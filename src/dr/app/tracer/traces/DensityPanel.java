@@ -63,15 +63,22 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private ChartSetupDialog chartSetupDialog = null;
 
-//    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
-    protected DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+//    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+    protected DiscreteJChart densityChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
 
-    protected JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "");
+    protected JChartPanel chartPanel = new JChartPanel(densityChart, null, "", "");
 
     protected int minimumBins = 100;
     protected JLabel labelBins;
     protected JComboBox binsCombo = new JComboBox(
             new Integer[]{10, 20, 50, 100, 200, 500, 1000});
+
+    private JCheckBox kdeCheckBox = new JCheckBox("KDE");
+    private JButton kdeSetupButton = new JButton("Settings...");
+    private KDESetupDialog kdeSetupDialog = null;
+
+    private boolean showKDE = false;
+    private int barCount = 0;
 
     protected JCheckBox relativeDensityCheckBox = new JCheckBox("Relative density");
     private JCheckBox solidCheckBox = new JCheckBox("Fill plot");
@@ -87,6 +94,8 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private int colourBy = COLOUR_BY_TRACE;
 
+    private Class traceType = null;
+
     private final JFrame frame;
 
     /**
@@ -101,7 +110,7 @@ public class DensityPanel extends JPanel implements Exportable {
         setLayout(new BorderLayout());
 
         JToolBar toolBar = setupToolBar(frame);
-        
+
         add(messageLabel, BorderLayout.NORTH);
         add(toolBar, BorderLayout.SOUTH);
         add(chartPanel, BorderLayout.CENTER);
@@ -159,6 +168,17 @@ public class DensityPanel extends JPanel implements Exportable {
 
         toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
 
+        kdeCheckBox.setFont(UIManager.getFont("SmallSystemFont"));
+        toolBar.add(kdeCheckBox);
+
+        kdeSetupButton.putClientProperty(
+                "Quaqua.Button.style", "placard"
+        );
+        kdeSetupButton.setFont(UIManager.getFont("SmallSystemFont"));
+        toolBar.add(kdeSetupButton);
+
+        kdeSetupButton.setEnabled(kdeCheckBox.isSelected());
+
         chartSetupButton.addActionListener(
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(ActionEvent actionEvent) {
@@ -167,7 +187,7 @@ public class DensityPanel extends JPanel implements Exportable {
                                     Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
                         }
 
-                        chartSetupDialog.showDialog(traceChart);
+                        chartSetupDialog.showDialog(densityChart);
                         validate();
                         repaint();
                     }
@@ -186,10 +206,10 @@ public class DensityPanel extends JPanel implements Exportable {
         relativeDensityCheckBox.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((NumericalDensityPlot) traceChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
+                        for (int i = 0; i < densityChart.getPlotCount(); i++) {
+                            ((NumericalDensityPlot) densityChart.getPlot(i)).setRelativeDensity(relativeDensityCheckBox.isSelected());
                         }
-                        traceChart.recalibrate();
+                        densityChart.recalibrate();
                         validate();
                         repaint();
                     }
@@ -199,10 +219,10 @@ public class DensityPanel extends JPanel implements Exportable {
         solidCheckBox.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        for (int i = 0; i < traceChart.getPlotCount(); i++) {
-                            ((NumericalDensityPlot) traceChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
+                        for (int i = 0; i < densityChart.getPlotCount(); i++) {
+                            ((NumericalDensityPlot) densityChart.getPlot(i)).setSolid(solidCheckBox.isSelected());
                         }
-                        traceChart.recalibrate();
+                        densityChart.recalibrate();
                         validate();
                         repaint();
                     }
@@ -216,31 +236,31 @@ public class DensityPanel extends JPanel implements Exportable {
                             case 0:
                                 break;
                             case 1:
-                                traceChart.setLegendAlignment(SwingConstants.NORTH_WEST);
+                                densityChart.setLegendAlignment(SwingConstants.NORTH_WEST);
                                 break;
                             case 2:
-                                traceChart.setLegendAlignment(SwingConstants.NORTH);
+                                densityChart.setLegendAlignment(SwingConstants.NORTH);
                                 break;
                             case 3:
-                                traceChart.setLegendAlignment(SwingConstants.NORTH_EAST);
+                                densityChart.setLegendAlignment(SwingConstants.NORTH_EAST);
                                 break;
                             case 4:
-                                traceChart.setLegendAlignment(SwingConstants.WEST);
+                                densityChart.setLegendAlignment(SwingConstants.WEST);
                                 break;
                             case 5:
-                                traceChart.setLegendAlignment(SwingConstants.EAST);
+                                densityChart.setLegendAlignment(SwingConstants.EAST);
                                 break;
                             case 6:
-                                traceChart.setLegendAlignment(SwingConstants.SOUTH_WEST);
+                                densityChart.setLegendAlignment(SwingConstants.SOUTH_WEST);
                                 break;
                             case 7:
-                                traceChart.setLegendAlignment(SwingConstants.SOUTH);
+                                densityChart.setLegendAlignment(SwingConstants.SOUTH);
                                 break;
                             case 8:
-                                traceChart.setLegendAlignment(SwingConstants.SOUTH_EAST);
+                                densityChart.setLegendAlignment(SwingConstants.SOUTH_EAST);
                                 break;
                         }
-                        traceChart.setShowLegend(legendCombo.getSelectedIndex() != 0);
+                        densityChart.setShowLegend(legendCombo.getSelectedIndex() != 0);
                         validate();
                         repaint();
                     }
@@ -256,6 +276,29 @@ public class DensityPanel extends JPanel implements Exportable {
                 }
         );
 
+        kdeCheckBox.addItemListener(
+                new java.awt.event.ItemListener() {
+                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
+                        showKDE = kdeCheckBox.isSelected();
+                        kdeSetupButton.setEnabled(showKDE);
+                        setupTraces();
+                    }
+                }
+        );
+        kdeSetupButton.addActionListener(
+                new java.awt.event.ActionListener() {
+                    public void actionPerformed(ActionEvent actionEvent) {
+                        if (kdeSetupDialog == null) {
+                            kdeSetupDialog = new KDESetupDialog(frame, true, false,
+                                    Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
+                        }
+
+                        kdeSetupDialog.showDialog(densityChart);
+                        setupTraces();
+                    }
+                }
+        );
+
         return toolBar;
     }
 
@@ -265,10 +308,41 @@ public class DensityPanel extends JPanel implements Exportable {
     public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
         this.traceLists = traceLists;
         this.traceNames = traceNames;
+
+        traceType = null;
+
+        barCount = 0;
+        for (TraceList tl : traceLists) {
+            for (String traceName : traceNames) {
+                int traceIndex = tl.getTraceIndex(traceName);
+                Trace trace = tl.getTrace(traceIndex);
+                if (trace != null) {
+                    if (traceType == null) {
+                        traceType = trace.getTraceType();
+                    }
+                    if (trace.getTraceType() != traceType) {
+                        densityChart.removeAllPlots();
+
+                        chartPanel.setXAxisTitle("");
+                        chartPanel.setYAxisTitle("");
+                        messageLabel.setText("Unable to display a mixture statistics types.");
+                        return;
+                    }
+                }
+            }
+        }
+
+        // only enable controls relevent to continuous densities...
+        relativeDensityCheckBox.setEnabled(traceType == Double.class);
+        labelBins.setEnabled(traceType == Double.class);
+        binsCombo.setEnabled(traceType == Double.class);
+        kdeCheckBox.setEnabled(traceType == Double.class);
+        kdeSetupButton.setEnabled(traceType == Double.class);
+
         setupTraces();
     }
 
-    protected Plot setupDoubleTrace(TraceList tl, int traceIndex, TraceCorrelation td) {
+    protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
         Double values[] = new Double[tl.getStateCount()];
         tl.getValues(traceIndex, values);
         boolean[] selected = new boolean[tl.getStateCount()];
@@ -276,17 +350,53 @@ public class DensityPanel extends JPanel implements Exportable {
 
         FrequencyPlot plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
 
-        traceChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
-        chartPanel.setYAxisTitle("Density");
-
-        relativeDensityCheckBox.setVisible(true);
-        labelBins.setVisible(true);
-        binsCombo.setVisible(true);
         return plot;
     }
 
+    protected Plot setupKDEPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
+        Double values[] = new Double[tl.getStateCount()];
+        tl.getValues(traceIndex, values);
+        boolean[] selected = new boolean[tl.getStateCount()];
+        tl.getSelected(traceIndex, selected);
+
+        Plot plot = new KDENumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+
+        return plot;
+    }
+
+    protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceCorrelation td, int barCount, int barId) {
+        Integer values[] = new Integer[tl.getStateCount()];
+        tl.getValues(traceIndex, values);
+        boolean[] selected = new boolean[tl.getStateCount()];
+        tl.getSelected(traceIndex, selected);
+
+        CategoryDensityPlot plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, barCount, barId);
+
+        return plot;
+    }
+
+    protected Plot setupCategoryPlot(TraceList tl, int traceIndex, TraceCorrelation td, Map<Integer, String> categoryDataMap, int barCount, int barId) {
+        String initValues[] = new String[tl.getStateCount()];
+        tl.getValues(traceIndex, initValues);
+        boolean[] selected = new boolean[tl.getStateCount()];
+        tl.getSelected(traceIndex, selected);
+
+        String[] values = Trace.arrayConvert(initValues, selected);
+
+        int[] intData = new int[values.length];
+        for (int v = 0; v < values.length; v++) {
+            intData[v] = td.credSet.getIndex(values[v]);
+            categoryDataMap.put(intData[v], values[v]);
+        }
+
+        CategoryDensityPlot plot = new CategoryDensityPlot(intData, -1, td, barCount, barId);
+
+        return plot;
+    }
+
+
     private void setupTraces() {
-        traceChart.removeAllPlots();
+        densityChart.removeAllPlots();
 
         if (traceLists == null || traceNames == null || traceNames.size() == 0) {
             chartPanel.setXAxisTitle("");
@@ -298,26 +408,8 @@ public class DensityPanel extends JPanel implements Exportable {
 
         remove(messageLabel);
 
-        Class iniTraceType = null;
+        int barId = 0;
         int i = 0;
-//        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-        int numOfBarsInt = 0;
-        int numOfBarsCat = 0;
-        for (TraceList tl : traceLists) {
-            for (String traceName : traceNames) {
-                int traceIndex = tl.getTraceIndex(traceName);
-                Trace trace = tl.getTrace(traceIndex);
-                if (trace != null) {
-                    if (trace.getTraceType() == Integer.class) {
-                        numOfBarsInt++;
-                    } else if (trace.getTraceType() == String.class) {
-                        numOfBarsCat++;
-                    }
-                }
-            }
-        }
-        int barIntId = 0; // start from 0
-        int barCatId = 0;
         for (TraceList tl : traceLists) {
             int n = tl.getStateCount();
 
@@ -328,79 +420,58 @@ public class DensityPanel extends JPanel implements Exportable {
                 Plot plot = null;
 
                 if (trace != null) {
-                    if (iniTraceType == null) iniTraceType = trace.getTraceType();
-                    if (iniTraceType == trace.getTraceType()) {
-                        Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                        if (trace.getTraceType() == Double.class) {
-                            plot = setupDoubleTrace(tl, traceIndex, td);
-
-                        } else if (trace.getTraceType() == Integer.class) {
-                            Integer values[] = new Integer[tl.getStateCount()];
-                            tl.getValues(traceIndex, values);
-                            boolean[] selected = new boolean[tl.getStateCount()];
-                            tl.getSelected(traceIndex, selected);
-
-                            plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, numOfBarsInt, barIntId);
-
-                            barIntId++;
-                            traceChart.setXAxis(true, new HashMap<Integer, String>());
-                            chartPanel.setYAxisTitle("Probability");
-
-                            relativeDensityCheckBox.setVisible(false);
-                            labelBins.setVisible(false);
-                            binsCombo.setVisible(false);
-
-                        } else if (trace.getTraceType() == String.class) {
-                            String initValues[] = new String[tl.getStateCount()];
-                            tl.getValues(traceIndex, initValues);
-                            boolean[] selected = new boolean[tl.getStateCount()];
-                            tl.getSelected(traceIndex, selected);
-
-                            String[] values = Trace.arrayConvert(initValues, selected);
-
-                            int[] intData = new int[values.length];
-                            for (int v = 0; v < values.length; v++) {
-                                intData[v] = td.credSet.getIndex(values[v]);
-                                categoryDataMap.put(intData[v], values[v]);
-                            }
-
-                            plot = new CategoryDensityPlot(intData, -1, td, numOfBarsCat, barCatId);
-                            barCatId++;
-                            traceChart.setXAxis(false, categoryDataMap);
-                            chartPanel.setYAxisTitle("Probability");
-
-                            relativeDensityCheckBox.setVisible(false);
-                            labelBins.setVisible(false);
-                            binsCombo.setVisible(false);
-
-                        } else {
-                            throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
-                        }
-
-                        String name = tl.getTraceName(traceIndex);
-                        if (traceLists.length > 1) {
-                            name = tl.getName() + " - " + name;
-                        }
-
-                        plot.setName(name);
-                        if (tl instanceof CombinedTraces) {
-                            plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
-                        } else {
-                            plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
-                        }
-
-                        traceChart.addPlot(plot);
-
-                        if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
-                            i++;
-                        }
-                        if (i == paints.length) i = 0;
-                    } else {
-//                         JOptionPane.showMessageDialog(frame,
-//                                 "Selected traces contain different trace types\rso that the plot is displayed improperly.",
-//                                 "Incompatible trace type",
-//                                 JOptionPane.ERROR_MESSAGE);
+                    String name = tl.getTraceName(traceIndex);
+                    if (traceLists.length > 1) {
+                        name = tl.getName() + " - " + name;
                     }
+
+                    Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+                    if (trace.getTraceType() == Double.class) {
+                        plot = setupDensityPlot(tl, traceIndex, td);
+
+                        if (showKDE) {
+                            ((NumericalDensityPlot)plot).setSolid(false);
+                            ((NumericalDensityPlot)plot).setLineStroke(null);
+                            ((NumericalDensityPlot)plot).setMarkStyle(Plot.POINT_MARK, 1, new BasicStroke(0.5f),
+                                    Color.black, Color.black);
+
+                            Plot plot2 = setupKDEPlot(tl, traceIndex, td);
+                            plot2.setName(name + " KDE");
+                            if (tl instanceof CombinedTraces) {
+                                plot2.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                            } else {
+                                plot2.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                            }
+                            densityChart.addPlot(plot2);
+                        }
+                    } else if (trace.getTraceType() == Integer.class) {
+
+                        plot = setupIntegerPlot(tl, traceIndex, td, barCount, barId);
+                        barId++;
+
+                    } else if (trace.getTraceType() == String.class) {
+
+                        plot = setupCategoryPlot(tl, traceIndex, td, categoryDataMap, barCount, barId);
+                        barId++;
+
+                    } else {
+                        throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
+                    }
+
+
+                    plot.setName(name);
+                    if (tl instanceof CombinedTraces) {
+                        plot.setLineStyle(new BasicStroke(2.0f), paints[i]);
+                    } else {
+                        plot.setLineStyle(new BasicStroke(1.0f), paints[i]);
+                    }
+
+                    densityChart.addPlot(plot);
+
+                    if (colourBy == COLOUR_BY_TRACE || colourBy == COLOUR_BY_ALL) {
+                        i++;
+                    }
+                    if (i == paints.length) i = 0;
                 }
             }
             if (colourBy == COLOUR_BY_FILE) {
@@ -419,6 +490,13 @@ public class DensityPanel extends JPanel implements Exportable {
             chartPanel.setXAxisTitle("Multiple Traces");
         }
 
+        if (traceType == Double.class) {
+            chartPanel.setYAxisTitle("Density");
+            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+        } else {
+            chartPanel.setYAxisTitle("Probability");
+        }
+
         validate();
         repaint();
     }
@@ -429,18 +507,18 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     public String toString() {
-        if (traceChart.getPlotCount() == 0) {
+        if (densityChart.getPlotCount() == 0) {
             return "no plot available";
         }
 
         StringBuffer buffer = new StringBuffer();
 
-        Plot plot = traceChart.getPlot(0);
+        Plot plot = densityChart.getPlot(0);
         Variate xData = plot.getXData();
 
         buffer.append(chartPanel.getXAxisTitle());
-        for (int i = 0; i < traceChart.getPlotCount(); i++) {
-            plot = traceChart.getPlot(i);
+        for (int i = 0; i < densityChart.getPlotCount(); i++) {
+            plot = densityChart.getPlot(i);
             buffer.append("\t");
             buffer.append(plot.getName());
         }
@@ -448,8 +526,8 @@ public class DensityPanel extends JPanel implements Exportable {
 
         for (int i = 0; i < xData.getCount(); i++) {
             buffer.append(String.valueOf(xData.get(i)));
-            for (int j = 0; j < traceChart.getPlotCount(); j++) {
-                plot = traceChart.getPlot(j);
+            for (int j = 0; j < densityChart.getPlotCount(); j++) {
+                plot = densityChart.getPlot(j);
                 Variate yData = plot.getYData();
                 buffer.append("\t");
                 buffer.append(String.valueOf(yData.get(i)));

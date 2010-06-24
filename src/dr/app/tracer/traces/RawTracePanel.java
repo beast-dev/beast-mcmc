@@ -368,7 +368,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 
         StringBuffer buffer = new StringBuffer();
 
-        //Plot plot = traceChart.getPlot(0);
+        //Plot plot = densityChart.getPlot(0);
 
         double[][] traceStates = new double[traceChart.getPlotCount()][];
         double[][] traceValues = new double[traceChart.getPlotCount()][];

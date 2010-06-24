@@ -48,7 +48,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @version $Id: CorrelationPanel.java,v 1.1.1.2 2006/04/25 23:00:09 rambaut Exp $
  */
-public class CorrelationPanel extends JPanel implements Exportable {
+public class JointDensityPanel extends JPanel implements Exportable {
 
     private ChartSetupDialog chartSetupDialog = null;
 
@@ -91,7 +91,7 @@ public class CorrelationPanel extends JPanel implements Exportable {
     /**
      * Creates new CorrelationPanel
      */
-    public CorrelationPanel(final JFrame frame) {
+    public JointDensityPanel(final JFrame frame) {
 
         setOpaque(false);
         setMinimumSize(new Dimension(300, 150));

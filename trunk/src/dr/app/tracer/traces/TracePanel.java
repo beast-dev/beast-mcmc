@@ -21,7 +21,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
     private final SummaryStatisticsPanel summaryPanel;
     private final DensityPanel densityPanel;
     private final BetterDensityPanel newDensityPanel;
-    private final CorrelationPanel correlationPanel;
+    private final JointDensityPanel jointDensityPanel;
     private final RawTracePanel tracePanel;
 
     private static final boolean USE_KDE = false;
@@ -47,7 +47,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         } else {
             newDensityPanel = null;
         }
-        correlationPanel = new CorrelationPanel(parent);
+        jointDensityPanel = new JointDensityPanel(parent);
         tracePanel = new RawTracePanel(parent);
 
         tabbedPane.addTab("Estimates", summaryIcon, summaryPanel);
@@ -55,7 +55,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
         if (USE_KDE) {
             tabbedPane.addTab("Better Prob Distribution", densityIcon, newDensityPanel);
         }
-        tabbedPane.addTab("Joint-Marginal", correlationIcon, correlationPanel);
+        tabbedPane.addTab("Joint-Marginal", correlationIcon, jointDensityPanel);
         tabbedPane.addTab("Trace", traceIcon, tracePanel);
 
         setLayout(new BorderLayout());
@@ -69,10 +69,10 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
 
         summaryPanel.setTraces(traceLists, traces);
         densityPanel.setTraces(traceLists, traces);
-        if (USE_KDE) {
+        if (newDensityPanel != null) {
             newDensityPanel.setTraces(traceLists, traces);
         }
-        correlationPanel.setTraces(traceLists, traces);
+        jointDensityPanel.setTraces(traceLists, traces);
         tracePanel.setTraces(traceLists, traces);
     }
 
@@ -95,7 +95,7 @@ public class TracePanel extends javax.swing.JPanel implements Exportable {
             case 1:
                 return densityPanel.toString();
             case 2:
-                return correlationPanel.toString();
+                return jointDensityPanel.toString();
             case 3:
                 return tracePanel.toString();
         }

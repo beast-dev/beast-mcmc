@@ -31,7 +31,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
     private JLabel labelBins;
 
     private JCheckBox showValuesCheckBox = new JCheckBox("Show values on above chart");
-//    private JChart traceChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
+//    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
     private DiscreteJChart traceChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
     private JChartPanel chartPanel = new JChartPanel(traceChart, null, "", "Frequency");
 
@@ -170,9 +170,9 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 boolean[] selected = new boolean[traceList.getStateCount()];
                 traceList.getSelected(traceIndex, selected);
                 String[] values = Trace.arrayConvert(initValues, selected);
-                
+
                 int[] intData = new int[values.length];
-                for (int v = 0; v < values.length; v++) { 
+                for (int v = 0; v < values.length; v++) {
                     intData[v] = td.credSet.getIndex(values[v]);
                     categoryDataMap.put(intData[v], values[v]);
                 }

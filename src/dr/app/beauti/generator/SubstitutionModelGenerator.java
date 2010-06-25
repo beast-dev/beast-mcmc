@@ -455,9 +455,9 @@ public class SubstitutionModelGenerator extends Generator {
             if (!model.isActivateBSSVS()) {
                 writer.writeComment("Rates parameter in " + GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL
                         + " element should have (" + (numOfSates * (numOfSates - 1) / 2) + " - 1) dimensions");
-                writeRatesAndIndicators(model, (numOfSates * (numOfSates - 1) / 2) - 1, 1, writer);           
+                writeRatesAndIndicators(model, (numOfSates * (numOfSates - 1) / 2) - 1, null, writer);
             } else {
-                writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, 1, writer);//TODO alway 1?
+                writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, null, writer);
             }
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 

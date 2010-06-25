@@ -884,7 +884,7 @@
                 </frequencies>
             </frequencyModel>
         </frequencies>
-        <rates relativeTo="1">
+        <rates>
             <parameter id="rates" dimension="21" value="1.0"/>
         </rates>
         <rateIndicator>

@@ -214,31 +214,33 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         TreeTrait unconditionedSum;
         if (!TRIAL) {
-         unconditionedSum = new TreeTrait.D() {
-            public String getTraitName() {
-                return UNCONDITIONED_PREFIX + codonLabeling.getText();
-            }
-
-            public Intent getIntent() {
-                return Intent.WHOLE_TREE;
-            }
-
-            public Double getTrait(Tree tree, NodeRef node) {
-                return getUnconditionedTraitValue();
-            }
-
-            public boolean getLoggable() {
-                return false;
-            }
-        };
-        } else {
-             unconditionedSum = new TreeTrait.DA() {
+            unconditionedSum = new TreeTrait.D() {
                 public String getTraitName() {
                     return UNCONDITIONED_PREFIX + codonLabeling.getText();
                 }
+
                 public Intent getIntent() {
                     return Intent.WHOLE_TREE;
                 }
+
+                public Double getTrait(Tree tree, NodeRef node) {
+                    return getUnconditionedTraitValue();
+                }
+
+                public boolean getLoggable() {
+                    return false;
+                }
+            };
+        } else {
+            unconditionedSum = new TreeTrait.DA() {
+                public String getTraitName() {
+                    return UNCONDITIONED_PREFIX + codonLabeling.getText();
+                }
+
+                public Intent getIntent() {
+                    return Intent.WHOLE_TREE;
+                }
+
                 public double[] getTrait(Tree tree, NodeRef node) {
                     return getUnconditionedTraitValues();
                 }
@@ -329,27 +331,33 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return numCodons;
     }
 
+    private void computeUnconditionedTraitValues() {
+        if (unconditionedCounts == null) {
+            unconditionedCounts = new double[numCodons];
+        }
+        final double treeLength = getExpectedTreeLength();
+        double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+        final int stateCount = 64;
+        double[] lambda = new double[stateCount * stateCount];
+        productChainModel.getInfinitesimalMatrix(lambda);
+        for (int i = 0; i < numCodons; i++) {
+            final int startingState = MathUtils.randomChoicePDF(rootDistribution);
+            StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
+                    0.0,
+                    startingState,
+                    treeLength,
+                    lambda,
+                    stateCount
+            );
+            unconditionedCounts[i] = markovJumps.getProcessForSimulant(history);
+
+        }
+    }
+
     private double[] getUnconditionedTraitValues() {
         if (!unconditionsKnown) {
-            if (unconditionedCounts == null) {
-                unconditionedCounts = new double[numCodons];
-                final double treeLength = getExpectedTreeLength();
-                double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
-                final int stateCount = 64;
-                double[] lambda = new double[stateCount * stateCount];
-                productChainModel.getInfinitesimalMatrix(lambda);
-                for (int i = 0; i < numCodons; i++) {
-                    final int startingState = MathUtils.randomChoicePDF(rootDistribution);
-                    StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
-                        0.0,
-                        startingState,
-                        treeLength,
-                        lambda,
-                        stateCount
-                    );
-                    unconditionedCounts[i] = markovJumps.getProcessForSimulant(history);
-                }
-            }
+            computeUnconditionedTraitValues();
+            unconditionsKnown = true;
         }
         return unconditionedCounts;
     }

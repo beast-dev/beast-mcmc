@@ -194,7 +194,8 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         dolloCheck.setEnabled(true);
-        dolloCheck.setToolTipText("<html>Activates a stochastic dollo model - Alekseyenko, Lee & Suchard(2008) Syst Biol 57: 772-784.</html>");
+        dolloCheck.setToolTipText("<html>Activates a Stochastic Dollo model as described in<br>" +
+                "Alekseyenko, Lee & Suchard (2008) <i>Syst Biol</i> <b>57</b>: 772-784.</html>");
 
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
@@ -209,6 +210,8 @@ public class PartitionModelPanel extends OptionsPanel {
                 model.setActivateBSSVS(activateBSSVS.isSelected());
             }
         });
+        activateBSSVS.setToolTipText("<html>Actives Bayesian stochastic search variable selection on the rates as decribed in<br>" +
+            "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
 
         setupPanel();
         setOpaque(false);

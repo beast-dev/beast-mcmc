@@ -83,6 +83,10 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
         throw new RuntimeException("Not Implemented.");
     }
 
+    public double getBandWidth() {
+        return bandWidth;
+    }
+
     protected int N;
     protected double lowerBound;
     protected double upperBound;

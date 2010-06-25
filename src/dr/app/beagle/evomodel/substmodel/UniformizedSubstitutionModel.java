@@ -9,7 +9,7 @@ import dr.inference.model.Model;
  * <p/>
  * This work is supported by NSF grant 0856099
  * <p/>
- * Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.
+ * Minin VN and Suchard MA (2008) Counting labeled transitions in continuous-time Markov models of evolution.
  * Journal of Mathematical Biology, 56, 391-412.
  * <p/>
  * Rodrigue N, Philippe H and Lartillot N (2006) Uniformization for sampling realizations of Markov processes:
@@ -112,11 +112,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     stateCount,
                     subordinator
             );
-            if (type == MarkovJumpsType.COUNTS) {
-                total += history.getTotalRegisteredCounts(registration);
-            } else {
-                total += history.getTotalReward(reward);
-            }
+            total += getProcessForSimulant(history);
         }
         return total / (double) numSimulants;
     }

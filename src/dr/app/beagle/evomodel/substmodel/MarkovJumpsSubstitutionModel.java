@@ -2,10 +2,11 @@ package dr.app.beagle.evomodel.substmodel;
 
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
+import dr.inference.markovjumps.StateHistory;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
-import dr.inference.model.Variable;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Marc Suchard
@@ -54,7 +55,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     public void setRegistration(double[] inRegistration) {
 
         if (type == MarkovJumpsType.COUNTS) {
-                   
+
             System.arraycopy(inRegistration, 0, registration, 0, stateCount * stateCount);
             for (int i = 0; i < stateCount; i++) {
                 registration[i * stateCount + i] = 0;  // diagonals are zero
@@ -98,7 +99,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
         } else if (type == MarkovJumpsType.REWARDS) {
 
-            System.arraycopy(registration,0,rateReg,0,stateCount * stateCount);
+            System.arraycopy(registration, 0, rateReg, 0, stateCount * stateCount);
 
         } else {
             throw new RuntimeException("Unknown expectation type in MarkovJumps");
@@ -138,15 +139,27 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
                                            double[] countMatrix) {
 
         substModel.getTransitionProbabilities(time, transitionProbs);
-        computeCondStatMarkovJumps(time,transitionProbs,countMatrix);
+        computeCondStatMarkovJumps(time, transitionProbs, countMatrix);
     }
+
+
+    public double getProcessForSimulant(StateHistory history) {
+        final double total;
+        if (type == MarkovJumpsType.COUNTS) {
+            total = history.getTotalRegisteredCounts(registration);
+        } else {
+            total = history.getTotalReward(reward);
+        }
+        return total;
+    }
+
 
     public void computeCondStatMarkovJumps(double time,
                                            double[] transitionProbs,
                                            double[] countMatrix) {
 
         if (regRateChanged) {
-            makeRateRegistrationMatrix(registration,rateReg,ievcRateRegEvec);
+            makeRateRegistrationMatrix(registration, rateReg, ievcRateRegEvec);
         }
 
         double[] evec = eigenDecomposition.getEigenVectors();
@@ -165,7 +178,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
                                             double[] countMatrix) {
 
         if (regRateChanged) {
-            makeRateRegistrationMatrix(registration,rateReg,ievcRateRegEvec);
+            makeRateRegistrationMatrix(registration, rateReg, ievcRateRegEvec);
         }
 
         double[] evec = eigenDecomposition.getEigenVectors();

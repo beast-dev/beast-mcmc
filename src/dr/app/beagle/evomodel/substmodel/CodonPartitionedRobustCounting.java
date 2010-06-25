@@ -12,10 +12,12 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
+import dr.inference.markovjumps.StateHistory;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -83,7 +85,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             }
         }
 
-        ProductChainSubstitutionModel productChainModel =
+        productChainModel =
                 new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
         addModel(productChainModel);
 
@@ -210,7 +212,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             }
         };
 
-        TreeTrait unconditionedSum = new TreeTrait.D() {
+        TreeTrait unconditionedSum;
+        if (!TRIAL) {
+         unconditionedSum = new TreeTrait.D() {
             public String getTraitName() {
                 return UNCONDITIONED_PREFIX + codonLabeling.getText();
             }
@@ -227,6 +231,23 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 return false;
             }
         };
+        } else {
+             unconditionedSum = new TreeTrait.DA() {
+                public String getTraitName() {
+                    return UNCONDITIONED_PREFIX + codonLabeling.getText();
+                }
+                public Intent getIntent() {
+                    return Intent.WHOLE_TREE;
+                }
+                public double[] getTrait(Tree tree, NodeRef node) {
+                    return getUnconditionedTraitValues();
+                }
+
+                public boolean getLoggable() {
+                    return false;
+                }
+            };
+        }
 
         TreeTrait sumOverTreeTrait = new TreeTrait.SumOverTreeDA(
                 SITE_SPECIFIC_PREFIX + codonLabeling.getText(),
@@ -308,8 +329,50 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return numCodons;
     }
 
+    private double[] getUnconditionedTraitValues() {
+        if (!unconditionsKnown) {
+            if (unconditionedCounts == null) {
+                unconditionedCounts = new double[numCodons];
+                final double treeLength = getExpectedTreeLength();
+                double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+                final int stateCount = 64;
+                double[] lambda = new double[stateCount * stateCount];
+                productChainModel.getInfinitesimalMatrix(lambda);
+                for (int i = 0; i < numCodons; i++) {
+                    final int startingState = MathUtils.randomChoicePDF(rootDistribution);
+                    StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
+                        0.0,
+                        startingState,
+                        treeLength,
+                        lambda,
+                        stateCount
+                    );
+                    unconditionedCounts[i] = markovJumps.getProcessForSimulant(history);
+                }
+            }
+        }
+        return unconditionedCounts;
+    }
+
     public Double getUnconditionedTraitValue() {
-        return markovJumps.getMarginalRate() * getExpectedTreeLength();
+        if (!TRIAL) {
+            return markovJumps.getMarginalRate() * getExpectedTreeLength();
+        } else {
+            final double treeLength = getExpectedTreeLength();
+            double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+            final int startingState = MathUtils.randomChoicePDF(rootDistribution);
+            final int stateCount = 64;
+            double[] lambda = new double[stateCount * stateCount];
+            productChainModel.getInfinitesimalMatrix(lambda);
+            StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
+                    0.0,
+                    startingState,
+                    treeLength,
+                    lambda,
+                    stateCount
+            );
+            return markovJumps.getProcessForSimulant(history);
+        }
     }
 
     private double getExpectedBranchLength(NodeRef node) {
@@ -320,7 +383,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         double expectedTreeLength = 0;
         if (includeExternalBranches) {
             for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef node = tree.getExternalNode(i);
+                NodeRef node = tree.getExternalNode(i);
                 expectedTreeLength += getExpectedBranchLength(node);
             }
         }
@@ -331,16 +394,18 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     expectedTreeLength += getExpectedBranchLength(node);
                 }
             }
-        }       
+        }
         return expectedTreeLength;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         countsKnown = false;
+        unconditionsKnown = false;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         countsKnown = false;
+        unconditionsKnown = false;
     }
 
     protected void storeState() {
@@ -349,6 +414,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     protected void restoreState() {
         countsKnown = false;
+        unconditionsKnown = false;
     }
 
     protected void acceptState() {
@@ -359,6 +425,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private final MarkovJumpsSubstitutionModel markovJumps;
     private final boolean useUniformization;
     private final BranchRateModel branchRateModel;
+    private final ProductChainSubstitutionModel productChainModel;
 
     private final CodonLabeling codonLabeling;
     private final Tree tree;
@@ -372,7 +439,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private static final boolean DEBUG = false;
 
-    private boolean countsKnown;
+    private boolean countsKnown = false;
+    private boolean unconditionsKnown = false;
+    private double[] unconditionedCounts;
     private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
 
     protected Helper treeTraits = new Helper();
@@ -380,4 +449,6 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private final boolean includeExternalBranches;
     private final boolean includeInternalBranches;
+
+    private static final boolean TRIAL = true;
 }

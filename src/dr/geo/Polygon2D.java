@@ -157,6 +157,14 @@ public class Polygon2D {
         length = point2Ds.size() - 1;
     }
 
+    public Point2D getPoint2D(int x) {
+        if (x > length +1) {
+            throw new RuntimeException("Polygon only has length"+length);
+        } else {
+            return point2Ds.get(x);
+        }
+    }
+
     public boolean containsPoint2D(Point2D Point2D) {
 
         final double inX = Point2D.getX();
@@ -174,12 +182,29 @@ public class Polygon2D {
         return contains;
     }
 
+    public boolean bordersPoint2D(Point2D Point2D) {
+        boolean borders = false;
+
+        Iterator<Point2D> it = point2Ds.iterator();
+        for (int i = 0; i < length; i++) {
+            Point2D point = it.next();
+            if (point.equals(Point2D)) {
+                borders = true;
+            }
+        }
+        return borders;
+    }
+
     public void setFillValue(double value) {
         fillValue = value;
     }
 
     public double getFillValue() {
         return fillValue;
+    }
+
+    public double getLength() {
+        return length;
     }
 
 //    public boolean containsPoint2D(Point2D Point2D) { // this takes 3 times as long as the above code, why???

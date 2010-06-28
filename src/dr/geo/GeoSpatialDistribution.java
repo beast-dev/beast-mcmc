@@ -68,6 +68,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         if (outside ^ contains)
             return 0;
         return Double.NEGATIVE_INFINITY;
+
     }
 
     public double[][] getScaleMatrix() {

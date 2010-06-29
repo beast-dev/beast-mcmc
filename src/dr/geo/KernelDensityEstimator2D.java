@@ -117,7 +117,7 @@ public class KernelDensityEstimator2D implements ContourMaker {
         final double criticalValue = 1.0 - probabilityMass;
         if (criticalValue < c1[0] || criticalValue >= 1.0)
                 throw new RuntimeException();
-        // do linearInterpolation on density (y) as function of cummulative sum (x)
+        // do linearInterpolation on density (y) as function of cumulative sum (x)
         for(int i=1; i<n*n; i++) {
             c1[i] = sz[i] * dxdy + c1[i-1];
             if (c1[i] > criticalValue) { // first largest point

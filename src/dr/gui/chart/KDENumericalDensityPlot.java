@@ -3,6 +3,7 @@ package dr.gui.chart;
 import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.KernelDensityEstimatorDistribution;
+import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -28,7 +29,15 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
     }
 
     private KernelDensityEstimatorDistribution getKDE(double[] samples) {
-        return new GammaKDEDistribution(samples);
+//        System.err.println("samples is null? " + (samples == null ? "yes" : "no"));
+//        System.err.println("type is null? " + (type == null ? "yes" : "no"));
+        type = KernelDensityEstimatorDistribution.Type.GAUSSIAN;
+        switch (type) {
+            case GAUSSIAN: return new NormalKDEDistribution(samples);
+            case GAMMA: return new GammaKDEDistribution(samples);
+            default:
+                throw new RuntimeException("Unknown type");
+        }       
     }
 
     /**
@@ -137,6 +146,8 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 
     private KernelDensityEstimatorDistribution kde;
     private NumericalDensityPlot densityPlot;
+
+    private KernelDensityEstimatorDistribution.Type type;
 
     private double lowerBoundary = 0;
     private double upperBoundary = Double.POSITIVE_INFINITY;

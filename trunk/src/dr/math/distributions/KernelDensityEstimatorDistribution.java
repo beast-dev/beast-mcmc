@@ -87,6 +87,29 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
         return bandWidth;
     }
 
+    public enum Type {
+        GAUSSIAN("Gaussian"),
+        GAMMA("Gamma"),
+        BETA("Beta");
+
+        private Type(String text) {
+            this.text = text;
+        }
+
+        public String getText() {
+            return text;
+        }
+
+        public static Type parseFromString(String text) {
+            for (Type format : Type.values()) {
+                if (format.getText().compareToIgnoreCase(text) == 0)
+                    return format;
+            }
+            return null;
+        }
+        private final String text;
+    }
+
     protected int N;
     protected double lowerBound;
     protected double upperBound;

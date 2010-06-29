@@ -3,7 +3,6 @@ package dr.app.tracer.application;
 import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
 import org.virion.jam.framework.*;
-import org.virion.jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
@@ -68,16 +67,23 @@ public class TracerApp extends MultiDocApplication {
             String aboutString = "<html><center><p>MCMC Trace Analysis Tool<br>" +
                     "Version " + versionString + ", 2003-2010</p>" +
                     "<p>by<br>" +
-                    "Andrew Rambaut, Walter Xei and Alexei J. Drummond</p>" +
+
+                    "Andrew Rambaut, Marc A. Suchard, Walter Xie and Alexei J. Drummond</p>" +
+
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
+
+                    "<p>Departments of Biomathematics, Biostatistics and Human Genetics, UCLA<br>" +
+                    "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
+
                     "<p>Department of Computer Science, University of Auckland<br>" +
                     "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
+
                     "<p>Available from the BEAST site:<br>" +
                     "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
-                    "<p>Thanks for contributions to: Joseph Heled, Oliver Pybus, Benjamin Redelings & Marc Suchard</p>" +
+                    "<p>Thanks for contributions to: Joseph Heled, Oliver Pybus & Benjamin Redelings</p>" +
                     "</center></html>";
 
             String websiteURLString = "http://beast.bio.ed.ac.uk/";

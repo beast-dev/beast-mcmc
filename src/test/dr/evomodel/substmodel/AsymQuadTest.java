@@ -229,6 +229,12 @@ public class AsymQuadTest extends TestCase {
                 }
             }
 
+            for(int i = 0; i < microsat.getStateCount();i ++){
+                double[] rowTransitionProb = aqm.getRowTransitionProbabilities(test.getDistance(), i);
+                for(int j =0 ; j < microsat.getStateCount(); j++){
+                    assertEquals(result[i*microsat.getStateCount()+j], rowTransitionProb[j], 1e-10);
+                }
+            }
         }
     }
 }

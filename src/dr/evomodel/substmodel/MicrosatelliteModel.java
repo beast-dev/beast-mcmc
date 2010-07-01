@@ -235,7 +235,63 @@ public abstract class MicrosatelliteModel extends ComplexSubstitutionModel{
 
         return probability;
     }
+    public double[] getRowTransitionProbabilities(double distance, int parentState){
 
+       double[] probability = new double[stateCount];
+       double temp;
+
+        synchronized (this) {
+            if (updateMatrix) {
+                setupMatrix();
+            }
+        }
+
+        if (!wellConditioned) {
+
+            //throw new RuntimeException("not well conditioned");
+            return probability;
+        }
+
+        int i,j;
+        double[][] iexp = new double[stateCount][stateCount];
+
+        for (i = 0; i < stateCount; i++) {
+
+            if (EvalImag[i] == 0) {
+                // 1x1 block
+                temp = Math.exp(distance * Eval[i]);
+                for (j = 0; j < stateCount; j++) {
+                    iexp[i][j] = Ievc[i][j] * temp;
+                }
+            } else {
+                // 2x2 conjugate block
+                // If A is 2x2 with complex conjugate pair eigenvalues a +/- bi, then
+                // exp(At) = exp(at)*( cos(bt)I + \frac{sin(bt)}{b}(A - aI)).
+                int i2 = i + 1;
+                double b = EvalImag[i];
+                double expat = Math.exp(distance * Eval[i]);
+                double expatcosbt = expat * Math.cos(distance * b);
+                double expatsinbt = expat * Math.sin(distance * b);
+
+                for (j = 0; j < stateCount; j++) {
+                    iexp[i][j] = expatcosbt * Ievc[i][j] + expatsinbt * Ievc[i2][j];
+                    iexp[i2][j] = expatcosbt * Ievc[i2][j] - expatsinbt * Ievc[i][j];
+                }
+                i++; // processed two conjugate rows
+            }
+        }
+        for(i = 0; i < stateCount; i++){
+            for(j = 0; j < stateCount; j++){
+                probability[i] += Evec[parentState][j]*iexp[j][i];
+
+            }
+            if(probability[i] <= 0.0){
+                probability[i] = minProb;
+            }
+        }
+
+        return probability;
+    }
     /*
      * The One Phase Models are special cases of the birth-death chain,
      * and therefore we can use this to calculate the stationay distribution

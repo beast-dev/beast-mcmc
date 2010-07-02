@@ -457,6 +457,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.missingIndices;
+            traitName = returnValue.traitName;
 
             Model samplingDensity = null;
 

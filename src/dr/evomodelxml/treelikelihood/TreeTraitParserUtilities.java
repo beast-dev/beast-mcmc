@@ -177,16 +177,18 @@ public class TreeTraitParserUtilities {
     public class TraitsAndMissingIndices {
         public CompoundParameter traitParameter;
         public List<Integer> missingIndices;
+        public String traitName;
 
-        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices) {
+        TraitsAndMissingIndices(CompoundParameter traitParameter, List<Integer> missingIndices, String traitName) {
             this.traitParameter = traitParameter;
             this.missingIndices = missingIndices;
+            this.traitName = traitName;
         }
     }
 
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
-            String traitName,
+            String inTraitName,
             TreeModel treeModel,           
             boolean integrateOutInternalStates) throws XMLParseException {
 
@@ -194,6 +196,8 @@ public class TreeTraitParserUtilities {
         Parameter parameter = (Parameter) xoc.getChild(Parameter.class);
         boolean existingTraitParameter = false;
         int randomSampleSizeFlag = xo.getAttribute(RANDOM_SAMPLE, -1);
+
+        String traitName = inTraitName;
 
         CompoundParameter traitParameter;
         List<Integer> missingIndices = null;
@@ -315,7 +319,7 @@ public class TreeTraitParserUtilities {
                 }
             }
         }
-        return new TraitsAndMissingIndices(traitParameter, missingIndices);
+        return new TraitsAndMissingIndices(traitParameter, missingIndices, traitName);
     }
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {

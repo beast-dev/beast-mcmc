@@ -1,6 +1,7 @@
 package dr.evomodelxml.branchratemodel;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -8,6 +9,7 @@ import dr.evomodel.branchratemodel.ContinuousTraitBranchRateModel;
 import dr.evomodel.branchratemodel.DiscreteTraitBranchRateModel;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -32,6 +34,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 
         TreeTraitProvider traitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
+        DataType dataType = DataTypeUtils.getDataType(xo);
 
         Parameter rateParameter = (Parameter) xo.getElementFirstChild(RATE);
         Parameter ratesParameter = null;
@@ -61,7 +64,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                 throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
             }
 
-            return new DiscreteTraitBranchRateModel(traitProvider, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
+            return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
         }
     }
 
@@ -87,7 +90,13 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(TreeModel.class, "The tree model"),
             new XORRule(
-                    new ElementRule(TreeTraitProvider.class, "The trait provider"),
+                    new AndRule(
+                            new ElementRule(TreeTraitProvider.class, "The trait provider"),
+                            new XORRule(
+                                   new StringAttributeRule(DataType.DATA_TYPE, "The type of general data",
+                                                           DataType.getRegisteredDataTypeNames(), false),
+                                   new ElementRule(DataType.class))
+                    ), 
                     new ElementRule(PatternList.class)),
             new ElementRule(RATE, Parameter.class, "The absolute rate of state 0", false),
             new ElementRule(RATES, Parameter.class, "The relative rates of state > 0", true),

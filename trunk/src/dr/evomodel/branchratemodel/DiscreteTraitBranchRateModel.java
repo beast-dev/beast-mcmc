@@ -26,6 +26,7 @@
 package dr.evomodel.branchratemodel;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.DataType;
 import dr.evolution.parsimony.FitchParsimony;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -54,11 +55,11 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
     public static final String DISCRETE_TRAIT_BRANCH_RATE_MODEL = "discreteTraitRateModel";
 
-    private TreeTrait trait = null;
+    protected TreeTrait trait = null;
     private Parameter rateParameter;
     private Parameter relativeRatesParameter;
     private Parameter indicatorParameter;
-    private int traitIndex;
+    protected int traitIndex;
     private boolean normKnown = false;
     private boolean storedNormKnown = false;
     private double norm = 1.0;
@@ -70,7 +71,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private boolean shouldRestoreTree = false;
 
     private Mode mode;
-
+    private DataType dataType;
 //    private int treeInitializeCounter = 0;
 
     /**
@@ -101,8 +102,9 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
      * @param relativeRatesParameter
      * @param indicatorParameter
      */
-    public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, TreeModel treeModel, TreeTrait trait, int traitIndex,
-                                        Parameter rateParameter, Parameter relativeRatesParameter, Parameter indicatorParameter) {
+    public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, DataType dataType, TreeModel treeModel,
+                                        TreeTrait trait, int traitIndex, Parameter rateParameter,
+                                        Parameter relativeRatesParameter, Parameter indicatorParameter) {
 
         this(treeModel, traitIndex, rateParameter, relativeRatesParameter, indicatorParameter);
 
@@ -110,6 +112,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 //            throw new IllegalArgumentException("Tree Models for ancestral state tree likelihood and target model of these rates must match!");
 
         this.trait = trait;
+        this.dataType = dataType;
 
         if (trait.getTraitName().equals("states")) {
             // Assume the trait is one or more discrete traits reconstructed at nodes
@@ -197,6 +200,10 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
+        double rate = getRawBranchRate(tree, node);
+
+//        System.out.println("rate = " + rate);
+
 //        if (!normKnown) {
 //            norm = calculateNorm(tree);
 //            normKnown = true;
@@ -204,7 +211,8 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 //        return getRawBranchRate(tree, node) / norm;
 
         // AR - I am not sure the normalization is required here?
-        return getRawBranchRate(tree, node);
+
+        return rate;
     }
 
     double calculateNorm(Tree tree) {
@@ -227,7 +235,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         return rateTime / time;
     }
 
-    double getRawBranchRate(final Tree tree, final NodeRef node) {
+    protected double getRawBranchRate(final Tree tree, final NodeRef node) {
 
         double rate = 0.0;
         double[] processValues = getProcessValues(tree, node);
@@ -256,6 +264,12 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         return rate;
     }
 
+    /**
+     *
+     * @param tree
+     * @param node
+     * @return and array of the total amount of time spent in each of the discrete states along the branch above the given node.
+     */
     private double[] getProcessValues(final Tree tree, final NodeRef node) {
 
         double[] processValues = null;
@@ -296,11 +310,14 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
                 processValues[i] /= (states.length + parentStates.length) / 2;
             }
         } else if (mode == Mode.NODE_STATES) {
-            if (indicatorParameter != null) {
-                processValues = new double[indicatorParameter.getDimension()];
-            } else {
-                processValues = new double[rateParameter.getDimension()];
-            }
+              processValues = new double[dataType.getStateCount()];
+//            if (indicatorParameter != null) {
+//                // this array should be size #states NOT #rates
+//                processValues = new double[indicatorParameter.getDimension()];
+//            } else {
+//                // this array should be size #states NOT #rates
+//                processValues = new double[rateParameter.getDimension()];
+//            }
 
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.

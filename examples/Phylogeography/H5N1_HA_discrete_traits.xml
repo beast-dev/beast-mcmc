@@ -938,10 +938,11 @@
     <discreteTraitRateModel id="branchRates">
         <treeModel idref="treeModel"/>
         <ancestralTreeLikelihood idref="geoTreeLikelihood"/>
+        <dataType idref="geography"/>
         <!--<attributePatterns idref="geoPatterns"/>-->
-        <rates>
+        <rate>
             <parameter id="trait.rates" value="1 1 1 1 1 1 1"/>
-        </rates>
+        </rate>
     </discreteTraitRateModel>
 
     <rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">

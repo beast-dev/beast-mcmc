@@ -34,7 +34,7 @@ import dr.inference.model.*;
  * @author Andrew Rambaut
  * @version $Id:$
  */
-public abstract class AbstractBranchRateModel extends AbstractModel implements BranchRateModel {
+public abstract class AbstractBranchRateModel extends AbstractModelLikelihood implements BranchRateModel {
     /**
      * @param name Model Name
      */
@@ -64,5 +64,17 @@ public abstract class AbstractBranchRateModel extends AbstractModel implements B
 
     public String getTraitString(final Tree tree, final NodeRef node) {
         return Double.toString(getBranchRate(tree, node));
+    }
+
+    public Model getModel() {
+        return this;
+    }
+
+    public double getLogLikelihood() {
+        return 0;
+    }
+
+    public void makeDirty() {
+        // Do nothing
     }
 }

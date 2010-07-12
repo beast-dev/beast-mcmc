@@ -197,7 +197,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             } else if (object instanceof Parameter) {
                 // Ignoring
             } else {
-                throw new RuntimeException("Unexpected TreeModel event occuring in AbstractMultivariateTraitLikelihood");
+                throw new RuntimeException("Unexpected TreeModel event occurring in AbstractMultivariateTraitLikelihood");
             }
         } else if (model == rateModel) {
             if (index == -1) {

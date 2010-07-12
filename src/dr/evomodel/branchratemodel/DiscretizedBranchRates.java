@@ -53,6 +53,7 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     private double normalizeBranchRateTo = Double.NaN;
     private double scaleFactor = 1.0;
     private TreeModel treeModel;
+    private final double logDensityNormalizationConstant;
 
     //overSampling control the number of effective categories
 
@@ -118,6 +119,10 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         }
 
         setupRates();
+        
+        // Each parameter take any value in [1, \ldots, categoryCount]
+        // NB But this depends on the transition kernel employed.  Using swap-only results in a different constant
+        logDensityNormalizationConstant = - rateCategoryParameter.getDimension()  * Math.log(categoryCount);
     }
 
     // compute scale factor
@@ -199,5 +204,9 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         }
         else { System.out.println(distributionModel.getClass().getName());}*/
         if (normalize) computeFactor();
+    }
+
+    public double getLogLikelihood() {
+        return logDensityNormalizationConstant;
     }
 }

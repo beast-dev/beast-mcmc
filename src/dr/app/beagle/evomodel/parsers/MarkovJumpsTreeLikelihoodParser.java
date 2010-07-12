@@ -2,19 +2,23 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.xml.*;
 import dr.inference.model.Parameter;
-import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Marc Suchard
@@ -41,6 +45,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                                                         BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
         SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
@@ -67,6 +72,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 branchRateModel,
                 useAmbiguities,
                 scalingScheme,
+                partialsRestrictions,
                 dataType,
                 stateTag,
                 substModel,
@@ -143,6 +149,10 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             AttributeRule.newBooleanRule(USE_UNIFORMIZATION,true),
             AttributeRule.newBooleanRule(REPORT_UNCONDITIONED_COLUMNS, true),
             AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
+                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
+                new ElementRule(TaxonList.class),
+                new ElementRule(Parameter.class),
+            }, true),
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
@@ -158,6 +168,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new XMLSyntaxRule[] {
                             new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
                     },true),
+            new ElementRule(FrequencyModel.class, true),
         };
     }
 }

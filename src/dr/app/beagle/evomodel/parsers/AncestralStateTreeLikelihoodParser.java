@@ -2,16 +2,22 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
+import dr.inference.model.Parameter;
 import dr.xml.*;
+
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Marc Suchard
@@ -34,6 +40,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                                                         BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
         SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
@@ -54,6 +61,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 branchRateModel,
                 useAmbiguities,
                 scalingScheme,
+                partialsRestrictions,
                 dataType,
                 tag,
                 substModel,
@@ -72,6 +80,11 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class),
             AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
+                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
+                new ElementRule(TaxonList.class),
+                new ElementRule(Parameter.class),
+            }, true),
+            new ElementRule(FrequencyModel.class, true),
         };
     }
 }

@@ -19,9 +19,7 @@ import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.markovjumps.MarkovJumpsType;
 
-import java.util.List;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 
 /**
  * @author Marc Suchard
@@ -39,7 +37,9 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                            BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
-                                           PartialsRescalingScheme scalingScheme, DataType dataType, String stateTag,
+                                           PartialsRescalingScheme scalingScheme,
+                                           Map<Set<String>, Parameter> partialsRestrictions,
+                                           DataType dataType, String stateTag,
                                            SubstitutionModel substModel,
                                            boolean useMAP,
                                            boolean returnMarginalLikelihood,
@@ -48,7 +48,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            int nSimulants) {
 
         super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
-                scalingScheme, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
+                scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;
         this.reportUnconditionedColumns = reportUnconditionedColumns;

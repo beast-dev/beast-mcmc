@@ -1,5 +1,7 @@
 package dr.app.beagle.evomodel.parsers;
 
+//import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
@@ -8,11 +10,14 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
+import dr.evolution.tree.Tree;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.CompoundLikelihood;
+import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.*;
@@ -30,9 +35,10 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE_LIKELIHOOD = TreeLikelihood.TREE_LIKELIHOOD;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
-    public static final String DEVICE_NUMBER = "deviceNumber";
-    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
+//    public static final String DEVICE_NUMBER = "deviceNumber";
+//    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
     public static final String SCALING_SCHEME = "scalingScheme";
+    public static final String PARTIALS_RESTRICTION = "partialsRestriction";
 
     public String getParserName() {
         return TREE_LIKELIHOOD;
@@ -42,6 +48,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                                                      BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
                                                      BranchRateModel branchRateModel,
                                                      boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                     Map<Set<String>, Parameter> partialsRestrictions,
                                                      XMLObject xo) throws XMLParseException {
            return new BeagleTreeLikelihood(
                     patternList,
@@ -50,7 +57,8 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
-                    scalingScheme
+                    scalingScheme,
+                    partialsRestrictions
             );
     }
 
@@ -71,9 +79,13 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 
+        FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+
         BranchSiteModel branchSiteModel = new HomogenousBranchSiteModel(
                 siteRateModel.getSubstitutionModel(),
-                siteRateModel.getSubstitutionModel().getFrequencyModel());
+                (rootFreqModel != null ? rootFreqModel :
+                siteRateModel.getSubstitutionModel().getFrequencyModel())
+        );
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -86,6 +98,21 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
+        Map<Set<String>, Parameter> partialsRestrictions = null;
+
+        if (xo.hasChildNamed(PARTIALS_RESTRICTION)) {
+            XMLObject cxo = (XMLObject) xo.getChild(PARTIALS_RESTRICTION);
+            TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
+            Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
+            try {
+                Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
+            } catch (Tree.MissingTaxonException e) {
+                throw new XMLParseException("Unable to parse taxon list: " + e.getMessage());
+            }
+            throw new XMLParseException("Restricting internal nodes is not yet implemented.  Contact Marc");
+
+        }
+
         if (instanceCount == 1) {
             return createTreeLikelihood(
                     patternList,
@@ -95,6 +122,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     branchRateModel,
                     useAmbiguities,
                     scalingScheme,
+                    partialsRestrictions,
                     xo
             );
         }
@@ -111,6 +139,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     branchRateModel,
                     useAmbiguities,
                     scalingScheme,
+                    partialsRestrictions,
                     xo);
             treeLikelihood.setId(xo.getId() + "_" + instanceCount);
             likelihoods.add(treeLikelihood);
@@ -139,6 +168,11 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchRateModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
+            new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
+                new ElementRule(TaxonList.class),
+                new ElementRule(Parameter.class),
+            }, true),
+            new ElementRule(FrequencyModel.class, true),
         };
     }
 }

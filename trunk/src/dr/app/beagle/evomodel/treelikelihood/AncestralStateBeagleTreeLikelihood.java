@@ -12,10 +12,13 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.inference.model.Model;
 import beagle.Beagle;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -40,13 +43,15 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
+                                              Map<Set<String>, Parameter> partialsRestrictions,
                                               final DataType dataType,
                                               final String tag,
                                               SubstitutionModel substModel,
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme);
+        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+              partialsRestrictions);
 
         if (useAmbiguities) {
             Logger.getLogger("dr.app.beagle.evomodel").info("Ancestral reconstruction using ambiguities is currently "+
@@ -224,17 +229,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return sb.toString();
     }
 
-    protected void getPartials(int number, double[] partials) {
-        int cumulativeBufferIndex = Beagle.NONE;
-//        if (useScaleFactors) {
-//            cumulativeBufferIndex = scaleBufferIndex;
-//            beagle.resetScaleFactors(cumulativeBufferIndex);
-//            beagle.accumulateScaleFactors(cumulativeScaleBuffers[number],cumulativeScaleBuffers[number].length,cumulativeBufferIndex);
-//        }
-        /* No need to rescale partials */
-        beagle.getPartials(partialBufferHelper.getOffsetIndex(number),cumulativeBufferIndex,partials);
-    }
-
     protected void getMatrix(int matrixNum, double[] probabilities) {
         beagle.getTransitionMatrix(matrixBufferHelper.getOffsetIndex(matrixNum),probabilities);
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
@@ -352,7 +346,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
                     System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
 
-                    double[] frequencies = substitutionModel.getFrequencyModel().getFrequencies();
+                    double[] frequencies = branchSiteModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
                     for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] *= frequencies[i];
                     }

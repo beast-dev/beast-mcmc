@@ -24,11 +24,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by IntelliJ IDEA.
- * User: msuchard
- * Date: Jul 12, 2010
- * Time: 7:32:56 AM
- * To change this template use File | Settings | File Templates.
+ * @author Marc A. Suchard
  */
 public class SequenceLikelihoodTest extends TraceCorrelationAssert {
     protected NumberFormat format = NumberFormat.getNumberInstance(Locale.ENGLISH);
@@ -57,6 +53,10 @@ public class SequenceLikelihoodTest extends TraceCorrelationAssert {
                 recursivelyAddCharacter(sequences, newPattern, dataType);
             }
         }
+    }
+
+    public void testNull() {
+        // Do nothing; completely abstract JUnitTests are not allowed?
     }
 
     private String[] createAllUniquePatterns(int nTaxa, DataType dataType) {

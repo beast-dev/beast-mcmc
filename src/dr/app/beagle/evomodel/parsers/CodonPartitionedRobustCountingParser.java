@@ -115,6 +115,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(USE_UNIFORMIZATION, true),
             AttributeRule.newBooleanRule(INCLUDE_EXTERNAL, true),
             AttributeRule.newBooleanRule(INCLUDE_INTERNAL, true),
+            AttributeRule.newStringRule(LABELING),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

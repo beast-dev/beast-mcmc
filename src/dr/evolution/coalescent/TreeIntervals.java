@@ -379,14 +379,50 @@ public class TreeIntervals implements IntervalList {
 		throw new IllegalArgumentException("Can't set interval's units");
 	}
 
+    /**
+     * Extra functionality to store and restore values for caching
+     */
+    public void storeState() {
+        if (intervalsKnown) {
+
+            if (storedIntervals == null) {
+                storedIntervals = new double[intervals.length];
+            }
+            if (storedLineageCounts == null) {
+                storedLineageCounts = new int[storedLineageCounts.length];
+            }
+            System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
+            System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
+        }
+
+        storedIntervalsKnown = intervalsKnown;
+    }
+
+    public void restoreState() {
+        intervalsKnown = storedIntervalsKnown;
+
+        if (intervalsKnown) {
+            double[] tmp1 = storedIntervals;
+            storedIntervals = intervals;
+            intervals = tmp1;
+
+            int[] tmp2 = storedLineageCounts;
+            storedLineageCounts = lineageCounts;
+            lineageCounts = tmp2;
+        }
+    }
+
+
 	/** The tree. */
 	private Tree tree = null;
 
 	/** The widths of the intervals. */
 	private double[] intervals;
+    private double[] storedIntervals;
 
 	/** The number of uncoalesced lineages within a particular interval. */
 	private int[] lineageCounts;
+    private int[] storedLineageCounts;
 
     /**
      * The lineages in each interval (stored by node ref).
@@ -399,6 +435,7 @@ public class TreeIntervals implements IntervalList {
 
      /** are the intervals known? */
 	private boolean intervalsKnown = false;
+    private boolean storedIntervalsKnown;
 	
 	private double multifurcationLimit = -1.0;
 }

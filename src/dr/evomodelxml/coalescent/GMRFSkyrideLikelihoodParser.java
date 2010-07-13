@@ -1,11 +1,15 @@
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.tree.Tree;
+import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
 
 /**
@@ -43,13 +47,25 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(POPULATION_TREE);
-        TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
+
+        List<Tree> treeList = new ArrayList<Tree>();
+        for (int i = 0; i < cxo.getChildCount(); i++) {
+            Object testObject = cxo.getChild(i);
+            if (testObject instanceof Tree) {
+                treeList.add((TreeModel) testObject);
+            }
+        }
+
+//        TreeModel treeModel = (TreeModel) cxo.getChild(TreeModel.class);
 
         cxo = xo.getChild(GROUP_SIZES);
-        Parameter groupParameter = (Parameter) cxo.getChild(Parameter.class);
-
-        if (popParameter.getDimension() != groupParameter.getDimension())
-            throw new XMLParseException("Population and group size parameters must have the same length");
+        Parameter groupParameter = null;
+        if (cxo != null) {
+            groupParameter = (Parameter) cxo.getChild(Parameter.class);
+        
+            if (popParameter.getDimension() != groupParameter.getDimension())
+                throw new XMLParseException("Population and group size parameters must have the same length");
+        }
 
         Parameter lambda;
         if (xo.getChild(LAMBDA_PARAMETER) != null) {
@@ -86,14 +102,28 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Design matrix column dimension must equal the regression coefficient length.");
         }
 
-        if (xo.hasAttribute(RANDOMIZE_TREE) && xo.getBooleanAttribute(RANDOMIZE_TREE))
-            GMRFSkyrideLikelihood.checkTree(treeModel);
+        if (xo.getAttribute(RANDOMIZE_TREE, false)) {
+            for (Tree tree : treeList) {
+                if (tree instanceof TreeModel) {
+                    GMRFSkyrideLikelihood.checkTree((TreeModel) tree);
+                } else {
+                    throw new XMLParseException("Can not randomize a fixed tree");
+                }
+            }
+        }
 
         Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
-        return new GMRFSkyrideLikelihood(treeModel, popParameter, groupParameter, precParameter,
+        if (treeList.size() > 1) {
+
+            return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
                 lambda, beta, dMatrix, timeAwareSmoothing);
+
+        } else {
+            return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
+                lambda, beta, dMatrix, timeAwareSmoothing);
+        }
     }
 
     //************************************************************************
@@ -120,11 +150,11 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
-                    new ElementRule(TreeModel.class)
+                    new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
             }),
             new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }),
+            }, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
     };

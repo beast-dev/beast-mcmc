@@ -65,7 +65,7 @@ public class OldAbstractCoalescentLikelihood extends AbstractModelLikelihood imp
     //
     //    public static final String POPULATION_TREE = "populationTree";
     //    public static final String POPULATION_FACTOR = "factor";
-    private MultiLociTreeSet treesSet = null;
+    protected MultiLociTreeSet treesSet = null;
 
     public enum CoalescentEventType {
         /**

@@ -27,7 +27,6 @@ package dr.evomodel.branchratemodel;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
@@ -66,7 +65,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
     }
 
     public void addExternalBranchClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
-        BitSet tips = getTipsForTaxa(treeModel, taxonList);
+        BitSet tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, ClockType.EXTERNAL);
         for (int i = tips.nextSetBit(0); i >= 0; i = tips.nextSetBit(i + 1)) {
             localTipClocks.put(i, clock);
@@ -75,50 +74,16 @@ public class LocalClockModel extends AbstractBranchRateModel {
     }
 
     public void addCladeClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate, boolean includeStem, boolean excludeClade) throws Tree.MissingTaxonException {
-        BitSet tips = getTipsForTaxa(treeModel, taxonList);
+        BitSet tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
         LocalClock clock = new LocalClock(rateParameter, isRelativeRate, tips, includeStem, excludeClade);
         localCladeClocks.put(tips, clock);
         addVariable(rateParameter);
     }
 
     public void addBackboneClock(TaxonList taxonList, Parameter rateParameter, boolean isRelativeRate) throws Tree.MissingTaxonException {
-        BitSet tips = getTipsForTaxa(treeModel, taxonList);
+        BitSet tips = Tree.Utils.getTipsForTaxa(treeModel, taxonList);
         backBoneClock = new LocalClock(rateParameter, isRelativeRate, tips, ClockType.BACKBONE);
         addVariable(rateParameter);
-    }
-
-
-    /**
-     * @param tree the tree
-     * @param taxa the taxa
-     * @return A bitset with the node numbers set.
-     * @throws dr.evolution.tree.Tree.MissingTaxonException
-     *          if a taxon in taxa is not contained in the tree
-     */
-    private BitSet getTipsForTaxa(Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
-
-        BitSet tips = new BitSet();
-
-        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-
-            Taxon taxon = taxa.getTaxon(i);
-            boolean found = false;
-            for (int j = 0; j < tree.getExternalNodeCount(); j++) {
-
-                NodeRef node = tree.getExternalNode(j);
-                if (tree.getNodeTaxon(node).getId().equals(taxon.getId())) {
-                    tips.set(node.getNumber());
-                    found = true;
-                    break;
-                }
-            }
-
-            if (!found) {
-                throw new Tree.MissingTaxonException(taxon);
-            }
-        }
-
-        return tips;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -175,7 +140,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
     }
 
     private void setupRateParameters(Tree tree, NodeRef node, BitSet tips) {
-        LocalClock clock = null;
+        LocalClock clock;
 
         if (tree.isExternal(node)) {
             tips.set(node.getNumber());

@@ -198,7 +198,7 @@ public class DnDsPerSiteAnalysis {
 //    }
 
 
-    private double[] smooth(double[] in) {
+    public static double[] smooth(double[] in) {
         final int length = in.length;
         double[] out = new double[length];
         double[] gammaStats = getNegBin(in);
@@ -208,7 +208,7 @@ public class DnDsPerSiteAnalysis {
         return out;
     }
 
-    private double[] getNegBin(double[] array) {
+    private static double[] getNegBin(double[] array) {
 //        double[] returnArray = new double[2];
         double mean = DiscreteStatistics.mean(array);
         double variance = DiscreteStatistics.variance(array, mean);

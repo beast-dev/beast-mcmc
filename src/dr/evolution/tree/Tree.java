@@ -441,6 +441,39 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return matches;
         }
 
+        /**
+         * @param tree the tree
+         * @param taxa the taxa
+         * @return A bitset with the node numbers set.
+         * @throws dr.evolution.tree.Tree.MissingTaxonException
+         *          if a taxon in taxa is not contained in the tree
+         */
+        public static BitSet getTipsForTaxa(Tree tree, TaxonList taxa) throws Tree.MissingTaxonException {
+
+            BitSet tips = new BitSet();
+
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+
+                Taxon taxon = taxa.getTaxon(i);
+                boolean found = false;
+                for (int j = 0; j < tree.getExternalNodeCount(); j++) {
+
+                    NodeRef node = tree.getExternalNode(j);
+                    if (tree.getNodeTaxon(node).getId().equals(taxon.getId())) {
+                        tips.set(node.getNumber());
+                        found = true;
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    throw new Tree.MissingTaxonException(taxon);
+                }
+            }
+
+            return tips;
+        }
+
         public static boolean isMonophyletic(Tree tree, Set<String> leafNodes) {
             return isMonophyletic(tree, leafNodes, Collections.<String>emptySet());
         }

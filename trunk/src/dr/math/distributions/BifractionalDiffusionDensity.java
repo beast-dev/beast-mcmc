@@ -16,6 +16,9 @@ import cern.jet.stat.Gamma;
  *         Also see:
  *         F. Mainardi and G. Pagnini (2003) The Wright functions as solutions of the time-fractional diffusion equation.
  *         Applied Mathematics and Computation, 141, pages?
+ *
+ *
+ * Need to read: http://www.hindawi.com/journals/ijde/2010/104505.html and http://www1.tfh-berlin.de/~luchko/papers/Luchko_111.pdf
  */
 
 public class BifractionalDiffusionDensity implements Distribution {

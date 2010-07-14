@@ -1,11 +1,9 @@
 package test.dr.evomodel;
 
-import dr.evolution.io.NewickImporter;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.BackboneNodeFilter;
-import junit.framework.TestCase;
 import test.dr.inference.trace.TraceCorrelationAssert;
 
 /**
@@ -20,18 +18,16 @@ public class FilteredTreeTraitTest extends TraceCorrelationAssert {
     public void setUp() throws Exception {
         super.setUp();
 
-        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:2.0);");
-        tree = (FlexibleTree) importer.importTree(null);
+//        NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:2.0);");
+//        tree = importer.importTree(null);
+        createAlignment(PRIMATES_TAXON_SEQUENCE, Nucleotides.INSTANCE);
+        tree = createPrimateTreeModel();
 
-    }
+        treeTraitProvider = new TreeTraitProvider.Helper();
 
-    public void testMe() {
-
-        TreeTraitProvider.Helper treeTraitProvider = new TreeTraitProvider.Helper();
-
-        TreeTrait dummy = new TreeTrait.D() {
+        dummyTrait = new TreeTrait.D() {
             public String getTraitName() {
-                return "test";
+                return "one";
             }
 
             public Intent getIntent() {
@@ -42,29 +38,64 @@ public class FilteredTreeTraitTest extends TraceCorrelationAssert {
                 return 1.0;
             }
         };
+    }
 
-        treeTraitProvider.addTrait(new TreeTrait.FilteredD(dummy, new TreeNodeFilter.ExternalInternalNodeFilter(false, true)));
+    public void testInternalFilter() {
 
-        Taxa taxonList = new Taxa();
+        TreeTrait filteredTrait = new TreeTrait.FilteredD(dummyTrait,
+                new TreeNodeFilter.ExternalInternalNodeFilter(false, true));
+        treeTraitProvider.addTrait(filteredTrait);
+        TreeTrait sumTrait = new TreeTrait.SumOverTreeD(filteredTrait);
+        treeTraitProvider.addTrait(sumTrait);
 
-//        treeTraitProvider.addTrait(new TreeTrait.FilteredD("new_name", dummy,
-//                new BackboneNodeFilter("name", tree, )));
-
-        System.out.println("Hello there!");
+        System.out.println("InternalFilter Test");
 
         StringBuffer buffer = new StringBuffer();
 
-                        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                        null, // format
-                        null, // branchRates,
-                                new TreeTraitProvider[] { treeTraitProvider },
-                                null, //idMap, 
-                                buffer);
+        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+                null, // format
+                null, // branchRates,
+                new TreeTraitProvider[]{treeTraitProvider},
+                null, //idMap,
+                buffer);
 
         System.out.println("Tree: " + buffer.toString());
+        double traitValue = (Double) sumTrait.getTrait(tree, null);
+        System.out.println("Trait: " + traitValue);
+        assertEquals(traitValue, 5.0);
     }
 
+    public void testBackboneFilter() {
+
+        Taxa taxonList = new Taxa();
+        taxonList.addTaxon(taxa[0]);
+        taxonList.addTaxon(taxa[1]);
+
+        TreeTrait backboneFilter = new TreeTrait.FilteredD(dummyTrait,
+                new BackboneNodeFilter("backbone", tree, taxonList, true, true));
+        treeTraitProvider.addTrait(backboneFilter);
+        TreeTrait sumTrait = new TreeTrait.SumOverTreeD(backboneFilter);
+        treeTraitProvider.addTrait(sumTrait);
+
+        System.out.println("BackboneFilter Test");
+
+        StringBuffer buffer = new StringBuffer();
+
+        Tree.Utils.newick(tree, tree.getRoot(), false, Tree.BranchLengthType.LENGTHS_AS_TIME,
+                null, // format
+                null, // branchRates,
+                new TreeTraitProvider[]{treeTraitProvider},
+                null, //idMap,
+                buffer);
+
+        System.out.println("Tree: " + buffer.toString());
+        double traitValue = (Double) sumTrait.getTrait(tree, null);
+        System.out.println("Trait: " + traitValue);
+        assertEquals(traitValue, 7.0); // TODO Get real result
+    }
 
     Tree tree;
+    TreeTrait dummyTrait;
+    TreeTraitProvider.Helper treeTraitProvider;
 
 }

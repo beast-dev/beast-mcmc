@@ -44,9 +44,9 @@ public class BifractionalDiffusionModelParser extends AbstractXMLObjectParser {
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(ALPHA_PARAMETER,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                 new ElementRule(BETA_PARAMETER,
-                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
         };
 
         public Class getReturnType() {

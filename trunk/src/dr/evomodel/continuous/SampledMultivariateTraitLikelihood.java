@@ -117,11 +117,15 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
                 System.err.println("time = " + time);
                 System.err.println("parent trait value = " + new Vector(parentTrait));
                 System.err.println("child trait value = " + new Vector(childTrait));
-                System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
-                if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
-                    CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
-                    System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
-                    System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
+
+                double[][] precisionMatrix = diffusionModel.getPrecisionmatrix();
+                if (precisionMatrix != null) {
+                    System.err.println("precision matrix = " + new Matrix(diffusionModel.getPrecisionmatrix()));
+                    if (diffusionModel.getPrecisionParameter() instanceof CompoundSymmetricMatrix) {
+                        CompoundSymmetricMatrix csMatrix = (CompoundSymmetricMatrix) diffusionModel.getPrecisionParameter();
+                        System.err.println("diagonals = " + new Vector(csMatrix.getDiagonals()));
+                        System.err.println("off diagonal = " + csMatrix.getOffDiagonal());
+                    }
                 }
             }
         }
@@ -132,7 +136,7 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
 
         if (new Double(logL).isNaN()) {
             System.err.println("logL = " + logL);
-            System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
+//            System.err.println(new Matrix(diffusionModel.getPrecisionmatrix()));
             System.exit(-1);
         }
 

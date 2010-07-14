@@ -52,7 +52,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     public double[][] getPrecisionmatrix() {
-        return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
+        if (diffusionPrecisionMatrixParameter != null) {
+            return diffusionPrecisionMatrixParameter.getParameterAsMatrix();
+        }
+        return null;
     }
 
     public double getDeterminantPrecisionMatrix() { return determinatePrecisionMatrix; }
@@ -133,7 +136,10 @@ public class MultivariateDiffusionModel extends AbstractModel implements TreeAtt
     }
 
     public String[] getAttributeForTree(Tree tree) {
-        return new String[] {diffusionPrecisionMatrixParameter.toSymmetricString()};
+        if (diffusionPrecisionMatrixParameter != null) {
+            return new String[] {diffusionPrecisionMatrixParameter.toSymmetricString()};
+        }
+        return new String[] { "null" };
     }
 
     // **************************************************************

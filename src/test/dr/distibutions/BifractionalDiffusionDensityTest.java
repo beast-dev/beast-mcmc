@@ -34,8 +34,8 @@ public class BifractionalDiffusionDensityTest extends TestCase {
             for (double x = xLower; x <= xUpper; x += xIncr) {
                 double pdf = density.pdf(x, v);
                 double pdfCheck = NormalDistribution.pdf(x, 0, Math.sqrt(v));
-//                System.err.println("A = "+pdf+ "(x = "+x+", v = "+v+")");
-//                System.err.println("B = "+pdfCheck);
+                System.err.println("A = "+pdf+ "(x = "+x+", v = "+v+")");
+                System.err.println("B = "+pdfCheck);
                 assertEquals(pdf, pdfCheck, 1E-10);
             }
         }

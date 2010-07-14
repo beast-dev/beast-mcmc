@@ -244,8 +244,10 @@ public class BeastGenerator extends Generator {
             if (trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_LOCATIONS.toString())) { // locations
                 writer.writeComment(TraitData.getPhylogeographicDescription());
             }
-            generalTraitGenerator.writeGeneralDataType(trait, writer);
-            writer.writeText("");
+            if (!trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_SPECIES.toString())) {
+                generalTraitGenerator.writeGeneralDataType(trait, writer);
+                writer.writeText("");
+            }
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
@@ -328,7 +330,9 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Ancestral Tree Likelihood ++++++++++++++++++
         for (TraitData trait : options.getTraitsList()) {
-            generalTraitGenerator.writeAncestralTreeLikelihood(trait, writer);
+            if (!trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_SPECIES.toString())) {
+                generalTraitGenerator.writeAncestralTreeLikelihood(trait, writer);
+            }
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++

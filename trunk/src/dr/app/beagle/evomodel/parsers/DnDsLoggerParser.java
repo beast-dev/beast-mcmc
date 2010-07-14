@@ -13,14 +13,7 @@ import dr.xml.*;
 public class DnDsLoggerParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "dNdSLogger";
-
-//    public static final String COND_S = "condS";
-//    public static final String COND_N = "condN";
-//    public static final String UNCOND_S = "uncondS";
-//    public static final String UNCOND_N = "uncondN";
-//
-//    public static final String SYN = "synonymous";
-//    public static final String NON_SYN = "nonsynonymous";
+    public static final String USE_SMOOTHING = "smooth";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -51,7 +44,9 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
 
         // Use AttributeRules for options here
 
-        return new DnDsLogger(xo.getId(), tree, foundTraits);
+        boolean useSmoothing = xo.getAttribute(USE_SMOOTHING, true);
+
+        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing);
     }
 
     @Override
@@ -62,6 +57,7 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
     private static XMLSyntaxRule[] rules = {
             new ElementRule(CodonPartitionedRobustCounting.class, 2, 2),
             new ElementRule(Tree.class),
+            AttributeRule.newBooleanRule(USE_SMOOTHING, true),
     };
 
     @Override

@@ -7,7 +7,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.trace.DnDsPerSiteAnalysis;
+import dr.math.EmpiricalBayesPoissonSmoother;
 
 /**
  * @author Philippe Lemey
@@ -15,11 +15,12 @@ import dr.inference.trace.DnDsPerSiteAnalysis;
  */
 public class DnDsLogger implements Loggable {
 
-    public DnDsLogger(String name, Tree tree, TreeTrait[] traits) {
+    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing) {
         this.tree = tree;
         this.traits = traits;
         numberSites = getNumberSites();
         this.name = name;
+        this.useSmoothing = useSmoothing;
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
@@ -72,7 +73,10 @@ public class DnDsLogger implements Loggable {
         }
 
         for (int i = 0; i < NUM_TRAITS; i++) {
-            cachedValues[i] = DnDsPerSiteAnalysis.smooth((double[]) traits[i].getTrait(tree, tree.getRoot()));
+            cachedValues[i] = (double[]) traits[i].getTrait(tree, tree.getRoot());
+            if (useSmoothing) {
+                cachedValues[i] = EmpiricalBayesPoissonSmoother.smooth((double[]) traits[i].getTrait(tree, tree.getRoot()));
+            }
         }
     }
 
@@ -80,6 +84,7 @@ public class DnDsLogger implements Loggable {
     private final Tree tree;
     private final int numberSites;
     private final String name;
+    private final boolean useSmoothing;
 
     private final static int NUM_TRAITS = 4;
     private final static int CS = 0;

@@ -670,7 +670,7 @@ public class BeautiOptions extends ModelOptions {
                     dataPartitions.size() +
                     (dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (starBEASTOptions.isSpeciesAnalysis()) {
+            if (starBEASTOptions.getSpeciesList() != null && starBEASTOptions.isSpeciesAnalysis()) {
                 int num = starBEASTOptions.getSpeciesList().size();
                 message += ", " + num + " species"; // species is both singular and plural
             }

@@ -220,7 +220,8 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel.setOptions(options);
         mcmcPanel.setOptions(options);
 
-        setStatusMessage();
+        GUIValidate();
+        setStatusMessage();               
     }
 
     /**
@@ -410,6 +411,8 @@ public class BeautiFrame extends DocumentFrame {
                 importTraitsFromFile(file);
 
                 traitsPanel.fireTraitsChanged();
+
+                setAllOptions();
             }
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
@@ -431,12 +434,6 @@ public class BeautiFrame extends DocumentFrame {
                     "Unable to read file",
                     JOptionPane.ERROR_MESSAGE);
         }
-
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
-            setupSpeciesAnalysis();
-        }
-
-        setAllOptions();
     }
 
     private void importMultiTraits(final File file) throws IOException {
@@ -592,9 +589,7 @@ public class BeautiFrame extends DocumentFrame {
 		}
     }
 
-    public void setStatusMessage() {
-        GUIValidate();
-
+    public void setStatusMessage() {        
         statusLabel.setText(options.statusMessage());
     }
 

@@ -240,6 +240,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTraitsChanged() {
+
+        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
+            frame.setupSpeciesAnalysis();
+        } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+            frame.updateDiscreteTraitAnalysis();
+        }
+
         traitsTableModel.fireTableDataChanged();
         options.updatePartitionAllLinks();
         frame.setDirty();
@@ -319,12 +326,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 // The createTraitDialog will have already checked if the
             // user is overwriting an existing trait
             addTrait(newTrait);
-
-            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-                frame.setupSpeciesAnalysis();
-            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                frame.updateDiscreteTraitAnalysis();
-            }
 
             fireTraitsChanged();
 //            traitsTableModel.fireTableDataChanged();

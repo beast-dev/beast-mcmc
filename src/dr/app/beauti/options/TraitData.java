@@ -77,7 +77,7 @@ public class TraitData extends PartitionData {
 
 
     public boolean isSpecifiedTraitAnalysis(String traitName) {
-        return  getName() == traitName;
+        return  getName().equalsIgnoreCase(traitName);
     }
 
     public List<String> getStatesListOfTrait(Taxa taxonList) {

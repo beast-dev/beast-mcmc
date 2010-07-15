@@ -202,6 +202,8 @@ public class BeautiFrame extends DocumentFrame {
      * set all the options for all panels
      */
     public void setAllOptions() {
+        GUIValidate();
+        
         dataPanel.setOptions(options);
         tipDatesPanel.setOptions(options);
         traitsPanel.setOptions(options);
@@ -220,8 +222,7 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel.setOptions(options);
         mcmcPanel.setOptions(options);
 
-        GUIValidate();
-        setStatusMessage();               
+        setStatusMessage();
     }
 
     /**
@@ -395,7 +396,7 @@ public class BeautiFrame extends DocumentFrame {
         return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
                 + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
                 + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[] { "Yes", "No" }, "No");
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
     }
 
     public final void doImportTraits() {
@@ -408,36 +409,30 @@ public class BeautiFrame extends DocumentFrame {
             if (dialog.getFile() != null) {
                 final File file = new File(dialog.getDirectory(), dialog.getFile());
 
-                importTraitsFromFile(file);
-
-                traitsPanel.fireTraitsChanged();
-
-                setAllOptions();
+                try {
+                    if (!importMultiTraits(file)) return;
+                } catch (FileNotFoundException fnfe) {
+                    JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
+                            "Unable to open file",
+                            JOptionPane.ERROR_MESSAGE);
+                } catch (IOException ioe) {
+                    JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
+                            "Unable to read file",
+                            JOptionPane.ERROR_MESSAGE);
+                }
             }
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+            return;
         }
 
+        traitsPanel.fireTraitsChanged();
+        setAllOptions();
     }
 
-    protected void importTraitsFromFile(final File file) {
-
-        try {
-            importMultiTraits(file);
-        } catch (FileNotFoundException fnfe) {
-            JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
-                    "Unable to open file",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (IOException ioe) {
-            JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
-                    "Unable to read file",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void importMultiTraits(final File file) throws IOException {
-
+    private boolean importMultiTraits(final File file) throws IOException {
+        boolean loadFile = true;
         try {
             Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
@@ -466,6 +461,11 @@ public class BeautiFrame extends DocumentFrame {
                     traitsPanel.addTrait(newTrait);
 
                 for (final String[] v : e.getValue()) {
+                    if (v[0].equalsIgnoreCase(v[1])) {
+                        throw new Arguments.ArgumentException("Trait (" + traitName + ") value (" + v[1]
+                                + ")\n cannot be same as taxon name (" + v[0] + ") !");
+                    }
+
                     final int index = options.taxonList.getTaxonIndex(v[0]);
                     if (index >= 0) {
                         // if the taxon isn't in the list then ignore it.
@@ -477,9 +477,14 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
         } catch (Arguments.ArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Error in loading traits file: " + e.getMessage(),
+            JOptionPane.showMessageDialog(this, "Error in loading traits file " + file.getName() + " :\n" + e.getMessage(),
                     "Error Loading file", JOptionPane.ERROR_MESSAGE);
+            traitsPanel.traitsTable.selectAll();
+            traitsPanel.removeTrait();
+            return false;
         }
+
+        return loadFile;
     }
 
     public boolean validateTraitName(String traitName) {
@@ -555,53 +560,53 @@ public class BeautiFrame extends DocumentFrame {
 //            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
 //        }
 
-    	treesPanel.updatePriorPanelForSpeciesAnalysis();
+        treesPanel.updatePriorPanelForSpeciesAnalysis();
 
         setStatusMessage();
     }
 
     public void updateDiscreteTraitAnalysis() {
-    	setStatusMessage();
+        setStatusMessage();
     }
 
     public void setupEBSP() {
-    	dataPanel.selectAll();
-    	dataPanel.unlinkAll();
+        dataPanel.selectAll();
+        dataPanel.unlinkAll();
 
-    	setAllOptions();
+        setAllOptions();
     }
 
     public PartitionTreePrior getCurrentPartitionTreePrior() {
-    	return treesPanel.currentTreeModel.getPartitionTreePrior();
+        return treesPanel.currentTreeModel.getPartitionTreePrior();
     }
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
-    	//TODO: wait for new implementation in BEAST
-	    if (DataPanel.ALLOW_UNLINKED_TREES) {
-			treesPanel.setCheckedTipDate(isChecked);
-		} else {
-			if (isChecked) {
-				oldTreesPanel.treePriorCombo.removeItem(TreePriorType.YULE);
-				oldTreesPanel.treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-			} else {
-				oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
-			}
-		}
+        //TODO: wait for new implementation in BEAST
+        if (DataPanel.ALLOW_UNLINKED_TREES) {
+            treesPanel.setCheckedTipDate(isChecked);
+        } else {
+            if (isChecked) {
+                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.YULE);
+                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+            } else {
+                oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
+            }
+        }
     }
 
-    public void setStatusMessage() {        
+    public void setStatusMessage() {
         statusLabel.setText(options.statusMessage());
     }
 
-     public void GUIValidate() {
-         if (options.starBEASTOptions.isSpeciesAnalysis()) {
-             if (options.starBEASTOptions.getSpeciesList() == null) {
-                 JOptionPane.showMessageDialog(this, "Species value is empty."
-                         + "\nPlease go to Traits panel, either Import Traits,"
-                         + "\nor Guess trait values", "*BEAST Error Message",
-                    JOptionPane.ERROR_MESSAGE);
-             }
-         }
+    public void GUIValidate() {
+        if (options.starBEASTOptions.isSpeciesAnalysis()) {
+            if (options.starBEASTOptions.getSpeciesList() == null) {
+                JOptionPane.showMessageDialog(this, "Species value is empty."
+                        + "\nPlease go to Traits panel, either Import Traits,"
+                        + "\nor Guess trait values", "*BEAST Error Message",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     public final boolean doGenerate() {
@@ -616,39 +621,39 @@ public class BeautiFrame extends DocumentFrame {
 
         DefaultPriorDialog defaultPriorDialog = new DefaultPriorDialog(this);
         if (!defaultPriorDialog.showDialog(options)) {
-           return false;
+            return false;
         }
 
         // offer stem as default
         exportChooser.setSelectedFile(new File(options.fileNameStem + ".xml"));
 
         final int returnVal = exportChooser.showSaveDialog(this);
-        if( returnVal == JFileChooser.APPROVE_OPTION ) {
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
             File file = exportChooser.getSelectedFile();
 
             int n = JOptionPane.YES_OPTION;
 
             if (file.exists()) {
-            	n = JOptionPane.showConfirmDialog(this, file.getName(),
-            		     "Overwrite the existing file?", JOptionPane.YES_NO_OPTION);
+                n = JOptionPane.showConfirmDialog(this, file.getName(),
+                        "Overwrite the existing file?", JOptionPane.YES_NO_OPTION);
             }
 
             if (n == JOptionPane.YES_OPTION) {
-	            try {
-	                getAllOptions();
+                try {
+                    getAllOptions();
                     generator.generateXML(file);
 
-	            } catch (IOException ioe) {
-	                JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
-	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
-	                return false;
-	            } catch (Exception e) {
-	                JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
-	                        "Unable to generate file", JOptionPane.ERROR_MESSAGE);
-	                return false;
-	            }
+                } catch (IOException ioe) {
+                    JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
+                            "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
+                            "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
             } else {
-            	doGenerate();
+                doGenerate();
             }
         }
 

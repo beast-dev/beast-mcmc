@@ -340,7 +340,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
     }
 
-    private void removeTrait() {
+    public void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
         options.removeTrait(traitsTable.getValueAt(selRow, 0).toString());
 

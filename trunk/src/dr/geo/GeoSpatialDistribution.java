@@ -50,6 +50,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String NODE_LABEL = "taxon";
     public static final String KML_FILE = "kmlFileName";
     public static final String INSIDE = "inside";
+    public static final String UNION = "union";
 
     public static final int dimPoint = 2; // Assumes 2D points only
 
@@ -57,10 +58,11 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         this.region = region;
     }
 
-    public GeoSpatialDistribution(String label, Polygon2D region, boolean inside) {
+    public GeoSpatialDistribution(String label, Polygon2D region, boolean inside, boolean union) {
         this.label = label;
         this.region = region;
         this.outside = !inside;
+        this.union = union;
     }
 
     public double logPdf(double[] x) {
@@ -87,6 +89,14 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         return label;
     }
 
+    public boolean getOutside() {
+        return outside;
+    }
+
+    public boolean getUnion() {
+        return union;
+    }
+
     public Polygon2D getRegion() {
         return region;
     }
@@ -94,6 +104,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     protected Polygon2D region;
     protected String label = null;
     private boolean outside = false;
+    private boolean union = false;
 
 
     public static XMLObjectParser FLAT_GEOSPATIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
@@ -107,6 +118,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
             String label = xo.getAttribute(NODE_LABEL, "");
 
             boolean inside = xo.getAttribute(INSIDE, true);
+            boolean union = xo.getAttribute(UNION, false);
             boolean readFromFile = false;
 
             List<GeoSpatialDistribution> geoSpatialDistributions = new ArrayList<GeoSpatialDistribution>();
@@ -116,7 +128,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 String kmlFileName = xo.getStringAttribute(KML_FILE);
                 List<Polygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
                 for (Polygon2D region : polygons)
-                    geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside));
+                    geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside, union));
                 readFromFile = true;
             } else {
 
@@ -124,7 +136,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                     if (xo.getChild(i) instanceof Polygon2D) {
                         Polygon2D region = (Polygon2D) xo.getChild(i);
                         geoSpatialDistributions.add(
-                                new GeoSpatialDistribution(label, region, inside)
+                                new GeoSpatialDistribution(label, region, inside, union)
                         );
                     }
                 }
@@ -157,7 +169,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                                 "\tParameter: " + parameter.getId() + "\n" +
                                 "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
 
-                return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions);
+                return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions, !union);
             }
 
             throw new XMLParseException("Multiple separate parameters and multiple regions not yet implemented");
@@ -171,6 +183,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(NODE_LABEL, true),
                 AttributeRule.newBooleanRule(INSIDE, true),
+                AttributeRule.newBooleanRule(UNION, true),
                 new XORRule(
                         AttributeRule.newStringRule(KML_FILE),
                         new ElementRule(Polygon2D.class, 1, Integer.MAX_VALUE)

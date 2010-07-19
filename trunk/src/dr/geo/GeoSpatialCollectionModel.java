@@ -42,7 +42,9 @@ import java.util.List;
 
 public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
-    public GeoSpatialCollectionModel(String name, Parameter points, List<GeoSpatialDistribution> geoSpatialDistributions) {
+    public GeoSpatialCollectionModel(String name, Parameter points,
+                                     List<GeoSpatialDistribution> geoSpatialDistributions,
+                                     boolean isIntersection) {
 
         super(name);
         this.points = points;
@@ -56,6 +58,8 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
         likelihoodKnown = false;
 
         addVariable(points);
+
+        this.isIntersection = isIntersection;
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -115,9 +119,22 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
                 double pointLogLikelihood = 0;
                 for (GeoSpatialDistribution distribution : geoSpatialDistributions) {
-                    pointLogLikelihood += distribution.logPdf(point);
-                    if (pointLogLikelihood == Double.NEGATIVE_INFINITY)
-                        break; // No need to finish
+                    //if we consider the union of polygons and the point must be inside, than it is good enough that the point is in one polygon
+                    //so we look for a polygon that does not yield -inf
+                    if (!isIntersection && !distribution.getOutside()) {
+                        final double logPdf = distribution.logPdf(point);
+                        if (logPdf != Double.NEGATIVE_INFINITY) {
+                            pointLogLikelihood = logPdf;
+                            break;
+                        } else {
+                            pointLogLikelihood = logPdf;
+                        }
+                    } else {
+                        // Below is for intersections (or unions of complements)
+                        pointLogLikelihood += distribution.logPdf(point);
+                        if (pointLogLikelihood == Double.NEGATIVE_INFINITY)
+                            break; // No need to finish
+                    }
                 }
                 cachedPointLogLikelihood[i] = pointLogLikelihood;
                 validPointLogLikelihood[i] = true;
@@ -155,4 +172,6 @@ public class GeoSpatialCollectionModel extends AbstractModelLikelihood {
 
     private boolean[] validPointLogLikelihood;
     private boolean[] storedValidPointLogLikelihood;
+
+    private final boolean isIntersection;
 }

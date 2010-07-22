@@ -31,11 +31,13 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        Parameter ratesParameter;
-        Parameter indicatorParameter;
+        Parameter ratesParameter = null;
+        FrequencyModel freqModel = null;
 
-        XMLObject cxo = xo.getChild(FREQUENCIES);
-        FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        if (xo.hasChildNamed(FREQUENCIES)) {
+            XMLObject cxo = xo.getChild(FREQUENCIES);
+            freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+        }
 
         DataType dataType = DataTypeUtils.getDataType(xo);
 
@@ -60,53 +62,73 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
         }
 
-        cxo = xo.getChild(RATES);
+        XMLObject cxo = xo.getChild(RATES);
         ratesParameter = (Parameter) cxo.getChild(Parameter.class);
 
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
-        int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
 
-        if (xo.hasChildNamed(INDICATOR)) {// has indicator
-            if (ratesParameter.getDimension() != rateCount) {
-                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount)
-                        + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
+        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO);
+
+        int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
+        int reversibleRateCount = (nonReversibleRateCount / 2);
+
+        boolean isNonReversible = ratesParameter.getDimension() == nonReversibleRateCount;
+        boolean hasIndicator = xo.hasChildNamed(INDICATOR);
+
+        if (!hasRelativeRates) {
+            Parameter indicatorParameter = null;
+
+            if (ratesParameter.getDimension() != reversibleRateCount && ratesParameter.getDimension() != nonReversibleRateCount) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (reversibleRateCount)
+                        + " dimensions for reversible model or " + nonReversibleRateCount + " dimensions for non-reversible. " +
+                        "However parameter dimension is " + ratesParameter.getDimension());
             }
 
-            if (cxo.hasAttribute(RELATIVE_TO)) {
-                throw new XMLParseException(RELATIVE_TO + " attribute is not allowed in SVS general substitution model.");
-            }
+            if (hasIndicator) { // this is using BSSVS
+                cxo = xo.getChild(INDICATOR);
+                indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
 
-            cxo = xo.getChild(INDICATOR);
-            indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
-                throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
-
-
-            if (xo.hasChildNamed(ROOT_FREQ)) {
-                cxo = xo.getChild(ROOT_FREQ);
-                FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-                if (dataType != rootFreq.getDataType()) {
-                    throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+                if (indicatorParameter.getDimension() != ratesParameter.getDimension()) {
+                    throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
                 }
-                Logger.getLogger("dr.evomodel").info("  SVS Irreversible Substitution Model is applied with "
-                        + INDICATOR + " " + indicatorParameter.getParameterName() + " and " + ROOT_FREQ + " " + rootFreq.getId());
-                return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
-
             }
-            Logger.getLogger("dr.evomodel").info("  SVS General Substitution Model is applied with "
-                    + INDICATOR + " " + indicatorParameter.getParameterName());
-            return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
 
-        } else if (xo.getName().equalsIgnoreCase(GENERAL_SUBSTITUTION_MODEL)) {// no indicator
-            if (!cxo.hasAttribute(RELATIVE_TO)) {
-                throw new XMLParseException("The index of the implicit rate (value 1.0) that all other rates are relative to."
-                        + " In DNA this is usually G<->T (6)");
+            if (isNonReversible) {
+                if (xo.hasChildNamed(ROOT_FREQ)) {
+                    cxo = xo.getChild(ROOT_FREQ);
+                    FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
+
+                    if (dataType != rootFreq.getDataType()) {
+                        throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
+                    }
+
+                    Logger.getLogger("dr.evomodel").info("  Using BSSVS Irreversible Substitution Model");
+                    return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
+
+                } else {
+                    throw new XMLParseException("Non-reversible model missing " + ROOT_FREQ + " element");
+                }
+            } else {
+                Logger.getLogger("dr.evomodel").info("  Using BSSVS General Substitution Model");
+                return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
             }
-            int relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
-            if (relativeTo < 0) {
+
+
+        } else {
+            // if we have relativeTo attribute then we use the old GeneralSubstitutionModel
+
+            if (ratesParameter.getDimension() != reversibleRateCount - 1) {
+                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (reversibleRateCount - 1)
+                        + " dimensions. However parameter dimension is " + ratesParameter.getDimension());
+            }
+
+            int relativeTo = 0;
+            if (hasRelativeRates) {
+                relativeTo = cxo.getIntegerAttribute(RELATIVE_TO) - 1;
+            }
+
+            if (relativeTo < 0 || relativeTo >= reversibleRateCount) {
                 throw new XMLParseException(RELATIVE_TO + " must be 1 or greater");
             } else {
                 int t = relativeTo;
@@ -124,20 +146,14 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             }
 
             if (ratesParameter == null) {
-                if (rateCount == 1) {
+                if (reversibleRateCount == 1) {
                     // simplest model for binary traits...
                 } else {
                     throw new XMLParseException("No rates parameter found in " + getParserName());
                 }
-            } else if (ratesParameter.getDimension() != (rateCount - 1)) {
-                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have ("
-                        + rateCount  + "- 1) dimensions because one of dimensions is fixed.");
             }
 
             return new GeneralSubstitutionModel(dataType, freqModel, ratesParameter, relativeTo);
-        } else {
-            throw new XMLParseException(SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL
-                    + " needs " + INDICATOR + " !");
         }
     }
 
@@ -162,8 +178,9 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
                             DataType.getRegisteredDataTypeNames(), false),
                     new ElementRule(DataType.class)
-            , true),
+                    , true),
             new ElementRule(FREQUENCIES, FrequencyModel.class),
+            new ElementRule(ROOT_FREQ, FrequencyModel.class, "Root frequencies for non-reversible models", true),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)}

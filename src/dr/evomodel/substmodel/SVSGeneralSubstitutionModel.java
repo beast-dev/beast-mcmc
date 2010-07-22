@@ -24,11 +24,15 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
 
 
     public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
-                                       Parameter indicator) { //, int relativeTo) {
+                                       Parameter indicator) {
         super(dataType, freqModel, parameter, 1);
 
-        rateIndicator = indicator;
-        addVariable(rateIndicator);
+        if (indicator != null) {
+            rateIndicator = indicator;
+            addVariable(rateIndicator);
+        } else {
+            rateIndicator = new Parameter.Default(parameter.getDimension(), 1.0);
+        }
     }
 
     protected SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel, int relativeTo) {

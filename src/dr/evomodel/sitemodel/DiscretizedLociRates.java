@@ -24,8 +24,9 @@ public class DiscretizedLociRates extends AbstractModel {
             CompoundParameter lociRates,
             Parameter rateCategoryParameter,
             ParametricDistributionModel model,
-            double normalizeLociRateTo,
             boolean normalize,
+            double normalizeLociRateTo,
+
             int categoryCount) {
         super("DiscretizedLociRatesModel");
         this.lociRates = lociRates;
@@ -82,7 +83,7 @@ public class DiscretizedLociRates extends AbstractModel {
         for(int i = 0; i < lociCount; i++){
             sumRates += rates[(int)rateCategoryParameter.getParameterValue(i)];
         }
-        scaleFactor = normalizeRateTo/(sumRates/categoryCount);
+        scaleFactor = normalizeRateTo/(sumRates/lociCount);
     }
 
 }

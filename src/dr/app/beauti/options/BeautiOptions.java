@@ -562,6 +562,7 @@ public class BeautiOptions extends ModelOptions {
     }
 
     // +++++++++++++ Traits +++++++++++++
+
     public List<PartitionData> getNonTraitsDataList() {
         List<PartitionData> nonTraitsData = new ArrayList<PartitionData>();
         for (PartitionData partition : dataPartitions) {
@@ -666,9 +667,14 @@ public class BeautiOptions extends ModelOptions {
     public String statusMessage() {
         String message = "";
         if (hasData()) {
-            message += "Data: " + taxonList.getTaxonCount() + " taxa, " +
-                    dataPartitions.size() +
-                    (dataPartitions.size() > 1 ? " partitions" : " partition");
+            
+            if (allowDifferentTaxa) {
+                message += "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
+            } else {
+                message += "Data: " + taxonList.getTaxonCount() + " taxa";
+            }
+
+            message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
 
             if (starBEASTOptions.getSpeciesList() != null && starBEASTOptions.isSpeciesAnalysis()) {
                 int num = starBEASTOptions.getSpeciesList().size();
@@ -678,10 +684,6 @@ public class BeautiOptions extends ModelOptions {
             if (userTrees.size() > 0) {
                 message += ", " + userTrees.size() +
                         (userTrees.size() > 1 ? " trees" : " tree");
-            }
-
-            if (allowDifferentTaxa) {
-                message += " in total";
             }
 
             if (starBEASTOptions.isSpeciesAnalysis()) {

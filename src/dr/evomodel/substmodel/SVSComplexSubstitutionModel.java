@@ -12,11 +12,11 @@ import dr.math.matrixAlgebra.Vector;
 public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
     public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                       Parameter parameter, Parameter indicators, boolean considerConnectedness) {
+                                       Parameter parameter, Parameter indicators /*, boolean considerConnectedness*/) {
         super(name, dataType, rootFreqModel, parameter);
         this.indicators = indicators;
         addVariable(indicators);
-        this.considerConnectedness = considerConnectedness;
+//        this.considerConnectedness = considerConnectedness;
     }
 
     protected double[] getRates() {
@@ -112,7 +112,7 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
         SVSComplexSubstitutionModel substModel = new SVSComplexSubstitutionModel("test",
                   dataType,
                   freqModel,
-                  ratesP,indicatorsP,true);
+                  ratesP,indicatorsP);
         double logL = substModel.getLogLikelihood();
         System.out.println("Prior = "+logL);
         if( !Double.isInfinite(logL) ) {
@@ -124,6 +124,6 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
     }
     
     private Parameter indicators;
-    private boolean considerConnectedness = false;
+//    private boolean considerConnectedness = false;
 
 }

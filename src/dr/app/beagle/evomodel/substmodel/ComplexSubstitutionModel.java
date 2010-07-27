@@ -112,18 +112,17 @@ public class ComplexSubstitutionModel extends GeneralSubstitutionModel implement
             rates[i] = ratesParameter.getParameterValue(i);
     }
 
-    //    protected void setupQMatrix(double[] rates, double[][] matrix) {
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
         int i, j, k = 0;
         for (i = 0; i < stateCount; i++) {
             for (j = i + 1; j < stateCount; j++) {
-                matrix[i][j] = rates[k++];
+                matrix[i][j] = rates[k++] * pi[j];
             }
         }
         // Copy lower triangle in column-order form (transposed)
         for (j = 0; j < stateCount; j++) {
             for (i = j + 1; i < stateCount; i++) {
-                matrix[i][j] = rates[k++];
+                matrix[i][j] = rates[k++] * pi[j];
             }
         }
     }

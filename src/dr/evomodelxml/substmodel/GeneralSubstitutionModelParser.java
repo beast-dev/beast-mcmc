@@ -19,14 +19,16 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE_TO = "relativeTo";
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
-    public static final String ROOT_FREQ = "rootFrequencies";
+
+    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
+    public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
 
     public String getParserName() {
         return GENERAL_SUBSTITUTION_MODEL;
     }
 
     public String[] getParserNames() {
-        return new String[]{getParserName(), SVSGeneralSubstitutionModel.SVS_GENERAL_SUBSTITUTION_MODEL};
+        return new String[]{getParserName(), SVS_GENERAL_SUBSTITUTION_MODEL, SVS_COMPLEX_SUBSTITUTION_MODEL};
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -95,20 +97,8 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             }
 
             if (isNonReversible) {
-                if (xo.hasChildNamed(ROOT_FREQ)) {
-                    cxo = xo.getChild(ROOT_FREQ);
-                    FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-                    if (dataType != rootFreq.getDataType()) {
-                        throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
-                    }
-
-                    Logger.getLogger("dr.evomodel").info("  Using BSSVS Irreversible Substitution Model");
-                    return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
-
-                } else {
-                    throw new XMLParseException("Non-reversible model missing " + ROOT_FREQ + " element");
-                }
+                Logger.getLogger("dr.evomodel").info("  Using BSSVS Complex Substitution Model");
+                return new SVSComplexSubstitutionModel(getParserName(), dataType, freqModel, ratesParameter, indicatorParameter);
             } else {
                 Logger.getLogger("dr.evomodel").info("  Using BSSVS General Substitution Model");
                 return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
@@ -180,7 +170,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
                     new ElementRule(DataType.class)
                     , true),
             new ElementRule(FREQUENCIES, FrequencyModel.class),
-            new ElementRule(ROOT_FREQ, FrequencyModel.class, "Root frequencies for non-reversible models", true),
             new ElementRule(RATES,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)}
@@ -188,10 +177,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             new ElementRule(INDICATOR,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
-                    }, true),
-            new ElementRule(ROOT_FREQ,
-                    new XMLSyntaxRule[]{
-                            new ElementRule(FrequencyModel.class)
-                    }, 0, 1)
+                    }, true)
     };
 }

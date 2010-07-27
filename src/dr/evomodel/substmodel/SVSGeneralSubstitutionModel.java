@@ -18,10 +18,6 @@ import dr.xml.*;
 public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implements Likelihood,
         BayesianStochasticSearchVariableSelection {
 
-    public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
-//    public static final String INDICATOR = "rateIndicator";
-//    public static final String ROOT_FREQ = "rootFrequencies";
-
 
     public SVSGeneralSubstitutionModel(DataType dataType, FrequencyModel freqModel, Parameter parameter,
                                        Parameter indicator) {
@@ -138,126 +134,6 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
             }
         }
     }
-
-/*    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-
-        public String[] getParserNames() {
-            return new String[] {
-                    getParserName(),"beast_"+getParserName()
-            };
-        }
-
-        public String getParserName() {
-            return SVS_GENERAL_SUBSTITUTION_MODEL;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            Parameter ratesParameter;
-            Parameter indicatorParameter;
-
-            XMLObject cxo = xo.getChild(GeneralSubstitutionModelParser.FREQUENCIES);
-            FrequencyModel freqModel = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-            DataType dataType = null;
-
-            if (xo.hasAttribute(DataType.DATA_TYPE)) {
-                String dataTypeStr = xo.getStringAttribute(DataType.DATA_TYPE);
-                if (dataTypeStr.equals(Nucleotides.DESCRIPTION)) {
-                    dataType = Nucleotides.INSTANCE;
-                } else if (dataTypeStr.equals(AminoAcids.DESCRIPTION)) {
-                    dataType = AminoAcids.INSTANCE;
-                } else if (dataTypeStr.equals(Codons.DESCRIPTION)) {
-                    dataType = Codons.UNIVERSAL;
-                } else if (dataTypeStr.equals(TwoStates.DESCRIPTION)) {
-                    dataType = TwoStates.INSTANCE;
-                }
-            }
-
-            if (dataType == null) dataType = (DataType) xo.getChild(DataType.class);
-
-            cxo = xo.getChild(GeneralSubstitutionModelParser.RATES);
-
-            ratesParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            if (dataType != freqModel.getDataType()) {
-                throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its frequencyModel.");
-            }
-
-            int rateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount()) / 2;
-
-            if (ratesParameter == null) {
-
-                if (rateCount == 1) {
-                    // simplest model for binary traits...
-                } else {
-                    throw new XMLParseException("No rates parameter found in " + getParserName());
-                }
-            } else if (ratesParameter.getDimension() != rateCount) {
-                throw new XMLParseException("Rates parameter in " + getParserName() + " element should have " + (rateCount) + " dimensions.  However parameter dimension is " + ratesParameter.getDimension());
-            }
-
-            cxo = xo.getChild(INDICATOR);
-
-            indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
-
-            if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
-                throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
-
-            if (xo.hasChildNamed(ROOT_FREQ)) {
-
-                cxo = xo.getChild(ROOT_FREQ);
-                FrequencyModel rootFreq = (FrequencyModel) cxo.getChild(FrequencyModel.class);
-
-                if (dataType != rootFreq.getDataType()) {
-                    throw new XMLParseException("Data type of " + getParserName() + " element does not match that of its rootFrequencyModel.");
-                }
-
-                return new SVSIrreversibleSubstitutionModel(dataType, freqModel, rootFreq, ratesParameter, indicatorParameter);
-
-            }
-
-            return new SVSGeneralSubstitutionModel(dataType, freqModel, ratesParameter, indicatorParameter);
-        }
-
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
-
-        public String getParserDescription() {
-            return "A general reversible model of sequence substitution for any data type with stochastic variable selection.";
-        }
-
-        public Class getReturnType() {
-            return SVSGeneralSubstitutionModel.class;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new XORRule(
-                    new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
-                            DataType.getRegisteredDataTypeNames(), false),
-                    new ElementRule(DataType.class)
-                ),
-                new ElementRule(GeneralSubstitutionModelParser.FREQUENCIES, FrequencyModel.class),
-                new ElementRule(GeneralSubstitutionModelParser.RATES,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)}
-                ),
-                new ElementRule(INDICATOR,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(Parameter.class)
-                        }),//SVS needs indicator
-                new ElementRule(ROOT_FREQ,
-                        new XMLSyntaxRule[]{
-                                new ElementRule(FrequencyModel.class)
-                        }, 0, 1)
-        };
-
-    }; */
     
     @Override
     public boolean isUsed() {

@@ -190,7 +190,7 @@ public class TimeIrreversibleTest extends TestCase {
         SVSComplexSubstitutionModel substModel = new SVSComplexSubstitutionModel("SVS Complex Substitution Model Test",
                 dataType,
                 freqModel,
-                ratesP, indicatorsP, true);
+                ratesP, indicatorsP);
 
         double logL = substModel.getLogLikelihood();
 

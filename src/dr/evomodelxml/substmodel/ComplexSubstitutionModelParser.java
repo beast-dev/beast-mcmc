@@ -82,7 +82,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
 
             boolean randomize = xo.getAttribute(RANDOMIZE, false);
             boolean connected = xo.getAttribute(CONNECTED, false);
-            model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators, connected);
+            model = new SVSComplexSubstitutionModel(xo.getId(), dataType, rootFreq, ratesParameter, indicators);
             if (randomize) {
                 BayesianStochasticSearchVariableSelection.Utils.randomize(indicators,
                         dataType.getStateCount(), false);

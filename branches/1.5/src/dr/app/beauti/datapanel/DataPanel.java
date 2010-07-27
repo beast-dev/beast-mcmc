@@ -73,7 +73,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //    UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
 //    LinkAllAction linkAllAction = new LinkAllAction();
 
-    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
+//    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
 
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
@@ -203,13 +203,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
-        allowDifferentTaxaCheck.setSelected(false);
-        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-            }
-        });
-        controlPanel1.add(allowDifferentTaxaCheck);
+//        allowDifferentTaxaCheck.setSelected(false);
+//        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent ev) {
+//                options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+//            }
+//        });
+//        controlPanel1.add(allowDifferentTaxaCheck);
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
@@ -252,12 +252,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     }
 
-    private void uncheckAllowDifferentTaxa() {
-        allowDifferentTaxaCheck.setSelected(false);
-        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-
-        frame.setDirty();
-    }
+//    private void uncheckAllowDifferentTaxa() {
+//        allowDifferentTaxaCheck.setSelected(false);
+//        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+//
+//        frame.setDirty();
+//    }
 
     private void fireDataChanged() {
         options.updateLinksBetweenPDPCMPSMPTMPTPP();
@@ -311,7 +311,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
-        allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
+//        allowDifferentTaxaCheck.setSelected(options.allowDifferentTaxa);
 
         modelsChanged();
 
@@ -319,7 +319,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
+//        options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
     }
 
     public JComponent getExportableComponent() {
@@ -336,9 +336,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
 
-        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-            uncheckAllowDifferentTaxa();
-        }
+//        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
+//            uncheckAllowDifferentTaxa();
+//        }
 
         if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa

@@ -260,8 +260,13 @@ public class RateIndicatorBF {
         folderElement.addContent(folderNameElement);
 
         double[] minMax = new double[2];
-        minMax[0] = supportedRateIndicators[supportedRateIndicators.length - 1];
-        minMax[1] = supportedRateIndicators[0];
+        if (supportedRateIndicators.length > 0) {
+            minMax[0] = supportedRateIndicators[supportedRateIndicators.length - 1];
+            minMax[1] = supportedRateIndicators[0];
+        } else {
+            minMax[0] = minMax[1] = 0;
+            System.err.println("No rate indicators above the specified cut-off!");
+        }
 
         for (int p = 0; p < supportedRateIndicators.length; p++){
             addRateAndStyle(supportedRateIndicators[p], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, branchWidthConstant, branchWidthMultiplier, minMax, altitudeFactor, divider, lowerLinkColor, upperLinkColor, folderElement, documentElement);
@@ -449,9 +454,9 @@ public class RateIndicatorBF {
 
     public void outputTextFile(String outFileName) {
 
-        double[] minMax = new double[2];
-        minMax[0] = supportedRateIndicators[0];
-        minMax[1] = supportedRateIndicators[supportedRateIndicators.length - 1];
+//        double[] minMax = new double[2];
+//        minMax[0] = supportedRateIndicators[0];
+//        minMax[1] = supportedRateIndicators[supportedRateIndicators.length - 1];
 
         try {
             PrintWriter outFile;

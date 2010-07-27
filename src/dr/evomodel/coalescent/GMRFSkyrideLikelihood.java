@@ -221,9 +221,13 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
         return logFieldLikelihood;
     }
 
-	public double[] getSufficientStatistics() {
-		return sufficientStatistics;
-	}
+    public double[] getSufficientStatistics() {
+	return sufficientStatistics;
+    }
+
+    public String toString() {
+        return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
+    }
 
     protected void setupSufficientStatistics() {
 	    int index = 0;

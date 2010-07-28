@@ -1,23 +1,16 @@
 package dr.math.distributions;
 
 import dr.stats.DiscreteStatistics;
-import dr.math.GammaFunction;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.StringTokenizer;
 
 
 /**
  * @author Jennifer Tom
- * Based on S. X. Chen. Probability density function estimation using gamma kernels.
- * Annals of the Institute of Statistical Mathematics, 52(3):471Ð480, 2000.
- * Use to create KDE for positive valued functions
- * Assumes limits are (0, inf)
- * Must provide with a bandwidth, or defaults to Scott's Rule
- * Univariate distribution only
+ *         Based on S. X. Chen. Probability density function estimation using gamma kernels.
+ *         Annals of the Institute of Statistical Mathematics, 52(3):471-480, 2000.
+ *         Use to create KDE for positive valued functions
+ *         Assumes limits are (0, inf)
+ *         Must provide with a bandwidth, or defaults to Scott's Rule
+ *         Univariate distribution only
  */
 public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
@@ -26,52 +19,50 @@ public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
         this(sample, null);
     }
 
-     public GammaKDEDistribution(double[] sample, Double bandWidth) {
-         super(sample, 0.0, Double.POSITIVE_INFINITY, bandWidth);
+    public GammaKDEDistribution(double[] sample, Double bandWidth) {
+        super(sample, 0.0, Double.POSITIVE_INFINITY, bandWidth);
 
-     }
+    }
 
-     protected void processBounds(Double lowerBound, Double upperBound) {
-         if (lowerBound > DiscreteStatistics.min(sample)) {
-             throw new RuntimeException("Sample min out of bounds.  Gamma kernel for use with positive data only: "+DiscreteStatistics.min(sample));
-         }
-         else if (upperBound < DiscreteStatistics.max(sample)) {
-             throw new RuntimeException("Sample max out of bounds" +DiscreteStatistics.max(sample));
-         }
-         this.lowerBound = lowerBound;
-         this.upperBound = upperBound;
+    protected void processBounds(Double lowerBound, Double upperBound) {
+        if (lowerBound > DiscreteStatistics.min(sample)) {
+            throw new RuntimeException("Sample min out of bounds.  Gamma kernel for use with positive data only: " + DiscreteStatistics.min(sample));
+        } else if (upperBound < DiscreteStatistics.max(sample)) {
+            throw new RuntimeException("Sample max out of bounds" + DiscreteStatistics.max(sample));
+        }
+        this.lowerBound = lowerBound;
+        this.upperBound = upperBound;
 
-     }
+    }
 
-     protected void setBandWidth(Double bandWidth) {
-         if (bandWidth == null) {
-       double sigma = DiscreteStatistics.stdev(sample);
-       //Scott's rule  (Hardle, 2004, Nonparametric and Semiparameteric Models)
-       this.bandWidth =  sigma*Math.pow(N, -0.2);
-     }   else
-       this.bandWidth = bandWidth;
+    protected void setBandWidth(Double bandWidth) {
+        if (bandWidth == null) {
+            double sigma = DiscreteStatistics.stdev(sample);
+            //Scott's rule  (Hardle, 2004, Nonparametric and Semiparameteric Models)
+            this.bandWidth = sigma * Math.pow(N, -0.2);
+        } else
+            this.bandWidth = bandWidth;
 
-     }
+    }
 
-     protected double evaluateKernel(double x) {
+    protected double evaluateKernel(double x) {
 
         double shape;
         double scale;
 
-        if (x >= 2*bandWidth) {
-            shape = x/bandWidth;
-        } else
-        {
-            shape = .25*Math.pow(x/bandWidth,2) + 1;
+        if (x >= 2 * bandWidth) {
+            shape = x / bandWidth;
+        } else {
+            shape = .25 * Math.pow(x / bandWidth, 2) + 1;
         }
         scale = bandWidth;
         double pdf = 0;
         for (int i = 0; i < N; i++) {
-             pdf +=
-        Math.pow(sample[i],shape-1)*Math.exp(-sample[i]/scale)/(Math.pow(scale,shape)*gamma(shape));
+            pdf +=
+                    Math.pow(sample[i], shape - 1) * Math.exp(-sample[i] / scale) / (Math.pow(scale, shape) * gamma(shape));
         }
-        return pdf/N;
-     }
+        return pdf / N;
+    }
 
     private double gamma(double value) {
         return cern.jet.stat.Gamma.gamma(value);

@@ -2,7 +2,9 @@ package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStateCovarion;
-import dr.evomodel.substmodel.*;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.SubstitutionModelUtils;
+import dr.evomodel.substmodel.TwoStateCovarionModel;
 import dr.inference.model.Parameter;
 import junit.framework.Test;
 import junit.framework.TestCase;
@@ -148,8 +150,8 @@ public class TwoStateCovarionModelTest extends TestCase {
 
 
     /*
-      The following Scilab code was written by Alexei Drummond
-      (adapted from Matlab code by David Bryant)
+      // The following Scilab code was written by Alexei Drummond
+      // (adapted from Matlab code by David Bryant)
 
       Q = [-1,1;1,-1];
 

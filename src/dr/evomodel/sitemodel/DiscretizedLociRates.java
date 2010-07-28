@@ -18,6 +18,7 @@ public class DiscretizedLociRates extends AbstractModel {
     private boolean normalize;
     private int categoryCount;
     private double scaleFactor;
+    private boolean completeSetup;
 
 
     public DiscretizedLociRates(
@@ -41,6 +42,7 @@ public class DiscretizedLociRates extends AbstractModel {
         this.normalize = normalize;
         this.categoryCount = categoryCount;
         rates = new double[categoryCount];
+        completeSetup = true;
         setupRates();
 
 
@@ -50,14 +52,18 @@ public class DiscretizedLociRates extends AbstractModel {
     }
 
     private void setupRates(){
-        double categoryIntervalSize = 1.0/categoryCount;
-        for(int i = 0; i < categoryCount; i++){
-            rates[i]= distrModel.quantile((i+0.5)*categoryIntervalSize);
-        }
+        if(completeSetup){
 
+            double categoryIntervalSize = 1.0/categoryCount;
+            for(int i = 0; i < categoryCount; i++){
+                rates[i]= distrModel.quantile((i+0.5)*categoryIntervalSize);
+            }
+        }
         if(normalize){
            computeFactor();
         }
+
+        completeSetup = false;
         int lociCount = rateCategoryParameter.getDimension();
         for(int i = 0; i < lociCount; i ++){
             lociRates.setParameterValue(i,rates[(int)rateCategoryParameter.getParameterValue(i)]*scaleFactor);
@@ -66,9 +72,15 @@ public class DiscretizedLociRates extends AbstractModel {
     }
     public void handleModelChangedEvent(Model model, Object object, int index) {
         if (model == distrModel) {
+            completeSetup = true;
             setupRates();
             fireModelChanged();
+        }else if (model == rateCategoryParameter) {
+            //if just the rate categories have changed the rates will be the same
+            setupRates();
+            fireModelChanged(null, index);
         }
+
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

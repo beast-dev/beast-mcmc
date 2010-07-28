@@ -55,15 +55,22 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     //boolean death rate is relative?
     boolean relativeDeath = false;
 
+    // boolean stating whether sampled individuals remain infectious, or become non-infectious
+    boolean sampledIndividualsRemainInfectious = false;
+
+    double finalTimeInterval = 0;
+
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
             Variable<Double> mu,
             Variable<Double> psi,
             Variable<Double> p,
             boolean relativeDeath,
+            boolean sampledIndividualsRemainInfectious,
+            double finalTimeInterval,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, sampledIndividualsRemainInfectious, finalTimeInterval, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -73,6 +80,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> psi,
             Variable<Double> p,
             boolean relativeDeath,
+            boolean sampledIndividualsRemainInfectious,
+            double finalTimeInterval,
             Type units) {
 
         super(modelName, units);
@@ -95,6 +104,14 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
         this.relativeDeath = relativeDeath;
 
+        this.finalTimeInterval = finalTimeInterval;
+
+        this.sampledIndividualsRemainInfectious = sampledIndividualsRemainInfectious;
+
+    }
+
+    public boolean analyzeSpeciesPhylogeny() {
+        return finalTimeInterval == 0 && sampledIndividualsRemainInfectious;
     }
 
 
@@ -102,46 +119,33 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
 
-        double expc1trc2 = Math.exp(-c1 * t) * ((1.0 - c2) / (1.0 + c2));
+        double expc1trc2 = Math.exp(-c1 * t) * (1.0 - c2);
 
-        return (b + d + psi + c1 * ((expc1trc2 - 1.0) / (expc1trc2 + 1.0))) / (2.0 * b);
+        return (b + d + psi + c1 * ((expc1trc2 - (1.0 + c2)) / (expc1trc2 + (1.0 + c2)))) / (2.0 * b);
     }
 
-    public static double p1(double b, double d, double p, double psi, double t) {
+    public static double q(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
-        double c3 = c3(b, d, p, psi);
-        double pc2 = 1.0 + c2;
-        double mc2 = 1.0 - c2;
-        double numerator = -4.0 * p * c1 * c1;
-        double denominator = c3 * (2.0 + Math.exp(-c1 * t) * (mc2 / pc2) + Math.exp(c1 * t) * (pc2 / mc2));
-        return numerator / denominator;
+        double res = 2 * (1 - c2 * c2) + Math.exp(-c1 * t) * (1 - c2) * (1 - c2) + Math.exp(c1 * t) * (1 + c2) * (1 + c2);
+        return res;
     }
 
     public double p0(double t) {
         return p0(birth(), death(), p(), psi(), t);
     }
 
-    public double p1(double t) {
-        return p1(birth(), death(), p(), psi(), t);
+    public double q(double t) {
+        return q(birth(), death(), p(), psi(), t);
     }
 
-    public double q(double s, double t) {
-        return psi() * p0(s) * p1(t) / p1(s);
+    private static double c1(double b, double d, double psi) {
+        return Math.abs(Math.sqrt(Math.pow(b - d - psi, 2.0) + 4.0 * b * psi));
     }
 
-    private static double c1(double b, double d, double ss) {
-        return Math.abs(Math.sqrt(Math.pow(b - d - ss, 2.0) + 4.0 * b * ss));
+    private static double c2(double b, double d, double p, double psi) {
+        return -(b - d - 2.0 * b * p - psi) / c1(b, d, psi);
     }
-
-    private static double c2(double b, double d, double p, double ss) {
-        return -(b - d - 2.0 * b * p - ss) / c1(b, d, ss);
-    }
-
-    private static double c3(double b, double d, double p, double ss) {
-        return 4.0 * b * (p * (d + b * (p - 1.0) + ss) - ss);
-    }
-
 
     private double c1() {
         return c1(birth(), death(), psi());
@@ -150,11 +154,6 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     private double c2() {
         return c2(birth(), death(), p(), psi());
     }
-
-    private double c3() {
-        return c3(birth(), death(), p(), psi());
-    }
-
 
     public double birth() {
         return lambda.getValue(0);
@@ -169,7 +168,9 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     }
 
     public double p() {
-        return p.getValue(0);
+
+        if (analyzeSpeciesPhylogeny()) return p.getValue(0);
+        return 0;
     }
 
     /**
@@ -181,51 +182,52 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     public final double calculateTreeLogLikelihood(Tree tree) {
 
         //System.out.println("calculating tree log likelihood");
+        double time = finalTimeInterval;
 
         // extant leaves
         int n = 0;
-
         // extinct leaves
         int m = 0;
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
-            if (tree.getNodeHeight(node) == 0.0) {
+            if (tree.getNodeHeight(node) + time == 0.0) {
                 n += 1;
             } else {
                 m += 1;
             }
         }
 
-        //System.out.println("m = " + m);
-        //System.out.println("n = " + n);
-
-        double x1 = tree.getNodeHeight(tree.getRoot());
+        double x1 = tree.getNodeHeight(tree.getRoot()) + time;
         double c1 = c1();
         double c2 = c2();
-        double c3 = c3();
         double b = birth();
+        double p = p();
 
+        double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
+        double logL = Math.log(1 / bottom);
 
-        double top = 4.0 * c1 * (c2 - 1.0) * p();
-        double bottom = c3 * (1.0 - c2 + (1.0 + c2) * Math.exp(c1 * x1));
-        //System.out.println("top=" + top);
-        //System.out.println("bottom=" + bottom);
-
-        double logL = Math.log(n * b * top / bottom);
-        //System.out.println("logL=" + logL);
+        if (n > 0) {
+            logL += n * Math.log(4 * p);
+        }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            double x = tree.getNodeHeight(tree.getInternalNode(i));
-
-            logL += Math.log(b * p1(x));
+            double x = tree.getNodeHeight(tree.getInternalNode(i)) + time;
+            logL += Math.log(b / q(x));
         }
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            double y = tree.getNodeHeight(tree.getExternalNode(i));
+            double y = tree.getNodeHeight(tree.getExternalNode(i)) + time;
 
             if (y > 0.0) {
-                logL += Math.log(psi() * p0(y) / p1(y));
+
+                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
+                    logL += Math.log(psi() * q(y)) * p0(y);
+                } else {
+
+                    logL += Math.log(psi() * q(y));
+                }
             }
         }
+
         return logL;
     }
 

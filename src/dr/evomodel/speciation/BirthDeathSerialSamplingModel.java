@@ -58,7 +58,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
     boolean sampledIndividualsRemainInfectious = false;
 
-    double finalTimeInterval = 0;
+    double finalTimeInterval = 0.0;
 
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
@@ -111,7 +111,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     }
 
     public boolean analyzeSpeciesPhylogeny() {
-        return finalTimeInterval == 0 && sampledIndividualsRemainInfectious;
+        return (finalTimeInterval == 0.0) && sampledIndividualsRemainInfectious;
     }
 
 

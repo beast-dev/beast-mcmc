@@ -27,6 +27,7 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
@@ -52,6 +53,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JScrollPane scrollPane = new JScrollPane();
     JTable priorTable = null;
     PriorTableModel priorTableModel = null;
+    JLabel messageLabel = new JLabel();
 
     public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
@@ -113,15 +115,18 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (isDefaultOnly) {
             scrollPane.setPreferredSize(new java.awt.Dimension(800, 600));
             panel.add(scrollPane, BorderLayout.CENTER);
-            panel.add(new JLabel("These priors listed above are still set to the default values " +
-                    "and need to be reviewed, especially their upper and lower limits."), BorderLayout.SOUTH);
+//            message += "These priors listed above are still set to the default values " +
+//                    "and need to be reviewed, especially their upper and lower limits.\n";
         } else {
             panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
             panel.add(scrollPane, BorderLayout.CENTER);
-            panel.add(new JLabel("* Marked parameters currently have a default prior distribution. " +
-                    "You should check that these are appropriate."), BorderLayout.SOUTH);
+//            message += "* Marked parameters currently have a default prior distribution. " +
+//                    "You should check that these are appropriate.\n";
         }
 
+        messageLabel.setText(getMessage());
+
+        panel.add(messageLabel, BorderLayout.SOUTH);
         add(panel, BorderLayout.CENTER);
     }
 
@@ -129,10 +134,36 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     	this.options = options;
     	
         parameters = options.selectParameters();
+
+        messageLabel.setText(getMessage());
+        
         priorTableModel.fireTableDataChanged();
 
         validate();
         repaint();
+    }
+
+    private String getMessage() {
+        String message = "<html>";
+        if (isDefaultOnly) {
+            message += "These priors listed above are still set to the default values " +
+                    "and need to be reviewed, especially their upper and lower limits.";
+        } else {
+            message += "* Marked parameters currently have a default prior distribution. " +
+                    "You should check that these are appropriate.";
+        }
+
+        for (Parameter para : parameters) {
+//            System.out.println(para.getBaseName());
+            if (para.getBaseName().endsWith("clock.rate") || para.getBaseName().endsWith(ClockType.UCED_MEAN)
+                    || para.getBaseName().endsWith(ClockType.UCLD_MEAN)) {
+               return message + "<br>" + "Warning: Clock rate has a *dangerous* default prior! " +
+                      "Please select a proper (perhaps diffuse) like a high variance lognormal or gamma distribution <br>" +
+                      "with a mean appropriate for the organism and units of time employed.";
+            }
+        }
+
+        return message + "</html>";
     }
 
     public void setParametersList(BeautiOptions options) {

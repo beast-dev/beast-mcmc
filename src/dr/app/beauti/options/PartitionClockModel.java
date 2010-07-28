@@ -95,19 +95,23 @@ public class PartitionClockModel extends PartitionModelOptions {
             scale = 1.0;
         }
 
-        createParameterClockRateGamma(this, "clock.rate", "substitution rate",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRateGamma(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterClockRateGamma(this, "clock.rate", "substitution rate",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterClockRateGamma(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
+//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
 
-//        createParameterClockRateUniform(this, "clock.rate", "substitution rate",
-//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-//        createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-//        createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-//                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateUniform(this, "clock.rate", "substitution rate. " +
+                "Please read warning message on the bottom",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. " +
+                "Please read warning message on the bottom",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+        createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. " +
+                "Please read warning message on the bottom",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+
         createParameterClockRateUniform(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
                 PriorScaleType.LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 

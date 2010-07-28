@@ -30,7 +30,12 @@ public class DiscretizedLociRates extends AbstractModel {
             int categoryCount) {
         super("DiscretizedLociRatesModel");
         this.lociRates = lociRates;
+
         this.rateCategoryParameter = rateCategoryParameter;
+        //Force the boundaries of rateCategoryParameter to match the category count
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(categoryCount - 1, 0, rateCategoryParameter.getDimension());
+        this.rateCategoryParameter.addBounds(bound);
+        
         this.distrModel = model;
         this.normalizeRateTo = normalizeLociRateTo;
         this.normalize = normalize;
@@ -40,7 +45,7 @@ public class DiscretizedLociRates extends AbstractModel {
 
 
         addModel(distrModel);
-        addVariable(rateCategoryParameter);
+        addVariable(this.rateCategoryParameter);
 
     }
 

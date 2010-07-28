@@ -110,11 +110,6 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
     }
 
-    public boolean analyzeSpeciesPhylogeny() {
-        return (finalTimeInterval == 0.0) && sampledIndividualsRemainInfectious;
-    }
-
-
     public static double p0(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
@@ -169,7 +164,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
     public double p() {
 
-        if (analyzeSpeciesPhylogeny()) return p.getValue(0);
+        if (finalTimeInterval == 0.0) return p.getValue(0);
         return 0;
     }
 

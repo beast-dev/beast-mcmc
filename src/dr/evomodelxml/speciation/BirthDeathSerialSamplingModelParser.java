@@ -45,6 +45,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
+    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectious";
+    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String TREE_TYPE = "type";
 
     public String getParserName() {
@@ -66,6 +68,9 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             mu = (Parameter) xo.getElementFirstChild(MU);
         }
 
+        boolean sampledRemainInfectious = xo.getAttribute(SAMPLED_REMAIN_INFECTIOUS, false);
+        double finalTimeInterval = xo.getAttribute(FINAL_TIME_INTERVAL, 0.0);
+
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
 
@@ -73,7 +78,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
         final String modelName = xo.getId();
 
-        return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath, units);
+        return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
+                sampledRemainInfectious, finalTimeInterval, units);
     }
 
     //************************************************************************
@@ -94,6 +100,9 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
+            AttributeRule.newBooleanRule(SAMPLED_REMAIN_INFECTIOUS, true),
+            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
+
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

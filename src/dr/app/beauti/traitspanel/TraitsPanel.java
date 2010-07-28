@@ -59,6 +59,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
      */
     private static final long serialVersionUID = 5283922195494563924L;
 
+    private static final int MINIMUM_TABLE_WIDTH = 140;
+
+    private static final String ADD_TRAITS_TOOLTIP =            "<html>Define a new trait for the current taxa</html>";
+    private static final String IMPORT_TRAITS_TOOLTIP =         "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
+                                                                "file. Taxa should be in the first column and the trait names<br>" +
+                                                                "in the first row</html>";
+    private static final String GUESS_TRAIT_VALUES_TOOLTIP =    "<html>This attempts to extract values for this trait that are<br>" +
+                                                                "encoded in the names of the taxa.</html>";
+    private static final String CLEAR_TRAIT_VALUES_TOOLTIP =    "<html>This clears all the values currently assigned to taxa for<br>" +
+                                                                "this trait.</html>";
+
     public final JTable traitsTable;
     private final TraitsTableModel traitsTableModel;
 
@@ -89,7 +100,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getTableHeader().setReorderingAllowed(false);
         traitsTable.getTableHeader().setResizingAllowed(false);
         traitsTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4))); 
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitData.TraitType.values());
@@ -148,32 +159,36 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         toolBar1.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 
-        JButton button = new JButton(new GuessTraitsAction());
+        JButton button;
+
+        // removed this button as there is already a "+" button at the bottom of the table.
+//        button = new JButton(addTraitAction);
+//        PanelUtils.setupComponent(button);
+//        button.setToolTipText(ADD_TRAITS_TOOLTIP);
+//        toolBar1.add(button);
+
+        button = new JButton(importTraitsAction);
         PanelUtils.setupComponent(button);
+        button.setToolTipText(IMPORT_TRAITS_TOOLTIP);
+        toolBar1.add(button);
+
+        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
+
+        button = new JButton(new GuessTraitsAction());
+        PanelUtils.setupComponent(button);
+        button.setToolTipText(GUESS_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
         button = new JButton(new ClearTraitAction());
         PanelUtils.setupComponent(button);
+        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
-//        toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTraitAction);
         actionPanel1.setRemoveAction(removeTraitAction);
-
+//        actionPanel1.getAddActionButton().setTooltipText(ADD_TRAITS_TOOLTIP);
+        
         removeTraitAction.setEnabled(false);
-
-        JToolBar toolBar2 = new JToolBar();
-        toolBar2.setFloatable(false);
-        toolBar2.setOpaque(false);
-        toolBar2.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-        button = new JButton(addTraitAction);
-        PanelUtils.setupComponent(button);
-        toolBar2.add(button);
-        button = new JButton(importTraitsAction);
-        PanelUtils.setupComponent(button);
-        toolBar2.add(button);
-        button = new JButton("Help");
-        toolBar2.add(button);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -181,9 +196,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
-        panel1.add(toolBar2, BorderLayout.NORTH);
         panel1.add(scrollPane1, BorderLayout.CENTER);
         panel1.add(controlPanel1, BorderLayout.SOUTH);
+        panel1.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
         JPanel panel2 = new JPanel(new BorderLayout(0, 0));
         panel2.setOpaque(false);
@@ -192,7 +207,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,
                 panel1, panel2);
-        splitPane.setDividerLocation(240);
+        splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
@@ -201,6 +216,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
+        add(toolBar1, BorderLayout.NORTH);
+
     }
 
     public void setOptions(BeautiOptions options) {
@@ -395,7 +412,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class AddTraitAction extends AbstractAction {        
+    public class AddTraitAction extends AbstractAction {
 
         public AddTraitAction() {
             super("Add trait");
@@ -452,13 +469,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 case 1:
                     options.getTraitsList().get(row).setTraitType((TraitData.TraitType) aValue);
                     break;
-            }            
+            }
         }
 
         public boolean isCellEditable(int row, int col) {
 //            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
             return !(options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())
-                  || options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
+                    || options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
         }
 
         public String getColumnName(int column) {

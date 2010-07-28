@@ -259,6 +259,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             setOpaque(true);
             setHorizontalAlignment(alignment);
             setMargin(insets);
+
+//            setFont(UIManager.getFont("SmallSystemFont"));
+//            putClientProperty("JComponent.sizeVariant", "small");
+//            putClientProperty("JButton.buttonType", "square");
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value,
@@ -266,10 +270,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             setEnabled(table.isEnabled());
             setFont(table.getFont());
             if (isSelected) {
-                setForeground(table.getSelectionForeground());
+                //setForeground(table.getSelectionForeground());
                 setBackground(table.getSelectionBackground());
             } else {
-                setForeground(table.getForeground());
+                //setForeground(table.getForeground());
                 setBackground(UIManager.getColor("Button.background"));
             }
             setText((value == null) ? "" : value.toString());
@@ -296,6 +300,9 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                     fireEditingStopped();
                 }
             });
+//            button.setFont(UIManager.getFont("SmallSystemFont"));
+//            button.putClientProperty("JComponent.sizeVariant", "small");
+//            button.putClientProperty("JButton.buttonType", "square");
         }
 
         public Component getTableCellEditorComponent(JTable table, Object value,
@@ -303,11 +310,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             button.setEnabled(table.isEnabled());
             button.setFont(table.getFont());
             if (isSelected) {
-                button.setForeground(table.getSelectionForeground());
+//                button.setForeground(table.getSelectionForeground());
                 button.setBackground(table.getSelectionBackground());
             } else {
-                button.setForeground(table.getForeground());
-                button.setBackground(table.getBackground());
+//                button.setForeground(table.getForeground());
+                button.setBackground(UIManager.getColor("Button.background"));
             }
             label = (value == null) ? "" : value.toString();
             button.setText(label);

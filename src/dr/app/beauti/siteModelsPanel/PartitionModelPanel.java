@@ -71,8 +71,8 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JComboBox codingCombo = new JComboBox(new String[]{
             "Off",
-            "2 partitions: codon positions (1 + 2), 3",
-            "3 partitions: codon positions 1, 2, 3"});
+            "2 partitions: positions (1 + 2), 3",
+            "3 partitions: positions 1, 2, 3"});
 
     private JCheckBox substUnlinkCheck = new JCheckBox("Unlink substitution rate parameters across codon positions");
     private JCheckBox heteroUnlinkCheck =

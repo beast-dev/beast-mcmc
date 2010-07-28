@@ -18,7 +18,7 @@ public class DiscretizedLociRatesParser extends AbstractXMLObjectParser {
     public final String NORMALIZE  = "normalize";
     public final String NORMALIZE_MEAN_LOCI_RATE_TO = "normalizeMeanLociRateTo";
     public final String RATE_CATEGORIES = "rateCategories";
-    public final String CATEGORY_COUNT = "catergoryCount";
+    public final String CATEGORY_COUNT = "categoryCount";
     public final String LOCI_RATES = "lociRates";
     public final String DISTRIBUTION = "distribution";
 

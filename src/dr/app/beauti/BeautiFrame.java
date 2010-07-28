@@ -32,6 +32,7 @@ import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.util.Arguments;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -174,11 +175,15 @@ public class BeautiFrame extends DocumentFrame {
 
         panel.add(panel2, BorderLayout.SOUTH);
 
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setOpaque(false);
-
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+        if (OSType.isMac()) {
+            getContentPane().add(panel, BorderLayout.CENTER);
+            setMinimumSize(new java.awt.Dimension(800, 600));
+        } else {
+            JScrollPane scrollPane = new JScrollPane(panel);
+            getContentPane().add(scrollPane, BorderLayout.CENTER);
+        }
 
         setAllOptions();
 
@@ -203,7 +208,7 @@ public class BeautiFrame extends DocumentFrame {
      */
     public void setAllOptions() {
         GUIValidate();
-        
+
         dataPanel.setOptions(options);
         tipDatesPanel.setOptions(options);
         traitsPanel.setOptions(options);

@@ -60,6 +60,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
+    private static final int MINIMUM_TABLE_WIDTH = 140;
+
     JTable modelTable = null;
     ModelTableModel modelTableModel = null;
     BeautiOptions options = null;
@@ -119,7 +121,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         panel.setOpaque(false);
         panel.add(scrollPane, BorderLayout.CENTER);
         panel.add(controlPanel1, BorderLayout.SOUTH);
-        
+        panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
+
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
         modelPanelParent.setOpaque(false);
         modelBorder = new TitledBorder("Substitution Model");
@@ -128,7 +131,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         setCurrentModel(null);
         
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, modelPanelParent);
-        splitPane.setDividerLocation(180);
+        splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
@@ -310,7 +313,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Substitution Model(s)"};
+        String[] columnNames = {"Substitution Model"};
 
         public ModelTableModel() {
         }

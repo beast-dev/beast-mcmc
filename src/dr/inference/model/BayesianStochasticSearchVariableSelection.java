@@ -101,6 +101,6 @@ public interface BayesianStochasticSearchVariableSelection {
             }
         }
 
-        private static final double tolerance = 1E-30;
+        private static final double tolerance = 1E-15;
     }
 }

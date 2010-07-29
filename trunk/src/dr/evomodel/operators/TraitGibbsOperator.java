@@ -339,17 +339,11 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                     if (dist instanceof GeoSpatialDistribution) {
                         GeoSpatialDistribution prior = (GeoSpatialDistribution) dist;
                         String nodeLabel = prior.getLabel();
-                        TreeModel treeModel = traitModel.getTreeModel();
-
-                        // Get taxon node from tree
-                        int index = treeModel.getTaxonIndex(nodeLabel);
-                        if (index == -1) {
-                            throw new XMLParseException("Taxon '" + nodeLabel + "' not found for geoSpatialDistribution element in traitGibbsOperator element");
-                        }
-                        operator.setTaxonPrior(treeModel.getTaxon(index),prior);
-                        System.err.println("Adding truncated prior for taxon '"+treeModel.getTaxon(index)+"'");
+                        Taxon taxon = getTaxon(traitModel.getTreeModel(), nodeLabel);
+                        operator.setTaxonPrior(taxon, prior);
+                        System.err.println("Adding truncated prior for taxon '" + taxon + "'");
                     }
-                }
+                } 
             }
 
             GeoSpatialCollectionModel collectionModel = (GeoSpatialCollectionModel) xo.getChild(GeoSpatialCollectionModel.class);
@@ -357,9 +351,18 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                 operator.setParameterPrior(collectionModel);
                 System.err.println("Adding truncated prior '"+collectionModel.getId()+
                         "' for parameter '"+collectionModel.getParameter().getId()+"'");
-             }
+            }
 
             return operator;
+        }
+
+        private Taxon getTaxon(TreeModel treeModel, String taxonLabel) throws XMLParseException {
+            // Get taxon node from tree
+            int index = treeModel.getTaxonIndex(taxonLabel);
+            if (index == -1) {
+                throw new XMLParseException("Taxon '" + taxonLabel + "' not found for geoSpatialDistribution element in traitGibbsOperator element");
+            }
+            return treeModel.getTaxon(index);
         }
 
         //************************************************************************
@@ -392,7 +395,7 @@ public class TraitGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
                         new XMLSyntaxRule[]{
                                 new ElementRule(MultivariateDistributionLikelihood.class)
                         }, true),
-                new ElementRule(GeoSpatialCollectionModel.class,true),
+                new ElementRule(GeoSpatialCollectionModel.class, true),
         };
 
     };

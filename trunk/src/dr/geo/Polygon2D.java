@@ -76,7 +76,7 @@ public class Polygon2D {
 
     public Polygon2D(Element e) {
 
-        System.err.println("parsing polygon");
+//        System.err.println("parsing polygon");
 
         List<Element> children = e.getChildren();
         id = e.getAttributeValue(XMLParser.ID);
@@ -90,7 +90,7 @@ public class Polygon2D {
             String value = element.getTextTrim();
             StringTokenizer st1 = new StringTokenizer(value, KMLCoordinates.POINT_SEPARATORS);
             int count = st1.countTokens();
-            System.out.println(count + " tokens");
+//            System.out.println(count + " tokens");
 
             point2Ds = new ArrayList<Point2D>(count);
             for (int i = 0; i < count; i++) {

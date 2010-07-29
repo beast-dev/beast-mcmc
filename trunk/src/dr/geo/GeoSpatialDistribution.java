@@ -51,18 +51,18 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public static final String KML_FILE = "kmlFileName";
     public static final String INSIDE = "inside";
     public static final String UNION = "union";
+    private static final String DEFAULT_LABEL = "";
 
     public static final int dimPoint = 2; // Assumes 2D points only
 
-    public GeoSpatialDistribution(Polygon2D region) {
-        this.region = region;
+    public GeoSpatialDistribution(String label) {
+        this.label = label;
     }
 
-    public GeoSpatialDistribution(String label, Polygon2D region, boolean inside, boolean union) {
+    public GeoSpatialDistribution(String label, Polygon2D region, boolean inside) {
         this.label = label;
         this.region = region;
         this.outside = !inside;
-        this.union = union;
     }
 
     public double logPdf(double[] x) {
@@ -92,11 +92,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     public boolean getOutside() {
         return outside;
     }
-
-    public boolean getUnion() {
-        return union;
-    }
-
+  
     public Polygon2D getRegion() {
         return region;
     }
@@ -104,8 +100,6 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
     protected Polygon2D region;
     protected String label = null;
     private boolean outside = false;
-    private boolean union = false;
-
 
     public static XMLObjectParser FLAT_GEOSPATIAL_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
@@ -115,7 +109,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            String label = xo.getAttribute(NODE_LABEL, "");
+            String label = xo.getAttribute(NODE_LABEL, DEFAULT_LABEL);
 
             boolean inside = xo.getAttribute(INSIDE, true);
             boolean union = xo.getAttribute(UNION, false);
@@ -128,7 +122,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 String kmlFileName = xo.getStringAttribute(KML_FILE);
                 List<Polygon2D> polygons = Polygon2D.readKMLFile(kmlFileName);
                 for (Polygon2D region : polygons)
-                    geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside, union));
+                    geoSpatialDistributions.add(new GeoSpatialDistribution(label, region, inside));
                 readFromFile = true;
             } else {
 
@@ -136,7 +130,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                     if (xo.getChild(i) instanceof Polygon2D) {
                         Polygon2D region = (Polygon2D) xo.getChild(i);
                         geoSpatialDistributions.add(
-                                new GeoSpatialDistribution(label, region, inside, union)
+                                new GeoSpatialDistribution(label, region, inside)
                         );
                     }
                 }
@@ -149,7 +143,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 parameters.add(spatialParameter);
             }
 
-            if (geoSpatialDistributions.size() == 1 && !readFromFile) {
+            if (geoSpatialDistributions.size() == 1) {
                 MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(geoSpatialDistributions.get(0));
                 for (Parameter spatialParameter : parameters) {
                     if (spatialParameter.getDimension() != dimPoint)
@@ -164,16 +158,28 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
                 if (parameter.getDimension() % dimPoint != 0)
                     throw new XMLParseException("Spatial priors currently only work in " + dimPoint + "D");
 
-                Logger.getLogger("dr.geo").info(
+                if (!label.equals(DEFAULT_LABEL)) {  // For a tip-taxon
+                    Logger.getLogger("dr.geo").info(
+                            "\nConstructing a multiple-region spatial prior:\n" +
+                                    "\tTaxon: " + label + "\n" +
+                                    "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
+                    MultivariateDistributionLikelihood likelihood = new MultivariateDistributionLikelihood(
+                            new MultiRegionGeoSpatialDistribution(label,geoSpatialDistributions, union));
+                    likelihood.addData(parameter);
+                    return likelihood;
+
+                } else {
+
+                    Logger.getLogger("dr.geo").info(
                         "\nConstructing a GeoSpatialCollectionModel:\n" +
                                 "\tParameter: " + parameter.getId() + "\n" +
                                 "\tNumber of regions: " + geoSpatialDistributions.size() + "\n\n");
 
-                return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions, !union);
+                    return new GeoSpatialCollectionModel(xo.getId(), parameter, geoSpatialDistributions, !union);
+                }
             }
 
             throw new XMLParseException("Multiple separate parameters and multiple regions not yet implemented");
-
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {

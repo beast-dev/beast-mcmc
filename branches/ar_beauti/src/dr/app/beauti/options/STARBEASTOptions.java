@@ -153,10 +153,6 @@ public class STARBEASTOptions extends ModelOptions {
     
     /////////////////////////////////////////////////////////////
 
-    public boolean isSpeciesAnalysis() {
-        return options.containTrait(TraitData.TRAIT_SPECIES.toString());
-    }
-
     public List<String> getSpeciesList() {
         return TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES.toString());
     }

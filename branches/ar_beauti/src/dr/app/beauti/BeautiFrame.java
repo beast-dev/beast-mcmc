@@ -483,6 +483,7 @@ public class BeautiFrame extends DocumentFrame {
     public void setupSpeciesAnalysis() {
         dataPanel.selectAll();
         dataPanel.unlinkAll();
+
 //        dataPanel.unlinkModels();
 //        dataPanel.unlinkTrees();
 

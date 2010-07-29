@@ -126,6 +126,7 @@ public class BeautiOptions extends ModelOptions {
         priorOptions = new PriorOptions(this);
 
 //        traitsOptions = new TraitsOptions(this);
+        useStarBEAST = false;
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -247,7 +248,7 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectOperators(ops);
         }
 
-        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (useStarBEAST) { // species
             starBEASTOptions.selectOperators(ops);
         }
 
@@ -788,6 +789,7 @@ public class BeautiOptions extends ModelOptions {
     public PriorOptions priorOptions = new PriorOptions(this);
 
 //    public TraitsOptions traitsOptions = new TraitsOptions(this);
+    public boolean useStarBEAST = false;
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

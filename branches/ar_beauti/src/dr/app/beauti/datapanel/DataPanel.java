@@ -75,9 +75,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
-    ShowAction showAction = new ShowAction();
-//    UnlinkAllAction unlinkAllAction = new UnlinkAllAction();
-//    LinkAllAction linkAllAction = new LinkAllAction();
+    CreateAction createAction = new CreateAction();
+
+//    ShowAction showAction = new ShowAction();
 
 //    JCheckBox allowDifferentTaxaCheck = new JCheckBox("Allow different taxa in partitions");
 
@@ -183,20 +183,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PanelUtils.setupComponent(button);
             toolBar1.add(button);
 
-            button = new JButton(showAction);
-            showAction.setEnabled(false);
-            PanelUtils.setupComponent(button);
-            toolBar1.add(button);
-            // all
-//            button = new JButton(unlinkAllAction);
-//            unlinkAllAction.setEnabled(false);
+            // too crowded on the toolbar  - just double click to show
+//            button = new JButton(showAction);
+//            showAction.setEnabled(false);
 //            PanelUtils.setupComponent(button);
 //            toolBar1.add(button);
-//
-//            button = new JButton(linkAllAction);
-//            linkAllAction.setEnabled(false);
-//            PanelUtils.setupComponent(button);
-//            toolBar1.add(button);
+
         }
 
         ActionPanel actionPanel1 = new ActionPanel(false);
@@ -211,6 +203,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //        button = new JButton(importTraitsAction);
 //        PanelUtils.setupComponent(button);
 //        controlPanel1.add(button);
+
+        button = new JButton(createAction);
+        PanelUtils.setupComponent(button);
+        controlPanel1.add(button);
 
 //        allowDifferentTaxaCheck.setSelected(false);
 //        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
@@ -317,7 +313,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         unlinkTreesAction.setEnabled(hasSelection);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
 
-        showAction.setEnabled(hasSelection);
+//        showAction.setEnabled(hasSelection);
 //        unlinkAllAction.setEnabled(hasSelection);
 //        linkAllAction.setEnabled(selRows != null && selRows.length > 1);
     }
@@ -371,17 +367,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-
-    public void unlinkAll() {
-        unlinkModels();
-        unlinkClocks();
-        unlinkTrees();
-    }
-
-    public void linkAll() {
-        linkModels();
-        linkClocks();
-        linkTrees();
+    public void createFromTraits() {
     }
 
     public void unlinkModels() {
@@ -789,16 +775,27 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class ShowAction extends AbstractAction {
-        public ShowAction() {
-            super("Show");
-            setToolTipText("Display the selected alignments");
+    public class CreateAction extends AbstractAction {
+        public CreateAction() {
+            super("Create...");
+            setToolTipText("Create a data partition from one or more traits");
         }
 
         public void actionPerformed(ActionEvent ae) {
-            showAlignment();
+            createFromTraits();
         }
     }
+
+//    public class ShowAction extends AbstractAction {
+//        public ShowAction() {
+//            super("Show");
+//            setToolTipText("Display the selected alignments");
+//        }
+//
+//        public void actionPerformed(ActionEvent ae) {
+//            showAlignment();
+//        }
+//    }
 
 //    public class UnlinkAllAction extends AbstractAction {
 //        public UnlinkAllAction() {

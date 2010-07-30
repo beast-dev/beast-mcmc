@@ -169,7 +169,7 @@ public class BeastGenerator extends Generator {
 
 
         //++++++++++++++++ Species tree ++++++++++++++++++
-        if (options.starBEASTOptions.isSpeciesAnalysis()) {
+        if (options.useStarBEAST) {
 //        	if (!(options.nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePriorType.SPECIES_YULE)) {
 //        		//TODO: more species tree model
 //        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
@@ -336,7 +336,7 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             writeStarBEAST(writer);
         }
 
@@ -639,7 +639,7 @@ public class BeastGenerator extends Generator {
         // write prior block
         writer.writeOpenTag(CompoundLikelihoodParser.PRIOR, new Attribute.Default<String>(XMLParser.ID, "prior"));
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             // coalescent prior
             writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes

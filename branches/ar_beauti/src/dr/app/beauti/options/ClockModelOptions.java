@@ -101,7 +101,7 @@ public class ClockModelOptions extends ModelOptions {
 
         //up down all rates and trees operator only available for *BEAST and EBSP
         if (rateOptionClockModel == FixRateType.RELATIVE_TO && //TODO what about Calibration? 
-                (options.starBEASTOptions.isSpeciesAnalysis() || options.isEBSPSharingSamePrior())) {
+                (options.useStarBEAST || options.isEBSPSharingSamePrior())) {
             ops.add(getOperator("upDownAllRatesHeights"));
         }
 

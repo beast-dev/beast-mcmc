@@ -181,7 +181,7 @@ public class InitialTreeGenerator extends Generator {
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
     	PartitionTreePrior prior = model.getPartitionTreePrior();
     		
-		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.starBEASTOptions.isSpeciesAnalysis()) {
+		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
         	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
         	writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");

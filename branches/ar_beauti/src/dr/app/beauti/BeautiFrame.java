@@ -124,7 +124,7 @@ public class BeautiFrame extends DocumentFrame {
         taxaPanel = new TaxaPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         clockModelsPanel = new ClockModelsPanel(this);
-        oldTreesPanel = new OldTreesPanel(this);
+//        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
         priorsPanel = new PriorsPanel(this, false);
@@ -137,11 +137,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
         tabbedPane.addTab("Clock Models", clockModelsPanel);
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             tabbedPane.addTab("Trees", treesPanel);
-        } else {
-            tabbedPane.addTab("Trees", oldTreesPanel);
-        }
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -208,22 +204,13 @@ public class BeautiFrame extends DocumentFrame {
      * set all the options for all panels
      */
     public void setAllOptions() {
-        GUIValidate();
-
         dataPanel.setOptions(options);
         tipDatesPanel.setOptions(options);
         traitsPanel.setOptions(options);
         taxaPanel.setOptions(options);
         siteModelsPanel.setOptions(options);
         clockModelsPanel.setOptions(options);
-//        if (options.isSpeciesAnalysis()) {
-//            speciesTreesPanel.setOptions(options);
-//        } else
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.setOptions(options);
-        } else {
-            oldTreesPanel.setOptions(options);
-        }
         priorsPanel.setOptions(options);
         operatorsPanel.setOptions(options);
         mcmcPanel.setOptions(options);
@@ -241,14 +228,7 @@ public class BeautiFrame extends DocumentFrame {
         taxaPanel.getOptions(options);
         siteModelsPanel.getOptions(options);
         clockModelsPanel.getOptions(options);
-//        if (options.isSpeciesAnalysis()) {
-//            speciesTreesPanel.getOptions(options);
-//        } else
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.getOptions(options);
-        } else {
-            oldTreesPanel.getOptions(options);
-        }
         priorsPanel.getOptions(options);
         operatorsPanel.getOptions(options);
         mcmcPanel.getOptions(options);
@@ -480,12 +460,11 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void setupSpeciesAnalysis() {
-        dataPanel.selectAll();
-        dataPanel.unlinkAll();
+    public void setupSpeciesAnalysis(boolean useStarBEAST) {
+        if (useStarBEAST) {
+            dataPanel.selectAll();
 
-//        dataPanel.unlinkModels();
-//        dataPanel.unlinkTrees();
+            dataPanel.unlinkAll();
 
 //        if (options.getPartitionClockModels().size() > 1) {
 //        	dataPanel.linkClocks();
@@ -499,24 +478,14 @@ public class BeautiFrame extends DocumentFrame {
 //        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
 //        speciesTreesPanel.getOptions(options);
 
-        treesPanel.updatePriorPanelForSpeciesAnalysis();
+            treesPanel.updatePriorPanelForSpeciesAnalysis();
 
-        options.starBEASTOptions = new STARBEASTOptions(options);
-        options.fileNameStem = "LogStem";
+            options.starBEASTOptions = new STARBEASTOptions(options);
+            options.fileNameStem = "LogStem";
 
-        setStatusMessage();
-    }
+        }
 
-    public void removeSepciesAnalysis() {
-//        options.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
-//
-//        int i = tabbedPane.indexOfTab("Trees");
-//        tabbedPane.removeTabAt(i);
-//        if (DataPanel.ALLOW_UNLINKED_TREES) {
-//            tabbedPane.insertTab("Trees", null, treesPanel, "", i);
-//        } else {
-//            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
-//        }
+        options.useStarBEAST = useStarBEAST;
 
         treesPanel.updatePriorPanelForSpeciesAnalysis();
 
@@ -529,6 +498,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public void setupEBSP() {
         dataPanel.selectAll();
+
         dataPanel.unlinkAll();
 
         setAllOptions();
@@ -540,31 +510,11 @@ public class BeautiFrame extends DocumentFrame {
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
         //TODO: wait for new implementation in BEAST
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
-            treesPanel.setCheckedTipDate(isChecked);
-        } else {
-            if (isChecked) {
-                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.YULE);
-                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-            } else {
-                oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
-            }
-        }
+        treesPanel.setCheckedTipDate(isChecked);
     }
 
     public void setStatusMessage() {
         statusLabel.setText(options.statusMessage());
-    }
-
-    public void GUIValidate() {
-        if (options.starBEASTOptions.isSpeciesAnalysis()) {
-            if (options.starBEASTOptions.getSpeciesList() == null) {
-                JOptionPane.showMessageDialog(this, "Species value is empty."
-                        + "\nPlease go to Traits panel, either Import Traits,"
-                        + "\nor Guess trait values", "*BEAST Error Message",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
     }
 
     public final boolean doGenerate() {

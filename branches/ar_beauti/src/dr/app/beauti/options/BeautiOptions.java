@@ -194,7 +194,7 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectStatistics(parameters);
         }
 
-        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (useStarBEAST) { // species
             starBEASTOptions.selectParameters(parameters);
         }
 
@@ -691,7 +691,7 @@ public class BeautiOptions extends ModelOptions {
 
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (starBEASTOptions.getSpeciesList() != null && starBEASTOptions.isSpeciesAnalysis()) {
+            if (starBEASTOptions.getSpeciesList() != null && useStarBEAST) {
                 int num = starBEASTOptions.getSpeciesList().size();
                 message += ", " + num + " species"; // species is both singular and plural
             }
@@ -701,7 +701,7 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-            if (starBEASTOptions.isSpeciesAnalysis()) {
+            if (useStarBEAST) {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 

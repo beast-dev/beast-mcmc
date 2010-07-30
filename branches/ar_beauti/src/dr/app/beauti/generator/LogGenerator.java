@@ -119,7 +119,7 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
                             new Attribute.Default<String>(ColumnsParser.LABEL, "PopMean"),
@@ -215,7 +215,7 @@ public class LogGenerator extends Generator {
             writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
         }
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             // coalescent prior
             writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
@@ -323,7 +323,7 @@ public class LogGenerator extends Generator {
     public void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             // species tree log
             writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                     new Attribute[]{
@@ -428,7 +428,7 @@ public class LogGenerator extends Generator {
 
 
         if (options.substTreeLog) {
-            if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+            if (options.useStarBEAST) { // species
                 //TODO: species sub tree
             }
 

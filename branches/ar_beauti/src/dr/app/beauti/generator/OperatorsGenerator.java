@@ -572,7 +572,7 @@ public class OperatorsGenerator extends Generator {
 				}
 			}
         }
-        if (options.starBEASTOptions.isSpeciesAnalysis()) {
+        if (options.useStarBEAST) {
 	        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
 	        	writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
 	        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
@@ -584,7 +584,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeOpenTag(UpDownOperatorParser.DOWN);
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) {
+        if (options.useStarBEAST) {
 	        writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE); // <speciesTree idref="sptree" /> has to be the 1st always
 	        writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	        writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);

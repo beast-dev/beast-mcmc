@@ -295,7 +295,7 @@ public class TreePriorGenerator extends Generator {
 	            break;	            
         }
 
-        if ((!options.starBEASTOptions.isSpeciesAnalysis()) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
+        if ((!options.useStarBEAST) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
             // If the node height prior is not one of these two then we need to simulate a
             // random starting tree under a constant size coalescent.
 

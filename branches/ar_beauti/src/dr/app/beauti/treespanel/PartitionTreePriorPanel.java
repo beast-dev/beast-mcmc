@@ -167,7 +167,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
             addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-            treesPanel.shareSameTreePriorCheck.setSelected(true);
+            treesPanel.linkTreePriorCheck.setSelected(true);
             treesPanel.updateShareSameTreePriorChanged();
             
 //            treesPanel.getFrame().setupEBSP(); TODO
@@ -183,13 +183,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 						+ "It is only available for single tree model partition for this release.<br>"
 						+ "Please go to Data Partition panel to link all tree models." + "</html>");
             //TODO link tree model
-//            treesPanel.shareSameTreePriorCheck.setSelected(false);
-//            treesPanel.shareSameTreePriorCheck.setEnabled(false);
+//            treesPanel.linkTreePriorCheck.setSelected(false);
+//            treesPanel.linkTreePriorCheck.setEnabled(false);
 //            treesPanel.linkTreeModel();
 //            treesPanel.updateShareSameTreePriorChanged();
 //        } else {
-//            treesPanel.shareSameTreePriorCheck.setEnabled(true);
-//            treesPanel.shareSameTreePriorCheck.setSelected(true);
+//            treesPanel.linkTreePriorCheck.setEnabled(true);
+//            treesPanel.linkTreePriorCheck.setSelected(true);
 //            treesPanel.updateShareSameTreePriorChanged();
         }
         

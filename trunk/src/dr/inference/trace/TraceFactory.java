@@ -9,7 +9,7 @@ public class TraceFactory {
     public enum TraceType {
         CONTINUOUS("real", "R", Double.class),
         INTEGER("integer", "I", Integer.class),
-        CATEGORY("category", "C", String.class);
+        CATEGORY("categorical", "C", String.class);
 
         TraceType(String name, String brief, Class type) {
             this.name = name;
@@ -41,7 +41,7 @@ public class TraceFactory {
 //        System.arraycopy(d, 0, t, 0, d.length);
 
         // System.out.println("create trace (" + name + ") with type " + traceType);
-        
+
         switch (traceType) {
             case CONTINUOUS:
                 return new Trace<Double>(name, initialSize, (double) 0);

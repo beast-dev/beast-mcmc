@@ -27,7 +27,6 @@ public class DiscretizedLociRates extends AbstractModel {
             ParametricDistributionModel model,
             boolean normalize,
             double normalizeLociRateTo,
-
             int categoryCount) {
         super("DiscretizedLociRatesModel");
         this.lociRates = lociRates;
@@ -74,17 +73,19 @@ public class DiscretizedLociRates extends AbstractModel {
         if (model == distrModel) {
             completeSetup = true;
             setupRates();
+            //System.out.println("speed investigation 1");
             fireModelChanged();
         }else if (model == rateCategoryParameter) {
-            //if just the rate categories have changed the rates will be the same
+            //System.out.println("speed investigation 2");
             setupRates();
             fireModelChanged(null, index);
         }
-
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        //System.out.println("speed investigation 3");
         setupRates();
+        fireModelChanged(null, index);
     }
 
     protected void storeState() {
@@ -92,7 +93,7 @@ public class DiscretizedLociRates extends AbstractModel {
     protected void acceptState() {
     }
     protected void restoreState() {
-        setupRates();
+        //setupRates();
     }
     private void computeFactor(){
         double sumRates = 0.0;

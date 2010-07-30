@@ -14,6 +14,7 @@ import dr.xml.*;
 public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
+    public static final String BACKWARDS_COMPATIBILITY_NAME = "markovJumpsTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
     public static final String TAG_NAME = "tagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
@@ -21,7 +22,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
     public String[] getParserNames() {
         return new String[]{
-                getParserName(), "beast_" + getParserName()
+                getParserName(), BACKWARDS_COMPATIBILITY_NAME, "beast_" + getParserName()
         };
     }
 

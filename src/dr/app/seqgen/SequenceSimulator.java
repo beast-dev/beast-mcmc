@@ -28,7 +28,7 @@ import dr.xml.*;
 
 public class SequenceSimulator {
 	/** nr of samples to generate **/
-	protected int m_nReplications;
+	protected int m_sequenceLength;
 	/** tree used for generating samples **/
     protected Tree m_tree;
 	/** site model used for generating samples **/
@@ -50,13 +50,13 @@ public class SequenceSimulator {
      * @param tree
      * @param siteModel
      * @param branchRateModel
-     * @param nReplications: nr of samples to generate
+     * @param sequenceLength: nr of sites to generate
      */
-    SequenceSimulator(Tree tree, SiteModel siteModel, BranchRateModel branchRateModel, int nReplications) {
+    SequenceSimulator(Tree tree, SiteModel siteModel, BranchRateModel branchRateModel, int sequenceLength) {
     	m_tree = tree;
     	m_siteModel = siteModel;
     	m_branchRateModel = branchRateModel;
-    	m_nReplications = nReplications;
+    	m_sequenceLength = sequenceLength;
     	m_stateCount = m_siteModel.getFrequencyModel().getDataType().getStateCount();
         m_categoryCount = m_siteModel.getCategoryCount();
         m_probabilities = new double[m_categoryCount][m_stateCount * m_stateCount];
@@ -69,12 +69,11 @@ public class SequenceSimulator {
      * @return Sequence
      */
 	Sequence intArray2Sequence(int [] seq, NodeRef node) {
-    	String sSeq = "";
-    	for (int i  = 0; i < m_nReplications; i++) {
-    		String c = m_siteModel.getFrequencyModel().getDataType().getCode(seq[i]);
-    		sSeq += c;
+    	StringBuilder sSeq = new StringBuilder();
+    	for (int i  = 0; i < m_sequenceLength; i++) {
+    		sSeq.append(m_siteModel.getFrequencyModel().getDataType().getCode(seq[i]));
     	}
-		return new Sequence(m_tree.getNodeTaxon(node), sSeq);
+		return new Sequence(m_tree.getNodeTaxon(node), sSeq.toString());
     } // intArray2Sequence
 
 	/**
@@ -87,14 +86,14 @@ public class SequenceSimulator {
 
 
     	double [] categoryProbs = m_siteModel.getCategoryProportions();
-    	int [] category  = new int[m_nReplications];
-    	for (int i  = 0; i < m_nReplications; i++) {
+    	int [] category  = new int[m_sequenceLength];
+    	for (int i  = 0; i < m_sequenceLength; i++) {
     		category[i] = MathUtils.randomChoicePDF(categoryProbs);
     	}
 
        	FrequencyModel frequencyModel = m_siteModel.getFrequencyModel();
-    	int [] seq = new int[m_nReplications];
-    	for (int i  = 0; i < m_nReplications; i++) {
+    	int [] seq = new int[m_sequenceLength];
+    	for (int i  = 0; i < m_sequenceLength; i++) {
         	seq[i] = MathUtils.randomChoicePDF(frequencyModel.getFrequencies());
     	}
 
@@ -124,9 +123,9 @@ public class SequenceSimulator {
             	getTransitionProbabilities(m_tree, child, i, m_probabilities[i]);
             }
 
-        	int [] seq = new int[m_nReplications];
+        	int [] seq = new int[m_sequenceLength];
     		double [] cProb = new double[m_stateCount];
-        	for (int i  = 0; i < m_nReplications; i++) {
+        	for (int i  = 0; i < m_sequenceLength; i++) {
         		System.arraycopy(m_probabilities[category[i]], parentSequence[i]*m_stateCount, cProb, 0, m_stateCount);
             	seq[i] = MathUtils.randomChoicePDF(cProb);
         	}

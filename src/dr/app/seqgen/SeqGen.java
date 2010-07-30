@@ -23,81 +23,16 @@ import jebl.math.Random;
  */
 public class SeqGen {
 
-    public SeqGen(String treeFileName, String outputFileStem) {
-        int length = 606;
-
-        double[] frequencies = new double[] { 0.25, 0.25, 0.25, 0.25 };
-        double kappa = 10.0;
-        double alpha = 0.5;
-        double substitutionRate = 1.0E-7;
-        int categoryCount = 0;
-        double damageRate = 3.2E-7;
-
-        FrequencyModel freqModel = new FrequencyModel(dr.evolution.datatype.Nucleotides.INSTANCE, frequencies);
-
-        HKY hkyModel = new HKY(kappa, freqModel);
-        SiteModel siteModel = null;
-
-        if (categoryCount > 1) {
-            siteModel = new GammaSiteModel(hkyModel, alpha, categoryCount);
-        } else {
-            // no rate heterogeneity
-            siteModel = new GammaSiteModel(hkyModel);
-        }
-
-        List<Tree> trees = new ArrayList<Tree>();
-
-        FileReader reader = null;
-        try {
-            reader = new FileReader(treeFileName);
-            TreeImporter importer = new NexusImporter(reader);
-
-            while (importer.hasTree()) {
-                Tree tree =  importer.importNextTree();
-                trees.add(tree);
-            }
-
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            return;
-        } catch (Importer.ImportException e) {
-            e.printStackTrace();
-            return;
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        int i = 1;
-        for (Tree tree : trees) {
-            Alignment alignment = simulateAlignment(tree, length,
-                    substitutionRate, freqModel, hkyModel, siteModel,
-                    damageRate);
-
-            FileWriter writer = null;
-            try {
-                writer = new FileWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".nex");
-                NexusExporter exporter = new NexusExporter(writer);
-
-                exporter.exportAlignment(alignment);
-
-                writer.close();
-
-                i++;
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
-            }
-        }
-
+    public SeqGen(final int length, final double substitutionRate, final FrequencyModel freqModel, final SubstitutionModel substModel, final SiteModel siteModel, final double damageRate) {
+        this.length = length;
+        this.substitutionRate = substitutionRate;
+        this.freqModel = freqModel;
+        this.substModel = substModel;
+        this.siteModel = siteModel;
+        this.damageRate = damageRate;
     }
 
-    private Alignment simulateAlignment(Tree tree, int length,
-                                        double substitutionRate,
-                                        FrequencyModel freqModel,
-                                        SubstitutionModel substModel,
-                                        SiteModel siteModel,
-                                        double damageRate) {
+    public Alignment simulate(Tree tree) {
 
         int[] initialSequence = new int[length];
 
@@ -256,7 +191,84 @@ public class SeqGen {
         return state;
     }
 
+    private final int length;
+    private final double substitutionRate;
+    private final FrequencyModel freqModel;
+    private final SubstitutionModel substModel;
+    private final SiteModel siteModel;
+    private final double damageRate;
+
     public static void main(String[] argv) {
-        new SeqGen(argv[0], argv[1]);
+
+        String treeFileName = argv[0];
+        String outputFileStem = argv[1];
+
+        int length = 470;
+
+        double[] frequencies = new double[] { 0.25, 0.25, 0.25, 0.25 };
+        double kappa = 10.0;
+        double alpha = 0.5;
+        double substitutionRate = 1.0E-9;
+        int categoryCount = 0;
+        double damageRate = 1.56E-6;
+
+        FrequencyModel freqModel = new FrequencyModel(dr.evolution.datatype.Nucleotides.INSTANCE, frequencies);
+
+        HKY hkyModel = new HKY(kappa, freqModel);
+        SiteModel siteModel = null;
+
+        if (categoryCount > 1) {
+            siteModel = new GammaSiteModel(hkyModel, alpha, categoryCount);
+        } else {
+            // no rate heterogeneity
+            siteModel = new GammaSiteModel(hkyModel);
+        }
+
+        List<Tree> trees = new ArrayList<Tree>();
+
+        FileReader reader = null;
+        try {
+            reader = new FileReader(treeFileName);
+            TreeImporter importer = new NexusImporter(reader);
+
+            while (importer.hasTree()) {
+                Tree tree =  importer.importNextTree();
+                trees.add(tree);
+            }
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return;
+        } catch (Importer.ImportException e) {
+            e.printStackTrace();
+            return;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        SeqGen seqGen = new SeqGen(length,
+                substitutionRate, freqModel, hkyModel, siteModel,
+                damageRate);
+        int i = 1;
+        for (Tree tree : trees) {
+            Alignment alignment = seqGen.simulate(tree);
+
+            FileWriter writer = null;
+            try {
+                writer = new FileWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".nex");
+                NexusExporter exporter = new NexusExporter(writer);
+
+                exporter.exportAlignment(alignment);
+
+                writer.close();
+
+                i++;
+            } catch (IOException e) {
+                e.printStackTrace();
+                return;
+            }
+        }
+
     }
 }

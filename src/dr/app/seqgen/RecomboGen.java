@@ -367,7 +367,7 @@ public class RecomboGen {
         }
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-                new ElementRule(Tree.class),
+                new ElementRule(Taxa.class),
                 new ElementRule(SiteModel.class),
                 new ElementRule(BranchRateModel.class, true),
                 AttributeRule.newDoubleRule(RECOMBINATION_RATE),

@@ -64,7 +64,9 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
                 PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false); 
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameterUniformPrior(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+//        createParameterUniformPrior(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterGammaPrior(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates",
+                PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false);
         createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
 
 //        {

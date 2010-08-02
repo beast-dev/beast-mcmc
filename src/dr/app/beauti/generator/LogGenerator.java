@@ -35,6 +35,7 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -393,8 +394,12 @@ public class LogGenerator extends Generator {
 
                         case UNCORRELATED_EXPONENTIAL:
                         case UNCORRELATED_LOGNORMAL:
-                        case RANDOM_LOCAL_CLOCK:
                             writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            break;
+
+                        case RANDOM_LOCAL_CLOCK:
+                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix())
+                                    + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
@@ -414,7 +419,7 @@ public class LogGenerator extends Generator {
 
             if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
                 for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
-                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) )
+                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())))
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                                 partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
@@ -455,8 +460,12 @@ public class LogGenerator extends Generator {
 
                             case UNCORRELATED_EXPONENTIAL:
                             case UNCORRELATED_LOGNORMAL:
-                            case RANDOM_LOCAL_CLOCK:
                                 writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                                break;
+
+                            case RANDOM_LOCAL_CLOCK:
+                                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix())
+                                        + BranchRateModel.BRANCH_RATES);
                                 break;
 
                             case AUTOCORRELATED_LOGNORMAL:

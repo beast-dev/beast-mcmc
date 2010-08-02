@@ -221,7 +221,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.RANDOM_LOCAL_CLOCK).toArray())));
+//        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
     }
 
     private void fireModelsChanged() {

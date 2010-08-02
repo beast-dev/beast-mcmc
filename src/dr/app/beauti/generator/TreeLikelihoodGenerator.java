@@ -35,6 +35,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -131,8 +132,12 @@ public class TreeLikelihoodGenerator extends Generator {
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
-            case RANDOM_LOCAL_CLOCK:
             	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+                        		+ BranchRateModel.BRANCH_RATES);
+                break;
+
+            case RANDOM_LOCAL_CLOCK:
+            	writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         		+ BranchRateModel.BRANCH_RATES);
                 break;
 

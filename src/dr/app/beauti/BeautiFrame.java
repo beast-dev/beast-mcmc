@@ -15,6 +15,7 @@ import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
@@ -651,6 +652,10 @@ public class BeautiFrame extends DocumentFrame {
                 } catch (IOException ioe) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
                             "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                } catch (Generator.GeneratorException e) {
+                    JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
+                            "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                     return false;
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),

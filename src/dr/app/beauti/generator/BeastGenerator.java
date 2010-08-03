@@ -190,7 +190,7 @@ public class BeastGenerator extends Generator {
      * @throws dr.app.util.Arguments.ArgumentException
      *                             ArgumentException
      */
-    public void generateXML(File file) throws IOException, Arguments.ArgumentException {
+    public void generateXML(File file) throws GeneratorException, IOException, Arguments.ArgumentException {
 
         XMLWriter writer = new XMLWriter(new BufferedWriter(new FileWriter(file)));
 
@@ -208,108 +208,162 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.BEFORE_TAXA, writer);
 
         //++++++++++++++++ Taxon List ++++++++++++++++++
-        writeTaxa(writer, options.taxonList);
+        try {
+            writeTaxa(writer, options.taxonList);
 
-        if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
-            writer.writeText("");
-            writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
-            // write all taxa in each gene tree regarding each data partition,
-            for (PartitionData partition : options.getNonTraitsDataList()) {
-                // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
-                writeDifferentTaxaForMultiGene(partition, writer);
+            if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
+                writer.writeText("");
+                writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
+                // write all taxa in each gene tree regarding each data partition,
+                for (PartitionData partition : options.getNonTraitsDataList()) {
+                    // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
+                    writeDifferentTaxaForMultiGene(partition, writer);
+                }
             }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Taxon list generation is failed");
         }
 
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) {
-            tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
+        try {
+            if (taxonSets != null && taxonSets.size() > 0) {
+                tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
+            }
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Taxon sets generation is failed");
         }
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
         //++++++++++++++++ Alignments ++++++++++++++++++
-        alignmentGenerator.writeAlignments(writer);
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
+        try {
+            alignmentGenerator.writeAlignments(writer);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Alignments generation is failed");
+        }
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
-        if (!options.samplePriorOnly) {
-            for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
-                writePatternList(partition, writer);
-                writer.writeText("");
+        try {
+            if (!options.samplePriorOnly) {
+                for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
+                    writePatternList(partition, writer);
+                    writer.writeText("");
+                }
             }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Pattern lists generation is failed");
         }
 
         //++++++++++++++++ General Data of Traits ++++++++++++++++++
-        for (TraitData trait : options.getTraitsList()) {
-            if (trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_LOCATIONS.toString())) { // locations
-                writer.writeComment(TraitData.getPhylogeographicDescription());
+        try {
+            for (TraitData trait : options.getTraitsList()) {
+                if (trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_LOCATIONS.toString())) { // locations
+                    writer.writeComment(TraitData.getPhylogeographicDescription());
+                }
+                if (!trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_SPECIES.toString())) {
+                    generalTraitGenerator.writeGeneralDataType(trait, writer);
+                    writer.writeText("");
+                }
             }
-            if (!trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_SPECIES.toString())) {
-                generalTraitGenerator.writeGeneralDataType(trait, writer);
-                writer.writeText("");
-            }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("General data of traits generation is failed");
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
-
         //++++++++++++++++ Tree Prior Model ++++++++++++++++++
-        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            treePriorGenerator.writeTreePriorModel(prior, writer);
-            writer.writeText("");
+        try {
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                treePriorGenerator.writeTreePriorModel(prior, writer);
+                writer.writeText("");
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Tree prior model generation is failed");
         }
 
         //++++++++++++++++ Starting Tree ++++++++++++++++++
-        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            initialTreeGenerator.writeStartingTree(model, writer);
-            writer.writeText("");
+        try {
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                initialTreeGenerator.writeStartingTree(model, writer);
+                writer.writeText("");
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Starting tree generation is failed");
         }
 
         //++++++++++++++++ Tree Model +++++++++++++++++++
+        try {
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                treeModelGenerator.writeTreeModel(model, writer);
+                writer.writeText("");
+            }
 
-        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            treeModelGenerator.writeTreeModel(model, writer);
-            writer.writeText("");
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Tree model generation is failed");
         }
-
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
 
         //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
-        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            PartitionTreePrior prior = model.getPartitionTreePrior();
-            treePriorGenerator.writePriorLikelihood(prior, model, writer);
-            writer.writeText("");
-        }
-
-        for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
-        }
-
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
-
-        //++++++++++++++++ Branch Rates Model ++++++++++++++++++                
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            branchRatesModelGenerator.writeBranchRatesModel(model, writer);
-            writer.writeText("");
-        }
-
-        // write allClockRate for fix mean option in clock model panel
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+        try {
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                PartitionTreePrior prior = model.getPartitionTreePrior();
+                treePriorGenerator.writePriorLikelihood(prior, model, writer);
+                writer.writeText("");
             }
-            writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-            writer.writeText("");
+
+            for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
+                treePriorGenerator.writeEBSPVariableDemographic(prior, writer);
+            }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Tree prior likelihood generation is failed");
+        }
+
+        //++++++++++++++++ Branch Rates Model ++++++++++++++++++
+        try {
+            for (PartitionClockModel model : options.getPartitionClockModels()) {
+                branchRatesModelGenerator.writeBranchRatesModel(model, writer);
+                writer.writeText("");
+            }
+
+            // write allClockRate for fix mean option in clock model panel
+            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
+                for (PartitionClockModel model : options.getPartitionClockModels()) {
+                    branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+                }
+                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+                writer.writeText("");
+            }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Branch rates model generation is failed");
         }
 
         //++++++++++++++++ Substitution Model & Site Model ++++++++++++++++++
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            substitutionModelGenerator.writeSubstitutionSiteModel(model, writer);
-            substitutionModelGenerator.writeAllMus(model, writer); // allMus
-            writer.writeText("");
-        }
+        try {
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                substitutionModelGenerator.writeSubstitutionSiteModel(model, writer);
+                substitutionModelGenerator.writeAllMus(model, writer); // allMus
+                writer.writeText("");
+            }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Substitution model or site model generation is failed");
+        }
 
         //++++++++++++++++ Site Model ++++++++++++++++++
 //        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
@@ -321,47 +375,78 @@ public class BeastGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SITE_MODEL, writer);
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
-        for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
-            treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
-            writer.writeText("");
+        try {
+            for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
+                treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
+                writer.writeText("");
+            }
+
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Tree likelihood generation is failed");
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
-
         //++++++++++++++++ Ancestral Tree Likelihood ++++++++++++++++++
+        try {
         for (TraitData trait : options.getTraitsList()) {
             if (!trait.isSpecifiedTraitAnalysis(TraitData.Traits.TRAIT_SPECIES.toString())) {
                 generalTraitGenerator.writeAncestralTreeLikelihood(trait, writer);
             }
         }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Ancestral Tree likelihood generation is failed");
+        }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
+        try {
         if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
             writeStarBEAST(writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("*BEAST special part generation is failed");
+        }
 
         //++++++++++++++++  ++++++++++++++++++
+        try {
         if (taxonSets != null && taxonSets.size() > 0) {
             tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
         }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("TMRCA statistics generation is failed");
+        }
 
         //++++++++++++++++ Operators ++++++++++++++++++
+        try {
         List<Operator> operators = options.selectOperators();
         operatorsGenerator.writeOperatorSchedule(operators, writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("Operators generation is failed");
+        }
 
         //++++++++++++++++ MCMC ++++++++++++++++++
+        try{
         // XMLWriter writer, List<PartitionSubstitutionModel> models,
         writeMCMC(writer);
         writer.writeText("");
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("MCMC or log generation is failed");
+        }
 
         //++++++++++++++++  ++++++++++++++++++
+        try{
         writeTimerReport(writer);
         writer.writeText("");
         if (options.performTraceAnalysis) {
@@ -371,6 +456,10 @@ public class BeastGenerator extends Generator {
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 treePriorGenerator.writeEBSPAnalysisToCSVfile(prior, writer);
             }
+        }
+        } catch (Exception e) {
+            System.err.println(e);
+            throw new GeneratorException("The last part of XML generation is failed");
         }
 
         writer.writeCloseTag("beast");
@@ -702,7 +791,7 @@ public class BeastGenerator extends Generator {
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator, generalTraitGenerator);
         logGenerator.writeAdditionalLogToFile(writer, branchRatesModelGenerator, substitutionModelGenerator);
-        
+
         // write tree log to file
         logGenerator.writeTreeLogToFile(writer);
 

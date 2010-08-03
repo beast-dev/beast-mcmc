@@ -167,7 +167,26 @@ public class BeastGenerator extends Generator {
             validateClockTreeModelCombination(model);
         }
 
+        //++++++++++++++++ Tree Model ++++++++++++++++++
+        if (options.allowDifferentTaxa) {
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                int numOfTaxa = -1;
+                for (PartitionData pd : model.getAllPartitionData()) {
+                    if (pd.getAlignment() != null) {
+                        if (numOfTaxa > 0) {
+                            if (numOfTaxa != pd.getTaxaCount()) {
+                                throw new IllegalArgumentException("BEAST does not allow that alignments with different taxa " +
+                                        "to refer to one tree !");
+                            }
+                        } else {
+                            numOfTaxa = pd.getTaxaCount();
+                        }
+                    }
+                }
+            }
+        }
 
+        
         //++++++++++++++++ Species tree ++++++++++++++++++
         if (options.starBEASTOptions.isSpeciesAnalysis()) {
 //        	if (!(options.nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePriorType.SPECIES_YULE)) {

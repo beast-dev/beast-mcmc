@@ -549,7 +549,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                    JOptionPane.showMessageDialog(this, "To allow different taxa, each taxa has to have a tree model !",
+                        "Illegal Configuration",
+                        JOptionPane.ERROR_MESSAGE);
+                    return;
                 }
             }
         }

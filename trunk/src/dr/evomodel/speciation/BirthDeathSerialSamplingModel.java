@@ -215,7 +215,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             if (y > 0.0) {
 
                 if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
-                    logL += Math.log(psi() * q(y)) * p0(y);
+                    logL += Math.log(psi() * q(y) * p0(y));
                 } else {
 
                     logL += Math.log(psi() * q(y));

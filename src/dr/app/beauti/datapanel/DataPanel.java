@@ -310,13 +310,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean hasSelection = (selRows != null && selRows.length != 0);
         frame.dataSelectionChanged(hasSelection);
 
-        unlinkModelsAction.setEnabled(hasSelection);
+        unlinkModelsAction.setEnabled(hasSelection && selRows.length > 1);
         linkModelsAction.setEnabled(selRows != null && selRows.length > 1);
 
-        unlinkClocksAction.setEnabled(hasSelection);
+        unlinkClocksAction.setEnabled(hasSelection && selRows.length > 1);
         linkClocksAction.setEnabled(selRows != null && selRows.length > 1);
 
-        unlinkTreesAction.setEnabled(hasSelection);
+        unlinkTreesAction.setEnabled(hasSelection && selRows.length > 1);
         linkTreesAction.setEnabled(selRows != null && selRows.length > 1);
 
         showAction.setEnabled(hasSelection);

@@ -299,7 +299,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         if (options.taxonList != null) { // validation of check empty taxonList
 //            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
             if (currentTrait == null) addTrait();
-
+            if (currentTrait == null) return; //
 //            if (guessTraitDialog == null) {
 //                guessTraitDialog = new GuessTraitDialog(frame, currentTrait);
 //            }

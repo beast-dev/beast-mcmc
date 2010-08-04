@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
+import dr.evomodel.substmodel.*;
 import dr.inference.model.*;
 import dr.evolution.datatype.DataType;
 
@@ -7,14 +8,18 @@ import dr.evolution.datatype.DataType;
  * @author Marc Suchard
  */
 public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements Likelihood,
-                                                                                     BayesianStochasticSearchVariableSelection {
+        BayesianStochasticSearchVariableSelection {
 
     public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
                                        Parameter ratesParameter, Parameter indicatorsParameter) {
         super(name, dataType, freqModel, ratesParameter);
 
-        this.indicatorsParameter  = indicatorsParameter;
-        addVariable(indicatorsParameter);
+        if (indicatorsParameter == null) {
+            this.indicatorsParameter = new Parameter.Default(ratesParameter.getDimension(), 1.0);
+        } else {
+            this.indicatorsParameter  = indicatorsParameter;
+            addVariable(indicatorsParameter);
+        }
     }
 
     @Override

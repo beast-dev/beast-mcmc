@@ -27,6 +27,7 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
@@ -76,7 +77,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean settingOptions = false;
     boolean hasAlignment = false;
 
-//    SequenceErrorModelComponentOptions comp;
+    SequenceErrorModelComponentOptions comp;
 
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
@@ -141,7 +142,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
 
-//        comp = new SequenceErrorModelComponentOptions();
+        comp = new SequenceErrorModelComponentOptions();
     }    
        
     private void resetPanel() {

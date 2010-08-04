@@ -10,26 +10,14 @@ import java.util.List;
  *
  */
 public class TraitData extends PartitionData {
+    public static final String TRAIT_SPECIES = "species";
+
     public static enum TraitType {
         DISCRETE,
         INTEGER,
         CONTINUOUS
     }
 
-    public static enum Traits {
-        TRAIT_SPECIES("species"),
-        TRAIT_LOCATIONS("locations");
-
-        Traits(String name) {
-            this.name = name;
-        }
-
-        public String toString() {
-            return name;
-        }
-
-        private final String name;
-    }
 //    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
     private TraitType traitType = TraitType.DISCRETE;
 

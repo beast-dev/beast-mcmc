@@ -2,6 +2,8 @@ package dr.app.beauti.util;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.*;
+import dr.app.util.Arguments;
+import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -18,10 +20,9 @@ import dr.evolution.util.Units;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
 
 
@@ -33,12 +34,14 @@ import java.util.List;
 public class BEAUTiImporter {
 
     private final BeautiOptions options;
+    private final BeautiFrame frame;
 
-    public BEAUTiImporter(BeautiOptions options) {
+    public BEAUTiImporter(BeautiFrame frame, BeautiOptions options) {
+        this.frame = frame;
         this.options = options;
     }
 
-    public void importFromFile(BeautiFrame frame, File file) throws Exception {
+    public void importFromFile(File file) throws Exception {
         try {
             Reader reader = new FileReader(file);
 
@@ -50,13 +53,18 @@ public class BEAUTiImporter {
 
             if ((line != null && line.toUpperCase().contains("#NEXUS"))) {
                 // is a NEXUS file
-                importNexusFile(frame, file);
+                importNexusFile(file);
             } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
-                importFastaFile(frame, file);
-            } else {
+                importFastaFile(file);
+            } else if ((line != null && (line.toUpperCase().contains("<?XML") ||  line.toUpperCase().contains("<BEAST")))) {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
+//            } else {
+//                // assume it is a tab-delimited traits file and see if that works...
+//                importTraits(file);
+            } else {
+                throw new ImportException ("Unrecognized format for imported file.");
             }
         } catch (IOException e) {
             throw new IOException(e.getMessage());
@@ -78,7 +86,7 @@ public class BEAUTiImporter {
             TaxonList taxa = taxonLists.get(0);
 
             for (Alignment alignment : alignments) {
-                setData(null, taxa, alignment, null, null, null, file.getName());
+                setData(taxa, alignment, null, null, null, null, file.getName());
             }
         } catch (JDOMException e) {
             throw new JDOMException (e.getMessage());
@@ -91,7 +99,7 @@ public class BEAUTiImporter {
     }
 
     // nexus
-    private void importNexusFile(BeautiFrame frame, File file) throws Exception {
+    private void importNexusFile(File file) throws Exception {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -200,11 +208,11 @@ public class BEAUTiImporter {
             throw new Exception (e.getMessage());
         }
 
-        setData(frame, taxa, alignment, trees, model, charSets, file.getName());
+        setData(taxa, alignment, trees, null, model, charSets, file.getName());
     }
 
     // FASTA
-    private void importFastaFile(BeautiFrame frame, File file) throws Exception {
+    private void importFastaFile(File file) throws Exception {
         try {
             FileReader reader = new FileReader(file);
 
@@ -212,16 +220,116 @@ public class BEAUTiImporter {
 
             Alignment alignment = importer.importAlignment();
 
-            setData(null, alignment, alignment, null, null, null, file.getName());
+            setData(alignment, alignment, null, null, null, null, file.getName());
         } catch (ImportException e) {
             throw new ImportException (e.getMessage());
         } catch (IOException e) {
             throw new IOException (e.getMessage());
         }
     }
-    
+
+    public void importTraits(final File file) throws Exception {
+        List<TraitData> importedTraits = new ArrayList<TraitData>();
+        Taxa taxa = new Taxa();
+
+        try {
+            Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
+
+
+            for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
+                final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
+                final String traitName = e.getKey();
+
+                Boolean warningGiven = false;
+                for (String[] v : e.getValue()) {
+                    final Class c1 = Utils.detectTYpe(v[1]);
+                    if (c != c1 && !warningGiven) {
+                        JOptionPane.showMessageDialog(frame, "Not all values of same type in column" + traitName,
+                                "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                        warningGiven = true;
+                        // TODO Error - not all values of same type
+                    }
+                }
+
+                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
+
+//                TraitData newTrait = new TraitData(options, traitName, file.getName(), TraitData.TraitType.DISCRETE);
+
+                if (validateTraitName(traitName)) {
+                    importedTraits.add(newTrait);
+                }
+
+                for (final String[] v : e.getValue()) {
+                    if (v[0].equalsIgnoreCase(v[1])) {
+                        throw new Arguments.ArgumentException("Trait (" + traitName + ") value (" + v[1]
+                                + ")\n cannot be same as taxon name (" + v[0] + ") !");
+                    }
+
+                    final int index = options.taxonList.getTaxonIndex(v[0]);
+                    Taxon taxon;
+                    if (index >= 0) {
+                        taxon = options.taxonList.getTaxon(index);
+//                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
+                    } else {
+                        taxon = new Taxon(v[0]);
+                    }
+                    taxon.setAttribute(traitName, v[1]);
+                    taxa.addTaxon(taxon);
+                }
+            }
+        } catch (Arguments.ArgumentException e) {
+            JOptionPane.showMessageDialog(frame, "Error in loading traits file " + file.getName() + " :\n" + e.getMessage(),
+                    "Error Loading file", JOptionPane.ERROR_MESSAGE);
+            // AR: this will remove all the existing traits including those loaded previously:
+//            traitsPanel.traitsTable.selectAll();
+//            traitsPanel.removeTrait();
+        }
+
+        setData(taxa, null, null, importedTraits, null, null, file.getName());
+    }
+
+    public boolean validateTraitName(String traitName) {
+        // check that the name is valid
+        if (traitName.trim().length() == 0) {
+            Toolkit.getDefaultToolkit().beep();
+            return false;
+        }
+
+        // disallow a trait called 'date'
+        if (traitName.equalsIgnoreCase("date")) {
+            JOptionPane.showMessageDialog(frame,
+                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
+                            " to set dates for taxa.",
+                    "Reserved trait name",
+                    JOptionPane.WARNING_MESSAGE);
+
+            return false;
+        }
+
+        // check that the trait name doesn't exist
+        if (options.containTrait(traitName)) {
+            int option = JOptionPane.showConfirmDialog(frame,
+                    "A trait of this name already exists. Do you wish to replace\n" +
+                            "it with this new trait? This may result in the loss or change\n" +
+                            "in trait values for the taxa.",
+                    "Overwrite trait?",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+
+            if (option == JOptionPane.NO_OPTION) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
     //TODO need refactory to simplify
-    private void setData(BeautiFrame frame, TaxonList taxa, Alignment alignment, List<Tree> trees, PartitionSubstitutionModel model,
+    private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, List<TraitData> traits,
+                         PartitionSubstitutionModel model,
                          List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
@@ -258,45 +366,48 @@ public class BEAUTiImporter {
             options.fileNameStem = fileNameStem;
 
         } else {
+            // AR - removed this distinction. I think we should always allow different taxa
+            // for different partitions but give a warning if they are different
+
             // This is an additional partition so check it uses the same taxa
-            if (!options.allowDifferentTaxa) { // not allow Different Taxa
-                List<String> oldTaxa = new ArrayList<String>();
-                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
-                }
-                List<String> newTaxa = new ArrayList<String>();
-                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    newTaxa.add(taxa.getTaxon(i).getId());
-                }
-
-                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                    int adt;
-                    if (frame == null) {
-                        adt = JOptionPane.YES_OPTION;
-                    } else {
-                        adt = frame.allowDifferentTaxaJOptionPane();
-                    }
-                    //TODO still have swing code
-                    if (adt == JOptionPane.YES_OPTION) {
-                        // set to Allow Different Taxa
-                        options.allowDifferentTaxa = true;
-                        //changeTabs();// can be added, if required in future
-
-                        List<String> prevTaxa = new ArrayList<String>();
-                        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                            prevTaxa.add(options.taxonList.getTaxon(i).getId());
-                        }
-                        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                            if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                                options.taxonList.addTaxon(taxa.getTaxon(i));
-                            }
-                        }
-
-                    } else {
-                        return;
-                    }
-                }
-            } else { // allow Different Taxa
+//            if (!options.allowDifferentTaxa) { // not allow Different Taxa
+//                List<String> oldTaxa = new ArrayList<String>();
+//                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+//                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
+//                }
+//                List<String> newTaxa = new ArrayList<String>();
+//                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+//                    newTaxa.add(taxa.getTaxon(i).getId());
+//                }
+//
+//                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+//                    int adt;
+//                    if (frame == null) {
+//                        adt = JOptionPane.YES_OPTION;
+//                    } else {
+//                        adt = frame.allowDifferentTaxaJOptionPane();
+//                    }
+//                    //TODO still have swing code
+//                    if (adt == JOptionPane.YES_OPTION) {
+//                        // set to Allow Different Taxa
+//                        options.allowDifferentTaxa = true;
+//                        //changeTabs();// can be added, if required in future
+//
+//                        List<String> prevTaxa = new ArrayList<String>();
+//                        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+//                            prevTaxa.add(options.taxonList.getTaxon(i).getId());
+//                        }
+//                        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+//                            if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
+//                                options.taxonList.addTaxon(taxa.getTaxon(i));
+//                            }
+//                        }
+//
+//                    } else {
+//                        return;
+//                    }
+//                }
+//            } else { // allow Different Taxa
                 // AR - it will be much simpler just to consider options.taxonList
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
@@ -312,10 +423,12 @@ public class BEAUTiImporter {
                     }
                 }
 
-            }
+//            }
         }
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);
+
+        addTraits(traits, fileName, fileNameStem);
 
         addTrees(trees);
     }
@@ -430,6 +543,18 @@ public class BEAUTiImporter {
         }
     }
 
+    private void addTraits(List<TraitData> traits,
+                              String fileName, String fileNameStem) {
+        if (traits != null) {
+            for (TraitData trait : traits) {
+                options.addTrait(trait);
+            }
+
+            options.updateLinksBetweenPDPCMPSMPTMPTPP();
+            options.updatePartitionAllLinks();
+            options.clockModelOptions.fixRateOfFirstClockPartition();
+        }
+    }
     private void addTrees(List<Tree> trees) {
         if (trees != null && trees.size() > 0) {
             for (Tree tree : trees) {

@@ -56,9 +56,9 @@ public class GeneralTraitGenerator extends Generator {
      * @throws dr.app.util.Arguments.ArgumentException
      *          ArgumentException
      */
-    public void writeAtrrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
+    public void writeAttrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
         for (TraitData trait : options.getDiscreteIntegerTraits()) {
-            if (!trait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
+            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
 
                 if (!taxon.containsAttribute(trait.getName())) {
                     throw new Arguments.ArgumentException("Cannot find trait " + trait.getName()
@@ -154,7 +154,7 @@ public class GeneralTraitGenerator extends Generator {
 
     public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
         for (TraitData traitData : options.getDiscreteIntegerTraits()) { // Each TD except Species has one AncestralTreeLikelihood
-            if (!traitData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))
+            if (!traitData.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))
                 writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                         traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
         }

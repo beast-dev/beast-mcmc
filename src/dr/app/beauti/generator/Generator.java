@@ -20,11 +20,11 @@ public abstract class Generator {
 	protected static final String COALESCENT = "coalescent";
 	public static final String SP_TREE = "sptree";
 	protected static final String SPECIATION_LIKE = "speciation.likelihood";
-	public static final String SPLIT_POPS = "splitPopSize"; 
+	public static final String SPLIT_POPS = "splitPopSize";
 	protected static final String PDIST = "pdist";
 //	protected static final String STP = "stp";
-	protected static final String SPOPS = TraitData.Traits.TRAIT_SPECIES + "." + "popSizesLikelihood";
-	
+	protected static final String SPOPS = TraitData.TRAIT_SPECIES + "." + "popSizesLikelihood";
+
     protected final BeautiOptions options;
     
 //    protected PartitionSubstitutionModel model;
@@ -285,10 +285,5 @@ public abstract class Generator {
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
-
-    public class GeneratorException extends Exception {
-        public GeneratorException(String message) {
-            super(message);
-        }
-    }    
+    
 }

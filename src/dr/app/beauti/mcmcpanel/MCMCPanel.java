@@ -267,7 +267,7 @@ public class MCMCPanel extends BeautiPanel {
             }
         }
 
-    	if (options.starBEASTOptions.isSpeciesAnalysis()) {
+    	if (options.useStarBEAST) {
     		treeFN = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
     		if (addTxt.isSelected()) treeFN = treeFN + ".txt";
     		options.treeFileName.add(treeFN);

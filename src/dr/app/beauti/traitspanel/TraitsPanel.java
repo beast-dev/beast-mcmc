@@ -61,14 +61,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    private static final String ADD_TRAITS_TOOLTIP =            "<html>Define a new trait for the current taxa</html>";
-    private static final String IMPORT_TRAITS_TOOLTIP =         "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
-                                                                "file. Taxa should be in the first column and the trait names<br>" +
-                                                                "in the first row</html>";
-    private static final String GUESS_TRAIT_VALUES_TOOLTIP =    "<html>This attempts to extract values for this trait that are<br>" +
-                                                                "encoded in the names of the taxa.</html>";
-    private static final String CLEAR_TRAIT_VALUES_TOOLTIP =    "<html>This clears all the values currently assigned to taxa for<br>" +
-                                                                "this trait.</html>";
+    private static final String ADD_TRAITS_TOOLTIP = "<html>Define a new trait for the current taxa</html>";
+    private static final String IMPORT_TRAITS_TOOLTIP = "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
+            "file. Taxa should be in the first column and the trait names<br>" +
+            "in the first row</html>";
+    private static final String GUESS_TRAIT_VALUES_TOOLTIP = "<html>This attempts to extract values for this trait that are<br>" +
+            "encoded in the names of the taxa.</html>";
+    private static final String CLEAR_TRAIT_VALUES_TOOLTIP = "<html>This clears all the values currently assigned to taxa for<br>" +
+            "this trait.</html>";
 
     public final JTable traitsTable;
     private final TraitsTableModel traitsTableModel;
@@ -187,7 +187,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         actionPanel1.setAddAction(addTraitAction);
         actionPanel1.setRemoveAction(removeTraitAction);
 //        actionPanel1.getAddActionButton().setTooltipText(ADD_TRAITS_TOOLTIP);
-        
+
         removeTraitAction.setEnabled(false);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -257,13 +257,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTraitsChanged() {
-
-        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-            frame.setupSpeciesAnalysis();
-        } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-            frame.updateDiscreteTraitAnalysis();
+        if (currentTrait != null) {
+            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
+                frame.setupSpeciesAnalysis();
+            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                frame.updateDiscreteTraitAnalysis();
+            }
         }
-
         traitsTableModel.fireTableDataChanged();
         options.updatePartitionAllLinks();
         frame.setDirty();

@@ -26,6 +26,7 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
+import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.enumTypes.FrequencyPolicyType;
 import dr.app.beauti.enumTypes.LocationSubstModelType;
@@ -86,7 +87,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(LocationSubstModelType.values());
     private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
-
 
     protected final PartitionSubstitutionModel model;
 

@@ -12,11 +12,14 @@ import dr.math.matrixAlgebra.Vector;
 public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implements BayesianStochasticSearchVariableSelection {
 
     public SVSComplexSubstitutionModel(String name, DataType dataType, FrequencyModel rootFreqModel,
-                                       Parameter parameter, Parameter indicators /*, boolean considerConnectedness*/) {
-        super(name, dataType, rootFreqModel, parameter);
-        this.indicators = indicators;
-        addVariable(indicators);
-//        this.considerConnectedness = considerConnectedness;
+                                       Parameter rates, Parameter indicators) {
+        super(name, dataType, rootFreqModel, rates);
+        if (indicators != null) {
+            this.indicators = indicators;
+            addVariable(indicators);
+        } else {
+            this.indicators = new Parameter.Default(rates.getDimension(), 1.0);
+        }
     }
 
     protected double[] getRates() {

@@ -32,6 +32,8 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
 import dr.gui.table.TableSorter;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.panels.ActionPanel;
@@ -61,13 +63,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    private static final String ADD_TRAITS_TOOLTIP = "<html>Define a new trait for the current taxa</html>";
-    private static final String IMPORT_TRAITS_TOOLTIP = "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
+    private static final String ADD_TRAITS_TOOLTIP =            "<html>Define a new trait for the current taxa</html>";
+    private static final String IMPORT_TRAITS_TOOLTIP =         "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
             "file. Taxa should be in the first column and the trait names<br>" +
             "in the first row</html>";
-    private static final String GUESS_TRAIT_VALUES_TOOLTIP = "<html>This attempts to extract values for this trait that are<br>" +
+    private static final String GUESS_TRAIT_VALUES_TOOLTIP =    "<html>This attempts to extract values for this trait that are<br>" +
             "encoded in the names of the taxa.</html>";
-    private static final String CLEAR_TRAIT_VALUES_TOOLTIP = "<html>This clears all the values currently assigned to taxa for<br>" +
+    private static final String CLEAR_TRAIT_VALUES_TOOLTIP =    "<html>This clears all the values currently assigned to taxa for<br>" +
             "this trait.</html>";
 
     public final JTable traitsTable;
@@ -257,13 +259,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTraitsChanged() {
-        if (currentTrait != null) {
-            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-                frame.setupSpeciesAnalysis();
-            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                frame.updateDiscreteTraitAnalysis();
-            }
+
+//        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
+//            frame.setupSpeciesAnalysis();
+//        } else
+        if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+            frame.updateDiscreteTraitAnalysis();
         }
+
         traitsTableModel.fireTableDataChanged();
         options.updatePartitionAllLinks();
         frame.setDirty();
@@ -299,7 +302,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         if (options.taxonList != null) { // validation of check empty taxonList
 //            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
             if (currentTrait == null) addTrait();
-            if (currentTrait == null) return; //
+
 //            if (guessTraitDialog == null) {
 //                guessTraitDialog = new GuessTraitDialog(frame, currentTrait);
 //            }
@@ -315,7 +318,18 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             guessTraitDialog.setupGuesser();
 
             try {
-                currentTraitGuesser.guessTrait(options);
+                int[] selRows = dataTable.getSelectedRows();
+                if (selRows.length > 0) {
+                    Taxa selectedTaxa = new Taxa();
+
+                    for (int row : selRows) {
+                        Taxon taxon = (Taxon)dataTable.getValueAt(row, 0);
+                        selectedTaxa.addTaxon(taxon);
+                    }
+                    currentTraitGuesser.guessTrait(selectedTaxa);
+                } else {
+                    currentTraitGuesser.guessTrait(options.taxonList);
+                }
 
             } catch (IllegalArgumentException iae) {
                 JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
@@ -363,9 +377,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         if (currentTrait != null) {
             clearTraitValues(currentTrait.getName()); // Clear trait values
-            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-                frame.removeSepciesAnalysis();
-            } else if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+//            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
+//                frame.removeSepciesAnalysis();
+//            } else
+            if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 frame.updateDiscreteTraitAnalysis();
             }
 
@@ -473,9 +488,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-//            return !getValueAt(row, 0).equals(TraitGuesser.Traits.TRAIT_SPECIES);
-            return !(options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())
-                    || options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
+//            return !(options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())
+//                    || options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
+            return col == 0;
         }
 
         public String getColumnName(int column) {
@@ -527,6 +542,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public int getRowCount() {
             if (options == null) return 0;
             if (options.taxonList == null) return 0;
+            if (currentTrait == null) return 0;
 
             return options.taxonList.getTaxonCount();
         }
@@ -534,7 +550,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.taxonList.getTaxonId(row);
+                    return options.taxonList.getTaxon(row);
                 case 1:
                     Object value = null;
                     if (currentTrait != null) {

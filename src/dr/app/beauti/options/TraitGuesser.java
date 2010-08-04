@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.traitspanel.GuessTraitException;
+import dr.evolution.util.TaxonList;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,19 +42,14 @@ public class TraitGuesser {
     }
 
     public static enum GuessType {
-        SUFFIX,
-        PREFIX,
+        DELIMITER,
         REGEX
     }
 
-//    private boolean guessTrait = false; // no use ??
+    private GuessType guessType = GuessType.DELIMITER;
 
-    private GuessType guessType = GuessType.SUFFIX;
-//    private String traitName = TraitsOptions.Traits.TRAIT_SPECIES.toString();
-//    private TraitsOptions.TraitType traitType = TraitsOptions.TraitType.DISCRETE;
-
-    private int index = 0;
-    private String separator;
+    private int order = 0;
+    private String delimiter;
     private String regex;
 
     ////////////////////////////////////////////////////////////////
@@ -70,20 +66,20 @@ public class TraitGuesser {
         this.guessType = guessType;
     }
 
-    public int getIndex() {
-        return index;
+    public int getOrder() {
+        return order;
     }
 
-    public void setIndex(int index) {
-        this.index = index;
+    public void setOrder(int order) {
+        this.order = order;
     }
 
-    public String getSeparator() {
-        return separator;
+    public String getDelimiter() {
+        return delimiter;
     }
 
-    public void setSeparator(String separator) {
-        this.separator = separator;
+    public void setDelimiter(String delimiter) {
+        this.delimiter = delimiter;
     }
 
     public String getRegex() {
@@ -95,22 +91,19 @@ public class TraitGuesser {
     }
 
     ////////////////////////////////////////////////////////////////
-    public void guessTrait(BeautiOptions options) {
+    public void guessTrait(TaxonList taxa) {
 
-        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
 
             String value = null;
 
             try {
                 switch (guessType) {
-                    case SUFFIX:
-                        value = guessTraitFromSuffix(options.taxonList.getTaxonId(i), separator);
-                        break;
-                    case PREFIX:
-                        value = guessTraitFromPrefix(options.taxonList.getTaxonId(i), separator);
+                    case DELIMITER:
+                        value = guessTraitByDelimiter(taxa.getTaxonId(i), delimiter);
                         break;
                     case REGEX:
-                        value = guessTraitFromRegex(options.taxonList.getTaxonId(i), regex);
+                        value = guessTraitFromRegex(taxa.getTaxonId(i), regex);
                         break;
                     default:
                         throw new IllegalArgumentException("unknown GuessType");
@@ -120,58 +113,34 @@ public class TraitGuesser {
                 //
             }
 
-            options.taxonList.getTaxon(i).setAttribute(traitData.getName(), value);
+            taxa.getTaxon(i).setAttribute(traitData.getName(), value);
         }
     }
 
-    public String guessTraitFromSuffix(String label, String seperator) throws GuessTraitException {
-        if (seperator.length() < 1 || index < 0) {
-            throw new IllegalArgumentException("No seperator or wrong seperator index !");
+    public String guessTraitByDelimiter(String label, String delimiter) throws GuessTraitException {
+        if (delimiter.length() < 1) {
+            throw new IllegalArgumentException("No delimiter");
         }
 
-        int id = -1;
-        String t = label;
-        for (int i = 0; i <= index; i++) { // i <= index
-            id = t.lastIndexOf(seperator);
+        String[] tokens = label.split(delimiter);
 
-            if (id < 0) {
-                throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
+        if (tokens.length < 2) {
+            throw new IllegalArgumentException("Can not find delimiter in taxon label (" + label + ")\n or invalid delimiter (" + delimiter + ").");
+        }
+
+        if (order >= 0) {
+            if (order >= tokens.length) {
+                throw new IllegalArgumentException("Insufficent delimiters in taxon lable (" + label + ")\n to find requested field.");
             }
 
-            t = t.substring(0, id);
-        }
-
-        return label.substring(id + 1); // exclude ith separator
-    }
-
-    public String guessTraitFromPrefix(String label, String seperator) throws GuessTraitException {
-        if (seperator.length() < 1 || index < 0) {
-            throw new IllegalArgumentException("No seperator or wrong seperator index !");
-        }
-
-        int id;
-        int idSum = 0;
-        String t = label;
-        for (int i = 0; i <= index; i++) { // i <= index
-            id = t.indexOf(seperator);
-
-            if (id < 0) {
-            	if (i == 0) {
-            		throw new IllegalArgumentException("Can not find seperator in taxon label (" + label + ")\n or invalid seperator (" + seperator + ") !");
-            	} else {
-            		return label + seperator + traitData.getName();
-            	}
+            return tokens[order];
+        } else {
+            if (tokens.length + order < 0) {
+                throw new IllegalArgumentException("Insufficent delimiters in taxon lable (" + label + ")\n to find requested field.");
             }
 
-            t = t.substring(id + 1);
-            if (i == 0) {
-                idSum = idSum + id;
-            } else {
-                idSum = idSum + id + 1;
-            }
+            return tokens[tokens.length + order];
         }
-
-        return label.substring(0, idSum); // exclude ith separator
     }
 
     public String guessTraitFromRegex(String label, String regex) throws GuessTraitException {

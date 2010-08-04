@@ -49,13 +49,11 @@ public class GuessTraitDialog {
 
     //    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
     
-    private final JRadioButton suffixRadio = new JRadioButton("Defined by a suffix, after the", true);
-    private final JComboBox suffixOrderCombo = new JComboBox(new String[]{"last", "second from last", "third from last", "fourth from last"});
-    private final JTextField suffixText = new JTextField(6);
-
-    private final JRadioButton prefixRadio = new JRadioButton("Defined by a prefix, before the", false);
-    private final JComboBox prefixOrderCombo = new JComboBox(new String[]{"first", "second", "third", "fourth"});
-    private final JTextField prefixText = new JTextField(6);
+    private final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
+    private final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
+            "fourth", "fourth from last",
+            "third from last", "second from last", "last"});
+    private final JTextField delimiterText = new JTextField(6);
 
     private final JRadioButton regexRadio = new JRadioButton("Defined by regular expression (REGEX)", false);
     private final JTextField regexText = new JTextField(16);
@@ -97,34 +95,25 @@ public class GuessTraitDialog {
         
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
         
-        optionPanel.addComponents(suffixRadio, suffixOrderCombo);
-        optionPanel.addComponentWithLabel("separator ", suffixText);
-        suffixText.setEnabled(true);
-        optionPanel.addSeparator();
-
-        optionPanel.addComponents(prefixRadio, prefixOrderCombo);
-        optionPanel.addComponentWithLabel("separator", prefixText);
-        prefixText.setEnabled(false);
+        optionPanel.addComponents(orderRadio, orderCombo);
+        optionPanel.addComponentWithLabel("with delimiter ", delimiterText);
+        delimiterText.setEnabled(true);
         optionPanel.addSeparator();
 
         regexText.setEnabled(false);
         optionPanel.addComponents(regexRadio, regexText);
  
         ButtonGroup group = new ButtonGroup();
-        group.add(suffixRadio);
-        group.add(prefixRadio);
+        group.add(orderRadio);
         group.add(regexRadio);
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
-            	suffixText.setEditable(suffixRadio.isSelected());
-            	suffixOrderCombo.setEnabled(suffixRadio.isSelected());
-            	prefixOrderCombo.setEnabled(prefixRadio.isSelected());
-                prefixText.setEnabled(prefixRadio.isSelected());
+            	delimiterText.setEditable(orderRadio.isSelected());
+            	orderCombo.setEnabled(orderRadio.isSelected());
                 regexText.setEnabled(regexRadio.isSelected());
             }
         };
-        suffixRadio.addItemListener(listener);
-        prefixRadio.addItemListener(listener);
+        orderRadio.addItemListener(listener);
         regexRadio.addItemListener(listener);
 
 //        setupGuesser();
@@ -155,14 +144,14 @@ public class GuessTraitDialog {
     }
 
     public void setupGuesser() {
-        if (suffixRadio.isSelected()) {
-            guesser.setGuessType(TraitGuesser.GuessType.SUFFIX);
-            guesser.setIndex(suffixOrderCombo.getSelectedIndex());
-            guesser.setSeparator(suffixText.getText());
-        } else if (prefixRadio.isSelected()) {
-            guesser.setGuessType(TraitGuesser.GuessType.PREFIX);
-            guesser.setIndex(prefixOrderCombo.getSelectedIndex());
-            guesser.setSeparator(prefixText.getText());
+        if (orderRadio.isSelected()) {
+            int order = orderCombo.getSelectedIndex();
+            if (order > 3) {
+                order =7 - order;
+            }
+            guesser.setGuessType(TraitGuesser.GuessType.DELIMITER);
+            guesser.setOrder(order);
+            guesser.setDelimiter(delimiterText.getText());
         } else if (regexRadio.isSelected()) {
             guesser.setGuessType(TraitGuesser.GuessType.REGEX);
             guesser.setRegex(regexText.getText());

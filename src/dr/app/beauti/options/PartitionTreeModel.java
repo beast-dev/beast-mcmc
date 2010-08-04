@@ -129,7 +129,7 @@ public class PartitionTreeModel extends PartitionModelOptions {
     	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
 //    	rootHeightPara.initial = initialRootHeight; 
 //    	rootHeightPara.priorEdited = true;
-    	if (!options.starBEASTOptions.isSpeciesAnalysis()) {
+    	if (!options.useStarBEAST) {
     		params.add(rootHeightPara);
     	}
     	     

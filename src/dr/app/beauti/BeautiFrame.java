@@ -15,7 +15,6 @@ import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
-import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.BeautiOptions;
@@ -51,6 +50,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
@@ -118,13 +118,13 @@ public class BeautiFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction(), getImportTraitsAction());
+        dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         clockModelsPanel = new ClockModelsPanel(this);
-        oldTreesPanel = new OldTreesPanel(this);
+//        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
         priorsPanel = new PriorsPanel(this, false);
@@ -137,11 +137,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
         tabbedPane.addTab("Clock Models", clockModelsPanel);
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             tabbedPane.addTab("Trees", treesPanel);
-        } else {
-            tabbedPane.addTab("Trees", oldTreesPanel);
-        }
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -208,22 +204,13 @@ public class BeautiFrame extends DocumentFrame {
      * set all the options for all panels
      */
     public void setAllOptions() {
-        GUIValidate();
-
         dataPanel.setOptions(options);
         tipDatesPanel.setOptions(options);
         traitsPanel.setOptions(options);
         taxaPanel.setOptions(options);
         siteModelsPanel.setOptions(options);
         clockModelsPanel.setOptions(options);
-//        if (options.isSpeciesAnalysis()) {
-//            speciesTreesPanel.setOptions(options);
-//        } else
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.setOptions(options);
-        } else {
-            oldTreesPanel.setOptions(options);
-        }
         priorsPanel.setOptions(options);
         operatorsPanel.setOptions(options);
         mcmcPanel.setOptions(options);
@@ -241,14 +228,7 @@ public class BeautiFrame extends DocumentFrame {
         taxaPanel.getOptions(options);
         siteModelsPanel.getOptions(options);
         clockModelsPanel.getOptions(options);
-//        if (options.isSpeciesAnalysis()) {
-//            speciesTreesPanel.getOptions(options);
-//        } else
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
             treesPanel.getOptions(options);
-        } else {
-            oldTreesPanel.getOptions(options);
-        }
         priorsPanel.getOptions(options);
         operatorsPanel.getOptions(options);
         mcmcPanel.getOptions(options);
@@ -345,8 +325,8 @@ public class BeautiFrame extends DocumentFrame {
                             "Invalid file name", JOptionPane.ERROR_MESSAGE);
                 } else {
                     try {
-                        BEAUTiImporter beautiImporter = new BEAUTiImporter(options);
-                        beautiImporter.importFromFile(this, file);
+                        BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                        beautiImporter.importFromFile(file);
 
                         setDirty();
 //                    } catch (FileNotFoundException fnfe) {
@@ -397,13 +377,13 @@ public class BeautiFrame extends DocumentFrame {
         }
     }
 
-    public int allowDifferentTaxaJOptionPane() {
-        // AR - Yes and No are perfectly good answers to this question
-        return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
-                + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
-                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
-                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
-    }
+//    public int allowDifferentTaxaJOptionPane() {
+//        // AR - Yes and No are perfectly good answers to this question
+//        return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
+//                + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
+//                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
+//                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
+//    }
 
     public final void doImportTraits() {
         if (options.taxonList != null) { // validation of check empty taxonList
@@ -416,7 +396,8 @@ public class BeautiFrame extends DocumentFrame {
                 final File file = new File(dialog.getDirectory(), dialog.getFile());
 
                 try {
-                    if (!importMultiTraits(file)) return;
+                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                    beautiImporter.importTraits(file);
                 } catch (FileNotFoundException fnfe) {
                     JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                             "Unable to open file",
@@ -425,6 +406,12 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
                             "Unable to read file",
                             JOptionPane.ERROR_MESSAGE);
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                            "Error reading file",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                    return;
                 }
             }
         } else {
@@ -435,62 +422,6 @@ public class BeautiFrame extends DocumentFrame {
 
         traitsPanel.fireTraitsChanged();
         setAllOptions();
-    }
-
-    private boolean importMultiTraits(final File file) throws IOException {
-        boolean loadFile = true;
-        try {
-            Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
-
-            for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
-                final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
-                final String traitName = e.getKey();
-
-                Boolean warningGiven = false;
-                for (String[] v : e.getValue()) {
-                    final Class c1 = Utils.detectTYpe(v[1]);
-                    if (c != c1 && !warningGiven) {
-                        JOptionPane.showMessageDialog(this, "Not all values of same type in column" + traitName,
-                                "Incompatible values", JOptionPane.WARNING_MESSAGE);
-                        warningGiven = true;
-                        // TODO Error - not all values of same type
-                    }
-                }
-
-//                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
-//                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
-//                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
-
-                TraitData newTrait = new TraitData(options, traitName, file.getName(), TraitData.TraitType.DISCRETE);
-
-                if (validateTraitName(traitName))
-                    traitsPanel.addTrait(newTrait);
-
-                for (final String[] v : e.getValue()) {
-                    if (v[0].equalsIgnoreCase(v[1])) {
-                        throw new Arguments.ArgumentException("Trait (" + traitName + ") value (" + v[1]
-                                + ")\n cannot be same as taxon name (" + v[0] + ") !");
-                    }
-
-                    final int index = options.taxonList.getTaxonIndex(v[0]);
-                    if (index >= 0) {
-                        // if the taxon isn't in the list then ignore it.
-                        // TODO provide a warning of unmatched taxa
-                        final Taxon taxon = options.taxonList.getTaxon(index);
-//                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
-                        taxon.setAttribute(traitName, v[1]);
-                    }
-                }
-            }
-        } catch (Arguments.ArgumentException e) {
-            JOptionPane.showMessageDialog(this, "Error in loading traits file " + file.getName() + " :\n" + e.getMessage(),
-                    "Error Loading file", JOptionPane.ERROR_MESSAGE);
-            traitsPanel.traitsTable.selectAll();
-            traitsPanel.removeTrait();
-            return false;
-        }
-
-        return loadFile;
     }
 
     public boolean validateTraitName(String traitName) {
@@ -529,11 +460,11 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void setupSpeciesAnalysis() {
-        dataPanel.selectAll();
-        dataPanel.unlinkAll();
-//        dataPanel.unlinkModels();
-//        dataPanel.unlinkTrees();
+    public void setupSpeciesAnalysis(boolean useStarBEAST) {
+        if (useStarBEAST) {
+            dataPanel.selectAll();
+
+            dataPanel.unlinkAll();
 
 //        if (options.getPartitionClockModels().size() > 1) {
 //        	dataPanel.linkClocks();
@@ -547,24 +478,14 @@ public class BeautiFrame extends DocumentFrame {
 //        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
 //        speciesTreesPanel.getOptions(options);
 
-        treesPanel.updatePriorPanelForSpeciesAnalysis();
+            treesPanel.updatePriorPanelForSpeciesAnalysis();
 
-        options.starBEASTOptions = new STARBEASTOptions(options);
-        options.fileNameStem = "LogStem";
+            options.starBEASTOptions = new STARBEASTOptions(options);
+            options.fileNameStem = "LogStem";
 
-        setStatusMessage();
-    }
+        }
 
-    public void removeSepciesAnalysis() {
-//        options.activedSameTreePrior.setNodeHeightPrior(TreePriorType.CONSTANT);
-//
-//        int i = tabbedPane.indexOfTab("Trees");
-//        tabbedPane.removeTabAt(i);
-//        if (DataPanel.ALLOW_UNLINKED_TREES) {
-//            tabbedPane.insertTab("Trees", null, treesPanel, "", i);
-//        } else {
-//            tabbedPane.insertTab("Trees", null, oldTreesPanel, "", i);
-//        }
+        options.useStarBEAST = useStarBEAST;
 
         treesPanel.updatePriorPanelForSpeciesAnalysis();
 
@@ -577,6 +498,7 @@ public class BeautiFrame extends DocumentFrame {
 
     public void setupEBSP() {
         dataPanel.selectAll();
+
         dataPanel.unlinkAll();
 
         setAllOptions();
@@ -588,31 +510,11 @@ public class BeautiFrame extends DocumentFrame {
 
     public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
         //TODO: wait for new implementation in BEAST
-        if (DataPanel.ALLOW_UNLINKED_TREES) {
-            treesPanel.setCheckedTipDate(isChecked);
-        } else {
-            if (isChecked) {
-                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.YULE);
-                oldTreesPanel.treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-            } else {
-                oldTreesPanel.treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
-            }
-        }
+        treesPanel.setCheckedTipDate(isChecked);
     }
 
     public void setStatusMessage() {
         statusLabel.setText(options.statusMessage());
-    }
-
-    public void GUIValidate() {
-        if (options.starBEASTOptions.isSpeciesAnalysis()) {
-            if (options.starBEASTOptions.getSpeciesList() == null) {
-                JOptionPane.showMessageDialog(this, "Species value is empty."
-                        + "\nPlease go to Traits panel, either Import Traits,"
-                        + "\nor Guess trait values", "*BEAST Error Message",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
     }
 
     public final boolean doGenerate() {
@@ -652,10 +554,6 @@ public class BeautiFrame extends DocumentFrame {
                 } catch (IOException ioe) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
                             "Unable to generate file", JOptionPane.ERROR_MESSAGE);
-                    return false;
-                } catch (Generator.GeneratorException e) {
-                    JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
-                            "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                     return false;
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),
@@ -748,7 +646,7 @@ public class BeautiFrame extends DocumentFrame {
         return importAlignmentAction;
     }
 
-    protected AbstractAction importAlignmentAction = new AbstractAction("Import Alignment(s)") {
+    protected AbstractAction importAlignmentAction = new AbstractAction("Import Data...") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {
@@ -760,7 +658,7 @@ public class BeautiFrame extends DocumentFrame {
         return importTraitsAction;
     }
 
-    protected AbstractAction importTraitsAction = new AbstractAction("Import Trait(s)") {
+    protected AbstractAction importTraitsAction = new AbstractAction("Import Traits") {
         private static final long serialVersionUID = 3217702096314745005L;
 
         public void actionPerformed(java.awt.event.ActionEvent ae) {

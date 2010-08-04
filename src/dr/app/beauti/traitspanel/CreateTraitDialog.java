@@ -40,8 +40,8 @@ public class CreateTraitDialog {
 
     private final BeautiFrame frame;
 
-//    JTextField nameField;
-    JComboBox nameCombo;
+    JTextField nameField;
+//    JComboBox nameCombo;
     JComboBox typeCombo;
 
     OptionsPanel optionPanel;
@@ -49,14 +49,14 @@ public class CreateTraitDialog {
     public CreateTraitDialog(BeautiFrame frame) {
         this.frame = frame;
 
-//        nameField = new JTextField(TraitGuesser.Traits.TRAIT_SPECIES.toString());
-//        nameField.setColumns(20);
+        nameField = new JTextField("Untitled");
+        nameField.setColumns(20);
 
-        nameCombo = new JComboBox(TraitData.Traits.values());
+//        nameCombo = new JComboBox(TraitData.Traits.values());
         typeCombo = new JComboBox(TraitData.TraitType.values());
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Name:", nameCombo);
+        optionPanel.addComponentWithLabel("Name:", nameField);
         optionPanel.addComponentWithLabel("Type:", typeCombo);
 
 
@@ -95,8 +95,8 @@ public class CreateTraitDialog {
     }
 
     public String getName() {
-//        return nameField.getText();
-        return nameCombo.getSelectedItem().toString();
+        return nameField.getText();
+//        return nameCombo.getSelectedItem().toString();
     }
 
     public TraitData.TraitType getType() {

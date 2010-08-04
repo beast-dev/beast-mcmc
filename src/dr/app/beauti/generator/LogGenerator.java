@@ -35,7 +35,6 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
-import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.coalescent.CoalescentLikelihoodParser;
@@ -120,7 +119,7 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             writer.writeOpenTag(ColumnsParser.COLUMN,
                     new Attribute[]{
                             new Attribute.Default<String>(ColumnsParser.LABEL, "PopMean"),
@@ -128,7 +127,7 @@ public class LogGenerator extends Generator {
                             new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
                     }
             );
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
@@ -216,9 +215,9 @@ public class LogGenerator extends Generator {
             writer.writeIDref(CompoundLikelihoodParser.LIKELIHOOD, "likelihood");
         }
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             // coalescent prior
-            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.Traits.TRAIT_SPECIES + "." + COALESCENT);
+            writer.writeIDref(MultiSpeciesCoalescentParser.SPECIES_COALESCENT, TraitData.TRAIT_SPECIES + "." + COALESCENT);
             // prior on population sizes
 //            if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
             writer.writeIDref(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, SPOPS);
@@ -228,14 +227,14 @@ public class LogGenerator extends Generator {
             // prior on species tree
             writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
 
-            writer.writeIDref(ParameterParser.PARAMETER, TraitData.Traits.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
+            writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
             writer.writeIDref(ParameterParser.PARAMETER, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS);
 
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.Traits.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
             } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-                writer.writeIDref(ParameterParser.PARAMETER, TraitData.Traits.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
+                writer.writeIDref(ParameterParser.PARAMETER, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
             } else {
                 throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
             }
@@ -324,11 +323,11 @@ public class LogGenerator extends Generator {
     public void writeTreeLogToFile(XMLWriter writer) {
         writer.writeComment("write tree log to file");
 
-        if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (options.useStarBEAST) { // species
             // species tree log
             writer.writeOpenTag(TreeLoggerParser.LOG_TREE,
                     new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, TraitData.Traits.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
+                            new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + TREE_FILE_LOG), // speciesTreeFileLog
                             new Attribute.Default<String>(TreeLoggerParser.LOG_EVERY, options.logEvery + ""),
                             new Attribute.Default<String>(TreeLoggerParser.NEXUS_FORMAT, "true"),
                             new Attribute.Default<String>(TreeLoggerParser.FILE_NAME, options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME),
@@ -394,12 +393,8 @@ public class LogGenerator extends Generator {
 
                         case UNCORRELATED_EXPONENTIAL:
                         case UNCORRELATED_LOGNORMAL:
-                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                            break;
-
                         case RANDOM_LOCAL_CLOCK:
-                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix())
-                                    + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
@@ -419,7 +414,7 @@ public class LogGenerator extends Generator {
 
             if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
                 for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
-                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())))
+                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString())) )
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                                 partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
@@ -433,7 +428,7 @@ public class LogGenerator extends Generator {
 
 
         if (options.substTreeLog) {
-            if (options.starBEASTOptions.isSpeciesAnalysis()) { // species
+            if (options.useStarBEAST) { // species
                 //TODO: species sub tree
             }
 
@@ -460,12 +455,8 @@ public class LogGenerator extends Generator {
 
                             case UNCORRELATED_EXPONENTIAL:
                             case UNCORRELATED_LOGNORMAL:
-                                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                                break;
-
                             case RANDOM_LOCAL_CLOCK:
-                                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix())
-                                        + BranchRateModel.BRANCH_RATES);
+                                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
                                 break;
 
                             case AUTOCORRELATED_LOGNORMAL:

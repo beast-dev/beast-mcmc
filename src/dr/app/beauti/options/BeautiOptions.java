@@ -126,6 +126,7 @@ public class BeautiOptions extends ModelOptions {
         priorOptions = new PriorOptions(this);
 
 //        traitsOptions = new TraitsOptions(this);
+        useStarBEAST = false;
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -193,7 +194,7 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectStatistics(parameters);
         }
 
-        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (useStarBEAST) { // species
             starBEASTOptions.selectParameters(parameters);
         }
 
@@ -247,7 +248,7 @@ public class BeautiOptions extends ModelOptions {
             clockTree.selectOperators(ops);
         }
 
-        if (starBEASTOptions.isSpeciesAnalysis()) { // species
+        if (useStarBEAST) { // species
             starBEASTOptions.selectOperators(ops);
         }
 
@@ -309,7 +310,7 @@ public class BeautiOptions extends ModelOptions {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (model != null && (!activeModels.contains(model))
                     // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))) {
+                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
                 activeModels.add(model);
             }
         }
@@ -353,7 +354,7 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel model = partition.getPartitionClockModel();
             if (model != null && (!activeModels.contains(model))
                     // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))) {
+                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
                 activeModels.add(model);
             }
         }
@@ -393,7 +394,7 @@ public class BeautiOptions extends ModelOptions {
             PartitionTreeModel tree = partition.getPartitionTreeModel();
             if (tree != null && (!activeTrees.contains(tree))
                     // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString()))) {
+                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
                 activeTrees.add(tree);
             }
         }
@@ -595,7 +596,7 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasDiscreteIntegerTraitsExcludeSpecies() { // exclude species at moment
         return getDiscreteIntegerTraits().size() > 1
-                || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitData.Traits.TRAIT_SPECIES.toString())));
+                || (getDiscreteIntegerTraits().size() > 0 && (!containTrait(TraitData.TRAIT_SPECIES)));
     }
 
     public boolean containTrait(String traitName) {
@@ -658,8 +659,22 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-    public boolean hasPhylogeographic() {
-        return containTrait(TraitData.Traits.TRAIT_LOCATIONS.toString());
+    public boolean hasDiscreteTraitModel() {
+        for (TraitData traitData : traitPartitions) {
+            if (traitData.getTraitType() == TraitData.TraitType.DISCRETE) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasContinuousTraitModel() {
+        for (TraitData traitData : traitPartitions) {
+            if (traitData.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // ++++++++++++++++++++ message bar +++++++++++++++++
@@ -676,7 +691,7 @@ public class BeautiOptions extends ModelOptions {
 
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
 
-            if (starBEASTOptions.getSpeciesList() != null && starBEASTOptions.isSpeciesAnalysis()) {
+            if (starBEASTOptions.getSpeciesList() != null && useStarBEAST) {
                 int num = starBEASTOptions.getSpeciesList().size();
                 message += ", " + num + " species"; // species is both singular and plural
             }
@@ -686,13 +701,13 @@ public class BeautiOptions extends ModelOptions {
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 
-            if (starBEASTOptions.isSpeciesAnalysis()) {
+            if (useStarBEAST) {
                 message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
-            if (hasPhylogeographic()) {
-                message += ";    Phylogeographic Analysis";
-            }
+//            if (hasPhylogeographic()) {
+//                message += ";    Phylogeographic Analysis";
+//            }
 
             message += ";    " + clockModelOptions.statusMessageClockModel();
 
@@ -730,6 +745,7 @@ public class BeautiOptions extends ModelOptions {
 
     // Data 
     public List<PartitionData> dataPartitions = new ArrayList<PartitionData>();
+    public List<TraitData> traitPartitions = new ArrayList<TraitData>();
 
     // ClockModel <=> TreeModel
     private List<PartitionClockModelTreeModelLink> partitionClockTreeLinks = new ArrayList<PartitionClockModelTreeModelLink>();
@@ -773,6 +789,7 @@ public class BeautiOptions extends ModelOptions {
     public PriorOptions priorOptions = new PriorOptions(this);
 
 //    public TraitsOptions traitsOptions = new TraitsOptions(this);
+    public boolean useStarBEAST = false;
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

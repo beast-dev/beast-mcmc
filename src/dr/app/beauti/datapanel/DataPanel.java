@@ -236,6 +236,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionData partition = options.dataPartitions.get(row);
             Alignment alignment = partition.getAlignment();
+
+            if (alignment == null) return; 
+
             AlignmentViewer viewer = new AlignmentViewer();
             if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
                 viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));

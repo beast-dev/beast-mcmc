@@ -15,8 +15,14 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     public SVSGeneralSubstitutionModel(String name, DataType dataType, FrequencyModel freqModel,
                                        Parameter ratesParameter, Parameter indicatorsParameter) {
         super(name, dataType, freqModel, ratesParameter, -1);
-        this.indicatorsParameter  = indicatorsParameter;
-        addVariable(indicatorsParameter);
+
+        if (indicatorsParameter == null) {
+            this.indicatorsParameter = new Parameter.Default(ratesParameter.getDimension(), 1.0);
+        } else {
+            this.indicatorsParameter  = indicatorsParameter;
+            addVariable(indicatorsParameter);
+        }
+
     }
 
     @Override

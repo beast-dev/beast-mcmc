@@ -31,9 +31,12 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut
+ * @author Walter Xie
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class CreateTraitDialog {
@@ -43,22 +46,41 @@ public class CreateTraitDialog {
     JTextField nameField;
 //    JComboBox nameCombo;
     JComboBox typeCombo;
+    private final JRadioButton createRadio = new JRadioButton("Create a new trait and then guess trait value from taxa name", true);
+    private final JRadioButton importRadio = new JRadioButton("Import trait(s) from a mapping file", false);
+
+    public static final int OK_IMPORT = 10;
 
     OptionsPanel optionPanel;
 
-    public CreateTraitDialog(BeautiFrame frame) {
+    public CreateTraitDialog(BeautiFrame frame, String traitName) {
         this.frame = frame;
 
-        nameField = new JTextField("Untitled");
+        if (traitName == null) traitName = "Untitled";
+        nameField = new JTextField(traitName);
         nameField.setColumns(20);
 
 //        nameCombo = new JComboBox(TraitData.Traits.values());
         typeCombo = new JComboBox(TraitData.TraitType.values());
 
         optionPanel = new OptionsPanel(12, 12);
+
+        ButtonGroup group = new ButtonGroup();
+        group.add(createRadio);
+        group.add(importRadio);
+        ItemListener listener = new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                nameField.setEnabled(createRadio.isSelected());
+            	typeCombo.setEnabled(createRadio.isSelected());
+            }
+        };
+        createRadio.addItemListener(listener);
+        importRadio.addItemListener(listener);
+
+        optionPanel.addComponent(importRadio);
+        optionPanel.addComponent(createRadio);
         optionPanel.addComponentWithLabel("Name:", nameField);
         optionPanel.addComponentWithLabel("Type:", typeCombo);
-
 
     }
 
@@ -76,7 +98,7 @@ public class CreateTraitDialog {
         int result = JOptionPane.CANCEL_OPTION;
 
         do {
-            final JDialog dialog = optionPane.createDialog(frame, "Create New Trait");
+            final JDialog dialog = optionPane.createDialog(frame, "Create or Import Trait(s)");
             dialog.pack();
 
             dialog.setVisible(true);
@@ -86,10 +108,12 @@ public class CreateTraitDialog {
                 result = value;
             }
             done = true;
-            if (result != JOptionPane.CANCEL_OPTION) {
+            if (result == JOptionPane.OK_OPTION && createRadio.isSelected()) {
                 done = frame.validateTraitName(getName());
             }
         } while (!done);
+
+        if (importRadio.isSelected() && result == JOptionPane.OK_OPTION) result = OK_IMPORT;
 
         return result;
     }

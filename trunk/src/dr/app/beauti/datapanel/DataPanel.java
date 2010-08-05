@@ -32,6 +32,7 @@ import dr.app.beauti.alignmentviewer.NucleotideDecorator;
 import dr.app.beauti.alignmentviewer.StateCellDecorator;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.options.*;
+import dr.app.beauti.traitspanel.CreateTraitDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -74,7 +75,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
     CreateAction createAction = new CreateAction();
-
+    JButton createImportTraitButton = new JButton(createAction);
 //    ShowAction showAction = new ShowAction();
 
     JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
@@ -193,13 +194,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
+        controlPanel1.add(new JLabel("   "));
+        PanelUtils.setupComponent(createImportTraitButton);
+        controlPanel1.add(createImportTraitButton);
+
+//        controlPanel1.add(new JLabel(" or "));
+//
 //        button = new JButton(importTraitsAction);
 //        PanelUtils.setupComponent(button);
 //        controlPanel1.add(button);
-
-        button = new JButton(createAction);
-        PanelUtils.setupComponent(button);
-        controlPanel1.add(button);
 
 //        allowDifferentTaxaCheck.setSelected(false);
 //        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
@@ -320,6 +323,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         useStarBEASTCheck.setEnabled(options.dataPartitions.size() > 1);
+        createImportTraitButton.setEnabled(options.dataPartitions.size() > 0);
         
         dataTableModel.fireTableDataChanged();
     }
@@ -363,6 +367,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public void createFromTraits() {
+        frame.createImportTraits();
+        dataTableModel.fireTableDataChanged();
     }
 
     public void unlinkModels() {
@@ -761,8 +767,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public class CreateAction extends AbstractAction {
         public CreateAction() {
-            super("Create...");
-            setToolTipText("Create a data partition from one or more traits");
+            super("Create or Import Trait ...");
+            setToolTipText("Create a data partition from one or more traits, or import from a mapping file");
         }
 
         public void actionPerformed(ActionEvent ae) {

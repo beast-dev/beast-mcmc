@@ -301,11 +301,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     public void guessTrait() {
         if (options.taxonList != null) { // validation of check empty taxonList
 //            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
-            if (currentTrait == null) addTrait();
+            if (currentTrait == null) {
+                if (!addTrait()) return; // if addTrait() cancel then false
+            }
 
-//            if (guessTraitDialog == null) {
-//                guessTraitDialog = new GuessTraitDialog(frame, currentTrait);
-//            }
             TraitGuesser currentTraitGuesser = new TraitGuesser(currentTrait);
             GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTraitGuesser);
             int result = guessTraitDialog.showDialog();
@@ -342,13 +341,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private void addTrait() {
+    public boolean addTrait() {
+        return addTrait("Untitled");
+    }
+
+    public boolean addTrait(String traitName) {
         if (createTraitDialog == null) {
-            createTraitDialog = new CreateTraitDialog(frame);
+            createTraitDialog = new CreateTraitDialog(frame, traitName);
         }
 
         int result = createTraitDialog.showDialog();
-        if (result != JOptionPane.CANCEL_OPTION) {
+        if (result == JOptionPane.OK_OPTION) {
             String name = createTraitDialog.getName();
             TraitData.TraitType type = createTraitDialog.getType();
             TraitData newTrait = new TraitData(options, name, "", type);
@@ -363,7 +366,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //            dataTableModel.fireTableDataChanged();
 
 //            traitSelectionChanged();
+        } else if (result == CreateTraitDialog.OK_IMPORT) {
+            frame.doImportTraits();
+        } else if (result == JOptionPane.CANCEL_OPTION) {
+            return false;
         }
+
+        return true;
     }
 
     public void addTrait(TraitData newTrait) {

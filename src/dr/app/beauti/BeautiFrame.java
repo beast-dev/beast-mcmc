@@ -414,14 +414,16 @@ public class BeautiFrame extends DocumentFrame {
                     return;
                 }
             }
+
+            traitsPanel.fireTraitsChanged();
+            setAllOptions();
+
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
-            return;
+
         }
 
-        traitsPanel.fireTraitsChanged();
-        setAllOptions();
     }
 
     public boolean validateTraitName(String traitName) {

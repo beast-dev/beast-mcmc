@@ -77,7 +77,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
 //    ShowAction showAction = new ShowAction();
 
-    JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree reconstruction (*BEAST) Heled & Drummond (...) ");
+    JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
 
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
@@ -222,6 +222,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
+        useStarBEASTCheck.setToolTipText("Joseph Heled and Alexei J. Drummond, " +
+                "Bayesian Inference of Species Trees from Multilocus Data, " +
+                "Molecular Biology and Evolution 2010 27(3):570-580");
         useStarBEASTCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 frame.setupSpeciesAnalysis(useStarBEASTCheck.isSelected());

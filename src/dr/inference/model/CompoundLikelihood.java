@@ -231,7 +231,7 @@ public class CompoundLikelihood implements Likelihood {
      */
     public dr.inference.loggers.LogColumn[] getColumns() {
         return new dr.inference.loggers.LogColumn[]{
-                new LikelihoodColumn(getId())
+                new LikelihoodColumn(getId() == null ? "likelihood" : getId())
         };
     }
 

@@ -384,6 +384,9 @@ public class BeautiFrame extends DocumentFrame {
 //                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
 //                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
 //    }
+    public boolean createImportTraits() {
+        return traitsPanel.addTrait();
+    }
 
     public final void doImportTraits() {
         if (options.taxonList != null) { // validation of check empty taxonList

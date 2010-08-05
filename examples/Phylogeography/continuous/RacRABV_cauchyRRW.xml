@@ -691,9 +691,11 @@
 				<exponentialMarkovLikelihood idref="eml1"/>
 	            <multivariateNormalPrior idref="rootPrior"/>
 				<multivariateWishartPrior idref="precisionPrior"/>
+<!--
 		 		<gammaPrior offset="0.0" shape="0.001" scale="1000.0">
                      <parameter idref="halfDF"/>
                 </gammaPrior>
+-->
 			</prior>
 			<likelihood id="likelihood">
 				<treeLikelihood idref="treeLikelihood"/>
@@ -754,7 +756,7 @@
 		<logTree id="treeFileLog" logEvery="50000" nexusFormat="true" fileName="RacRABV_cauchyRRW.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<posterior idref="posterior"/>
-			<randomLocalClockModel idref="branchRatesDiffusion"/>
+			<discretizedBranchRates idref="branchRatesDiffusion"/>
 			<multivariateDiffusionModel idref="diffusionModel"/>   <!-- reports info about diffusion model -->
             <multivariateTraitLikelihood idref="traitLikelihood"/>
 		</logTree>

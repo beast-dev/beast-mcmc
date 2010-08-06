@@ -17,10 +17,7 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.options.STARBEASTOptions;
-import dr.app.beauti.options.TraitData;
+import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
@@ -388,7 +385,11 @@ public class BeautiFrame extends DocumentFrame {
         return traitsPanel.addTrait();
     }
 
-    public final void doImportTraits() {
+    public boolean createImportTraits(String traitName) {
+        return traitsPanel.addTrait(traitName);
+    }
+
+    public final boolean doImportTraits() {
         if (options.taxonList != null) { // validation of check empty taxonList
             FileDialog dialog = new FileDialog(this,
                     "Import Traits File...",
@@ -405,28 +406,32 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
                             "Unable to open file",
                             JOptionPane.ERROR_MESSAGE);
+                    return false;
                 } catch (IOException ioe) {
                     JOptionPane.showMessageDialog(this, "Unable to read file: " + ioe.getMessage(),
                             "Unable to read file",
                             JOptionPane.ERROR_MESSAGE);
+                    return false;
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     ex.printStackTrace();
-                    return;
+                    return false;
                 }
+            } else {
+                return false;
             }
 
             traitsPanel.fireTraitsChanged();
             setAllOptions();
+            return true;
 
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
-
+            return false;
         }
-
     }
 
     public boolean validateTraitName(String traitName) {
@@ -475,19 +480,21 @@ public class BeautiFrame extends DocumentFrame {
 //        	dataPanel.linkClocks();
 //        }
 
-//        options.rateOptionClockModel = FixRateType.FIX_FIRST_PARTITION;
-//        options.activedSameTreePrior.setNodeHeightPrior(TreePriorType.SPECIES_YULE);
-//
-//        int i = tabbedPane.indexOfTab("Trees");
-//        tabbedPane.removeTabAt(i);
-//        tabbedPane.insertTab("Trees", null, speciesTreesPanel, "", i);
-//        speciesTreesPanel.getOptions(options);
-
-            treesPanel.updatePriorPanelForSpeciesAnalysis();
+//            treesPanel.updatePriorPanelForSpeciesAnalysis();
 
             options.starBEASTOptions = new STARBEASTOptions(options);
-            options.fileNameStem = "LogStem";
+            options.fileNameStem = "StarBEASTLog";
 
+            if (!createImportTraits(TraitData.TRAIT_SPECIES)) {
+                dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
+                useStarBEAST = false;
+            }
+        } else { // remove species
+            int i = -1;
+            for (PartitionData pd : options.dataPartitions) {
+                if (pd.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) i = options.dataPartitions.indexOf(pd);
+            }
+            if (i >= 0) options.dataPartitions.remove(i);
         }
 
         options.useStarBEAST = useStarBEAST;

@@ -78,7 +78,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     JButton createImportTraitButton = new JButton(createAction);
 //    ShowAction showAction = new ShowAction();
 
-    JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
+    public JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
 
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
@@ -231,6 +231,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         useStarBEASTCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 frame.setupSpeciesAnalysis(useStarBEASTCheck.isSelected());
+                dataTableModel.fireTableDataChanged();
             }
         });
 

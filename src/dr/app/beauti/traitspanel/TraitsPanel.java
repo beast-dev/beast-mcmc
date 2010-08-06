@@ -263,7 +263,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
 //            frame.setupSpeciesAnalysis();
 //        } else
-        if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+        if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
             frame.updateDiscreteTraitAnalysis();
         }
 
@@ -367,7 +367,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
 //            traitSelectionChanged();
         } else if (result == CreateTraitDialog.OK_IMPORT) {
-            frame.doImportTraits();
+            return frame.doImportTraits();
         } else if (result == JOptionPane.CANCEL_OPTION) {
             return false;
         }

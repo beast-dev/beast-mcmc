@@ -340,6 +340,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         	
         settingOptions = true;
 
+        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1);
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : treeModelPanels.keySet()) {

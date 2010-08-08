@@ -30,7 +30,7 @@ The aim is to provide every parameter with a proper and reasonable prior. This d
 || clock.rate || Strict clock substitution rate || 0,+Inf || Gamma || Y || ||
 || uced.mean || uncorrelated exponential relaxed clock mean || 0,+Inf || Gamma || Y || ||
 || ucld.mean || uncorrelated lognormal relaxed clock mean || 0,+Inf || Gamma || Y || ||
-|| ucld.stdev || uncorrelated lognormal relaxed clock stdev || 0,+Inf || Gamma || Y || ||
+|| ucld.stdev || uncorrelated lognormal relaxed clock stdev || Exp(mean=0.333) || Gamma || Y || ||
 || branchRates.var || autocorrelated lognormal relaxed clock rate variance || 0,+Inf || Gamma || Y || || 
 || branchRates.categories || relaxed clock branch rate categories || 0,branches || integer || N || ||
 || `*`.rates || random local clock rates || 0,+Inf || Gamma || N || ||

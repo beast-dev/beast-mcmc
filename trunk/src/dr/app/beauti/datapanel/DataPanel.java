@@ -224,9 +224,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
-        useStarBEASTCheck.setToolTipText("Joseph Heled and Alexei J. Drummond, " +
-                "Bayesian Inference of Species Trees from Multilocus Data, " +
-                "Molecular Biology and Evolution 2010 27(3):570-580");
+        useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 frame.setupStarBEAST(useStarBEASTCheck.isSelected());

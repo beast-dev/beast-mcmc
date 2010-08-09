@@ -26,11 +26,16 @@
 package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.text.Document;
+import javax.swing.text.html.HTMLEditorKit;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -48,12 +53,13 @@ public class CreateTraitDialog {
     JComboBox typeCombo;
     private final JRadioButton createRadio = new JRadioButton("Create a new trait and then guess trait value from taxa name", true);
     private final JRadioButton importRadio = new JRadioButton("Import trait(s) from a mapping file", false);
+    JButton exampleButton = new JButton("Show example of mapping file format");
 
     public static final int OK_IMPORT = 10;
 
     OptionsPanel optionPanel;
 
-    public CreateTraitDialog(BeautiFrame frame, String traitName) {
+    public CreateTraitDialog(final BeautiFrame frame, String traitName) {
         this.frame = frame;
 
         if (traitName == null) traitName = "Untitled";
@@ -71,13 +77,37 @@ public class CreateTraitDialog {
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 nameField.setEnabled(createRadio.isSelected());
-            	typeCombo.setEnabled(createRadio.isSelected());
+                typeCombo.setEnabled(createRadio.isSelected());
+                exampleButton.setEnabled(importRadio.isSelected());
             }
         };
         createRadio.addItemListener(listener);
         importRadio.addItemListener(listener);
 
+        exampleButton.setEnabled(false);
+        exampleButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                JEditorPane jEditorPane = new JEditorPane();
+                // make it read-only
+                jEditorPane.setEditable(false);
+                // create a scrollpane; modify its attributes as desired
+                JScrollPane scrollPane = new JScrollPane(jEditorPane);
+                // add an html editor kit
+                HTMLEditorKit kit = new HTMLEditorKit();
+                jEditorPane.setEditorKit(kit);
+                // create a document, set it on the jeditorpane, then add the html
+                Document doc = kit.createDefaultDocument();
+                jEditorPane.setDocument(doc);
+                jEditorPane.setText(STARBEASTOptions.EXAMPLE_FORMAT);
+
+                JOptionPane.showMessageDialog(frame, scrollPane,
+                    "Example of mapping file format",
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+        });
+
         optionPanel.addComponent(importRadio);
+        optionPanel.addComponent(exampleButton);
         optionPanel.addComponent(createRadio);
         optionPanel.addComponentWithLabel("Name:", nameField);
         optionPanel.addComponentWithLabel("Type:", typeCombo);

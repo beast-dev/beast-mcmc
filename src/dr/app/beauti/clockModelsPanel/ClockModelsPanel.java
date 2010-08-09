@@ -66,9 +66,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 	JTable dataTable = null;
     DataTableModel dataTableModel = null;
     JScrollPane scrollPane;
-//    JComboBox rateOptionCombo = new JComboBox(FixRateType.values());
-    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate:   mean =");
-//    JLabel substitutionRateLabel = new JLabel("Mean substitution rate:");
+    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate of molecular clock model:   mean =");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
@@ -150,38 +148,24 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
 //		meanRateField.setEnabled(true);
 
-		JPanel modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
+		JPanel modelPanelParent = new JPanel(new BorderLayout(0, 0));
         modelPanelParent.setOpaque(false);
-        TitledBorder modelBorder = new TitledBorder("");
+        TitledBorder modelBorder = new TitledBorder("Molecular Clock Model : ");
         modelPanelParent.setBorder(modelBorder);
 
 		OptionsPanel panel = new OptionsPanel(12, 20);
 
 		meanRateField.setColumns(10);
 		panel.addComponents(fixedMeanRateCheck, meanRateField);
-//		panel.addComponentWithLabel("Fixed mean rate / 1st partition rate:", meanRateField);
-
 		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-        // panel.addComponentWithLabel("Molecular Clock Model:", clockModelCombo);
 
-		modelPanelParent.add(panel);
+		modelPanelParent.add(panel, BorderLayout.CENTER);
+        modelPanelParent.add(scrollPane, BorderLayout.NORTH);
 
-//		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, modelPanelParent);
-//		splitPane.setDividerLocation(400);
-//		splitPane.setContinuousLayout(true);
-//		splitPane.setBorder(BorderFactory.createEmptyBorder());
-//		splitPane.setOpaque(false);
         setOpaque(false);
-		setLayout(new BorderLayout(0, 0));
+		setLayout(new BorderLayout(12, 12));
 		setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
-		add(scrollPane, BorderLayout.NORTH);
 		add(modelPanelParent, BorderLayout.CENTER);
-
-//        panelParent = new JPanel(new BorderLayout(0, 0));
-//        panelParent.add(scrollPane, BorderLayout.NORTH);
-//		panelParent.add(modelPanelParent, BorderLayout.SOUTH);
-//
-//        add(panelParent, BorderLayout.NORTH);
 
 		comp = new SequenceErrorModelComponentOptions();
 
@@ -189,12 +173,14 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         discreteTraitTable = new JTable(new DiscreteTraitModelTableModel());
 
         initTable(discreteTraitTable);
-
         d_scrollPane = new JScrollPane(discreteTraitTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		d_scrollPane.setOpaque(false);
         d_scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth(), 150));
+        TitledBorder traitClockBorder = new TitledBorder("Trait Clock Model : ");
+        d_scrollPane.setBorder(traitClockBorder);
+
     }
 
     private void initTable(JTable dataTable){
@@ -221,7 +207,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void modelsChanged() {
         TableColumn col = dataTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.UNCORRELATED_LOGNORMAL).toArray())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.RANDOM_LOCAL_CLOCK).toArray())));
     }
 
     private void fireModelsChanged() {
@@ -314,7 +300,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = -2852144669936634910L;
 
 //        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};
-        String[] columnNames = {"Clock Model Name", "Molecular Clock Model", "Estimate", "Rate"};
+        String[] columnNames = {"Name", "Model", "Estimate", "Rate"};
 
         public DataTableModel() {
         }
@@ -470,10 +456,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     class DiscreteTraitModelTableModel extends AbstractTableModel {
 
-            /**
-             *
-             */
-             String[] columnNames = {"Clock Model Name", "Molecular Clock Model", "Estimate", "Rate"};
+        String[] columnNames = {"Name", "Model", "Estimate", "Rate"};
 
         public DiscreteTraitModelTableModel() {
         }

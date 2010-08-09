@@ -32,7 +32,6 @@ import dr.app.beauti.alignmentviewer.NucleotideDecorator;
 import dr.app.beauti.alignmentviewer.StateCellDecorator;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.options.*;
-import dr.app.beauti.traitspanel.CreateTraitDialog;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -230,7 +229,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 "Molecular Biology and Evolution 2010 27(3):570-580");
         useStarBEASTCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                frame.setupSpeciesAnalysis(useStarBEASTCheck.isSelected());
+                frame.setupStarBEAST(useStarBEASTCheck.isSelected());
                 dataTableModel.fireTableDataChanged();
             }
         });
@@ -323,7 +322,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         modelsChanged();
 
-        useStarBEASTCheck.setEnabled(options.dataPartitions.size() > 1);
+        useStarBEASTCheck.setEnabled(options.dataPartitions.size() > 0); // single partition is allowed
         createImportTraitButton.setEnabled(options.dataPartitions.size() > 0);
         
         dataTableModel.fireTableDataChanged();

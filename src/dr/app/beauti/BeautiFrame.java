@@ -64,7 +64,7 @@ public class BeautiFrame extends DocumentFrame {
     private final BeautiOptions options;
     private final BeastGenerator generator;
 
-    private final JTabbedPane tabbedPane = new JTabbedPane();
+    public final JTabbedPane tabbedPane = new JTabbedPane();
     public final JLabel statusLabel = new JLabel("No data loaded");
 
     private DataPanel dataPanel;
@@ -470,7 +470,7 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void setupSpeciesAnalysis(boolean useStarBEAST) {
+    public void setupStarBEAST(boolean useStarBEAST) {
         if (useStarBEAST) {
             dataPanel.selectAll();
 

@@ -48,6 +48,24 @@ public class STARBEASTOptions extends ModelOptions {
     public final String SPECIES_TREE_FILE_NAME = TraitData.TRAIT_SPECIES
     							+ "." + STARBEASTOptions.TREE_FILE_NAME; // species.trees
 
+    public static final String CITATION = "<html>Joseph Heled and Alexei J. Drummond,<br>" +
+                "Bayesian Inference of Species Trees from Multilocus Data,<br>" +
+                "Molecular Biology and Evolution 2010 27(3):570-580</html>";
+
+    public static final String EXAMPLE_FORMAT = "<html>A proper trait file is tab delimited.<br>" +
+            "The first row is always <b>traits</b> followed by the keyword (e.g. <b>species</b> in *BEAST)<br> in the <br>" +
+            "second column and separated by tab. The rest rows are mapping taxa to species, which list taxon <br>" +
+            "name in the first column and species name in the second column separated by tab. For example: <br>" +
+            "traits\tspecies<br>" +
+            "taxon1\tspeciesA<br>" +
+            "taxon2\tspeciesA<br>" +
+            "taxon3\tspeciesB<br>" +
+            "... ...<br>" +
+            "Once mapping file is loaded, the trait named by keyword \"species\" is displayed in the main panel,<br>" +
+            "and the message of using *BEAST is also displayed on the bottom of main frame.<br>" +
+            "For multi-alignment, the default of *BEAST is unlinking all models: substitution model, clock model,<br>" +
+            "and tree models.</html>";
+
     private final BeautiOptions options;
 
     public STARBEASTOptions(BeautiOptions options) {

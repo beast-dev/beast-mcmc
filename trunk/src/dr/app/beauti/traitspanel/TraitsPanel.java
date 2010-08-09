@@ -63,13 +63,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    private static final String ADD_TRAITS_TOOLTIP =            "<html>Define a new trait for the current taxa</html>";
-    private static final String IMPORT_TRAITS_TOOLTIP =         "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
+    private static final String ADD_TRAITS_TOOLTIP = "<html>Define a new trait for the current taxa</html>";
+    private static final String IMPORT_TRAITS_TOOLTIP = "<html>Import one or more traits for these taxa from a tab-delimited<br>" +
             "file. Taxa should be in the first column and the trait names<br>" +
             "in the first row</html>";
-    private static final String GUESS_TRAIT_VALUES_TOOLTIP =    "<html>This attempts to extract values for this trait that are<br>" +
+    private static final String GUESS_TRAIT_VALUES_TOOLTIP = "<html>This attempts to extract values for this trait that are<br>" +
             "encoded in the names of the taxa.</html>";
-    private static final String CLEAR_TRAIT_VALUES_TOOLTIP =    "<html>This clears all the values currently assigned to taxa for<br>" +
+    private static final String CLEAR_TRAIT_VALUES_TOOLTIP = "<html>This clears all the values currently assigned to taxa for<br>" +
             "this trait.</html>";
 
     public final JTable traitsTable;
@@ -261,7 +261,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     public void fireTraitsChanged() {
 
 //        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-//            frame.setupSpeciesAnalysis();
+//            frame.setupStarBEAST();
 //        } else
         if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
             frame.updateDiscreteTraitAnalysis();
@@ -304,37 +304,40 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             if (currentTrait == null) {
                 if (!addTrait()) return; // if addTrait() cancel then false
             }
+            int result;
+            do {
+                TraitGuesser currentTraitGuesser = new TraitGuesser(currentTrait);
+                GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTraitGuesser);
+                result = guessTraitDialog.showDialog();
 
-            TraitGuesser currentTraitGuesser = new TraitGuesser(currentTrait);
-            GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTraitGuesser);
-            int result = guessTraitDialog.showDialog();
-
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-//            currentTrait.guessTrait = true; // ?? no use?
-            guessTraitDialog.setupGuesser();
-
-            try {
-                int[] selRows = dataTable.getSelectedRows();
-                if (selRows.length > 0) {
-                    Taxa selectedTaxa = new Taxa();
-
-                    for (int row : selRows) {
-                        Taxon taxon = (Taxon)dataTable.getValueAt(row, 0);
-                        selectedTaxa.addTaxon(taxon);
-                    }
-                    currentTraitGuesser.guessTrait(selectedTaxa);
-                } else {
-                    currentTraitGuesser.guessTrait(options.taxonList);
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
                 }
 
-            } catch (IllegalArgumentException iae) {
-                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
-            }
+//            currentTrait.guessTrait = true; // ?? no use?
+                guessTraitDialog.setupGuesser();
 
-            dataTableModel.fireTableDataChanged();
+                try {
+                    int[] selRows = dataTable.getSelectedRows();
+                    if (selRows.length > 0) {
+                        Taxa selectedTaxa = new Taxa();
+
+                        for (int row : selRows) {
+                            Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                            selectedTaxa.addTaxon(taxon);
+                        }
+                        currentTraitGuesser.guessTrait(selectedTaxa);
+                    } else {
+                        currentTraitGuesser.guessTrait(options.taxonList);
+                    }
+
+                } catch (IllegalArgumentException iae) {
+                    JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
+                    result = -1;
+                }
+
+                dataTableModel.fireTableDataChanged();
+            } while (result < 0);
         } else {
             JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
@@ -346,12 +349,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait(String traitName) {
-        if (createTraitDialog == null) {
-            createTraitDialog = new CreateTraitDialog(frame, traitName);
-        }
+//        if (createTraitDialog == null) {
+        createTraitDialog = new CreateTraitDialog(frame, traitName);
+//        }
 
         int result = createTraitDialog.showDialog();
         if (result == JOptionPane.OK_OPTION) {
+            frame.tabbedPane.setSelectedComponent(this);
+
             String name = createTraitDialog.getName();
             TraitData.TraitType type = createTraitDialog.getType();
             TraitData newTrait = new TraitData(options, name, "", type);
@@ -366,6 +371,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //            dataTableModel.fireTableDataChanged();
 
 //            traitSelectionChanged();
+            guessTrait();
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             return frame.doImportTraits();
         } else if (result == JOptionPane.CANCEL_OPTION) {
@@ -568,7 +574,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                     if (value != null) {
                         return value;
                     } else {
-                        return "-";
+                        return "";
                     }
             }
             return null;
@@ -589,8 +595,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             if (col == 1) {
-                Object t = options.taxonList.getTaxon(row).getAttribute(currentTrait.getName());
-                return (t != null);
+//                Object t = options.taxonList.getTaxon(row).getAttribute(currentTrait.getName());
+//                return (t != null);
+                return true;
             } else {
                 return false;
             }

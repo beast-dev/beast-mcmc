@@ -131,39 +131,39 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3",
                 PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        createParameterGammaPrior("kappa", "HKY transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1.kappa", "HKY transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP2.kappa", "HKY transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP3.kappa", "HKY transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
+        //This prior is moderately diffuse with a median of 2.718 
+        createParameterLognormalPrior("kappa", "HKY transition-transversion parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1.kappa", "HKY transition-transversion parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP2.kappa", "HKY transition-transversion parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1+2.kappa", "HKY transition-transversion parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP3.kappa", "HKY transition-transversion parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
 
-        createParameterGammaPrior("kappa1", "TN93 1st transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1.kappa1", "TN93 1st transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP2.kappa1", "TN93 1st transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1+2.kappa1", "TN93 1st transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP3.kappa1", "TN93 1st transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
+        createParameterLognormalPrior("kappa1", "TN93 1st transition-transversion parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1.kappa1", "TN93 1st transition-transversion parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP2.kappa1", "TN93 1st transition-transversion parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1+2.kappa1", "TN93 1st transition-transversion parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP3.kappa1", "TN93 1st transition-transversion parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
 
-        createParameterGammaPrior("kappa2", "TN93 2nd transition-transversion parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-        createParameterGammaPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 40, 0, Double.POSITIVE_INFINITY, false);
-
+        createParameterLognormalPrior("kappa2", "TN93 2nd transition-transversion parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1",
+               PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+        createParameterLognormalPrior("CP3.kappa2", "TN93 2nd transition-transversion parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
 
 //        createParameter("frequencies", "GTR base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
 //        createParameter("CP1.frequencies", "GTR base frequencies for codon position 1", UNITY_SCALE, 0.25, 0.0, 1.0);

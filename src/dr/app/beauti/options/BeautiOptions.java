@@ -686,7 +686,7 @@ public class BeautiOptions extends ModelOptions {
             if (allowDifferentTaxa) {
                 message += "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
             } else {
-                message += "Data: " + taxonList.getTaxonCount() + " taxa";
+                message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
             }
 
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");

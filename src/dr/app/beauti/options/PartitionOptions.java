@@ -55,6 +55,13 @@ public abstract class PartitionOptions extends ModelOptions {
                 shape(shape).scale(scale).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
+    public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType, 
+            double initial, double mean, double offset, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
+                  .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).partitionOptions(options).build(parameters);
+    }
+
+
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
             double lower, double upper) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)

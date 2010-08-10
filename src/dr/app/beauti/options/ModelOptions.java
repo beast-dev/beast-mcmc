@@ -91,6 +91,12 @@ public class ModelOptions {
                   .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
+    public void createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                double mean, double stdev, double offset, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LOGNORMAL_PRIOR)
+                  .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
+    }
+
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public void createDiscreteStatistic(String name, String description) { // Poisson Prior
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)

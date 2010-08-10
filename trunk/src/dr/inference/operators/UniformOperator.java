@@ -40,8 +40,15 @@ import dr.math.MathUtils;
 public class UniformOperator extends SimpleMCMCOperator {
 
     public UniformOperator(Parameter parameter, double weight) {
+        this(parameter, weight, null, null);
+    }
+
+    public UniformOperator(Parameter parameter, double weight, Double lowerBound, Double upperBound) {
         this.parameter = parameter;
         setWeight(weight);
+
+        this.lowerBound = lowerBound;
+        this.upperBound = upperBound;
     }
 
     /**
@@ -58,8 +65,8 @@ public class UniformOperator extends SimpleMCMCOperator {
 
         final int index = MathUtils.nextInt(parameter.getDimension());
         final Bounds<Double> bounds = parameter.getBounds();
-        final double lower = bounds.getLowerLimit(index);
-        final double upper = bounds.getUpperLimit(index);
+        final double lower = (lowerBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerBound));
+        final double upper = (upperBound == null ? bounds.getUpperLimit(index) : Math.min(bounds.getUpperLimit(index), upperBound));
         final double newValue = (MathUtils.nextDouble() * (upper - lower)) + lower;
 
         parameter.setParameterValue(index, newValue);
@@ -105,4 +112,6 @@ public class UniformOperator extends SimpleMCMCOperator {
     //PRIVATE STUFF
 
     private Parameter parameter = null;
+    private final Double lowerBound;
+    private final Double upperBound;
 }

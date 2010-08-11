@@ -74,10 +74,9 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         priorTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(0).setMinWidth(160);
+        priorTable.getColumnModel().getColumn(0).setMinWidth(200);
 
         priorTable.getColumnModel().getColumn(1).setCellRenderer(
                 new ButtonRenderer(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
@@ -86,16 +85,13 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTable.getColumnModel().getColumn(1).setMinWidth(260);
 
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        if (isDefaultOnly) {
-            priorTable.getColumnModel().getColumn(2).setMinWidth(60);
-        } else {
-            priorTable.getColumnModel().getColumn(2).setMinWidth(30);
-        }
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));       
+        priorTable.getColumnModel().getColumn(2).setMinWidth(30);
+
 
         priorTable.getColumnModel().getColumn(3).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(3).setMinWidth(400);
+        priorTable.getColumnModel().getColumn(3).setMinWidth(410);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 

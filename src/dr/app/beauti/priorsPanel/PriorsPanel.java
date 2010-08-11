@@ -77,57 +77,48 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         priorTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(0).setPreferredWidth(160);
+        priorTable.getColumnModel().getColumn(0).setMinWidth(160);
 
         priorTable.getColumnModel().getColumn(1).setCellRenderer(
                 new ButtonRenderer(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
         priorTable.getColumnModel().getColumn(1).setCellEditor(
                 new ButtonEditor(SwingConstants.LEFT, new Insets(0, 8, 0, 8)));
-        priorTable.getColumnModel().getColumn(1).setPreferredWidth(260);
+        priorTable.getColumnModel().getColumn(1).setMinWidth(260);
 
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         if (isDefaultOnly) {
-            priorTable.getColumnModel().getColumn(2).setPreferredWidth(60);
+            priorTable.getColumnModel().getColumn(2).setMinWidth(60);
         } else {
-            priorTable.getColumnModel().getColumn(2).setPreferredWidth(30);
+            priorTable.getColumnModel().getColumn(2).setMinWidth(30);
         }
 
         priorTable.getColumnModel().getColumn(3).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        priorTable.getColumnModel().getColumn(3).setPreferredWidth(400);
+        priorTable.getColumnModel().getColumn(3).setMinWidth(400);
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 
         scrollPane = new JScrollPane(priorTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setOpaque(false);
+
+        messageLabel.setText(getMessage());
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-        JPanel panel = new JPanel(new BorderLayout(0, 0));
-        panel.setOpaque(false);
-
         if (isDefaultOnly) {
-            scrollPane.setPreferredSize(new java.awt.Dimension(800, 600));
-            panel.add(scrollPane, BorderLayout.CENTER);
-//            message += "These priors listed above are still set to the default values " +
-//                    "and need to be reviewed, especially their upper and lower limits.\n";
+            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
         } else {
-            panel.add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
-            panel.add(scrollPane, BorderLayout.CENTER);
-//            message += "* Marked parameters currently have a default prior distribution. " +
-//                    "You should check that these are appropriate.\n";
+            add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);          
         }
 
-        messageLabel.setText(getMessage());
-
-        panel.add(messageLabel, BorderLayout.SOUTH);
-        add(panel, BorderLayout.CENTER);
+        add(scrollPane, BorderLayout.CENTER);
+        add(messageLabel, BorderLayout.SOUTH);
     }
 
     public void setOptions(BeautiOptions options) {

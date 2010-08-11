@@ -80,7 +80,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     JTable discreteTraitTable = null;
     JScrollPane d_scrollPane;
     boolean activateDiscreteTraitsTable = false;
-    JPanel panelParent;
+    
     public ClockModelsPanel(BeautiFrame parent) {
 
 		this.frame = parent;
@@ -91,8 +91,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         initTable(dataTable);
 
         scrollPane = new JScrollPane(dataTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.setOpaque(false);
 
 		PanelUtils.setupComponent(errorModelCombo);
@@ -146,21 +146,27 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 			}
 		});
 		meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
+        meanRateField.setColumns(10);
 //		meanRateField.setEnabled(true);
 
-		JPanel modelPanelParent = new JPanel(new BorderLayout(0, 0));
-        modelPanelParent.setOpaque(false);
+		JPanel modelPanelParent = new JPanel();
+        modelPanelParent.setLayout(new BoxLayout(modelPanelParent, BoxLayout.Y_AXIS));
+//        modelPanelParent.setOpaque(false);
         TitledBorder modelBorder = new TitledBorder("Molecular Clock Model : ");
         modelPanelParent.setBorder(modelBorder);
 
-		OptionsPanel panel = new OptionsPanel(12, 20);
-
-		meanRateField.setColumns(10);
+		OptionsPanel panel = new OptionsPanel(12, 12);		
 		panel.addComponents(fixedMeanRateCheck, meanRateField);
 		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+//        panel.setMinimumSize(new Dimension(600, 150));
+//        scrollPane.setPreferredSize(new Dimension(400, 350));
+        
+        JScrollPane scrollPane2 = new JScrollPane(panel);
+        scrollPane2.setOpaque(false);
+//        scrollPane2.setPreferredSize(new Dimension(400, 150));
 
-		modelPanelParent.add(panel, BorderLayout.CENTER);
-        modelPanelParent.add(scrollPane, BorderLayout.NORTH);
+		modelPanelParent.add(scrollPane);
+        modelPanelParent.add(scrollPane2);
 
         setOpaque(false);
 		setLayout(new BorderLayout(12, 12));
@@ -174,8 +180,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         initTable(discreteTraitTable);
         d_scrollPane = new JScrollPane(discreteTraitTable,
-				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		d_scrollPane.setOpaque(false);
         d_scrollPane.setPreferredSize(new Dimension(scrollPane.getWidth(), 150));
         TitledBorder traitClockBorder = new TitledBorder("Trait Clock Model : ");
@@ -184,23 +190,27 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void initTable(JTable dataTable){
-        //		dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        dataTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
 		dataTable.getTableHeader().setReorderingAllowed(false);
 		dataTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-		dataTable.getColumnModel().getColumn(0).setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        TableColumn col = dataTable.getColumnModel().getColumn(0);
+		col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        col.setMinWidth(200);
 
-		TableColumn col = dataTable.getColumnModel().getColumn(1);
+		col = dataTable.getColumnModel().getColumn(1);
 		ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
 		comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
 		col.setCellRenderer(comboBoxRenderer);
+        col.setMinWidth(260);
 
 		col = dataTable.getColumnModel().getColumn(2);
-		col.setPreferredWidth(6);
+		col.setMinWidth(40);
 
 		col = dataTable.getColumnModel().getColumn(3);
 		col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 		col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
+        col.setMinWidth(80);
 
 		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
     }

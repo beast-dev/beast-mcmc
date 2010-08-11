@@ -134,7 +134,7 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
         tabbedPane.addTab("Clock Models", clockModelsPanel);
-            tabbedPane.addTab("Trees", treesPanel);
+        tabbedPane.addTab("Trees", treesPanel);
         tabbedPane.addTab("Priors", priorsPanel);
         tabbedPane.addTab("Operators", operatorsPanel);
         tabbedPane.addTab("MCMC", mcmcPanel);
@@ -154,34 +154,45 @@ public class BeautiFrame extends DocumentFrame {
             }
         });
 
-        JPanel panel = new JPanel(new BorderLayout(6, 6));
-        panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-        panel.add(tabbedPane, BorderLayout.CENTER);
-        panel.setPreferredSize(new java.awt.Dimension(800, 600));
+        JPanel basePanel = new JPanel(new BorderLayout(6, 6));
+        basePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
+//        basePanel.setPreferredSize(new java.awt.Dimension(800, 600));
 
         getExportAction().setEnabled(false);
         JButton generateButton = new JButton(getExportAction());
         generateButton.putClientProperty("JButton.buttonType", "roundRect");
 
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
-        panel2.add(statusLabel, BorderLayout.CENTER);
+        panel2.add(statusLabel, BorderLayout.WEST);
         panel2.add(generateButton, BorderLayout.EAST);
+        panel2.setMinimumSize(new java.awt.Dimension(10, 10));
 
-        panel.add(panel2, BorderLayout.SOUTH);
+        basePanel.add(tabbedPane, BorderLayout.CENTER);
+        basePanel.add(panel2, BorderLayout.SOUTH);
 
-        getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
+//        if (OSType.isMac()) {
+//            getContentPane().add(panel, BorderLayout.CENTER);
+////            setMinimumSize(new java.awt.Dimension(800, 600));
+//        } else {
+////            JScrollPane scrollPane = new JScrollPane(panel);
+////            getContentPane().add(scrollPane, BorderLayout.CENTER);
+//            getContentPane().add(panel, BorderLayout.CENTER);
+//        }
 
-        if (OSType.isMac()) {
-            getContentPane().add(panel, BorderLayout.CENTER);
-            setMinimumSize(new java.awt.Dimension(800, 600));
+        add(basePanel, BorderLayout.CENTER);
+
+        Toolkit tk = Toolkit.getDefaultToolkit();
+        Dimension d = tk.getScreenSize();
+        System.out.println("Screen width = " + d.width);
+        System.out.println("Screen height = " + d.height);
+
+        if (d.width < 1000 || d.height < 700) {
+            setSize(new java.awt.Dimension(700, 500));
         } else {
-            JScrollPane scrollPane = new JScrollPane(panel);
-            getContentPane().add(scrollPane, BorderLayout.CENTER);
+            setSize(new java.awt.Dimension(1024, 768));
         }
 
         setAllOptions();
-
-        setSize(new java.awt.Dimension(1024, 768));
 
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
@@ -207,7 +218,7 @@ public class BeautiFrame extends DocumentFrame {
         taxaPanel.setOptions(options);
         siteModelsPanel.setOptions(options);
         clockModelsPanel.setOptions(options);
-            treesPanel.setOptions(options);
+        treesPanel.setOptions(options);
         priorsPanel.setOptions(options);
         operatorsPanel.setOptions(options);
         mcmcPanel.setOptions(options);
@@ -225,7 +236,7 @@ public class BeautiFrame extends DocumentFrame {
         taxaPanel.getOptions(options);
         siteModelsPanel.getOptions(options);
         clockModelsPanel.getOptions(options);
-            treesPanel.getOptions(options);
+        treesPanel.getOptions(options);
         priorsPanel.getOptions(options);
         operatorsPanel.getOptions(options);
         mcmcPanel.getOptions(options);
@@ -381,6 +392,7 @@ public class BeautiFrame extends DocumentFrame {
 //                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
 //                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
 //    }
+
     public boolean createImportTraits() {
         return traitsPanel.addTrait();
     }

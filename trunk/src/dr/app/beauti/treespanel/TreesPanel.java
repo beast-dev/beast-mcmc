@@ -138,7 +138,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-        panel1.add(controlPanel1, BorderLayout.SOUTH);
+//        panel1.add(controlPanel1, BorderLayout.SOUTH);
         
 //        JPanel panel2 = new JPanel(new BorderLayout(0, 0));        
 //        panel2.setOpaque(false);
@@ -147,14 +147,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         treeModelPanelParent.setOpaque(false);
         treeModelBorder = new TitledBorder("Tree Model");
         treeModelPanelParent.setBorder(treeModelBorder);
-//        currentTreeModel.setBorder(null);
-               
-//        panel2.add(treeModelPanelParent, BorderLayout.NORTH);
+
+        JScrollPane scrollPane2 = new JScrollPane(treeModelPanelParent);
+        scrollPane.setOpaque(false);
         
-//        treeDisplayPanel = new TreeDisplayPanel(parent);
-//        panel2.add(treeDisplayPanel, BorderLayout.CENTER);        
-        
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, treeModelPanelParent);
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, scrollPane2);
         splitPane.setDividerLocation(180);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());

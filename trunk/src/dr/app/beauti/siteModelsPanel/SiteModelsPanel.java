@@ -107,7 +107,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         });
 
         JScrollPane scrollPane = new JScrollPane(modelTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
 //        ActionPanel actionPanel1 = new ActionPanel(false);
@@ -121,7 +121,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
         panel.add(scrollPane, BorderLayout.CENTER);
-        panel.add(controlPanel1, BorderLayout.SOUTH);
+//        panel.add(controlPanel1, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
         modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -130,8 +130,11 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         modelPanelParent.setBorder(modelBorder);
         
         setCurrentModel(null);
-        
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, modelPanelParent);
+
+        JScrollPane scrollPane2 = new JScrollPane(modelPanelParent);
+        scrollPane.setOpaque(false);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, scrollPane2);
         splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());

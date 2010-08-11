@@ -64,7 +64,8 @@ public class DefaultPriorDialog {
 		final JDialog dialog = optionPane.createDialog(frame, "Check the default priors");
 		dialog.pack();
 		dialog.setVisible(true);
-
+        dialog.setResizable(true);
+        
         return optionPane.getValue() != null && optionPane.getValue().equals(buttons[0]);
 
     }

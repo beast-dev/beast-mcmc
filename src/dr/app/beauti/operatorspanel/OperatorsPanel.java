@@ -76,37 +76,35 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         operatorTable.getTableHeader().setDefaultRenderer(
                 new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-//		operatorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
-
-        operatorTable.getColumnModel().getColumn(0).setPreferredWidth(50);
+        operatorTable.getColumnModel().getColumn(0).setMinWidth(40);
 
         operatorTable.getColumnModel().getColumn(1).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(1).setPreferredWidth(180);
+        operatorTable.getColumnModel().getColumn(1).setMinWidth(200);
 
         operatorTable.getColumnModel().getColumn(2).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(2).setPreferredWidth(140);
+        operatorTable.getColumnModel().getColumn(2).setMinWidth(140);
 
         operatorTable.getColumnModel().getColumn(3).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         operatorTable.getColumnModel().getColumn(3).setCellEditor(
                 new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
-        operatorTable.getColumnModel().getColumn(3).setPreferredWidth(50);
+        operatorTable.getColumnModel().getColumn(3).setMinWidth(40);
 
         operatorTable.getColumnModel().getColumn(4).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         operatorTable.getColumnModel().getColumn(4).setCellEditor(
                 new RealNumberCellEditor(0, Double.MAX_VALUE));
-        operatorTable.getColumnModel().getColumn(4).setPreferredWidth(50);
+        operatorTable.getColumnModel().getColumn(4).setMinWidth(40);
 
         operatorTable.getColumnModel().getColumn(5).setCellRenderer(
                 new OperatorTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        operatorTable.getColumnModel().getColumn(5).setPreferredWidth(400);
+        operatorTable.getColumnModel().getColumn(5).setMinWidth(380);
 
         scrollPane = new JScrollPane(operatorTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
-                JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setOpaque(false);
 
@@ -129,8 +127,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
-        add(toolBar1, "North");
-        add(scrollPane, "Center");
+        add(toolBar1, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
     }
 
     public final void operatorsChanged() {

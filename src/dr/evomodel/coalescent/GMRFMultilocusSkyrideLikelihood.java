@@ -92,8 +92,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 //	return times[indices[i]];
 //}
 
-        System.err.println("Am I here?");
-
         int numTrees = treeList.size();
 
         int N = 0;

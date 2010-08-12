@@ -193,7 +193,7 @@ public class PriorDialog {
 			}
 		}
 
-//        dialog.setResizable(true); // TODO make optionsPanel shrunken
+//        dialog.setResizable(true); // TODO make optionsPanel shrunk
         dialog.setVisible(true);
         dialog.pack();
 
@@ -323,6 +323,11 @@ public class PriorDialog {
 			}
 		}
 
+        if (!parameter.isStatistic) {
+            optionPanel.addSeparator();
+            optionPanel.addComponentWithLabel("Initial Value: ", initialField);
+        }
+        
 		if (priorType != PriorType.JEFFREYS_PRIOR) {
 			optionPanel.addSeparator();
 			optionPanel.addComponent(optionsPanels.get(priorType));
@@ -334,11 +339,6 @@ public class PriorDialog {
             SpecialNumberPanel specialNumberPanel = new SpecialNumberPanel (this);
             optionPanel.addSpanningComponent(specialNumberPanel);
         }
-
-		if (!parameter.isStatistic) {
-			optionPanel.addSeparator();
-			optionPanel.addComponentWithLabel("Initial Value: ", initialField);
-		}
 
         // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart
 		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {

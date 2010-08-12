@@ -119,21 +119,14 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
         setTree(treeList);
 
-        int tips = 0;
-        for (Tree tree : treeList) {
-            tips += tree.getExternalNodeCount();
-            if (tree instanceof TreeModel) {
-                addModel((TreeModel) tree);
-            }
-        }
-
 		fieldLength = popSizeParameter.getDimension();
-		if (tips - fieldLength != treeList.size()) {
-			throw new IllegalArgumentException("Number of tips (" + tips + ") must be one greater than number of pop sizes (" + fieldLength + ") for each locus");
+        int correctFieldLength = getCorrectFieldLength();
+		if (correctFieldLength != fieldLength) {
+			throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
 		}
 
         // Field length must be set by this point
-		setupIntervals();
+		wrapSetupIntervals();
 		coalescentIntervals = new double[fieldLength];
 		storedCoalescentIntervals = new double[fieldLength];
 		sufficientStatistics = new double[fieldLength];
@@ -152,6 +145,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		}
 	}
 
+    protected int getCorrectFieldLength() {
+        return tree.getExternalNodeCount() - 1;
+    }
+
     protected void wrapSetupIntervals() {
         setupIntervals();
     }
@@ -162,6 +159,9 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
         }
         this.tree = treeList.get(0);
         this.treesSet = null;
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
     }
 
 	public double[] getCopyOfCoalescentIntervals() {

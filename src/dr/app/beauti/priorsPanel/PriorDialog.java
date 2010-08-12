@@ -123,7 +123,7 @@ public class PriorDialog {
 		setupComponents();
 
 		JOptionPane optionPane = new JOptionPane(optionPanel,
-				JOptionPane.QUESTION_MESSAGE,
+				JOptionPane.PLAIN_MESSAGE,
 				JOptionPane.OK_CANCEL_OPTION,
 				null,
 				null,
@@ -131,9 +131,6 @@ public class PriorDialog {
 		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
 		final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
-//        dialog.setResizable(true);
-        dialog.setVisible(true);
-        dialog.pack();
 
 		priorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
@@ -195,6 +192,10 @@ public class PriorDialog {
                 }
 			}
 		}
+
+//        dialog.setResizable(true); // TODO make optionsPanel shrunken
+        dialog.setVisible(true);
+        dialog.pack();
 
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer) optionPane.getValue();
@@ -306,7 +307,7 @@ public class PriorDialog {
 
 		PriorType priorType;
 		if (parameter.isNodeHeight) {
-			optionPanel.addComponents(new JLabel("Prior Distribution:"), rootHeightPriorCombo);
+			optionPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
 				return; // PriorType.NONE
 			} else {
@@ -314,11 +315,11 @@ public class PriorDialog {
 			}
 		} else {
 			if (!parameter.priorFixed) {
-				optionPanel.addComponents(new JLabel("Prior Distribution:"), priorCombo);
+				optionPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
 				priorType = (PriorType) priorCombo.getSelectedItem();
 			} else {
 				priorType = (PriorType) priorCombo.getSelectedItem();
-				optionPanel.addComponents(new JLabel("Prior Distribution: "), new JLabel(priorType.toString()));
+				optionPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
 			}
 		}
 
@@ -336,7 +337,7 @@ public class PriorDialog {
 
 		if (!parameter.isStatistic) {
 			optionPanel.addSeparator();
-			optionPanel.addComponents(new JLabel("Initial Value:"), initialField);
+			optionPanel.addComponentWithLabel("Initial Value: ", initialField);
 		}
 
         // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart

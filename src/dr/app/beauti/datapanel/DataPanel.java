@@ -142,7 +142,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         JToolBar toolBar1 = new JToolBar();
         toolBar1.setFloatable(false);
         toolBar1.setOpaque(false);
-        toolBar1.setLayout(new FlowLayout(java.awt.FlowLayout.LEFT, 0, 0));
+        toolBar1.setLayout(new BoxLayout(toolBar1, BoxLayout.X_AXIS));
 
         JButton button = new JButton(unlinkModelsAction);
         unlinkModelsAction.setEnabled(false);
@@ -203,17 +203,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //        PanelUtils.setupComponent(button);
 //        controlPanel1.add(button);
 
-//        allowDifferentTaxaCheck.setSelected(false);
-//        allowDifferentTaxaCheck.addItemListener(new ItemListener() {
-//            public void itemStateChanged(ItemEvent ev) {
-//                options.allowDifferentTaxa = allowDifferentTaxaCheck.isSelected();
-//            }
-//        });
-//        controlPanel1.add(allowDifferentTaxaCheck);
-
         JPanel panel1 = new JPanel(new BorderLayout());
         panel1.setOpaque(false);
-        useStarBEASTCheck.setEnabled(false);
         panel1.add(useStarBEASTCheck, BorderLayout.NORTH);
         panel1.add(toolBar1, BorderLayout.SOUTH);
 
@@ -224,6 +215,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
+        useStarBEASTCheck.setEnabled(false);
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {

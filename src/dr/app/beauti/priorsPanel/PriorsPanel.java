@@ -107,9 +107,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
-        if (isDefaultOnly) {
-            scrollPane.setPreferredSize(new java.awt.Dimension(700, 500));
-        } else {
+        if (!isDefaultOnly) {
             add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);          
         }
 

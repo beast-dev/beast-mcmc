@@ -19,7 +19,6 @@ public abstract class PriorOptionsPanel extends OptionsPanel {
     private List<String> argumentNames = new ArrayList<String>();
 
     public PriorOptionsPanel() {
-
         super(12, 12);
     }
 

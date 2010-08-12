@@ -44,6 +44,9 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionAdapter;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,7 +68,7 @@ public class BeautiFrame extends DocumentFrame {
     private final BeastGenerator generator;
 
     public final JTabbedPane tabbedPane = new JTabbedPane();
-    public final JLabel statusLabel = new JLabel("No data loaded");
+    public final JLabel statusLabel = new JLabel();
 
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
@@ -165,7 +168,7 @@ public class BeautiFrame extends DocumentFrame {
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
         panel2.add(statusLabel, BorderLayout.WEST);
         panel2.add(generateButton, BorderLayout.EAST);
-        panel2.setMinimumSize(new java.awt.Dimension(10, 10));
+        panel2.setMinimumSize(new java.awt.Dimension(10, 10));           
 
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
@@ -187,7 +190,7 @@ public class BeautiFrame extends DocumentFrame {
         System.out.println("Screen height = " + d.height);
 
         if (d.width < 1000 || d.height < 700) {
-            setSize(new java.awt.Dimension(700, 500));
+            setSize(new java.awt.Dimension(700, 550));
         } else {
             setSize(new java.awt.Dimension(1024, 768));
         }

@@ -680,13 +680,12 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-        String message = "";
+        String message = "No data loaded";
         if (hasData()) {
-            
             if (allowDifferentTaxa) {
-                message += "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
+                message = "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
             } else {
-                message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
+                message = "Data: " + taxonList.getTaxonCount() + " taxa, ";
             }
 
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
@@ -711,12 +710,12 @@ public class BeautiOptions extends ModelOptions {
 
             message += ";    " + clockModelOptions.statusMessageClockModel();
 
-        } else if (userTrees.size() > 0) {
-            message += "Trees only : " + userTrees.size() +
+        } else if (userTrees.size() > 0) { // TODO
+            message = "Trees only : " + userTrees.size() +
                     (userTrees.size() > 1 ? " trees, " : " tree, ") +
                     taxonList.getTaxonCount() + " taxa";
-        } else if (taxonList != null && taxonList.getTaxonCount() > 0) {
-            message += "Taxa only: " + taxonList.getTaxonCount() + " taxa";
+        } else if (taxonList != null && taxonList.getTaxonCount() > 0) {  // TODO 
+            message = "Taxa only: " + taxonList.getTaxonCount() + " taxa";
         }
 
         return message;

@@ -168,7 +168,7 @@ public class BeautiFrame extends DocumentFrame {
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
         panel2.add(statusLabel, BorderLayout.WEST);
         panel2.add(generateButton, BorderLayout.EAST);
-        panel2.setMinimumSize(new java.awt.Dimension(10, 10));           
+        panel2.setMinimumSize(new java.awt.Dimension(10, 10));
 
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
@@ -215,18 +215,24 @@ public class BeautiFrame extends DocumentFrame {
      * set all the options for all panels
      */
     public void setAllOptions() {
-        dataPanel.setOptions(options);
-        tipDatesPanel.setOptions(options);
-        traitsPanel.setOptions(options);
-        taxaPanel.setOptions(options);
-        siteModelsPanel.setOptions(options);
-        clockModelsPanel.setOptions(options);
-        treesPanel.setOptions(options);
-        priorsPanel.setOptions(options);
-        operatorsPanel.setOptions(options);
-        mcmcPanel.setOptions(options);
+        try {
+            dataPanel.setOptions(options);
+            tipDatesPanel.setOptions(options);
+            traitsPanel.setOptions(options);
+            taxaPanel.setOptions(options);
+            siteModelsPanel.setOptions(options);
+            clockModelsPanel.setOptions(options);
+            treesPanel.setOptions(options);
+            priorsPanel.setOptions(options);
+            operatorsPanel.setOptions(options);
+            mcmcPanel.setOptions(options);
 
-        setStatusMessage();
+            setStatusMessage();
+        } catch (IllegalArgumentException illegEx) {
+            JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+                    "Illegal Argument Exception",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     /**

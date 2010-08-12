@@ -77,7 +77,10 @@ public class TraitData extends PartitionData {
                 Taxon taxon = taxonList.getTaxon(i);
                 attr = (String) taxon.getAttribute(getName());
 
-                if (attr == null) return null;
+                if (attr == null) {
+                     throw new IllegalArgumentException("Trait (" + getName() + ") has no value in taxon " + taxon.getId() +
+                     " !\nPlease go to Traits panel to import value.");
+                }
 
                 if (!states.contains(attr)) {
                     states.add(attr);

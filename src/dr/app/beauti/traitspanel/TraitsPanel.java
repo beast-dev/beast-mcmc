@@ -144,11 +144,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
 
-        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
+//        dataTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+//            public void valueChanged(ListSelectionEvent evt) {
 //                traitSelectionChanged();
-            }
-        });
+//            }
+//        });
 
         JScrollPane scrollPane2 = new JScrollPane(dataTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,

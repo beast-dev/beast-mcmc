@@ -131,7 +131,9 @@ public class PriorDialog {
 		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
 		final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
-		dialog.pack();
+//        dialog.setResizable(true);
+        dialog.setVisible(true);
+        dialog.pack();
 
 		priorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
@@ -193,8 +195,6 @@ public class PriorDialog {
                 }
 			}
 		}
-
-		dialog.setVisible(true);
 
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer) optionPane.getValue();

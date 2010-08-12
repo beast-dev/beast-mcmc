@@ -36,89 +36,86 @@ import java.util.List;
 /**
  * Extracts the intervals from a tree.
  *
- * @version $Id: TreeIntervals.java,v 1.9 2005/05/24 20:25:56 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public class TreeIntervals implements IntervalList {
 
-	/**
-	 * Parameterless constructor.
-	 */
-	public TreeIntervals() { }
+    /**
+     * Parameterless constructor.
+     */
+    public TreeIntervals() {
+    }
 
 
-	public TreeIntervals(Tree tree) { setTree(tree); }
+    public TreeIntervals(Tree tree) {
+        setTree(tree);
+    }
 
-
-	/**
-	 * Sets the tree for which intervals are obtained
-	 */
-	public void setTree(Tree tree)
-	{
-		this.tree = tree;
-		intervalsKnown = false;
-	}
-
-	/**
-	 * Specifies that the intervals are unknown (i.e., the tree has changed).
-	 */
-	public void setIntervalsUnknown()
-	{
-		intervalsKnown = false;
-	}
 
     /**
-     *  Sets the limit for which adjacent events are merged.
-     * @param multifurcationLimit   A value of 0 means merge addition of leafs (terminal nodes) when possible but
-     * return each coalescense as a separate event.
-     *
+     * Sets the tree for which intervals are obtained
      */
-    public void setMultifurcationLimit(double multifurcationLimit)
-	{
-		this.multifurcationLimit = multifurcationLimit;
-		intervalsKnown = false;
-	}
+    public void setTree(Tree tree) {
+        this.tree = tree;
+        intervalsKnown = false;
+    }
 
-	public int getSampleCount() {
-		return tree.getExternalNodeCount();
-	}
-	
-	/**
-	 * get number of intervals
-	 */
-	public int getIntervalCount()
-	{
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		return intervalCount;
-	}
+    /**
+     * Specifies that the intervals are unknown (i.e., the tree has changed).
+     */
+    public void setIntervalsUnknown() {
+        intervalsKnown = false;
+    }
 
-	/**
-	 * Gets an interval.
-	 */
-	public double getInterval(int i) {
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		return intervals[i];
-	}
+    /**
+     * Sets the limit for which adjacent events are merged.
+     *
+     * @param multifurcationLimit A value of 0 means merge addition of leafs (terminal nodes) when possible but
+     *                            return each coalescense as a separate event.
+     */
+    public void setMultifurcationLimit(double multifurcationLimit) {
+        this.multifurcationLimit = multifurcationLimit;
+        intervalsKnown = false;
+    }
 
-	/**
-	 * Returns the number of uncoalesced lineages within this interval.
-	 * Required for s-coalescents, where new lineages are added as
-	 * earlier samples are come across.
-	 */
-	public int getLineageCount(int i) {
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		return lineageCounts[i];
-	}
+    public int getSampleCount() {
+        return tree.getExternalNodeCount();
+    }
+
+    /**
+     * get number of intervals
+     */
+    public int getIntervalCount() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return intervalCount;
+    }
+
+    /**
+     * Gets an interval.
+     */
+    public double getInterval(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return intervals[i];
+    }
+
+    /**
+     * Returns the number of uncoalesced lineages within this interval.
+     * Required for s-coalescents, where new lineages are added as
+     * earlier samples are come across.
+     */
+    public int getLineageCount(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        return lineageCounts[i];
+    }
 
     /**
      * @param interval
@@ -139,40 +136,35 @@ public class TreeIntervals implements IntervalList {
         return lineages[interval];
     }
 
-	/**
-	 * Returns the number coalescent events in an interval
-	 */
-	public int getCoalescentEvents(int i)
-	{
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		if (i < intervalCount-1)
-		{
-			return lineageCounts[i]-lineageCounts[i+1];
-		}
-		else
-		{
-			return lineageCounts[i]-1;
-		}
-	}
+    /**
+     * Returns the number coalescent events in an interval
+     */
+    public int getCoalescentEvents(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        if (i < intervalCount - 1) {
+            return lineageCounts[i] - lineageCounts[i + 1];
+        } else {
+            return lineageCounts[i] - 1;
+        }
+    }
 
-	/**
-	 * Returns the type of interval observed.
-	 */
-	public IntervalType getIntervalType(int i)
-	{
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		if (i >= intervalCount) throw new IllegalArgumentException();
-		int numEvents = getCoalescentEvents(i);
-		
-		if (numEvents > 0) return IntervalType.COALESCENT;
-		else if (numEvents < 0) return IntervalType.SAMPLE;
-		else return IntervalType.NOTHING;
-	}
+    /**
+     * Returns the type of interval observed.
+     */
+    public IntervalType getIntervalType(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        if (i >= intervalCount) throw new IllegalArgumentException();
+        int numEvents = getCoalescentEvents(i);
+
+        if (numEvents > 0) return IntervalType.COALESCENT;
+        else if (numEvents < 0) return IntervalType.SAMPLE;
+        else return IntervalType.NOTHING;
+    }
 
     public NodeRef getCoalescentNode(int interval) {
         if (getIntervalType(interval) == IntervalType.COALESCENT) {
@@ -184,97 +176,94 @@ public class TreeIntervals implements IntervalList {
         } else throw new IllegalArgumentException("Interval " + interval + " is not a coalescent interval.");
     }
 
-	/**
-	 * get the total height of the genealogy represented by these
-	 * intervals. 
-	 */
-	public double getTotalDuration() {
-		
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		double height=0.0;
-		for (int j=0; j < intervalCount; j++) {
-			height += intervals[j];
-		}
-		return height;
-	}
+    /**
+     * get the total height of the genealogy represented by these
+     * intervals.
+     */
+    public double getTotalDuration() {
 
-	/**
-	 * Checks whether this set of coalescent intervals is fully resolved
-	 * (i.e. whether is has exactly one coalescent event in each
-	 * subsequent interval)
-	 */
-	public boolean isBinaryCoalescent()
-	{
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		for (int i = 0; i < intervalCount; i++) {
-			if (getCoalescentEvents(i) > 0) { 
-				if (getCoalescentEvents(i) != 1) return false; 
-			}
-		}
-		
-		return true;
-	}
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        double height = 0.0;
+        for (int j = 0; j < intervalCount; j++) {
+            height += intervals[j];
+        }
+        return height;
+    }
 
-	/**
-	 * Checks whether this set of coalescent intervals coalescent only
-	 * (i.e. whether is has exactly one or more coalescent event in each
-	 * subsequent interval)
-	 */
-	public boolean isCoalescentOnly()
-	{
-		if (!intervalsKnown) {
-			calculateIntervals();
-		}
-		for (int i = 0; i < intervalCount; i++)
-		{
-			if (getCoalescentEvents(i) < 1) return false; 
-		}
-		
-		return true;
-	}
+    /**
+     * Checks whether this set of coalescent intervals is fully resolved
+     * (i.e. whether is has exactly one coalescent event in each
+     * subsequent interval)
+     */
+    public boolean isBinaryCoalescent() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) > 0) {
+                if (getCoalescentEvents(i) != 1) return false;
+            }
+        }
 
-	/**
-	 * Recalculates all the intervals for the given tree.
-	 */
-	private void calculateIntervals() {
-		
-		int nodeCount = tree.getNodeCount();
-		
-		double[] times = new double[nodeCount];
-		int[] childCounts = new int[nodeCount];
+        return true;
+    }
 
-		collectTimes(tree, times, childCounts);
-				
-		int[] indices = new int[nodeCount];
-		
-		HeapSort.sort(times, indices);
-		
-		if( intervals == null || intervals.length != nodeCount ) {
-			intervals = new double[nodeCount];
-			lineageCounts = new int[nodeCount];
+    /**
+     * Checks whether this set of coalescent intervals coalescent only
+     * (i.e. whether is has exactly one or more coalescent event in each
+     * subsequent interval)
+     */
+    public boolean isCoalescentOnly() {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        for (int i = 0; i < intervalCount; i++) {
+            if (getCoalescentEvents(i) < 1) return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Recalculates all the intervals for the given tree.
+     */
+    private void calculateIntervals() {
+
+        int nodeCount = tree.getNodeCount();
+
+        times = new double[nodeCount];
+        int[] childCounts = new int[nodeCount];
+
+        collectTimes(tree, times, childCounts);
+
+        indices = new int[nodeCount];
+
+        HeapSort.sort(times, indices);
+
+        if (intervals == null || intervals.length != nodeCount) {
+            intervals = new double[nodeCount];
+            lineageCounts = new int[nodeCount];
             lineagesAdded = new List[nodeCount];
             lineagesRemoved = new List[nodeCount];
             lineages = new List[nodeCount];
-		}
+        }
 
-		// start is the time of the first tip
-		double start = times[indices[0]];
-		int numLines = 0;
-		int nodeNo = 0;
-		intervalCount = 0;
-		while (nodeNo < nodeCount) {
-			
-			int lineagesRemoved = 0;
-			int lineagesAdded = 0;
-			
-			double finish = times[indices[nodeNo]];
-			double next;
-			
-			do {
+        // start is the time of the first tip
+        double start = times[indices[0]];
+        int numLines = 0;
+        int nodeNo = 0;
+        intervalCount = 0;
+        while (nodeNo < nodeCount) {
+
+            int lineagesRemoved = 0;
+            int lineagesAdded = 0;
+
+            double finish = times[indices[nodeNo]];
+            double next;
+
+            do {
                 final int childIndex = indices[nodeNo];
                 final int childCount = childCounts[childIndex];
                 // dont use nodeNo from here on in do loop
@@ -282,8 +271,8 @@ public class TreeIntervals implements IntervalList {
                 if (childCount == 0) {
                     addLineage(intervalCount, tree.getNode(childIndex));
                     lineagesAdded += 1;
-				} else {
-					lineagesRemoved += (childCount - 1);
+                } else {
+                    lineagesRemoved += (childCount - 1);
 
                     // record removed lineages
                     final NodeRef parent = tree.getNode(childIndex);
@@ -297,43 +286,56 @@ public class TreeIntervals implements IntervalList {
                     // record added lineages
                     addLineage(intervalCount, parent);
                     // no mix of removed lineages when 0 th
-                    if( multifurcationLimit == 0.0 ) {
+                    if (multifurcationLimit == 0.0) {
                         break;
                     }
                 }
 
-				if (nodeNo < nodeCount) {
-					next = times[indices[nodeNo]];
-				} else break;
-			} while (Math.abs(next - finish) <= multifurcationLimit);
+                if (nodeNo < nodeCount) {
+                    next = times[indices[nodeNo]];
+                } else break;
+            } while (Math.abs(next - finish) <= multifurcationLimit);
 
-			if (lineagesAdded > 0) {
-			
-				if (intervalCount > 0 || ((finish - start) > multifurcationLimit)) {
-					intervals[intervalCount] = finish - start;
-					lineageCounts[intervalCount] = numLines;
-					intervalCount += 1;
-				}
-			
-				start = finish;
-			}
-			
-			// add sample event
-			numLines += lineagesAdded;
-			
-			if (lineagesRemoved > 0) {
-			
-				intervals[intervalCount] = finish - start;
-				lineageCounts[intervalCount] = numLines;
+            if (lineagesAdded > 0) {
+
+                if (intervalCount > 0 || ((finish - start) > multifurcationLimit)) {
+                    intervals[intervalCount] = finish - start;
+                    lineageCounts[intervalCount] = numLines;
+                    intervalCount += 1;
+                }
+
+                start = finish;
+            }
+
+            // add sample event
+            numLines += lineagesAdded;
+
+            if (lineagesRemoved > 0) {
+
+                intervals[intervalCount] = finish - start;
+                lineageCounts[intervalCount] = numLines;
                 intervalCount += 1;
-				start = finish;
-			}
-			// coalescent event
-			numLines -= lineagesRemoved;
-		}
-			
-		intervalsKnown = true;
-	}
+                start = finish;
+            }
+            // coalescent event
+            numLines -= lineagesRemoved;
+        }
+
+        intervalsKnown = true;
+    }
+
+    /**
+     * Returns the time of the start of an interval
+     *
+     * @param i which interval
+     * @return start time
+     */
+    public double getIntervalTime(int i) {
+        if (!intervalsKnown) {
+            calculateIntervals();
+        }
+        return times[indices[i]];
+    }
 
     private void addLineage(int interval, NodeRef node) {
         if (lineagesAdded[interval] == null) lineagesAdded[interval] = new ArrayList<NodeRef>();
@@ -345,20 +347,20 @@ public class TreeIntervals implements IntervalList {
         lineagesRemoved[interval].add(node);
     }
 
-	/**
-	 * @return the delta parameter of Pybus et al (Node spread statistic)
-	 */
-	public double getDelta() {
-		
-		return IntervalList.Utils.getDelta(this);
-	}
-	
-	/**
-	 * extract coalescent times and tip information into array times from tree.
-	 */
+    /**
+     * @return the delta parameter of Pybus et al (Node spread statistic)
+     */
+    public double getDelta() {
+
+        return IntervalList.Utils.getDelta(this);
+    }
+
+    /**
+     * extract coalescent times and tip information into array times from tree.
+     */
     private static void collectTimes(Tree tree, double[] times, int[] childCounts) {
 
-        for(int i = 0; i < tree.getNodeCount(); i++) {
+        for (int i = 0; i < tree.getNodeCount(); i++) {
             NodeRef node = tree.getNode(i);
             times[i] = tree.getNodeHeight(node);
             childCounts[i] = tree.getChildCount(node);
@@ -366,18 +368,18 @@ public class TreeIntervals implements IntervalList {
     }
 
     /**
-	 * Return the units that this tree is expressed in.
-	 */
-	public final Type getUnits() {
-		return tree.getUnits();
-	} 
+     * Return the units that this tree is expressed in.
+     */
+    public final Type getUnits() {
+        return tree.getUnits();
+    }
 
-	/**
-	 * Sets the units that this tree is expressed in.
-	 */
-	public final void setUnits(Type units) {
-		throw new IllegalArgumentException("Can't set interval's units");
-	}
+    /**
+     * Sets the units that this tree is expressed in.
+     */
+    public final void setUnits(Type units) {
+        throw new IllegalArgumentException("Can't set interval's units");
+    }
 
     /**
      * Extra functionality to store and restore values for caching
@@ -412,16 +414,36 @@ public class TreeIntervals implements IntervalList {
         }
     }
 
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < getIntervalCount(); i++) {
+            sb.append("[ ");
+            sb.append(getInterval(i));
+            sb.append(": ");
+            sb.append(getLineageCount(i));
+            sb.append(" ]");
+        }
+        return sb.toString();
+    }
 
-	/** The tree. */
-	private Tree tree = null;
+    private int[] indices;
+    private double[] times;
 
-	/** The widths of the intervals. */
-	private double[] intervals;
+    /**
+     * The tree.
+     */
+    private Tree tree = null;
+
+    /**
+     * The widths of the intervals.
+     */
+    private double[] intervals;
     private double[] storedIntervals;
 
-	/** The number of uncoalesced lineages within a particular interval. */
-	private int[] lineageCounts;
+    /**
+     * The number of uncoalesced lineages within a particular interval.
+     */
+    private int[] lineageCounts;
     private int[] storedLineageCounts;
 
     /**
@@ -431,10 +453,12 @@ public class TreeIntervals implements IntervalList {
     private List<NodeRef>[] lineagesRemoved;
     private List[] lineages;
 
-	private int intervalCount = 0;
+    private int intervalCount = 0;
 
-     /** are the intervals known? */
-	private boolean intervalsKnown = false;
+    /**
+     * are the intervals known?
+     */
+    private boolean intervalsKnown = false;
     private boolean storedIntervalsKnown;
 	
 	private double multifurcationLimit = -1.0;

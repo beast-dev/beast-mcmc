@@ -56,6 +56,11 @@ public class PartitionTreeModel extends PartitionModelOptions {
     // BeastGenerator.checkOptions()
     private PloidyType ploidyType = PloidyType.AUTOSOMAL_NUCLEAR;
 
+    public static final String USER_SPEC_TREE_FORMAT = "<html>User can only load specified starting tree(s) " +
+            "from <font color=red>Nexus</font> file, for example :<br>" +
+            "begin trees;<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tree StartingTree1 = [&R] [&R=true] " +
+            "((((((((A),F),(T,P)),((C,C),S)), ... ..., (P,C))),(A,D));<br> end;<br>" +
+            "Note: BEAST only allows <font color=red>bifurcating</font> tree.</html>";
 
     public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this.options = options;

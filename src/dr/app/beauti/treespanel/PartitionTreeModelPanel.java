@@ -26,13 +26,14 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.util.PanelUtils;
+import dr.app.beauti.util.TextUtil;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
-
 import dr.gui.tree.JTreeDisplay;
 import dr.gui.tree.JTreePanel;
 import dr.gui.tree.SquareTreePainter;
@@ -41,7 +42,11 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.event.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Andrew Rambaut
@@ -64,6 +69,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private JButton treeDisplayButton = new JButton("Display Selected Tree");
     private JButton correctBranchLengthButton = new JButton("Correct Branch Length to Get Ultrametric Tree");
+    private JButton exampleButton = new JButton("Introduce how to load starting tree by user");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
 
@@ -150,6 +156,16 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             }
         });
 
+        exampleButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent ae) {
+                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(PartitionTreeModel.USER_SPEC_TREE_FORMAT, new Dimension(400,200));
+
+                JOptionPane.showMessageDialog(parent, scrollPane,
+                    "Introduction of loading starting tree by user",
+                    JOptionPane.PLAIN_MESSAGE);
+            }
+        });
+
         setupPanel();
     }
 
@@ -192,6 +208,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             addComponent(treeDisplayButton);
             addComponent(newickJRadioButton);
             addComponent(simpleJRadioButton);
+            addComponent(exampleButton);
             newickJRadioButton.setSelected(partitionTreeModel.isNewick());
 //            simpleJRadioButton.setSelected(!partitionTreeModel.isNewick());
 

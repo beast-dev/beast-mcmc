@@ -33,8 +33,6 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.text.Document;
-import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -89,19 +87,7 @@ public class CreateTraitDialog {
         exampleButton.setEnabled(false);
         exampleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                JEditorPane jEditorPane = new JEditorPane();
-                // make it read-only
-                jEditorPane.setEditable(false);
-                // create a scrollpane; modify its attributes as desired
-                JScrollPane scrollPane = new JScrollPane(jEditorPane);
-                // add an html editor kit
-                HTMLEditorKit kit = new HTMLEditorKit();
-                jEditorPane.setEditorKit(kit);
-                // create a document, set it on the jeditorpane, then add the html
-                Document doc = kit.createDefaultDocument();
-                jEditorPane.setDocument(doc);
-                jEditorPane.setText(STARBEASTOptions.EXAMPLE_FORMAT);
-                jEditorPane.setPreferredSize(new Dimension(400,300));
+                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(STARBEASTOptions.EXAMPLE_FORMAT, new Dimension(400,300));
 
                 JOptionPane.showMessageDialog(frame, scrollPane,
                     "Example of mapping file format",

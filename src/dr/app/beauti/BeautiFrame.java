@@ -13,7 +13,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
-import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
@@ -27,13 +26,11 @@ import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
+import dr.app.beauti.util.TextUtil;
 import dr.app.java16compat.FileNameExtensionFilter;
-import dr.app.util.Arguments;
-import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
-import dr.evolution.util.Taxon;
 import org.virion.jam.framework.DocumentFrame;
 import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
@@ -43,17 +40,10 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
-import java.awt.event.MouseMotionListener;
+import java.awt.event.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -114,6 +104,13 @@ public class BeautiFrame extends DocumentFrame {
 
         options = new BeautiOptions(components);
         generator = new BeastGenerator(options, components);
+
+        this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener(){
+			public void ancestorMoved(HierarchyEvent e) {}
+			public void ancestorResized(HierarchyEvent e) {
+				setStatusMessage();
+			}
+		});
     }
 
     public void initializeComponents() {
@@ -169,7 +166,7 @@ public class BeautiFrame extends DocumentFrame {
         panel2.add(statusLabel, BorderLayout.WEST);
         panel2.add(generateButton, BorderLayout.EAST);
         panel2.setMinimumSize(new java.awt.Dimension(10, 10));
-
+        
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
 
@@ -384,7 +381,6 @@ public class BeautiFrame extends DocumentFrame {
                 dataPanel.unlinkTrees();
             }
 
-            setStatusMessage();
             setAllOptions();
 
 //          // @Todo templates are not implemented yet...
@@ -547,7 +543,11 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public void setStatusMessage() {
-        statusLabel.setText(options.statusMessage());
+        int width = this.getWidth() - 200; // minus generate button size
+        if (width < 100) width = 100; // prevent too narrow
+        String tw = TextUtil.wrapText(options.statusMessage(), statusLabel, width);
+//        System.out.println(this.getWidth() + "   " + tw);
+        statusLabel.setText(tw);
     }
 
     public final boolean doGenerate() {

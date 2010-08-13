@@ -195,7 +195,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         	if (options.clockModelOptions.isNodeCalibrated(param)) {
         		options.clockModelOptions.nodeCalibration();
         		frame.setAllOptions();
-        		frame.setStatusMessage();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();
         	}

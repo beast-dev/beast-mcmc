@@ -680,12 +680,13 @@ public class BeautiOptions extends ModelOptions {
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
     public String statusMessage() {
-        String message = "No data loaded";
+//        String message = "<html><p>";
+        String message = "";
         if (hasData()) {
             if (allowDifferentTaxa) {
-                message = "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
+                message += "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
             } else {
-                message = "Data: " + taxonList.getTaxonCount() + " taxa, ";
+                message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
             }
 
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
@@ -701,23 +702,25 @@ public class BeautiOptions extends ModelOptions {
             }
 
             if (useStarBEAST) {
-                message += ";    Species Tree Ancestral Reconstruction (*BEAST)";
+                message += "; Species Tree Ancestral Reconstruction (*BEAST)";
             }
 
 //            if (hasPhylogeographic()) {
 //                message += ";    Phylogeographic Analysis";
 //            }
 
-            message += ";    " + clockModelOptions.statusMessageClockModel();
+            message += "; " + clockModelOptions.statusMessageClockModel();
 
         } else if (userTrees.size() > 0) { // TODO
-            message = "Trees only : " + userTrees.size() +
+            message += "Trees only : " + userTrees.size() +
                     (userTrees.size() > 1 ? " trees, " : " tree, ") +
                     taxonList.getTaxonCount() + " taxa";
         } else if (taxonList != null && taxonList.getTaxonCount() > 0) {  // TODO 
-            message = "Taxa only: " + taxonList.getTaxonCount() + " taxa";
+            message += "Taxa only: " + taxonList.getTaxonCount() + " taxa";
+        } else {
+            message += "No data loaded";
         }
-
+//        message += "</p></html>";
         return message;
     }
 

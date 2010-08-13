@@ -28,12 +28,14 @@ package dr.app.beauti.traitspanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
+import dr.app.beauti.util.TextUtil;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.Document;
 import javax.swing.text.html.HTMLEditorKit;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -99,6 +101,7 @@ public class CreateTraitDialog {
                 Document doc = kit.createDefaultDocument();
                 jEditorPane.setDocument(doc);
                 jEditorPane.setText(STARBEASTOptions.EXAMPLE_FORMAT);
+                jEditorPane.setPreferredSize(new Dimension(400,300));
 
                 JOptionPane.showMessageDialog(frame, scrollPane,
                     "Example of mapping file format",

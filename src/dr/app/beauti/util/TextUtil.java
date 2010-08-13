@@ -24,7 +24,7 @@ public class TextUtil {
         while (end != BreakIterator.DONE) {
             String word = someText.substring(start,end);
             if( len + fm.stringWidth(word) > lenLimit) {
-                s += "<br/>";
+                s += "<br> ";
                 len = fm.stringWidth(word);
             } else {
                 len += fm.stringWidth(word);

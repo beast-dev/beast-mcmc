@@ -116,7 +116,7 @@ public class BeastVersion implements Version {
                         "<p>BEAST developers:<br>" +
                         "Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, Philippe Lemey,<br>" +
                         "Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, Vladimir Minin,<br>" +
-                        "Michael Defoin Platel, Oliver Pybus, Walter Xie</p>" +
+                        "Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

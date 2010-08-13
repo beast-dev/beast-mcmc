@@ -46,7 +46,7 @@ public class BeastVersion implements Version {
      * Version string: assumed to be in format x.x.x
      */
     private static final String VERSION = "1.6.0pre";
-    
+
     private static final String DATE_STRING = "2002-2010";
 
     /**
@@ -68,7 +68,7 @@ public class BeastVersion implements Version {
     }
 
     public String[] getCredits() {
-        return new String[] {
+        return new String[]{
                 "Designed and developed by",
                 "Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard",
                 "",
@@ -94,7 +94,7 @@ public class BeastVersion implements Version {
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
                 "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, ",
-                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Walter Xie",
+                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};

@@ -159,8 +159,11 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	static {
         String currentDir = null;
         try {
+            // get path to find lib http://code.google.com/p/beast-mcmc/issues/detail?id=203
             currentDir = new File(NativeNucleotideLikelihoodCore.class.getProtectionDomain().getCodeSource().
-                        getLocation().toURI()).getParent() + "\\lib\\";
+                        getLocation().toURI()).getParent() + System.getProperty("file.separator") + "lib"
+                    + System.getProperty("file.separator");
+//            System.out.println("currentDir = " + currentDir);
         } catch (URISyntaxException e) {
             e.printStackTrace();
         }          

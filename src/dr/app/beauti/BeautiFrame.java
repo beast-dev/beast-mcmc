@@ -28,6 +28,7 @@ import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.java16compat.FileNameExtensionFilter;
+import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
@@ -166,7 +167,7 @@ public class BeautiFrame extends DocumentFrame {
         panel2.add(statusLabel, BorderLayout.WEST);
         panel2.add(generateButton, BorderLayout.EAST);
         panel2.setMinimumSize(new java.awt.Dimension(10, 10));
-        
+
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
 
@@ -190,6 +191,14 @@ public class BeautiFrame extends DocumentFrame {
             setSize(new java.awt.Dimension(700, 550));
         } else {
             setSize(new java.awt.Dimension(1024, 768));
+        }
+
+        // todo Andrew:
+        // It is really nasty on the Mac not to have a minimum window size (probably
+        // other platforms too?). We surely don't require a working interface less
+        // than this...
+        if (OSType.isMac()) {
+            setMinimumSize(new java.awt.Dimension(640, 480));
         }
 
         setAllOptions();

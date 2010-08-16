@@ -106,9 +106,9 @@ public abstract class Generator {
     }
     
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
-        Parameter parameter = model.getParameter(id);        
+        Parameter parameter = model.getParameter(model.getPrefixCodon(num) + id);        
         String prefix = model.getPrefix(num);
-        
+
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + model.getPrefix());
         }

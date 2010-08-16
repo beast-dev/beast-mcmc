@@ -237,7 +237,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
             Alignment alignment = partition.getAlignment();
 
             // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
-            if (alignment == null) return;
+            if (alignment == null) {
+                JOptionPane.showMessageDialog(this, "Cannot show alignment if the selected partition is a trait !",
+                    "Illegal Argument Exception",
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             AlignmentViewer viewer = new AlignmentViewer();
             if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {

@@ -33,16 +33,15 @@ import dr.gui.chart.LinearAxis;
 import dr.gui.chart.PDFPlot;
 import dr.math.distributions.*;
 import dr.util.NumberFormatter;
-//import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.EnumSet;
 
 /**
  * @author Andrew Rambaut
@@ -122,7 +121,9 @@ public class PriorDialog {
 		setArguments(priorType);
 		setupComponents();
 
-		JOptionPane optionPane = new JOptionPane(optionPanel,
+        JScrollPane scrollPane = new JScrollPane(optionPanel);
+        scrollPane.setOpaque(false);
+		JOptionPane optionPane = new JOptionPane(scrollPane,
 				JOptionPane.PLAIN_MESSAGE,
 				JOptionPane.OK_CANCEL_OPTION,
 				null,
@@ -193,10 +194,20 @@ public class PriorDialog {
 			}
 		}
 
-//        dialog.setResizable(true); // TODO make optionsPanel shrunk
+        Toolkit tk = Toolkit.getDefaultToolkit();
+        Dimension d = tk.getScreenSize();
+        if (d.height < 700 && optionPanel.getHeight() > 450) {
+            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, 550));
+        } else {
+            // setSize because optionPanel is shrunk in dialog
+            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, optionPanel.getHeight() + 100));
+        }
+//        System.out.println("panel width = " + optionPanel.getWidth());
+//        System.out.println("panel height = " + optionPanel.getHeight());
+        dialog.setResizable(true); 
         dialog.setVisible(true);
         dialog.pack();
-
+        
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer) optionPane.getValue();
 		if (value != null && value != -1) {

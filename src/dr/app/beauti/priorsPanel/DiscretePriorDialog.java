@@ -32,6 +32,7 @@ import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
@@ -88,8 +89,10 @@ public class DiscretePriorDialog {
         setArguments();
         setupComponents();
 
-        JOptionPane optionPane = new JOptionPane(optionPanel,
-                JOptionPane.QUESTION_MESSAGE,
+        JScrollPane scrollPane = new JScrollPane(optionPanel);
+        scrollPane.setOpaque(false);
+        JOptionPane optionPane = new JOptionPane(scrollPane,
+                JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
                 null,
@@ -97,8 +100,7 @@ public class DiscretePriorDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
-        dialog.pack();
-
+        
         priorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
@@ -107,7 +109,19 @@ public class DiscretePriorDialog {
             }
         });
 
+        Toolkit tk = Toolkit.getDefaultToolkit();
+        Dimension d = tk.getScreenSize();
+        if (d.height < 700 && optionPanel.getHeight() > 450) {
+            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, 550));
+        } else {
+            // setSize because optionPanel is shrunk in dialog
+            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, optionPanel.getHeight() + 100));
+        }
+//        System.out.println("panel width = " + optionPanel.getWidth());
+//        System.out.println("panel height = " + optionPanel.getHeight());
+        dialog.setResizable(true);
         dialog.setVisible(true);
+        dialog.pack();
 
         int result = JOptionPane.CANCEL_OPTION;
         Integer value = (Integer) optionPane.getValue();

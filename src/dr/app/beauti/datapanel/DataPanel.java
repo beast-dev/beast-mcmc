@@ -235,6 +235,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionData partition = options.dataPartitions.get(row);
             Alignment alignment = partition.getAlignment();
+
+            // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
+            if (alignment == null) return;
+
             AlignmentViewer viewer = new AlignmentViewer();
             if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
                 viewer.setCellDecorator(new StateCellDecorator(new NucleotideDecorator(), false));

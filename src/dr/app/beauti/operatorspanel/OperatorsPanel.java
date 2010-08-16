@@ -104,11 +104,14 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         scrollPane = new JScrollPane(operatorTable,
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setOpaque(false);
 
-        autoOptimizeCheck = new JCheckBox("Auto Optimize - This option will attempt to tune the operators to maximum efficiency. Turn off to tune the operators manually.");
+        autoOptimizeCheck = new JCheckBox("Auto Optimize");
+        autoOptimizeCheck.setToolTipText("<html>This option will attempt to tune the operators<br>" +
+                "to maximum efficiency. Turn off to tune the<br>" +
+                "operators manually.</html>");
         autoOptimizeCheck.setOpaque(false);
         autoOptimizeCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {

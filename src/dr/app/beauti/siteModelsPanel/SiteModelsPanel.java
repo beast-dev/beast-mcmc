@@ -28,11 +28,14 @@ package dr.app.beauti.siteModelsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
+import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
 import org.virion.jam.framework.Exportable;
+import org.virion.jam.panels.OptionsPanel;
 import org.virion.jam.table.HeaderRenderer;
 import org.virion.jam.table.TableEditorStopper;
 import org.virion.jam.table.TableRenderer;
@@ -46,6 +49,8 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -77,14 +82,16 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean settingOptions = false;
     boolean hasAlignment = false;
 
+    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
     SequenceErrorModelComponentOptions comp;
+
 
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();
 
         this.frame = parent;
-               
+
         modelTableModel = new ModelTableModel();
         modelTable = new JTable(modelTableModel);
 
@@ -117,7 +124,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
 //        controlPanel1.add(actionPanel1);
-  
+
         JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
         panel.add(scrollPane, BorderLayout.CENTER);
@@ -128,7 +135,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         modelPanelParent.setOpaque(false);
         modelBorder = new TitledBorder("Substitution Model");
         modelPanelParent.setBorder(modelBorder);
-        
+
         setCurrentModel(null);
 
         JScrollPane scrollPane2 = new JScrollPane(modelPanelParent);
@@ -140,14 +147,34 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
+		PanelUtils.setupComponent(errorModelCombo);
+		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
+						+ "post-mortem DNA damage.</html>");
+		errorModelCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                fireModelsChanged();
+            }
+        });
+
+		comp = new SequenceErrorModelComponentOptions();
+
+        OptionsPanel panel1 = new OptionsPanel(12, 12);
+        panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+
+
+        // The bottom panel is now small enough that this is not necessary
+//        JScrollPane scrollPane2 = new JScrollPane(panel);
+//        scrollPane2.setOpaque(false);
+//        scrollPane2.setPreferredSize(new Dimension(400, 150));
+
+
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
+        add(panel1, BorderLayout.SOUTH);
+    }
 
-        comp = new SequenceErrorModelComponentOptions();
-    }    
-       
     private void resetPanel() {
     	if (!options.hasData()) {
     		currentModel = null;
@@ -162,7 +189,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         	return;
         }
     }
-    
+
     public void setOptions(BeautiOptions options) {
 
         if (DEBUG) {
@@ -172,8 +199,11 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         this.options = options;
 
         resetPanel();
-        
+
         settingOptions = true;
+
+        comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        errorModelCombo.setSelectedItem(comp.errorModelType);
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
@@ -189,13 +219,14 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
 
         settingOptions = false;
-        
+
         validate();
         repaint();
     }
 
     public void getOptions(BeautiOptions options) {
-
+    	SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+        comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
     }
 
     private void fireModelsChanged() {

@@ -66,12 +66,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 	JTable dataTable = null;
     DataTableModel dataTableModel = null;
     JScrollPane scrollPane;
-    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean substitution rate of molecular clock model:   mean =");
+    JCheckBox fixedMeanRateCheck = new JCheckBox("Fix mean rate of molecular clock model to: ");
     RealNumberField meanRateField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
-
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
-
-    SequenceErrorModelComponentOptions comp;
 
     BeautiFrame frame = null;
     BeautiOptions options = null;
@@ -80,7 +76,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     JTable discreteTraitTable = null;
     JScrollPane d_scrollPane;
     boolean activateDiscreteTraitsTable = false;
-    
+
     public ClockModelsPanel(BeautiFrame parent) {
 
 		this.frame = parent;
@@ -95,15 +91,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.setOpaque(false);
 
-		PanelUtils.setupComponent(errorModelCombo);
-		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
-						+ "post-mortem DNA damage.</html>");
-		errorModelCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                fireModelsChanged();
-            }
-        });
-
 		// PanelUtils.setupComponent(clockModelCombo);
 		// clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
 		// clockModelCombo.addItemListener(comboListener);
@@ -112,8 +99,10 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
 		fixedMeanRateCheck.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent ev) {
+                // todo Rather than validating, wouldn't it be nicer to simply disable the checkbox
+                // todo if molecular clocks are linked or there is just one partition?
 			    if (!options.clockModelOptions.validateFixMeanRate(fixedMeanRateCheck)) {
-			        JOptionPane.showMessageDialog(frame, "It must have multi-clock rates to fix mean substitution rate!",
+			        JOptionPane.showMessageDialog(frame, "It is only necessary to fix mean substitution rate if multiple molecular clock models are being employed.",
 		                    "Validation Of Fix Mean Rate",
 		                    JOptionPane.WARNING_MESSAGE);
 		            fixedMeanRateCheck.setSelected(false);
@@ -135,7 +124,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 						+ "rather than try to infer it. If this option is turned off, then<br>"
 						+ "either the sequences should have dates or the tree should have<br>"
 						+ "sufficient calibration informations specified as priors.<br>"
-						+ "In addition, it is only available for multi-clock paritions." + "</html>");// TODO Alexei
+						+ "In addition, it is only available for multi-clock partitions." + "</html>");// TODO Alexei
 
 		PanelUtils.setupComponent(meanRateField);
 		meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
@@ -149,31 +138,28 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         meanRateField.setColumns(10);
 //		meanRateField.setEnabled(true);
 
-		JPanel modelPanelParent = new JPanel();
-        modelPanelParent.setLayout(new BoxLayout(modelPanelParent, BoxLayout.Y_AXIS));
-//        modelPanelParent.setOpaque(false);
+		JPanel modelPanelParent = new JPanel(new BorderLayout(12,12));
+//        modelPanelParent.setLayout(new BoxLayout(modelPanelParent, BoxLayout.Y_AXIS));
+        modelPanelParent.setOpaque(false);
         TitledBorder modelBorder = new TitledBorder("Molecular Clock Model : ");
         modelPanelParent.setBorder(modelBorder);
 
-		OptionsPanel panel = new OptionsPanel(12, 12);		
+		OptionsPanel panel = new OptionsPanel(12, 12);
 		panel.addComponents(fixedMeanRateCheck, meanRateField);
-		panel.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-//        panel.setMinimumSize(new Dimension(600, 150));
-//        scrollPane.setPreferredSize(new Dimension(400, 350));
-        
-        JScrollPane scrollPane2 = new JScrollPane(panel);
-        scrollPane2.setOpaque(false);
+
+
+        // The bottom panel is now small enough that this is not necessary
+//        JScrollPane scrollPane2 = new JScrollPane(panel);
+//        scrollPane2.setOpaque(false);
 //        scrollPane2.setPreferredSize(new Dimension(400, 150));
 
-		modelPanelParent.add(scrollPane);
-        modelPanelParent.add(scrollPane2);
+		modelPanelParent.add(scrollPane, BorderLayout.CENTER);
+        modelPanelParent.add(panel, BorderLayout.SOUTH);
 
         setOpaque(false);
 		setLayout(new BorderLayout(12, 12));
 		setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
 		add(modelPanelParent, BorderLayout.CENTER);
-
-		comp = new SequenceErrorModelComponentOptions();
 
         //=======================  Discrete Trait Substitution Model =========================
         discreteTraitTable = new JTable(new DiscreteTraitModelTableModel());
@@ -247,9 +233,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
-        errorModelCombo.setSelectedItem(comp.errorModelType);
-
         fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
         fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
         		|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
@@ -287,9 +270,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     public void getOptions(BeautiOptions options) {
     	if (settingOptions) return;
-
-    	SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
-        comp.errorModelType = (SequenceErrorType) errorModelCombo.getSelectedItem();
 
 //        if (fixedMeanRateCheck.isSelected()) {
 //        	options.clockModelOptions.fixMeanRate();

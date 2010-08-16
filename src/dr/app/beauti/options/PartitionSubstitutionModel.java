@@ -24,7 +24,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.*;
-import dr.app.beauti.generator.GeneralTraitGenerator;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
@@ -946,10 +945,13 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     public String getPrefix(int codonPartitionNumber) {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1) { //|| options.isSpeciesAnalysis()) {
-            // There is more than one active partition model, or doing species analysis
-            prefix += getName() + ".";
-        }
+        prefix += getPrefix();
+        prefix += getPrefixCodon(codonPartitionNumber);
+        return prefix;
+    }
+
+    public String getPrefixCodon(int codonPartitionNumber) {
+        String prefix = "";        
         if (getCodonPartitionCount() > 1 && codonPartitionNumber > 0) {
             if (getCodonHeteroPattern().equals("123")) {
                 prefix += "CP" + codonPartitionNumber + ".";

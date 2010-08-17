@@ -14,6 +14,7 @@ import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
 import dr.app.beauti.options.*;
@@ -41,7 +42,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.HierarchyBoundsListener;
+import java.awt.event.HierarchyEvent;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -596,6 +599,10 @@ public class BeautiFrame extends DocumentFrame {
                 } catch (IOException ioe) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file due to I/O issue: " + ioe.getMessage(),
                             "Unable to generate file", JOptionPane.ERROR_MESSAGE);
+                    return false;
+                } catch (Generator.GeneratorException e) {
+                    JOptionPane.showMessageDialog(this, "The BEAST XML is incomplete because :\n" + e.getMessage(),
+                            "The BEAST XML is incomplete", JOptionPane.ERROR_MESSAGE);
                     return false;
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(this, "Unable to generate file: " + e.getMessage(),

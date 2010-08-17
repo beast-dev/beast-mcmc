@@ -286,4 +286,9 @@ public abstract class Generator {
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
     
+    public class GeneratorException extends Exception {
+        public GeneratorException(String message) {
+            super(message);
+        }
+    }
 }

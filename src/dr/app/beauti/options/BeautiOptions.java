@@ -697,7 +697,7 @@ public class BeautiOptions extends ModelOptions {
             }
 
             if (userTrees.size() > 0) {
-                message += ", " + userTrees.size() +
+                message += ", " + userTrees.size() + " user" +
                         (userTrees.size() > 1 ? " trees" : " tree");
             }
 

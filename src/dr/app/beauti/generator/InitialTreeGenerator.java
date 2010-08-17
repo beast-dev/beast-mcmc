@@ -227,19 +227,20 @@ public class InitialTreeGenerator extends Generator {
      * @param tree   the user tree
      * @param writer the writer
      */
-    private void writeSimpleTree (Tree tree, XMLWriter writer) {
+    private void writeSimpleTree(Tree tree, XMLWriter writer) {
 
         writer.writeComment("The user-specified starting tree in a simple tree format.");
         writer.writeOpenTag(
-                "tree",
+                SimpleTreeParser.SIMPLE_TREE,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, STARTING_TREE),
 //                        new Attribute.Default<String>(DateParser.UNITS, options.datesUnits.getAttribute()),
+                        new Attribute.Default<Object>(DateParser.UNITS, options.units.toString()),
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
         );
         writeSimpleNode(tree, tree.getRoot(), writer);
-        writer.writeCloseTag("tree");
+        writer.writeCloseTag(SimpleTreeParser.SIMPLE_TREE);
     }
 
     /**
@@ -252,8 +253,8 @@ public class InitialTreeGenerator extends Generator {
     private void writeSimpleNode(Tree tree, NodeRef node, XMLWriter writer) {
 
         writer.writeOpenTag(
-                "node",
-                new Attribute[]{new Attribute.Default<Double>("height", tree.getNodeHeight(node))}
+                SimpleNodeParser.NODE,
+                new Attribute[]{new Attribute.Default<Double>(SimpleNodeParser.HEIGHT, tree.getNodeHeight(node))}
         );
 
         if (tree.getChildCount(node) == 0) {
@@ -262,6 +263,6 @@ public class InitialTreeGenerator extends Generator {
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeSimpleNode(tree, tree.getChild(node, i), writer);
         }
-        writer.writeCloseTag("node");
+        writer.writeCloseTag(SimpleNodeParser.NODE);
     }
 }

@@ -25,34 +25,47 @@
 
 package dr.evolution.util;
 
+import dr.evoxml.util.XMLUnits;
+
 /**
  * interface holding unit constants
  *
- * @version $Id: Units.java,v 1.17 2005/05/24 20:25:57 rambaut Exp $
- *
  * @author Alexei Drummond
  * @author Andrew Rambaut
+ * @version $Id: Units.java,v 1.17 2005/05/24 20:25:57 rambaut Exp $
  */
 public interface Units {
 
     public enum Type {
-       SUBSTITUTIONS, GENERATIONS, DAYS, MONTHS, YEARS
+        SUBSTITUTIONS(XMLUnits.SUBSTITUTIONS), GENERATIONS(XMLUnits.GENERATIONS),
+        DAYS(XMLUnits.DAYS), MONTHS(XMLUnits.MONTHS), YEARS(XMLUnits.YEARS);
+
+        Type(String name) {
+            this.name = name;
+        }
+
+        public String toString() {
+            return name;
+        }
+
+        private final String name;
     }
 
-	/**
-	 * @return the units for this object.
-	 */
-	Type getUnits();
+    /**
+     * @return the units for this object.
+     */
+    Type getUnits();
 
-	/**
-	 * Sets the units for this object.
+    /**
+     * Sets the units for this object.
+     *
      * @param units to use
      */
-	void setUnits(Type units);
+    void setUnits(Type units);
 
     // array of unit names
     // second dimension is to allow synonyms -- first element is default
-	final public String[][] UNIT_NAMES = {{"substitutions","mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
+    final public String[][] UNIT_NAMES = {{"substitutions", "mutations"}, {"generations"}, {"days"}, {"months"}, {"years"}};
 
     public class Utils {
 

@@ -29,6 +29,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.enumTypes.LocationSubstModelType;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
@@ -158,6 +159,15 @@ public class BeastGenerator extends Generator {
                     throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
                             "\nIt is only available for single tree model partition for this release.");
                 }
+            }
+        }
+
+        //+++++++++++++++ Starting tree ++++++++++++++++
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if (model.getStartingTreeType() == StartingTreeType.USER) {
+                if (model.getUserStartingTree() == null) {
+                    throw new IllegalArgumentException("Please selected a starting tree in Trees panel !");
+                }                
             }
         }
 

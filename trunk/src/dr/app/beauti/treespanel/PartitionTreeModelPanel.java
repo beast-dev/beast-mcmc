@@ -33,6 +33,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.util.TextUtil;
 import dr.evolution.datatype.PloidyType;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.gui.tree.JTreeDisplay;
 import dr.gui.tree.JTreePanel;
@@ -58,6 +59,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 8096349200725353543L;
 
+    private final String NO_TREE = "no tree loaded";
     private JComboBox ploidyTypeCombo = new JComboBox(PloidyType.values());
 
     private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
@@ -105,7 +107,20 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(userTreeCombo);
         userTreeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                fireUserTreeChanged();
+                if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
+                    Tree seleTree = getSelectedUserTree();
+                    if (seleTree == null || isBifurcatingTree(seleTree, seleTree.getRoot())) {
+                        partitionTreeModel.setUserStartingTree(seleTree);
+                    } else {
+                        JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
+                                "is not bifurcating !\nBEAST only allows bifurcating tree !",
+                                "Illegal user-specified starting tree",
+                                JOptionPane.ERROR_MESSAGE);
+
+                        userTreeCombo.setSelectedItem(NO_TREE);
+                        partitionTreeModel.setUserStartingTree(null);
+                    }
+                }
             }
         });
 
@@ -158,19 +173,15 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         exampleButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
-                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(PartitionTreeModel.USER_SPEC_TREE_FORMAT, new Dimension(400,200));
+                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(PartitionTreeModel.USER_SPEC_TREE_FORMAT, new Dimension(400, 200));
 
                 JOptionPane.showMessageDialog(parent, scrollPane,
-                    "Introduction of loading starting tree by user",
-                    JOptionPane.PLAIN_MESSAGE);
+                        "Introduction of loading starting tree by user",
+                        JOptionPane.PLAIN_MESSAGE);
             }
         });
 
         setupPanel();
-    }
-
-    private void fireUserTreeChanged() {
-        partitionTreeModel.setUserStartingTree(getSelectedUserTree());
     }
 
     private void setupPanel() {
@@ -195,8 +206,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             addComponentWithLabel("Select User-specified Tree:", userTreeCombo);
             userTreeCombo.removeAllItems();
+            userTreeCombo.addItem(NO_TREE);
             if (options.userTrees.size() == 0) {
-                userTreeCombo.addItem("no trees loaded");
                 userTreeCombo.setEnabled(false);
             } else {
                 for (Tree tree : options.userTrees) {
@@ -205,7 +216,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 userTreeCombo.setEnabled(true);
             }
 
-            addComponent(treeDisplayButton);
+//            addComponent(treeDisplayButton);  // todo JTreeDisplay not work properly
             addComponent(newickJRadioButton);
             addComponent(simpleJRadioButton);
             addComponent(exampleButton);
@@ -237,7 +248,9 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
 
-        if (partitionTreeModel.getUserStartingTree() != null) {
+        if (partitionTreeModel.getUserStartingTree() == null) {
+            userTreeCombo.setSelectedItem(NO_TREE);
+        } else {
             userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
         }
 
@@ -255,6 +268,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 //
 //    	partitionTreeModel.setStartingTreeType( (StartingTreeType) startingTreeCombo.getSelectedItem());
 //    	partitionTreeModel.setUserStartingTree(getSelectedUserTree(options));
+    }
+
+    public boolean isBifurcatingTree(Tree tree, NodeRef node) {
+        if (tree.getChildCount(node) > 2) return false;
+        for (int i = 0; i < tree.getChildCount(node); i++) {
+            if (!isBifurcatingTree(tree, tree.getChild(node, i))) return false;
+        }
+        return true;
     }
 
     private Tree getSelectedUserTree() {

@@ -259,17 +259,18 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void fireTraitsChanged() {
-
+        if (currentTrait != null) {
 //        if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
 //            frame.setupStarBEAST();
 //        } else
-        if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-            frame.updateDiscreteTraitAnalysis();
-        }
+            if (currentTrait != null && currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                frame.updateDiscreteTraitAnalysis();
+            }
 
-        traitsTableModel.fireTableDataChanged();
-        options.updatePartitionAllLinks();
-        frame.setDirty();
+            traitsTableModel.fireTableDataChanged();
+            options.updatePartitionAllLinks();
+            frame.setDirty();
+        }
     }
 
     private void traitSelectionChanged() {

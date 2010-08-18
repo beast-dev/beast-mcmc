@@ -112,6 +112,7 @@ public class BeautiOptions extends ModelOptions {
 
         fileNameStem = MCMCPanel.fileNameStem;
         logFileName = null;
+        allowOverwriteLog = false;
 //        mapTreeLog = false;
 //        mapTreeFileName = null;
         treeFileName.clear();
@@ -777,6 +778,7 @@ public class BeautiOptions extends ModelOptions {
 
     public String fileNameStem = MCMCPanel.fileNameStem;
     public String logFileName = null;
+    public boolean allowOverwriteLog = false;
 //    public boolean mapTreeLog = false;
 //    public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();

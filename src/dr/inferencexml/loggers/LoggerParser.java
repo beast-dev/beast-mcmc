@@ -33,6 +33,7 @@ import dr.util.Identifiable;
 import dr.util.Property;
 import dr.xml.*;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.util.Date;
 
@@ -52,6 +53,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
     public static final String HTML = "html";
     public static final String PRETTY = "pretty";
     public static final String LOG_EVERY = "logEvery";
+    public static final String ALLOW_OVERWRITE_LOG = "allowOverwrite";
 
     public static final String COLUMNS = "columns";
     public static final String COLUMN = "column";
@@ -75,6 +77,19 @@ public class LoggerParser extends AbstractXMLObjectParser {
         String fileName = null;
         if (xo.hasAttribute(FILE_NAME)) {
             fileName = xo.getStringAttribute(FILE_NAME);
+        }
+
+        boolean allowOverwrite = false; // default to not allow to overwrite
+        if (xo.hasAttribute(ALLOW_OVERWRITE_LOG)) allowOverwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
+
+        if (fileName!= null && (!allowOverwrite)) {
+             File f = new File(fileName);
+            if (f.exists()) {
+                throw new XMLParseException("\nThe log file " + fileName + " already exists in the working directory." +
+                        "\nYou cannot overwrite it, unless adding an attribute " + ALLOW_OVERWRITE_LOG + "=\"true\" in "
+                        + LOG + " element in xml.\nFor example: <" + LOG + " ... fileName=\"" + fileName + "\" "
+                        + ALLOW_OVERWRITE_LOG + "=\"true\">");
+            }
         }
 
         final PrintWriter pw = XMLParser.getFilePrintWriter(xo, getParserName());

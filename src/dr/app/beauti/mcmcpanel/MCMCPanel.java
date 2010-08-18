@@ -65,6 +65,7 @@ public class MCMCPanel extends BeautiPanel {
 
     JTextField logFileNameField = new JTextField(fileNameStem + ".log");
     JTextField treeFileNameField = new JTextField(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
 //    JTextField mapTreeFileNameField = new JTextField("untitled.MAP.tree");
@@ -169,9 +170,19 @@ public class MCMCPanel extends BeautiPanel {
         logFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Log file name:", logFileNameField);
         logFileNameField.setEditable(false);
+
+        optionsPanel.addComponent(allowOverwriteLogCheck);
+        allowOverwriteLogCheck.setSelected(false);
+        allowOverwriteLogCheck.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent changeEvent) {
+            	options.allowOverwriteLog = allowOverwriteLogCheck.isSelected();
+            }
+        });
+
         treeFileNameField.setColumns(32);
         optionsPanel.addComponentWithLabel("Trees file name:", treeFileNameField);
         treeFileNameField.setEditable(false);
+
 
 //        addComponent(mapTreeLogCheck);
 //        mapTreeLogCheck.setOpaque(false);

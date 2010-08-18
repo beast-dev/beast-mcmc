@@ -204,7 +204,8 @@ public class LogGenerator extends Generator {
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, "fileLog"),
                         new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
-                        new Attribute.Default<String>(LoggerParser.FILE_NAME, options.logFileName)
+                        new Attribute.Default<String>(LoggerParser.FILE_NAME, options.logFileName),
+                        new Attribute.Default<Boolean>(LoggerParser.ALLOW_OVERWRITE_LOG, options.allowOverwriteLog)
                 });
 
         if (options.hasData()) {

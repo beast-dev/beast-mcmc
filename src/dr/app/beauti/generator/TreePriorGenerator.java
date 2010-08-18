@@ -85,8 +85,8 @@ public class TreePriorGenerator extends Generator {
 
         switch (nodeHeightPrior) {
         	case CONSTANT:  
-	            writer.writeComment("A prior assumption that the population size has remained constant");
-	            writer.writeComment("throughout the time spanned by the genealogy.");
+	            writer.writeComment("A prior assumption that the population size has remained constant",
+                        "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
 	                    ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
 	                    new Attribute[]{
@@ -105,8 +105,8 @@ public class TreePriorGenerator extends Generator {
         	case EXPONENTIAL:
 	            // generate an exponential prior tree
 	
-	            writer.writeComment("A prior assumption that the population size has grown exponentially");
-	            writer.writeComment("throughout the time spanned by the genealogy.");
+	            writer.writeComment("A prior assumption that the population size has grown exponentially",
+                        "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
 	                    ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL,
 	                    new Attribute[]{
@@ -139,8 +139,8 @@ public class TreePriorGenerator extends Generator {
         	case LOGISTIC:
 	            // generate an exponential prior tree
 	
-	            writer.writeComment("A prior assumption that the population size has grown logistically");
-	            writer.writeComment("throughout the time spanned by the genealogy.");
+	            writer.writeComment("A prior assumption that the population size has grown logistically",
+                    "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
 	                    LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL,
 	                    new Attribute[]{
@@ -172,25 +172,25 @@ public class TreePriorGenerator extends Generator {
 //	            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
 //	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 //            		writer.writeComment("No calibration");
-                writer.writeComment("logistic.t50 initial always has to < treeRootHeight initial");
-                dr.app.beauti.options.Parameter priorPara = prior.getParameter("logistic.t50");
-
-                double initRootHeight;
-                if (options.isShareSameTreePrior()) {
-                    initRootHeight = priorPara.initial;
-                    for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-                        double tmpRootHeight = tree.getParameter("treeModel.rootHeight").initial;
-                        if (initRootHeight > tmpRootHeight) { // take min
-                            initRootHeight = tmpRootHeight;
-                        }
-                    }
-                } else {
-                    initRootHeight = prior.getTreeModel().getParameter("treeModel.rootHeight").initial;
-                }
-                // logistic.t50 initial always has to < treeRootHeight initial
-                if (priorPara.initial >= initRootHeight) {
-                    priorPara.initial = initRootHeight / 2; // tree prior.initial has to < treeRootHeight.initial
-                }
+//                writer.writeComment("logistic.t50 initial always has to < treeRootHeight initial");
+//                dr.app.beauti.options.Parameter priorPara = prior.getParameter("logistic.t50");
+//
+//                double initRootHeight;
+//                if (options.isShareSameTreePrior()) {
+//                    initRootHeight = priorPara.initial;
+//                    for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+//                        double tmpRootHeight = tree.getParameter("treeModel.rootHeight").initial;
+//                        if (initRootHeight > tmpRootHeight) { // take min
+//                            initRootHeight = tmpRootHeight;
+//                        }
+//                    }
+//                } else {
+//                    initRootHeight = prior.getTreeModel().getParameter("treeModel.rootHeight").initial;
+//                }
+//                // logistic.t50 initial always has to < treeRootHeight initial
+//                if (priorPara.initial >= initRootHeight) {
+//                    priorPara.initial = initRootHeight / 2; // tree prior.initial has to < treeRootHeight.initial
+//                }
 //	            } else {
 //	            	writer.writeComment("Has calibration");
 //	            	//TODO
@@ -208,8 +208,8 @@ public class TreePriorGenerator extends Generator {
 
         	case EXPANSION:
         		// generate an exponential prior tree
-	            writer.writeComment("A prior assumption that the population size has grown exponentially");
-	            writer.writeComment("from some ancestral population size in the past.");
+	            writer.writeComment("A prior assumption that the population size has grown exponentially",
+                    "from some ancestral population size in the past.");
 	            writer.writeOpenTag(
 	                    ExpansionModelParser.EXPANSION_MODEL,
 	                    new Attribute[]{
@@ -239,8 +239,8 @@ public class TreePriorGenerator extends Generator {
 	            break;
 
         	case YULE:
-	            writer.writeComment("A prior on the distribution node heights defined given");
-	            writer.writeComment("a Yule speciation process (a pure birth process).");
+	            writer.writeComment("A prior on the distribution node heights defined given",
+	            "a Yule speciation process (a pure birth process).");
 	            writer.writeOpenTag(
 	                    YuleModelParser.YULE_MODEL,
 	                    new Attribute[]{
@@ -299,8 +299,8 @@ public class TreePriorGenerator extends Generator {
             // If the node height prior is not one of these two then we need to simulate a
             // random starting tree under a constant size coalescent.
 
-            writer.writeComment("This is a simple constant population size coalescent model");
-            writer.writeComment("that is used to generate an initial tree for the chain.");
+            writer.writeComment("This is a simple constant population size coalescent model",
+            "that is used to generate an initial tree for the chain.");
             writer.writeOpenTag(
                     ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                     new Attribute[]{
@@ -358,40 +358,42 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
 	            
 	            break;
-	            
-    		case LOGISTIC:
-    			writer.writeComment("Generate a boolean likelihood for Coalescent: Logistic Growth");
-    			writer.writeOpenTag(
-    	                BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD,
-    	                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "booleanLikelihood1")}
-    	        );
-    	        writer.writeOpenTag(
-    	                TestStatisticParser.TEST_STATISTIC,
-    	                new Attribute[]{
-    	                        new Attribute.Default<String>(XMLParser.ID, "test1"),
-    	                        new Attribute.Default<String>("name", "test1")
-    	                }
-    	        );
-    	        writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + "logistic.t50"); //TODO correct?
-    	        writer.writeOpenTag("lessThan");
-    	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "treeModel.rootHeight");
-    	        writer.writeCloseTag("lessThan");
-    	        writer.writeCloseTag(TestStatisticParser.TEST_STATISTIC);
-    	        writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
-    	        
-    	        writer.writeOpenTag(
-	                    CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD,
-	                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT)}
-	            );
-	            writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
-	            writeNodeHeightPriorModelRef(prior, writer);
-	            writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
-	            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
-	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
-	            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
-	            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
-	            
-    	        break;
+
+            // AR - removed this special case for Logistic - it causes terrible problems.
+            // Need to put informative priors on Logistic parameters.
+//    		case LOGISTIC:
+//    			writer.writeComment("Generate a boolean likelihood for Coalescent: Logistic Growth");
+//    			writer.writeOpenTag(
+//    	                BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD,
+//    	                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "booleanLikelihood1")}
+//    	        );
+//    	        writer.writeOpenTag(
+//    	                TestStatisticParser.TEST_STATISTIC,
+//    	                new Attribute[]{
+//    	                        new Attribute.Default<String>(XMLParser.ID, "test1"),
+//    	                        new Attribute.Default<String>("name", "test1")
+//    	                }
+//    	        );
+//    	        writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + "logistic.t50");
+//    	        writer.writeOpenTag("lessThan");
+//    	        writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "treeModel.rootHeight");
+//    	        writer.writeCloseTag("lessThan");
+//    	        writer.writeCloseTag(TestStatisticParser.TEST_STATISTIC);
+//    	        writer.writeCloseTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
+//
+//    	        writer.writeOpenTag(
+//	                    CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD,
+//	                    new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT)}
+//	            );
+//	            writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
+//	            writeNodeHeightPriorModelRef(prior, writer);
+//	            writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
+//	            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
+//	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
+//	            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
+//	            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
+//
+//    	        break;
 	            
     		case SKYLINE:
 	            // generate a Bayesian skyline plot
@@ -450,7 +452,7 @@ public class TreePriorGenerator extends Generator {
 	
 	            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
-                writer.writeComment("skyride.logPopSize is log unit unlike other popSize");
+                writer.writeComment("skyride.logPopSize is in log units unlike other popSize");
 	            writeParameter(prior.getParameter("skyride.logPopSize"), skyrideIntervalCount, writer);
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
 	
@@ -802,10 +804,10 @@ public class TreePriorGenerator extends Generator {
             case GMRF_SKYRIDE:
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, modelPrefix + "skyride");
                 break;
-            case LOGISTIC:
-                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
-                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
-                break;
+//            case LOGISTIC:
+//                writer.writeIDref(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD, modelPrefix + "booleanLikelihood1");
+//                writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
+//                break;
             case EXTENDED_SKYLINE:
             	// only 1 coalescent, so write it in writeEBSPVariableDemographicReference
             case SPECIES_YULE:

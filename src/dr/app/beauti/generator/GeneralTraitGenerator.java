@@ -39,13 +39,16 @@ public class GeneralTraitGenerator extends Generator {
     }
 
     public static String getLocationSubstModelTag(PartitionSubstitutionModel substModel) {
-        if (substModel.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
-            return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
-        } else if (substModel.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
-            return ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
-        } else {
-            return null;
-        }
+        // AR - switch to a unified GeneralSubstitutionModel parser.
+        return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
+
+//        if (substModel.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
+//            return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
+//        } else if (substModel.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
+//            return ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
+//        } else {
+//            return null;
+//        }
     }
 
     /**

@@ -185,6 +185,10 @@ public enum PriorType {
 
     public String getPriorBoundString(Parameter param) {
 
+        if (param.isStatistic) {
+            return "n/a";
+        }
+        
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 

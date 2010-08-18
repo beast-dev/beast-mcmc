@@ -117,7 +117,7 @@ public class TraitGuesser {
         }
     }
 
-    public String guessTraitByDelimiter(String label, String delimiter) throws GuessTraitException {
+    private String guessTraitByDelimiter(String label, String delimiter) throws GuessTraitException {
         if (delimiter.length() < 1) {
             throw new IllegalArgumentException("No delimiter");
         }
@@ -143,8 +143,13 @@ public class TraitGuesser {
         }
     }
 
-    public String guessTraitFromRegex(String label, String regex) throws GuessTraitException {
+    private String guessTraitFromRegex(String label, String regex) throws GuessTraitException {
         String t;
+
+        if (!regex.contains("(")) {
+            // if user hasn't specified a replace element, assume the whole regex should match
+            regex = "(" + regex + ")";
+        }
 
         try {
             Pattern pattern = Pattern.compile(regex);

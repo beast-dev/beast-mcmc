@@ -71,8 +71,8 @@ public class AlignmentGenerator extends Generator {
     private void writeAlignment(Alignment alignment, XMLWriter writer) {
 
         writer.writeText("");
-        writer.writeComment("The sequence alignment (each sequence refers to a taxon above).");
-        writer.writeComment("ntax=" + alignment.getTaxonCount() + " nchar=" + alignment.getSiteCount());
+        writer.writeComment("The sequence alignment (each sequence refers to a taxon above).",
+                "ntax=" + alignment.getTaxonCount() + " nchar=" + alignment.getSiteCount());
         if (options.samplePriorOnly) {
             writer.writeComment("Null sequences generated in order to sample from the prior only.");
         }

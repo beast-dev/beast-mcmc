@@ -50,18 +50,22 @@ public class XMLWriter extends java.io.PrintWriter {
         level -= 1;
     }
 
-    public void writeComment(String comment) {
-        writeComment(comment, 80);
+    public void writeComment(String... comments) {
+        writeComment(80, comments);
     }
 
-    public void writeComment(String comment, int length) {
-        StringBuffer buffer = new StringBuffer("<!-- ");
-        buffer.append(comment);
-        for (int i = buffer.length(); i < (length - 3); i++) {
-            buffer.append(' ');
+    public void writeComment(int length, String... comments) {
+        writeBlankLine();
+
+        for (String comment : comments) {
+            StringBuffer buffer = new StringBuffer("<!-- ");
+            buffer.append(comment);
+            for (int i = buffer.length(); i < (length - 3); i++) {
+                buffer.append(' ');
+            }
+            buffer.append("-->");
+            writeText(buffer.toString());
         }
-        buffer.append("-->");
-        writeText(buffer.toString());
     }
 
     public void writeOpenTag(String tagname) {
@@ -136,6 +140,11 @@ public class XMLWriter extends java.io.PrintWriter {
     public void writeCloseTag(String tagname) {
         decreaseLevel();
         writeText("</" + tagname + ">");
+    }
+
+    public void writeBlankLine() {
+        println();
+        flush();
     }
 
     public void writeText(String string) {

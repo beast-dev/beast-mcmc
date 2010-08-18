@@ -95,7 +95,7 @@ public class DateGuesser {
         }
     }
 
-    public double guessDateFromOrder(String label, int order, boolean fromLast) throws GuessDatesException {
+    private double guessDateFromOrder(String label, int order, boolean fromLast) throws GuessDatesException {
 
         String field;
 
@@ -164,7 +164,7 @@ public class DateGuesser {
         return Double.parseDouble(field);
     }
 
-    public double guessDateFromPrefix(String label, String prefix) throws GuessDatesException {
+    private double guessDateFromPrefix(String label, String prefix) throws GuessDatesException {
 
         int i = label.indexOf(prefix);
 
@@ -195,8 +195,13 @@ public class DateGuesser {
         return d;
     }
 
-    public double guessDateFromRegex(String label, String regex) throws GuessDatesException {
+    private double guessDateFromRegex(String label, String regex) throws GuessDatesException {
         double d;
+
+        if (!regex.contains("(")) {
+            // if user hasn't specified a replace element, assume the whole regex should match
+            regex = "(" + regex + ")";
+        }
 
         try {
             Pattern pattern = Pattern.compile(regex);
@@ -206,7 +211,7 @@ public class DateGuesser {
             }
 
             if (matcher.groupCount() < 1) {
-                throw new GuessDatesException("Date group not defined in regular expression: use parentheses to surround the character group that gives the date");
+                throw new GuessDatesException("Date group not defined in regular expression");
             }
 
             d = Double.parseDouble(matcher.group(0));

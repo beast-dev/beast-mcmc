@@ -330,7 +330,7 @@ public class BranchRatesModelGenerator extends Generator {
                 break;
 
             case RANDOM_LOCAL_CLOCK:
-                writer.writeComment("The random local clock model (Drummond & Suchard, 2007)");
+                writer.writeComment("The random local clock model (Drummond & Suchard, 2010)");
                 
                 activeTrees = options.getPartitionTreeModels(model.getAllPartitionData());
                 for (PartitionTreeModel tree : activeTrees) {

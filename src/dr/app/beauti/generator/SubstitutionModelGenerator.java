@@ -423,12 +423,12 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        int numOfSates = TraitData.getStatesListOfTrait(options.taxonList, model.getAllPartitionData().get(0).getName()).size();
+        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, model.getAllPartitionData().get(0).getName()).size();
 
-        if (numOfSates < 1) throw new IllegalArgumentException("The number of states must be greater than 1 !");
+        if (numOfStates < 1) throw new IllegalArgumentException("The number of states must be greater than 1 !");
 
         for (PartitionData partition : model.getAllPartitionData()) {
-            if (numOfSates != TraitData.getStatesListOfTrait(options.taxonList, partition.getName()).size()) {
+            if (numOfStates != TraitData.getStatesListOfTrait(options.taxonList, partition.getName()).size()) {
                 throw new IllegalArgumentException("Discrete Traits having different number of states " +
                         "\n" + "cannot share the same substitution model !");
             }
@@ -446,25 +446,27 @@ public class SubstitutionModelGenerator extends Generator {
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeFrequencyModel(model, numOfSates, true, writer);
+            writeFrequencyModel(model, numOfStates, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
             //---------------- rates and indicators -----------------
 
-            if (!model.isActivateBSSVS()) {
-                writer.writeComment("Rates parameter in " + GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL
-                        + " element should have (" + (numOfSates * (numOfSates - 1) / 2) + " - 1) dimensions");
-                writeRatesAndIndicators(model, (numOfSates * (numOfSates - 1) / 2) - 1, null, writer);
-            } else {
-                writeRatesAndIndicators(model, numOfSates * (numOfSates - 1) / 2, null, writer);
-            }
+            // AR - we are trying to unify this setup. The only difference between BSSVS and not is the presence of indicators...
+//            if (!model.isActivateBSSVS()) {
+//                writer.writeComment("Rates parameter in " + GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL
+//                        + " element should have (" + (numOfStates * (numOfStates - 1) / 2) + " - 1) dimensions");
+//                writeRatesAndIndicators(model, (numOfStates * (numOfStates - 1) / 2) - 1, null, writer);
+//            } else {
+//                writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
+//            }
+            writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
         } else if (model.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
-            writer.writeOpenTag(ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL, new Attribute[]{
+            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL),
                     new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
 
@@ -472,16 +474,16 @@ public class SubstitutionModelGenerator extends Generator {
                 writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
             }
 
-            writer.writeOpenTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+            writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeFrequencyModel(model, numOfSates, true, writer);
+            writeFrequencyModel(model, numOfStates, true, writer);
 
-            writer.writeCloseTag(ComplexSubstitutionModelParser.ROOT_FREQUENCIES);
+            writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
             //---------------- rates and indicators -----------------
-            writeRatesAndIndicators(model, numOfSates * (numOfSates - 1), null, writer);
+            writeRatesAndIndicators(model, numOfStates * (numOfStates - 1), null, writer);
 
-            writer.writeCloseTag(ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL);
+            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
         } else {
 

@@ -53,7 +53,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox parameterizationCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.GROWTH_RATE,
             TreePriorParameterizationType.DOUBLING_TIME).toArray());
-    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
+//    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
     private JComboBox bayesianSkylineCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.CONSTANT_SKYLINE,
             TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
@@ -96,12 +96,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             }
         });
         
-        PanelUtils.setupComponent(parameterizationCombo1);
-        parameterizationCombo1.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());       
-            }
-        });
+//        PanelUtils.setupComponent(parameterizationCombo1);
+//        parameterizationCombo1.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent ev) {
+//            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
+//            }
+//        });
         
         PanelUtils.setupComponent(groupCountField);
         groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -146,16 +146,17 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL) {
-//                || treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC  //TODO Issue 93
-//                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
+        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL
+                || treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC
+                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
             addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-            
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC //) {//TODO Issue 93
-                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
-        	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
-        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
+        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
+//        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC //) {//TODO Issue 93
+//                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
+//        	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
+//        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
+//
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
             groupCountField.setColumns(6);
             addComponentWithLabel("Number of groups:", groupCountField);

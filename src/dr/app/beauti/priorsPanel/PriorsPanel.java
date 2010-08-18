@@ -28,6 +28,7 @@ package dr.app.beauti.priorsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.*;
 import dr.util.NumberFormatter;
 import org.virion.jam.framework.Exportable;
@@ -48,7 +49,7 @@ import java.util.ArrayList;
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
-    
+
     private static final long serialVersionUID = -2936049032365493416L;
     JScrollPane scrollPane = new JScrollPane();
     JTable priorTable = null;
@@ -85,7 +86,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTable.getColumnModel().getColumn(1).setMinWidth(260);
 
         priorTable.getColumnModel().getColumn(2).setCellRenderer(
-                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));       
+                new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         priorTable.getColumnModel().getColumn(2).setMinWidth(30);
 
 
@@ -96,8 +97,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(priorTable);
 
         scrollPane = new JScrollPane(priorTable,
-                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+                JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+                JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 
         scrollPane.setOpaque(false);
 
@@ -108,7 +109,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
 
         if (!isDefaultOnly) {
-            add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);          
+            add(new JLabel("Priors for model parameters and statistics:"), BorderLayout.NORTH);
         }
 
         add(scrollPane, BorderLayout.CENTER);
@@ -116,12 +117,12 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public void setOptions(BeautiOptions options) {
-    	this.options = options;
-    	
+        this.options = options;
+
         parameters = options.selectParameters();
 
         messageLabel.setText(getMessage());
-        
+
         priorTableModel.fireTableDataChanged();
 
         validate();
@@ -131,22 +132,36 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     private String getMessage() {
         String message = "<html>";
         if (isDefaultOnly) {
-            message += "These priors listed above are still set to the default values " +
-                    "and need to be reviewed, especially their upper and lower limits.";
+            message += "<ul><li>These priors listed above are still set to the default values " +
+                    "and need to be reviewed.</li>";
+
+            boolean hasImproperPrior = false;
+            boolean hasRate = false;
+            for (Parameter para : parameters) {
+                if (para.priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(para.upper) || Double.isInfinite(para.lower))) {
+                    hasImproperPrior = true;
+                }
+                if (para.getBaseName().endsWith("clock.rate") || para.getBaseName().endsWith(ClockType.UCED_MEAN)
+                        || para.getBaseName().endsWith(ClockType.UCLD_MEAN)) {
+                    hasRate = true;
+                }
+            }
+
+            if (hasImproperPrior) {
+                message += "<li><b>Warning: one or more parameters have improper priors.</b></li>";
+            }
+            if (hasRate) {
+                message += "<li>" +
+                        "Priors on clock rates in particular should be proper such as a high variance lognormal or gamma distribution " +
+                        "with a mean appropriate for the organism and units of time employed.</li>";
+            }
+            message += "</ul>";
+
         } else {
             message += "* Marked parameters currently have a default prior distribution. " +
                     "You should check that these are appropriate.";
         }
 
-        for (Parameter para : parameters) {
-//            System.out.println(para.getBaseName());
-            if (para.getBaseName().endsWith("clock.rate") || para.getBaseName().endsWith(ClockType.UCED_MEAN)
-                    || para.getBaseName().endsWith(ClockType.UCLD_MEAN)) {
-               return message + "<br>" + "Warning: Clock rate has a *dangerous* default prior! " +
-                      "Please select a proper (perhaps diffuse) like a high variance lognormal or gamma distribution <br>" +
-                      "with a mean appropriate for the organism and units of time employed.";
-            }
-        }
 
         return message + "</html>";
     }
@@ -160,6 +175,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 parameters.add(param);
             }
         }
+        messageLabel.setText(getMessage());
     }
 
     private PriorDialog priorDialog = null;
@@ -187,17 +203,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
         param.setPriorEdited(true);
 
-        if (isDefaultOnly) {             
+        if (isDefaultOnly) {
             setParametersList(options);
         }
-        
+
         if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA 
-        	if (options.clockModelOptions.isNodeCalibrated(param)) {
-        		options.clockModelOptions.nodeCalibration();
-        		frame.setAllOptions();
+            if (options.clockModelOptions.isNodeCalibrated(param)) {
+                options.clockModelOptions.nodeCalibration();
+                frame.setAllOptions();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();
-        	}
+            }
         }
 
         priorTableModel.fireTableDataChanged();
@@ -266,7 +282,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ButtonEditor extends DefaultCellEditor {
-        
+
         private static final long serialVersionUID = 6372738480075411674L;
         protected JButton button;
         private String label;

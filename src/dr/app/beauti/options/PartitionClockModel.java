@@ -102,14 +102,11 @@ public class PartitionClockModel extends PartitionModelOptions {
 //        createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
 //                PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
 
-        createParameterClockRateUniform(this, "clock.rate", "substitution rate. " +
-                "Please read warning message on the bottom",
+        createParameterClockRateUniform(this, "clock.rate", "substitution rate. ",
                 PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. " +
-                "Please read warning message on the bottom",
+        createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. ",
                 PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. " +
-                "Please read warning message on the bottom",
+        createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. ",
                 PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
         
         createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",

@@ -74,33 +74,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
         // You must say how often you want to log
         final int logEvery = xo.getIntegerAttribute(LOG_EVERY);
 
-        String fileName = null;
-        if (xo.hasAttribute(FILE_NAME)) {
-            fileName = xo.getStringAttribute(FILE_NAME);
-        }
-
-        boolean allowOverwrite = false;
-
-        if (xo.hasAttribute(ALLOW_OVERWRITE_LOG)) {
-            allowOverwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
-        }
-
-        // override with a runtime set System Property
-        if (System.getProperty("allow.overwrite") != null) {
-            allowOverwrite = Boolean.parseBoolean(System.getProperty("allow.overwrite", "false"));
-        }
-
-        if (fileName!= null && (!allowOverwrite)) {
-             File f = new File(fileName);
-            if (f.exists()) {
-                throw new XMLParseException("\nThe log file " + fileName + " already exists in the working directory." +
-                        "\nYou cannot overwrite it, unless adding an attribute " + ALLOW_OVERWRITE_LOG + "=\"true\" in "
-                        + LOG + " element in xml.\nFor example: <" + LOG + " ... fileName=\"" + fileName + "\" "
-                        + ALLOW_OVERWRITE_LOG + "=\"true\">");
-            }
-        }
-
-        final PrintWriter pw = XMLParser.getFilePrintWriter(xo, getParserName());
+        final PrintWriter pw = getLogFile(xo, getParserName());
 
         final LogFormatter formatter = new TabDelimitedFormatter(pw);
 
@@ -112,7 +86,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
         }
 
         // added a performance measurement delay to avoid the full evaluation period.
-        final MCLogger logger = new MCLogger(fileName, formatter, logEvery, performanceReport, 10000);
+        final MCLogger logger = new MCLogger(formatter, logEvery, performanceReport, 10000);
 
         if (xo.hasAttribute(TITLE)) {
             logger.setTitle(xo.getStringAttribute(TITLE));
@@ -168,6 +142,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(LOG_EVERY),
+            AttributeRule.newBooleanRule(ALLOW_OVERWRITE_LOG, true),
             new StringAttributeRule(FILE_NAME,
                     "The name of the file to send log output to. " +
                             "If no file name is specified then log is sent to standard output", true),

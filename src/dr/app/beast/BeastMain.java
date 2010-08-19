@@ -291,7 +291,7 @@ public class BeastMain {
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
         final boolean working = arguments.hasOption("working");
-        final boolean allowOverwrite = arguments.hasOption("overwrite");
+        boolean allowOverwrite = arguments.hasOption("overwrite");
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
@@ -395,6 +395,10 @@ public class BeastMain {
 
             if (!dialog.showDialog(nameString, seed)) {
                 return;
+            }
+
+            if (dialog.allowOverwrite()) {
+                allowOverwrite = true;
             }
 
             seed = dialog.getSeed();

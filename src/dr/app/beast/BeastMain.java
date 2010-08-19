@@ -231,6 +231,7 @@ public class BeastMain {
         System.out.println();
         System.out.println("  Example: beast test.xml");
         System.out.println("  Example: beast -window test.xml");
+        System.out.println("  Example: beast -help");
         System.out.println();
     }
 
@@ -240,21 +241,22 @@ public class BeastMain {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
-                        new Arguments.Option("verbose", "verbose XML parsing messages"),
+                        new Arguments.Option("verbose", "Give verbose XML parsing messages"),
                         new Arguments.Option("warnings", "Show warning messages about BEAST XML file"),
                         new Arguments.Option("strict", "Fail on non-conforming BEAST XML file"),
-                        new Arguments.Option("window", "provide a console window"),
-                        new Arguments.Option("options", "display an options dialog"),
-                        new Arguments.Option("working", "change working directory to input file's directory"),
-                        new Arguments.LongOption("seed", "specify a random number generator seed"),
+                        new Arguments.Option("window", "Provide a console window"),
+                        new Arguments.Option("options", "Display an options dialog"),
+                        new Arguments.Option("working", "Change working directory to input file's directory"),
+                        new Arguments.LongOption("seed", "Specify a random number generator seed"),
+                        new Arguments.StringOption("prefix", "PREFIX", "Specify a prefix for all output log filenames"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
-                        new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
+                        new Arguments.IntegerOption("errors", "Specify maximum number of numerical errors before stopping"),
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
 //                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
 //                                "in number of states."),
-                        new Arguments.IntegerOption("threads", "the number of computational threads to use (default auto)"),
-                        new Arguments.Option("java", "use Java only, no native implementations"),
-                        new Arguments.Option("beagle", "use beagle library if available"),
+                        new Arguments.IntegerOption("threads", "The number of computational threads to use (default auto)"),
+                        new Arguments.Option("java", "Use Java only, no native implementations"),
+                        new Arguments.Option("beagle", "Use beagle library if available"),
                         new Arguments.Option("beagle_info", "BEAGLE: show information on available resources"),
                         new Arguments.StringOption("beagle_order", "order", "BEAGLE: set order of resource use"),
                         new Arguments.IntegerOption("beagle_instances", "BEAGLE: divide site patterns amongst instances"),
@@ -265,7 +267,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
                         new Arguments.StringOption("beagle_scaling", new String[] { "default", "none", "dynamic", "always"},
                                 false, "BEAGLE: specify scaling scheme to use"),
-                        new Arguments.Option("help", "option to print this message"),
+                        new Arguments.Option("help", "Print this information and stop"),
                 });
 
         try {
@@ -291,6 +293,7 @@ public class BeastMain {
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
         final boolean working = arguments.hasOption("working");
+        String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
 
         long seed = MathUtils.getSeed();
@@ -300,6 +303,10 @@ public class BeastMain {
 
         if (arguments.hasOption("java")) {
             useJava = true;
+        }
+
+        if (arguments.hasOption("prefix")) {
+            fileNamePrefix = arguments.getStringOption("prefix");
         }
 
         long beagleFlags = 0;
@@ -315,215 +322,222 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_scaling")) {
             System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
-            boolean beagleShowInfo = arguments.hasOption("beagle_info");
-            if (arguments.hasOption("beagle_CPU")) {
-                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
+        }
+
+        boolean beagleShowInfo = arguments.hasOption("beagle_info");
+
+        if (arguments.hasOption("beagle_CPU")) {
+            beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
+        }
+        if (arguments.hasOption("beagle_GPU")) {
+            beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+        if (arguments.hasOption("beagle_SSE")) {
+            beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
+            beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+        }
+        if (arguments.hasOption("beagle_double")) {
+            beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+        }
+        if (arguments.hasOption("beagle_single")) {
+            beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+        }
+
+        if (arguments.hasOption("beagle_order")) {
+            System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
+        }
+
+        if (arguments.hasOption("beagle_instances")) {
+            System.setProperty("beagle.instance.count", Integer.toString(arguments.getIntegerOption("beagle_instances")));
+        }
+
+        if (arguments.hasOption("beagle_scaling")) {
+            System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
+        }
+
+        if (arguments.hasOption("threads")) {
+            threadCount = arguments.getIntegerOption("threads");
+            if (threadCount < 0) {
+                printTitle();
+                System.err.println("The the number of threads should be >= 0");
+                System.exit(1);
             }
-            if (arguments.hasOption("beagle_GPU")) {
-                beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+        }
+
+        if (arguments.hasOption("seed")) {
+            seed = arguments.getLongOption("seed");
+            if (seed <= 0) {
+                printTitle();
+                System.err.println("The random number seed should be > 0");
+                System.exit(1);
             }
-            if (arguments.hasOption("beagle_SSE")) {
-                beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+        }
+
+        int maxErrorCount = 0;
+        if (arguments.hasOption("errors")) {
+            maxErrorCount = arguments.getIntegerOption("errors");
+            if (maxErrorCount < 0) {
+                maxErrorCount = 0;
             }
-            if (arguments.hasOption("beagle_double")) {
-                beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-            }
-            if (arguments.hasOption("beagle_single")) {
-                beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-            }
+        }
 
-            if (arguments.hasOption("beagle_order")) {
-                System.setProperty("beagle.resource.order", arguments.getStringOption("beagle_order"));
-            }
+        BeastConsoleApp consoleApp = null;
 
-            if (arguments.hasOption("beagle_instances")) {
-                System.setProperty("beagle.instance.count", Integer.toString(arguments.getIntegerOption("beagle_instances")));
-            }
+        String nameString = "BEAST " + version.getVersionString();
 
-            if (arguments.hasOption("beagle_scaling")) {
-                System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
-            }
+        if (window) {
+            System.setProperty("com.apple.macos.useScreenMenuBar", "true");
+            System.setProperty("apple.laf.useScreenMenuBar", "true");
+            System.setProperty("apple.awt.showGrowBox", "true");
 
-            if (arguments.hasOption("threads")) {
-                threadCount = arguments.getIntegerOption("threads");
-                if (threadCount < 0) {
-                    printTitle();
-                    System.err.println("The the number of threads should be >= 0");
-                    System.exit(1);
-                }
-            }
+            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
-            if (arguments.hasOption("seed")) {
-                seed = arguments.getLongOption("seed");
-                if (seed <= 0) {
-                    printTitle();
-                    System.err.println("The random number seed should be > 0");
-                    System.exit(1);
-                }
-            }
+            String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
+                    "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    version.getHTMLCredits() +
+                    "</div></center></div></html>";
 
-            int maxErrorCount = 0;
-            if (arguments.hasOption("errors")) {
-                maxErrorCount = arguments.getIntegerOption("errors");
-                if (maxErrorCount < 0) {
-                    maxErrorCount = 0;
-                }
-            }
+            consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
+        }
 
-            BeastConsoleApp consoleApp = null;
+        printTitle();
 
-            String nameString = "BEAST " + version.getVersionString();
+        File inputFile = null;
 
-            if (window) {
-                System.setProperty("com.apple.macos.useScreenMenuBar", "true");
-                System.setProperty("apple.laf.useScreenMenuBar", "true");
-                System.setProperty("apple.awt.showGrowBox", "true");
+        if (options) {
 
-                javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
+            String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
+            javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
 
-                String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
-                        "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                        "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
-                        version.getHTMLCredits() +
-                        "</div></center></div></html>";
+            BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
-                consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
-            }
-
-            printTitle();
-
-            File inputFile = null;
-
-            if (options) {
-
-                String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
-                        "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
-                javax.swing.Icon icon = IconUtils.getIcon(BeastMain.class, "images/beast.png");
-
-                BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
-
-                if (!dialog.showDialog(nameString, seed)) {
-                    return;
-                }
-
-                if (dialog.allowOverwrite()) {
-                    allowOverwrite = true;
-                }
-
-                seed = dialog.getSeed();
-                threadCount = dialog.getThreadPoolSize();
-
-                useBeagle = dialog.useBeagle();
-                if (useBeagle) {
-                    beagleShowInfo = dialog.showBeagleInfo();
-                    if (dialog.preferBeagleCPU()) {
-                        beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
-                    }
-                    if (dialog.preferBeagleSSE()) {
-                        beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
-                    }
-                    if (dialog.preferBeagleGPU()) {
-                        beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
-                    }
-                    if (dialog.preferBeagleDouble()) {
-                        beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
-                    }
-                    if (dialog.preferBeagleSingle()) {
-                        beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
-                    }
-                }
-
-                inputFile = dialog.getInputFile();
-                if (!beagleShowInfo && inputFile == null) {
-                    System.err.println("No input file specified");
-                    return;
-                }
-
-            }
-
-            if (beagleShowInfo) {
-                BeagleInfo.printResourceList();
+            if (!dialog.showDialog(nameString, seed)) {
                 return;
             }
 
-            if (inputFile == null) {
-
-                String[] args2 = arguments.getLeftoverArguments();
-
-                if (args2.length > 1) {
-                    System.err.println("Unknown option: " + args2[1]);
-                    System.err.println();
-                    printUsage(arguments);
-                    return;
-                }
-
-                String inputFileName = null;
-
-
-                if (args2.length > 0) {
-                    inputFileName = args2[0];
-                    inputFile = new File(inputFileName);
-                }
-
-                if (inputFileName == null) {
-                    // No input file name was given so throw up a dialog box...
-                    inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
-                }
+            if (dialog.allowOverwrite()) {
+                allowOverwrite = true;
             }
 
-            if (inputFile != null && inputFile.getParent() != null && working) {
-                System.setProperty("user.dir", inputFile.getParent());
-            }
+            seed = dialog.getSeed();
+            threadCount = dialog.getThreadPoolSize();
 
-            if (useJava) {
-                System.setProperty("java.only", "true");
-            }
-
-            if (allowOverwrite) {
-                System.setProperty("allow.overwrite", "true");
-            }
-
+            useBeagle = dialog.useBeagle();
             if (useBeagle) {
-                additionalParsers.add("beagle");
-            }
-
-            if (beagleFlags != 0) {
-                System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
-
-            }
-
-            if (threadCount >= 0) {
-                System.setProperty("thread.count", String.valueOf(threadCount));
-            }
-
-            MathUtils.setSeed(seed);
-
-            System.out.println();
-            System.out.println("Random number seed: " + seed);
-            System.out.println();
-
-            try {
-                new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers);
-            } catch (RuntimeException rte) {
-                if (window) {
-                    // This sleep for 2 seconds is to ensure that the final message
-                    // appears at the end of the console.
-                    try {
-                        Thread.sleep(2000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    System.out.println();
-                    System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                beagleShowInfo = dialog.showBeagleInfo();
+                if (dialog.preferBeagleCPU()) {
+                    beagleFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
                 }
-                // logger.severe will throw a RTE but we want to keep the console visible
+                if (dialog.preferBeagleSSE()) {
+                    beagleFlags |= BeagleFlag.VECTOR_SSE.getMask();
+                }
+                if (dialog.preferBeagleGPU()) {
+                    beagleFlags |= BeagleFlag.PROCESSOR_GPU.getMask();
+                }
+                if (dialog.preferBeagleDouble()) {
+                    beagleFlags |= BeagleFlag.PRECISION_DOUBLE.getMask();
+                }
+                if (dialog.preferBeagleSingle()) {
+                    beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
+                }
             }
 
-            if (!window) {
-                System.exit(0);
+            inputFile = dialog.getInputFile();
+            if (!beagleShowInfo && inputFile == null) {
+                System.err.println("No input file specified");
+                return;
+            }
+
+        }
+
+        if (beagleShowInfo) {
+            BeagleInfo.printResourceList();
+            return;
+        }
+
+        if (inputFile == null) {
+
+            String[] args2 = arguments.getLeftoverArguments();
+
+            if (args2.length > 1) {
+                System.err.println("Unknown option: " + args2[1]);
+                System.err.println();
+                printUsage(arguments);
+                return;
+            }
+
+            String inputFileName = null;
+
+
+            if (args2.length > 0) {
+                inputFileName = args2[0];
+                inputFile = new File(inputFileName);
+            }
+
+            if (inputFileName == null) {
+                // No input file name was given so throw up a dialog box...
+                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
             }
         }
-    }
 
+        if (inputFile != null && inputFile.getParent() != null && working) {
+            System.setProperty("user.dir", inputFile.getParent());
+        }
+
+        if (useJava) {
+            System.setProperty("java.only", "true");
+        }
+
+        if (fileNamePrefix != null && fileNamePrefix.trim().length() > 0) {
+            System.setProperty("file.name.prefix", fileNamePrefix.trim());
+        }
+
+        if (allowOverwrite) {
+            System.setProperty("file.allow.overwrite", "true");
+        }
+
+        if (useBeagle) {
+            additionalParsers.add("beagle");
+        }
+
+        if (beagleFlags != 0) {
+            System.setProperty("beagle.preferred.flags", Long.toString(beagleFlags));
+
+        }
+
+        if (threadCount >= 0) {
+            System.setProperty("thread.count", String.valueOf(threadCount));
+        }
+
+        MathUtils.setSeed(seed);
+
+        System.out.println();
+        System.out.println("Random number seed: " + seed);
+        System.out.println();
+
+        try {
+            new BeastMain(inputFile, consoleApp, maxErrorCount, verbose, parserWarning, strictXML, additionalParsers);
+        } catch (RuntimeException rte) {
+            if (window) {
+                // This sleep for 2 seconds is to ensure that the final message
+                // appears at the end of the console.
+                try {
+                    Thread.sleep(2000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println();
+                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+            }
+            // logger.severe will throw a RTE but we want to keep the console visible
+        }
+
+        if (!window) {
+            System.exit(0);
+        }
+    }
 }
+
+

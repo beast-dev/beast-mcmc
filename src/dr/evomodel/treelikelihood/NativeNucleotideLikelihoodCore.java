@@ -168,9 +168,6 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
             e.printStackTrace();
         }          
         try {
-//            System.setProperty("java.library.path", currentDir);
-//            System.setProperty("user.dir", currentDir);
-
             if (OSType.isWindows()) {
                 System.load(currentDir + "NucleotideLikelihoodCore.dll");
                 System.out.println("Load NucleotideLikelihoodCore.dll successfully ...");

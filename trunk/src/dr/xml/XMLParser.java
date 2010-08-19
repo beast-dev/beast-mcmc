@@ -354,7 +354,18 @@ public class XMLParser {
         if (xo.hasAttribute(FileHelpers.FILE_NAME)) {
 
             final String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-            final File logFile = FileHelpers.getFile(fileName);
+
+            // Check to see if a filename prefix has been specified, check it doesn't contain directory
+            // separator characters and then prefix it.
+            final String fileNamePrefix = System.getProperty("file.name.prefix");
+            final String fileSeparator = System.getProperty("file.separator");
+            if (fileNamePrefix != null) {
+                if (fileNamePrefix.trim().length()==0 || fileNamePrefix.contains(fileSeparator)) {
+                    throw new XMLParseException("The specified file name prefix is illegal.");
+                }
+            }
+
+            final File logFile = FileHelpers.getFile(fileName, fileNamePrefix);
 
             boolean allowOverwrite = false;
 

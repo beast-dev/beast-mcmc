@@ -64,11 +64,15 @@ public class FileHelpers {
      * @param fileName an absolute or relative file name
      * @return a File object resolved from provided file name
      */
-    public static File getFile(String fileName) {
+    public static File getFile(String fileName, String prefix) {
         final boolean localFile = fileName.startsWith("./");
         final boolean relative = masterDirectory != null && localFile;
         if (localFile) {
             fileName = fileName.substring(2);
+        }
+
+        if (prefix != null) {
+            fileName = prefix + fileName;
         }
 
         final File file = new File(fileName);
@@ -89,6 +93,10 @@ public class FileHelpers {
             }
         }
         return new File(parent, name);
+    }
+
+    public static File getFile(String fileName) {
+        return getFile(fileName, null);
     }
 
     // directory where beast xml file resides

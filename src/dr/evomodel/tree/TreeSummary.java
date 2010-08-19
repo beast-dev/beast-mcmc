@@ -195,7 +195,9 @@ public class TreeSummary extends MCLogger {
             }
 
             Tree tree = (Tree) xo.getChild(Tree.class);
-            PrintWriter pw = getLogFile(xo, getParserName());
+
+            final PrintWriter pw = getLogFile(xo, getParserName());
+
             LogFormatter formatter = new TabDelimitedFormatter(pw);
 
             return new TreeSummary(tree, formatter, checkEvery, outputFile);

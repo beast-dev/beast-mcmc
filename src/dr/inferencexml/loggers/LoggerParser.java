@@ -53,7 +53,7 @@ public class LoggerParser extends AbstractXMLObjectParser {
     public static final String HTML = "html";
     public static final String PRETTY = "pretty";
     public static final String LOG_EVERY = "logEvery";
-    public static final String ALLOW_OVERWRITE_LOG = "allowOverwrite";
+    public static final String ALLOW_OVERWRITE_LOG = "overwrite";
 
     public static final String COLUMNS = "columns";
     public static final String COLUMN = "column";

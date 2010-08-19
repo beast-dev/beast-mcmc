@@ -247,6 +247,7 @@ public class BeastMain {
                         new Arguments.Option("options", "display an options dialog"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.LongOption("seed", "specify a random number generator seed"),
+                        new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.IntegerOption("errors", "maximum number of numerical errors before stopping"),
                         // new Arguments.Option("logops", "hack: log ops to stderr"),
 //                        new Arguments.IntegerOption("otfops", "experimental: on the fly op weigths. recompute frequency" +
@@ -262,7 +263,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.StringOption("beagle_scaling", new String[] { "default", "none", "dynamic", "always"}, 
+                        new Arguments.StringOption("beagle_scaling", new String[] { "default", "none", "dynamic", "always"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("help", "option to print this message"),
                 });
@@ -290,6 +291,7 @@ public class BeastMain {
         final boolean window = arguments.hasOption("window");
         final boolean options = arguments.hasOption("options");
         final boolean working = arguments.hasOption("working");
+        final boolean allowOverwrite = arguments.hasOption("overwrite");
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
@@ -462,6 +464,10 @@ public class BeastMain {
 
         if (useJava) {
             System.setProperty("java.only", "true");
+        }
+
+        if (allowOverwrite) {
+            System.setProperty("allow.overwrite", "true");
         }
 
         if (useBeagle) {

@@ -79,8 +79,16 @@ public class LoggerParser extends AbstractXMLObjectParser {
             fileName = xo.getStringAttribute(FILE_NAME);
         }
 
-        boolean allowOverwrite = false; // default to not allow to overwrite
-        if (xo.hasAttribute(ALLOW_OVERWRITE_LOG)) allowOverwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
+        boolean allowOverwrite = false;
+
+        if (xo.hasAttribute(ALLOW_OVERWRITE_LOG)) {
+            allowOverwrite = xo.getBooleanAttribute(ALLOW_OVERWRITE_LOG);
+        }
+
+        // override with a runtime set System Property
+        if (System.getProperty("allow.overwrite") != null) {
+            allowOverwrite = Boolean.parseBoolean(System.getProperty("allow.overwrite", "false"));
+        }
 
         if (fileName!= null && (!allowOverwrite)) {
              File f = new File(fileName);

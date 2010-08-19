@@ -26,7 +26,7 @@ public class MLLoggerParser extends LoggerParser {
         // logEvery of zero only displays at the end
         int logEvery = xo.getAttribute(LOG_EVERY, 0);
 
-        PrintWriter pw = getLogFile(xo, getParserName());
+        final PrintWriter pw = getLogFile(xo, getParserName());
 
         LogFormatter formatter = new TabDelimitedFormatter(pw);
 

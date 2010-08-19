@@ -48,6 +48,7 @@ public class BeastDialog {
     private final OptionsPanel optionPanel;
 
     private final WholeNumberField seedText = new WholeNumberField((long)1, Long.MAX_VALUE);
+    private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
     private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
@@ -98,6 +99,8 @@ public class BeastDialog {
         panel1.add(inputFileNameText, BorderLayout.CENTER);
         panel1.add(inputFileButton, BorderLayout.EAST);
         optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
+
+        optionPanel.addComponent(overwriteCheckBox);
 
         optionPanel.addSeparator();
 
@@ -190,6 +193,10 @@ public class BeastDialog {
 
     public long getSeed() {
         return seedText.getLongValue();
+    }
+
+    public boolean allowOverwrite() {
+        return overwriteCheckBox.isSelected();
     }
 
     public boolean useBeagle() {

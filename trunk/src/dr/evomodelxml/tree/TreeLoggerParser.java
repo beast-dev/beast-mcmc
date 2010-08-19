@@ -9,6 +9,7 @@ import dr.inference.model.Likelihood;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -184,6 +185,7 @@ public class TreeLoggerParser extends LoggerParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(LOG_EVERY, true),
+            AttributeRule.newBooleanRule(ALLOW_OVERWRITE_LOG, true),
             new StringAttributeRule(FILE_NAME,
                     "The name of the file to send log output to. " +
                             "If no file name is specified then log is sent to standard output", true),

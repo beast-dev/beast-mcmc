@@ -43,10 +43,6 @@ import java.util.LinkedList;
  */
 public class MCLogger implements Logger {
 
-    // the file that this logger is logging to or
-    // null if the LogFormatter is logging to a non-file print stream
-    String fileName;
-
     /**
      * Output performance stats in this log
      */
@@ -59,13 +55,12 @@ public class MCLogger implements Logger {
      * @param formatter the formatter of this logger
      * @param logEvery  logging frequency
      */
-    public MCLogger(String fileName, LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
+    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
 
         addFormatter(formatter);
         this.logEvery = logEvery;
         this.performanceReport = performanceReport;
         this.performanceReportDelay = performanceReportDelay;
-        this.fileName = fileName;
     }
 
     /**
@@ -75,26 +70,16 @@ public class MCLogger implements Logger {
      * @param logEvery  logging frequency
      */
     public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
-        this(null, formatter, logEvery, performanceReport, 0);
+        this(formatter, logEvery, performanceReport, 0);
     }
-
-    /**
-     * Constructor. Will log every logEvery.
-     *
-     * @param formatter the formatter of this logger
-     * @param logEvery  logging frequency
-     */
-    public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport, int performanceReportDelay) {
-        this(null, formatter, logEvery, performanceReport, performanceReportDelay);
-    }
-
+    
     /**
      * Constructor. Will log every logEvery.
      *
      * @param logEvery logging frequency
      */
     public MCLogger(String fileName, int logEvery, boolean performanceReport, int performanceReportDelay) throws IOException {
-        this(fileName, new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport, performanceReportDelay);
+        this(new TabDelimitedFormatter(new PrintWriter(new FileWriter(fileName))), logEvery, performanceReport, performanceReportDelay);
     }
 
     /**
@@ -103,7 +88,7 @@ public class MCLogger implements Logger {
      * @param logEvery logging frequency
      */
     public MCLogger(int logEvery) {
-        this(null, new TabDelimitedFormatter(System.out), logEvery, true, 0);
+        this(new TabDelimitedFormatter(System.out), logEvery, true, 0);
     }
 
     public final void setTitle(String title) {
@@ -165,13 +150,6 @@ public class MCLogger implements Logger {
     public final String getColumnFormatted(int index) {
 
         return columns.get(index).getFormatted();
-    }
-
-    /**
-     * @return file name or null if this logger is logging to a non-file print stream
-     */
-    public final String getFileName() {
-        return fileName;
     }
 
     protected void logHeading(String heading) {

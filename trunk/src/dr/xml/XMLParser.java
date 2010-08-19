@@ -28,6 +28,7 @@ package dr.xml;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inferencexml.loggers.LoggerParser;
 import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import org.w3c.dom.*;
@@ -349,11 +350,29 @@ public class XMLParser {
      * @throws XMLParseException if file can't be created for some reason
      */
     public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName) throws XMLParseException {
+
         if (xo.hasAttribute(FileHelpers.FILE_NAME)) {
 
             final String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
-
             final File logFile = FileHelpers.getFile(fileName);
+
+            boolean allowOverwrite = false;
+
+            if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
+                allowOverwrite = xo.getBooleanAttribute(LoggerParser.ALLOW_OVERWRITE_LOG);
+            }
+
+            // override with a runtime set System Property
+            if (System.getProperty("allow.overwrite") != null) {
+                allowOverwrite = Boolean.parseBoolean(System.getProperty("allow.overwrite", "false"));
+            }
+
+            if (logFile.exists() && !allowOverwrite) {
+                throw new XMLParseException("\nThe log file " + fileName + " already exists in the working directory." +
+                        "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
+                        "\nBEAST or select the option in the Run Options dialog box as appropriate.");
+            }
+
 
             try {
                 return new PrintWriter(new FileOutputStream(logFile));

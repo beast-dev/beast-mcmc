@@ -24,15 +24,19 @@
  */
 
 package dr.app.beast;
-import dr.app.plugin.*;
+
+import beagle.BeagleFlag;
+import beagle.BeagleInfo;
+import dr.app.plugin.Plugin;
+import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.math.MathUtils;
 import dr.util.ErrorLogHandler;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
-import dr.xml.XMLParser;
 import dr.xml.XMLObjectParser;
+import dr.xml.XMLParser;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
@@ -45,8 +49,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.*;
 
-import beagle.*;
-
 public class BeastMain {
 
     private final static Version version = new BeastVersion();
@@ -56,6 +58,7 @@ public class BeastMain {
 
         public BeastConsoleApp(String nameString, String aboutString, javax.swing.Icon icon) throws IOException {
             super(nameString, aboutString, icon, false);
+            getDefaultFrame().setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
         }
 
         public void doStop() {

@@ -33,6 +33,9 @@ import org.virion.jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.lang.reflect.Method;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -41,6 +44,8 @@ import java.awt.*;
  */
 public class BeautiApp extends MultiDocApplication {
     private final static Version version = new BeastVersion();
+
+    private static final boolean COMPILING_MAC_UI = false;
 
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
@@ -94,17 +99,33 @@ public class BeautiApp extends MultiDocApplication {
                 System.setProperty("apple.awt.draggableWindowBackground","true");
                 System.setProperty("apple.awt.showGrowBox","true");
 
-                // set the Quaqua Look and Feel in the UIManager
-//                try {
-//                    UIManager.setLookAndFeel(
-//                            "ch.randelshofer.quaqua.QuaquaLookAndFeel"
-//                    );
-//                    lafLoaded = true;
-//
-//
-//                } catch (Exception e) {
-//
-//                }
+                try {
+
+                    try {
+                        // We need to do this using dynamic class loading to avoid other platforms
+                        // having to link to this class. If the Quaqua library is not on the classpath
+                        // it simply won't be used.
+                        Class<?> qm = Class.forName("ch.randelshofer.quaqua.QuaquaManager");
+                        Method method = qm.getMethod("setExcludedUIs", Set.class);
+
+                        Set<String> excludes = new HashSet<String>();
+                        excludes.add("Button");
+                        excludes.add("ToolBar");
+                        method.invoke(null, excludes);
+
+                    }
+                    catch (Throwable e) {
+                    }
+
+                    //set the Quaqua Look and Feel in the UIManager
+                    UIManager.setLookAndFeel(
+                            "ch.randelshofer.quaqua.QuaquaLookAndFeel"
+                    );
+                    lafLoaded = true;
+
+                } catch (Exception e) {
+
+                }
 
                 UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
                 UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
@@ -129,7 +150,7 @@ public class BeautiApp extends MultiDocApplication {
                         "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", " + version.getDateString() + "</p>" +
                         "<p>by Alexei J. Drummond, Andrew Rambaut and Walter Xie</p></div>" +
-                                "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
+                        "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
                         version.getHTMLCredits() +
                         "</div></center></div></html>";
 

@@ -117,7 +117,7 @@ public class InitialTreeGenerator extends Generator {
                 if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
                     if (model.getAllPartitionData().size() > 1) {
                         if (!options.validateDiffTaxa(model.getAllPartitionData())) {
-                            throw new IllegalArgumentException("To allow different taxa, each taxa has to have a tree model !");
+                            throw new IllegalArgumentException("To accommodate different taxa for each partition trees cannot be linked");
                         }
                     }
 

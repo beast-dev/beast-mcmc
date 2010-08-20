@@ -278,7 +278,7 @@ public abstract class Generator {
         
         if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
         	//FAIL
-            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
+            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet");
         }
 
         return new int[]{autocorrelatedClockCount, randomLocalClockCount};

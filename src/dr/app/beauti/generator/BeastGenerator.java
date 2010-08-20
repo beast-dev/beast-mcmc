@@ -156,7 +156,7 @@ public class BeastGenerator extends Generator {
         if (options.getPartitionTreeModels().size() > 1) { //TODO not allowed multi-prior yet
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
-                    throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet!" +
+                    throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet" +
                             "\nIt is only available for single tree model partition for this release.");
                 }
             }
@@ -166,7 +166,7 @@ public class BeastGenerator extends Generator {
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if (model.getStartingTreeType() == StartingTreeType.USER) {
                 if (model.getUserStartingTree() == null) {
-                    throw new IllegalArgumentException("Please selected a starting tree in Trees panel !");
+                    throw new IllegalArgumentException("Please selected a starting tree in Trees panel");
                 }
             }
         }
@@ -185,8 +185,7 @@ public class BeastGenerator extends Generator {
                     if (pd.getAlignment() != null) {
                         if (numOfTaxa > 0) {
                             if (numOfTaxa != pd.getTaxaCount()) {
-                                throw new IllegalArgumentException("BEAST does not allow that alignments with different taxa " +
-                                        "to refer to one tree !");
+                                throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree");
                             }
                         } else {
                             numOfTaxa = pd.getTaxaCount();

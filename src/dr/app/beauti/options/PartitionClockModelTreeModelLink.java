@@ -177,7 +177,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
                 case AUTOCORRELATED_LOGNORMAL:
                 	
-                	throw new IllegalArgumentException("This function is NOT available !");
+                	throw new IllegalArgumentException("This function is NOT available");
                 	
 //                	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {//&& model.isEstimatedRate()) {
 //	                	ops.add(getOperator("scaleRootRate"));

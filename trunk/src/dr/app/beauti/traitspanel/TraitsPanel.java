@@ -340,7 +340,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 dataTableModel.fireTableDataChanged();
             } while (result < 0);
         } else {
-            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
         }
     }

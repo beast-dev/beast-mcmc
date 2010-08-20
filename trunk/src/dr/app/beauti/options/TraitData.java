@@ -79,7 +79,7 @@ public class TraitData extends PartitionData {
 
                 if (attr == null) {
                      throw new IllegalArgumentException("Trait (" + getName() + ") has no value in taxon " + taxon.getId() +
-                     " !\nPlease go to Traits panel to import value.");
+                     ".\nPlease go to Traits panel to import value.");
                 }
 
                 if (!states.contains(attr)) {

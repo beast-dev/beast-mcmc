@@ -238,7 +238,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
-                JOptionPane.showMessageDialog(this, "Cannot show alignment if the selected partition is a trait !",
+                JOptionPane.showMessageDialog(this, "Cannot currently display traits. Use the traits panel to view and edit these.",
                     "Illegal Argument Exception",
                     JOptionPane.ERROR_MESSAGE);
                 return;
@@ -527,7 +527,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    JOptionPane.showMessageDialog(this, "To allow different taxa, each taxa has to have a tree model !",
+                    JOptionPane.showMessageDialog(this, "To accommodate different taxa for each partition trees cannot be linked.",
                         "Illegal Configuration",
                         JOptionPane.ERROR_MESSAGE);
                     return;

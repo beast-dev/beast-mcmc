@@ -114,7 +114,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                         partitionTreeModel.setUserStartingTree(seleTree);
                     } else {
                         JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-                                "is not bifurcating !\nBEAST only allows bifurcating tree !",
+                                "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
                                 "Illegal user-specified starting tree",
                                 JOptionPane.ERROR_MESSAGE);
 

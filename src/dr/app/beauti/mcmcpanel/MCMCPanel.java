@@ -246,7 +246,11 @@ public class MCMCPanel extends BeautiPanel {
 
 //        optionsPanel.setPreferredSize(new java.awt.Dimension(500, 600));
 
-        JScrollPane scrollPane = new JScrollPane(optionsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel.add(optionsPanel, BorderLayout.CENTER);
+        panel.setOpaque(false);
+
+        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);

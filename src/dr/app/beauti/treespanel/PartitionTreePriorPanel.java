@@ -181,7 +181,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet! "
+            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet.<br>"
 						+ "It is only available for single tree model partition for this release.<br>"
 						+ "Please go to Data Partition panel to link all tree models." + "</html>");
             //TODO link tree model

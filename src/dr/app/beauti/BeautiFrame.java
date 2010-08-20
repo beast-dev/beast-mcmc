@@ -457,7 +457,7 @@ public class BeautiFrame extends DocumentFrame {
             return true;
 
         } else {
-            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file!",
+            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
                     "No taxa loaded", JOptionPane.ERROR_MESSAGE);
             return false;
         }

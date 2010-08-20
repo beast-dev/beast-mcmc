@@ -131,7 +131,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return new Double(getText());
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Find incorrect number format !",
+            JOptionPane.showMessageDialog(this, "Unable to parse number correctly",
                         "Number Format Exception",
                         JOptionPane.ERROR_MESSAGE);
             return null;

@@ -27,6 +27,7 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
+import dr.app.util.OSType;
 import dr.gui.chart.Axis;
 import dr.gui.chart.JChart;
 import dr.gui.chart.LinearAxis;
@@ -61,11 +62,12 @@ public class PriorDialog {
 	private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
-	private OptionsPanel optionsPanel;
+	private JPanel panel;
+
     private final SpecialNumberPanel specialNumberPanel;
 	private JChart chart;
-	private JLabel quantileLabels;
-	private JTextArea quantileText;
+    private JPanel quantilePanel;
+    private JTextArea quantileText;
 
 	private Parameter parameter;
 
@@ -84,20 +86,23 @@ public class PriorDialog {
 		optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
-		optionsPanel = new OptionsPanel(12, 12);
-
 		chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
 				new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
 
-		quantileLabels = new JLabel();
+		JLabel quantileLabels = new JLabel();
 		quantileLabels.setFont(quantileLabels.getFont().deriveFont(10.0f));
 		quantileLabels.setOpaque(false);
 		quantileLabels.setText("<html><p align=\"right\">Quantiles: 2.5%:<br>5%:<br>Median:<br>95%:<br>97.5%:</p></html>");
-		quantileText = new JTextArea(0, 5);
+
+        quantileText = new JTextArea(0, 5);
 		quantileText.setFont(quantileText.getFont().deriveFont(10.0f));
 		quantileText.setOpaque(false);
 		quantileText.setEditable(false);
+        quantileLabels.setHorizontalAlignment(JLabel.LEFT);
 
+        quantilePanel = new JPanel();
+        quantilePanel.add(quantileLabels);
+        quantilePanel.add(quantileText);
 
         specialNumberPanel = new SpecialNumberPanel(this);
         specialNumberPanel.setEnabled(false);
@@ -123,14 +128,15 @@ public class PriorDialog {
 			initialField.setValue(parameter.initial);
 		}
 
-		setArguments(priorType);
-		setupComponents();
+        panel = new JPanel(new GridBagLayout());
 
-        JScrollPane scrollPane = new JScrollPane(optionsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setOpaque(false);
+        setArguments(priorType);
+        setupComponents();
+
+        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);
-        
+
 		JOptionPane optionPane = new JOptionPane(scrollPane,
 				JOptionPane.PLAIN_MESSAGE,
 				JOptionPane.OK_CANCEL_OPTION,
@@ -144,16 +150,18 @@ public class PriorDialog {
 		priorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setupComponents();
+                dialog.validate();
 				dialog.repaint();
-                dialog.pack();
+//                dialog.pack();
 			}
 		});
 
 		rootHeightPriorCombo.addItemListener(new ItemListener() {
 			public void itemStateChanged(ItemEvent e) {
 				setupComponents();
+                dialog.validate();
 				dialog.repaint();
-                dialog.pack();
+//                dialog.pack();
 			}
 		});
 
@@ -174,8 +182,9 @@ public class PriorDialog {
                 }
 
                 setupChart();
-                dialog.pack();
+                dialog.validate();
                 dialog.repaint();
+//                dialog.pack();
             }
         });
 
@@ -208,20 +217,24 @@ public class PriorDialog {
 			}
 		}
 
-        Toolkit tk = Toolkit.getDefaultToolkit();
-        Dimension d = tk.getScreenSize();
-        if (d.height < 700 && optionsPanel.getHeight() > 450) {
-            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, 550));
-        } else {
-            // setSize because optionsPanel is shrunk in dialog
-            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, optionsPanel.getHeight() + 100));
-        }
+//        Toolkit tk = Toolkit.getDefaultToolkit();
+//        Dimension d = tk.getScreenSize();
+//        if (d.height < 700 && optionsPanel.getHeight() > 450) {
+//            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, 550));
+//        } else {
+//            // setSize because optionsPanel is shrunk in dialog
+//            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, optionsPanel.getHeight() + 100));
+//        }
+
 //        System.out.println("panel width = " + optionsPanel.getWidth());
 //        System.out.println("panel height = " + optionsPanel.getHeight());
-        dialog.setResizable(true); 
-        dialog.setVisible(true);
-        dialog.pack();
         
+        dialog.pack();
+        dialog.setMinimumSize(new Dimension(dialog.getBounds().width, 300));
+
+        dialog.setResizable(true);
+        dialog.setVisible(true);
+
 		int result = JOptionPane.CANCEL_OPTION;
 		Integer value = (Integer) optionPane.getValue();
 		if (value != null && value != -1) {
@@ -326,7 +339,9 @@ public class PriorDialog {
 	}
 
 	private void setupComponents() {
-		optionsPanel.removeAll();
+        panel.removeAll();
+        
+        OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
 
 		optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
@@ -354,14 +369,28 @@ public class PriorDialog {
         }
         
 		if (priorType != PriorType.JEFFREYS_PRIOR) {
-			optionsPanel.addSeparator();
-			optionsPanel.addComponent(optionsPanels.get(priorType));
+			optionsPanel.addSpanningComponent(optionsPanels.get(priorType));
 		}
 
         if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             optionsPanel.addSeparator();
             optionsPanel.addSpanningComponent(specialNumberPanel);
         }
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.PAGE_START;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel1.add(optionsPanel);
+
+        panel.add(panel1, gbc);
 
         // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart
 		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {
@@ -370,9 +399,21 @@ public class PriorDialog {
 			setupChart();
 			chart.setPreferredSize(new Dimension(300, 200));
 			chart.setFontSize(8);
-			optionsPanel.addSpanningComponent(chart);
-			optionsPanel.addComponents(quantileLabels, quantileText);
-		}
+
+            gbc.gridy = 1;
+            gbc.weighty = 1.0;
+            gbc.fill = GridBagConstraints.BOTH;
+
+            panel.add(chart, gbc);
+
+            gbc.gridy = 2;
+            gbc.weighty = 0.0;
+            gbc.anchor = GridBagConstraints.PAGE_END;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
+
+            panel.add(quantilePanel, gbc);
+
+        }
 	}
 
     public void setSelectedField(RealNumberField selectedField) {

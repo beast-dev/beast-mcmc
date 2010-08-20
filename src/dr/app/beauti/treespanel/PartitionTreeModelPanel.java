@@ -32,6 +32,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.util.TextUtil;
+import dr.app.util.OSType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -82,7 +83,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     PartitionTreeModel partitionTreeModel;
 
     public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel parTreeModel, BeautiOptions options) {
-        super(12, 18);
+        super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreeModel = parTreeModel;
         this.options = options;

@@ -61,7 +61,7 @@ public class PriorDialog {
 	private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
-	private OptionsPanel optionPanel;
+	private OptionsPanel optionsPanel;
 	private JChart chart;
 	private JLabel quantileLabels;
 	private JTextArea quantileText;
@@ -83,7 +83,7 @@ public class PriorDialog {
 		optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
-		optionPanel = new OptionsPanel(12, 12);
+		optionsPanel = new OptionsPanel(12, 12);
 
 		chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
 				new LinearAxis(Axis.AT_ZERO, Axis.AT_DATA));
@@ -121,8 +121,11 @@ public class PriorDialog {
 		setArguments(priorType);
 		setupComponents();
 
-        JScrollPane scrollPane = new JScrollPane(optionPanel);
+        JScrollPane scrollPane = new JScrollPane(optionsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setOpaque(false);
+        
 		JOptionPane optionPane = new JOptionPane(scrollPane,
 				JOptionPane.PLAIN_MESSAGE,
 				JOptionPane.OK_CANCEL_OPTION,
@@ -196,14 +199,14 @@ public class PriorDialog {
 
         Toolkit tk = Toolkit.getDefaultToolkit();
         Dimension d = tk.getScreenSize();
-        if (d.height < 700 && optionPanel.getHeight() > 450) {
-            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, 550));
+        if (d.height < 700 && optionsPanel.getHeight() > 450) {
+            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, 550));
         } else {
-            // setSize because optionPanel is shrunk in dialog
-            dialog.setSize(new java.awt.Dimension(optionPanel.getWidth() + 100, optionPanel.getHeight() + 100));
+            // setSize because optionsPanel is shrunk in dialog
+            dialog.setSize(new java.awt.Dimension(optionsPanel.getWidth() + 100, optionsPanel.getHeight() + 100));
         }
-//        System.out.println("panel width = " + optionPanel.getWidth());
-//        System.out.println("panel height = " + optionPanel.getHeight());
+//        System.out.println("panel width = " + optionsPanel.getWidth());
+//        System.out.println("panel height = " + optionsPanel.getHeight());
         dialog.setResizable(true); 
         dialog.setVisible(true);
         dialog.pack();
@@ -312,13 +315,13 @@ public class PriorDialog {
 	}
 
 	private void setupComponents() {
-		optionPanel.removeAll();
+		optionsPanel.removeAll();
 
-		optionPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
+		optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
 		PriorType priorType;
 		if (parameter.isNodeHeight) {
-			optionPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
+			optionsPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
 			if (rootHeightPriorCombo.getSelectedIndex() == 0) {
 				return; // PriorType.NONE
 			} else {
@@ -326,40 +329,40 @@ public class PriorDialog {
 			}
 		} else {
 			if (!parameter.priorFixed) {
-				optionPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
+				optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
 				priorType = (PriorType) priorCombo.getSelectedItem();
 			} else {
 				priorType = (PriorType) priorCombo.getSelectedItem();
-				optionPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
+				optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
 			}
 		}
 
         if (!parameter.isStatistic) {
-            optionPanel.addSeparator();
-            optionPanel.addComponentWithLabel("Initial Value: ", initialField);
+            optionsPanel.addSeparator();
+            optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
         }
         
 		if (priorType != PriorType.JEFFREYS_PRIOR) {
-			optionPanel.addSeparator();
-			optionPanel.addComponent(optionsPanels.get(priorType));
+			optionsPanel.addSeparator();
+			optionsPanel.addComponent(optionsPanels.get(priorType));
 		}
 
         if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-            optionPanel.addSeparator();
-            optionPanel.addLabel("Set a sepcial value in the selected text field above.");
+            optionsPanel.addSeparator();
+            optionsPanel.addLabel("Set a sepcial value in the selected text field above.");
             SpecialNumberPanel specialNumberPanel = new SpecialNumberPanel (this);
-            optionPanel.addSpanningComponent(specialNumberPanel);
+            optionsPanel.addSpanningComponent(specialNumberPanel);
         }
 
         // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart
 		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {
-			optionPanel.addSeparator();
+			optionsPanel.addSeparator();
 
 			setupChart();
 			chart.setPreferredSize(new Dimension(300, 200));
 			chart.setFontSize(8);
-			optionPanel.addSpanningComponent(chart);
-			optionPanel.addComponents(quantileLabels, quantileText);
+			optionsPanel.addSpanningComponent(chart);
+			optionsPanel.addComponents(quantileLabels, quantileText);
 		}
 	}
 

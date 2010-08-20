@@ -30,6 +30,7 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.util.OSType;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import org.virion.jam.components.WholeNumberField;
 import org.virion.jam.panels.OptionsPanel;
@@ -76,7 +77,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 
     public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {
-    	super(12, 8);
+    	super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;

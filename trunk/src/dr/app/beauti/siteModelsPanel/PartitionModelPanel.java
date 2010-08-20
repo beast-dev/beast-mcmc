@@ -32,6 +32,7 @@ import dr.app.beauti.enumTypes.FrequencyPolicyType;
 import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
@@ -92,7 +93,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
     public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
 
-        super(12, 30);
+        super(12, (OSType.isMac() ? 6 : 24));
 
         this.model = partitionModel;
 
@@ -316,11 +317,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addSeparator();
 
-                JPanel panel1 = new JPanel(new BorderLayout(6, 6));
-                panel1.setOpaque(false);
-                panel1.add(codingCombo, BorderLayout.CENTER);
-                panel1.add(setSRD06Button, BorderLayout.EAST);
-                addComponentWithLabel("Partition into codon positions:", panel1);
+                addComponentWithLabel("Partition into codon positions:", codingCombo);
 
                 JPanel panel2 = new JPanel();
                 panel2.setOpaque(false);
@@ -331,6 +328,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 panel2.add(freqsUnlinkCheck);
 
                 addComponent(panel2);
+
+                addComponent(setSRD06Button);
+                
                 break;
 
             case DataType.AMINO_ACIDS:

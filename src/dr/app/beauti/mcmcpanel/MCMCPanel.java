@@ -83,12 +83,8 @@ public class MCMCPanel extends BeautiPanel {
     public MCMCPanel(BeautiFrame parent) {
         setLayout(new BorderLayout());
 
-        int verticalSpacing = 24;
-        if (OSType.isMac()) {
-            // Mac OS X components have more spacing round them
-            verticalSpacing = 6;
-        }
-        optionsPanel = new OptionsPanel(12, verticalSpacing);
+        // Mac OS X components have more spacing round them already
+        optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
 
         this.frame = parent;
 
@@ -248,10 +244,13 @@ public class MCMCPanel extends BeautiPanel {
         //mapTreeFileNameField.addKeyListener(listener);
 //        substTreeFileNameField.addKeyListener(listener);
 
-        optionsPanel.setPreferredSize(new java.awt.Dimension(500, 600));
-//        optionsPanel.setMinimumSize(new java.awt.Dimension(800, 600));
-        JScrollPane scrollPane = new JScrollPane(optionsPanel);
+//        optionsPanel.setPreferredSize(new java.awt.Dimension(500, 600));
+
+        JScrollPane scrollPane = new JScrollPane(optionsPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setOpaque(false);
+
         add(scrollPane, BorderLayout.CENTER);
     }
 

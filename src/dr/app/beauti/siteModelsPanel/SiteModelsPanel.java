@@ -138,8 +138,10 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         setCurrentModel(null);
 
-        JScrollPane scrollPane2 = new JScrollPane(modelPanelParent);
-        scrollPane.setOpaque(false);
+        JScrollPane scrollPane2 = new JScrollPane(modelPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        scrollPane2.setOpaque(false);
+        scrollPane2.setBorder(null);
+        scrollPane2.getViewport().setOpaque(false);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel, scrollPane2);
         splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);

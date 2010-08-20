@@ -30,6 +30,7 @@ import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.enumTypes.PopulationSizeModelType;
 import dr.app.beauti.util.PanelUtils;
 
+import dr.app.util.OSType;
 import org.virion.jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -53,7 +54,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
 //    private boolean settingOptions = false;
 
     public SpeciesTreesPanel(final PartitionTreePrior partitionTreePrior) {
-    	super(12, 18); 	
+    	super(12, (OSType.isMac() ? 6 : 24));
        
     	this.partitionTreePrior = partitionTreePrior;
 

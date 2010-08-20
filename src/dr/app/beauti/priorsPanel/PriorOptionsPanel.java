@@ -1,6 +1,7 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.util.OSType;
 import dr.math.distributions.Distribution;
 //import org.virion.jam.components.RealNumberField;
 import org.virion.jam.panels.OptionsPanel;
@@ -19,7 +20,7 @@ public abstract class PriorOptionsPanel extends OptionsPanel {
     private List<String> argumentNames = new ArrayList<String>();
 
     public PriorOptionsPanel() {
-        super(12, 12);
+        super(12, (OSType.isMac() ? 6 : 24));
     }
 
     public PriorOptionsPanel(String[] names, RealNumberField[] fields) {

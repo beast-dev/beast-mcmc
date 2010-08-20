@@ -62,6 +62,7 @@ public class PriorDialog {
     private RealNumberField selectedField;
 
 	private OptionsPanel optionsPanel;
+    private final SpecialNumberPanel specialNumberPanel;
 	private JChart chart;
 	private JLabel quantileLabels;
 	private JTextArea quantileText;
@@ -96,6 +97,10 @@ public class PriorDialog {
 		quantileText.setFont(quantileText.getFont().deriveFont(10.0f));
 		quantileText.setOpaque(false);
 		quantileText.setEditable(false);
+
+
+        specialNumberPanel = new SpecialNumberPanel(this);
+        specialNumberPanel.setEnabled(false);
 	}
 
 	public int showDialog(final Parameter parameter) {
@@ -184,9 +189,15 @@ public class PriorDialog {
 			public void focusGained(FocusEvent e) {
                 if (e.getComponent() instanceof RealNumberField) {
                     selectedField = (RealNumberField) e.getComponent();
+                    specialNumberPanel.setEnabled(true);
                 }
 			}
-		};
+
+            public void focusLost(FocusEvent e) {
+                selectedField = null;
+                specialNumberPanel.setEnabled(false);
+            }
+        };
 
 		for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
 			for (JComponent component : optionsPanel.getJComponents()) {
@@ -349,8 +360,6 @@ public class PriorDialog {
 
         if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
             optionsPanel.addSeparator();
-            optionsPanel.addLabel("Set a sepcial value in the selected text field above.");
-            SpecialNumberPanel specialNumberPanel = new SpecialNumberPanel (this);
             optionsPanel.addSpanningComponent(specialNumberPanel);
         }
 

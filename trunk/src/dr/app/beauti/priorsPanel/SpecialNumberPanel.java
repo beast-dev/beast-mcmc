@@ -26,68 +26,99 @@
 
 package dr.app.beauti.priorsPanel;
 
+import dr.app.beauti.util.PanelUtils;
+
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.ActionEvent;
 import java.text.NumberFormat;
 
 /**
+ * @author Walter Xie
  * @author Andrew Rambaut
  * @author Alexei Drummond
- * @author Walter Xie
  * @version $Id: SpecialNumberPanel.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
  */
 public class SpecialNumberPanel extends JPanel implements ActionListener {
-    protected JButton b1, b2, b3, b4, b5;
-
-    private PriorDialog priorDialog;
+    private final JButton b1, b2, b3, b4, b5;
+    private final JLabel label;
+    private final PriorDialog priorDialog;
 
     SpecialNumberPanel (PriorDialog pd) {
+        super(new BorderLayout());
+
         this.priorDialog = pd;
 
+        label = new JLabel("Set a special value in the text fields above:");
+        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        panel.setOpaque(false);
+
         b1 = new JButton(NumberFormat.getNumberInstance().format(Double.POSITIVE_INFINITY));
+        PanelUtils.setupComponent(b1);
+        b1.setFocusable(false);
         b1.setActionCommand(RealNumberField.POSITIVE_INFINITY);
         b1.addActionListener(this);
 
         b2 = new JButton(NumberFormat.getNumberInstance().format(Double.NEGATIVE_INFINITY));
+        PanelUtils.setupComponent(b2);
+        b2.setFocusable(false);
         b2.setActionCommand(RealNumberField.NEGATIVE_INFINITY);
         b2.addActionListener(this);
 
         b3 = new JButton("MAX");
+        PanelUtils.setupComponent(b3);
+        b3.setFocusable(false);
         b3.setActionCommand(RealNumberField.MAX_VALUE);
         b3.addActionListener(this);
 
         b4 = new JButton("MIN");
+        PanelUtils.setupComponent(b4);
+        b4.setFocusable(false);
         b4.setActionCommand(RealNumberField.MIN_VALUE);
         b4.addActionListener(this);
 
         b5 = new JButton(RealNumberField.NaN);
+        PanelUtils.setupComponent(b5);
+        b5.setFocusable(false);
         b5.setActionCommand(RealNumberField.NaN);
         b5.addActionListener(this);
 
-        b1.setToolTipText("Click to set Double.POSITIVE_INFINITY in the selected text field.");
-        b2.setToolTipText("Click to set Double.POSITIVE_INFINITY in the selected text field.");
-        b3.setToolTipText("Click to set Double.MAX_VALUE in the selected text field.");
-        b3.setToolTipText("Click to set Double.MIN_VALUE in the selected text field.");
-        b3.setToolTipText("Click to set Double.NaN in the selected text field.");
+        b1.setToolTipText("Click to set 'Positive Infinity' in the selected text field.");
+        b2.setToolTipText("Click to set 'Negative Infinity' in the selected text field.");
+        b3.setToolTipText("Click to set the 'Maximum numerical value' in the selected text field.");
+        b3.setToolTipText("Click to set the 'Minimum numerical value' in the selected text field.");
+        b3.setToolTipText("Click to set 'Not a Number' in the selected text field.");
 
         //Add Components to this container, using the default FlowLayout.
-        add(b1);
-        add(b2);
-        add(b3);
-        add(b4);
-        add(b5);
+        panel.add(b1);
+        panel.add(b2);
+        panel.add(b3);
+        panel.add(b4);
+        panel.add(b5);
+
+        add(label, BorderLayout.NORTH);
+        add(panel, BorderLayout.CENTER);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        super.setEnabled(enabled);
+        b1.setEnabled(enabled);
+        b2.setEnabled(enabled);
+        b3.setEnabled(enabled);
+        b4.setEnabled(enabled);
+        b5.setEnabled(enabled);
+        label.setEnabled(enabled);
     }
 
     public void actionPerformed(ActionEvent e) {
         if (priorDialog.getSelectedField() == null) {
-            JOptionPane.showMessageDialog(this, "Please select a text field above !",
+            JOptionPane.showMessageDialog(this, "Place cursor in a text field above",
                     "No text field selected",
                     JOptionPane.INFORMATION_MESSAGE);
         } else {
             priorDialog.getSelectedField().setText(e.getActionCommand());
         }
-
-        priorDialog.setSelectedField(null); // to force user to select the correct field
     }
 }

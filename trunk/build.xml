@@ -46,10 +46,6 @@
         description="Clean and Build all run-time stuff without unit test and distribute jar">
 	</target>
 
-    <target name="build_jar_all_BEAST_BEAGLE_NoJUnitTest" depends="build_jar_all_BEAST_NoJUnitTest,dist_BEAST_BEAGLE"
-        description="Clean and Build all run-time stuff without unit test and distribute jar">
-	</target>
-
 	<!-- compile Java source code -->
 	<target name="compile-all" depends="init">
 		<mkdir dir="${build}" />
@@ -300,19 +296,6 @@
 
 	</target>
 
-    <target name="dist_BEAST_BEAGLE" depends="build_jar_all_BEAST_NoJUnitTest" description="create BEAST-BEAGLE jar">
-        <jar jarfile="${dist}/beast-beagle.jar">
-			<manifest>
-				<attribute name="Built-By" value="${user.name}" />
-                <attribute name="Main-Class" value="${main_class_BEAST}" />
-			</manifest>
-			<fileset dir="${build}">
-				<include name="dr/app/beagle/**/*.class" />
-			</fileset>
-			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
-		</jar>
-    </target>
-
 	<!-- run beast.jar -->
 	<target name="run_BEAST">
 		<java jar="${dist}/beast.jar" fork="true" />
@@ -367,7 +350,7 @@
 	</target>
 
 
-	<property name="version" value="1.6.0pre" />
+	<property name="version" value="1.6.0" />
     <property name="version_number" value="1.6.0" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
@@ -587,13 +570,13 @@
                 <include name="**/beauti.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_package_dir}/lib">
-                <include name="**/quaqua-filechooser-only.jar"/>
+                <include name="**/quaqua.jar"/>
             </jarfileset>
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="libquaqua*.jnilib"/>
             </jarfileset>
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
-            <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+            <javaproperty name="java.library.path" value="$JAVAROOT"/>
         </jarbundler>
 
         <jarbundler dir="${Mac_package_dir}"

@@ -125,27 +125,18 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addTreeAction);
-//        actionPanel1.setRemoveAction(removeTreeAction);
-
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
-//        controlPanel1.add(actionPanel1);
-    
+
         setCurrentModelAndPrior(null);
 
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
         panel1.add(scrollPane, BorderLayout.CENTER);
-//        panel1.add(controlPanel1, BorderLayout.SOUTH);
-        
-//        JPanel panel2 = new JPanel(new BorderLayout(0, 0));        
-//        panel2.setOpaque(false);
-        
+
         treeModelPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treeModelPanelParent.setOpaque(false);
-        treeModelBorder = new TitledBorder("Tree Model");
+        treeModelBorder = new javax.swing.border.TitledBorder("Tree Model");
         treeModelPanelParent.setBorder(treeModelBorder);
 
         JScrollPane scrollPane2 = new JScrollPane(treeModelPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);

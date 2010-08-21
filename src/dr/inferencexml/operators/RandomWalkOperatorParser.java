@@ -31,6 +31,17 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
+            Double lower = null;
+            Double upper = null;
+
+            if (xo.hasAttribute(LOWER)) {
+                lower = xo.getDoubleAttribute(LOWER);
+            }
+
+            if (xo.hasAttribute(UPPER)) {
+                upper = xo.getDoubleAttribute(UPPER);
+            }
+
             RandomWalkOperator.BoundaryCondition condition = RandomWalkOperator.BoundaryCondition.valueOf(
                     xo.getAttribute(BOUNDARY_CONDITION, RandomWalkOperator.BoundaryCondition.reflecting.name()));
 
@@ -40,10 +51,10 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 if (updateIndex.getDimension() != parameter.getDimension())
                     throw new RuntimeException("Parameter to update and missing indices must have the same dimension");
                 return new RandomWalkOperator(parameter, updateIndex, windowSize, condition,
-                        weight, mode);
+                        weight, mode, lower, upper);
             }
 
-            return new RandomWalkOperator(parameter, windowSize, condition, weight, mode);
+            return new RandomWalkOperator(parameter, null, windowSize, condition, weight, mode, lower, upper);
         }
 
         //************************************************************************

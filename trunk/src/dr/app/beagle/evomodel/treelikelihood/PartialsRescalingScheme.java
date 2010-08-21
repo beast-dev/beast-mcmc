@@ -10,6 +10,7 @@ public enum PartialsRescalingScheme {
     NONE("none"),
     DYNAMIC("dynamic"),
     AUTO("auto"),
+    KICK_ASS("kickAss"),
     ALWAYS("always");
 
     PartialsRescalingScheme(String text) {

@@ -25,6 +25,7 @@
 
 package dr.inference.operators;
 
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
 import dr.math.MathUtils;
@@ -47,27 +48,32 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     }
 
     public RandomWalkOperator(Parameter parameter, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
-
-        super(mode);
-        this.parameter = parameter;
-        this.windowSize = windowSize;
-        this.condition = bc;
-
-        setWeight(weight);
+        this(parameter, null, windowSize, bc, weight, mode);
     }
 
-    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc, double weight, CoercionMode mode) {
+    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc,
+                              double weight, CoercionMode mode) {
+        this(parameter, updateIndex, windowSize, bc, weight, mode, null, null);
+    }
+
+    public RandomWalkOperator(Parameter parameter, Parameter updateIndex, double windowSize, BoundaryCondition bc,
+                              double weight, CoercionMode mode, Double lowerOperatorBound, Double upperOperatorBound) {
         super(mode);
         this.parameter = parameter;
         this.windowSize = windowSize;
         this.condition = bc;
 
         setWeight(weight);
-        updateMap = new ArrayList<Integer>();
-        for (int i = 0; i < updateIndex.getDimension(); i++) {
-            if (updateIndex.getParameterValue(i) == 1.0)
-                updateMap.add(i);
+        if (updateIndex != null) {
+            updateMap = new ArrayList<Integer>();
+            for (int i = 0; i < updateIndex.getDimension(); i++) {
+                if (updateIndex.getParameterValue(i) == 1.0)
+                    updateMap.add(i);
+            }
         }
+
+        this.lowerOperatorBound = lowerOperatorBound;
+        this.upperOperatorBound = upperOperatorBound;
     }
 
     /**
@@ -96,8 +102,9 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         // a random point around old value within windowSize * 2
         double newValue = parameter.getParameterValue(index) + ((2.0 * MathUtils.nextDouble() - 1.0) * windowSize);
 
-        double lower = parameter.getBounds().getLowerLimit(index);
-        double upper = parameter.getBounds().getUpperLimit(index);
+        final Bounds<Double> bounds = parameter.getBounds();
+        final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerOperatorBound));
+        final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(index) : Math.min(bounds.getUpperLimit(index), upperOperatorBound));
 
         while (newValue < lower || newValue > upper) {
             if (newValue < lower) {
@@ -184,4 +191,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
     private double windowSize = 0.01;
     private List<Integer> updateMap = null;
     private final BoundaryCondition condition;
+
+    private final Double lowerOperatorBound;
+    private final Double upperOperatorBound;
 }

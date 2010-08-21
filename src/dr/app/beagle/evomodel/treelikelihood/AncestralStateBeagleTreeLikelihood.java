@@ -15,7 +15,6 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.inference.model.Model;
-import beagle.Beagle;
 
 import java.util.Map;
 import java.util.Set;

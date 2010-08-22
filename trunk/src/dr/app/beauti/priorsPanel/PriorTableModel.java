@@ -9,9 +9,9 @@ import javax.swing.table.AbstractTableModel;
  * @author Andrew Rambaut
  */
 class PriorTableModel extends AbstractTableModel {
-    
+
     private static final long serialVersionUID = -8864178122484971872L;
-    
+
     String[] columnNames = {"Parameter", "Prior", "Bound", "Description"};
     private PriorsPanel priorsPanel;
 

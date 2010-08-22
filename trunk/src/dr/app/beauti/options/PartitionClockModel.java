@@ -83,24 +83,24 @@ public class PartitionClockModel extends PartitionModelOptions {
 
     private void initClockModelParaAndOpers() {
 
-        double shape = 0.001;
-        double scale = 1000.0;
-
-        int dataLength = 0;
-        for (PartitionData partitionData : allPartitionData) {
-            dataLength += partitionData.getSiteCount();
-        }
-        if (dataLength <= 1) { // TODO Discuss threshold
-            shape = 1.0;
-            scale = 1.0;
-
-            createParameterClockRateGamma(this, "clock.rate", "substitution rate",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateGamma(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
-        } else {
+//        double shape = 0.001;
+//        double scale = 1000.0;
+//
+//        int dataLength = 0;
+//        for (PartitionData partitionData : allPartitionData) {
+//            dataLength += partitionData.getSiteCount();
+//        }
+//        if (dataLength <= 1) { // TODO Discuss threshold
+//            shape = 1.0;
+//            scale = 1.0;
+//
+//            createParameterClockRateGamma(this, "clock.rate", "substitution rate",
+//                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//            createParameterClockRateGamma(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
+//                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//            createParameterClockRateGamma(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
+//                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, shape, scale, 0.0, Double.POSITIVE_INFINITY);
+//        } else {
 
             createParameterClockRateUniform(this, "clock.rate", "substitution rate. ",
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
@@ -108,7 +108,7 @@ public class PartitionClockModel extends PartitionModelOptions {
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. ",
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
-        }
+//        }
         createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
                 PriorScaleType.LOG_STDEV_SCALE, 1.0/3.0, 1.0/3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
 
@@ -127,7 +127,7 @@ public class PartitionClockModel extends PartitionModelOptions {
         if (options.hasData()) {
             // if not fixed then do mutation rate move and up/down move
             boolean fixed = !isEstimatedRate;
-//            
+//
 //            List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
 //            models.add(this);
 //            double selectedRate = options.clockModelOptions.getSelectedRate(models);
@@ -170,12 +170,12 @@ public class PartitionClockModel extends PartitionModelOptions {
             }
 //            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
 //                     || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-//                
+//
 //                rateParam.priorEdited = true; // important
 //            }
-//            
+//
 //            if (!rateParam.priorEdited) {
-//                rateParam.initial = selectedRate;  
+//                rateParam.initial = selectedRate;
 //            }
 
             if (!fixed) params.add(rateParam);

@@ -312,8 +312,12 @@ public class Parameter {
     }
 
     public boolean isPriorImproper() {
-        if (priorType == PriorType.ONE_OVER_X_PRIOR || (
-                priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
+        if (
+                // 1/x is an improper prior but we probably don't want to flag it as
+                // such (or we want to make a more explicit distinction about when it
+                // might be appropriate:
+                /* priorType == PriorType.ONE_OVER_X_PRIOR || */
+                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
             return true;
         }
         return false;

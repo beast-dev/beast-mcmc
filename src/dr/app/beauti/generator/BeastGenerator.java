@@ -784,7 +784,8 @@ public class BeastGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
             // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
-            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
+//            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
+           if (model.isActivateBSSVS()) {
                 writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
                 writer.writeText("");
             }

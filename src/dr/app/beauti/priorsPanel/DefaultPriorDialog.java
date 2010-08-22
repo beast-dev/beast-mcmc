@@ -42,7 +42,7 @@ public class DefaultPriorDialog {
 
 	private BeautiFrame frame;
    private PriorsPanel priorsPanel;
-    
+
 	public DefaultPriorDialog(BeautiFrame frame) {
 		this.frame = frame;
         priorsPanel = new PriorsPanel(frame, true);
@@ -59,13 +59,13 @@ public class DefaultPriorDialog {
 				buttons,
 				buttons[0]);
 		optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-//        optionPane.setPreferredSize(new java.awt.Dimension(800, 600));
+        optionPane.setPreferredSize(new java.awt.Dimension(800, 600));
 
 		final JDialog dialog = optionPane.createDialog(frame, "Check the default priors");
 		dialog.pack();
         dialog.setResizable(true);
 		dialog.setVisible(true);
-        
+
         return optionPane.getValue() != null && optionPane.getValue().equals(buttons[0]);
 
     }

@@ -49,7 +49,6 @@ import java.util.ArrayList;
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
  */
 public class PriorsPanel extends BeautiPanel implements Exportable {
-
     private static final long serialVersionUID = -2936049032365493416L;
     JScrollPane scrollPane = new JScrollPane();
     JTable priorTable = null;
@@ -148,7 +147,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
 
             if (hasImproperPrior) {
-                message += "<li><b>Warning: one or more parameters have improper priors.</b></li>";
+                message += "<li><b><font color=\"#E42217\">Warning: one or more parameters have improper priors.</font></b></li>";
             }
             if (hasRate) {
                 message += "<li>" +
@@ -207,7 +206,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             setParametersList(options);
         }
 
-        if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA 
+        if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA
             if (options.clockModelOptions.isNodeCalibrated(param)) {
                 options.clockModelOptions.nodeCalibration();
                 frame.setAllOptions();
@@ -252,6 +251,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ButtonRenderer extends JButton implements TableCellRenderer {
+        protected Color improperColour = new Color(0xE4, 0x22, 0x17);
+
 
         private static final long serialVersionUID = -2416184092883649169L;
 
@@ -276,6 +277,13 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 //setForeground(table.getForeground());
                 setBackground(UIManager.getColor("Button.background"));
             }
+
+            if (value.toString().startsWith("!")) {
+                setForeground(improperColour);
+            } else {
+                setForeground(UIManager.getColor("Button.foreground"));
+            }
+
             setText((value == null) ? "" : value.toString());
             return this;
         }
@@ -340,4 +348,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             super.fireEditingStopped();
         }
     }
+
+
 }

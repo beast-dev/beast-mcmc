@@ -311,6 +311,14 @@ public class Parameter {
         return priorEdited;
     }
 
+    public boolean isPriorImproper() {
+        if (priorType == PriorType.ONE_OVER_X_PRIOR || (
+                priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
+            return true;
+        }
+        return false;
+    }
+
     public boolean isMeanInRealSpace() {
         return meanInRealSpace;
     }

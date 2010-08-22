@@ -374,8 +374,8 @@ public class XMLParser {
             }
 
             // override with a runtime set System Property
-            if (System.getProperty("allow.overwrite") != null) {
-                allowOverwrite = Boolean.parseBoolean(System.getProperty("allow.overwrite", "false"));
+            if (System.getProperty("log.allow.overwrite") != null) {
+                allowOverwrite = Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"));
             }
 
             if (logFile.exists() && !allowOverwrite) {

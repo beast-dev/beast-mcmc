@@ -60,7 +60,7 @@ public enum PriorType {
                 dist = new UniformDistribution(param.lower, param.upper);
                 break;
             case EXPONENTIAL_PRIOR:
-                if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0."); 
+                if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
                 dist = new OffsetPositiveDistribution(new ExponentialDistribution(1/param.mean), param.offset);
                 break;
             case LAPLACE_PRIOR:
@@ -95,9 +95,14 @@ public enum PriorType {
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
-        if (!param.isPriorEdited()) {
+        if (param.isPriorImproper()) {
+            buffer.append("! ");
+        } else if (!param.isPriorEdited()) {
             buffer.append("* ");
+        } else {
+            buffer.append("  ");
         }
+        
         switch (param.priorType) {
             case NONE:
                 buffer.append("Using Tree Prior");
@@ -132,7 +137,7 @@ public enum PriorType {
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
-                if (param.isMeanInRealSpace()) buffer.append("R"); 
+                if (param.isMeanInRealSpace()) buffer.append("R");
                 buffer.append(formatter.format(param.mean));
                 buffer.append(", ");
                 buffer.append(formatter.format(param.stdev));
@@ -188,7 +193,7 @@ public enum PriorType {
         if (param.isStatistic) {
             return "n/a";
         }
-        
+
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 

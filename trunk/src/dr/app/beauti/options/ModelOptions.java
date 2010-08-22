@@ -81,7 +81,7 @@ public class ModelOptions {
 
     public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,
                                              double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.JEFFREYS_PRIOR)
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.ONE_OVER_X_PRIOR)
                 .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 

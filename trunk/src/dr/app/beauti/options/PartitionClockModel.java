@@ -159,7 +159,7 @@ public class PartitionClockModel extends PartitionModelOptions {
             }
 
 //            if (this.getAllPartitionData().get(0) instanceof TraitData) {
-//                rateParam.priorType = PriorType.JEFFREYS_PRIOR; // 1/location.clock.rate
+//                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
 //            }
 
             rateParam.isFixed = fixed;

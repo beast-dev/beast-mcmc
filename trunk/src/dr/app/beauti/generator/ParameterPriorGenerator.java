@@ -169,7 +169,7 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.INVGAMMA_PRIOR);
                 break;
-            case JEFFREYS_PRIOR:
+            case ONE_OVER_X_PRIOR:
                 writer.writeOpenTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(OneOnXPriorParser.ONE_ONE_X_PRIOR);

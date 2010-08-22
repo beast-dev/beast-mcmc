@@ -18,7 +18,7 @@ public enum PriorType {
     LOGNORMAL_PRIOR,
     GAMMA_PRIOR,
     INVERSE_GAMMA_PRIOR,
-    JEFFREYS_PRIOR,
+    ONE_OVER_X_PRIOR,
     TRUNC_NORMAL_PRIOR,
     POISSON_PRIOR;
 
@@ -42,7 +42,7 @@ public enum PriorType {
                 return "Gamma";
             case INVERSE_GAMMA_PRIOR:
                 return "Inverse Gamma";
-            case JEFFREYS_PRIOR:
+            case ONE_OVER_X_PRIOR:
                 return "1/x"; //rename Jeffreys prior to 1/x prior everywhere in Beauti
             case POISSON_PRIOR:
                 return "Poisson";
@@ -78,7 +78,7 @@ public enum PriorType {
             case INVERSE_GAMMA_PRIOR:
                 dist = new OffsetPositiveDistribution(new InverseGammaDistribution(param.shape, param.scale), param.offset);
                 break;
-//            case JEFFREYS_PRIOR:
+//            case ONE_OVER_X_PRIOR:
 //                return ;
             case POISSON_PRIOR:
                 dist = new OffsetPositiveDistribution(new PoissonDistribution(param.mean), param.offset);
@@ -152,7 +152,7 @@ public enum PriorType {
                 buffer.append(formatter.format(param.scale));
                 buffer.append("]");
                 break;
-            case JEFFREYS_PRIOR:
+            case ONE_OVER_X_PRIOR:
                 buffer.append("1/x"); // rename Jeffreys prior to 1/x prior everywhere in Beauti
                 break;
             case POISSON_PRIOR:
@@ -203,7 +203,7 @@ public enum PriorType {
             case LOGNORMAL_PRIOR:
             case GAMMA_PRIOR:
             case INVERSE_GAMMA_PRIOR:
-            case JEFFREYS_PRIOR:
+            case ONE_OVER_X_PRIOR:
             case POISSON_PRIOR:
             case TRUNC_NORMAL_PRIOR:
                 buffer.append("[");

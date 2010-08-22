@@ -137,12 +137,12 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
             boolean hasImproperPrior = false;
             boolean hasRate = false;
-            for (Parameter para : parameters) {
-                if (para.priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(para.upper) || Double.isInfinite(para.lower))) {
+            for (Parameter param : parameters) {
+                if (param.isPriorImproper()) {
                     hasImproperPrior = true;
                 }
-                if (para.getBaseName().endsWith("clock.rate") || para.getBaseName().endsWith(ClockType.UCED_MEAN)
-                        || para.getBaseName().endsWith(ClockType.UCLD_MEAN)) {
+                if (param.getBaseName().endsWith("clock.rate") || param.getBaseName().endsWith(ClockType.UCED_MEAN)
+                        || param.getBaseName().endsWith(ClockType.UCLD_MEAN)) {
                     hasRate = true;
                 }
             }
@@ -171,7 +171,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         parameters.clear();
         for (Parameter param : options.selectParameters()) {
-            if (!param.isPriorEdited()) {
+            if (!param.isPriorEdited() || param.isPriorImproper()) {
                 parameters.add(param);
             }
         }

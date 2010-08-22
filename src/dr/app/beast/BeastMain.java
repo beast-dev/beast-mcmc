@@ -495,7 +495,7 @@ public class BeastMain {
         }
 
         if (allowOverwrite) {
-            System.setProperty("file.allow.overwrite", "true");
+            System.setProperty("log.allow.overwrite", "true");
         }
 
         if (useBeagle) {

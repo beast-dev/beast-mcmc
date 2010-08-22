@@ -335,7 +335,7 @@ public class PriorDialog {
 
 		if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
 
-		if (parameter.priorType != PriorType.JEFFREYS_PRIOR) optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
+		if (parameter.priorType != PriorType.ONE_OVER_X_PRIOR) optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
 	}
 
 	private void setupComponents() {
@@ -368,7 +368,7 @@ public class PriorDialog {
             optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
         }
         
-		if (priorType != PriorType.JEFFREYS_PRIOR) {
+		if (priorType != PriorType.ONE_OVER_X_PRIOR) {
 			optionsPanel.addSpanningComponent(optionsPanels.get(priorType));
 		}
 
@@ -392,8 +392,8 @@ public class PriorDialog {
 
         panel.add(panel1, gbc);
 
-        // UNIFORM_PRIOR and JEFFREYS_PRIOR have no chart
-		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.JEFFREYS_PRIOR) {
+        // UNIFORM_PRIOR and ONE_OVER_X_PRIOR have no chart
+		if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.ONE_OVER_X_PRIOR) {
 			optionsPanel.addSeparator();
 
 			setupChart();

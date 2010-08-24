@@ -1,6 +1,7 @@
 package dr.evomodelxml.coalescent.operators;
 
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.operators.GMRFMultiocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -21,6 +22,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
     public static final String MAX_ITERATIONS = "maxIterations";
     public static final String STOP_VALUE = "stopValue";
     public static final String KEEP_LOG_RECORD = "keepLogRecord";
+    public static final String TRIAL_VERSION = "trialVersion";
 
     public String getParserName() {
         return BLOCK_UPDATE_OPERATOR;
@@ -73,6 +75,13 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
 
         GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
 
+        boolean trialVersion = xo.getAttribute(TRIAL_VERSION, false);
+
+        if (trialVersion) {
+            return new GMRFMultiocusSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+                maxIterations, stopValue);
+        }
+
         return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
 
@@ -100,6 +109,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
+            AttributeRule.newBooleanRule(TRIAL_VERSION, true),
             new ElementRule(GMRFSkyrideLikelihood.class)
     };
 

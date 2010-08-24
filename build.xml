@@ -30,7 +30,7 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-                  build_all_BEAST
+                  
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="test" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff with unit test">

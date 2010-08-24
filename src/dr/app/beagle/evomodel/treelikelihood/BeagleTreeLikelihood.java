@@ -311,6 +311,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         hasInitialized = true;
     }
 
+    public TreeModel getTreeModel() {
+        return treeModel;
+    }
+
     public SiteRateModel getSiteRateModel() {
         return siteRateModel;
     }
@@ -366,6 +370,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.setPartials(nodeIndex, partials);
     }
 
+    public int getPatternCount() {
+        return patternCount;
+    }
+
     /**
      * Sets the partials from a sequence in an alignment.
      *
@@ -389,6 +397,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         beagle.setTipStates(nodeIndex, states);
     }
+
+
+//    public void setStates(int tipIndex, int[] states) {
+//        System.err.println("BTL:setStates");
+//        beagle.setTipStates(tipIndex, states);
+//        makeDirty();
+//    }
+//
+//    public void getStates(int tipIndex, int[] states) {
+//        System.err.println("BTL:getStates");
+//        beagle.getTipStates(tipIndex, states);
+//    }
 
     // **************************************************************
     // ModelListener IMPLEMENTATION

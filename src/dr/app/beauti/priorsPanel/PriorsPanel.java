@@ -60,6 +60,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     BeautiFrame frame = null;
     BeautiOptions options = null;
 
+    boolean hasUndefinedPrior = false;
+    boolean hasImproperPrior = false;
+    boolean hasRate = false;
+
     private final boolean isDefaultOnly;
 
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
@@ -134,9 +138,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             message += "<ul><li>These priors listed above are still set to the default values " +
                     "and need to be reviewed.</li>";
 
-            boolean hasImproperPrior = false;
-            boolean hasRate = false;
+            hasUndefinedPrior = false;
+            hasImproperPrior = false;
+            hasRate = false;
+
             for (Parameter param : parameters) {
+                if (param.priorType == PriorType.UNDEFINED) {
+                    hasUndefinedPrior = true;
+                }
                 if (param.isPriorImproper()) {
                     hasImproperPrior = true;
                 }
@@ -146,8 +155,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
+            if (hasUndefinedPrior) {
+                message += "<li><b><font color=\"#E42217\">These priors need to be defined by the user.</font></b></li>";
+            }
             if (hasImproperPrior) {
-                message += "<li><b><font color=\"#E42217\">Warning: one or more parameters have improper priors.</font></b></li>";
+                message += "<li><b><font color=\"#B4B417\">Warning: one or more parameters have improper priors.</font></b></li>";
             }
             if (hasRate) {
                 message += "<li>" +
@@ -251,7 +263,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ButtonRenderer extends JButton implements TableCellRenderer {
-        protected Color improperColour = new Color(0xE4, 0x22, 0x17);
+        protected Color undefinedColour = new Color(0xE4, 0x22, 0x17);
+        protected Color improperColour = new Color(0xB4, 0xB4, 0x17);
 
 
         private static final long serialVersionUID = -2416184092883649169L;
@@ -278,7 +291,9 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 setBackground(UIManager.getColor("Button.background"));
             }
 
-            if (value.toString().startsWith("!")) {
+            if (value.toString().startsWith("?")) {
+                setForeground(undefinedColour);
+            } else if (value.toString().startsWith("!")) {
                 setForeground(improperColour);
             } else {
                 setForeground(UIManager.getColor("Button.foreground"));

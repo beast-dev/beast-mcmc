@@ -346,21 +346,6 @@ public class PriorDialog {
 
         OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
 
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.PAGE_START;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-
-        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panel1.add(optionsPanel);
-
-        panel.add(panel1, gbc);
-        
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
         PriorType priorType;
@@ -394,6 +379,21 @@ public class PriorDialog {
             optionsPanel.addSeparator();
             optionsPanel.addSpanningComponent(specialNumberPanel);
         }
+
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel1.add(optionsPanel);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.PAGE_START;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+        panel.add(panel1, gbc);
 
         // UNIFORM_PRIOR and ONE_OVER_X_PRIOR have no chart
         if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.ONE_OVER_X_PRIOR) {

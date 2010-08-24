@@ -69,8 +69,11 @@ public class ErrorLogHandler extends StreamHandler {
 
         // Line separator string.  This is the value of the line.separator
         // property at the moment that the SimpleFormatter was created.
-        private final String lineSeparator = (String) java.security.AccessController.doPrivileged(
-                new sun.security.action.GetPropertyAction("line.separator"));
+        private final String lineSeparator = System.getProperty("line.separator");
+
+        // AR - is there a reason why this was used? It causes warnings at compile
+//        private final String lineSeparator = (String) java.security.AccessController.doPrivileged(
+//                new sun.security.action.GetPropertyAction("line.separator"));
 
         /**
          * Format the given LogRecord.

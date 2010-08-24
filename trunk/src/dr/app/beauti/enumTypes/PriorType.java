@@ -11,6 +11,7 @@ import java.text.NumberFormat;
 public enum PriorType {
 
     NONE,
+    UNDEFINED,
     UNIFORM_PRIOR,
     EXPONENTIAL_PRIOR,
     LAPLACE_PRIOR,
@@ -28,6 +29,8 @@ public enum PriorType {
         switch (this) {
             case NONE:
                 return "none";
+            case UNDEFINED:
+                return "undefined";
             case UNIFORM_PRIOR:
                 return "Uniform";
             case EXPONENTIAL_PRIOR:
@@ -86,6 +89,8 @@ public enum PriorType {
             case TRUNC_NORMAL_PRIOR:
                 dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.lower, param.upper);
                 break;
+            default:
+                throw new IllegalArgumentException("Distribution class not available for this prior");
         }
         return dist;
     }
@@ -95,7 +100,9 @@ public enum PriorType {
         NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
-        if (param.isPriorImproper()) {
+        if (param.priorType == PriorType.UNDEFINED) {
+            buffer.append("? ");
+        } else if (param.isPriorImproper()) {
             buffer.append("! ");
         } else if (!param.isPriorEdited()) {
             buffer.append("* ");
@@ -106,6 +113,9 @@ public enum PriorType {
         switch (param.priorType) {
             case NONE:
                 buffer.append("Using Tree Prior");
+                break;
+            case UNDEFINED:
+                buffer.append("Not yet specified");
                 break;
             case UNIFORM_PRIOR:
                 if (!param.isDiscrete && !param.isStatistic) {
@@ -201,6 +211,7 @@ public enum PriorType {
             case NONE:
 //                buffer.append("None");
 //                break;
+            case UNDEFINED:
             case UNIFORM_PRIOR:
             case EXPONENTIAL_PRIOR:
             case LAPLACE_PRIOR:

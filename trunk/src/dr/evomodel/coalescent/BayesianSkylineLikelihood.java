@@ -44,7 +44,7 @@ import java.util.Date;
  *
  * @author Alexei Drummond
  */
-public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood implements DemographicReconstructor {
+public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood {
 
     // PUBLIC STUFF
 
@@ -334,26 +334,9 @@ public class BayesianSkylineLikelihood extends OldAbstractCoalescentLikelihood i
     // ****************************************************************
 
     public String getTitle() {
-        final String title = "Bayesian Skyline (" + getChangeType().name() + ")\n" +
+        final String title = "Bayesian Skyline (" + (type == STEPWISE_TYPE ? "stepwise" : "linear") + ")\n" +
                 "Generated " + (new Date()).toString() + " [seed=" + MathUtils.getSeed() + "]";
         return title;
-    }
-
-    public ChangeType getChangeType() {
-        switch (getType()) {
-            case 0: return ChangeType.STEPWISE;
-            case 1: return ChangeType.LINEAR;
-            case 2: return ChangeType.EXPONENTIAL;
-            default: throw new IllegalArgumentException("Unknown change type index");
-        }
-    }
-
-    public double[] getIntervals() {
-        return new double[0];
-    }
-
-    public double[] getPopSizes() {
-        return new double[0];
     }
 
     // ****************************************************************

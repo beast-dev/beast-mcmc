@@ -114,11 +114,7 @@ public class PriorDialog {
         PriorType priorType = parameter.priorType;
 
         if (parameter.isNodeHeight) {
-            if (priorType != PriorType.NONE) {
-                rootHeightPriorCombo.setSelectedItem(priorType);
-            } else {
-                rootHeightPriorCombo.setSelectedIndex(0);
-            }
+            rootHeightPriorCombo.setSelectedItem(priorType);
         } else {
             priorCombo.setSelectedItem(priorType);
         }
@@ -324,13 +320,11 @@ public class PriorDialog {
 
     private void getArguments() {
         if (parameter.isNodeHeight) {
-            if (rootHeightPriorCombo.getSelectedIndex() == 0) {
-                parameter.priorType = PriorType.NONE;
-                parameter.initial = Double.NaN;
-                return;
-            } else {
-                parameter.priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            }
+            parameter.priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
+            if (parameter.priorType == PriorType.NONE || parameter.priorType == PriorType.UNDEFINED) {
+                parameter.initial = Double.NaN; // ?
+                return; // todo Andrew
+            }            
         } else {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
@@ -345,23 +339,37 @@ public class PriorDialog {
         panel.removeAll();
 
         OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
+        //++++++++ this needs to be here because "return; // PriorType.NONE" ++++++++++
+        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        panel1.add(optionsPanel);
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.weightx = 1.0;
+        gbc.weighty = 0.0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.PAGE_START;
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+
+        panel.add(panel1, gbc);
+        //++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
         PriorType priorType;
         if (parameter.isNodeHeight) {
             optionsPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
-            if (rootHeightPriorCombo.getSelectedIndex() == 0) {
-                return; // PriorType.NONE
-            } else {
-                priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
+            priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE || priorType == PriorType.UNDEFINED) {
+                return; // todo Andrew
             }
         } else {
+            priorType = (PriorType) priorCombo.getSelectedItem();
             if (!parameter.priorFixed) {
                 optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
-                priorType = (PriorType) priorCombo.getSelectedItem();
             } else {
-                priorType = (PriorType) priorCombo.getSelectedItem();
                 optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
             }
         }
@@ -379,21 +387,6 @@ public class PriorDialog {
             optionsPanel.addSeparator();
             optionsPanel.addSpanningComponent(specialNumberPanel);
         }
-
-        JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panel1.add(optionsPanel);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.weightx = 1.0;
-        gbc.weighty = 0.0;
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.anchor = GridBagConstraints.PAGE_START;
-        gbc.gridwidth = GridBagConstraints.REMAINDER;
-
-        panel.add(panel1, gbc);
 
         // UNIFORM_PRIOR and ONE_OVER_X_PRIOR have no chart
         if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.ONE_OVER_X_PRIOR) {
@@ -435,10 +428,9 @@ public class PriorDialog {
 
         PriorType priorType;
         if (parameter.isNodeHeight) {
-            if (rootHeightPriorCombo.getSelectedIndex() == 0) {
-                return;
-            } else {
-                priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
+            priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE || priorType == PriorType.UNDEFINED) {
+                return; // todo Andrew
             }
         } else {
             priorType = (PriorType) priorCombo.getSelectedItem();

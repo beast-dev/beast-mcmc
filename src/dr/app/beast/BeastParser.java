@@ -93,7 +93,7 @@ public class BeastParser extends XMLParser {
                 // load the development parsers
                 if (parsers.equalsIgnoreCase(DEV)) {
                     System.out.println("\nLoading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
-                            + ", which is additional set of parsers only available for development version ...");                    
+                            + ", which is additional set of parsers only available for development version ...");
                 }
                 loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
             }
@@ -121,7 +121,7 @@ public class BeastParser extends XMLParser {
      * @param parsersFile     parser file name, (*.properties)
      * @param verbose         verbose
      * @param parserWarning   parserWarning
-     * @param canReplace      can this new loaded parser to replace old one with the same name 
+     * @param canReplace      can this new loaded parser to replace old one with the same name
      * @throws IOException    IOException
      */
     private void loadProperties(Class c, String parsersFile, boolean verbose, boolean parserWarning, boolean canReplace) throws IOException {
@@ -195,7 +195,7 @@ public class BeastParser extends XMLParser {
         }
 
         if (verbose) {
-            System.out.println("load " + parsersFile + " successfully.\n");             
+            System.out.println("load " + parsersFile + " successfully.\n");
         }
     }
 
@@ -217,12 +217,12 @@ public class BeastParser extends XMLParser {
 
         addXMLObjectParser(new dr.inference.model.StatisticParser());
         addXMLObjectParser(new dr.inference.model.ParameterParser());
-        
+
         //addXMLObjectParser(ColouringTest.PARSER);
 
 
 //**************** move all parsers below into release_parsers.properties *********************
-        
+
 //        addXMLObjectParser(new dr.evoxml.GeneralDataTypeParser());
 //        addXMLObjectParser(new dr.evoxml.AlignmentParser());
 //        addXMLObjectParser(new dr.evoxml.SitePatternsParser());
@@ -266,8 +266,6 @@ public class BeastParser extends XMLParser {
 //        addXMLObjectParser(dr.evomodel.coalescent.ConstantLogisticModel.PARSER);
 //        addXMLObjectParser(dr.evomodel.coalescent.ExpansionModel.PARSER);
 //
-//        addXMLObjectParser(dr.evomodel.coalescent.DemographicLogger.PARSER);
-
         // substitution models
 //        addXMLObjectParser(dr.evomodel.substmodel.FrequencyModel.PARSER);
 //        addXMLObjectParser(dr.evomodel.substmodel.GeneralSubstitutionModel.PARSER);

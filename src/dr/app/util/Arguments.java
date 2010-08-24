@@ -445,7 +445,8 @@ public class Arguments {
 			
 			if (arguments[i].length() - 1 >= label.length()) {
 				if (arguments[i].startsWith(ARGUMENT_CHARACTER)) {
-					String l = arguments[i].substring(1, label.length() + 1);
+//					String l = arguments[i].substring(1, label.length() + 1);
+                    String l = arguments[i];
 					if ((!caseSensitive && label.equalsIgnoreCase(l)) || label.equals(l)) {
 						return i;
 					}

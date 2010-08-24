@@ -41,12 +41,6 @@
         description="Clean and Build all and distribute jar">
 	</target>
 
-    <!-- the target used by Hudson -->
-    <target name="build_all_BEAST" depends="clean,compile-all,junit"
-        description="Target used by Hudson (switch Hudson to use 'test' and remove this)">
-    </target>
-
-
 	<!-- compile Java source code -->
 	<target name="compile-all" depends="init">
 		<mkdir dir="${build}" />

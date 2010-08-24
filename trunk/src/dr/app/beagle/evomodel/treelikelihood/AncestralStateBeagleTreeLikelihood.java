@@ -233,9 +233,15 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
 
-    private void getStates(int tipNum, int[] states)  {
-        // Keep these in local memory because they don't change
-        System.arraycopy(tipStates[tipNum],0,states,0,states.length);
+    public void setStates(int tipNum, int[] states) {
+        System.arraycopy(states, 0, tipStates[tipNum], 0, states.length);
+        beagle.setTipStates(tipNum, states);
+        makeDirty();
+    }
+
+    public void getStates(int tipNum, int[] states)  {
+        // Saved locally to reduce BEAGLE library access
+        System.arraycopy(tipStates[tipNum], 0, states, 0, states.length);
     }
 
 //    public int traverseCollectScaleBuffers(TreeModel tree, NodeRef node) {

@@ -391,7 +391,7 @@ public class TreeIntervals implements IntervalList {
                 storedIntervals = new double[intervals.length];
             }
             if (storedLineageCounts == null) {
-                storedLineageCounts = new int[storedLineageCounts.length];
+                storedLineageCounts = new int[lineageCounts.length];
             }
             System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
             System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
@@ -419,6 +419,8 @@ public class TreeIntervals implements IntervalList {
         for (int i = 0; i < getIntervalCount(); i++) {
             sb.append("[ ");
             sb.append(getInterval(i));
+            sb.append(": ");
+            sb.append(getIntervalTime(i));
             sb.append(": ");
             sb.append(getLineageCount(i));
             sb.append(" ]");

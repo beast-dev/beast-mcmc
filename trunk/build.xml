@@ -30,7 +30,7 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-
+                  build_all_BEAST
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="test" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff with unit test">
@@ -40,6 +40,12 @@
 	<target name="build" depends="clean,compile-all,dist-all"
         description="Clean and Build all and distribute jar">
 	</target>
+
+    <!-- the target used by Hudson -->
+    <target name="build_all_BEAST" depends="clean,compile-all,junit"
+        description="Target used by Hudson (switch Hudson to use 'test' and remove this)">
+    </target>
+
 
 	<!-- compile Java source code -->
 	<target name="compile-all" depends="init">

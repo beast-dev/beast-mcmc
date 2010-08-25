@@ -41,8 +41,8 @@ public class GMRFMultiocusSkyrideBlockUpdateOperator extends AbstractCoercableOp
                                           int maxIterations, double stopValue) {
         super(mode);
 
-        System.err.println("Here?");
-        System.exit(-1);
+        //System.err.println("Here?");
+        //System.exit(-1);
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();
         precisionParameter = gmrfLikelihood.getPrecisionParameter();
@@ -82,7 +82,6 @@ public class GMRFMultiocusSkyrideBlockUpdateOperator extends AbstractCoercableOp
         } else {
             returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
         }
-
         return returnValue;
     }
 
@@ -264,7 +263,6 @@ public class GMRFMultiocusSkyrideBlockUpdateOperator extends AbstractCoercableOp
 
         proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
 
-
         for (int i = 0; i < fieldLength; i++)
             popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
 
@@ -316,12 +314,13 @@ public class GMRFMultiocusSkyrideBlockUpdateOperator extends AbstractCoercableOp
 
         // Removed 0.5 * 2
         hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        //System.err.println(hRatio - alt);
-        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
-        //hRatio -= alt;
 
+        //System.err.println(hRatio - alt);
+        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm);
         //System.err.println(hRatio);
 
+        //System.err.println(alt);
+        //System.err.println(logGeneralizedDeterminant(forwardCholesky.getU()) - 0.5 * stand_norm.dot(stand_norm));
 
         return hRatio;
     }

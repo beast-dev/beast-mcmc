@@ -57,14 +57,14 @@ public class BEAUTiImporter {
             } else if ((line != null && line.trim().startsWith("" + FastaImporter.FASTA_FIRST_CHAR))) {
                 // is a FASTA file
                 importFastaFile(file);
-            } else if ((line != null && (line.toUpperCase().contains("<?XML") ||  line.toUpperCase().contains("<BEAST")))) {
+            } else if ((line != null && (line.toUpperCase().contains("<?XML") || line.toUpperCase().contains("<BEAST")))) {
                 // assume it is a BEAST XML file and see if that works...
                 importBEASTFile(file);
 //            } else {
 //                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
             } else {
-                throw new ImportException ("Unrecognized format for imported file.");
+                throw new ImportException("Unrecognized format for imported file.");
             }
         } catch (IOException e) {
             throw new IOException(e.getMessage());
@@ -72,6 +72,7 @@ public class BEAUTiImporter {
     }
 
     // xml
+
     private void importBEASTFile(File file) throws IOException, JDOMException, ImportException {
         try {
             FileReader reader = new FileReader(file);
@@ -89,16 +90,17 @@ public class BEAUTiImporter {
                 setData(taxa, alignment, null, null, null, null, file.getName());
             }
         } catch (JDOMException e) {
-            throw new JDOMException (e.getMessage());
+            throw new JDOMException(e.getMessage());
         } catch (ImportException e) {
-            throw new ImportException (e.getMessage());
+            throw new ImportException(e.getMessage());
         } catch (IOException e) {
-            throw new IOException (e.getMessage());
+            throw new IOException(e.getMessage());
         }
 
     }
 
     // nexus
+
     private void importNexusFile(File file) throws Exception {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
@@ -201,17 +203,18 @@ public class BEAUTiImporter {
             }
 
         } catch (IOException e) {
-            throw new IOException (e.getMessage());
+            throw new IOException(e.getMessage());
         } catch (ImportException e) {
-            throw new ImportException (e.getMessage());
+            throw new ImportException(e.getMessage());
         } catch (Exception e) {
-            throw new Exception (e.getMessage());
+            throw new Exception(e.getMessage());
         }
 
         setData(taxa, alignment, trees, null, model, charSets, file.getName());
     }
 
     // FASTA
+
     private void importFastaFile(File file) throws Exception {
         try {
             FileReader reader = new FileReader(file);
@@ -222,9 +225,9 @@ public class BEAUTiImporter {
 
             setData(alignment, alignment, null, null, null, null, file.getName());
         } catch (ImportException e) {
-            throw new ImportException (e.getMessage());
+            throw new ImportException(e.getMessage());
         } catch (IOException e) {
-            throw new IOException (e.getMessage());
+            throw new IOException(e.getMessage());
         }
     }
 
@@ -328,6 +331,7 @@ public class BEAUTiImporter {
 
 
     //TODO need refactory to simplify
+
     private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, List<TraitData> traits,
                          PartitionSubstitutionModel model,
                          List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
@@ -348,7 +352,7 @@ public class BEAUTiImporter {
                 }
             }
             if (foundAmp) {
-                throw new ImportException ("One or more taxon names include an illegal character ('&').\n" +
+                throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
                         "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
                         "Please edit the taxon name(s) before reloading the data file.");
             }
@@ -370,44 +374,32 @@ public class BEAUTiImporter {
             // for different partitions but give a warning if they are different
 
             // This is an additional partition so check it uses the same taxa
-//            if (!options.allowDifferentTaxa) { // not allow Different Taxa
-//                List<String> oldTaxa = new ArrayList<String>();
-//                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-//                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
-//                }
-//                List<String> newTaxa = new ArrayList<String>();
-//                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-//                    newTaxa.add(taxa.getTaxon(i).getId());
-//                }
-//
-//                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-//                    int adt;
-//                    if (frame == null) {
-//                        adt = JOptionPane.YES_OPTION;
-//                    } else {
-//                        adt = frame.allowDifferentTaxaJOptionPane();
-//                    }
-//                    //TODO still have swing code
-//                    if (adt == JOptionPane.YES_OPTION) {
-//                        // set to Allow Different Taxa
-//                        options.allowDifferentTaxa = true;
-//                        //changeTabs();// can be added, if required in future
-//
-//                        List<String> prevTaxa = new ArrayList<String>();
-//                        for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-//                            prevTaxa.add(options.taxonList.getTaxon(i).getId());
-//                        }
-//                        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-//                            if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-//                                options.taxonList.addTaxon(taxa.getTaxon(i));
-//                            }
-//                        }
-//
-//                    } else {
-//                        return;
-//                    }
-//                }
-//            } else { // allow Different Taxa
+            if (!options.allowDifferentTaxa) { // not allow Different Taxa
+                List<String> oldTaxa = new ArrayList<String>();
+                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
+                }
+                List<String> newTaxa = new ArrayList<String>();
+                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                    newTaxa.add(taxa.getTaxon(i).getId());
+                }
+
+                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+                    // set to Allow Different Taxa
+                    options.allowDifferentTaxa = true;
+                    //changeTabs();// can be added, if required in future
+
+                    List<String> prevTaxa = new ArrayList<String>();
+                    for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                        prevTaxa.add(options.taxonList.getTaxon(i).getId());
+                    }
+                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                        if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
+                            options.taxonList.addTaxon(taxa.getTaxon(i));
+                        }
+                    }
+                }
+            } else { // allow Different Taxa
                 // AR - it will be much simpler just to consider options.taxonList
                 // to be the union set of all taxa. Each data partition has an alignment
                 // which is a taxon list containing the taxa specific to that partition
@@ -423,7 +415,7 @@ public class BEAUTiImporter {
                     }
                 }
 
-//            }
+            }
         }
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);
@@ -544,7 +536,7 @@ public class BEAUTiImporter {
     }
 
     private void addTraits(List<TraitData> traits,
-                              String fileName, String fileNameStem) {
+                           String fileName, String fileNameStem) {
         if (traits != null) {
             for (TraitData trait : traits) {
                 options.addTrait(trait);
@@ -555,6 +547,7 @@ public class BEAUTiImporter {
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
     }
+
     private void addTrees(List<Tree> trees) {
         if (trees != null && trees.size() > 0) {
             for (Tree tree : trees) {

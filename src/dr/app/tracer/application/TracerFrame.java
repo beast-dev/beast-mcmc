@@ -27,7 +27,10 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -58,8 +61,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final java.util.List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
 
-    private JComboBox filterCombo = new JComboBox(new String[]{"None"});
-    private JLabel filterStatus = new JLabel();
+    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
+    private final JLabel filterStatus = new JLabel();
     String message;
 
     private FilterDialog filterDialog;
@@ -1456,8 +1459,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 case 2:
                     if (!td.isValid()) return "-";
                     value = td.getESS();
+                    if( Double.isNaN(value) || value < 1 ) {
+                        // assume not applicable; should be tested in the computation
+                       return "-";
+                    }
                     if (value < 200.0) warning = true;
                     if (value < 100.0) extremeWarning = true;
+                    value = Math.round(value);
                     break;
             }
 

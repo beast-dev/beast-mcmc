@@ -321,10 +321,10 @@ public class PriorDialog {
     private void getArguments() {
         if (parameter.isNodeHeight) {
             parameter.priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (parameter.priorType == PriorType.NONE || parameter.priorType == PriorType.UNDEFINED) {
-                parameter.initial = Double.NaN; // ?
-                return; // todo Andrew
-            }            
+            if (parameter.priorType == PriorType.NONE) {
+                parameter.initial = Double.NaN;
+                return;
+            }
         } else {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
         }
@@ -339,7 +339,7 @@ public class PriorDialog {
         panel.removeAll();
 
         OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
-        //++++++++ this needs to be here because "return; // PriorType.NONE" ++++++++++
+
         JPanel panel1 = new JPanel(new FlowLayout(FlowLayout.CENTER));
         panel1.add(optionsPanel);
 
@@ -354,7 +354,6 @@ public class PriorDialog {
         gbc.gridwidth = GridBagConstraints.REMAINDER;
 
         panel.add(panel1, gbc);
-        //++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
@@ -362,8 +361,8 @@ public class PriorDialog {
         if (parameter.isNodeHeight) {
             optionsPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
             priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (priorType == PriorType.NONE || priorType == PriorType.UNDEFINED) {
-                return; // todo Andrew
+            if (priorType == PriorType.NONE) {
+                return;
             }
         } else {
             priorType = (PriorType) priorCombo.getSelectedItem();
@@ -429,14 +428,14 @@ public class PriorDialog {
         PriorType priorType;
         if (parameter.isNodeHeight) {
             priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (priorType == PriorType.NONE || priorType == PriorType.UNDEFINED) {
-                return; // todo Andrew
+            if (priorType == PriorType.NONE) {
+                return;
             }
         } else {
             priorType = (PriorType) priorCombo.getSelectedItem();
         }
         // ExponentialDistribution(1.0 / mean)
-//        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1; 
+//        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1;
 
         double offset = 0.0;
         Distribution distribution = optionsPanels.get(priorType).getDistribution();

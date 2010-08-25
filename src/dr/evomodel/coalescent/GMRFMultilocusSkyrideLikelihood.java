@@ -6,6 +6,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,16 +45,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     }
 
 
-    // Must deal with this.  Right now, this doesn't correct anything.  The correct field length is established
-    // below in calculateSufficientStatistics()
     protected int getCorrectFieldLength() {
         int tips = 0;
         for (Tree tree : treeList) {
            tips += tree.getExternalNodeCount();
         }
-        //System.err.println(tips - treeList.size());
         return tips - treeList.size();
-        // TODO Solution = # of internal nodes in all trees + (# of unique sampling times - 1)
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -65,7 +62,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 intervalsList.get(tn).setIntervalsUnknown();
             }
         }
-        
         super.handleModelChangedEvent(model, object, index);
     }
 
@@ -82,23 +78,28 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     }
 
     // Calculation of sufficient statistics
-    //What we want:
 
-    //-Matrix with number of lineages present in each tree during each interval
-    //-length of each "w" interval and each "u" interval
-    //-vector which has -1 if corresponding interval does not end with coalescent event, and otherwise has i, where i is the tree in which the coalescent event took place
+
+    // To do: offsets, rootHeight options
 
 
     int numTrees;
-
     int N = 0;
 
+    // countsOfLineages[i][j] is the number of lineages present in tree j during "w" interval i
     int[][] countsOfLineages;
+
+    // lengths of "w" intervals (intervals with coalescent events or sampling times as endpoints)
     double[] intervalLengths;
+
+    // coalEvent[i] = -1 if i-th "w" interval ends with sampling even rather than coalescent event
+    // coalEvent[i] = k if i-th "w" interval ends with coalescent event in tree k
     int[] coalEvent;
 
     int index;
     double[] sufficientStatistics;
+
+    // lengths of "u" intervals (intervals with coalescent events as endpoints)
     double[] coalescentIntervals;
 
 
@@ -107,6 +108,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         index = 0;
         numTrees = treeList.size();
 
+        // set N to an upper bound on number of "w" intervals
         for (int i = 0; i < numTrees; i++) {
             N = N + intervalsList.get(i).getIntervalCount();
         }
@@ -114,20 +116,23 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         countsOfLineages = new int[numTrees][N];
         intervalLengths = new double[N];
         coalEvent = new int[N];
-                
-        //vector keeping track of which intervals are next in each tree (in other words, how far we've gone with
-        //respect to each tree
-        //should be initialized to all zeros
+
+        // nextIntervals keeps track of how far we have traveled with respect to each tree
+        // nextIntervals[i] is the next interval which has yet to be reached in tree i
+        // should be initialized to all zeros
         int nextIntervals[] = new int[numTrees];
-        int treeFinished[] = new int[numTrees]; //vector indicating whether we have reached end of a certain tree
+
+        // treeFinished[i] indicates whether we have reached the end of tree i
+        int treeFinished[] = new int[numTrees];
         int numTreesFinished = 0;
 
-        //starting time in first tree
+        // currentTime is the starting time of the interval which we are at
+        // currentTree is the tree in which that interval is located
         int currentTree = 0;
         double currentTime = intervalsList.get(0).getIntervalTime(0);
         double propCurrent;
 
-        //Figure out which tree to start in by finding smallest starting time among all trees
+        // Figure out which tree to start in by finding smallest starting time among all trees
         for (int i = 1; i < numTrees; i++) {
             propCurrent = intervalsList.get(i).getIntervalTime(0);
             if (propCurrent < currentTime) {
@@ -136,18 +141,18 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             }
         }
 
-        for (TreeIntervals treeInterval : intervalsList) {
-            System.err.println(treeInterval);
-        }
+        //for (TreeIntervals treeInterval : intervalsList) {
+        //    System.err.println(treeInterval);
+        //}
 
-        //note that the next interval may have have same starting time as current interval
+        // Once we find the currentTree, we update corresponding nextIntervals entry
+        // note that the next interval may have have same starting time as current interval
         nextIntervals[currentTree] = nextIntervals[currentTree] + 1;
 
         while (numTreesFinished < numTrees) {
 
-            // Make sure that for each tree, the starting time of the next interval (nextIntervals[i]) is
+            // Make sure that for each tree the starting time of the next interval (nextIntervals[i]) is
             // strictly greater than currentTime.  Need this in case more than one tree has node at currentTime
-            
             for(int i = 0; i < numTrees; i++){
                 if(treeFinished[i] == 0){
                     while(intervalsList.get(i).getIntervalTime(nextIntervals[i]) <= currentTime){
@@ -160,6 +165,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     }
                 }
             }
+
+
+            // We find nextTree, the tree with the node closest (but not equal to) the current node in terms of time
 
             int nextTree = 0;
             double nextTime = 0;
@@ -179,7 +187,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             double propNext;
             int startIndex = nextTree + 1;   //for efficiency, since we already looked at trees 0 through nextTree
 
-            // Find tree with node closest (but not equal to) current node in terms of time
             for (int i = startIndex; i < numTrees; i++) {
                 if (treeFinished[i] == 0) {
                     propNext = intervalsList.get(i).getIntervalTime(nextIntervals[i]);
@@ -194,28 +201,26 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             // update countsOfLineages
             for (int i = 0; i < numTrees; i++) {
                 if (treeFinished[i] == 0) {
-                    // in case we haven't "gotten" to tree i
+                    // in case we haven't "gotten" to tree i, should be 0
                     if (intervalsList.get(i).getIntervalTime(0) >= nextTime){
                         countsOfLineages[i][index] = 0;
                     }else{
-                        countsOfLineages[i][index] = intervalsList.get(i).getLineageCount(nextIntervals[i]);
-                        //System.err.println(i);
-                        //System.err.println(index);
-                        //System.err.println(nextIntervals[i]);
-                        //System.err.println(countsOfLineages[i][index]);
-
+                        countsOfLineages[i][index] = intervalsList.get(i).getLineageCount(nextIntervals[i]);                        
                     }    
                 }
             }
 
+            // update coalEvent
             if (intervalsList.get(nextTree).getCoalescentEvents(nextIntervals[nextTree]) > 0) {
                 coalEvent[index] = nextTree;
             } else {
                 coalEvent[index] = -1;
             }
 
+            // update intervalLengths
             intervalLengths[index] = length;
 
+            // move from current node to next node
             currentTime = nextTime;
             currentTree = nextTree;
 
@@ -226,14 +231,12 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 numTreesFinished++;
             }
 
-            index++;  //when the loop stops, index will have value equal to the total number of intervals
+            index++;  //when the loop stops, index will have value equal to the total number of "w" intervals
         }
 
         calculateSufficientStatistics();
 
     }
-
-
 
 
     public void calculateSufficientStatistics() {
@@ -246,7 +249,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         double tempLength = 0;
 
         //here i indexes intervals, j indexes trees
-
         for (int i = 0; i < index; i++) {
             for (int j = 0; j < numTrees; j++) {
                 weight = weight + countsOfLineages[j][i] * (countsOfLineages[j][i] - 1) * intervalLengths[i];
@@ -254,7 +256,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             tempLength = tempLength + intervalLengths[i];
             if (coalEvent[i] > -1) {
                 sufficientStatistics[m] = weight / 2;
-                System.err.println(sufficientStatistics[m]);
                 coalescentIntervals[m] = tempLength;
                 m++;
                 weight = 0;
@@ -265,27 +266,19 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     }
 
 
-
-    
     // Likelihood implementation
-    
+
     public double getLogLikelihood(){
         if(!likelihoodKnown){
-            logCoalescentLikelihood = calculateLogCoalescentLikelihood();
+            logLikelihood = calculateLogCoalescentLikelihood();
             logFieldLikelihood = calculateLogFieldLikelihood();
             likelihoodKnown = true;
         }
-        //System.err.println(logCoalescentLikelihood);
-        //System.err.println(logFieldLikelihood);
-        return logCoalescentLikelihood + logFieldLikelihood;
+        return logLikelihood + logFieldLikelihood;
     }
 
-    protected double peakLogCoalescentLikelihood() {
-        return logCoalescentLikelihood;
-    }
-
-    protected double peakLogFieldLikelihood() {
-        return logFieldLikelihood;
+    public double[] getSufficientStatistics() {
+	    return sufficientStatistics;
     }
 
 
@@ -330,101 +323,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
 
 
-    public SymmTridiagMatrix getScaledWeightMatrix(double precision) {
-		SymmTridiagMatrix a = weightMatrix.copy();
-		for (int i = 0; i < a.numRows() - 1; i++) {
-			a.set(i, i, a.get(i, i) * precision);
-			a.set(i + 1, i, a.get(i + 1, i) * precision);
-		}
-		a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
-		return a;
-	}
 
 
-    public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision) {
-		SymmTridiagMatrix a = storedWeightMatrix.copy();
-		for (int i = 0; i < a.numRows() - 1; i++) {
-			a.set(i, i, a.get(i, i) * precision);
-			a.set(i + 1, i, a.get(i + 1, i) * precision);
-		}
-		a.set(fieldLength - 1, fieldLength - 1, a.get(fieldLength - 1, fieldLength - 1) * precision);
-		return a;
-	}
-
-	public SymmTridiagMatrix getScaledWeightMatrix(double precision, double lambda) {
-		if (lambda == 1)
-			return getScaledWeightMatrix(precision);
-
-		SymmTridiagMatrix a = weightMatrix.copy();
-		for (int i = 0; i < a.numRows() - 1; i++) {
-			a.set(i, i, precision * (1 - lambda + lambda * a.get(i, i)));
-			a.set(i + 1, i, a.get(i + 1, i) * precision * lambda);
-		}
-
-		a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
-		return a;
-	}
-
-
-    /*
-	public double[] getCoalescentIntervalHeights() {
-		double[] a = new double[coalescentIntervals.length];
-
-		a[0] = coalescentIntervals[0];
-
-		for (int i = 1; i < a.length; i++) {
-			a[i] = a[i - 1] + coalescentIntervals[i];
-		}
-		return a;
-	}
-
-	public SymmTridiagMatrix getCopyWeightMatrix() {
-		return weightMatrix.copy();
-	}
-	*/
-
-	public SymmTridiagMatrix getStoredScaledWeightMatrix(double precision, double lambda) {
-		if (lambda == 1)
-			return getStoredScaledWeightMatrix(precision);
-
-		SymmTridiagMatrix a = storedWeightMatrix.copy();
-		for (int i = 0; i < a.numRows() - 1; i++) {
-			a.set(i, i, precision * (1 - lambda + lambda * a.get(i, i)));
-			a.set(i + 1, i, a.get(i + 1, i) * precision * lambda);
-		}
-
-		a.set(fieldLength - 1, fieldLength - 1, precision * (1 - lambda + lambda * a.get(fieldLength - 1, fieldLength - 1)));
-		return a;
-	}
-
-    /*
-	protected void storeState() {
-		super.storeState();
-		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
-		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
-		storedWeightMatrix = weightMatrix.copy();
-        storedLogFieldLikelihood = logFieldLikelihood;
-	}
-
-
-	protected void restoreState() {
-		super.restoreState();
-		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
-		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
-		weightMatrix = storedWeightMatrix;
-        logFieldLikelihood = storedLogFieldLikelihood;
-
-	}
-
-	protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
-		likelihoodKnown = false;
-        // Parameters (precision and popsizes do not change intervals or GMRF Q matrix
-	}
-    */
-    
-
-
-    private double calculateLogCoalescentLikelihood() {
+    public double calculateLogCoalescentLikelihood() {
 
 		if (!intervalsKnown) {
 			// intervalsKnown -> false when handleModelChanged event occurs in super.
@@ -441,10 +342,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 			currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
 		}
 
-		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
+		return currentLike;
 	}
 
-    private double calculateLogFieldLikelihood() {
+    public double calculateLogFieldLikelihood() {
 
         if (!intervalsKnown) {
             // intervalsKnown -> false when handleModelChanged event occurs in super.
@@ -465,17 +366,13 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         } else {
             currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
         }
-
+       
         return currentLike;
     }
 
 
 
-    private double logCoalescentLikelihood;
-    private double logFieldLikelihood;
-    private boolean likelihoodKnown = false;
-
-
+    //public boolean likelihoodKnown = false;
 
     private List<Tree> treeList;
     private List<TreeIntervals> intervalsList;

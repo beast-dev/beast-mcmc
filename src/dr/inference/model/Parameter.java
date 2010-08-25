@@ -426,6 +426,11 @@ public interface Parameter extends Statistic, Variable<Double> {
      */
     class Default extends Abstract {
 
+        public Default(String id, int dimension) {
+            this(dimension);
+            setId(id);
+        }
+
         public Default(String id) {
             this(1); // dimension
             setId(id);

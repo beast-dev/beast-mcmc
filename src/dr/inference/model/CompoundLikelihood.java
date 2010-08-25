@@ -26,6 +26,7 @@
 package dr.inference.model;
 
 import dr.util.NumberFormatter;
+import dr.xml.Reportable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,7 +40,11 @@ import java.util.concurrent.*;
  * @author Andrew Rambaut
  * @version $Id: CompoundLikelihood.java,v 1.19 2005/05/25 09:14:36 rambaut Exp $
  */
-public class CompoundLikelihood implements Likelihood {
+public class CompoundLikelihood implements Likelihood, Reportable {
+
+    public final static boolean EVALUATION_TIMERS = true;
+    public final long[] evaluationTimes;
+    public final int[] evaluationCounts;
 
     public CompoundLikelihood(int threads, Collection<Likelihood> likelihoods) {
         if (threads < 0 && likelihoods.size() > 1) {
@@ -58,12 +63,22 @@ public class CompoundLikelihood implements Likelihood {
             pool = null;
         }
 
+        int i = 0;
         for (Likelihood l : likelihoods) {
-            addLikelihood(l);
+            addLikelihood(l, i);
+            i++;
+        }
+
+        if (EVALUATION_TIMERS) {
+            evaluationTimes = new long[likelihoods.size()];
+            evaluationCounts = new int[likelihoods.size()];
+        } else {
+            evaluationTimes = null;
+            evaluationCounts = null;
         }
     }
 
-    private void addLikelihood(Likelihood likelihood) {
+    private void addLikelihood(Likelihood likelihood, int index) {
 
         if (!likelihoods.contains(likelihood)) {
 
@@ -72,7 +87,7 @@ public class CompoundLikelihood implements Likelihood {
                 compoundModel.addModel(likelihood.getModel());
             }
 
-            likelihoodCallers.add(new LikelihoodCaller(likelihood));
+            likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
         }
     }
 
@@ -101,14 +116,28 @@ public class CompoundLikelihood implements Likelihood {
         if (pool == null) {
             // Single threaded
 
+            int i = 0;
             for (Likelihood likelihood : likelihoods) {
-                final double l = likelihood.getLogLikelihood();
-                // if the likelihood is zero then short cut the rest of the likelihoods
-                // This means that expensive likelihoods such as TreeLikelihoods should
-                // be put after cheap ones such as BooleanLikelihoods
-                if( l == Double.NEGATIVE_INFINITY )
-                    return Double.NEGATIVE_INFINITY;
-                logLikelihood += l;
+                if (EVALUATION_TIMERS) {
+                    // this code is only compiled if EVALUATION_TIMERS is true
+                    long time = System.nanoTime();
+                    double l = likelihood.getLogLikelihood();
+                    evaluationTimes[i] += System.nanoTime() - time;
+                    evaluationCounts[i] ++;
+
+                    if( l == Double.NEGATIVE_INFINITY )
+                        return Double.NEGATIVE_INFINITY;
+
+                    logLikelihood += l;
+                } else {
+                    final double l = likelihood.getLogLikelihood();
+                    // if the likelihood is zero then short cut the rest of the likelihoods
+                    // This means that expensive likelihoods such as TreeLikelihoods should
+                    // be put after cheap ones such as BooleanLikelihoods
+                    if( l == Double.NEGATIVE_INFINITY )
+                        return Double.NEGATIVE_INFINITY;
+                    logLikelihood += l;
+                }
             }
         } else {
             try {
@@ -144,7 +173,7 @@ public class CompoundLikelihood implements Likelihood {
     public String getDiagnosis() {
         return getDiagnosis(0);
     }
-    
+
     public String getDiagnosis(int indent) {
         String message = "";
         boolean first = true;
@@ -246,6 +275,68 @@ public class CompoundLikelihood implements Likelihood {
     }
 
     // **************************************************************
+    // Reportable IMPLEMENTATION
+    // **************************************************************
+
+    public String getReport() {
+        return getReport(0);
+    }
+
+    public String getReport(int indent) {
+        if (EVALUATION_TIMERS) {
+            String message = "";
+            boolean first = true;
+
+            final NumberFormatter nf = new NumberFormatter(6);
+
+            int index = 0;
+            for( Likelihood lik : likelihoods ) {
+
+                if( !first ) {
+                    message += ", ";
+                } else {
+                    first = false;
+                }
+
+                if (indent >= 0) {
+                    message += "\n";
+                    for (int i = 0; i < indent; i++) {
+                        message += " ";
+                    }
+                }
+                message += lik.prettyName() + "=";
+
+                if( lik instanceof CompoundLikelihood ) {
+                    final String d = ((CompoundLikelihood) lik).getReport(indent < 0 ? -1 : indent + 2);
+                    if( d != null && d.length() > 0 ) {
+                        message += "(" + d;
+
+                        if (indent >= 0) {
+                            message += "\n";
+                            for (int i = 0; i < indent; i++) {
+                                message += " ";
+                            }
+                        }
+                        message += ")";
+                    }
+                } else {
+                    double secs = (double)evaluationTimes[index] / 1.0E9;
+                        message += evaluationCounts[index] + " evaluations in " +
+                                nf.format(secs) + " secs (" +
+                                nf.format(secs / evaluationCounts[index]) + " secs/eval)";
+                }
+                index++;
+            }
+
+            return message;
+        } else {
+            return "No evaluation timer report available";
+        }
+    }
+
+
+
+    // **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************
 
@@ -273,15 +364,24 @@ public class CompoundLikelihood implements Likelihood {
 
     class LikelihoodCaller implements Callable<Double> {
 
-        public LikelihoodCaller(Likelihood likelihood) {
+        public LikelihoodCaller(Likelihood likelihood, int index) {
             this.likelihood = likelihood;
+            this.index = index;
         }
 
         public Double call() throws Exception {
+            if (EVALUATION_TIMERS) {
+                long time = System.nanoTime();
+                double logL = likelihood.getLogLikelihood();
+                evaluationTimes[index] += System.nanoTime() - time;
+                evaluationCounts[index] ++;
+                return logL;
+            }
             return likelihood.getLogLikelihood();
         }
 
         private final Likelihood likelihood;
+        private final int index;
     }
 }
 

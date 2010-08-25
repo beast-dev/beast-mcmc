@@ -504,7 +504,7 @@
 		</scaleOperator>
 	</operators>
 	
-	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="200" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<jeffreysPrior>
@@ -532,7 +532,7 @@
 
 		</posterior>
 		<operators idref="operators"/>
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="100">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -575,6 +575,7 @@
 		<property name="timer">
 			<mcmc idref="mcmc"/>
 		</property>
+		<posterior idref="posterior"/>
 	</report>
 	
 </beast>

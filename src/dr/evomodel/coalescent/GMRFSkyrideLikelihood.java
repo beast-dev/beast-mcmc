@@ -72,9 +72,11 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected double[] sufficientStatistics;
 	protected double[] storedSufficientStatistics;
 
-    private double logFieldLikelihood;
-    private double storedLogFieldLikelihood;
 
+    //changed from private to protected
+    protected double logFieldLikelihood;
+    protected double storedLogFieldLikelihood;
+    
 	protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
 	protected MatrixParameter dMatrix;
@@ -379,8 +381,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
 		weightMatrix = storedWeightMatrix;
         logFieldLikelihood = storedLogFieldLikelihood;
-
-	}
+    }
 
 	protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
 		likelihoodKnown = false;

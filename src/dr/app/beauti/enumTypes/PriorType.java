@@ -10,8 +10,8 @@ import java.text.NumberFormat;
  */
 public enum PriorType {
 
-    NONE,
     UNDEFINED,
+    NONE,
     UNIFORM_PRIOR,
     EXPONENTIAL_PRIOR,
     LAPLACE_PRIOR,
@@ -27,10 +27,10 @@ public enum PriorType {
     public String toString() {
 
         switch (this) {
-            case NONE:
-                return "none";
             case UNDEFINED:
                 return "undefined";
+            case NONE:
+                return "None (Tree Prior Only)";
             case UNIFORM_PRIOR:
                 return "Uniform";
             case EXPONENTIAL_PRIOR:
@@ -109,7 +109,7 @@ public enum PriorType {
         } else {
             buffer.append("  ");
         }
-        
+
         switch (param.priorType) {
             case NONE:
                 buffer.append("Using Tree Prior");

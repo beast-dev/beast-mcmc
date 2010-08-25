@@ -157,9 +157,9 @@ public class BranchRatesModelGenerator extends Generator {
 	                writer.writeCloseTag("distribution");
 	                
 	                writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-	                if (options.allowDifferentTaxa) {
+	                if (options.allowDifferentTaxa) { // http://code.google.com/p/beast-mcmc/issues/detail?id=235
 	                    for (PartitionData dataPartition : options.getNonTraitsDataList()) {
-	                        if (dataPartition.getPartitionClockModel().equals(model)) { // TODO check this with Joseph
+	                        if (dataPartition.getPartitionClockModel().equals(model)) {
 	                            categoryCount = (dataPartition.getTaxaCount() - 1) * 2;
 	                        }
 	                    }

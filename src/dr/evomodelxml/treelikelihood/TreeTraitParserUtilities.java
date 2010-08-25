@@ -225,23 +225,26 @@ public class TreeTraitParserUtilities {
                 String taxonName = treeModel.getTaxonId(i);
                 String paramName = taxonName + "." + traitName;
 
-                Parameter traitParam;
-                if (existingTraitParameter) {
-                    traitParam = getTraitParameterByName(traitParameter, paramName);
-                    if (traitParam == null) {
-                        throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
-                    }
-                } else {
-                    traitParam = new Parameter.Default(paramName);
-                    traitParameter.addParameter(traitParam);
-                }
-
                 String object = (String) treeModel.getTaxonAttribute(i, traitName);
                 if (object == null)
                     throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
                 else {
                     StringTokenizer st = new StringTokenizer(object);
                     int count = st.countTokens();
+
+                    Parameter traitParam;
+                    if (existingTraitParameter) {
+                        traitParam = getTraitParameterByName(traitParameter, paramName);
+                        if (traitParam == null) {
+                            throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                        }
+                    } else {
+                        // Make multidimensional, in earlier revisions only first dimension was stored
+                        traitParam = new Parameter.Default(paramName, count);
+                        traitParameter.addParameter(traitParam);
+                    }
+
+
                     int sampleSize = count;
                     if (randomSampleSizeFlag > 0) {
                         if (randomSample == null) {

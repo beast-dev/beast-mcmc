@@ -285,7 +285,7 @@
 			<fileset dir="${common_dir}/doc"/>
 		</copy>
 		<copy todir="${Windows_package_dir}/examples">
-			<fileset dir="${common_dir}/examples"/>
+			<fileset dir="examples/release"/>
 		</copy>
 		<copy todir="${Windows_package_dir}/native">
 			<fileset dir="${common_dir}/native"/>
@@ -369,7 +369,7 @@
 			<fileset dir="${common_dir}/doc"/>
 		</copy>
 		<copy todir="${Linux_package_dir}/examples">
-			<fileset dir="${common_dir}/examples"/>
+			<fileset dir="examples/release"/>
 		</copy>
 		<copy todir="${Linux_package_dir}/native">
 			<fileset dir="${common_dir}/native"/>
@@ -416,7 +416,7 @@
             <fileset dir="${common_dir}/doc"/>
         </copy>
         <copy todir="${Mac_package_dir}/examples">
-            <fileset dir="${common_dir}/examples"/>
+            <fileset dir="examples/release"/>
         </copy>
         <copy todir="${Mac_package_dir}/native">
             <fileset dir="${common_dir}/native"/>

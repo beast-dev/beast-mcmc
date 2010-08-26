@@ -46,9 +46,7 @@ import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.ExponentialMarkovModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
-import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.SumStatisticParser;
-import dr.inferencexml.model.TestStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 

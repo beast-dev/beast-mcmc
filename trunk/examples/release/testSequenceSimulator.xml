@@ -1,0 +1,143 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id:  $ -->
+<!-- Tests the sequence simulator -->
+
+<beast>
+
+    <!-- The list of taxa analyse (can also include dates/ages).                 -->
+    <!-- ntax=6                                                                  -->
+    <taxa id="taxa1">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="bonobo"/>
+        <taxon id="gorilla"/>
+        <taxon id="orangutan"/>
+        <taxon id="siamang"/>
+    </taxa>
+
+    <tree id="treeML" units="years" usingDates="false">
+        <node height="0.099582">
+            <node height="0.069125">
+                <node height="0.036038">
+                    <node height="0.024003">
+                        <node height="0.000000">
+                            <taxon idref="human"/>
+                        </node>
+                        <node height="0.010772">
+                            <node height="0.000000">
+                                <taxon idref="chimp"/>
+                            </node>
+                            <node height="0.000000">
+                                <taxon idref="bonobo"/>
+                            </node>
+                        </node>
+                    </node>
+                    <node height="0.000000">
+                        <taxon idref="gorilla"/>
+                    </node>
+                </node>
+                <node height="0.000000">
+                    <taxon idref="orangutan"/>
+                </node>
+            </node>
+            <node height="0.000000">
+                <taxon idref="siamang"/>
+            </node>
+        </node>
+    </tree>
+
+    <!-- JC -->
+
+    <hkyModel id="jc69">
+        <frequencies>
+            <frequencyModel dataType="nucleotide">
+                <frequencies>
+                    <parameter dimension="4" value="0.25 0.25 0.25 0.25"/>
+                </frequencies>
+            </frequencyModel>
+        </frequencies>
+        <kappa>
+            <parameter id="jc69.kappa" value="1.0" lower="0.0" upper="100.0"/>
+        </kappa>
+    </hkyModel>
+
+    <siteModel id="siteModel1">
+        <substitutionModel>
+            <hkyModel idref="jc69"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="siteModel1.mu" value="1.0" lower="0.0"/>
+        </mutationRate>
+    </siteModel>
+
+    <report>
+        <sequenceSimulator id="myAlignment" replications='10000'>
+            <tree idref="treeML"/>
+            <siteModel idref="siteModel1"/>
+        </sequenceSimulator>
+    </report>
+
+    <patterns id="myPatterns">
+        <sequenceSimulator idref="myAlignment"/>
+    </patterns>
+
+    <treeModel id="treeModel1">
+        <tree idref="treeML"/>
+        <rootHeight>
+            <parameter id="treeModel1.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel1.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel1.allInternalNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <treeLikelihood id="treeLikelihood1">
+        <patterns idref="myPatterns"/>
+        <treeModel idref="treeModel1"/>
+        <siteModel idref="siteModel1"/>
+    </treeLikelihood>
+
+
+    <operators id="operators">
+        <scaleOperator scaleFactor="0.5" weight="1">
+            <parameter idref="jc69.kappa"/>
+        </scaleOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="500000" autoOptimize="true">
+        <posterior>
+            <likelihood id="likelihood">
+                <treeLikelihood idref="treeLikelihood1"/>
+            </likelihood>
+            <!--<prior>
+
+               </prior>-->
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="50000">
+            <column label="Likelihood" dp="4" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="Kappa" sf="6" width="12">
+                <parameter idref="jc69.kappa"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testSimulation.log">
+            <likelihood idref="likelihood"/>
+            <parameter idref="jc69.kappa"/>
+        </log>
+    </mcmc>
+
+    <report>
+        <property name="timer">
+            <mcmc idref="mcmc"/>
+        </property>
+    </report>
+
+    <traceAnalysis fileName="testSimulation.log"/>
+
+</beast>
+	

@@ -1080,7 +1080,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
         public Node parent;
         public Node leftChild, rightChild;
-        public int number;
+        private int number;
         public Parameter heightParameter;
         public Parameter rateParameter = null;
         //public Parameter traitParameter = null;

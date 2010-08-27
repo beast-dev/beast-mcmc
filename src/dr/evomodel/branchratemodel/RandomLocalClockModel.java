@@ -31,7 +31,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodel.tree.randomlocalmodel.RandomLocalTreeVariable;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -107,12 +106,12 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
-        recalculateScaleFactor();
+        recalculationNeeded = true;
         fireModelChanged();
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        recalculateScaleFactor();
+        recalculationNeeded = true;
         fireModelChanged();
     }
 
@@ -127,6 +126,10 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
     }
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
+        if (recalculationNeeded) {
+            recalculateScaleFactor();
+            recalculationNeeded = false;
+        }
         return unscaledBranchRates[node.getNumber()] * scaleFactor;
     }
 
@@ -227,4 +230,6 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
 
     private TreeParameterModel indicators;
     private TreeParameterModel rates;
+
+    boolean recalculationNeeded = true;
 }

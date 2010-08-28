@@ -10264,7 +10264,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="benchmark3.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="benchmark1.log" overwrite="true">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -10278,7 +10278,7 @@
 		</log>
 
 		<!--
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="benchmark3.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="benchmark1.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<strictClockBranchRates idref="branchRates"/>
 			<posterior idref="posterior"/>

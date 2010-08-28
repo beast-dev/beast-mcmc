@@ -129,6 +129,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                         return Double.NEGATIVE_INFINITY;
 
                     logLikelihood += l;
+
+                    i++;
                 } else {
                     final double l = likelihood.getLogLikelihood();
                     // if the likelihood is zero then short cut the rest of the likelihoods

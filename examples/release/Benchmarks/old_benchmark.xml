@@ -1,6 +1,6 @@
 <?xml version="1.0" standalone="yes"?>
 <!--
-  ~ benchmark.xml
+  ~ old_benchmark.xml
   ~
   ~ Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
   ~
@@ -24,7 +24,7 @@
   ~ Boston, MA  02110-1301  USA
   -->
 
-<!-- $Id: benchmark.xml,v 1.3 2005/07/11 23:22:40 rambaut Exp $ -->
+<!-- $Id: old_benchmark.xml,v 1.3 2005/07/11 23:22:40 rambaut Exp $ -->
 
 <!--
 Benchmark results:

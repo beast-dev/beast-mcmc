@@ -28,6 +28,7 @@ import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
+import dr.app.gui.FileDrop;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
@@ -38,6 +39,7 @@ import org.virion.jam.framework.Exportable;
 import org.virion.jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
@@ -218,6 +220,18 @@ public class BeautiFrame extends DocumentFrame {
         importChooser.setFileFilter(new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
         importChooser.setDialogTitle("Import Aligment...");
+
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
+        dataPanel.setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
+        new FileDrop(null, dataPanel, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(java.io.File[] files) {
+                importFiles(files);
+            }   // end filesDropped
+        }); // end FileDrop.Listener
+
+
+
     }
 
     /**
@@ -345,61 +359,66 @@ public class BeautiFrame extends DocumentFrame {
         int returnVal = importChooser.showOpenDialog(this);
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = importChooser.getSelectedFiles();
-            for (File file : files) {
-                if (file == null || file.getName().equals("")) {
-                    JOptionPane.showMessageDialog(this, "Invalid file name",
-                            "Invalid file name", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    try {
-                        BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
-                        beautiImporter.importFromFile(file);
+            importFiles(files);
+        }
+    }
 
-                        setDirty();
+    private void importFiles(File[] files) {
+        for (File file : files) {
+            if (file == null || file.getName().equals("")) {
+                JOptionPane.showMessageDialog(this, "Invalid file name",
+                        "Invalid file name", JOptionPane.ERROR_MESSAGE);
+            } else {
+                try {
+                    BEAUTiImporter beautiImporter = new BEAUTiImporter(this, options);
+                    beautiImporter.importFromFile(file);
+
+                    setDirty();
 //                    } catch (FileNotFoundException fnfe) {
 //                        JOptionPane.showMessageDialog(this, "Unable to open file: File not found",
 //                                "Unable to open file", JOptionPane.ERROR_MESSAGE);
-                    } catch (IOException ioe) {
-                        JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
-                                "Unable to read file", JOptionPane.ERROR_MESSAGE);
-                        ioe.printStackTrace();
-                        return;
+                } catch (IOException ioe) {
+                    JOptionPane.showMessageDialog(this, "File I/O Error unable to read file: " + ioe.getMessage(),
+                            "Unable to read file", JOptionPane.ERROR_MESSAGE);
+                    ioe.printStackTrace();
+                    // there may be other files in the list so don't return
+//                    return;
 
-                    } catch (MissingBlockException ex) {
-                        JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
-                                "Missing Block in Nexus File",
-                                JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace();
+                } catch (MissingBlockException ex) {
+                    JOptionPane.showMessageDialog(this, "TAXON, DATA or CHARACTERS block is missing in Nexus file: " + ex,
+                            "Missing Block in Nexus File",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
 
-                    } catch (ImportException ime) {
-                        JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
-                                "Error reading file",
-                                JOptionPane.ERROR_MESSAGE);
-                        ime.printStackTrace();
-                        return;
-
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                                "Error reading file",
-                                JOptionPane.ERROR_MESSAGE);
-                        ex.printStackTrace();
-                        return;
-                    }
+                } catch (ImportException ime) {
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
+                            "Error reading file",
+                            JOptionPane.ERROR_MESSAGE);
+                    ime.printStackTrace();
+                    // there may be other files in the list so don't return
+//                    return;
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                            "Error reading file",
+                            JOptionPane.ERROR_MESSAGE);
+                    ex.printStackTrace();
+                    return;
                 }
             }
+        }
 
-            if (options.allowDifferentTaxa) {
-                setAllOptions();
-                dataPanel.selectAll();
-                dataPanel.unlinkTrees();
-            }
-
+        if (options.allowDifferentTaxa) {
             setAllOptions();
+            dataPanel.selectAll();
+            dataPanel.unlinkTrees();
+        }
+
+        setAllOptions();
 
 //          // @Todo templates are not implemented yet...
 ////        getOpenAction().setEnabled(true);
 ////        getSaveAction().setEnabled(true);
-            getExportAction().setEnabled(true);
-        }
+        getExportAction().setEnabled(true);
     }
 
 //    public int allowDifferentTaxaJOptionPane() {

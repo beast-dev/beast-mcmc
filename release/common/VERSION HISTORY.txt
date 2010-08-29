@@ -1,4 +1,4 @@
-                    BEAST v1.5.3 2002-2009
+                    BEAST v1.6.0 2002-2010
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,13 +17,119 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 9th December 2009
+Last updated: alexei@cs.auckland.ac.nz - 1st September 2010
+
+================================================================================
+
+Version 1.6.0 released 1st September 2010
+
+	New Features:
+	    Random local clock:
+
+
+	    Discrete trait model:
+	    
+
+	Bug Fixes:
+	    Issue 186: Guess Trait dialog has ambiguous text
+	    Issue 235: Unlinked DiscretizedBranchRates for multiple loci have the
+	               wrong number of dimensions
+	    Issue 263: BEAST ARG bug
+	    Issue 266: BEAST: tree prior expansion + growth not working
+		Issue 274: BEAUti: add error message in XML if XML is truncated
+        Issue 291: Starting tree error message is not clear
+		Issue 294: BEAUti: load xml with tip date but BEAUti would not recognize
+		Issue 295: If no BSSVS then no need for the indicators parameter
+		Issue 296: The imported data has become global to all BEAUti windows
+		Issue 298: BEAUti should validate a user specified tree that is only
+		           bifurcating at the root
+		Issue 299: GeneralDataType should be registered for the purpose that
+		           DataType.getRegisteredDataTypeNames() returns the correct
+		           set of DataType
+		Issue 300: have a single parser 'generalSubstitutionModel' and get
+		           rid of 'svsGeneralSubstitutionModel' parser
+		Issue 302: Importing multiple files at once gives NPE when they have
+		           different taxon sets
+		Issue 303: Drag and drop alignment files into BEAUti
+		Issue 305: BEAST should warn/halt if log files already exist
+		Issue 306: Add a command line option to add a prefix to all output
+		           file names
+		Issue 307: BEAUti: missing .txt in tree log using EBSP
+		Issue 311: BEAUti: prior generator is not picking up the correct value
+		           from prior panel
+		Issue 314: Error message for alignments with different taxa to refer
+		           to one tree in BEAST & BEAUti
+		Issue 315: make alias "svsGeneralSubstitutionModel" of
+		           "generalSubstitutionModel"
+		Issue 316: previous XML with "generalSubstitutionModel" is not working
+		Issue 317: BEAUti: geo-phylogenetic symmetric + no BSSVS xml not working
+		Issue 319: BEAUti:checkbox 'allow different taxa in partitions' should
+		           be a message instead
+		Issue 320: BEAUti: need validation of changing tree in data panel after
+		           allowing different taxa
+		Issue 323: BEAUti: reload xml having alignments with different taxa
+		Issue 324: "rates" in "svsGeneralSubstitutionModel" should not have
+		           relativeTo
+		Issue 325: processValues[] in DiscreteTraitBranchRateModel should be size
+		           of the number of states NOT the number of rates
+		Issue 328: Generating very long default value and bound arrays for
+		           parameters
+		Issue 331: Help button on Traits panel in BEAUti seems to do nothing
+		Issue 332: Add traits should allow any trait name to be given
+		Issue 333: Unlink buttons are enabled even when only one partition is
+		           loaded
+		Issue 334: NullPointerException after cancelled 'Import Traits'.
+		Issue 336: Subst model table in Site Models tab collapses to nothing
+		           when window is resized
+		Issue 338: Clock model panel is confusingly laid out.
+		Issue 339: GUI within scroll panes is just nasty
+		Issue 340: Spacing between elements in BEAUti generated XML
+		Issue 341: Random local clock model Bug
+		Issue 342: NullPointerException after cancelled 'Create New Trait' dialog
+		Issue 343: NullPointerException after double-click discrete traits
+		           in Data Partition panel
+		Issue 345: BEAUti: user want to be able to edit trait value at any time
+		Issue 346: Show user a guide for an example of *BEAST or trait mapping
+		           file format
+		Issue 347: change BEAUti default prior of ucld.stdv and kappa
+		Issue 348: Windows BEAST exe <close> then <cancel>, window should NOT
+		           be closed
+		Issue 349: BEAUti frame is too large for low resolution projector
+		           or screen
+		Issue 350: BEAUti prior dialog cannot enable resizable because of using
+		           OptionsPanel
+		Issue 351: message label on the bottom of BEAUti frame is floating
+		           when no space enough
+		Issue 352: BEAUti: NullPointerException if leave any trait value
+		           empty after activate BSSVS
+		Issue 353: BEAUti: make *BEAST fired by a checkbox and separated
+		           to trait event
+		Issue 354: BEAUti: make auto wrap for HTMLEditorKit inside JEditorPane
+		Issue 355: get rid of ">" when wrapping text using BEAUti TextUtil
+        Issue 356: Add instruction to show user how to load specified
+                   starting tree from BEAUti
+        Issue 357: window's programmer has broken compatibility with
+                   unix-based operating systems
+        Issue 358: 'Sequence Error Model' options in Molecular Clock Panel
+        Issue 359: No minimum window size
+        Issue 360: Remove warning text about certain parameters in Priors table
+        Issue 361: RegEx should default to having braces round them
+        Issue 362: Remove exclamation marks from dialog box messages.
+        Issue 365: Folder called 'beauti1.5' in /examples
+        Issue 370: BEAST argument -overwrite not working
+        Issue 371: new change of PriorDialog broke GUI functions
+        Issue 372: Failed to load parser
+        Issue 374: BEAUti: only one taxa set for 3 unlinked partitions
+        Issue 375: BEAUti: rootHeightPriorCombo disappear when switch between
+                   Undefined and others
+
+        All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
 Version 1.5.3 released 9th December 2009
 
-    Bug Fixes
+    Bug Fixes:
 		Many bugs fixed that were introduced in 1.5.2 including:
 
         Issue 55:  MCMC Screen log doesn't currently work.
@@ -106,10 +212,6 @@ Version 1.5.3 released 9th December 2009
         Issue 262: wrong XML of testCataclysmCoalescent.xml
         Issue 264: ImportException: Number format error for <treeTraceAnalysis ...
 
-
-
-================================================================================
-
 Version 1.5.2 released 9th October 2009
 
     Bug Fixes
@@ -168,11 +270,7 @@ Version 1.5.2 released 9th October 2009
                    in name="" attribute
         Issue 200: BEAUTi: *BEAST using Import Trait cannot add species in Trait table
 
-        All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
-
-================================================================================
-
-Version 1.5.1 released 3rd September 2009
+ Version 1.5.1 released 3rd September 2009
 
 	New Features:
 	    *BEAST: a version of BEAST that can estimate species trees from
@@ -219,10 +317,6 @@ Version 1.5.1 released 3rd September 2009
 		Issue 121: Beauti generates spurios multiple upDown operators;
 		Issue 124: Create method to check calibration situation;
 		Issue 125: Tree prior panel affecting isShareSameTreePrior check box wrongly.
-		        
-		All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
-
-================================================================================
 
 Version 1.5.0 released 4th August 2009
 	This was a major new version with numerous new features and many bugs -

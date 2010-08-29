@@ -1,4 +1,4 @@
-                    BEAST v1.5.3 2002-2009
+                    BEAST v1.6.0 2002-2010
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,8 +16,7 @@
                       msuchard@ucla.edu
 
 
-Windows version README
-Last updated: alexei@cs.auckland.ac.nz - 9th December 2009
+Last updated: alexei@cs.auckland.ac.nz - 1st September 2010
 
 Contents:
 1) INTRODUCTION
@@ -69,7 +68,7 @@ If in doubt type "java -version" to see what version of java is installed
 
 Mac OS X will already have a suitable version of Java installed.
 
-Within the BEAST.v1.5.3 package will be the following directories:
+Within the BEAST.v1.6.x package will be the following directories:
 Directory       Contents
 doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
@@ -84,7 +83,7 @@ A program called "BEAUti" will import data in NEXUS format, allow you to
 select various models and options and generate an XML file ready for use in
 BEAST.
 
-To run BEAUti simply double-click the "BEAUti v1.5.3.exe" file in the BEAST
+To run BEAUti simply double-click the "BEAUti v1.6.x.exe" file in the BEAST
 folder. If this doesn't work then you may not have Java installed correctly. 
 Try opening an MS-DOS window and typing:
 
@@ -95,7 +94,7 @@ See also the separate BEAUti README.txt document.
 __________________________________________________________________________
 4) RUNNING BEAST
 
-To run BEAST simply double-click the "BEAST v1.5.1.exe" file in the BEAST
+To run BEAST simply double-click the "BEAST v1.6.x.exe" file in the BEAST
 folder. You will be asked to select a BEAST XML input file.
 
 Alternatively open a Command window and type:
@@ -116,6 +115,35 @@ Tutorials - <http://beast.bio.ed.ac.uk/tutorials/>
 The latest manual can be downloaded from here:
 
 <http://code.google.com/p/beast-mcmc/>
+
+BEAST arguments:
+     -verbose        "Give verbose XML parsing messages"
+     -warnings       "Show warning messages about BEAST XML file"
+     -strict         "Fail on non-conforming BEAST XML file"
+     -window         "Provide a console window"
+     -options        "Display an options dialog"
+     -working        "Change working directory to input file's directory"
+     -seed           "Specify a random number generator seed"
+     -prefix         "PREFIX", "Specify a prefix for all output log filenames"
+     -overwrite      "Allow overwriting of log files"
+     -errors         "Specify maximum number of numerical errors before stopping"
+     -threads        "The number of computational threads to use (default auto)"
+     -java           "Use Java only, no native implementations"
+     -beagle         "Use beagle library if available"
+     -beagle_info          "BEAGLE: show information on available resources"
+     -beagle_order         "BEAGLE: set order of resource use"
+     -beagle_instances     "BEAGLE: divide site patterns amongst instances"
+     -beagle_CPU           "BEAGLE: use CPU instance"
+     -beagle_GPU           "BEAGLE: use GPU instance if available"
+     -beagle_SSE           "BEAGLE: use SSE extensions if available"
+     -beagle_single        "BEAGLE: use single precision if available"
+     -beagle_double        "BEAGLE: use double precision if available"
+     -beagle_scaling       "BEAGLE: specify scaling scheme to use"
+     -help"          "Print this information and stop"
+
+For example:
+
+     java -jar lib/beast.jar -seed 123456 -overwrite input.xml
 
 ___________________________________________________________________________
 5) ANALYZING RESULTS
@@ -181,15 +209,9 @@ ___________________________________________________________________________
 Thanks to the following for supplying code or assisting with the creation
 or testing of BEAST:
 
-	Michael Defoin Platel
-	Roald Forsberg
-	Simon Ho
-	Philippe Lemey
-	Gerton Lunter
-	Sidney Markowitz
-	Tulio de Oliveira
-	Oliver Pybus
-	Beth Shapiro
-	Korbinian Strimmer
-	Marc Suchard
+	Alex Alekseyenko, Beth Shapiro, Chieh-Hsi Wu, Erik Bloomquist,
+	Gerton Lunter, Joseph Heled, Korbinian Strimmer, Michael Defoin Platel,
+	Oliver Pybus, Philippe Lemey, Roald Forsberg, Sebastian Hoehna,
+	Sidney Markowitz, Simon Ho, Tulio de Oliveira, Oliver Pybus,
+	Vladimir Minin, Wai Lok Sibon Li, Walter Xie
 	+ numerous other users who have kindly helped make BEAST better.

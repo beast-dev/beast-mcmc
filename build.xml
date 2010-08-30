@@ -149,6 +149,7 @@
 				<include name="dr/app/beauti/**/*.class" />
 				<include name="dr/app/oldbeauti/**/*.class" />
 				<include name="dr/app/util/**/*.class" />
+				<include name="dr/app/gui/**/*.class" />
                 <include name="dr/app/java16compat/**/*.class"/>
 				<include name="dr/evolution/alignment/**/*.class" />
 				<include name="dr/evolution/coalescent/**/*.class" />

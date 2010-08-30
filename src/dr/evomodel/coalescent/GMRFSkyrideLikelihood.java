@@ -72,7 +72,6 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	protected double[] sufficientStatistics;
 	protected double[] storedSufficientStatistics;
 
-
     //changed from private to protected
     protected double logFieldLikelihood;
     protected double storedLogFieldLikelihood;

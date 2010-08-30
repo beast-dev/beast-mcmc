@@ -273,7 +273,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             logLikelihood = calculateLogCoalescentLikelihood();
             logFieldLikelihood = calculateLogFieldLikelihood();
             likelihoodKnown = true;
-        }
+        }                                                                                     
         return logLikelihood + logFieldLikelihood;
     }
 

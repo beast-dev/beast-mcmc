@@ -303,7 +303,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         if (options.taxonList != null) { // validation of check empty taxonList
 //            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
             if (currentTrait == null) {
-                if (!addTrait()) return; // if addTrait() cancel then false
+                if (!addTrait()) {
+                    return; // if addTrait() cancel then false
+                }
             }
             int result;
             do {
@@ -372,7 +374,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //            dataTableModel.fireTableDataChanged();
 
 //            traitSelectionChanged();
-            guessTrait();
+            // AR we don't want to guess traits automatically - the user may
+            // be planning on typing them in. Also this method may have been
+            // called by guessTraits() anyway.
+//            guessTrait();
         } else if (result == CreateTraitDialog.OK_IMPORT) {
             return frame.doImportTraits();
         } else if (result == JOptionPane.CANCEL_OPTION) {
@@ -586,7 +591,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //                Location location = options.taxonList.getTaxon(row).getLocation();
 //                if (location != null) {
 //                    options.taxonList.getTaxon(row).setLocation(location);
-//                }            	
+//                }
                 if (currentTrait != null) {
                     options.taxonList.getTaxon(row).setAttribute(currentTrait.getName(), aValue);
                 }

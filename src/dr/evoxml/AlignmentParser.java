@@ -73,7 +73,7 @@ public class AlignmentParser extends AbstractXMLObjectParser {
         }
 
         final Logger logger = Logger.getLogger("dr.evoxml");
-        logger.info("Read alignment" + (xo.hasAttribute(XMLParser.ID) ? ", ':" + xo.getId() : ":") +
+        logger.info("Read alignment" + (xo.hasAttribute(XMLParser.ID) ? ": " + xo.getId() : "") +
                 "\n  Sequences = " + alignment.getSequenceCount() +
                 "\n      Sites = " + alignment.getSiteCount() +
                 "\n   Datatype = " + alignment.getDataType().getDescription());

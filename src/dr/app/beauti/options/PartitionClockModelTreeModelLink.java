@@ -26,7 +26,6 @@ package dr.app.beauti.options;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.OperatorType;
 import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.PriorType;
 import dr.evomodelxml.tree.RateStatisticParser;
 
 import java.util.List;
@@ -37,10 +36,6 @@ import java.util.List;
  * @version $Id$
  */
 public class PartitionClockModelTreeModelLink extends PartitionOptions {
-
-    // Instance variables
-    public Parameter localClockRateChangesStatistic = null;
-    public Parameter localClockRatesStatistic = null;
 
     private final BeautiOptions options;
     private final PartitionClockModel model;    
@@ -64,7 +59,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
                 PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false); 
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameterUniformPrior(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterGammaPrior(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, 0.0, Double.POSITIVE_INFINITY, false);
         createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
 
 //        {
@@ -119,6 +115,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
         createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
                 0.0, Double.POSITIVE_INFINITY);
+        // Random local clock
+        createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
     }
 
     /**
@@ -244,30 +242,12 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             params.add(getParameter("covariance"));
             params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
         }
-                
-    	//TODO ?        
-        if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
-            if (localClockRateChangesStatistic == null) {
-                localClockRateChangesStatistic = new Parameter.Builder("rateChanges", "number of random local clocks").isDiscrete(true)
-                        .prior(PriorType.POISSON_PRIOR).mean(1.0).offset(0.0).build();                
-            }
-            if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter.Builder(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates")
-                        .isDiscrete(false).prior(PriorType.GAMMA_PRIOR).shape(0.5).scale(2.0).build();
-            }
 
-            localClockRateChangesStatistic.setPrefix(getPrefix());
-            params.add(localClockRateChangesStatistic);
-            localClockRatesStatistic.setPrefix(getPrefix());
-            params.add(localClockRatesStatistic);
+        if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
+            params.add(getParameter("rateChanges"));
+            params.add(getParameter(ClockType.LOCAL_CLOCK + "." + "rates"));
         }
 
-//	        if (clock.getClockType() != ClockType.STRICT_CLOCK) {
-//	            params.add(getParameter("meanRate"));
-//	            params.add(getParameter(RateStatistic.COEFFICIENT_OF_VARIATION));
-//	            params.add(getParameter("covariance"));
-//	        }
-                
     }
     /////////////////////////////////////////////////////////////
     public PartitionClockModel getPartitionClockModel() {

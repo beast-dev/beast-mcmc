@@ -350,10 +350,21 @@ public class BranchRatesModelGenerator extends Generator {
 	                        }
 	                );
 	                writer.writeIDref(TreeModel.TREE_MODEL, treePrefix + TreeModel.TREE_MODEL);
-	
-	                writeParameterRef("rates", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".rates", writer);
-	                writeParameterRef("rateIndicator", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes", writer);
-	                
+
+                    writer.writeOpenTag("rates");
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
+                            (XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".rates")
+	                        , true);
+	                writer.writeCloseTag("rates");
+                    writer.writeOpenTag("rateIndicator");
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
+                            (XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes")
+	                        , true);
+	                writer.writeCloseTag("rateIndicator");
+
+//                    writeParameterRef("rates", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".rates", writer);
+//                    writeParameterRef("rateIndicator", options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".changes", writer);
+
 	                if (activeTrees.indexOf(tree) < 1) {
 		                writeParameter("clockRate", "clock.rate", model, writer);
 	                } else {

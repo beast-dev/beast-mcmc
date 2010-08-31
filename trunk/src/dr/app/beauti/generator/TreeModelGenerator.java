@@ -26,7 +26,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
@@ -115,8 +114,6 @@ public class TreeModelGenerator extends Generator {
 //        } 
         // move to validateClockTreeModelCombination(PartitionTreeModel model)
 
-        int[] count = validateClockTreeModelCombination(model);
-
 //    	if (autocorrelatedClockCount == 1) {
 //        if (count[0] == 1) {
 //                writer.writeOpenTag(TreeModelParser.NODE_RATES,
@@ -141,27 +138,30 @@ public class TreeModelGenerator extends Generator {
 //                writer.writeCloseTag(TreeModelParser.NODE_RATES);
 ////    	} else if (randomLocalClockCount == 1 ) {
 //        } else 
-        if (count[1] == 1) {
-            writer.writeOpenTag(TreeModelParser.NODE_RATES,
-                    new Attribute[]{
-                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-                    });
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "rates"), true);
-            writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
-            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
-                    new Attribute[]{
-                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
-                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
-                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
-                    });
-            writer.writeTag(ParameterParser.PARAMETER,
-                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "changes"), true);
-            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
-        }
+        //+++++++++++++ removed because random local clock XML is changed ++++++++++++++++
+//        int[] count = validateClockTreeModelCombination(model);
+//        if (count[1] == 1) {
+//            writer.writeOpenTag(TreeModelParser.NODE_RATES,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+//                    });
+//            writer.writeTag(ParameterParser.PARAMETER,
+//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "rates"), true);
+//            writer.writeCloseTag(TreeModelParser.NODE_RATES);
+//
+//            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(TreeModelParser.ROOT_NODE, "false"),
+//                            new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
+//                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
+//                    });
+//            writer.writeTag(ParameterParser.PARAMETER,
+//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "changes"), true);
+//            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
+//        }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_MODEL, writer);
 

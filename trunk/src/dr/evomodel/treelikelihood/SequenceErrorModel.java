@@ -1,5 +1,6 @@
 package dr.evomodel.treelikelihood;
 
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.TaxonList;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
@@ -35,7 +36,9 @@ public class SequenceErrorModel extends TipPartialsModel {
     }
 
     public SequenceErrorModel(TaxonList includeTaxa, TaxonList excludeTaxa,
-                              ErrorType errorType, Parameter baseErrorRateParameter, Parameter ageRelatedErrorRateParameter) {
+                              ErrorType errorType, Parameter baseErrorRateParameter,
+                              Parameter ageRelatedErrorRateParameter,
+                              Parameter indicatorParameter) {
         super(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, includeTaxa, excludeTaxa);
 
         this.errorType = errorType;
@@ -53,82 +56,134 @@ public class SequenceErrorModel extends TipPartialsModel {
         } else {
             this.ageRelatedErrorRateParameter = null;
         }
+
+        if (indicatorParameter != null) {
+            this.indicatorParameter = indicatorParameter;
+            addVariable(indicatorParameter);
+        } else {
+            this.indicatorParameter = null;
+        }
     }
 
     protected void taxaChanged() {
-        // nothing to do
+        if (indicatorParameter != null && indicatorParameter.getDimension() <= 1) {
+            this.indicatorParameter.setDimension(tree.getExternalNodeCount());
+        }
     }
 
     public void getTipPartials(int nodeIndex, double[] partials) {
+
         int[] states = this.states[nodeIndex];
+        if (indicatorParameter == null || indicatorParameter.getParameterValue(nodeIndex) > 0.0) {
 
-        double pUndamaged = 1.0;
-        double pDamagedTS = 0.0;
-        double pDamagedTV = 0.0;
+            double pUndamaged = 1.0;
+            double pDamagedTS = 0.0;
+            double pDamagedTV = 0.0;
 
-        if (!excluded[nodeIndex]) {
-            if (baseErrorRateParameter != null) {
-                pUndamaged = pUndamaged - baseErrorRateParameter.getParameterValue(0);
+            if (!excluded[nodeIndex]) {
+                if (baseErrorRateParameter != null) {
+                    pUndamaged = pUndamaged - baseErrorRateParameter.getParameterValue(0);
+                }
+
+                if (ageRelatedErrorRateParameter != null) {
+                    double rate = ageRelatedErrorRateParameter.getParameterValue(0);
+                    double age = tree.getNodeHeight(tree.getExternalNode(nodeIndex));
+                    pUndamaged *= Math.exp(-rate * age);
+                }
+
+
+                if (errorType == ErrorType.ALL_SUBSTITUTIONS) {
+                    pDamagedTS = (1.0 - pUndamaged) / 3.0;
+                    pDamagedTV = pDamagedTS;
+
+                } else if (errorType == ErrorType.TRANSITIONS_ONLY) {
+                    pDamagedTS = 1.0 - pUndamaged;
+                    pDamagedTV = 0.0;
+                } else {
+                    throw new IllegalArgumentException("only TRANSITIONS_ONLY and ALL_SUBSTITUTIONS are supported");
+                }
+
             }
 
-            if (ageRelatedErrorRateParameter != null) {
-                double rate = ageRelatedErrorRateParameter.getParameterValue(0);
-                double age = tree.getNodeHeight(tree.getExternalNode(nodeIndex));
-                pUndamaged *= Math.exp(-rate * age);
+            int k = 0;
+            for (int j = 0; j < patternCount; j++) {
+                switch (states[j]) {
+                    case Nucleotides.A_STATE: // is an A
+                        partials[k] = pUndamaged;
+                        partials[k + 1] = pDamagedTV;
+                        partials[k + 2] = pDamagedTS;
+                        partials[k + 3] = pDamagedTV;
+                        break;
+                    case Nucleotides.C_STATE: // is an C
+                        partials[k] = pDamagedTV;
+                        partials[k + 1] = pUndamaged;
+                        partials[k + 2] = pDamagedTV;
+                        partials[k + 3] = pDamagedTS;
+                        break;
+                    case Nucleotides.G_STATE: // is an G
+                        partials[k] = pDamagedTS;
+                        partials[k + 1] = pDamagedTV;
+                        partials[k + 2] = pUndamaged;
+                        partials[k + 3] = pDamagedTV;
+                        break;
+                    case Nucleotides.UT_STATE: // is an T
+                        partials[k] = pDamagedTV;
+                        partials[k + 1] = pDamagedTS;
+                        partials[k + 2] = pDamagedTV;
+                        partials[k + 3] = pUndamaged;
+                        break;
+                    default: // is an ambiguity
+                        partials[k] = 1.0;
+                        partials[k + 1] = 1.0;
+                        partials[k + 2] = 1.0;
+                        partials[k + 3] = 1.0;
+                }
+                k += stateCount;
+            }
+        } else {
+            int k = 0;
+            for (int j = 0; j < patternCount; j++) {
+
+                switch (states[j]) {
+                    case Nucleotides.A_STATE: // is an A
+                        partials[k] = 1.0;
+                        partials[k + 1] = 0.0;
+                        partials[k + 2] = 0.0;
+                        partials[k + 3] = 0.0;
+                        break;
+                    case Nucleotides.C_STATE: // is an C
+                        partials[k] = 0.0;
+                        partials[k + 1] = 1.0;
+                        partials[k + 2] = 0.0;
+                        partials[k + 3] = 0.0;
+                        break;
+                    case Nucleotides.G_STATE: // is an G
+                        partials[k] = 0.0;
+                        partials[k + 1] = 0.0;
+                        partials[k + 2] = 1.0;
+                        partials[k + 3] = 0.0;
+                        break;
+                    case Nucleotides.UT_STATE: // is an T
+                        partials[k] = 0.0;
+                        partials[k + 1] = 0.0;
+                        partials[k + 2] = 0.0;
+                        partials[k + 3] = 1.0;
+                        break;
+                    default: // is an ambiguity
+                        partials[k] = 1.0;
+                        partials[k + 1] = 1.0;
+                        partials[k + 2] = 1.0;
+                        partials[k + 3] = 1.0;
+                }
+
+                k += stateCount;
             }
 
-
-            if (errorType == ErrorType.ALL_SUBSTITUTIONS) {
-                pDamagedTS = (1.0 - pUndamaged) / 3.0;
-                pDamagedTV = pDamagedTS;
-
-            } else if (errorType == ErrorType.TRANSITIONS_ONLY) {
-                pDamagedTS = 1.0 - pUndamaged;
-                pDamagedTV = 0.0;
-            } else {
-                throw new IllegalArgumentException("only TRANSITIONS_ONLY and ALL_SUBSTITUTIONS are supported");
-            }
-
-        }
-
-        int k = 0;
-        for (int j = 0; j < patternCount; j++) {
-            switch (states[j]) {
-                case 0: // is an A
-                    partials[k] = pUndamaged;
-                    partials[k + 1] = pDamagedTV;
-                    partials[k + 2] = pDamagedTS;
-                    partials[k + 3] = pDamagedTV;
-                    break;
-                case 1: // is an C
-                    partials[k] = pDamagedTV;
-                    partials[k + 1] = pUndamaged;
-                    partials[k + 2] = pDamagedTV;
-                    partials[k + 3] = pDamagedTS;
-                    break;
-                case 2: // is an G
-                    partials[k] = pDamagedTS;
-                    partials[k + 1] = pDamagedTV;
-                    partials[k + 2] = pUndamaged;
-                    partials[k + 3] = pDamagedTV;
-                    break;
-                case 3: // is an T
-                    partials[k] = pDamagedTV;
-                    partials[k + 1] = pDamagedTS;
-                    partials[k + 2] = pDamagedTV;
-                    partials[k + 3] = pUndamaged;
-                    break;
-                default: // is an ambiguity
-                    partials[k] = 1.0;
-                    partials[k + 1] = 1.0;
-                    partials[k + 2] = 1.0;
-                    partials[k + 3] = 1.0;
-            }
-            k += stateCount;
         }
     }
 
     private final ErrorType errorType;
     private final Parameter baseErrorRateParameter;
     private final Parameter ageRelatedErrorRateParameter;
+    private final Parameter indicatorParameter;
 }

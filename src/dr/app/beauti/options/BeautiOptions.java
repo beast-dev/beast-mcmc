@@ -407,6 +407,10 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionTreeModels(dataPartitions);
     }
 
+    public List<PartitionTreeModel> getNonTraitPartitionTreeModels() {
+        return getPartitionTreeModels(getNonTraitsDataList());
+    }
+
     // ++++++++++++++ Partition Tree Prior ++++++++++++++ 
 
     public List<PartitionTreePrior> getPartitionTreePriors() {

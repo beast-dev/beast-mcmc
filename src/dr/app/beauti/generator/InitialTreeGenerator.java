@@ -33,16 +33,16 @@ public class InitialTreeGenerator extends Generator {
 
     /**
      * Generate XML for the starting tree
-     * @param model  PartitionTreeModel 
+     * @param model  PartitionTreeModel
      *
      * @param writer the writer
      */
     public void writeStartingTree(PartitionTreeModel model, XMLWriter writer) {
-    	
-    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1) 
-    	
+
+    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1)
+
         Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-        
+
         switch (model.getStartingTreeType()) {
             case USER:
                 if (model.isNewick()) {
@@ -90,11 +90,11 @@ public class InitialTreeGenerator extends Generator {
             case RANDOM:
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
-                               	
+
                 if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {            	
-                	
-            		writer.writeComment("No calibration");
+            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+
+//            		writer.writeComment("No calibration");
 	            	writer.writeOpenTag(
 	                        CoalescentSimulatorParser.COALESCENT_TREE,
 	                        new Attribute[]{
@@ -104,7 +104,7 @@ public class InitialTreeGenerator extends Generator {
 	                );
 
                 } else {
-            		writer.writeComment("Has calibration");
+//            		writer.writeComment("Has calibration");
             		writer.writeOpenTag(
 	                        CoalescentSimulatorParser.COALESCENT_TREE,
 	                        new Attribute[]{
@@ -112,14 +112,18 @@ public class InitialTreeGenerator extends Generator {
 	                        }
 	                );
             	}
-                
+
                 String taxaId;
                 if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
-                    if (model.getAllPartitionData().size() > 1) {
-                        if (!options.validateDiffTaxa(model.getAllPartitionData())) {
-                            throw new IllegalArgumentException("To accommodate different taxa for each partition trees cannot be linked");
-                        }
-                    }
+                    // AR - this validation was causing an exception because a discrete trait
+                    // partition doesn't have an alignment. I believe the check about using
+                    // partitions being linked when they have different taxa is done in the
+                    // GUI so this validation isn't required.
+//                    if (model.getAllPartitionData().size() > 1) {
+//                        if (!options.validateDiffTaxa(model.getAllPartitionData())) {
+//                            throw new IllegalArgumentException("To accommodate different taxa for each partition trees cannot be linked");
+//                        }
+//                    }
 
 //                    for (PartitionData partition : model.getAllPartitionData()) {
 //                        taxaId = partition.getPrefix() + TaxaParser.TAXA;
@@ -128,7 +132,7 @@ public class InitialTreeGenerator extends Generator {
 //                    }
                     taxaId = model.getAllPartitionData().get(0).getPrefix() + TaxaParser.TAXA;
                     writeTaxaRef(taxaId, model, writer);
-                    
+
                 } else {
                 	taxaId = TaxaParser.TAXA;
                 	writeTaxaRef(taxaId, model, writer);
@@ -142,12 +146,12 @@ public class InitialTreeGenerator extends Generator {
 
         }
     }
-    
+
     private void writeTaxaRef(String taxaId, PartitionTreeModel model, XMLWriter writer) {
-    	
+
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
-        
-        if (options.taxonSets != null && options.taxonSets.size() > 0) { 
+
+        if (options.taxonSets != null && options.taxonSets.size() > 0) {
             writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {
@@ -180,15 +184,15 @@ public class InitialTreeGenerator extends Generator {
 
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
     	PartitionTreePrior prior = model.getPartitionTreePrior();
-    		
+
 		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
         	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
         	writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
         } else {
         	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
-        }     		    		
-    	
+        }
+
     }
 
     private void writeNewickTree (Tree tree, XMLWriter writer) {

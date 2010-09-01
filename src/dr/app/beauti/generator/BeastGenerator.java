@@ -249,7 +249,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Taxon list generation is failed");
+            throw new GeneratorException("Taxon list generation has failed");
         }
 
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
@@ -261,7 +261,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Taxon sets generation is failed");
+            throw new GeneratorException("Taxon sets generation has failed");
         }
 
         //++++++++++++++++ Alignments ++++++++++++++++++
@@ -270,7 +270,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Alignments generation is failed");
+            throw new GeneratorException("Alignments generation has failed");
         }
 
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
@@ -283,7 +283,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Pattern lists generation is failed");
+            throw new GeneratorException("Pattern lists generation has failed");
         }
 
         //++++++++++++++++ General Data of Traits ++++++++++++++++++
@@ -301,7 +301,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_PATTERNS, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("General data of traits generation is failed");
+            throw new GeneratorException("General data of traits generation has failed");
         }
 
         //++++++++++++++++ Tree Prior Model ++++++++++++++++++
@@ -312,7 +312,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Tree prior model generation is failed");
+            throw new GeneratorException("Tree prior model generation has failed");
         }
 
         //++++++++++++++++ Starting Tree ++++++++++++++++++
@@ -323,7 +323,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Starting tree generation is failed");
+            throw new GeneratorException("Starting tree generation has failed");
         }
 
         //++++++++++++++++ Tree Model +++++++++++++++++++
@@ -336,7 +336,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_MODEL, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Tree model generation is failed");
+            throw new GeneratorException("Tree model generation has failed");
         }
 
         //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
@@ -354,10 +354,10 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_PRIOR, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Tree prior likelihood generation is failed");
+            throw new GeneratorException("Tree prior likelihood generation has failed");
         }
 
-        //++++++++++++++++ Branch Rates Model ++++++++++++++++++                
+        //++++++++++++++++ Branch Rates Model ++++++++++++++++++
         try {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
                 branchRatesModelGenerator.writeBranchRatesModel(model, writer);
@@ -389,7 +389,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SUBSTITUTION_MODEL, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Substitution model or site model generation is failed");
+            throw new GeneratorException("Substitution model or site model generation has failed");
         }
 
         //++++++++++++++++ Site Model ++++++++++++++++++
@@ -411,7 +411,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREE_LIKELIHOOD, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Tree likelihood generation is failed");
+            throw new GeneratorException("Tree likelihood generation has failed");
         }
 
         //++++++++++++++++ Ancestral Tree Likelihood ++++++++++++++++++
@@ -423,7 +423,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Ancestral Tree likelihood generation is failed");
+            throw new GeneratorException("Ancestral Tree likelihood generation has failed");
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
@@ -435,7 +435,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("*BEAST special part generation is failed");
+            throw new GeneratorException("*BEAST special part generation has failed");
         }
 
         //++++++++++++++++  ++++++++++++++++++
@@ -445,7 +445,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("TMRCA statistics generation is failed");
+            throw new GeneratorException("TMRCA statistics generation has failed");
         }
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -457,7 +457,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_OPERATORS, writer);
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("Operators generation is failed");
+            throw new GeneratorException("Operators generation has failed");
         }
 
         //++++++++++++++++ MCMC ++++++++++++++++++
@@ -486,7 +486,7 @@ public class BeastGenerator extends Generator {
             }
         } catch (Exception e) {
             System.err.println(e);
-            throw new GeneratorException("The last part of XML generation is failed");
+            throw new GeneratorException("The last part of XML generation has failed");
         }
 
         writer.writeCloseTag("beast");
@@ -814,7 +814,7 @@ public class BeastGenerator extends Generator {
 
         writer.writeIDref(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE, "operators");
 
-        // write log to screen    	
+        // write log to screen
         logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,

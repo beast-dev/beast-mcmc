@@ -276,7 +276,6 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-
     public boolean isEBSPSharingSamePrior() {
         return getPartitionTreePriors().size() >= 1 &&
                 (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
@@ -292,6 +291,16 @@ public class BeautiOptions extends ModelOptions {
 //    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
 //        return partitionModels;
 //    }
+
+    public List<PartitionData> getPartitionDataNoSpecies() {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (PartitionData pd : dataPartitions) {            
+            if (!pd.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {// species excluded
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
 
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();

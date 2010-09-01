@@ -75,7 +75,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
     //changed from private to protected
     protected double logFieldLikelihood;
     protected double storedLogFieldLikelihood;
-    
+
 	protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
 	protected MatrixParameter dMatrix;
@@ -120,8 +120,14 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 
         setTree(treeList);
 
-		fieldLength = popSizeParameter.getDimension();
         int correctFieldLength = getCorrectFieldLength();
+
+        if (popSizeParameter.getDimension() <= 1) {
+            // popSize dimension hasn't been set yet, set it here:
+            popSizeParameter.setDimension(correctFieldLength);
+        }
+
+		fieldLength = popSizeParameter.getDimension();
 		if (correctFieldLength != fieldLength) {
 			throw new IllegalArgumentException("Population size parameter should have length " + correctFieldLength);
 		}
@@ -268,7 +274,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 //
 //		}
         setupSufficientStatistics();
-		
+
 		//Set up the weight Matrix
 		double[] offdiag = new double[fieldLength - 1];
 		double[] diag = new double[fieldLength];
@@ -279,11 +285,11 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -1.0;
 			}
-			
-			
+
+
 		} else {
 			double rootHeight = tree.getNodeHeight(tree.getRoot());
-						
+
 			for (int i = 0; i < fieldLength - 1; i++) {
 				offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * rootHeight;
 			}

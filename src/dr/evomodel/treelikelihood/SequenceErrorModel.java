@@ -4,6 +4,7 @@ import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.TaxonList;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 
 /**
  * This class incorporates uncertainty in the state at the tips of the tree and can
@@ -62,6 +63,10 @@ public class SequenceErrorModel extends TipPartialsModel {
             addVariable(indicatorParameter);
         } else {
             this.indicatorParameter = null;
+        }
+
+        if (indicatorParameter != null) {
+            addStatistic(new TaxonHasErrorsStatistic());
         }
     }
 
@@ -181,6 +186,27 @@ public class SequenceErrorModel extends TipPartialsModel {
 
         }
     }
+    public class TaxonHasErrorsStatistic extends Statistic.Abstract {
+
+        public TaxonHasErrorsStatistic() {
+            super("hasErrors");
+        }
+
+        public int getDimension() {
+            if (indicatorParameter == null) return 0;
+            return indicatorParameter.getDimension();
+        }
+
+        public String getDimensionName(int dim) {
+            return taxonMap.get(dim);
+        }
+
+        public double getStatisticValue(int dim) {
+            return indicatorParameter.getParameterValue(dim);
+        }
+
+    }
+
 
     private final ErrorType errorType;
     private final Parameter baseErrorRateParameter;

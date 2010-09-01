@@ -86,9 +86,9 @@ public class PMDTestProblem extends TraceCorrelationAssert {
 
         // SequenceErrorModel
         Parameter ageRelatedRateParameter = new Parameter.Default(SequenceErrorModelParser.AGE_RELATED_RATE, 4.0E-7, 0, 100.0);
-        
+
         TipPartialsModel aDNADamageModel =  new SequenceErrorModel(null, null, SequenceErrorModel.ErrorType.TRANSITIONS_ONLY,
-                null, ageRelatedRateParameter);
+                null, ageRelatedRateParameter, null);
 
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);

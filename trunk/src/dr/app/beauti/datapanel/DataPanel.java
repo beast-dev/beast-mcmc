@@ -238,7 +238,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
-                JOptionPane.showMessageDialog(this, "Cannot currently display traits. Use the traits panel to view and edit these.",
+                JOptionPane.showMessageDialog(this, "Cannot display traits currently. Use the traits panel to view and edit these.",
                     "Illegal Argument Exception",
                     JOptionPane.ERROR_MESSAGE);
                 return;
@@ -291,7 +291,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         col = dataTable.getColumnModel().getColumn(6);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
 
-        modelArray = options.getPartitionTreeModels().toArray();
+        modelArray = options.getNonTraitPartitionTreeModels().toArray();
         col = dataTable.getColumnModel().getColumn(7);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
 
@@ -492,7 +492,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionData partition = options.dataPartitions.get(row);
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
-            if (!model.getName().equals(partition.getName())) {
+            if (!model.getName().equals(partition.getName()) && partition.getTraitType() == null) {// not a trait
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
 
                 // this prevents partition not broken, and used for unsharing tree prior only, 

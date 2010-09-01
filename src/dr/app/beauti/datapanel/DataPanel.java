@@ -583,11 +583,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.dataPartitions.size();
+            return options.getPartitionDataNoSpecies().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
@@ -613,7 +613,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            PartitionData partition = options.dataPartitions.get(row);
+            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

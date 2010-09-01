@@ -14,6 +14,7 @@ public class SequenceErrorModelParser extends AbstractXMLObjectParser {
     public static final String SEQUENCE_ERROR_MODEL = "sequenceErrorModel";
     public static final String BASE_ERROR_RATE = "baseErrorRate";
     public static final String AGE_RELATED_RATE = "ageRelatedErrorRate";
+    public static final String INDICATORS = "indicators";
 
     public static final String EXCLUDE = "exclude";
     public static final String INCLUDE = "include";
@@ -51,6 +52,12 @@ public class SequenceErrorModelParser extends AbstractXMLObjectParser {
                     BASE_ERROR_RATE + " and " + AGE_RELATED_RATE + " parameters");
         }
 
+        Parameter indicatorParameter = null;
+        if (xo.hasChildNamed(INDICATORS)) {
+            indicatorParameter = (Parameter)xo.getElementFirstChild(INDICATORS);
+        }
+
+
         TaxonList includeTaxa = null;
         TaxonList excludeTaxa = null;
 
@@ -63,7 +70,7 @@ public class SequenceErrorModelParser extends AbstractXMLObjectParser {
         }
 
         SequenceErrorModel aDNADamageModel = new SequenceErrorModel(includeTaxa, excludeTaxa,
-                errorType, baseDamageRateParameter, ageRelatedRateParameter);
+                errorType, baseDamageRateParameter, ageRelatedRateParameter, indicatorParameter);
 
         Logger.getLogger("dr.evomodel").info("Using sequence error model, assuming errors cause " +
                 (errorType == SequenceErrorModel.ErrorType.TRANSITIONS_ONLY ? "transitions only." : "any substitution."));
@@ -91,6 +98,7 @@ public class SequenceErrorModelParser extends AbstractXMLObjectParser {
             AttributeRule.newStringRule(TYPE, true),
             new ElementRule(BASE_ERROR_RATE, Parameter.class, "The base error rate per site per sequence", true),
             new ElementRule(AGE_RELATED_RATE, Parameter.class, "The error rate per site per unit time", true),
+            new ElementRule(INDICATORS, Parameter.class, "A binary indicator of whether the sequence has errors", true),
             new XORRule(
                     new ElementRule(INCLUDE, TaxonList.class, "A set of taxa to which to apply the damage model to"),
                     new ElementRule(EXCLUDE, TaxonList.class, "A set of taxa to which to not apply the damage model to")

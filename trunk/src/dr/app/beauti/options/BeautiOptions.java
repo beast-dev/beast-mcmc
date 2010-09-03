@@ -336,6 +336,10 @@ public class BeautiOptions extends ModelOptions {
         return getPartitionSubstitutionModels(getTraitsList());
     }
 
+    public List<PartitionSubstitutionModel> getPartitionNonTraitsSubstitutionModels() {
+        return getPartitionSubstitutionModels(getNonTraitsDataList());
+    }
+
 //    public int getTotalActivePartitionSubstitutionModelCount() {
 //        int totalPartitionCount = 0;
 //        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {

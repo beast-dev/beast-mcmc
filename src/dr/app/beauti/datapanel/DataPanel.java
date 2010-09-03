@@ -239,8 +239,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
                 JOptionPane.showMessageDialog(this, "Cannot display traits currently. Use the traits panel to view and edit these.",
-                    "Illegal Argument Exception",
-                    JOptionPane.ERROR_MESSAGE);
+                        "Illegal Argument Exception",
+                        JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -274,7 +274,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         if (!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
                 || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED )) {
+                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED)) {
             //TODO correct?
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
@@ -283,18 +283,56 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void modelsChanged() {
-        Object[] modelArray = options.getPartitionSubstitutionModels().toArray();
         TableColumn col = dataTable.getColumnModel().getColumn(5);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        col.setCellEditor(new ComboBoxCellEditor());
 
-        modelArray = options.getPartitionClockModels().toArray();
         col = dataTable.getColumnModel().getColumn(6);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        col.setCellEditor(new ComboBoxCellEditor());
 
-        modelArray = options.getNonTraitPartitionTreeModels().toArray();
         col = dataTable.getColumnModel().getColumn(7);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getNonTraitPartitionTreeModels().toArray())));
 
+    }
+
+    public class ComboBoxCellEditor extends DefaultCellEditor {
+        public ComboBoxCellEditor() {
+            super(new JComboBox());
+        }
+
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                                                     boolean isSelected,
+                                                     int row, int column) {
+
+            ((JComboBox) editorComponent).removeAllItems();
+            if (options.containTrait(table.getValueAt(row, 0).toString())) {
+                if (column == 5) {
+                    for (Object ob : options.getPartitionTraitsSubstitutionModels()) {
+                        ((JComboBox) editorComponent).addItem(ob);
+                    }
+                } else if (column == 6) {
+                    for (Object ob : options.getPartitionTraitsClockModels()) {
+                        ((JComboBox) editorComponent).addItem(ob);
+                    }
+                }
+            } else {
+                if (column == 5) {
+                    for (Object ob : options.getPartitionNonTraitsSubstitutionModels()) {
+                        ((JComboBox) editorComponent).addItem(ob);
+                    }
+                } else if (column == 6) {
+                    for (Object ob : options.getPartitionNonTraitsClockModels()) {
+                        ((JComboBox) editorComponent).addItem(ob);
+                    }
+                }
+            }
+
+//            if (((JComboBox) editorComponent).contains(value)) // todo need validate whether value in the editorComponent
+
+            ((JComboBox) editorComponent).setSelectedItem(value);
+            delegate.setValue(value);
+
+            return editorComponent;
+        }
     }
 
     public void selectionChanged() {
@@ -323,7 +361,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         useStarBEASTCheck.setEnabled(options.dataPartitions.size() > 0); // single partition is allowed
         createImportTraitButton.setEnabled(options.dataPartitions.size() > 0);
-        
+
         dataTableModel.fireTableDataChanged();
     }
 
@@ -528,8 +566,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
                     JOptionPane.showMessageDialog(this, "To accommodate different taxa for each partition trees cannot be linked.",
-                        "Illegal Configuration",
-                        JOptionPane.ERROR_MESSAGE);
+                            "Illegal Configuration",
+                            JOptionPane.ERROR_MESSAGE);
                     return;
                 }
             }

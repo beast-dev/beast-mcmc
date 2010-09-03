@@ -50,7 +50,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	
 	public GMRFFixedGridLikelihood(Tree tree, Parameter data, Parameter times, int tips){
 		super(tree, new Parameter.Default(tips), null, new Parameter.Default(5.0),
-				new Parameter.Default(1.0), null, null,false);
+				new Parameter.Default(1.0), null, null,false, true);
 				
 		covariateData = data;
 		covariateTimes = times;
@@ -70,7 +70,7 @@ public class GMRFFixedGridLikelihood extends GMRFSkyrideLikelihood{
 	public GMRFFixedGridLikelihood(Tree tree, Parameter popParameter, Parameter precParameter,
 	                                      Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                                      Parameter data, Parameter times) {
-		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false);
+		super(tree, popParameter, null, precParameter, lambda, beta, dMatrix, false, true);
 
 		covariateData = data;
 		covariateTimes = times;

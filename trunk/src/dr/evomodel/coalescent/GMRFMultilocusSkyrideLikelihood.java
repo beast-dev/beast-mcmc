@@ -6,13 +6,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 /**
  * @author Mandev Gill
@@ -29,12 +25,17 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                                                Parameter beta,
                                                MatrixParameter dMatrix,
 	                                           boolean timeAwareSmoothing) {
-            super(trees, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing);
+            super(trees, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, timeAwareSmoothing, true);
         }
 
     protected void setTree(List<Tree> treeList) {
         treesSet = this;
         this.treeList = treeList;
+        makeTreeIntervalList(treeList);
+        numTrees = treeList.size();
+    }
+
+    private void makeTreeIntervalList(List<Tree> treeList) {
         intervalsList = new ArrayList<TreeIntervals>();
         for (Tree tree : treeList) {
             intervalsList.add(new TreeIntervals(tree));
@@ -43,7 +44,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             }
         }
     }
-
 
     protected int getCorrectFieldLength() {
         int tips = 0;
@@ -59,10 +59,19 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             TreeModel treeModel = (TreeModel) model;
             int tn = treeList.indexOf(treeModel);
             if (tn >= 0) {
-                intervalsList.get(tn).setIntervalsUnknown();
+//                intervalsList.get(tn).setIntervalsUnknown();  // TODO Why does this not work?
+//                intervalsList.get(tn).setTree(treeModel); // TODO Why does this not work?
+                makeTreeIntervalList(treeList);               
+                intervalsKnown = false;
+                likelihoodKnown = false;
+            } else {
+                throw new RuntimeException("What?");
             }
+        } else {
+            throw new RuntimeException("What? (but remove me)");
         }
-        super.handleModelChangedEvent(model, object, index);
+
+//        super.handleModelChangedEvent(model, object, index); // Not needed
     }
 
     public void initializationReport() {
@@ -70,7 +79,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
 		System.out.println("\tIf you publish results using this model, please reference: ");
         System.out.println("\t\tMinin, Bloomquist and Suchard (2008) Molecular Biology and Evolution, 25, 1459-1471, and");
-        System.out.println("\t\tGill, Suchard, Drummond and Lemey (in preparation).");
+        System.out.println("\t\tGill, Lemey, Drummond and Suchard (in preparation).");
 	}
 
     public void wrapSetupIntervals() {
@@ -80,11 +89,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     // Calculation of sufficient statistics
 
 
-    // To do: offsets, rootHeight options
+    // TODO: offsets, rootHeight options
 
 
     int numTrees;
-    int N = 0;
+//    int N = 0;
 
     // countsOfLineages[i][j] is the number of lineages present in tree j during "w" interval i
     int[][] countsOfLineages;
@@ -97,25 +106,27 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     int[] coalEvent;
 
     int index;
-    double[] sufficientStatistics;
-
-    // lengths of "u" intervals (intervals with coalescent events as endpoints)
-    double[] coalescentIntervals;
 
 
     protected void setupSufficientStatistics() {
 
         index = 0;
-        numTrees = treeList.size();
+//        numTrees = treeList.size();
 
-        // set N to an upper bound on number of "w" intervals
-        for (int i = 0; i < numTrees; i++) {
-            N = N + intervalsList.get(i).getIntervalCount();
-        }
+//        if (countsOfLineages == null) { // Allocate once   // TODO Why does this not work?
 
-        countsOfLineages = new int[numTrees][N];
-        intervalLengths = new double[N];
-        coalEvent = new int[N];
+            int N = 0; // TODO Calculate ONCE
+            // set N to an upper bound on number of "w" intervals
+            for (int i = 0; i < numTrees; i++) {
+                N = N + intervalsList.get(i).getIntervalCount();
+            }
+
+//        System.err.println(N + " " + fieldLength);
+
+            countsOfLineages = new int[numTrees][N];
+            intervalLengths = new double[N];
+            coalEvent = new int[N];
+//        }
 
         // nextIntervals keeps track of how far we have traveled with respect to each tree
         // nextIntervals[i] is the next interval which has yet to be reached in tree i
@@ -235,14 +246,11 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         }
 
         calculateSufficientStatistics();
-
     }
 
 
-    public void calculateSufficientStatistics() {
+    private void calculateSufficientStatistics() {
 
-        sufficientStatistics = new double[fieldLength];
-        coalescentIntervals = new double[fieldLength];
         int m = 0;
 
         double weight = 0;
@@ -261,118 +269,34 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 weight = 0;
                 tempLength = 0;
             }
-
         }
     }
 
-
-    // Likelihood implementation
-
-    public double getLogLikelihood(){
-        if(!likelihoodKnown){
-            logLikelihood = calculateLogCoalescentLikelihood();
-            logFieldLikelihood = calculateLogFieldLikelihood();
-            likelihoodKnown = true;
+    protected double getFieldScalar() {
+        if (!rescaleByRootHeight) {
+            return 1.0;
         }                                                                                     
-        return logLikelihood + logFieldLikelihood;
-    }
-
-    public double[] getSufficientStatistics() {
-	    return sufficientStatistics;
-    }
-
-
-    protected void setupGMRFWeights(){
-        
-        setupSufficientStatistics();
-
-        //Set up the weight matrix
-	    double[] offdiag = new double[fieldLength - 1];
-	    double[] diag = new double[fieldLength];
-
-	    //First set up the offdiagonal entries;
-
-	    double rootHeight = 0;
-        double prospRootHeight;
-
+        double rootHeight = 0;
         // Set rootHeight to greatest rootHeight among all trees.  Make sure this is what we want.
         for(int i = 0; i < numTrees; i++){
-            prospRootHeight = treeList.get(i).getNodeHeight(treeList.get(i).getRoot());
+            double prospRootHeight = treeList.get(i).getNodeHeight(treeList.get(i).getRoot());
             if(prospRootHeight > rootHeight){
                 rootHeight = prospRootHeight;
             }
         }
+        return rootHeight;
+    }    
 
-
-	    for (int i = 0; i < (fieldLength - 1); i++) {
-		    offdiag[i] = (-2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1])) * rootHeight;
-	    }
-
-
-	    //Then set up the diagonal entries;
-	    for (int i = 1; i < (fieldLength - 1); i++)
-	    diag[i] = -(offdiag[i] + offdiag[i - 1]);
-
-	    //Take care of the endpoints
-	    diag[0] = -offdiag[0];
-	    diag[fieldLength - 1] = -offdiag[fieldLength - 2];
-
-	    weightMatrix = new SymmTridiagMatrix(diag, offdiag);
-    }
-
-
-
-
-
-
-    public double calculateLogCoalescentLikelihood() {
-
-		if (!intervalsKnown) {
-			// intervalsKnown -> false when handleModelChanged event occurs in super.
-			wrapSetupIntervals();
-			setupGMRFWeights();
-		}
-
-		// Matrix operations taken from block update sampler to calculate data likelihood and field prior
-
-		double currentLike = 0;
-        double[] currentGamma = popSizeParameter.getParameterValues();
-
-		for (int i = 0; i < fieldLength; i++) {
-			currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
-		}
-
-		return currentLike;
+	protected void storeState() {
+		super.storeState();
+        storeTheState();
 	}
 
-    public double calculateLogFieldLikelihood() {
 
-        if (!intervalsKnown) {
-            // intervalsKnown -> false when handleModelChanged event occurs in super.
-            wrapSetupIntervals();
-            setupGMRFWeights();
-        }
-
-        double currentLike = 0;
-        DenseVector diagonal1 = new DenseVector(fieldLength);
-        DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
-
-        SymmTridiagMatrix currentQ = getScaledWeightMatrix(precisionParameter.getParameterValue(0), lambdaParameter.getParameterValue(0));
-        currentQ.mult(currentGamma, diagonal1);
-
-        currentLike += 0.5 * (fieldLength - 1) * Math.log(precisionParameter.getParameterValue(0)) - 0.5 * currentGamma.dot(diagonal1);
-        if (lambdaParameter.getParameterValue(0) == 1) {
-            currentLike -= (fieldLength - 1) / 2.0 * LOG_TWO_TIMES_PI;
-        } else {
-            currentLike -= fieldLength / 2.0 * LOG_TWO_TIMES_PI;
-        }
-       
-        return currentLike;
+	protected void restoreState() {
+		super.restoreState();
+        restoreTheState();
     }
-
-
-
-    //public boolean likelihoodKnown = false;
 
     private List<Tree> treeList;
     private List<TreeIntervals> intervalsList;

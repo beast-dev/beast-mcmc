@@ -30,6 +30,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 	public static final String RANDOMIZE_TREE = "randomizeTree";
 	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 
+    public static final String RESCALE_BY_ROOT_ISSUE = "rescaleByRootHeight";
+
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;
     }
@@ -112,6 +114,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
+        boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_ISSUE, true);
+
         Logger.getLogger("dr.evomodel").info("The " + SKYLINE_LIKELIHOOD + " has " +
                 (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
@@ -122,7 +126,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
 
         } else {
             return new GMRFSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, beta, dMatrix, timeAwareSmoothing);
+                lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight);
         }
     }
 
@@ -155,6 +159,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
+            AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
             AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
     };

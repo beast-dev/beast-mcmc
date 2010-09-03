@@ -353,7 +353,7 @@ public class BranchRatesModelGenerator extends Generator {
 
                     writer.writeOpenTag("rates");
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>
-                            (XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".rates")
+                            (XMLParser.ID, options.noDuplicatedPrefix(modelPrefix, treePrefix) + ClockType.LOCAL_CLOCK + ".relativeRates")
 	                        , true);
 	                writer.writeCloseTag("rates");
                     writer.writeOpenTag("rateIndicator");

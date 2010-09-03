@@ -4,6 +4,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.operators.FunkyPriorMixerOperatorParser;
+import dr.inference.model.Bounds;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.inferencexml.operators.RandomWalkOperatorParser;
@@ -13,17 +14,19 @@ import dr.math.MathUtils;
  * @author Marc A. Suchard
  * @author John J. Welch
  */
-public class FunkyPriorMixerOperator extends SimpleMCMCOperator //AbstractCoercableOperator
-        implements GibbsOperator {
+public class FunkyPriorMixerOperator extends
+        SimpleMCMCOperator {
+//        AbstractCoercableOperator {
+//        implements GibbsOperator {
 
-    public FunkyPriorMixerOperator(TreeModel treeModel, double windowSize, RandomWalkOperator.BoundaryCondition bc,
+    public FunkyPriorMixerOperator(TreeModel treeModel, Parameter parameter, double windowSize, RandomWalkOperator.BoundaryCondition bc,
                                    double weight, CoercionMode mode) {
       
 //        super(mode);
         this.treeModel = treeModel;
 //        this.parameter = treeModel.getRootHeightParameter();
-        this.parameter = null;
-//        this.parameter = parameter;
+//        this.parameter = null;
+        this.parameter = parameter;
         this.windowSize = windowSize;
         this.condition = bc;
 
@@ -65,19 +68,49 @@ public class FunkyPriorMixerOperator extends SimpleMCMCOperator //AbstractCoerca
 //
 //        parameter.setParameterValue(index, newValue);
 
-        double[] minNodeHeights = new double[treeModel.getNodeCount()];
-        recursivelyFindNodeMinHeights(treeModel, treeModel.getRoot(), minNodeHeights);
+//        double[] minNodeHeights = new double[treeModel.getNodeCount()];
+//        recursivelyFindNodeMinHeights(treeModel, treeModel.getRoot(), minNodeHeights);
+//
+//        logForwardDensity = new Double(0.0);
+//        logBackwardDensity = new Double(0.0);
+//
+//        try {
+//
+//        recursivelyDrawNodeHeights(treeModel, treeModel.getRoot(), 0.0, 0.0, minNodeHeights); //,
+//                //logForwardDensity, logBackwardDensity);
+//
+//        } catch (Exception e) {
+//            System.err.println("Got exception: " + e.getMessage());
+//        }
 
-        logForwardDensity = new Double(0.0);
-        logBackwardDensity = new Double(0.0);
 
-        recursivelyDrawNodeHeights(treeModel, treeModel.getRoot(), 0.0, 0.0, minNodeHeights); //,
-                //logForwardDensity, logBackwardDensity);
+        int iterations = 100;
+
+        for (int i = 0; i < iterations; i++) {
+
+//            NodeRef node = treeModel.getNode(MathUtils.nextInt(treeModel.getNodeCount()));
+//            if (node != treeModel.getRoot()) {
+//                treeModel.getN
+//            }
+
+            final int index = MathUtils.nextInt(parameter.getDimension());
+            final Bounds<Double> bounds = parameter.getBounds();
+            final double lower = bounds.getLowerLimit(index);
+            final double upper = bounds.getUpperLimit(index);
+            final double newValue = (MathUtils.nextDouble() * (upper - lower)) + lower;
+
+//            parameter.setParameterValueQuietly(index, newValue);
+            parameter.setParameterValue(index, newValue);
+        }
+//        ((Parameter.Default)parameter).fireParameterChangedEvent(-1, Parameter.ChangeType.VALUE_CHANGED);
 
 //        System.err.println("logFD = " + logForwardDensity);
 //        System.err.println("logBD = " + logBackwardDensity);
 
-        return 0.0; //logBackwardDensity - logForwardDensity;    // TODO Think: Is this a Gibbs operator?
+        return
+                0.0;
+//                -1 *
+//        (logBackwardDensity - logForwardDensity);
     }
 
 
@@ -107,11 +140,12 @@ public class FunkyPriorMixerOperator extends SimpleMCMCOperator //AbstractCoerca
         if (tree.isExternal(node))
             return;
 
-        double oldNodeHeight = tree.getNodeHeight(node);
+        final double oldNodeHeight = tree.getNodeHeight(node);
         double newNodeHeight = oldNodeHeight;
 
+//        System.err.println("old: " + oldNodeHeight);
+//
         if (!tree.isRoot(node)) {
-
 
             double minHeight = minNodeHeights[node.getNumber()];
 
@@ -127,6 +161,8 @@ public class FunkyPriorMixerOperator extends SimpleMCMCOperator //AbstractCoerca
             tree.setNodeHeight(node, newNodeHeight);            
         }
 
+//        System.err.println("new: " + newNodeHeight + "\n");
+//
         recursivelyDrawNodeHeights(tree, tree.getChild(node, 0), oldNodeHeight, newNodeHeight, minNodeHeights); //,
 //                logForwardDensity, logBackwardDensity);
         recursivelyDrawNodeHeights(tree, tree.getChild(node, 1), oldNodeHeight, newNodeHeight, minNodeHeights); //,

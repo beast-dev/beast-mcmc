@@ -32,12 +32,13 @@ public class FunkyPriorMixerOperatorParser extends AbstractXMLObjectParser {
 
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
             double windowSize = xo.getDoubleAttribute(WINDOW_SIZE);
+            Parameter parameter = (Parameter) xo.getChild(Parameter.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
             RandomWalkOperator.BoundaryCondition condition = RandomWalkOperator.BoundaryCondition.valueOf(
                     xo.getAttribute(BOUNDARY_CONDITION, RandomWalkOperator.BoundaryCondition.reflecting.name()));
 
-            return new FunkyPriorMixerOperator(treeModel, windowSize, condition, weight, mode);
+            return new FunkyPriorMixerOperator(treeModel, parameter, windowSize, condition, weight, mode);
         }
 
         //************************************************************************
@@ -61,6 +62,7 @@ public class FunkyPriorMixerOperatorParser extends AbstractXMLObjectParser {
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
                 new StringAttributeRule(BOUNDARY_CONDITION, null, RandomWalkOperator.BoundaryCondition.values(), true),
+                new ElementRule(Parameter.class),
                 new ElementRule(TreeModel.class)
         };
 }

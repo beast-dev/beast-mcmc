@@ -1,7 +1,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.LocationSubstModelType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
@@ -11,9 +10,9 @@ import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.clock.ACLikelihoodParser;
-import dr.evomodelxml.substmodel.ComplexSubstitutionModelParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
@@ -138,11 +137,13 @@ public class GeneralTraitGenerator extends Generator {
                 break;
             case UNCORRELATED_EXPONENTIAL:
             case UNCORRELATED_LOGNORMAL:
-            case RANDOM_LOCAL_CLOCK:
                 writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
-
+            case RANDOM_LOCAL_CLOCK:
+            	writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
+                        clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
+                break;
             case AUTOCORRELATED_LOGNORMAL:
                 writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);

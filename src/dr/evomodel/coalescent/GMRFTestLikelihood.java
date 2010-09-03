@@ -15,7 +15,7 @@ import no.uib.cipr.matrix.SymmTridiagMatrix;
 public class GMRFTestLikelihood extends GMRFSkyrideLikelihood {
 
 	public GMRFTestLikelihood(Tree tree, Parameter popParameter, Parameter precParameter, Parameter lambda, Parameter beta, DesignMatrix design) {
-		super(tree, popParameter, null, precParameter, lambda, beta, design,false);
+		super(tree, popParameter, null, precParameter, lambda, beta, design, false, true);
 	}
 
 

@@ -25,8 +25,10 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
         boolean elementwise = xo.getAttribute(ELEMENTWISE, false);
 
         String name = SUM_STATISTIC;
-        if (xo.hasAttribute(Statistic.NAME) || xo.hasAttribute(dr.xml.XMLParser.ID)) {
+        if (xo.hasAttribute(Statistic.NAME)) {
             name = xo.getAttribute(Statistic.NAME, xo.getId());
+        } else if (xo.hasAttribute(XMLParser.ID)) {
+            name = xo.getAttribute(XMLParser.ID, xo.getId());
         }
 
         final SumStatistic sumStatistic = new SumStatistic(name, elementwise);

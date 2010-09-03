@@ -30,6 +30,7 @@ import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.math.matrixAlgebra.CholeskyDecomposition;
 import dr.math.matrixAlgebra.IllegalDimension;
+import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
 
 
@@ -41,6 +42,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
     public static final String MVN_OPERATOR = "mvnOperator";
     public static final String SCALE_FACTOR = "scaleFactor";
     public static final String VARIANCE_MATRIX = "varMatrix";
+    public static final String FORM_XTX = "formXtXInverse";
 
     private double scaleFactor;
     private final Parameter parameter;
@@ -48,24 +50,52 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
 
     private double[][] cholesky;
 
-    public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
-                                      MatrixParameter varMatrix, double weight, CoercionMode mode) {
+    public MultivariateNormalOperator(Parameter parameter, double scaleFactor, double[][] inMatrix, double weight,
+                                      CoercionMode mode, boolean isVarianceMatrix) {
+
         super(mode);
         this.scaleFactor = scaleFactor;
         this.parameter = parameter;
         setWeight(weight);
         dim = parameter.getDimension();
-        cholesky = new double[dim][dim];
-        for (int i = 0; i < dim; i++) {
-            for (int j = i; j < dim; j++)
-                cholesky[i][j] = cholesky[j][i] = varMatrix.getParameterValue(i, j);
+
+        final double[][] matrix;
+        if (isVarianceMatrix) {
+            matrix = inMatrix;
+        } else {
+            matrix = formXtXInverse(inMatrix);
         }
 
         try {
-            cholesky = (new CholeskyDecomposition(cholesky)).getL();
+            cholesky = (new CholeskyDecomposition(matrix)).getL();
         } catch (IllegalDimension illegalDimension) {
+            throw new RuntimeException("Unable to decompose matrix in mvnOperator");
+        }
+    }
+
+    public MultivariateNormalOperator(Parameter parameter, double scaleFactor,
+                                      MatrixParameter varMatrix, double weight, CoercionMode mode, boolean isVariance) {
+        this(parameter, scaleFactor, varMatrix.getParameterAsMatrix(), weight, mode, isVariance);
+    }
+
+    private double[][] formXtXInverse(double[][] X) {
+        int N = X.length;
+        int P = X[0].length;
+
+        double[][] matrix = new double[P][P];
+        for (int i = 0; i < P; i++) {
+            for (int j = 0; j < P; j++) {
+                int total = 0;
+                for (int k = 0; k < N; k++) {
+                    total += X[k][i] * X[k][j];
+                }
+                matrix[i][j] = total;
+            }
         }
 
+        // Take inverse
+        matrix = new SymmetricMatrix(matrix).inverse().toComponents();
+        return matrix;
     }
 
     public double doOperation() throws OperatorFailedException {
@@ -142,7 +172,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         } else return "";
     }
 
-    public static dr.xml.XMLObjectParser PARSER = new dr.xml.AbstractXMLObjectParser() {
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
             return MVN_OPERATOR;
@@ -161,19 +191,22 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
 
             Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
+            boolean formXtXInverse = xo.getAttribute(FORM_XTX, false);
 
-            XMLObject cxo = (XMLObject) xo.getChild(VARIANCE_MATRIX);
+            XMLObject cxo = xo.getChild(VARIANCE_MATRIX);
             MatrixParameter varMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
 
             // Make sure varMatrix is square and dim(varMatrix) = dim(parameter)
 
-            if (varMatrix.getColumnDimension() != varMatrix.getRowDimension())
-                throw new XMLParseException("The variance matrix is not square");
+            if (!formXtXInverse) {
+                if (varMatrix.getColumnDimension() != varMatrix.getRowDimension())
+                    throw new XMLParseException("The variance matrix is not square");
+            }
 
             if (varMatrix.getColumnDimension() != parameter.getDimension())
                 throw new XMLParseException("The parameter and variance matrix have differing dimensions");
 
-            return new MultivariateNormalOperator(parameter, scaleFactor, varMatrix, weight, mode);
+            return new MultivariateNormalOperator(parameter, scaleFactor, varMatrix, weight, mode, !formXtXInverse);
         }
 
         //************************************************************************
@@ -196,6 +229,7 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
                 AttributeRule.newDoubleRule(SCALE_FACTOR),
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newBooleanRule(AUTO_OPTIMIZE, true),
+                AttributeRule.newBooleanRule(FORM_XTX, true),
                 new ElementRule(Parameter.class),
                 new ElementRule(VARIANCE_MATRIX,
                         new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)})

@@ -149,7 +149,7 @@ public class TreeModelGenerator extends Generator {
 //                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
 //                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "rates"), true);
+//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".relativeRates"), true);
 //            writer.writeCloseTag(TreeModelParser.NODE_RATES);
 //
 //            writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
@@ -159,7 +159,7 @@ public class TreeModelGenerator extends Generator {
 //                            new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
 //                    });
 //            writer.writeTag(ParameterParser.PARAMETER,
-//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + "." + "changes"), true);
+//                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + ClockType.LOCAL_CLOCK + ".changes"), true);
 //            writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
 //        }
 

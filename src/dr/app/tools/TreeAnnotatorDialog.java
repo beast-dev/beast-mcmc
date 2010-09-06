@@ -25,10 +25,10 @@
 
 package dr.app.tools;
 
+import dr.app.gui.components.RealNumberField;
 import dr.app.gui.FileDrop;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.components.RealNumberField;
+import jam.panels.OptionsPanel;
+import dr.app.gui.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.Border;

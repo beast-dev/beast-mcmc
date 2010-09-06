@@ -1,8 +1,8 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.Axis;
-import dr.gui.chart.DiscreteAxis;
-import dr.gui.chart.JChart;
+import dr.app.gui.chart.Axis;
+import dr.app.gui.chart.DiscreteAxis;
+import dr.app.gui.chart.JChart;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;

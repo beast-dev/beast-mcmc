@@ -37,9 +37,9 @@ import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.util.IconUtils;
+import jam.framework.DocumentFrame;
+import jam.framework.Exportable;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -295,9 +295,9 @@ public class BeautiFrame extends DocumentFrame {
         if (tabbedPane.getSelectedComponent() == dataPanel) {
             dataPanel.removeSelection();
 //        } else if (tabbedPane.getSelectedComponent() == modelsPanel) {
-//            modelsPanel.removeSelection();
+//            modelsPanel.delete();
 //        } else if (tabbedPane.getSelectedComponent() == treesPanel) {
-//        	treesPanel.removeSelection();
+//        	treesPanel.delete();
         } else {
             throw new RuntimeException("Delete should only be accessable from the Data and Models panels");
         }

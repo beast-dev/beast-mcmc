@@ -25,10 +25,10 @@
 
 package dr.app.oldbeauti;
 
+import dr.app.gui.components.RealNumberField;
 import dr.evolution.datatype.DataType;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;

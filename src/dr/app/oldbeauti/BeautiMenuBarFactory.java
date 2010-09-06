@@ -25,11 +25,11 @@
 
 package dr.app.oldbeauti;
 
-import org.virion.jam.mac.MacHelpMenuFactory;
-import org.virion.jam.mac.MacWindowMenuFactory;
-import org.virion.jam.framework.DefaultMenuBarFactory;
-import org.virion.jam.framework.DefaultEditMenuFactory;
-import org.virion.jam.framework.DefaultHelpMenuFactory;
+import jam.mac.MacHelpMenuFactory;
+import jam.mac.MacWindowMenuFactory;
+import jam.framework.DefaultMenuBarFactory;
+import jam.framework.DefaultEditMenuFactory;
+import jam.framework.DefaultHelpMenuFactory;
 
 import dr.app.util.OSType;
 

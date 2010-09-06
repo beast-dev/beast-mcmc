@@ -34,10 +34,10 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.alignment.Alignment;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.util.IconUtils;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
+import jam.table.TableRenderer;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -58,7 +58,7 @@ import java.util.List;
  * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
 public class TaxaPanel extends BeautiPanel implements Exportable {
-  
+
     private static final long serialVersionUID = -3138832889782090814L;
 
     private final String TAXON_SET_DEFAULT = "taxon set...";
@@ -72,7 +72,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     private final TableColumnModel tableColumnModel;
     private TaxonSetsTableModel taxonSetsTableModel = null;
     ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
-    
+
     private JPanel taxonSetEditingPanel = null;
 
     private Taxa currentTaxonSet = null;
@@ -395,7 +395,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         TableColumn col = tableColumnModel.getColumn(2);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
     }
-    
+
     private void resetPanel() {
         if (!options.hasData() || options.taxonSets == null || options.taxonSets.size() < 1) {
             setCurrentTaxonSet(null);
@@ -405,7 +405,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     public void setOptions(BeautiOptions options) {
 
         this.options = options;
-        
+
         resetPanel();
 
         if (options.taxonSets == null) {
@@ -414,7 +414,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         } else {
             addTaxonSetAction.setEnabled(true);
         }
-                
+
         taxonSetsTableSelectionChanged();
         taxonSetsTableModel.fireTableDataChanged();
 
@@ -445,7 +445,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     private void taxonSetsTableSelectionChanged() {
         treeModelsChanged();
-                
+
         int[] rows = taxonSetsTable.getSelectedRows();
         if (rows.length == 0) {
             removeTaxonSetAction.setEnabled(false);
@@ -472,12 +472,12 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 //	}
 
     Action addTaxonSetAction = new AbstractAction("+") {
-        
+
         private static final long serialVersionUID = 20273987098143413L;
 
         public void actionPerformed(ActionEvent ae) {
             taxonSetCount++;
-            // initialize currentTaxonSet with 1st PartitionTreeModel            
+            // initialize currentTaxonSet with 1st PartitionTreeModel
             currentTaxonSet = new Taxa("untitled" + taxonSetCount, options.getPartitionTreeModels().get(0));
 
             options.taxonSets.add(currentTaxonSet);
@@ -534,7 +534,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
             // get taxa associated to each tree
             Alignment alignment = currentTaxonSet.getTreeModel().getAllPartitionData().get(0).getAlignment();
-            Taxa taxa = new Taxa(alignment);    
+            Taxa taxa = new Taxa(alignment);
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 excludedTaxa.add(taxa.getTaxon(i));
             }
@@ -629,7 +629,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         public int getColumnCount() {
             return 3;
-        }        
+        }
 
         public String getColumnName(int column) {
             switch (column) {

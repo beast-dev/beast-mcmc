@@ -35,7 +35,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.util.Version;
-import org.virion.jam.console.ConsoleApplication;
+import jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.*;

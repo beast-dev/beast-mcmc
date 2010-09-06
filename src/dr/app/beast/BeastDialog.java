@@ -25,9 +25,9 @@
 
 package dr.app.beast;
 
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.html.SimpleLinkListener;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.WholeNumberField;
+import jam.html.SimpleLinkListener;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

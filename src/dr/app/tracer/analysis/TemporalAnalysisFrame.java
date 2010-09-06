@@ -33,8 +33,8 @@ import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 import dr.app.tracer.application.TracerFileMenuHandler;
 import dr.stats.Variate;
-import org.virion.jam.framework.AuxilaryFrame;
-import org.virion.jam.framework.DocumentFrame;
+import jam.framework.AuxilaryFrame;
+import jam.framework.DocumentFrame;
 
 import javax.swing.*;
 import java.awt.*;

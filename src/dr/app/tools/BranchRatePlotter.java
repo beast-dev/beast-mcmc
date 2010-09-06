@@ -33,9 +33,9 @@ import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.gui.tree.JTreeDisplay;
-import dr.gui.tree.JTreePanel;
-import dr.gui.tree.SquareTreePainter;
+import dr.app.gui.tree.JTreeDisplay;
+import dr.app.gui.tree.JTreePanel;
+import dr.app.gui.tree.SquareTreePainter;
 import dr.stats.DiscreteStatistics;
 
 import javax.swing.*;
@@ -75,7 +75,7 @@ public class BranchRatePlotter {
         BufferedReader readerTarget = new BufferedReader(new FileReader(targetTreeFile));
         String lineTarget = readerTarget.readLine();
         readerTarget.close();
-        
+
         TreeImporter targetImporter;
         if (lineTarget.toUpperCase().startsWith("#NEXUS")) {
             targetImporter = new NexusImporter(new FileReader(targetTreeFile));

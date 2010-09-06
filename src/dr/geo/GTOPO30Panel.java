@@ -25,7 +25,7 @@
 
 package dr.geo;
 
-import dr.gui.ColorFunction;
+import dr.app.gui.ColorFunction;
 import dr.math.distributions.GammaDistribution;
 
 import javax.swing.*;

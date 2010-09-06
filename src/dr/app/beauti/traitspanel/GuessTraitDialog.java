@@ -27,7 +27,7 @@ package dr.app.beauti.traitspanel;
 
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -48,7 +48,7 @@ public class GuessTraitDialog {
     private final OptionsPanel optionPanel;
 
     //    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
-    
+
     private final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
     private final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
             "fourth", "fourth from last",
@@ -92,9 +92,9 @@ public class GuessTraitDialog {
         optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
 
         optionPanel.addSeparator();
-        
+
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
-        
+
         optionPanel.addComponents(orderRadio, orderCombo);
         optionPanel.addComponentWithLabel("with delimiter ", delimiterText);
         delimiterText.setEnabled(true);
@@ -102,7 +102,7 @@ public class GuessTraitDialog {
 
         regexText.setEnabled(false);
         optionPanel.addComponents(regexRadio, regexText);
- 
+
         ButtonGroup group = new ButtonGroup();
         group.add(orderRadio);
         group.add(regexRadio);

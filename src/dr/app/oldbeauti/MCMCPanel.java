@@ -25,9 +25,9 @@
 
 package dr.app.oldbeauti;
 
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.WholeNumberField;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeListener;
@@ -42,7 +42,7 @@ import java.awt.event.ActionEvent;
 public class MCMCPanel extends OptionsPanel implements Exportable {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = -3710586474593827540L;
 	WholeNumberField chainLengthField = new WholeNumberField(1, Integer.MAX_VALUE);

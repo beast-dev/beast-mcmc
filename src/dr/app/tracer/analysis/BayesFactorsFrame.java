@@ -26,8 +26,8 @@
 package dr.app.tracer.analysis;
 
 import dr.inference.trace.MarginalLikelihoodAnalysis;
-import org.virion.jam.framework.AuxilaryFrame;
-import org.virion.jam.framework.DocumentFrame;
+import jam.framework.AuxilaryFrame;
+import jam.framework.DocumentFrame;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

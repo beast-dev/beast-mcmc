@@ -1,11 +1,11 @@
 package dr.app.phylogeography.builder;
 
+import dr.app.gui.components.RealNumberField;
 import dr.app.phylogeography.structure.Layer;
 import dr.app.phylogeography.spread.InputFile;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import jam.panels.OptionsPanel;
-import org.virion.jam.components.RealNumberField;
 
 import javax.swing.*;
 
@@ -51,7 +51,7 @@ public class DiscreteDiffusionTreeBuilder extends AbstractBuilder {
     }
 
     public void setFromEditPanel() {
-        maxAltitude = maxAltitudeField.getValue(0.0);
+        maxAltitude = maxAltitudeField.getValue();
         invalidate();
     }
 

@@ -1,7 +1,7 @@
 package dr.app.tracer.application;
 
-import org.virion.jam.framework.*;
-import org.virion.jam.mac.*;
+import jam.framework.*;
+import jam.mac.*;
 
 import dr.app.util.OSType;
 

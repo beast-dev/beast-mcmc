@@ -25,15 +25,14 @@
 
 package dr.app.oldbeauti;
 
+import dr.app.gui.components.RealNumberField;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.*;
 import dr.evolution.util.*;
-import dr.gui.table.DateCellEditor;
-import dr.gui.table.TableSorter;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.*;
+import dr.app.gui.table.*;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+import jam.table.*;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

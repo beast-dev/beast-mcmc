@@ -1,8 +1,8 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.*;
+import dr.app.gui.chart.*;
 import dr.inference.trace.*;
-import org.virion.jam.framework.Exportable;
+import jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;

@@ -34,12 +34,11 @@ import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.*;
 import dr.evoxml.util.DateUnitsType;
-import dr.gui.table.DateCellEditor;
-import dr.gui.table.TableSorter;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.table.*;
+import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -216,10 +215,10 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
-                
+
                 frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
 
-                if (options.taxonList != null) timeScaleChanged();    
+                if (options.taxonList != null) timeScaleChanged();
             }
         });
 
@@ -262,7 +261,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         if (options.clockModelOptions.isTipCalibrated()) {
             options.clockModelOptions.tipTimeCalibration();
         }
-        
+
         dataTableModel.fireTableDataChanged();
         frame.setDirty();
     }
@@ -285,7 +284,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         calculateHeights();
         usingTipDates.setSelected(options.clockModelOptions.isTipCalibrated());
-        
+
         dataTableModel.fireTableDataChanged();
 
         tipDateTaxonSetCombo.removeAllItems();

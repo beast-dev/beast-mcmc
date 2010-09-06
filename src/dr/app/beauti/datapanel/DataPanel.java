@@ -35,10 +35,10 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -533,7 +533,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (!model.getName().equals(partition.getName()) && partition.getTraitType() == null) {// not a trait
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
 
-                // this prevents partition not broken, and used for unsharing tree prior only, 
+                // this prevents partition not broken, and used for unsharing tree prior only,
                 // because sharing uses shareSameTreePrior, unsharing uses getPartitionTreePrior
 //                newTree.setPartitionTreePrior(newPrior); // important
 

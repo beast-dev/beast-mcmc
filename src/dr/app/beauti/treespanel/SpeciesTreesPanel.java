@@ -31,7 +31,7 @@ import dr.app.beauti.enumTypes.PopulationSizeModelType;
 import dr.app.beauti.util.PanelUtils;
 
 import dr.app.util.OSType;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -55,10 +55,10 @@ public class SpeciesTreesPanel extends OptionsPanel {
 
     public SpeciesTreesPanel(final PartitionTreePrior partitionTreePrior) {
     	super(12, (OSType.isMac() ? 6 : 24));
-       
+
     	this.partitionTreePrior = partitionTreePrior;
 
-    	PanelUtils.setupComponent(treePriorCombo);    	
+    	PanelUtils.setupComponent(treePriorCombo);
     	addComponentWithLabel("Species Tree Prior:", treePriorCombo);
 
         treePriorCombo.addItemListener(
@@ -82,12 +82,12 @@ public class SpeciesTreesPanel extends OptionsPanel {
 //        addSeparator();
 
         addLabel("Note: *BEAST only needs to select the prior for species tree.");
-        
+
         validate();
         repaint();
 
-    }    
-   
+    }
+
     public void setOptions() {
 //        settingOptions = true;
 
@@ -101,7 +101,7 @@ public class SpeciesTreesPanel extends OptionsPanel {
     }
 
     public void getOptions() {
-    	
+
     }
 
 	// @Override

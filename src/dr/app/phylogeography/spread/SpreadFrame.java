@@ -15,6 +15,8 @@ import jam.framework.Exportable;
 import jam.util.IconUtils;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
@@ -25,7 +27,6 @@ import java.util.ArrayList;
  * @version $Id$
  */
 public class SpreadFrame extends DocumentFrame {
-
     private static final long serialVersionUID = 2114148696789612509L;
 
     private final SpreadDocument document = new SpreadDocument();
@@ -34,6 +35,7 @@ public class SpreadFrame extends DocumentFrame {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
     private final InputPanel inputPanel;
+    private final LayersPanel layersPanel = new LayersPanel(this, document);
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
@@ -61,7 +63,13 @@ public class SpreadFrame extends DocumentFrame {
 
         getZoomWindowAction().setEnabled(false);
 
-        inputPanel = new InputPanel(this, document, getImportAction(), getDeleteAction());
+        inputPanel = new InputPanel(this, document, getImportAction());
+
+        tabbedPane.addChangeListener(new ChangeListener() {
+            public void stateChanged(final ChangeEvent e) {
+                tabbedPaneChanged();
+            }
+        });
 
         document.addListener(new SpreadDocument.Listener() {
             public void dataChanged() {
@@ -77,7 +85,6 @@ public class SpreadFrame extends DocumentFrame {
     public void initializeComponents() {
 
         final TimelinePanel timeLinePanel = new TimelinePanel(this, document);
-        final LayersPanel layersPanel = new LayersPanel(this, document);
         final OutputPanel outputPanel = new OutputPanel(this, document, generators);
 
         tabbedPane.addTab("Input", inputPanel);
@@ -100,15 +107,13 @@ public class SpreadFrame extends DocumentFrame {
 
         panel.add(panel2, BorderLayout.SOUTH);
 
-        JScrollPane scrollPane = new JScrollPane(panel);
-        scrollPane.setOpaque(false);
-
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-        getContentPane().add(scrollPane, BorderLayout.CENTER);
+        getContentPane().add(panel2, BorderLayout.CENTER);
 
 //        setAllOptions();
 
         setSize(new java.awt.Dimension(1024, 768));
+        setMinimumSize(new java.awt.Dimension(800, 600));
 
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
@@ -123,17 +128,35 @@ public class SpreadFrame extends DocumentFrame {
         importChooser.setDialogTitle("Import Data Files...");
     }
 
-    public final void dataSelectionChanged(boolean isSelected) {
-        getDeleteAction().setEnabled(isSelected);
-    }
-
-    public final void modelSelectionChanged(boolean isSelected) {
-        getDeleteAction().setEnabled(isSelected);
+    public final void tabbedPaneChanged() {
+        if (tabbedPane.getSelectedComponent() instanceof DeleteActionResponder) {
+            getDeleteAction().setEnabled(
+                    ((DeleteActionResponder)(tabbedPane.getSelectedComponent()))
+                            .getDeleteAction()
+                            .isEnabled()
+            );
+        }
     }
 
     public void doDelete() {
-        inputPanel.removeSelection();
+        if (tabbedPane.getSelectedComponent() instanceof DeleteActionResponder) {
+            ((DeleteActionResponder)(tabbedPane.getSelectedComponent())).delete();
+        }
     }
+
+    public void doSelectAll() {
+        if (tabbedPane.getSelectedComponent() instanceof SelectAllActionResponder) {
+            ((SelectAllActionResponder)(tabbedPane.getSelectedComponent())).selectAll();
+        }
+    }
+
+
+    public void setRemoveActionEnabled(final DeleteActionResponder responder, final boolean isEnabled) {
+        if (responder == tabbedPane.getSelectedComponent()) {
+            getDeleteAction().setEnabled(isEnabled);
+        }
+    }
+
 
     public boolean requestClose() {
         if (isDirty()) {
@@ -403,5 +426,7 @@ public class SpreadFrame extends DocumentFrame {
             doGenerate();
         }
     };
+
+
 
 }

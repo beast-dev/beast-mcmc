@@ -30,10 +30,10 @@ import dr.inference.trace.MarginalLikelihoodAnalysis;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import dr.util.TaskListener;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.util.LongTask;
+import dr.app.gui.components.WholeNumberField;
+import jam.framework.DocumentFrame;
+import jam.panels.OptionsPanel;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

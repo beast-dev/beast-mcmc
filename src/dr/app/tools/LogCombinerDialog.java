@@ -27,11 +27,11 @@ package dr.app.tools;
 
 import dr.app.gui.FileDrop;
 import dr.app.util.Utils;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.components.WholeNumberField;
+import jam.panels.ActionPanel;
+import jam.panels.OptionsPanel;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -251,7 +251,7 @@ public class LogCombinerDialog {
 	Action addFileAction = new AbstractAction("+") {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7602227478402204088L;
 
@@ -267,7 +267,7 @@ public class LogCombinerDialog {
 	Action removeFileAction = new AbstractAction("-") {
 
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 5934278375005327047L;
 
@@ -289,7 +289,7 @@ public class LogCombinerDialog {
 
 	class FilesTableModel extends AbstractTableModel {
 		/**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 4153326364833213013L;
 		private final String[] columns = { "File", "Burnin" };

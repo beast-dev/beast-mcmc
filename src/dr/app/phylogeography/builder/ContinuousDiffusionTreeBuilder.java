@@ -1,5 +1,6 @@
 package dr.app.phylogeography.builder;
 
+import dr.app.gui.components.RealNumberField;
 import dr.app.phylogeography.spread.InputFile;
 import dr.app.phylogeography.structure.Coordinates;
 import dr.app.phylogeography.structure.Layer;
@@ -7,8 +8,7 @@ import dr.app.phylogeography.structure.Line;
 import dr.app.phylogeography.structure.Style;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -60,7 +60,7 @@ public class
     }
 
     public void setFromEditPanel() {
-        maxAltitude = maxAltitudeField.getValue(0.0);
+        maxAltitude = maxAltitudeField.getValue();
         invalidate();
     }
 

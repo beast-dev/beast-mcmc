@@ -25,6 +25,7 @@
 
 package dr.app.coalgen;
 
+import dr.app.gui.components.RealNumberField;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
@@ -34,10 +35,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.io.File;
-import java.io.IOException;
-
-import org.virion.jam.components.RealNumberField;
 
 /**
  * @author Andrew Rambaut
@@ -69,7 +66,7 @@ public class ModelPanel extends JPanel implements Exportable {
 
         optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
         add(optionPanel, BorderLayout.NORTH);
-        
+
         demographicCombo = new JComboBox();
         demographicCombo.setOpaque(false);
 

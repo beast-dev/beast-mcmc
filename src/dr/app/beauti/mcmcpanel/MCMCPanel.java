@@ -32,8 +32,8 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.util.OSType;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.WholeNumberField;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

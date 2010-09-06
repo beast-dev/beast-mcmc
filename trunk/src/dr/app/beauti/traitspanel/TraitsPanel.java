@@ -349,7 +349,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public boolean addTrait() {
         boolean isAdd = addTrait("Untitled");
-
+        // http://code.google.com/p/beast-mcmc/issues/detail?id=388
         if (options.containTrait(TraitData.TRAIT_SPECIES)) {
             JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
                  "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);

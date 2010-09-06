@@ -56,11 +56,11 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        double finalTimeInterval = xo.getAttribute(FINAL_TIME_INTERVAL, 0.0);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-
+        
         boolean relativeDeath = xo.hasChildNamed(RELATIVE_MU);
-
         Parameter mu;
         if (relativeDeath) {
             mu = (Parameter) xo.getElementFirstChild(RELATIVE_MU);
@@ -68,8 +68,9 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             mu = (Parameter) xo.getElementFirstChild(MU);
         }
 
-        double sampledRemainInfectiousRate = xo.getAttribute(SAMPLED_REMAIN_INFECTIOUS, 1.0);
-        double finalTimeInterval = xo.getAttribute(FINAL_TIME_INTERVAL, 0.0);
+        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+        final Parameter r = (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS);
 
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
@@ -77,10 +78,9 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
 
         final String modelName = xo.getId();
-        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
-        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                sampledRemainInfectiousRate, finalTimeInterval, units);
+                r, finalTimeInterval, units);
     }
 
     //************************************************************************
@@ -101,7 +101,6 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            AttributeRule.newDoubleRule(SAMPLED_REMAIN_INFECTIOUS, true),
             AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
 
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
@@ -109,6 +108,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                     new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(SAMPLED_REMAIN_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };

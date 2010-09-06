@@ -56,7 +56,12 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     boolean relativeDeath = false;
 
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
-    boolean sampledIndividualsRemainInfectious = false;
+//    boolean sampledIndividualsRemainInfectious = false; // replaced by r
+
+//    the additional parameter 0 <= r <= 1 has to be estimated.
+//    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+//    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+    double sampledRemainInfectiousRate = 1.0;
 
     double finalTimeInterval = 0.0;
 
@@ -66,11 +71,11 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> psi,
             Variable<Double> p,
             boolean relativeDeath,
-            boolean sampledIndividualsRemainInfectious,
+            double sampledRemainInfectiousRate, //boolean sampledIndividualsRemainInfectious,
             double finalTimeInterval,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, sampledIndividualsRemainInfectious, finalTimeInterval, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, sampledRemainInfectiousRate, finalTimeInterval, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -80,7 +85,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> psi,
             Variable<Double> p,
             boolean relativeDeath,
-            boolean sampledIndividualsRemainInfectious,
+            double sampledRemainInfectiousRate, //boolean sampledIndividualsRemainInfectious,
             double finalTimeInterval,
             Type units) {
 
@@ -106,7 +111,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
         this.finalTimeInterval = finalTimeInterval;
 
-        this.sampledIndividualsRemainInfectious = sampledIndividualsRemainInfectious;
+//        this.sampledIndividualsRemainInfectious = sampledIndividualsRemainInfectious;
+        this.sampledRemainInfectiousRate = sampledRemainInfectiousRate;
 
     }
 
@@ -213,13 +219,13 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             double y = tree.getNodeHeight(tree.getExternalNode(i)) + time;
 
             if (y > 0.0) {
+                logL += Math.log( psi() * (sampledRemainInfectiousRate + (1-sampledRemainInfectiousRate)*p0(y))  * q(y) );
 
-                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
-                    logL += Math.log(psi() * q(y) * p0(y));
-                } else {
-
-                    logL += Math.log(psi() * q(y));
-                }
+//                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
+//                    logL += Math.log(psi() * q(y) * p0(y));
+//                } else {
+//                    logL += Math.log(psi() * q(y));
+//                }
             }
         }
 

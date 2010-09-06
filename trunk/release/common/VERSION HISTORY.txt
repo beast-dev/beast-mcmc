@@ -24,13 +24,16 @@ Last updated: alexei@cs.auckland.ac.nz - 1st September 2010
 Version 1.6.0 released 1st September 2010
 
 	New Features:
-	    Random local clock:
-
+	    Random local clock model, see:
+	        Drummond AJ and Suchard MA (2010) Bayesian random local clocks or one
+	        rate to rule them all. BMC Biology.
 
 	    Discrete trait model:
-	    
+
+	    Add TreeStat in the release.
 
 	Bug Fixes:
+	    Issue 19:  Setting lognormal priors in real-space
 	    Issue 186: Guess Trait dialog has ambiguous text
 	    Issue 235: Unlinked DiscretizedBranchRates for multiple loci have the
 	               wrong number of dimensions
@@ -116,16 +119,54 @@ Version 1.6.0 released 1st September 2010
         Issue 361: RegEx should default to having braces round them
         Issue 362: Remove exclamation marks from dialog box messages.
         Issue 365: Folder called 'beauti1.5' in /examples
+         Issue 368:  	 Move release example xml into \example folder to reduce the redudant xml
         Issue 370: BEAST argument -overwrite not working
         Issue 371: new change of PriorDialog broke GUI functions
         Issue 372: Failed to load parser
         Issue 374: BEAUti: only one taxa set for 3 unlinked partitions
         Issue 375: BEAUti: rootHeightPriorCombo disappear when switch between
                    Undefined and others
+        Issue 377: BEAUti: Random local clock model Bug
+        Issue 380: Discrete trait model should have its tree linked to that for a tree for a sequence partition
+        Issue 381: Discrete trait model can select an inappropriate substitution model in the data partition table
+        Issue 383: BEAUti: "species" trait should not appear in Data Panel
+        Issue 384: Unhandled attribute (typo?) name in sumStatistic:rateChanges
+        Issue 388: BEAUti: "species" should NOT be used as a trait name
 
         All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
+
+Version 1.5.4 released on 29th March 2010
+
+    Bug Fixes
+		Many bugs fixed that were introduced in 1.5.3 including:
+
+		Issue 52:  Commas put into years displayed in BEAUti
+		Issue 59:  examples/testCoalescent.xml
+		Issue 74:  mcmc.operators
+		Issue 161: BEAUTi: review all initial rates and root heights
+		           calculations
+		Issue 162: Fix unstable JUnit test
+		Issue 198: Improper JUnit test code causes incorrect failure in
+		           Hudson
+		Issue 241: BEAUTi: operator subtreeSlide size should not be INF
+		Issue 270: BEASTParserDoc is unable to generate Wiki format
+		Issue 267: BEAUTi: The user should *always* be allowed to fix
+		           the rates if they want
+		Issue 268: BEAUti: prior distribution error message "find
+		           incorrect number format"
+		Issue 277: Typo in BEAUTi - Unable to overwrite exsting file
+		Issue 282: BEAUti: AlignmentGenerator cannot print sequence with
+		           long sites properly
+		Issue 285: BEAST: ComplexSubstitutionModelParser can only refer to
+		           SVS not ComplexSubstitutionModel
+		Issue 286: BEAUti: remove exponential in VariableDemographicModel
+		           from BEAUti
+		Issue 287: BEAUti: EBSP VariableDemographicModel popSize value =
+		           populationMean value and indicators value = 0
+		Issue 288: BEAUti: avoid comma generated in the numbers in the log
+
 
 Version 1.5.3 released 9th December 2009
 

@@ -17,7 +17,10 @@ import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.generator.Generator;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.operatorspanel.OperatorsPanel;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.STARBEASTOptions;
+import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
@@ -538,11 +541,7 @@ public class BeautiFrame extends DocumentFrame {
                 useStarBEAST = false;
             }
         } else { // remove species
-            int i = -1;
-            for (PartitionData pd : options.dataPartitions) {
-                if (pd.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) i = options.dataPartitions.indexOf(pd);
-            }
-            if (i >= 0) options.dataPartitions.remove(i);
+            options.removeTrait(TraitData.TRAIT_SPECIES);
         }
 
         options.useStarBEAST = useStarBEAST;

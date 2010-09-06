@@ -348,13 +348,23 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait() {
-        return addTrait("Untitled");
+        boolean isAdd = addTrait("Untitled");
+
+        if (options.containTrait(TraitData.TRAIT_SPECIES)) {
+            JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
+                 "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+            options.removeTrait(TraitData.TRAIT_SPECIES);
+//            options.useStarBEAST = false;
+            traitsTableModel.fireTableDataChanged();
+            dataTableModel.fireTableDataChanged();
+            return false;
+        }
+
+        return isAdd;
     }
 
     public boolean addTrait(String traitName) {
-//        if (createTraitDialog == null) {
         createTraitDialog = new CreateTraitDialog(frame, traitName);
-//        }
 
         int result = createTraitDialog.showDialog();
         if (result == JOptionPane.OK_OPTION) {

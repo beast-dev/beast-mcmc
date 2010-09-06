@@ -45,7 +45,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
-    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectious";
+    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousRate";
     public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String TREE_TYPE = "type";
 
@@ -68,7 +68,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             mu = (Parameter) xo.getElementFirstChild(MU);
         }
 
-        boolean sampledRemainInfectious = xo.getAttribute(SAMPLED_REMAIN_INFECTIOUS, false);
+        double sampledRemainInfectiousRate = xo.getAttribute(SAMPLED_REMAIN_INFECTIOUS, 1.0);
         double finalTimeInterval = xo.getAttribute(FINAL_TIME_INTERVAL, 0.0);
 
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
@@ -77,9 +77,10 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
 
         final String modelName = xo.getId();
-
+        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                sampledRemainInfectious, finalTimeInterval, units);
+                sampledRemainInfectiousRate, finalTimeInterval, units);
     }
 
     //************************************************************************
@@ -100,7 +101,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            AttributeRule.newBooleanRule(SAMPLED_REMAIN_INFECTIOUS, true),
+            AttributeRule.newDoubleRule(SAMPLED_REMAIN_INFECTIOUS, true),
             AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
 
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

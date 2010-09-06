@@ -68,6 +68,10 @@ public class BeastMain {
                 thread.stop(); // http://java.sun.com/j2se/1.5.0/docs/guide/misc/threadPrimitiveDeprecation.html
             }
         }
+
+        public void setTitle(String title) {
+            getDefaultFrame().setTitle(title);
+        }
     }
 
     public BeastMain(File inputFile, BeastConsoleApp consoleApp, int maxErrorCount, final boolean verbose,
@@ -265,7 +269,7 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.StringOption("beagle_scaling", new String[] { "default", "none", "dynamic", "always"},
+                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "none", "dynamic", "always"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
@@ -312,7 +316,7 @@ public class BeastMain {
         long beagleFlags = 0;
 
         boolean useBeagle = arguments.hasOption("beagle") ||
-                arguments.hasOption("beagle_CPU")||
+                arguments.hasOption("beagle_CPU") ||
                 arguments.hasOption("beagle_GPU") ||
                 arguments.hasOption("beagle_SSE") ||
                 arguments.hasOption("beagle_double") ||
@@ -484,6 +488,14 @@ public class BeastMain {
 
         if (inputFile != null && inputFile.getParent() != null && working) {
             System.setProperty("user.dir", inputFile.getParent());
+        }
+
+        if (window) {
+            if (inputFile == null) {
+                consoleApp.setTitle("null");
+            } else {
+                consoleApp.setTitle(inputFile.getName());
+            }
         }
 
         if (useJava) {

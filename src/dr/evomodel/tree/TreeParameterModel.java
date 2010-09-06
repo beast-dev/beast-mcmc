@@ -92,8 +92,8 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         int treeSize = tree.getNodeCount();
         if (!includeRoot) treeSize -= 1;
         if (dim != treeSize) {
-            System.err.println("WARNING: setting dimension of parameter to match tree branch count ("
-                    + dim + " != " + treeSize + ")");
+//            System.err.println("WARNING: setting dimension of parameter to match tree branch count ("
+//                    + dim + " != " + treeSize + ")"); // http://code.google.com/p/beast-mcmc/issues/detail?id=385
             parameter.setDimension(treeSize);
         }
 

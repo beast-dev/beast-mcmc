@@ -26,7 +26,7 @@
 package dr.app.beauti.datapanel;
 
 import dr.app.beauti.options.PartitionSubstitutionModel;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

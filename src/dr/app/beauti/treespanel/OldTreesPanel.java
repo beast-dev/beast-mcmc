@@ -39,10 +39,10 @@ import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.tree.NeighborJoiningTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.components.WholeNumberField;
+import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

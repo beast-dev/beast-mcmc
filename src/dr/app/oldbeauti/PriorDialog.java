@@ -25,11 +25,11 @@
 
 package dr.app.oldbeauti;
 
-import dr.gui.chart.*;
+import dr.app.gui.components.RealNumberField;
+import dr.app.gui.chart.*;
 import dr.util.NumberFormatter;
 import dr.math.distributions.*;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

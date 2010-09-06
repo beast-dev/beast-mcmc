@@ -4,7 +4,7 @@ import dr.inference.trace.Filter;
 import dr.inference.trace.FilteredTraceList;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceFactory;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

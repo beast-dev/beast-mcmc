@@ -1,8 +1,8 @@
 package dr.app.phylogeography.spread.inputpanel;
 
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.TableEditorStopper;
+import dr.app.gui.table.TableEditorStopper;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -14,8 +14,7 @@ import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.UnsupportedFlavorException;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.Iterator;
@@ -30,7 +29,7 @@ import dr.app.gui.MultiLineTableCellRenderer;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class InputPanel extends JPanel implements Exportable {
+public class InputPanel extends JPanel implements DeleteActionResponder, Exportable {
     private JScrollPane scrollPane = new JScrollPane();
     private JTable dataTable = null;
     private DataTableModel dataTableModel = null;
@@ -40,7 +39,7 @@ public class InputPanel extends JPanel implements Exportable {
     private InputFileSettingsDialog inputFileSettingsDialog = null;
     private final SpreadDocument document;
 
-    public InputPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction, final Action removeDataAction) {
+    public InputPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction) {
 
         this.frame = parent;
         this.document = document;
@@ -94,9 +93,9 @@ public class InputPanel extends JPanel implements Exportable {
 
         ActionPanel actionPanel1 = new ActionPanel(true);
         actionPanel1.setAddAction(addDataAction);
-        actionPanel1.setRemoveAction(removeDataAction);
+        actionPanel1.setRemoveAction(removeAction);
 
-        removeDataAction.setEnabled(false);
+        removeAction.setEnabled(false);
 
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
@@ -121,7 +120,9 @@ public class InputPanel extends JPanel implements Exportable {
     public void selectionChanged() {
         int[] selRows = dataTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
-        frame.dataSelectionChanged(hasSelection);
+        removeAction.setEnabled(hasSelection);
+
+        frame.setRemoveActionEnabled(this, hasSelection);
     }
 
     public JComponent getExportableComponent() {
@@ -149,14 +150,14 @@ public class InputPanel extends JPanel implements Exportable {
         }
     }
 
-    public void removeSelection() {
+    public void delete() {
         int[] selRows = dataTable.getSelectedRows();
         Set<InputFile> dataToRemove = new HashSet<InputFile>();
         for (int row : selRows) {
             dataToRemove.add(document.getInputFiles().get(row));
         }
 
-        // TODO: would probably be a good idea to check if the user wants to remove the last partition
+        // TODO: would probably be a good idea to check if the user wants to remove the last file
         document.getInputFiles().removeAll(dataToRemove);
         document.fireDataChanged();
 
@@ -275,4 +276,22 @@ public class InputPanel extends JPanel implements Exportable {
             return false;
         }
     }
+
+    public Action getDeleteAction() {
+        return removeAction;
+    }
+
+    private Action removeAction = new RemoveDataAction();
+    private class RemoveDataAction extends AbstractAction {
+        public RemoveDataAction() {
+            super("Remove");
+            setToolTipText("Use this button to remove selected input data from the table");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            delete();
+        }
+    }
+
+
 }

@@ -1,8 +1,7 @@
 package dr.inference.trace;
 
-import dr.gui.chart.Axis;
-import dr.gui.chart.LinearAxis;
-import dr.math.distributions.*;
+import dr.app.gui.chart.Axis;
+import dr.app.gui.chart.LinearAxis;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
@@ -42,7 +41,7 @@ public class DensityEstimate {
         xCoordinates.add(x + (frequencyDistribution.getBinSize() / 2.0));
         yCoordinates.add(0.0);
     }
-    
+
     protected FrequencyDistribution calculateFrequencies(Variate data, int minimumBinCount) {
         double min = data.getMin();
         double max = data.getMax();

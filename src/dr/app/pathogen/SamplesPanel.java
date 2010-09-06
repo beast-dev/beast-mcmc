@@ -32,12 +32,11 @@ import dr.evolution.util.Date;
 import dr.evolution.util.TimeScale;
 import dr.evolution.util.Units;
 import dr.evolution.util.TaxonList;
-import dr.gui.table.DateCellEditor;
-import dr.gui.table.TableSorter;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.table.*;
+import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

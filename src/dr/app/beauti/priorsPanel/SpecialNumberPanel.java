@@ -27,6 +27,7 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.RealNumberField;
 
 import javax.swing.*;
 import java.awt.*;

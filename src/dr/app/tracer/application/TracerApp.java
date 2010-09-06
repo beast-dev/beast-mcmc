@@ -2,7 +2,7 @@ package dr.app.tracer.application;
 
 import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
-import org.virion.jam.framework.*;
+import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;

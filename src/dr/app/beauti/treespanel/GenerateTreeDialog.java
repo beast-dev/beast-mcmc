@@ -27,7 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

@@ -25,9 +25,9 @@
 
 package dr.app.treestat;
 
-import org.virion.jam.framework.Application;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.util.IconUtils;
+import jam.framework.Application;
+import jam.framework.DocumentFrame;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

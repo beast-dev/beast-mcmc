@@ -26,18 +26,16 @@
 package dr.app.coalgen;
 
 import dr.evolution.util.*;
-import dr.gui.table.DateCellEditor;
-import dr.gui.table.TableSorter;
+import dr.app.gui.table.DateCellEditor;
+import dr.app.gui.table.TableSorter;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.tipdatepanel.GuessDatesDialog;
 import dr.app.beauti.util.PanelUtils;
 import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
 import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
@@ -46,11 +44,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.table.TableEditorStopper;
+import dr.app.gui.table.TableEditorStopper;
 
 /**
  * @author Andrew Rambaut

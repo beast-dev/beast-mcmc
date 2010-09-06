@@ -25,15 +25,15 @@
 
 package dr.app.pathogen;
 
+import dr.app.gui.util.LongTask;
 import dr.evolution.tree.*;
-import dr.gui.chart.*;
+import dr.app.gui.chart.*;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
 import dr.stats.Variate;
 import dr.util.NumberFormatter;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.util.LongTask;
+import jam.framework.Exportable;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

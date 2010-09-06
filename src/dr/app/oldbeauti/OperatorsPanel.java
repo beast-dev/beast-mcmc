@@ -25,10 +25,10 @@
 
 package dr.app.oldbeauti;
 
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.RealNumberCellEditor;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.table.RealNumberCellEditor;
+import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

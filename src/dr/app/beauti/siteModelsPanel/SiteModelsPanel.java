@@ -34,11 +34,11 @@ import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.datatype.DataType;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
@@ -253,7 +253,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 ////        fireModelsChanged();
 //    }
 
-//    public void removeSelection() {
+//    public void delete() {
 //        int selRow = modelTable.getSelectedRow();
 //        if (!isUsed(selRow)) {
 //            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(selRow);

@@ -29,7 +29,7 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.TextUtil;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

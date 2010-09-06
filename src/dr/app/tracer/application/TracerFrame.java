@@ -12,13 +12,13 @@ import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
 import dr.app.tracer.traces.TracePanel;
-import dr.gui.chart.ChartRuntimeException;
+import dr.app.gui.chart.ChartRuntimeException;
+import dr.app.gui.table.TableEditorStopper;
 import dr.inference.trace.*;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.util.LongTask;
+import jam.framework.DocumentFrame;
+import jam.panels.ActionPanel;
+import jam.table.TableRenderer;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -234,7 +234,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.setToolTipText("<html>Traces Type: real(R) is double, integer(I) is integer, category(C) is string.</html>");
         bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
-        
+
 //        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
 //                "category(C) is string. Right click to change trace type in a selected cell.</html>"),
 //                BorderLayout.SOUTH);
@@ -279,7 +279,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         filterButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int rowIndex = statisticTable.getSelectedRow();
-                
+
                 if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
                     removeAllFilters();
                 } else {
@@ -345,7 +345,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {
-        return false;  //Todo 
+        return false;  //Todo
     }
 
     private JPopupMenu createContextMenu() {

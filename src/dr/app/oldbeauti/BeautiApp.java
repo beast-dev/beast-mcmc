@@ -28,8 +28,7 @@ package dr.app.oldbeauti;
 import dr.app.beast.BeastVersion;
 import dr.app.util.OSType;
 import dr.util.Version;
-import org.virion.jam.framework.*;
-import org.virion.jam.mac.Utils;
+import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;

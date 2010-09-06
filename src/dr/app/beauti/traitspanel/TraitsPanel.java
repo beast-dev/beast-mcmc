@@ -34,12 +34,12 @@ import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.gui.table.TableSorter;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.table.TableSorter;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
+import jam.table.HeaderRenderer;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

@@ -3,7 +3,7 @@ package dr.app.phylogeography.spread.layerspanel;
 import dr.app.phylogeography.builder.Builder;
 import dr.app.phylogeography.builder.BuilderFactory;
 import dr.app.phylogeography.spread.SpreadDocument;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

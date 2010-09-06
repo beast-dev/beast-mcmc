@@ -1,7 +1,7 @@
 package dr.app.tracer.application;
 
-import org.virion.jam.preferences.PreferencesSection;
-import org.virion.jam.util.IconUtils;
+import jam.preferences.PreferencesSection;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.util.prefs.Preferences;

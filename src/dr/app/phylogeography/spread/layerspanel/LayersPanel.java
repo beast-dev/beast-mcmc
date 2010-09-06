@@ -3,9 +3,9 @@ package dr.app.phylogeography.spread.layerspanel;
 import dr.app.phylogeography.builder.*;
 import dr.app.phylogeography.spread.*;
 import dr.app.gui.MultiLineTableCellRenderer;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.TableEditorStopper;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
+import dr.app.gui.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -15,9 +15,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.dnd.*;
-import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
-import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -28,7 +26,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class LayersPanel extends JPanel implements Exportable {
+public class LayersPanel extends JPanel implements DeleteActionResponder, Exportable {
     public final static BuilderFactory[] builderFactories = {
             DiscreteDiffusionTreeBuilder.FACTORY,
             ContinuousDiffusionTreeBuilder.FACTORY
@@ -62,7 +60,7 @@ public class LayersPanel extends JPanel implements Exportable {
         layerTable.setRowHeight(layerTable.getRowHeight() * 3);
 
         layerTable.setDragEnabled(true);
-        
+
 //        layerTable.setDropMode(DropMode.INSERT);
 //        layerTable.setTransferHandler(new MyListDropHandler(layerTable));
 
@@ -115,7 +113,6 @@ public class LayersPanel extends JPanel implements Exportable {
         generateButton.putClientProperty("JButton.buttonType", "roundRect");
         controlPanel1.add(generateButton, BorderLayout.EAST);
 
-
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
@@ -136,23 +133,29 @@ public class LayersPanel extends JPanel implements Exportable {
     public void selectionChanged() {
         int[] selRows = layerTable.getSelectedRows();
         boolean hasSelection = (selRows != null && selRows.length != 0);
-        frame.dataSelectionChanged(hasSelection);
+        removeAction.setEnabled(hasSelection);
+
+        frame.setRemoveActionEnabled(this, hasSelection);
     }
 
     public JComponent getExportableComponent() {
         return layerTable;
     }
 
-    public void removeSelection() {
+    public void delete() {
         int[] selRows = layerTable.getSelectedRows();
         Set<Builder> buildersToRemove = new HashSet<Builder>();
         for (int row : selRows) {
             buildersToRemove.add(document.getLayerBuilders().get(row));
         }
 //
-//        // TODO: would probably be a good idea to check if the user wants to remove the last partition
+//        // TODO: would probably be a good idea to check if the user wants to remove the last layer
         document.getLayerBuilders().removeAll(buildersToRemove);
         document.fireSettingsChanged();
+    }
+
+    public Action getDeleteAction() {
+        return removeAction;
     }
 
     public void editSelection() {
@@ -337,7 +340,7 @@ public class LayersPanel extends JPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            removeSelection();
+            delete();
         }
     }
 

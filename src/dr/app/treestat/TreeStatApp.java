@@ -27,8 +27,8 @@ package dr.app.treestat;
 
 import javax.swing.*;
 
-import org.virion.jam.framework.SingleDocApplication;
-import org.virion.jam.mac.Utils;
+import jam.framework.SingleDocApplication;
+import jam.mac.Utils;
 
 import dr.app.util.OSType;
 

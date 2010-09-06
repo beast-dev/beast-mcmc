@@ -45,7 +45,7 @@ import dr.util.Version;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
-import org.virion.jam.console.ConsoleApplication;
+import jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.FileOutputStream;

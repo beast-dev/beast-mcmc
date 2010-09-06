@@ -26,10 +26,10 @@
 package dr.app.oldbeauti;
 
 import dr.evolution.util.*;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.ActionPanel;
-import org.virion.jam.table.TableRenderer;
-import org.virion.jam.util.IconUtils;
+import jam.framework.Exportable;
+import jam.panels.ActionPanel;
+import jam.table.TableRenderer;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

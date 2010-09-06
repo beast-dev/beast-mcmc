@@ -1,14 +1,14 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.JChartPanel;
-import dr.gui.chart.LinearAxis;
+import dr.app.gui.chart.JChartPanel;
+import dr.app.gui.chart.LinearAxis;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 
 import javax.swing.*;
 import java.awt.*;
 
-import org.virion.jam.framework.Exportable;
+import jam.framework.Exportable;
 
 
 /**

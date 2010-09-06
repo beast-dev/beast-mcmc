@@ -4,7 +4,7 @@ import dr.app.phylogeography.builder.Builder;
 import dr.app.phylogeography.builder.BuilderFactory;
 import dr.app.phylogeography.spread.SpreadDocument;
 import dr.app.phylogeography.spread.InputFile;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

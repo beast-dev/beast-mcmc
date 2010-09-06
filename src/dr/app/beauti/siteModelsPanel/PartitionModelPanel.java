@@ -36,7 +36,7 @@ import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -330,7 +330,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponent(panel2);
 
                 addComponent(setSRD06Button);
-                
+
                 break;
 
             case DataType.AMINO_ACIDS:

@@ -29,7 +29,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.util.CommandLineBeauti;
 import dr.app.util.OSType;
 import dr.util.Version;
-import org.virion.jam.framework.*;
+import jam.framework.*;
 
 import javax.swing.*;
 import java.awt.*;

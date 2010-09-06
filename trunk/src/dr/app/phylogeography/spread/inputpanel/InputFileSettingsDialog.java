@@ -1,12 +1,11 @@
 package dr.app.phylogeography.spread.inputpanel;
 
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.components.WholeNumberField;
+import dr.app.gui.components.RealNumberField;
+import jam.panels.OptionsPanel;
+import dr.app.gui.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import java.awt.*;
 
 import dr.app.phylogeography.spread.InputFile;
 

@@ -25,7 +25,7 @@
 
 package dr.app.tracer.analysis;
 
-import dr.gui.chart.*;
+import dr.app.gui.chart.*;
 import dr.stats.Variate;
 
 import javax.swing.*;

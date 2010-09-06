@@ -25,8 +25,8 @@
 
 package dr.app.treestat;
 
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.TableRenderer;
+import jam.framework.Exportable;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;

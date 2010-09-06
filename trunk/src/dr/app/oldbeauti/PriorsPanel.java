@@ -25,14 +25,14 @@
 
 package dr.app.oldbeauti;
 
+import dr.app.gui.components.RealNumberField;
+import dr.app.gui.table.TableEditorStopper;
 import dr.util.NumberFormatter;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.components.WholeNumberField;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import dr.app.gui.components.WholeNumberField;
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

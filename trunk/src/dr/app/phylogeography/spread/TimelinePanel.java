@@ -1,6 +1,6 @@
 package dr.app.phylogeography.spread;
 
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;

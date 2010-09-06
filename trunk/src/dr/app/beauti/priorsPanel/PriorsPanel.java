@@ -30,11 +30,11 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.*;
+import dr.app.gui.table.TableEditorStopper;
 import dr.util.NumberFormatter;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.HeaderRenderer;
-import org.virion.jam.table.TableEditorStopper;
-import org.virion.jam.table.TableRenderer;
+import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

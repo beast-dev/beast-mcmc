@@ -1,6 +1,6 @@
 package dr.app.tracer.traces;
 
-import dr.gui.chart.*;
+import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceList;
@@ -47,7 +47,7 @@ public class BetterDensityPanel extends DensityPanel {
                     }
                 }
         );
-        
+
         return toolBar;
     }
 

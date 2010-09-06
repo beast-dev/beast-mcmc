@@ -3,8 +3,8 @@ package dr.app.tracer.traces;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
-import org.virion.jam.framework.Exportable;
-import org.virion.jam.table.TableRenderer;
+import jam.framework.Exportable;
+import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -279,7 +279,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         break;
                     case 6:
                         if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
-                            return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]"; 
+                            return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
                             return tc.credSet.printCredibleSet();
                         }

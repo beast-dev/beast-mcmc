@@ -37,7 +37,7 @@ import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
-import org.virion.jam.util.IconUtils;
+import jam.util.IconUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -53,7 +53,7 @@ public class BeastMain {
 
     private final static Version version = new BeastVersion();
 
-    static class BeastConsoleApp extends org.virion.jam.console.ConsoleApplication {
+    static class BeastConsoleApp extends jam.console.ConsoleApplication {
         XMLParser parser = null;
 
         public BeastConsoleApp(String nameString, String aboutString, javax.swing.Icon icon) throws IOException {

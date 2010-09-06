@@ -33,7 +33,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 
-import dr.gui.table.TableSorter;
+import dr.app.gui.table.TableSorter;
 import jam.table.TableRenderer;
 import jam.framework.Exportable;
 
@@ -41,7 +41,7 @@ import jam.framework.Exportable;
 public class CharactersPanel extends JPanel implements Exportable {
 
     /**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1063807543195481382L;
 	TreeStatFrame frame = null;
@@ -92,7 +92,7 @@ public class CharactersPanel extends JPanel implements Exportable {
 
         charactersTable.getColumnModel().getColumn(0).setCellRenderer(
             new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-                                                                                                                                      
+
         charactersTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) { charactersTableSelectionChanged(); }
         });
@@ -340,7 +340,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action addCharacterAction = new AbstractAction("Add") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -2222139644754040949L;
 
@@ -359,7 +359,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action removeCharacterAction = new AbstractAction("Remove") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6836455052115579291L;
 
@@ -378,7 +378,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action addStateAction = new AbstractAction("Add") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -2304872597649350237L;
 
@@ -389,7 +389,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action removeStateAction = new AbstractAction("Remove") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -6390058458520173491L;
 
@@ -400,7 +400,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action includeTaxonAction = new AbstractAction("->") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 4577920870740752531L;
 
@@ -422,7 +422,7 @@ public class CharactersPanel extends JPanel implements Exportable {
       Action excludeTaxonAction = new AbstractAction("<-") {
 
           /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 7911132810956409390L;
 
@@ -442,7 +442,7 @@ public class CharactersPanel extends JPanel implements Exportable {
     class CharactersTableModel extends AbstractTableModel {
 
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -3916166866378281436L;
 
@@ -479,7 +479,7 @@ public class CharactersPanel extends JPanel implements Exportable {
     class StatesTableModel extends AbstractTableModel {
 
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = -1912262346368463655L;
 		String[] columnNames = new String[] { "State", "Description" };
@@ -528,7 +528,7 @@ public class CharactersPanel extends JPanel implements Exportable {
     class TaxaTableModel extends AbstractTableModel {
 
         /**
-		 * 
+		 *
 		 */
 		private static final long serialVersionUID = 2786966293840685962L;
 		boolean included;

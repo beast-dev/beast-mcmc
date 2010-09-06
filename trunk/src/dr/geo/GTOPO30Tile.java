@@ -1,6 +1,6 @@
 package dr.geo;
 
-import dr.gui.ColorFunction;
+import dr.app.gui.ColorFunction;
 
 import javax.imageio.ImageIO;
 import javax.imageio.stream.ImageInputStream;

@@ -1,10 +1,10 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.math.distributions.Distribution;
-//import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.util.ArrayList;

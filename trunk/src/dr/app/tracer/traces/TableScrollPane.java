@@ -1,6 +1,6 @@
 package dr.app.tracer.traces;
 
-import org.virion.jam.framework.Exportable;
+import jam.framework.Exportable;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;

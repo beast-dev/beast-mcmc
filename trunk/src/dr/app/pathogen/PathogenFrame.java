@@ -16,8 +16,8 @@ import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
 import dr.app.pathogen.TemporalRooting;
 import dr.util.NumberFormatter;
-import org.virion.jam.framework.DocumentFrame;
-import org.virion.jam.framework.Exportable;
+import jam.framework.DocumentFrame;
+import jam.framework.Exportable;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;

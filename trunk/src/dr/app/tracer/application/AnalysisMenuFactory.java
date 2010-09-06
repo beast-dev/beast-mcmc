@@ -1,7 +1,7 @@
 package dr.app.tracer.application;
 
-import org.virion.jam.framework.AbstractFrame;
-import org.virion.jam.framework.MenuFactory;
+import jam.framework.AbstractFrame;
+import jam.framework.MenuFactory;
 
 import javax.swing.*;
 

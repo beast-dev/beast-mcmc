@@ -1,6 +1,6 @@
 package dr.app.beauti;
 
-import org.virion.jam.framework.Exportable;
+import jam.framework.Exportable;
 
 import javax.swing.*;
 

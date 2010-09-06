@@ -27,14 +27,12 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
+import dr.app.gui.chart.*;
+import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
-import dr.gui.chart.Axis;
-import dr.gui.chart.JChart;
-import dr.gui.chart.LinearAxis;
-import dr.gui.chart.PDFPlot;
 import dr.math.distributions.*;
 import dr.util.NumberFormatter;
-import org.virion.jam.panels.OptionsPanel;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

@@ -1,9 +1,9 @@
 package dr.app.pathogen;
 
-import org.virion.jam.framework.AbstractFrame;
-import org.virion.jam.framework.Application;
-import org.virion.jam.framework.MenuBarFactory;
-import org.virion.jam.framework.MenuFactory;
+import jam.framework.AbstractFrame;
+import jam.framework.Application;
+import jam.framework.MenuBarFactory;
+import jam.framework.MenuFactory;
 
 import javax.swing.*;
 import java.awt.event.KeyEvent;

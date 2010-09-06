@@ -26,8 +26,8 @@
 package dr.app.beauti.tipdatepanel;
 
 import dr.app.beauti.options.DateGuesser;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.RealNumberField;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

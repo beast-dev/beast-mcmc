@@ -25,7 +25,7 @@
 
 package dr.geo;
 
-import dr.gui.ColorFunction;
+import dr.app.gui.ColorFunction;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;

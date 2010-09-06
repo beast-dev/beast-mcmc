@@ -25,9 +25,9 @@
 
 package dr.app.tracer.traces;
 
-import dr.gui.chart.Axis;
-import dr.gui.chart.DiscreteJChart;
-import dr.gui.chart.Plot;
+import dr.app.gui.chart.Axis;
+import dr.app.gui.chart.DiscreteJChart;
+import dr.app.gui.chart.Plot;
 import dr.stats.Variate;
 
 import java.awt.*;

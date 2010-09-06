@@ -25,13 +25,12 @@
 
 package dr.app.tracer.analysis;
 
-import dr.inference.trace.Trace;
+import dr.app.gui.components.RealNumberField;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
-import org.virion.jam.util.LongTask;
+import jam.panels.OptionsPanel;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

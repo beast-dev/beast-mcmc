@@ -33,7 +33,7 @@ import dr.inference.mcmcmc.MCMCMCOptions;
 import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLParser;
-import org.virion.jam.console.ConsoleApplication;
+import jam.console.ConsoleApplication;
 
 import java.io.File;
 import java.io.FileReader;

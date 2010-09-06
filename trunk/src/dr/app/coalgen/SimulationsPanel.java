@@ -30,7 +30,7 @@ import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import org.virion.jam.components.WholeNumberField;
+import dr.app.gui.components.WholeNumberField;
 
 /**
  * @author Andrew Rambaut

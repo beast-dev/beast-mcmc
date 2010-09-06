@@ -1,7 +1,7 @@
 package dr.app.oldbeauti;
 
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.RealNumberField;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

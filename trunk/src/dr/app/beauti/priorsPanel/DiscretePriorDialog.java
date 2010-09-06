@@ -27,8 +27,8 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
-import org.virion.jam.components.RealNumberField;
-import org.virion.jam.panels.OptionsPanel;
+import dr.app.gui.components.RealNumberField;
+import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -100,7 +100,7 @@ public class DiscretePriorDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
-        
+
         priorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();

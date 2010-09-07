@@ -11,17 +11,22 @@ import dr.math.ModifiedBesselFirstKind;
  */
 public class NewMicrosatelliteModel extends AbstractSubstitutionModel {
 
+    Parameter biasConst;
     public NewMicrosatelliteModel(Microsatellite msat, FrequencyModel rootFreqModel){
         super("NewMicrosatelliteModel", msat, rootFreqModel);
-
+        biasConst = new Parameter.Default(0.5);
     }
 
     public void getTransitionProbabilities(double distance, double[] matrix){
         int k = 0;
         double[] rowSums = new double[stateCount];
+        double bCVal = biasConst.getParameterValue(0);
         for(int i = 0; i < stateCount; i ++){
             for(int j = 0; j < stateCount; j++){
-                matrix[k] = Math.exp(-distance)* ModifiedBesselFirstKind.bessi(distance,Math.abs(i-j));
+                int n = Math.abs(i - j);
+                //matrix[k] = Math.exp(-distance)* Math.pow(bCVal/(1-bCVal),n/2)*ModifiedBesselFirstKind.bessi(2*Math.sqrt(bCVal*(1-bCVal))*distance,n);
+                matrix[k] = Math.exp(-distance)*ModifiedBesselFirstKind.bessi(distance,n);
+
                 rowSums[i] += matrix[k];
                 k++;
             }

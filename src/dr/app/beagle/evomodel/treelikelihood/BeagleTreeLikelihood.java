@@ -298,9 +298,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 logger.info("  Using rescaling scheme : " + this.rescalingScheme.getText());
             }
 
-//            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-//                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
-//            }
+            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
+            }
 
             updateSubstitutionModel = true;
             updateSiteModel = true;

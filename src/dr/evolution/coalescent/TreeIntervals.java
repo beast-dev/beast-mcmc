@@ -393,8 +393,20 @@ public class TreeIntervals implements IntervalList {
             if (storedLineageCounts == null) {
                 storedLineageCounts = new int[lineageCounts.length];
             }
+            if (superStore) {
+            if (storedIndices == null) {
+                storedIndices = new int[indices.length];
+            }
+            if (storedTimes == null) {
+                storedTimes = new double[times.length];
+            }
+            }
             System.arraycopy(intervals, 0, storedIntervals, 0, intervals.length);
             System.arraycopy(lineageCounts, 0, storedLineageCounts, 0, lineageCounts.length);
+            if (superStore) {
+            System.arraycopy(indices, 0, storedIndices, 0, indices.length);
+            System.arraycopy(times, 0, storedTimes, 0, times.length);
+            }
         }
 
         storedIntervalsKnown = intervalsKnown;
@@ -411,6 +423,16 @@ public class TreeIntervals implements IntervalList {
             int[] tmp2 = storedLineageCounts;
             storedLineageCounts = lineageCounts;
             lineageCounts = tmp2;
+
+            if (superStore) {
+            tmp1 = storedTimes;
+            storedTimes = times;
+            times = tmp1;
+
+            tmp2 = storedIndices;
+            storedIndices = indices;
+            indices = tmp2;
+            }
         }
     }
 
@@ -429,7 +451,10 @@ public class TreeIntervals implements IntervalList {
     }
 
     private int[] indices;
+    private int[] storedIndices;
+
     private double[] times;
+    private double[] storedTimes;
 
     /**
      * The tree.
@@ -464,4 +489,6 @@ public class TreeIntervals implements IntervalList {
     private boolean storedIntervalsKnown;
 	
 	private double multifurcationLimit = -1.0;
+
+    private static final boolean superStore = true;
 }

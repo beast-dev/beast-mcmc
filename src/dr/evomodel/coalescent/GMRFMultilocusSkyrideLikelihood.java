@@ -8,6 +8,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -31,15 +32,19 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     protected void setTree(List<Tree> treeList) {
         treesSet = this;
         this.treeList = treeList;
-        makeTreeIntervalList(treeList);
+        makeTreeIntervalList(treeList, true);
         numTrees = treeList.size();
     }
 
-    private void makeTreeIntervalList(List<Tree> treeList) {
-        intervalsList = new ArrayList<TreeIntervals>();
+    private void makeTreeIntervalList(List<Tree> treeList, boolean add) {
+        if (intervalsList == null) {
+            intervalsList = new ArrayList<TreeIntervals>();
+        } else {
+            intervalsList.clear();
+        }
         for (Tree tree : treeList) {
             intervalsList.add(new TreeIntervals(tree));
-            if (tree instanceof TreeModel) {
+            if (add && tree instanceof TreeModel) {
                 addModel((TreeModel) tree);
             }
         }
@@ -59,19 +64,16 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             TreeModel treeModel = (TreeModel) model;
             int tn = treeList.indexOf(treeModel);
             if (tn >= 0) {
-//                intervalsList.get(tn).setIntervalsUnknown();  // TODO Why does this not work?
-//                intervalsList.get(tn).setTree(treeModel); // TODO Why does this not work?
-                makeTreeIntervalList(treeList);               
+                intervalsList.get(tn).setIntervalsUnknown();  // TODO Why is this slower (?) than remaking whole list?
+//                makeTreeIntervalList(treeList, false);
                 intervalsKnown = false;
                 likelihoodKnown = false;
             } else {
-                throw new RuntimeException("What?");
+                throw new RuntimeException("Unknown tree modified in GMRFMultilocusSkyrideLikelihood");
             }
         } else {
-            throw new RuntimeException("What? (but remove me)");
+            throw new RuntimeException("Unknown object modified in GMRFMultilocusSkyrideLikelihood");
         }
-
-//        super.handleModelChangedEvent(model, object, index); // Not needed
     }
 
     public void initializationReport() {
@@ -91,9 +93,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
     // TODO: offsets, rootHeight options
 
-
     int numTrees;
-//    int N = 0;
 
     // countsOfLineages[i][j] is the number of lineages present in tree j during "w" interval i
     int[][] countsOfLineages;
@@ -111,30 +111,30 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     protected void setupSufficientStatistics() {
 
         index = 0;
-//        numTrees = treeList.size();
 
-//        if (countsOfLineages == null) { // Allocate once   // TODO Why does this not work?
-
-            int N = 0; // TODO Calculate ONCE
+        if (countsOfLineages == null) { // Allocate once
+            int N = 0;
             // set N to an upper bound on number of "w" intervals
             for (int i = 0; i < numTrees; i++) {
                 N = N + intervalsList.get(i).getIntervalCount();
             }
 
-//        System.err.println(N + " " + fieldLength);
-
             countsOfLineages = new int[numTrees][N];
             intervalLengths = new double[N];
             coalEvent = new int[N];
-//        }
+        } else {
+            for (int i = 0; i < numTrees; i++) {  // Why are these not filled below?
+                Arrays.fill(countsOfLineages[i], 0);
+            }
+        }
 
         // nextIntervals keeps track of how far we have traveled with respect to each tree
         // nextIntervals[i] is the next interval which has yet to be reached in tree i
         // should be initialized to all zeros
-        int nextIntervals[] = new int[numTrees];
+        int nextIntervals[] = new int[numTrees]; // TODO Allocate once
 
         // treeFinished[i] indicates whether we have reached the end of tree i
-        int treeFinished[] = new int[numTrees];
+        int treeFinished[] = new int[numTrees];  // TODO Allocate once
         int numTreesFinished = 0;
 
         // currentTime is the starting time of the interval which we are at
@@ -151,10 +151,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                 currentTime = propCurrent;
             }
         }
-
-        //for (TreeIntervals treeInterval : intervalsList) {
-        //    System.err.println(treeInterval);
-        //}
 
         // Once we find the currentTree, we update corresponding nextIntervals entry
         // note that the next interval may have have same starting time as current interval
@@ -176,7 +172,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
                     }
                 }
             }
-
 
             // We find nextTree, the tree with the node closest (but not equal to) the current node in terms of time
 
@@ -260,7 +255,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         for (int i = 0; i < index; i++) {
             for (int j = 0; j < numTrees; j++) {
                 weight = weight + countsOfLineages[j][i] * (countsOfLineages[j][i] - 1) * intervalLengths[i];
-                }
+            }
             tempLength = tempLength + intervalLengths[i];
             if (coalEvent[i] > -1) {
                 sufficientStatistics[m] = weight / 2;
@@ -287,16 +282,15 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         return rootHeight;
     }    
 
-	protected void storeState() {
-		super.storeState();
-        storeTheState();
-	}
+//	protected void storeState() {
+//		super.storeState();
+////        storeTheState();  // Called in super
+//	}
 
-
-	protected void restoreState() {
-		super.restoreState();
-        restoreTheState();
-    }
+//	protected void restoreState() {
+//		super.restoreState();
+////        restoreTheState();  // Called in super
+//    }
 
     private List<Tree> treeList;
     private List<TreeIntervals> intervalsList;

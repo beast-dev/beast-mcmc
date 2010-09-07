@@ -341,11 +341,8 @@ public class STARBEASTGenerator extends Generator {
 
         writer.writeOpenTag(DistributionModelParser.SCALE);
         
-        Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
-        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN),
-                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial))}, true);
-        
+        Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);         
+        writeParameter(para, 1, writer);
         writer.writeCloseTag(DistributionModelParser.SCALE);
 
         writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);   

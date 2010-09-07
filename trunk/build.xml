@@ -258,6 +258,7 @@
 	<property name="TreeAnnotator_name" value="TreeAnnotator" />
 	<property name="LogCombiner_name" value="LogCombiner" />
 	<property name="LogAnalyser_name" value="LogAnalyser" />
+    <property name="TreeStat_name" value="TreeStat" />
 
     <property name="common_dir" value="${release_dir}/common" />
 
@@ -334,6 +335,14 @@
 		<launch4j configFile="${Windows_dir}/LogCombiner_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${LogCombiner_name} v${version}.exe"
+				  fileVersion="${version_number}.0"
+				  txtFileVersion="${version}"
+				  productVersion="${version_number}.0"
+				  txtProductVersion="${version}"/>
+
+        <launch4j configFile="${Windows_dir}/TreeStat_launch4j.xml"
+				  jar="${dist}/beast.jar"
+				  outfile="${Windows_package_dir}/${TreeStat_name} v${version}.exe"
 				  fileVersion="${version_number}.0"
 				  txtFileVersion="${version}"
 				  productVersion="${version_number}.0"
@@ -443,7 +452,7 @@
                         vmoptions="-Xmx1024M"
 		    			arguments="-window -working -options"
 		                version="${version}"
-		                infostring="${BEAST_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+		                infostring="${BEAST_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >
 			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
 			<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -464,7 +473,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${BEAUti_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Walter Xie"
+                        infostring="${BEAUti_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Walter Xie"
                         bundleid="dr.app.beauti" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>
@@ -487,7 +496,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.logcombiner" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -504,8 +513,25 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2009, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.treeannotator" >
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+            </jarfileset>
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <javaproperty name="java.library.path" value="$JAVAROOT/lib"/>
+        </jarbundler>
+
+        <jarbundler dir="${Mac_package_dir}"
+                        name="${TreeStat_name} v${version}"
+                        mainclass="dr.app.treestat.TreeStatApp"
+                        icon="${common_dir}/icons/utility.icns"
+                        jvmversion="1.5+"
+                        vmoptions="-Xmx1024M"
+                        arguments=""
+                        version="${version}"
+                        infostring="${TreeStat_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        bundleid="dr.app.treestat" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
             </jarfileset>

@@ -60,8 +60,10 @@ public class TMRCAStatisticsGenerator extends Generator {
         writer.writeText("");
         for (Taxa taxa : options.taxonSets) {
             writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
-                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "tmrca("
-                        + taxa.getTreeModel().getPrefix() + taxa.getId() + ")"),}
+                new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")"),
+                    new Attribute.Default<Boolean>(TMRCAStatisticParser.PARENT, options.taxonSetsForParent.get(taxa)),
+                }
             ); // make tmrca(tree.name) eay to read in log for Tracer
             writer.writeOpenTag(TMRCAStatisticParser.MRCA);
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());

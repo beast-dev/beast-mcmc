@@ -31,9 +31,9 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evolution.alignment.Alignment;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
@@ -113,9 +113,14 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         TableColumn tableColumn = tableColumnModel.getColumn(0);
         tableColumn.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
         tableColumn.setMinWidth(20);
+
         tableColumn = tableColumnModel.getColumn(1);
         tableColumn.setPreferredWidth(10);
+
         tableColumn = tableColumnModel.getColumn(2);
+        tableColumn.setPreferredWidth(10);
+
+        tableColumn = tableColumnModel.getColumn(3);
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         tableColumn.setCellRenderer(comboBoxRenderer);
 
@@ -392,7 +397,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     private void treeModelsChanged() {
         Object[] modelArray = options.getPartitionTreeModels().toArray();
-        TableColumn col = tableColumnModel.getColumn(2);
+        TableColumn col = tableColumnModel.getColumn(3);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
     }
 
@@ -484,6 +489,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             Collections.sort(options.taxonSets);
 
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
+            options.taxonSetsForParent.put(currentTaxonSet, Boolean.FALSE);
 
             taxonSetsTableModel.fireTableDataChanged();
 
@@ -503,6 +509,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             if (row != -1) {
                 Taxa taxa = options.taxonSets.remove(row);
                 options.taxonSetsMono.remove(taxa);
+                options.taxonSetsForParent.remove(taxa);
             }
             taxonSetChanged();
 
@@ -624,23 +631,16 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     class TaxonSetsTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 3318461381525023153L;
 
+        String[] columnNames = {"Taxon Sets", "Monophyletic?", "Parent?", "Tree"};
         public TaxonSetsTableModel() {
         }
 
         public int getColumnCount() {
-            return 3;
+            return columnNames.length;
         }
 
         public String getColumnName(int column) {
-            switch (column) {
-                case 0:
-                    return "Taxon Sets";
-                case 1:
-                    return "Monophyletic?";
-                case 2:
-                    return "Tree";
-            }
-            return null;
+            return columnNames[column];
         }
 
         public int getRowCount() {
@@ -656,20 +656,23 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return options.taxonSetsMono.get(taxonSet);
                 case 2:
+                    return options.taxonSetsForParent.get(taxonSet);
+                case 3:
                     return taxonSet.getTreeModel();
+                default:
+                    throw new IllegalArgumentException("unknown column, " + columnIndex);
             }
-            return null;
         }
 
         public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
             Taxa taxonSet = options.taxonSets.get(rowIndex);
             switch (columnIndex) {
-                case 0: {
+                case 0:
                     taxonSet.setId(aValue.toString());
                     setTaxonSetTitle();
                     break;
-                }
-                case 1: {
+
+                case 1:
                     if ((Boolean) aValue) {
                         Taxa taxa = options.taxonSets.get(rowIndex);
                         if (checkCompatibility(taxa)) {
@@ -679,10 +682,15 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                         options.taxonSetsMono.put(taxonSet, (Boolean) aValue);
                     }
                     break;
-                }
+
                 case 2:
+                    options.taxonSetsForParent.put(taxonSet, (Boolean) aValue);
+                    break;
+                case 3:
                     taxonSet.setTreeModel((PartitionTreeModel) aValue);
                     break;
+                default:
+                    throw new IllegalArgumentException("unknown column, " + columnIndex);
             }
         }
 

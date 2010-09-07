@@ -8,16 +8,16 @@ public class ModifiedBesselFirstKind {
 
     //Adapted from Numerical Recipes for C
 
-    public final int ACC = 40;
-    public final double BIGNO = 1.0e10;
-    public final double BIGNI = 1.0e-10;
+    public static final int ACC = 40;
+    public static final double BIGNO = 1.0e10;
+    public static final double BIGNI = 1.0e-10;
 
     /**
      * @param x argument
      * @param n order
      * @return the modified Bessel function of the first kind and nth order
      */
-    public double bessi(double x, int n) {
+    public static double bessi(double x, int n) {
 
         if (n == 0) return Bessel.i0(x);
         if (n == 1) return Bessel.i1(x);

@@ -28,7 +28,10 @@ Version 1.6.0 released 1st September 2010
 	        Drummond AJ and Suchard MA (2010) Bayesian random local clocks or one
 	        rate to rule them all. BMC Biology.
 
-	    Discrete trait model:
+	    Discrete trait model, see:
+	        http://beast.bio.ed.ac.uk/Tutorials#Phylogeography_tutorials
+
+	    Add ForParent attribute in Taxon Set in BEAUti.
 
 	    Add TreeStat in the release.
 

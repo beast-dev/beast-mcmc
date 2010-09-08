@@ -25,6 +25,8 @@
 
 package dr.inference.operators;
 
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -58,6 +60,11 @@ public class MultivariateNormalOperator extends AbstractCoercableOperator {
         this.parameter = parameter;
         setWeight(weight);
         dim = parameter.getDimension();
+
+        SingularValueDecomposition svd = new SingularValueDecomposition(new DenseDoubleMatrix2D(inMatrix));
+        if (inMatrix[0].length != svd.rank()) {
+            throw new RuntimeException("Variance matrix in mvnOperator is not of full rank");
+        }
 
         final double[][] matrix;
         if (isVarianceMatrix) {

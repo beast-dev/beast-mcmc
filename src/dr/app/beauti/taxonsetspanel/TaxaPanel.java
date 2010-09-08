@@ -44,6 +44,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -62,9 +63,12 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     private static final long serialVersionUID = -3138832889782090814L;
 
     private final String TAXON_SET_DEFAULT = "taxon set...";
+    private final String[] columnToolTips = {null,
+            "Enforce the selected taxon set to be monophyletic on the specified tree",
+            "The tmrcaStatistic will represent that age of the parent node of the MRCA, rather than the MRCA itself",
+            "Select the tree from which to report the MRCA of the taxa"};
 
     BeautiFrame frame = null;
-
     BeautiOptions options = null;
 
 //    private TaxonList taxa = null;
@@ -106,7 +110,20 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
         // Taxon Sets
         taxonSetsTableModel = new TaxonSetsTableModel();
-        taxonSetsTable = new JTable(taxonSetsTableModel);
+        taxonSetsTable = new JTable(taxonSetsTableModel) {
+            //Implement table header tool tips.
+            protected JTableHeader createDefaultTableHeader() {
+                return new JTableHeader(columnModel) {
+                    public String getToolTipText(MouseEvent e) {
+                        java.awt.Point p = e.getPoint();
+                        int index = columnModel.getColumnIndexAtX(p.x);
+                        int realIndex = columnModel.getColumn(index).getModelIndex();
+                        return columnToolTips[realIndex];
+                    }
+                };
+            }
+        };
+
         taxonSetsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         tableColumnModel = taxonSetsTable.getColumnModel();

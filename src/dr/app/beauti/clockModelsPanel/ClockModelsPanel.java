@@ -35,20 +35,22 @@ import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.RealNumberCellEditor;
+import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.HeaderRenderer;
-import dr.app.gui.table.TableEditorStopper;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.util.EnumSet;
 
 /**
@@ -60,7 +62,12 @@ import java.util.EnumSet;
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
 	private static final long serialVersionUID = 2945922234432540027L;
-
+    private final String[] columnToolTips = {null, "Molecular clock model",
+            "Decide whether to estimate molecular clock model",
+            "Provide the rate if it is fixed"};
+    private final String[] columnToolTips2 = {null, "Trait clock model",
+            "Decide whether to estimate trait clock model",
+            "Provide the rate if it is fixed"};
 	JTable dataTable = null;
     DataTableModel dataTableModel = null;
     JScrollPane scrollPane;
@@ -80,7 +87,19 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		this.frame = parent;
 
 		dataTableModel = new DataTableModel();
-		dataTable = new JTable(dataTableModel);
+		dataTable = new JTable(dataTableModel){
+            //Implement table header tool tips.
+            protected JTableHeader createDefaultTableHeader() {
+                return new JTableHeader(columnModel) {
+                    public String getToolTipText(MouseEvent e) {
+                        java.awt.Point p = e.getPoint();
+                        int index = columnModel.getColumnIndexAtX(p.x);
+                        int realIndex = columnModel.getColumn(index).getModelIndex();
+                        return columnToolTips[realIndex];
+                    }
+                };
+            }
+        };
 
         initTable(dataTable);
 
@@ -160,7 +179,19 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 		add(modelPanelParent, BorderLayout.CENTER);
 
         //=======================  Discrete Trait Substitution Model =========================
-        discreteTraitTable = new JTable(new DiscreteTraitModelTableModel());
+        discreteTraitTable = new JTable(new DiscreteTraitModelTableModel()){
+            //Implement table header tool tips.
+            protected JTableHeader createDefaultTableHeader() {
+                return new JTableHeader(columnModel) {
+                    public String getToolTipText(MouseEvent e) {
+                        java.awt.Point p = e.getPoint();
+                        int index = columnModel.getColumnIndexAtX(p.x);
+                        int realIndex = columnModel.getColumn(index).getModelIndex();
+                        return columnToolTips2[realIndex];
+                    }
+                };
+            }
+        };
 
         initTable(discreteTraitTable);
         d_scrollPane = new JScrollPane(discreteTraitTable,

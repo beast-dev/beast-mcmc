@@ -164,6 +164,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             	updateShareSameTreePriorChanged ();
             }
         });
+        linkTreePriorCheck.setToolTipText("Decide whether to use one tree prior for all trees");
         panel3.add(linkTreePriorCheck);
 
         JPanel panel4 = new JPanel(new BorderLayout());

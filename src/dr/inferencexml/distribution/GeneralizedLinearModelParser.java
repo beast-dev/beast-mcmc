@@ -1,5 +1,7 @@
 package dr.inferencexml.distribution;
 
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.distribution.GeneralizedLinearModel;
 import dr.inference.distribution.LinearRegression;
 import dr.inference.distribution.LogLinearModel;
@@ -28,6 +30,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
     public static final String LOG_LINEAR = "logLinear";
 //    public static final String LOG_TRANSFORM = "logDependentTransform";
     public static final String RANDOM_EFFECTS = "randomEffects";
+    public static final String CHECK_IDENTIFIABILITY = "checkIdentifiability";
 
     public String getParserName() {
         return GLM_LIKELIHOOD;
@@ -86,6 +89,13 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
         addIndependentParameters(xo, glm, dependentParam);
         addRandomEffects(xo, glm, dependentParam);
 
+        boolean checkIdentifiability = xo.getAttribute(CHECK_IDENTIFIABILITY, true);
+        if (checkIdentifiability) {
+            if (!glm.getAllIndependentVariablesIdentifiable()) {
+                throw new XMLParseException("All design matrix predictors are not identifiable in "+  xo.getId());
+            }
+        }
+
         return glm;
     }
 
@@ -120,8 +130,23 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
                     if (indicator.getDimension() != independentParam.getDimension())
                         throw new XMLParseException("dim(" + independentParam.getId() + ") != dim(" + indicator.getId() + ")");
                 }
+                checkFullRank(designMatrix);
                 glm.addIndependentParameter(independentParam, designMatrix, indicator);
             }
+        }
+    }
+
+    private void checkFullRank(DesignMatrix designMatrix) throws XMLParseException {
+        int fullRank = designMatrix.getColumnDimension();
+
+        SingularValueDecomposition svd = new SingularValueDecomposition(
+                new DenseDoubleMatrix2D(designMatrix.getParameterAsMatrix()));
+        int realRank = svd.rank();
+        if (realRank != fullRank) {
+            throw new XMLParseException(
+                "rank(" + designMatrix.getId() + ") = " + realRank +
+                        ".\nMatrix is not of full rank as colDim(" + designMatrix.getId() + ") = " + fullRank        
+            );
         }
     }
 
@@ -163,6 +188,7 @@ public class GeneralizedLinearModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(FAMILY),
+            AttributeRule.newBooleanRule(CHECK_IDENTIFIABILITY, true),
             new ElementRule(DEPENDENT_VARIABLES,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(INDEPENDENT_VARIABLES,

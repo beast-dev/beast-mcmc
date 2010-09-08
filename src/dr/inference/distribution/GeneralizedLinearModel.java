@@ -1,5 +1,7 @@
 package dr.inference.distribution;
 
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.SingularValueDecomposition;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.model.*;
@@ -81,6 +83,35 @@ public abstract class GeneralizedLinearModel extends AbstractModelLikelihood imp
             addVariable(delta);
         numIndependentVariables++;
         Logger.getLogger("dr.inference").info("\tAdding independent predictors '" + effect.getStatisticName() + "' with design matrix '" + matrix.getStatisticName() + "'");
+    }
+
+    public boolean getAllIndependentVariablesIdentifiable() {
+
+        int totalColDim = 0;
+        for (double[][] mat : designMatrix) {
+            totalColDim += mat[0].length;
+        }
+
+        double[][] grandDesignMatrix = new double[N][totalColDim];
+
+        int offset = 0;
+        for (double[][] mat: designMatrix) {
+            final int length = mat[0].length;
+            for (int i = 0; i < N; ++i) {
+                for (int j = 0; j < length; ++j) {
+                    grandDesignMatrix[i][offset + j] = mat[i][j];
+                }
+            }
+            offset += length;
+        }
+
+        SingularValueDecomposition svd = new SingularValueDecomposition(
+                new DenseDoubleMatrix2D(grandDesignMatrix));
+
+        int rank = svd.rank();
+        boolean isFullRank = (totalColDim == rank);
+        Logger.getLogger("dr.inference").info("\tTotal # of predictors = " + totalColDim + " and rank = " + rank);        
+        return isFullRank;
     }
 
     public int getNumberOfFixedEffects() {

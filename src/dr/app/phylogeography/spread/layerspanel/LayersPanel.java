@@ -1,5 +1,6 @@
 package dr.app.phylogeography.spread.layerspanel;
 
+import dr.app.gui.DeleteActionResponder;
 import dr.app.phylogeography.builder.*;
 import dr.app.phylogeography.spread.*;
 import dr.app.gui.table.MultiLineTableCellRenderer;

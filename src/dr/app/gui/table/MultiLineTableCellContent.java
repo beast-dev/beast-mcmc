@@ -1,4 +1,4 @@
-package pyromania.gui;
+package dr.app.gui.table;
 
 import javax.swing.*;
 

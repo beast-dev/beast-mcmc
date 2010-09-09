@@ -7,18 +7,18 @@ import com.lowagie.text.pdf.PdfContentByte;
 import com.lowagie.text.pdf.PdfTemplate;
 import com.lowagie.text.pdf.PdfWriter;
 import dr.app.gui.FileDrop;
+import dr.app.gui.chart.ChartRuntimeException;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.util.LongTask;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
 import dr.app.tracer.traces.TracePanel;
-import dr.app.gui.chart.ChartRuntimeException;
-import dr.app.gui.table.TableEditorStopper;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
-import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -26,11 +26,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
@@ -38,6 +36,8 @@ import java.util.*;
 import java.util.List;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
+    private final String[] columnToolTips = {null, null, null,
+            "Traces Type: real(R) is double, integer(I) is integer, category(C) is string"};
 
     private TracePanel tracePanel = null;
 
@@ -149,7 +149,19 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         topPanel.add(controlPanel1, BorderLayout.SOUTH);
 
         statisticTableModel = new StatisticTableModel();
-        statisticTable = new JTable(statisticTableModel);
+        statisticTable = new JTable(statisticTableModel){
+            //Implement table header tool tips.
+            protected JTableHeader createDefaultTableHeader() {
+                return new JTableHeader(columnModel) {
+                    public String getToolTipText(MouseEvent e) {
+                        java.awt.Point p = e.getPoint();
+                        int index = columnModel.getColumnIndexAtX(p.x);
+                        int realIndex = columnModel.getColumn(index).getModelIndex();
+                        return columnToolTips[realIndex];
+                    }
+                };
+            }
+        };
         statisticTable.getColumnModel().getColumn(0).setPreferredWidth(150);
         statisticTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
         statisticTable.getColumnModel().getColumn(1).setPreferredWidth(70);
@@ -211,15 +223,18 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        changeTraceTypePanel.add(new JLabel("Change To:"));
-        JButton realButton = new JButton("real(R)");
-        JButton integerButton = new JButton("integer(I)");
-        JButton categoryButton = new JButton("category(C)");
+        changeTraceTypePanel.add(new JLabel("Change type to:"));
+        JButton realButton = new JButton("R");
+        realButton.setToolTipText("real");
+        JButton integerButton = new JButton("I");
+        integerButton.setToolTipText("integer");
+        JButton categoryButton = new JButton("C");
+        categoryButton.setToolTipText("category");
         ActionListener traceTypeButton = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (((JButton) e.getSource()).getText().equals("integer(I)")) {
+                if (((JButton) e.getSource()).getText().equals("I")) {
                     changeTraceType(TraceFactory.TraceType.INTEGER);
-                } else if (((JButton) e.getSource()).getText().equals("category(C)")) {
+                } else if (((JButton) e.getSource()).getText().equals("C")) {
                     changeTraceType(TraceFactory.TraceType.CATEGORY);
                 } else {
                     changeTraceType(TraceFactory.TraceType.CONTINUOUS);

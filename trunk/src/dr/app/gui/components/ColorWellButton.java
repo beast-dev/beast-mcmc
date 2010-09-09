@@ -7,7 +7,7 @@
  *
  */
 
-package dr.app.gui.components;
+package pyromania.gui.components;
 
 import javax.swing.*;
 import java.awt.*;

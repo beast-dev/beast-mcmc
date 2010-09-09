@@ -43,9 +43,11 @@ public class TipTraitSwapOperator extends SimpleMCMCOperator {
     }
 
     private void swap(int i, int j) {
-        double[] trait1 = traitLikelihood.getTraitForNode(traitLikelihood.getTreeModel(), traitLikelihood.getTreeModel().getNode(index1), traitName);
-        double[] trait2 = traitLikelihood.getTraitForNode(traitLikelihood.getTreeModel(), traitLikelihood.getTreeModel().getNode(index2), traitName);
+        double[] trait1 = traitLikelihood.getTipDataValues(i);
+        double[] trait2 = traitLikelihood.getTipDataValues(j);
 
+        traitLikelihood.setTipDataValuesForNode(j, trait1);
+        traitLikelihood.setTipDataValuesForNode(i, trait2);           
     }
 
     public void reject() {

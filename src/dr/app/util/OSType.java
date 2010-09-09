@@ -21,9 +21,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.util;
+package pyromania.util;
 
-/** 
+/**
  * @author Walter Xie
  */
 public enum OSType {
@@ -31,7 +31,7 @@ public enum OSType {
     MAC,
     UNIX_LINUX;
 
-	static OSType detect() {        
+	static OSType detect() {
 
 		if (os.indexOf("mac") >= 0) {
 			return MAC;
@@ -46,30 +46,30 @@ public enum OSType {
 		}
 
 		return null;
-    } 
-    
-    public static boolean isWindows(){ 
+    }
+
+    public static boolean isWindows(){
 		//windows
-	    return (os.indexOf( "win" ) >= 0); 
+	    return (os.indexOf( "win" ) >= 0);
 	}
- 
+
 	public static boolean isMac(){
 		//Mac
-	    return (os.indexOf( "mac" ) >= 0);  
+	    return (os.indexOf( "mac" ) >= 0);
 	}
- 
+
 	public static boolean isUnixOrLinux(){
 		//linux or unix
-	    return (os.indexOf( "nix") >=0 || os.indexOf( "nux") >=0); 
+	    return (os.indexOf( "nix") >=0 || os.indexOf( "nux") >=0);
 	}
-    
+
     public String toString() {
         return os;
     }
-    
+
     public String version() {
         return System.getProperty("os.version");
     }
-   
+
     static final String os = System.getProperty("os.name").toLowerCase();
 }

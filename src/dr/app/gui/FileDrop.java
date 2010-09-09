@@ -1,4 +1,4 @@
-package dr.app.gui;
+package pyromania.gui;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.BufferedReader;
@@ -21,7 +21,7 @@ import java.io.Reader;
  *      JPanel myPanel = new JPanel();
  *      new FileDrop( myPanel, new FileDrop.Listener()
  *      {   public void filesDropped( java.io.File[] files )
- *          {   
+ *          {
  *              // handle file drop
  *              ...
  *          }   // end filesDropped
@@ -162,7 +162,7 @@ public class FileDrop
 
 
     /**
-     * Constructor with a specified border 
+     * Constructor with a specified border
      *
      * @param c Component on which files will be dropped.
      * @param dragBorder Border to use on <tt>JComponent</tt> when dragging occurs.
@@ -278,7 +278,7 @@ public class FileDrop
                             log( out, "FileDrop: normal border saved." );
                             jc.setBorder( dragBorder );
                             log( out, "FileDrop: drag border set." );
-                        }   // end if: JComponent   
+                        }   // end if: JComponent
 
                         // Acknowledge that it's okay to enter
                         //evt.acceptDrag( java.awt.dnd.DnDConstants.ACTION_COPY_OR_MOVE );
@@ -710,7 +710,7 @@ public class FileDrop
      *      ...
      * </code></pre>
      *
-     * The {@link java.awt.datatransfer.DataFlavor} associated with 
+     * The {@link java.awt.datatransfer.DataFlavor} associated with
      * {@link TransferableObject} has the representation class
      * <tt>net.iharder.dnd.TransferableObject.class</tt> and MIME type
      * <tt>application/x-net.iharder.dnd.TransferableObject</tt>.
@@ -727,7 +727,7 @@ public class FileDrop
     public static class TransferableObject implements java.awt.datatransfer.Transferable
     {
         /**
-         * The MIME type for {@link #DATA_FLAVOR} is 
+         * The MIME type for {@link #DATA_FLAVOR} is
          * <tt>application/x-net.iharder.dnd.TransferableObject</tt>.
          *
          * @since 1.1
@@ -739,7 +739,7 @@ public class FileDrop
          * The default {@link java.awt.datatransfer.DataFlavor} for
          * {@link TransferableObject} has the representation class
          * <tt>net.iharder.dnd.TransferableObject.class</tt>
-         * and the MIME type 
+         * and the MIME type
          * <tt>application/x-net.iharder.dnd.TransferableObject</tt>.
          *
          * @since 1.1
@@ -758,7 +758,7 @@ public class FileDrop
         /**
          * Creates a new {@link TransferableObject} that wraps <var>data</var>.
          * Along with the {@link #DATA_FLAVOR} associated with this class,
-         * this creates a custom data flavor with a representation class 
+         * this creates a custom data flavor with a representation class
          * determined from <code>data.getClass()</code> and the MIME type
          * <tt>application/x-net.iharder.dnd.TransferableObject</tt>.
          *

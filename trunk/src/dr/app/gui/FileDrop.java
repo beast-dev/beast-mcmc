@@ -1,4 +1,4 @@
-package pyromania.gui;
+package dr.app.gui;
 
 import java.awt.datatransfer.DataFlavor;
 import java.io.BufferedReader;

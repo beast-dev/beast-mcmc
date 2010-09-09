@@ -1,6 +1,6 @@
-package pyromania.gui.table;
+package dr.app.gui.table;
 
-import pyromania.gui.components.WholeNumberField;
+import dr.app.gui.components.WholeNumberField;
 
 import javax.swing.*;
 import java.awt.*;

@@ -121,7 +121,7 @@ public class RateIndicatorBF {
 
         int firstActualRate = getFirstEntryOf(inputFileName, actualRateString);
 
-        int geoSiteModelMuPosition = getFirstEntryOf(inputFileName, geoSiteModelString);
+//        int geoSiteModelMuPosition = getFirstEntryOf(inputFileName, geoSiteModelString);
         //System.out.println("geoSiteModelMu is at column "+geoSiteModelMuPosition);
 
 

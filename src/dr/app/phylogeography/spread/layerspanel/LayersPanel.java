@@ -2,7 +2,7 @@ package dr.app.phylogeography.spread.layerspanel;
 
 import dr.app.phylogeography.builder.*;
 import dr.app.phylogeography.spread.*;
-import dr.app.gui.MultiLineTableCellRenderer;
+import dr.app.gui.table.MultiLineTableCellRenderer;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import dr.app.gui.table.TableEditorStopper;

@@ -1,7 +1,7 @@
 package dr.app.phylogeography.builder;
 
 import dr.app.phylogeography.spread.InputFile;
-import dr.app.gui.MultiLineTableCellContent;
+import dr.app.gui.table.MultiLineTableCellContent;
 import dr.app.phylogeography.structure.Layer;
 
 import javax.swing.*;

@@ -2,7 +2,7 @@ package dr.app.phylogeography.spread;
 
 import dr.evolution.tree.Tree;
 import dr.util.NumberFormatter;
-import dr.app.gui.MultiLineTableCellContent;
+import dr.app.gui.table.MultiLineTableCellContent;
 
 import javax.swing.*;
 import java.io.File;

@@ -1,5 +1,7 @@
 package dr.app.phylogeography.spread.inputpanel;
 
+import dr.app.gui.DeleteActionResponder;
+import dr.app.gui.table.MultiLineTableCellRenderer;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
@@ -23,7 +25,6 @@ import java.io.IOException;
 
 import dr.evolution.io.Importer;
 import dr.app.phylogeography.spread.*;
-import dr.app.gui.MultiLineTableCellRenderer;
 
 /**
  * @author Andrew Rambaut

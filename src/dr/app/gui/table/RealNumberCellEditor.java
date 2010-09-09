@@ -1,6 +1,6 @@
-package dr.app.gui.table;
+package pyromania.gui.table;
 
-import dr.app.gui.components.RealNumberField;
+import pyromania.gui.components.RealNumberField;
 
 import javax.swing.*;
 import java.awt.*;

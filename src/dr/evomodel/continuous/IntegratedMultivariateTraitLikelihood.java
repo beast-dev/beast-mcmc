@@ -113,7 +113,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         return traitValue;
     }
 
-    private void setTipDataValuesForNode(int index, double[] traitValue) {
+    public void setTipDataValuesForNode(int index, double[] traitValue) {
         // Set tip data values
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
         makeDirty();

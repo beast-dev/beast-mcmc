@@ -1,4 +1,4 @@
-package dr.app.gui.table;
+package pyromania.gui.table;
 
 import java.awt.Component;
 import java.awt.event.FocusAdapter;

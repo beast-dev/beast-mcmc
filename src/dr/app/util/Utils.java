@@ -26,12 +26,19 @@
 package dr.app.util;
 
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author adru001
  */
 public class Utils {
+    public static final String TRAITS = "traits";
 
     public static String absName(File file) {
         return (file != null) ? file.getAbsolutePath() : null;
@@ -72,6 +79,148 @@ public class Utils {
         frame.dispose();
 
         return file;
+    }
+
+    // detect type of text value - return class of type
+
+    public static Class detectTYpe(final String valueString) {
+        if (valueString.equalsIgnoreCase("TRUE") || valueString.equalsIgnoreCase("FALSE")) {
+            return Boolean.class;
+        }
+
+        try {
+            final double number = Double.parseDouble(valueString);
+            if (Math.round(number) == number) {
+                return Integer.class;
+            }
+            return Double.class;
+        } catch (NumberFormatException pe) {
+            return String.class;
+        }
+    }
+
+    // New object of type cl from text.
+    // return null if can't be done of value can't be converted.
+
+    public static Object constructFromString(Class cl, String value) {
+        for (Constructor c : cl.getConstructors()) {
+            final Class[] classes = c.getParameterTypes();
+            if (classes.length == 1 && classes[0].equals(String.class)) {
+                try {
+                    return c.newInstance(value);
+                } catch (Exception e) {
+                    return null;
+                }
+            }
+        }
+        return null;
+    }
+
+    // skip over comment and empty lines
+
+    public static String nextNonCommentLine(BufferedReader reader) throws IOException {
+        String line;
+        do {
+            line = reader.readLine();
+            // ignore empty or comment lines
+        } while (line != null && (line.trim().length() == 0 || line.trim().charAt(0) == '#'));
+        return line;
+    }
+
+    /**
+     * Load traits from file.
+     *
+     * @param file      File
+     * @param delimiter String
+     * @return A map whose key is the trait. The value is a list of <taxa, value> as a string array of size 2.
+     * @throws java.io.IOException  IOException
+     * @throws dr.app.util.Arguments.ArgumentException   ArgumentException
+     */
+    public static Map<String, List<String[]>> importTraitsFromFile(File file, final String delimiter)
+            throws IOException, Arguments.ArgumentException {
+        final BufferedReader reader = new BufferedReader(new FileReader(file));
+
+        String line = nextNonCommentLine(reader);
+
+        // define where is the trait keyword in the 1st row of file
+        final int startAt = 1;
+
+        final String[] traitNames = line.split(delimiter);
+        for (int k = 0; k < traitNames.length; ++k) {
+            traitNames[k] = traitNames[k].trim();
+        }
+
+        if (!(traitNames[0].equalsIgnoreCase(TRAITS) || traitNames[0].length() < 1))
+            throw new Arguments.ArgumentException("Wrong file format:\ntrait key word should be declared in the 1st row");
+
+        Map<String, List<String[]>> traits = new HashMap<String, List<String[]>>();
+        for (int i = startAt; i < traitNames.length; i++) {
+            traits.put(traitNames[i], new ArrayList<String[]>());
+        }
+
+        line = nextNonCommentLine(reader);
+        while (line != null) {
+            String[] values = line.split(delimiter);
+
+            assert (values.length > 0);
+            if (values.length != traitNames.length)
+                 throw new Arguments.ArgumentException("Wrong file format:\neach trait should have its corresponding value");
+
+            try {
+                if (traitNames[0].equalsIgnoreCase(TRAITS)) {
+                    importStatesMoreThanTaxon(traits, values, traitNames, startAt);
+                } else {
+                    importSpecies(traits, values, traitNames, startAt);
+                }
+            } catch (Arguments.ArgumentException e) {
+                e.printStackTrace();
+            }
+
+            line = nextNonCommentLine(reader);
+        }
+        return traits;
+    }
+
+    private static void importSpecies(Map<String, List<String[]>> traits, String[] values, String[] traitNames, int startAt)
+            throws Arguments.ArgumentException {
+        // first column is label for the redundant "taxa" name
+        final String first = values[0].trim();
+        int k = Arrays.asList(traitNames).indexOf(first);
+        if (k >= 0) {
+            List<String[]> trait = traits.get(first);
+            if (trait == null) {
+                throw new Arguments.ArgumentException("undefined trait " + first);
+            }
+            final String traitVal = values[1].trim();
+            for (int i = 2; i < values.length; i++) {
+                trait.add(new String[]{values[i], traitVal}); // {taxon_name, trait}
+            }
+        } else {
+            for (int i = startAt; i < values.length; i++) {
+                if (i < traitNames.length) {
+                    List<String[]> column = traits.get(traitNames[i]);
+                    column.add(new String[]{first, values[i].trim()});
+                }
+            }
+        }
+    }
+
+    private static void importStatesMoreThanTaxon(Map<String, List<String[]>> traits, String[] values, String[] traitNames, int startAt)
+            throws Arguments.ArgumentException {
+        // first column is label taxon name
+
+        if (traitNames.length < 2) {
+            throw new Arguments.ArgumentException("Wrong file format:\ntrait key words in the 1st row are loaded improperly");
+        } else if (traitNames.length - startAt < 1) {
+            throw new Arguments.ArgumentException("startAt set improperly");
+        }
+
+        for (int i = 0; i < (traitNames.length - startAt); i++) {
+            List<String[]> trait = traits.get(traitNames[i + startAt]);
+            if (trait == null) throw new Arguments.ArgumentException("undefined trait " + traitNames[i + startAt]);
+
+            trait.add(new String[]{values[0].trim(), values[i + startAt].trim()}); // {taxon_name, trait}
+        }
     }
 
     /**
@@ -124,4 +273,28 @@ public class Utils {
         return new File(f);
     }
 
+//    enum Platform {
+//        WINDOWS,
+//        MACOSX,
+//        LINUX;
+//
+//        Platform detect() {
+//
+//            final String os = System.getProperty("os.name");
+//
+//            if( os.equals("Linux") ) {
+//                return LINUX;
+//            }
+//            // todo probably wrong, please check on windows
+//            if( os.equals("Windows") ) {
+//                return WINDOWS;
+//            }
+//
+//            if( System.getProperty("os.name").toLowerCase().startsWith("mac os x") ) {
+//                return MACOSX;
+//            }
+//
+//            return null;
+//        }
+//    }
 }

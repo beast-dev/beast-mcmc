@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package pyromania.util;
+package dr.app.util;
 
 import java.awt.*;
 import java.io.File;

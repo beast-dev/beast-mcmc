@@ -8,6 +8,9 @@ import dr.evomodel.tree.TreeStatistic;
 import dr.inference.model.Statistic;
 import dr.geo.math.SphericalPolarCoordinates;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc Suchard
  * @author Philippe Lemey
@@ -17,11 +20,11 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
     public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
     public static final String BOOLEAN_OPTION = "greatCircleDistance";
 
-    public TreeDispersionStatistic(String name, TreeModel tree, AbstractMultivariateTraitLikelihood traitLikelihood,
+    public TreeDispersionStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                    boolean genericOption) {
         super(name);
         this.tree = tree;
-        this.traitLikelihood = traitLikelihood;
+        this.traitLikelihoods = traitLikelihoods;
         this.genericOption = genericOption;
     }
 
@@ -42,27 +45,30 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
      */
     public double getStatisticValue(int dim) {
 
-        String traitName = traitLikelihood.getTraitName();
+        String traitName = traitLikelihoods.get(0).getTraitName();
         double treelength = 0;
         double treeDistance = 0;
 
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            double[] trait = traitLikelihood.getTraitForNode(tree, node, traitName);
+        for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
 
-            if (node != tree.getRoot()) {
+            for (int i = 0; i < tree.getNodeCount(); i++) {
+                NodeRef node = tree.getNode(i);
+                double[] trait = traitLikelihood.getTraitForNode(tree, node, traitName);
 
-                double[] parentTrait = traitLikelihood.getTraitForNode(tree, tree.getParent(node), traitName);
-                treelength += tree.getBranchLength(node);
+                if (node != tree.getRoot()) {
 
-                if (genericOption) { // Great Circle distance
-                    SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(trait[0], trait[1]);
-                    SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(parentTrait[0], parentTrait[1]);
-                    treeDistance += coord1.distance(coord2);
-                } else {
-                    treeDistance += getNativeDistance(trait, parentTrait);
+                    double[] parentTrait = traitLikelihood.getTraitForNode(tree, tree.getParent(node), traitName);
+                    treelength += tree.getBranchLength(node);
+
+                    if (genericOption) { // Great Circle distance
+                        SphericalPolarCoordinates coord1 = new SphericalPolarCoordinates(trait[0], trait[1]);
+                        SphericalPolarCoordinates coord2 = new SphericalPolarCoordinates(parentTrait[0], parentTrait[1]);
+                        treeDistance += coord1.distance(coord2);
+                    } else {
+                        treeDistance += getNativeDistance(trait, parentTrait);
+                    }
+
                 }
-
             }
         }
         return treeDistance / treelength;
@@ -85,10 +91,15 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
 
             boolean option = xo.getAttribute(BOOLEAN_OPTION, false); // Default value is false
 
-            AbstractMultivariateTraitLikelihood traitLikelihood = (AbstractMultivariateTraitLikelihood)
-                    xo.getChild(AbstractMultivariateTraitLikelihood.class);
+            List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
+                        
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                if (xo.getChild(i) instanceof AbstractMultivariateTraitLikelihood) {
+                     traitLikelihoods.add((AbstractMultivariateTraitLikelihood) xo.getChild(i));
+                }
+            }
 
-            return new TreeDispersionStatistic(name, tree, traitLikelihood, option);
+            return new TreeDispersionStatistic(name, tree, traitLikelihoods, option);
         }
 
         //************************************************************************
@@ -111,11 +122,11 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
                 AttributeRule.newStringRule(NAME, true),
                 AttributeRule.newBooleanRule(BOOLEAN_OPTION, true),
                 new ElementRule(TreeModel.class),
-                new ElementRule(AbstractMultivariateTraitLikelihood.class),
+                new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };
 
     private TreeModel tree = null;
     private boolean genericOption;
-    private AbstractMultivariateTraitLikelihood traitLikelihood;
+    private List<AbstractMultivariateTraitLikelihood> traitLikelihoods;
 }

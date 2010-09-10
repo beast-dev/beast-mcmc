@@ -17,11 +17,12 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 1st September 2010
+Last updated: alexei@cs.auckland.ac.nz - 10th September 2010
+All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.0 released 1st September 2010
+Version 1.6.0 released 10th September 2010
 
 	New Features:
 	    Random local clock model, see:
@@ -87,6 +88,8 @@ Version 1.6.0 released 1st September 2010
 		Issue 334: NullPointerException after cancelled 'Import Traits'.
 		Issue 336: Subst model table in Site Models tab collapses to nothing
 		           when window is resized
+		Issue 337: Creating a 'CONTINUOUS' or 'INTEGER' trait gives Discrete
+		           model of substitution in SiteModelPanel
 		Issue 338: Clock model panel is confusingly laid out.
 		Issue 339: GUI within scroll panes is just nasty
 		Issue 340: Spacing between elements in BEAUti generated XML
@@ -122,7 +125,8 @@ Version 1.6.0 released 1st September 2010
         Issue 361: RegEx should default to having braces round them
         Issue 362: Remove exclamation marks from dialog box messages.
         Issue 365: Folder called 'beauti1.5' in /examples
-         Issue 368:  	 Move release example xml into \example folder to reduce the redudant xml
+        Issue 368: Move release example xml into \example folder to reduce the
+                   redudant xml
         Issue 370: BEAST argument -overwrite not working
         Issue 371: new change of PriorDialog broke GUI functions
         Issue 372: Failed to load parser
@@ -130,13 +134,21 @@ Version 1.6.0 released 1st September 2010
         Issue 375: BEAUti: rootHeightPriorCombo disappear when switch between
                    Undefined and others
         Issue 377: BEAUti: Random local clock model Bug
-        Issue 380: Discrete trait model should have its tree linked to that for a tree for a sequence partition
-        Issue 381: Discrete trait model can select an inappropriate substitution model in the data partition table
+        Issue 380: Discrete trait model should have its tree linked to that
+                   for a tree for a sequence partition
+        Issue 381: Discrete trait model can select an inappropriate substitution
+                   model in the data partition table
+        Issue 382: Minor Typo in Treestat
         Issue 383: BEAUti: "species" trait should not appear in Data Panel
         Issue 384: Unhandled attribute (typo?) name in sumStatistic:rateChanges
+        Issue 385: Warning message of using random local clock model
+        Issue 386: xml file name should be shown in BEAST window
+        Issue 387: BEAUti generates wrong xml when a uniform prior is selected
+                   for species.popMean
         Issue 388: BEAUti: "species" should NOT be used as a trait name
-
-        All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+        Issue 389: add TreeStat into BEAST release
+        Issue 391: BEAUti: add forParent for taxon set
+        Issue 392: BEAUti: wrong validation to apply Normal prior to tmrca
 
 ================================================================================
 

@@ -29,126 +29,98 @@ Version 1.6.0 released 10th September 2010
 	        Drummond AJ and Suchard MA (2010) Bayesian random local clocks or one
 	        rate to rule them all. BMC Biology.
 
-	    Discrete trait model, see:
+	    Discrete trait models, see:
+            Lemey P, Rambaut A, Drummond AJ & Suchard MA (2009) Bayesian
+            Phylogeography Finds Its Roots.PLoS Comput Biol 5, e1000520.
 	        http://beast.bio.ed.ac.uk/Tutorials#Phylogeography_tutorials
 
-	    Add forParent attribute in Taxon Set in BEAUti.
+	    Continuous trait models, see:
+            Lemey P, Rambaut A, Welch JJ & Suchard MA Phylogeography takes a
+            relaxed random walk in continuous space and time. (2010)
+            Mol Biol Evol 27, 1877-1886.
+            These models are not currently specifiable from BEAUti
 
-	    Add TreeStat in the release.
+        Improved user interface for Discrete Trait models in BEAUti.
+
+	    Added 'forParent' attribute in Taxon Set in BEAUti.
+
+	    Added the application TreeStat to the BEAST package.
+
+	    Can 'drag and drop' files to the data table in BEAUti to import them.
+
+        New 'tool tip' help messages for most user-interface elements in BEAUti
+
+        The name of the XML file is now shown in the title bar of the BEAST window.
+
+        By default, BEAST will no longer overwrite existing log/trees files. This
+        behaviour can be overridden by using the '-overwrite' command line option
+        or the check box in the options dialog box.
+
+        There is a BEAST new command line option '-prefix XXX' which will add the
+        specified text to start of the file names of all log files and trees files
+        for that run. This is useful for batch running of BEAST.
+
+        More warnings are given now about potentially problematic prior choices,
+        in particular the use of improper priors. These are shown in yellow.
+        For some models, the user now has to make an explicit prior choice.
 
 	Bug Fixes:
-	    Issue 19:  Setting lognormal priors in real-space
-	    Issue 186: Guess Trait dialog has ambiguous text
-	    Issue 235: Unlinked DiscretizedBranchRates for multiple loci have the
+	    Issue 235: BEAUti: Unlinked DiscretizedBranchRates for multiple loci have the
 	               wrong number of dimensions
-	    Issue 263: BEAST ARG bug
-	    Issue 266: BEAST: tree prior expansion + growth not working
-		Issue 274: BEAUti: add error message in XML if XML is truncated
-        Issue 291: Starting tree error message is not clear
-		Issue 294: BEAUti: load xml with tip date but BEAUti would not recognize
-		Issue 295: If no BSSVS then no need for the indicators parameter
-		Issue 296: The imported data has become global to all BEAUti windows
-		Issue 298: BEAUti should validate a user specified tree that is only
-		           bifurcating at the root
-		Issue 299: GeneralDataType should be registered for the purpose that
-		           DataType.getRegisteredDataTypeNames() returns the correct
-		           set of DataType
-		Issue 300: have a single parser 'generalSubstitutionModel' and get
-		           rid of 'svsGeneralSubstitutionModel' parser
-		Issue 302: Importing multiple files at once gives NPE when they have
-		           different taxon sets
-		Issue 303: Drag and drop alignment files into BEAUti
-		Issue 305: BEAST should warn/halt if log files already exist
-		Issue 306: Add a command line option to add a prefix to all output
-		           file names
+        Issue 291: BEAUti: fixed a problem generating a starting tree in XML.
+		Issue 298: BEAUti: checks that a user specified tree that is rooted and
+		           fully bifurcating.
+		Issue 300: BEAUti: Simplified the XML for discrete models by using a single
+		           'generalSubstitutionModel' parser for all variants.
+		Issue 302: BEAUti: Now possible to importing multiple files at once when they
+		           have different taxon sets
 		Issue 307: BEAUti: missing .txt in tree log using EBSP
-		Issue 311: BEAUti: prior generator is not picking up the correct value
-		           from prior panel
-		Issue 314: Error message for alignments with different taxa to refer
-		           to one tree in BEAST & BEAUti
-		Issue 315: make alias "svsGeneralSubstitutionModel" of
-		           "generalSubstitutionModel"
-		Issue 316: previous XML with "generalSubstitutionModel" is not working
+		Issue 311: BEAUti: Prior choices for codon partition parameters are now
+		           properly generated.
 		Issue 317: BEAUti: geo-phylogenetic symmetric + no BSSVS xml not working
 		Issue 319: BEAUti:checkbox 'allow different taxa in partitions' should
 		           be a message instead
 		Issue 320: BEAUti: need validation of changing tree in data panel after
 		           allowing different taxa
-		Issue 323: BEAUti: reload xml having alignments with different taxa
-		Issue 324: "rates" in "svsGeneralSubstitutionModel" should not have
-		           relativeTo
-		Issue 325: processValues[] in DiscreteTraitBranchRateModel should be size
-		           of the number of states NOT the number of rates
-		Issue 328: Generating very long default value and bound arrays for
-		           parameters
-		Issue 331: Help button on Traits panel in BEAUti seems to do nothing
-		Issue 332: Add traits should allow any trait name to be given
-		Issue 333: Unlink buttons are enabled even when only one partition is
+		Issue 328: BEAUti: No longer generates very long default value and bound
+		           arrays for parameters.
+		Issue 332: BEAUti: Add traits now allows any trait name to be given.
+		Issue 333: BEAUti: Unlink buttons are enabled even when only one partition is
 		           loaded
-		Issue 334: NullPointerException after cancelled 'Import Traits'.
-		Issue 336: Subst model table in Site Models tab collapses to nothing
-		           when window is resized
-		Issue 337: Creating a 'CONTINUOUS' or 'INTEGER' trait gives Discrete
+		Issue 337: BEAUti: Creating a 'CONTINUOUS' or 'INTEGER' trait gives Discrete
 		           model of substitution in SiteModelPanel
-		Issue 338: Clock model panel is confusingly laid out.
-		Issue 339: GUI within scroll panes is just nasty
-		Issue 340: Spacing between elements in BEAUti generated XML
-		Issue 341: Random local clock model Bug
-		Issue 342: NullPointerException after cancelled 'Create New Trait' dialog
-		Issue 343: NullPointerException after double-click discrete traits
+		Issue 338: BEAUti: Clock model panel is confusingly laid out.
+		Issue 339: BEAUti: Improved use of scrollbars for s
+		Issue 342: BEAUti: NullPointerException after cancelled 'Create New Trait' dialog
+		Issue 343: BEAUti: NullPointerException after double-click discrete traits
 		           in Data Partition panel
-		Issue 345: BEAUti: user want to be able to edit trait value at any time
-		Issue 346: Show user a guide for an example of *BEAST or trait mapping
-		           file format
-		Issue 347: change BEAUti default prior of ucld.stdv and kappa
-		Issue 348: Windows BEAST exe <close> then <cancel>, window should NOT
-		           be closed
-		Issue 349: BEAUti frame is too large for low resolution projector
-		           or screen
-		Issue 350: BEAUti prior dialog cannot enable resizable because of using
-		           OptionsPanel
-		Issue 351: message label on the bottom of BEAUti frame is floating
-		           when no space enough
+		Issue 345: BEAUti: traits can be edited in the Traits table.
+		Issue 346: BEAUti: Show user a guide for an example of *BEAST or trait mapping
+		           file format.
+		Issue 347: BEAUti: Change for BEAUti default prior of ucld.stdv and kappa
+		Issue 348: BEAST: For GUI versions, <close> then <cancel>, should allow BEAST
+		           to continue running.
+		Issue 349: BEAUti: Window is too large for low resolution projector
+		           or screen.
 		Issue 352: BEAUti: NullPointerException if leave any trait value
 		           empty after activate BSSVS
-		Issue 353: BEAUti: make *BEAST fired by a checkbox and separated
-		           to trait event
-		Issue 354: BEAUti: make auto wrap for HTMLEditorKit inside JEditorPane
-		Issue 355: get rid of ">" when wrapping text using BEAUti TextUtil
-        Issue 356: Add instruction to show user how to load specified
+		Issue 353: BEAUti: *BEAST is now explicitly activated by a check box
+		           above the data partition table.
+        Issue 356: BEAUti: Added instructions to show user how to load specified
                    starting tree from BEAUti
-        Issue 357: window's programmer has broken compatibility with
-                   unix-based operating systems
-        Issue 358: 'Sequence Error Model' options in Molecular Clock Panel
-        Issue 359: No minimum window size
-        Issue 360: Remove warning text about certain parameters in Priors table
-        Issue 361: RegEx should default to having braces round them
-        Issue 362: Remove exclamation marks from dialog box messages.
-        Issue 365: Folder called 'beauti1.5' in /examples
-        Issue 368: Move release example xml into \example folder to reduce the
-                   redudant xml
-        Issue 370: BEAST argument -overwrite not working
-        Issue 371: new change of PriorDialog broke GUI functions
-        Issue 372: Failed to load parser
-        Issue 374: BEAUti: only one taxa set for 3 unlinked partitions
-        Issue 375: BEAUti: rootHeightPriorCombo disappear when switch between
-                   Undefined and others
+        Issue 357: BEAST: Linux/UNIX version was unable to locate the native libraries.
+        Issue 361: BEAUti: RegEx for guess dates and guess traits now works better.
+        Issue 374: BEAUti: only one taxon set for 3 unlinked partitions
         Issue 377: BEAUti: Random local clock model Bug
-        Issue 380: Discrete trait model should have its tree linked to that
+        Issue 380: BEAUti: Discrete trait model should have its tree linked to that
                    for a tree for a sequence partition
-        Issue 381: Discrete trait model can select an inappropriate substitution
+        Issue 381: BEAUti: Discrete trait model can select an inappropriate substitution
                    model in the data partition table
-        Issue 382: Minor Typo in Treestat
         Issue 383: BEAUti: "species" trait should not appear in Data Panel
-        Issue 384: Unhandled attribute (typo?) name in sumStatistic:rateChanges
-        Issue 385: Warning message of using random local clock model
-        Issue 386: xml file name should be shown in BEAST window
-        Issue 387: BEAUti generates wrong xml when a uniform prior is selected
+        Issue 384: BEAST: Unhandled attribute (typo?) name in sumStatistic:rateChanges
+        Issue 387: BEAUti: Generates wrong xml when a uniform prior is selected
                    for species.popMean
-        Issue 388: BEAUti: "species" should NOT be used as a trait name
-        Issue 389: add TreeStat into BEAST release
         Issue 391: BEAUti: add forParent for taxon set
-        Issue 392: BEAUti: wrong validation to apply Normal prior to tmrca
 
 ================================================================================
 

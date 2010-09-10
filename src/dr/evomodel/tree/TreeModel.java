@@ -79,6 +79,10 @@ public class TreeModel extends AbstractModel implements MutableTree {
         FlexibleTree binaryTree = new FlexibleTree(tree, copyAttributes);
         binaryTree.resolveTree();
 
+        // adjust the heights to be compatible with the tip dates and perturb
+        // any zero branches.
+        MutableTree.Utils.correctHeightsForTips(binaryTree);
+
         // clone the node structure (this will create the individual parameters
         Node node = new Node(binaryTree, binaryTree.getRoot());
 

@@ -15,7 +15,7 @@ import java.util.List;
  * @author Marc Suchard
  * @author Philippe Lemey
  */
-public class TreeDispersionStatistic extends Statistic.Abstract implements TreeStatistic {
+public class TreeDispersionStatistic extends Statistic.Abstract {
 
     public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
     public static final String BOOLEAN_OPTION = "greatCircleDistance";
@@ -23,17 +23,8 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
     public TreeDispersionStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                    boolean genericOption) {
         super(name);
-        this.tree = tree;
         this.traitLikelihoods = traitLikelihoods;
         this.genericOption = genericOption;
-    }
-
-    public void setTree(Tree tree) {
-        this.tree = (TreeModel) tree;
-    }
-
-    public Tree getTree() {
-        return tree;
     }
 
     public int getDimension() {
@@ -50,6 +41,7 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
         double treeDistance = 0;
 
         for (AbstractMultivariateTraitLikelihood traitLikelihood : traitLikelihoods) {
+            TreeModel tree = traitLikelihood.getTreeModel();
 
             for (int i = 0; i < tree.getNodeCount(); i++) {
                 NodeRef node = tree.getNode(i);
@@ -92,7 +84,7 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
             boolean option = xo.getAttribute(BOOLEAN_OPTION, false); // Default value is false
 
             List<AbstractMultivariateTraitLikelihood> traitLikelihoods = new ArrayList<AbstractMultivariateTraitLikelihood>();
-                        
+
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof AbstractMultivariateTraitLikelihood) {
                      traitLikelihoods.add((AbstractMultivariateTraitLikelihood) xo.getChild(i));
@@ -121,12 +113,10 @@ public class TreeDispersionStatistic extends Statistic.Abstract implements TreeS
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newStringRule(NAME, true),
                 AttributeRule.newBooleanRule(BOOLEAN_OPTION, true),
-                new ElementRule(TreeModel.class),
                 new ElementRule(AbstractMultivariateTraitLikelihood.class, 1, Integer.MAX_VALUE),
         };
     };
 
-    private TreeModel tree = null;
     private boolean genericOption;
     private List<AbstractMultivariateTraitLikelihood> traitLikelihoods;
 }

@@ -287,10 +287,16 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         dataTableModel.fireTableDataChanged();
 
+        Object item = tipDateTaxonSetCombo.getSelectedItem();
+
         tipDateTaxonSetCombo.removeAllItems();
         tipDateTaxonSetCombo.addItem("All taxa");
         for (TaxonList taxa : options.taxonSets) {
             tipDateTaxonSetCombo.addItem(taxa);
+        }
+
+        if (item != null) {
+            tipDateTaxonSetCombo.setSelectedItem(item);
         }
     }
 

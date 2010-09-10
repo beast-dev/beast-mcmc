@@ -87,7 +87,7 @@ public class B1Statistic extends AbstractTreeSummaryStatistic {
 		}
 
 		public String getSummaryStatisticDescription() {
-			return "The sum of the recipricals of the maximum number of nodes between " +
+			return "The sum of the reciprocals of the maximum number of nodes between " +
 		 	"each interior node and a tip (Mi) for all internal nodes except the " +
 		 	"root.";
 		}

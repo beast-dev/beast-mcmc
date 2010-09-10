@@ -31,7 +31,7 @@ Version 1.6.0 released 1st September 2010
 	    Discrete trait model, see:
 	        http://beast.bio.ed.ac.uk/Tutorials#Phylogeography_tutorials
 
-	    Add ForParent attribute in Taxon Set in BEAUti.
+	    Add forParent attribute in Taxon Set in BEAUti.
 
 	    Add TreeStat in the release.
 

@@ -33,12 +33,12 @@ import dr.app.beauti.alignmentviewer.StateCellDecorator;
 import dr.app.beauti.enumTypes.FixRateType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.HeaderRenderer;
-import dr.app.gui.table.TableEditorStopper;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -386,7 +386,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //            uncheckAllowDifferentTaxa();
 //        }
 
-        if (options.dataPartitions.size() == 0) {
+        if (options.getNonTraitsDataList().size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
             frame.statusLabel.setText("");
@@ -621,11 +621,13 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getPartitionDataNoSpecies().size();
+//            return options.getPartitionDataNoSpecies().size();
+            return options.getNonTraitsDataList().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
+//            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
+            PartitionData partition = options.getNonTraitsDataList().get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
@@ -651,7 +653,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
+//            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
+            PartitionData partition = options.getNonTraitsDataList().get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

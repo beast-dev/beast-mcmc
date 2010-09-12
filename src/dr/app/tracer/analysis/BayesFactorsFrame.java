@@ -119,8 +119,9 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
         contentPanel.add(panel1, BorderLayout.CENTER);
 
-        label = new JLabel("<html>Marginal likelihood estimated using the method Newton & Raftery (ref)" +
-                "with the modifications proprosed by Suchard et al (2001, <i>MBE</i> <b>18</b>: 1001-1013)</html>");
+        label = new JLabel("<html>Marginal likelihood estimated using the method Newton & Raftery (ref) <br>" +
+                "Newton M, Raftery A: Approximate Bayesian inference with the weighted likelihood bootstrap.<br>" +
+                "Journal of the Royal Statistical Society, Series B 1994, 56:3-48.</html>");
         label.setFont(UIManager.getFont("SmallSystemFont"));
 
         contentPanel.add(label, BorderLayout.SOUTH);

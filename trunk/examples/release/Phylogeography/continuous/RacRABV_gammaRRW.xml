@@ -538,7 +538,7 @@
 		<distribution>
 			<onePGammaDistributionModel id="gammaModel">
          		<shape>
-        			<parameter id="halfDF" value="2.0"/>
+        			<parameter id="halfDF" value="0.5"/>
         		</shape>
 			</onePGammaDistributionModel>
 		</distribution>

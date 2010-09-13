@@ -43,7 +43,8 @@ Version 1.6.0 released 10th September 2010
 
         Improved user interface for Discrete Trait models in BEAUti.
 
-	    Added 'forParent' attribute in Taxon Set in BEAUti.
+	    Added 'forParent' attribute in Taxon Set in BEAUti. This allows the calibration
+	    to be specified for the stem of a clade.
 
 	    Added the application TreeStat to the BEAST package.
 

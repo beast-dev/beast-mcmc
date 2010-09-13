@@ -56,7 +56,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        double finalTimeInterval = xo.getAttribute(FINAL_TIME_INTERVAL, 0.0);
+        final Parameter finalTimeInterval = (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
         
@@ -101,8 +101,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
-
+//            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
+            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

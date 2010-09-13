@@ -359,8 +359,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         modelsChanged();
 
-        useStarBEASTCheck.setEnabled(options.dataPartitions.size() > 0); // single partition is allowed
-        createImportTraitButton.setEnabled(options.dataPartitions.size() > 0);
+        useStarBEASTCheck.setEnabled(options.getNonTraitsDataList().size() > 0); // single partition is allowed
+        createImportTraitButton.setEnabled(options.getNonTraitsDataList().size() > 0);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -389,6 +389,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.getNonTraitsDataList().size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
+            useStarBEASTCheck.setSelected(false);
             frame.statusLabel.setText("");
             frame.setAllOptions();
             frame.getExportAction().setEnabled(false);

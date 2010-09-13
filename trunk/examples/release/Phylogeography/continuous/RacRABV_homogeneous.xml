@@ -11,9 +11,7 @@
 	<taxa id="taxa">
 		<taxon id="hOH10_97.2_41.053_80.706">
 			<date value="1997.2" direction="forwards" units="years"/>
-			<attr name="location">
-                41.053 -80.706
-            </attr>
+			<attr name="location">41.053 -80.706</attr>
 		</taxon>
 		<taxon id="hWVa01_93.2_40.505_80.575">
 			<date value="1993.2" direction="forwards" units="years"/>
@@ -575,7 +573,7 @@
          </subStatistic>
      </productStatistic>
 
-	<treeDispersionStatistic id="dispersionRate" greatCircleDistance="true">
+	<treeDispersionStatistic id="diffusionRate" greatCircleDistance="true">
 		<treeModel idref="treeModel"/>
 		<multivariateTraitLikelihood idref="traitLikelihood"/>
 	</treeDispersionStatistic>
@@ -691,10 +689,9 @@
 			<parameter idref="siteModel.alpha"/>
 			<matrixParameter idref="precisionMatrix"/>
 			<parameter idref="rootTrait"/>
-			<treeDispersionStatistic idref="dispersionRate"/>
+			<treeDispersionStatistic idref="diffusionRate"/>
 			<productStatistic idref="treeLengthPrecision1"/>
 			<productStatistic idref="treeLengthPrecision2"/>
-			<treeDispersionStatistic idref="dispersionRate"/>
  			<correlation idref="locationCorrelation"/>
 			<treeLikelihood idref="treeLikelihood"/>
 			<generalizedSkyLineLikelihood idref="skyline"/>

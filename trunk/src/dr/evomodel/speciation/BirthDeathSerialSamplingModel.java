@@ -63,7 +63,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
     Variable<Double> r;
 
-    double finalTimeInterval = 0.0;
+    Variable<Double> finalTimeInterval;
 
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
@@ -72,7 +72,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> p,
             boolean relativeDeath,
             Variable<Double> r,
-            double finalTimeInterval,
+            Variable<Double> finalTimeInterval,
             Type units) {
 
         this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, units);
@@ -86,7 +86,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             Variable<Double> p,
             boolean relativeDeath,
             Variable<Double> r,
-            double finalTimeInterval,
+            Variable<Double> finalTimeInterval,
             Type units) {
 
         super(modelName, units);
@@ -110,6 +110,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         this.relativeDeath = relativeDeath;
 
         this.finalTimeInterval = finalTimeInterval;
+        addVariable(finalTimeInterval);
+        finalTimeInterval.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 1.0, 1));
 
         this.r = r;
         addVariable(r);
@@ -170,13 +172,16 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     }
 
     public double p() {
-
-        if (finalTimeInterval == 0.0) return p.getValue(0);
+        if (finalTimeInterval() == 0.0) return p.getValue(0);
         return 0;
     }
 
     public double r() {
         return r.getValue(0);
+    }
+
+    public double finalTimeInterval() {
+        return finalTimeInterval.getValue(0);
     }
 
     /**
@@ -188,7 +193,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     public final double calculateTreeLogLikelihood(Tree tree) {
 
         //System.out.println("calculating tree log likelihood");
-        double time = finalTimeInterval;
+        double time = finalTimeInterval();
 
         // extant leaves
         int n = 0;

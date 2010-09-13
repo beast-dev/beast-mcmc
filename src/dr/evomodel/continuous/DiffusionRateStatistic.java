@@ -14,13 +14,15 @@ import java.util.List;
 /**
  * @author Marc Suchard
  * @author Philippe Lemey
+ * @author Andrew Rambaut
  */
-public class TreeDispersionStatistic extends Statistic.Abstract {
+public class DiffusionRateStatistic extends Statistic.Abstract {
 
+    public static final String DIFFUSION_RATE_STATISTIC = "diffusionRateStatistic";
     public static final String TREE_DISPERSION_STATISTIC = "treeDispersionStatistic";
     public static final String BOOLEAN_OPTION = "greatCircleDistance";
 
-    public TreeDispersionStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
+    public DiffusionRateStatistic(String name, TreeModel tree, List<AbstractMultivariateTraitLikelihood> traitLikelihoods,
                                    boolean genericOption) {
         super(name);
         this.traitLikelihoods = traitLikelihoods;
@@ -73,7 +75,12 @@ public class TreeDispersionStatistic extends Statistic.Abstract {
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public String getParserName() {
-            return TREE_DISPERSION_STATISTIC;
+            return DIFFUSION_RATE_STATISTIC;
+        }
+
+        @Override
+        public String[] getParserNames() {
+            return new String[] { getParserName(), TREE_DISPERSION_STATISTIC };
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -91,7 +98,7 @@ public class TreeDispersionStatistic extends Statistic.Abstract {
                 }
             }
 
-            return new TreeDispersionStatistic(name, tree, traitLikelihoods, option);
+            return new DiffusionRateStatistic(name, tree, traitLikelihoods, option);
         }
 
         //************************************************************************

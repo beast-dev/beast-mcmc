@@ -606,7 +606,7 @@
          </subStatistic>
      </productStatistic>
 
-	<treeDispersionStatistic id="dispersionRate" greatCircleDistance="true">
+	<treeDispersionStatistic id="diffusionRate" greatCircleDistance="true">
 		<treeModel idref="treeModel"/>
 		<multivariateTraitLikelihood idref="traitLikelihood"/>
 	</treeDispersionStatistic>
@@ -741,10 +741,9 @@
 			<parameter idref="siteModel.alpha"/>
 			<matrixParameter idref="precisionMatrix"/>
 			<parameter idref="rootTrait"/>
-			<treeDispersionStatistic idref="dispersionRate"/>
+			<treeDispersionStatistic idref="diffusionRate"/>
 			<productStatistic idref="treeLengthPrecision1"/>
 			<productStatistic idref="treeLengthPrecision2"/>
-			<treeDispersionStatistic idref="dispersionRate"/>
  			<correlation idref="locationCorrelation"/>
 			<parameter idref="ucldDiffusion.stdev"/>
 			<rateStatistic idref="coefficientOfVariationDiffusion"/>

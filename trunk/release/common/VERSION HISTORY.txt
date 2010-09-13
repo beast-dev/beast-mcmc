@@ -38,7 +38,8 @@ Version 1.6.0 released 10th September 2010
             Lemey P, Rambaut A, Welch JJ & Suchard MA Phylogeography takes a
             relaxed random walk in continuous space and time. (2010)
             Mol Biol Evol 27, 1877-1886.
-            These models are not currently specifiable from BEAUti
+            These models are not currently specifiable from BEAUti, but see here:
+            http://beast.bio.ed.ac.uk/Tutorials#Phylogeography_tutorials
 
         Improved user interface for Discrete Trait models in BEAUti.
 

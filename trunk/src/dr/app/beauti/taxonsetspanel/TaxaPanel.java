@@ -506,7 +506,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             Collections.sort(options.taxonSets);
 
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
-            options.taxonSetsForParent.put(currentTaxonSet, Boolean.FALSE);
+            options.taxonSetsIncludeStem.put(currentTaxonSet, Boolean.FALSE);
 
             taxonSetsTableModel.fireTableDataChanged();
 
@@ -526,7 +526,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             if (row != -1) {
                 Taxa taxa = options.taxonSets.remove(row);
                 options.taxonSetsMono.remove(taxa);
-                options.taxonSetsForParent.remove(taxa);
+                options.taxonSetsIncludeStem.remove(taxa);
             }
             taxonSetChanged();
 
@@ -648,7 +648,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
     class TaxonSetsTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 3318461381525023153L;
 
-        String[] columnNames = {"Taxon Sets", "Monophyletic?", "Parent?", "Tree"};
+        String[] columnNames = {"Taxon Sets", "Monophyletic?", "IncludeStem?", "Tree"};
         public TaxonSetsTableModel() {
         }
 
@@ -673,7 +673,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return options.taxonSetsMono.get(taxonSet);
                 case 2:
-                    return options.taxonSetsForParent.get(taxonSet);
+                    return options.taxonSetsIncludeStem.get(taxonSet);
                 case 3:
                     return taxonSet.getTreeModel();
                 default:
@@ -701,7 +701,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                     break;
 
                 case 2:
-                    options.taxonSetsForParent.put(taxonSet, (Boolean) aValue);
+                    options.taxonSetsIncludeStem.put(taxonSet, (Boolean) aValue);
                     break;
                 case 3:
                     taxonSet.setTreeModel((PartitionTreeModel) aValue);

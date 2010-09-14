@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 10th September 2010
+Last updated: alexei@cs.auckland.ac.nz - 15th September 2010
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.0 released 10th September 2010
+Version 1.6.0 released 15th September 2010
 
 	New Features:
 	    Random local clock model, see:
@@ -43,8 +43,8 @@ Version 1.6.0 released 10th September 2010
 
         Improved user interface for Discrete Trait models in BEAUti.
 
-	    Added 'forParent' attribute in Taxon Set in BEAUti. This allows the calibration
-	    to be specified for the stem of a clade.
+	    Added 'includeStem' alias as 'forParent' attribute in Taxon Set in BEAUti.
+	    This allows the calibration to be specified for the stem of a clade.
 
 	    Added the application TreeStat to the BEAST package.
 
@@ -67,6 +67,9 @@ Version 1.6.0 released 10th September 2010
         For some models, the user now has to make an explicit prior choice.
 
 	Bug Fixes:
+	    Issue 40:  TreeAnnotator produces misleading medians and HPDs when calculated
+	               from only 1 tree.
+	    Issue 170: coalescentLikelihood -INF when using UPGMA starting tree
 	    Issue 235: BEAUti: Unlinked DiscretizedBranchRates for multiple loci have the
 	               wrong number of dimensions
         Issue 291: BEAUti: fixed a problem generating a starting tree in XML.
@@ -84,6 +87,7 @@ Version 1.6.0 released 10th September 2010
 		           be a message instead
 		Issue 320: BEAUti: need validation of changing tree in data panel after
 		           allowing different taxa
+		Issue 321: Default priors in BEAUTi still lead to IMPROPER posterior
 		Issue 328: BEAUti: No longer generates very long default value and bound
 		           arrays for parameters.
 		Issue 332: BEAUti: Add traits now allows any trait name to be given.
@@ -112,6 +116,8 @@ Version 1.6.0 released 10th September 2010
                    starting tree from BEAUti
         Issue 357: BEAST: Linux/UNIX version was unable to locate the native libraries.
         Issue 361: BEAUti: RegEx for guess dates and guess traits now works better.
+        Issue 369: Beauti: Tip Dates panel: Tip date sampling "apply to" resets to
+                   "All taxa" after navigating to different tab
         Issue 374: BEAUti: only one taxon set for 3 unlinked partitions
         Issue 377: BEAUti: Random local clock model Bug
         Issue 380: BEAUti: Discrete trait model should have its tree linked to that
@@ -123,6 +129,7 @@ Version 1.6.0 released 10th September 2010
         Issue 387: BEAUti: Generates wrong xml when a uniform prior is selected
                    for species.popMean
         Issue 391: BEAUti: add forParent for taxon set
+        Issue 396: make alias "forParent" of "includeStem" in TMRCAPasrer
 
 ================================================================================
 

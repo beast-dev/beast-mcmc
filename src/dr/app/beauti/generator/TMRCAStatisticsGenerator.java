@@ -62,7 +62,7 @@ public class TMRCAStatisticsGenerator extends Generator {
             writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
                 new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")"),
-                    new Attribute.Default<Boolean>(TMRCAStatisticParser.PARENT, options.taxonSetsForParent.get(taxa)),
+                    new Attribute.Default<Boolean>(TMRCAStatisticParser.STEM, options.taxonSetsIncludeStem.get(taxa)),
                 }
             ); // make tmrca(tree.name) eay to read in log for Tracer
             writer.writeOpenTag(TMRCAStatisticParser.MRCA);

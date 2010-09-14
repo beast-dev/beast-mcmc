@@ -51,8 +51,7 @@ public class GuessTraitDialog {
 
     private final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
     private final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
-            "fourth", "fourth from last",
-            "third from last", "second from last", "last"});
+            "fourth", "fourth from last", "third from last", "second from last", "last"});
     private final JTextField delimiterText = new JTextField(6);
 
     private final JRadioButton regexRadio = new JRadioButton("Defined by regular expression (REGEX)", false);
@@ -147,7 +146,7 @@ public class GuessTraitDialog {
         if (orderRadio.isSelected()) {
             int order = orderCombo.getSelectedIndex();
             if (order > 3) {
-                order =7 - order;
+                order = order - 8; // http://code.google.com/p/beast-mcmc/issues/detail?id=394
             }
             guesser.setGuessType(TraitGuesser.GuessType.DELIMITER);
             guesser.setOrder(order);

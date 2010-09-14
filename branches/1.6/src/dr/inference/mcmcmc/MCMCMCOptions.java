@@ -1,0 +1,61 @@
+/*
+ * MCMCMCOptions.java
+ *
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.inference.mcmcmc;
+
+
+
+/**
+ * A class that brings together the auxillary information associated
+ * with an MCMC analysis.
+ *
+ * @version $Id: MCMCMCOptions.java,v 1.2 2005/01/06 14:46:36 rambaut Exp $
+ *
+ * @author Alexei Drummond
+ */
+public class MCMCMCOptions {
+
+	public MCMCMCOptions() {
+    }
+
+    public double[] getChainTemperatures() {
+        return temperatures;
+    }
+
+    public void setChainTemperatures(double[] temperatures) {
+        this.temperatures = temperatures;
+    }
+
+    public int getSwapChainsEvery() {
+        return swapChainsEvery;
+    }
+
+    public void setSwapChainsEvery(int swapChainsEvery) {
+        this.swapChainsEvery = swapChainsEvery;
+    }
+
+    private double[] temperatures = new double[] { 1.0 };
+    private int swapChainsEvery = 0;
+}

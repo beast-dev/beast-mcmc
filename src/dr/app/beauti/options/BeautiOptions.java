@@ -71,7 +71,7 @@ public class BeautiOptions extends ModelOptions {
         taxonList = null;
         taxonSets.clear();
         taxonSetsMono.clear();
-        taxonSetsForParent.clear();
+        taxonSetsIncludeStem.clear();
         
 //        meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
@@ -752,7 +752,7 @@ public class BeautiOptions extends ModelOptions {
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
-    public Map<Taxa, Boolean> taxonSetsForParent = new HashMap<Taxa, Boolean>();
+    public Map<Taxa, Boolean> taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
 
     public DateUnitsType datesUnits = DateUnitsType.YEARS;
     public DateUnitsType datesDirection = DateUnitsType.FORWARDS;

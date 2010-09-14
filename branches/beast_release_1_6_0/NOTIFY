@@ -1,0 +1,23 @@
+BEAST is Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
+BEAST is distributed under the terms of the GNU Lesser General Public License.
+See the notice in individual files and the file LICENSE for licensing details.
+
+BEAST includes software libraries from projects whose licensing
+terms require that the following notices be included when they are
+distributed in binary form and that the recipient be given a copy of
+their respective licenses.
+
+This product includes software developed by the
+JDOM Project (http://www.jdom.org/)
+
+This product includes software developed by
+The Apache Software Foundation (http://www.apache.org/)
+
+The license for JDOM can be read in the LICENSE.txt file in the
+source distribution available at http://www.jdom.org/
+
+The license for the Commons Math library can be read at
+http://www.apache.org/licenses/LICENSE-2.0 or in the LICENSE.txt file
+in the source distribution available at
+http://jakarta.apache.org/commons/math/
+

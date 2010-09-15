@@ -30,7 +30,7 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-                  
+
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="test" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff with unit test">
@@ -46,10 +46,10 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
+		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath"
 		       fork="true"
 		       memoryinitialsize="256m"
-		       memorymaximumsize="256m">
+		       memorymaximumsize="1024m">
 			<include name="dr/app/beast/**" />
 			<include name="dr/app/beauti/**" />
 			<include name="dr/app/tracer/**"/>
@@ -60,7 +60,8 @@
 			<include name="dr/app/plugin/**" />
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
-            <include name="dr/app/java16compat/**"/>			            
+            <include name="dr/app/treestat/**" />
+            <include name="dr/app/java16compat/**"/>
 			<include name="dr/evolution/**" />
 			<include name="dr/evomodel/**" />
 			<include name="dr/evomodelxml/**" />
@@ -102,6 +103,7 @@
 				<include name="dr/app/plugin/**" />
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
+                <include name="dr/app/treestat/**/*.class" />
                 <include name="dr/app/java16compat/**/*.class"/>
                 <include name="dr/app/beagle/**/*.class" />  <!-- include beagle -->
 				<include name="dr/evolution/**/*.class" />
@@ -184,15 +186,14 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
-				<include name="org/virion/jam/**/*.class" />
 			</fileset>
 			<fileset dir="">
 				<include name="images/*.png" />
 			</fileset>
 			<fileset dir="${src}">
 				<include name="dr/**/*.png" />
-				<include name="org/virion/jam/**/*.png" />
 			</fileset>
+            <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
 			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
@@ -224,12 +225,12 @@
 
 			<batchtest fork="yes" todir="${report}">
 				<fileset dir="${src}">
-                    <include name="test/dr/distibutions/**/*Test.java"/>                                         
+                    <include name="test/dr/distibutions/**/*Test.java"/>
 					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
 					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
                     <include name="test/dr/evomodel/branchratemodel/**/*Test.java" />
 					<include name="test/dr/evomodel/coalescent/**/*Test.java" />
-                    <include name="test/dr/evomodel/operators/**/*Test.java" /> 
+                    <include name="test/dr/evomodel/operators/**/*Test.java" />
 					<include name="test/dr/evomodel/speciation/**/*Test.java" />
 					<include name="test/dr/evomodel/substmodel/**/*Test.java" />
                     <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
@@ -280,7 +281,7 @@
 		<mkdir dir="${Windows_package_dir}" />
 
 		<property name="launch4j.dir" location="${Windows_dir}/launch4j" />
-		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" 
+		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
 			classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
 
 		<copy todir="${Windows_package_dir}/doc">
@@ -305,7 +306,7 @@
 		<copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
 
 		<!-- BEAUTi v?.?.?.exe -->
-		<launch4j configFile="${Windows_dir}/BEAUTi_launch4j.xml"
+		<launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
 		          jar="${dist}/beauti.jar"
 				  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
 		          fileVersion="${version_number}.0"
@@ -348,7 +349,7 @@
 				  productVersion="${version_number}.0"
 				  txtProductVersion="${version}"/>
 
-		<!-- LogAnalyser v?.?.?.exe 
+		<!-- LogAnalyser v?.?.?.exe
 		<launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
@@ -446,7 +447,7 @@
 		<!-- create a jar bundle for the mac -->
 		<jarbundler dir="${Mac_package_dir}"
 		                name="${BEAST_name} v${version}"
-		                mainclass="dr.app.beast.BeastMain" 
+		                mainclass="dr.app.beast.BeastMain"
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
                         vmoptions="-Xmx1024M"
@@ -553,7 +554,7 @@
             <arg value="zlib-level=6"/>
             <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>
-        
+
 		<echo message="Mac version release is finished." />
 	</target>
 

@@ -402,7 +402,7 @@
 		<copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
 
 		<!-- BEAUTi v?.?.?.exe -->
-		<launch4j configFile="${Windows_dir}/BEAUTi_launch4j.xml"
+		<launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
 		          jar="${dist}/beauti.jar"
 				  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
 		          fileVersion="${version}.0"

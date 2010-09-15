@@ -25,13 +25,11 @@
 
 package dr.app.treestat;
 
-import javax.swing.*;
-
+import dr.app.util.OSType;
 import jam.framework.SingleDocApplication;
 import jam.mac.Utils;
 
-import dr.app.util.OSType;
-
+import javax.swing.*;
 import java.awt.*;
 
 public class TreeStatApp extends SingleDocApplication {
@@ -67,7 +65,7 @@ public class TreeStatApp extends SingleDocApplication {
 
             String nameString = "TreeStat";
             String aboutString = "<html><center><p>Tree Statistic Calculation Tool<br>" +
-                    "Version 1.2, 2005-2008</p>" +
+                    "Version 1.2, 2005-2010</p>" +
                     "<p>by<br>" +
                     "Andrew Rambaut and Alexei J. Drummond</p>" +
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +

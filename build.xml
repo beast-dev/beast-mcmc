@@ -49,7 +49,7 @@
 		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
 		       fork="true"
 		       memoryinitialsize="256m"
-		       memorymaximumsize="256m">
+		       memorymaximumsize="1024m">
 			<include name="dr/app/beast/**" />
 			<include name="dr/app/beauti/**" />
 			<include name="dr/app/tracer/**"/>
@@ -60,6 +60,7 @@
 			<include name="dr/app/plugin/**" />
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
+            <include name="dr/app/treestat/**" />
             <include name="dr/app/java16compat/**"/>			            
 			<include name="dr/evolution/**" />
 			<include name="dr/evomodel/**" />
@@ -102,6 +103,7 @@
 				<include name="dr/app/plugin/**" />
 				<include name="dr/app/util/**/*.class" />
 				<include name="dr/app/tools/**/*.class" />
+                <include name="dr/app/treestat/**/*.class" />
                 <include name="dr/app/java16compat/**/*.class"/>
                 <include name="dr/app/beagle/**/*.class" />  <!-- include beagle -->
 				<include name="dr/evolution/**/*.class" />
@@ -184,15 +186,14 @@
 				<include name="dr/util/**/*.class" />
 				<include name="dr/xml/**/*.class" />
 				<include name="dr/geo/**/*.class"/>
-				<include name="org/virion/jam/**/*.class" />
 			</fileset>
 			<fileset dir="">
 				<include name="images/*.png" />
 			</fileset>
 			<fileset dir="${src}">
 				<include name="dr/**/*.png" />
-				<include name="org/virion/jam/**/*.png" />
 			</fileset>
+            <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
 			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
@@ -305,7 +306,7 @@
 		<copy file="${common_dir}/README.txt" todir="${Windows_package_dir}"/>
 
 		<!-- BEAUTi v?.?.?.exe -->
-		<launch4j configFile="${Windows_dir}/BEAUTi_launch4j.xml"
+		<launch4j configFile="${Windows_dir}/BEAUti_launch4j.xml"
 		          jar="${dist}/beauti.jar"
 				  outfile="${Windows_package_dir}/${BEAUti_name} v${version}.exe"
 		          fileVersion="${version_number}.0"

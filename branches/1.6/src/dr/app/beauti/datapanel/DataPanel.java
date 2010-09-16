@@ -217,12 +217,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         useStarBEASTCheck.setEnabled(false);
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
-        useStarBEASTCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
+        useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
                 frame.setupStarBEAST(useStarBEASTCheck.isSelected());
                 dataTableModel.fireTableDataChanged();
             }
-        });
+        });       
 
     }
 

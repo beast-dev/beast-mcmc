@@ -63,8 +63,6 @@ public class TreeAnnotator {
     private final static Version version = new BeastVersion();
 
     private final static boolean USE_R = false;
-    private final static String HPD_2D_STRING = "80";
-    private final static double HPD_2D = 0.80;
 
     private static boolean forceIntegerToDiscrete = false;
 
@@ -110,6 +108,7 @@ public class TreeAnnotator {
     public TreeAnnotator(final int burnin,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
+                         double hpd2D,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -117,6 +116,7 @@ public class TreeAnnotator {
     ) throws IOException {
 
         this.posteriorLimit = posteriorLimit;
+        this.hpd2D = hpd2D;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -762,7 +762,7 @@ public class TreeAnnotator {
                                         annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
 
                                     if (variationInFirst && variationInSecond)
-                                        annotate2DHPDAttribute(tree, node, name, "_" + HPD_2D_STRING + "%HPD", HPD_2D, valuesArray);
+                                        annotate2DHPDAttribute(tree, node, name, "_" + (int)(100*hpd2D) + "%HPD", hpd2D, valuesArray);
                                 }
                             }
                         }
@@ -964,7 +964,8 @@ public class TreeAnnotator {
 
 
 //                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-                ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
+                //ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
+                ContourMaker kde = new ContourWithSynder(values[0], values[1]);
 
                 ContourPath[] paths = kde.getContourPaths(hpd);
 
@@ -1094,6 +1095,7 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
+    double hpd2D = 0.80;
 
     Set<String> attributeNames = new HashSet<String>();
     TaxonList taxa = null;
@@ -1202,6 +1204,7 @@ public class TreeAnnotator {
 
             int burnin = dialog.getBurnin();
             double posteriorLimit = dialog.getPosteriorLimit();
+            double hpd2D = 0.80;
             Target targetOption = dialog.getTargetOption();
             HeightsSummary heightsOption = dialog.getHeightsOption();
 
@@ -1227,6 +1230,7 @@ public class TreeAnnotator {
                 new TreeAnnotator(burnin,
                         heightsOption,
                         posteriorLimit,
+                        hpd2D,
                         targetOption,
                         targetTreeFileName,
                         inputFileName,
@@ -1257,7 +1261,8 @@ public class TreeAnnotator {
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
-                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits.")
+                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
+                        new Arguments.RealOption("hpd2D", "the HPD interval to be used for the bivariate traits")
                 });
 
         try {
@@ -1298,6 +1303,11 @@ public class TreeAnnotator {
             posteriorLimit = arguments.getRealOption("limit");
         }
 
+        double hpd2D = 0.80;
+        if (arguments.hasOption("hpd2D")) {
+            hpd2D = arguments.getRealOption("hpd2D");
+        }
+
         Target target = Target.MAX_CLADE_CREDIBILITY;
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
@@ -1321,7 +1331,7 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burnin, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
     }

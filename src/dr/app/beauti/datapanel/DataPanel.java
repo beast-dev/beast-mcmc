@@ -47,7 +47,9 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -217,12 +219,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         useStarBEASTCheck.setEnabled(false);
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
-        useStarBEASTCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
+        useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
                 frame.setupStarBEAST(useStarBEASTCheck.isSelected());
                 dataTableModel.fireTableDataChanged();
             }
-        });
+        });       
 
     }
 

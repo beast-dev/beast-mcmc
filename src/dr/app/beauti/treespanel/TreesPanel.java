@@ -71,32 +71,32 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;
-	private BeautiOptions options = null;
+    private BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
 
-//    private GenerateTreeDialog generateTreeDialog = null;
+    //    private GenerateTreeDialog generateTreeDialog = null;
     private boolean settingOptions = false;
 //    boolean hasAlignment = false;
 
     public JCheckBox linkTreePriorCheck = new JCheckBox("Link tree prior for all trees");
 
     JPanel treeModelPanelParent;
-//    private OptionsPanel currentTreeModel = new OptionsPanel();
+    //    private OptionsPanel currentTreeModel = new OptionsPanel();
     public PartitionTreeModel currentTreeModel = null;
     TitledBorder treeModelBorder;
     Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
     //  private OptionsPanel treePriorPanel = new OptionsPanel();
     JPanel treePriorPanelParent;
-//    public PartitionTreePrior currentTreePrior = null;
+    //    public PartitionTreePrior currentTreePrior = null;
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, OptionsPanel> treePriorPanels = new HashMap<PartitionTreePrior, OptionsPanel>();
 
     private boolean isCheckedTipDate = false;
 
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
-    	super();
+        super();
         this.frame = parent;
 
         treesTableModel = new TreesTableModel();
@@ -161,7 +161,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         linkTreePriorCheck.setSelected(true);
         linkTreePriorCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-            	updateShareSameTreePriorChanged ();
+                updateShareSameTreePriorChanged();
             }
         });
         linkTreePriorCheck.setToolTipText("Decide whether to use one tree prior for all trees");
@@ -184,14 +184,14 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    	options.shareSameTreePrior = linkTreePriorCheck.isSelected();
 //    	fireShareSameTreePriorChanged ();
 
-    	if (linkTreePriorCheck.isSelected()) {
-    		options.linkTreePriors(currentTreeModel.getPartitionTreePrior());
-    	} else {
-    		options.unLinkTreePriors();
+        if (linkTreePriorCheck.isSelected()) {
+            options.linkTreePriors(currentTreeModel.getPartitionTreePrior());
+        } else {
+            options.unLinkTreePriors();
 //    		currentTreePrior = currentTreeModel.getPartitionTreePrior();
-    	}
+        }
 //    	setCurrentModelAndPrior(currentTreeModel);
-    	updateTreePriorBorder();
+        updateTreePriorBorder();
     }
 
 //    private void fireShareSameTreePriorChanged() {
@@ -207,12 +207,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    }
 
     private void updateTreePriorBorder() {
-    	if (options.useStarBEAST) {
-    		treePriorBorder.setTitle("Species tree prior used to start all gene tree models");
-    	} else if (options.isShareSameTreePrior()) {
-        	treePriorBorder.setTitle("Tree prior shared by all tree models");
+        if (options.useStarBEAST) {
+            treePriorBorder.setTitle("Species tree prior used to start all gene tree models");
+        } else if (options.isShareSameTreePrior()) {
+            treePriorBorder.setTitle("Tree prior shared by all tree models");
         } else {
-        	treePriorBorder.setTitle("Tree Prior - " + currentTreeModel.getPartitionTreePrior().getName());
+            treePriorBorder.setTitle("Tree Prior - " + currentTreeModel.getPartitionTreePrior().getName());
         }
         repaint();
     }
@@ -223,42 +223,44 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void updatePriorPanelForSpeciesAnalysis() {
-    	linkTreePriorCheck.setSelected(true);
-    	updateShareSameTreePriorChanged();
+        linkTreePriorCheck.setSelected(true);
+        updateShareSameTreePriorChanged();
 
-    	if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();
+        if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();
 
-    	OptionsPanel p;
-    	if (options.useStarBEAST) {
-	    	linkTreePriorCheck.setEnabled(false);
+        if (options.getPartitionTreePriors().size() > 0) {
+            OptionsPanel p;
+            if (options.useStarBEAST) {
+                linkTreePriorCheck.setEnabled(false);
 
-	        options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
+                options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
-	        options.clockModelOptions.fixRateOfFirstClockPartition(); // fix 1st partition
+                options.clockModelOptions.fixRateOfFirstClockPartition(); // fix 1st partition
 
-	    	p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
+                p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
 
-    	} else {
-    		linkTreePriorCheck.setEnabled(true);
+            } else {
+                linkTreePriorCheck.setEnabled(true);
 
-    		options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
+                options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
 
-    		p = new PartitionTreePriorPanel(options.getPartitionTreePriors().get(0), this);
+                p = new PartitionTreePriorPanel(options.getPartitionTreePriors().get(0), this);
 
-    	}
+            }
 
-    	treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
-    	updateTreePriorBorder();
-	    treePriorPanelParent.add(p);
+            treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
+            updateTreePriorBorder();
+            treePriorPanelParent.add(p);
+        }
         repaint();
     }
 
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
         if (selRow >= 0) {
-        	PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
-        	setCurrentModelAndPrior(ptm);
-    //TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));
+            PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
+            setCurrentModelAndPrior(ptm);
+            //TODO            treeDisplayPanel.setTree(options.userTrees.get(selRow));
         }
     }
 
@@ -299,18 +301,18 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
             repaint();
         } else {
-        	//TODO
+            //TODO
         }
     }
 
 
     public void setCheckedTipDate(boolean isCheckedTipDate) {
-		this.isCheckedTipDate = isCheckedTipDate;
-	}
+        this.isCheckedTipDate = isCheckedTipDate;
+    }
 
     private void resetPanel() {
-    	if (!options.hasData()) {
-        	currentTreeModel = null;
+        if (!options.hasData()) {
+            currentTreeModel = null;
             treeModelPanels.clear();
 //            currentTreePrior = null;
             treePriorPanels.clear();
@@ -320,7 +322,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             treePriorPanelParent.removeAll();
             treePriorBorder.setTitle("Tree Prior");
 
-        	return;
+            return;
         }
     }
 
@@ -335,29 +337,29 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : treeModelPanels.keySet()) {
-        	if (model != null) {
-        		treeModelPanels.get(model).setOptions();
-        	}
-     	}
+            if (model != null) {
+                treeModelPanels.get(model).setOptions();
+            }
+        }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (options.useStarBEAST) {
-        		SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
-	        	if (ptpp != null) {
-	        		ptpp.setOptions();
-	        	}
-        	} else {
-        		PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
-	        	if (ptpp != null) {
-		        	ptpp.setOptions();
+            if (options.useStarBEAST) {
+                SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
+                if (ptpp != null) {
+                    ptpp.setOptions();
+                }
+            } else {
+                PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
+                if (ptpp != null) {
+                    ptpp.setOptions();
 
-		        	if (isCheckedTipDate) {
-	    	        	ptpp.removeCertainPriorFromTreePriorCombo();
-	    	    	} else {
-	    	    		ptpp.recoveryTreePriorCombo();
-	    	    	}
-	        	}
-        	}
+                    if (isCheckedTipDate) {
+                        ptpp.removeCertainPriorFromTreePriorCombo();
+                    } else {
+                        ptpp.recoveryTreePriorCombo();
+                    }
+                }
+            }
         }
 
         settingOptions = false;
@@ -372,7 +374,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         if (currentTreeModel == null && options.getPartitionTreeModels().size() > 0) {
-        	treesTable.getSelectionModel().setSelectionInterval(0, 0);
+            treesTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
 //        fireShareSameTreePriorChanged();
@@ -382,7 +384,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void getOptions(BeautiOptions options) {
-    	if (settingOptions) return;
+        if (settingOptions) return;
 
 //    	Set<PartitionTreeModel> models = treeModelPanels.keySet();
 //
@@ -391,27 +393,27 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //     	}
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-        	if (options.useStarBEAST) {
-        		SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
-	        	if (ptpp != null) {
-	        		ptpp.getOptions();
-	        	}
-        	} else {
-        		PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
-	        	if (ptpp != null) {
-	        		ptpp.getOptions();
-	        	}
-        	}
+            if (options.useStarBEAST) {
+                SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
+                if (ptpp != null) {
+                    ptpp.getOptions();
+                }
+            } else {
+                PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
+                if (ptpp != null) {
+                    ptpp.getOptions();
+                }
+            }
         }
     }
 
     public BeautiFrame getFrame() {
-		return frame;
-	}
+        return frame;
+    }
 
     public JComponent getExportableComponent() {
 //        return treeDisplayPanel;
-    	return this;
+        return this;
     }
 
     private boolean isUsed(int row) {
@@ -442,7 +444,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         public Object getValueAt(int row, int col) {
-        	PartitionTreeModel model = options.getPartitionTreeModels().get(row);
+            PartitionTreeModel model = options.getPartitionTreeModels().get(row);
             switch (col) {
                 case 0:
                     return model.getName();
@@ -457,12 +459,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 case 0:
                     String name = ((String) aValue).trim();
                     if (name.length() > 0) {
-                    	PartitionTreeModel model = options.getPartitionTreeModels().get(row);
-                    	model.setName(name);
-                    	// keep tree prior name same as tree model name
-                    	PartitionTreePrior prior = model.getPartitionTreePrior();
-                    	prior.setName(name);
-                    	fireTreePriorsChanged();
+                        PartitionTreeModel model = options.getPartitionTreeModels().get(row);
+                        model.setName(name);
+                        // keep tree prior name same as tree model name
+                        PartitionTreePrior prior = model.getPartitionTreePrior();
+                        prior.setName(name);
+                        fireTreePriorsChanged();
                     }
                     break;
                 default:

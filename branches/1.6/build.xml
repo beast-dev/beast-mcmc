@@ -389,6 +389,7 @@
 		<copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
+        <copy file="${common_dir}/icons/TreeStat.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
 		<!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->

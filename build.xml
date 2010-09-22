@@ -526,7 +526,7 @@
         <jarbundler dir="${Mac_package_dir}"
                         name="${TreeStat_name} v${version}"
                         mainclass="dr.app.treestat.TreeStatApp"
-                        icon="${common_dir}/icons/utility.icns"
+                        icon="${common_dir}/icons/TreeStat.icns"
                         jvmversion="1.5+"
                         vmoptions="-Xmx1024M"
                         arguments=""

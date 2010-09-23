@@ -23,13 +23,13 @@
         <ambiguity code="U"/>
     </extendedDataType>
 
-    <!--    <alignment id="short">
-        <dataType idref="alsDataType"/>
-        <sequence> <taxon idref="hg"/>    222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222</sequence>
-        <sequence> <taxon idref="panTro"/>U000000000000000000000000011111111111111111111111112222222222222222222222222BBBBBBBBBBBBBBBBBBBBBBBBBUUUUUUUUUUUUUUUUUUUUUUUUU</sequence>
-        <sequence> <taxon idref="mm"/>    U000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU</sequence>
-        <sequence> <taxon idref="rn"/>    U012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU</sequence>
-    </alignment>-->
+    <!-- <alignment id="short">
+   <dataType idref="alsDataType"/>
+   <sequence> <taxon idref="hg"/>    222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222222</sequence>
+   <sequence> <taxon idref="panTro"/>U000000000000000000000000011111111111111111111111112222222222222222222222222BBBBBBBBBBBBBBBBBBBBBBBBBUUUUUUUUUUUUUUUUUUUUUUUUU</sequence>
+   <sequence> <taxon idref="mm"/>    U000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU000001111122222BBBBBUUUUU</sequence>
+   <sequence> <taxon idref="rn"/>    U012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU012BU</sequence>
+</alignment>     -->
 
     <alignment id="short">
         <dataType idref="alsDataType"/>
@@ -141,9 +141,14 @@
         <scaleOperator scaleFactor="0.54" weight="1">
             <parameter idref="substitutionRate"/>
         </scaleOperator>
-        <deltaExchange delta="0.33" weight="1" autoOptimize="true">
+        <deltaMix delta=".5" weight="1" autoOptimize="false">
             <parameter idref="binary.frequencies"/>
-        </deltaExchange>
+        </deltaMix>
+
+        <!--  <deltaExchange delta=".1" weight="1" autoOptimize="true">
+      <parameter idref="binary.frequencies"/>
+  </deltaExchange>      -->
+
         <scaleOperator scaleFactor="0.65" weight="1">
             <parameter idref="als.death"/>
         </scaleOperator>
@@ -172,7 +177,7 @@
             <column label="Del" sf="4" width="12">
                 <parameter idref="als.death"/>
             </column>
-            <column label="P" sf="4" width="12">
+            <column label="P" sf="8" width="12">
                 <parameter idref="binary.frequencies"/>
             </column>
             <column label="Mrate" sf="4" width="12">
@@ -191,7 +196,7 @@
         <log id="fileLog" logEvery="1" fileName="scalePrior.log">
             <!--	<parameter idref="als.birth" />         -->
             <parameter idref="als.death"/>
-            <parameter idref="binary.frequencies" dimension="1"/>
+            <parameter idref="binary.frequencies"/>
             <parameter idref="substitutionRate"/>
             <likelihood idref="likelihood"/>
             <!--<alsTreeLikelihood idref="alsLikelihood"/>-->

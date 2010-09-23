@@ -225,7 +225,8 @@
 
 			<batchtest fork="yes" todir="${report}">
 				<fileset dir="${src}">
-                    <include name="test/dr/distibutions/**/*Test.java"/>                                         
+                    <include name="test/dr/distibutions/**/*Test.java"/>
+                    <include name="test/dr/evolution/**/*Test.java" />
 					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
 					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
                     <include name="test/dr/evomodel/branchratemodel/**/*Test.java" />

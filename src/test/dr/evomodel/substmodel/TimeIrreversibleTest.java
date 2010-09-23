@@ -1,4 +1,4 @@
-package test.dr.integration;
+package test.dr.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;

@@ -5,13 +5,8 @@ import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.sequence.Sequence;
-import dr.evolution.alignment.Patterns;
-import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.SimpleAlignment;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.SubstitutionEpochModel;
 import dr.math.MathUtils;
 import dr.inference.model.Parameter;
 
@@ -36,12 +31,19 @@ public class GeoDiffusionSimulator extends SequenceSimulator{
             Tree tree,
             SiteModel siteModel,
             BranchRateModel branchRateModel,
-            double max,
-            double min) {
+            double maxLat,
+            double minLat,
+            double maxLong,
+            double minLong) {
 
     	super(tree, siteModel, branchRateModel, 1);
         this.dataType = dataType;
         this.taxa = taxa;
+        this.maxLat = maxLat;
+        this.minLat = minLat;
+        this.maxLong = maxLong;
+        this.minLong = minLong;
+
     }
 
     /**

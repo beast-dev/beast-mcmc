@@ -85,9 +85,9 @@ public class TreeAnnotator {
     }
 
     enum HeightsSummary {
-        KEEP_HEIGHTS("Keep target heights"),
+        MEDIAN_HEIGHTS("Median heights"),
         MEAN_HEIGHTS("Mean heights"),
-        MEDIAN_HEIGHTS("Median heights");
+        KEEP_HEIGHTS("Keep target heights");
 
         String desc;
 

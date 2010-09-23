@@ -42,10 +42,10 @@ import dr.geo.contouring.ContourWithSynder;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
+import jam.console.ConsoleApplication;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
-import jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.FileOutputStream;
@@ -83,9 +83,9 @@ public class TreeAnnotator {
     }
 
     enum HeightsSummary {
-        KEEP_HEIGHTS("Keep target heights"),
+        MEDIAN_HEIGHTS("Median heights"),
         MEAN_HEIGHTS("Mean heights"),
-        MEDIAN_HEIGHTS("Median heights");
+        KEEP_HEIGHTS("Keep target heights");
 
         String desc;
 

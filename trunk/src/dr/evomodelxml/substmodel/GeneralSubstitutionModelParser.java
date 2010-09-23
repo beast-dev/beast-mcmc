@@ -1,7 +1,10 @@
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.*;
-import dr.evomodel.substmodel.*;
+import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.FrequencyModel;
+import dr.evomodel.substmodel.GeneralSubstitutionModel;
+import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -70,7 +73,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO);
+        boolean hasRelativeRates = cxo.getIntegerAttribute(RELATIVE_TO) > 0 || cxo.hasChildNamed(RELATIVE_TO);
 
         int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
         int reversibleRateCount = (nonReversibleRateCount / 2);

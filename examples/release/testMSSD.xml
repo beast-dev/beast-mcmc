@@ -141,9 +141,9 @@
         <scaleOperator scaleFactor="0.54" weight="1">
             <parameter idref="substitutionRate"/>
         </scaleOperator>
-        <deltaMix delta=".5" weight="1" autoOptimize="false">
+        <deltaMixOperator delta=".5" weight="1" autoOptimize="false">
             <parameter idref="binary.frequencies"/>
-        </deltaMix>
+        </deltaMixOperator>
 
         <!--  <deltaExchange delta=".1" weight="1" autoOptimize="true">
       <parameter idref="binary.frequencies"/>

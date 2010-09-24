@@ -46,7 +46,8 @@ public class SubtreeSlideOperatorParser extends AbstractXMLObjectParser {
         final double size = xo.getAttribute("size", 1.0);
 
         if (Double.isInfinite(size) || size <= 0.0) {
-            throw new XMLParseException("size attribute must be positive and not infinity.");
+            throw new XMLParseException("size attribute must be positive and not infinite. was " + size +
+           " for tree " + treeModel.getId() );
         }
 
         final boolean gaussian = xo.getBooleanAttribute("gaussian");

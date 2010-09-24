@@ -1,0 +1,93 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+
+    <!-- random data generated in r via:
+    > set.seed(777)
+    > rmultinom(20, size = 12, prob=c(0.01,0.29,0.7))
+         [,1] [,2] [,3] [,4] [,5] [,6] [,7] [,8] [,9] [,10] [,11] [,12] [,13] [,14] [,15] [,16] [,17] [,18] [,19] [,20]
+    [1,]    0    0    0    0    1    0    0    0    0     0     0     0     0     0     1     0     0     0     0     0
+    [2,]    3    8    0    2    2    4    4    2    5     3     4     2     5     4     4     4     3     3     3     4
+    [3,]    9    4   12   10    9    8    8   10    7     9     8    10     7     8     7     8     9     9     9     8
+
+    -->
+
+    <taxa id="taxa">
+        <taxon id="OTU1"/>
+        <taxon id="OTU2"/>
+        <taxon id="OTU3"/>
+    </taxa>
+
+    <matrixParameter id="OTU.abundance.matrix">
+        <parameter id="OTU1.abundanceCol"
+                   value="0    0    0    0    1    0    0    0    0     0     0     0     0     0     1     0     0     0     0     0"/>
+        <parameter id="OTU2.abundanceCol"
+                   value="3    8    0    2    2    4    4    2    5     3     4     2     5     4     4     4     3     3     3     4"/>
+        <parameter id="OTU3.abundanceCol"
+                   value="9    4   12   10    9    8    8   10    7     9     8    10     7     8     7     8     9     9     9     8"/>
+    </matrixParameter>
+
+    <mvPolyaLikelihood id="mvPolyaLike">
+        <data>
+            <matrixParameter idref="OTU.abundance.matrix"/>
+        </data>
+        <dispersion>
+            <parameter id="dirichletDispersion" value="1"/>
+        </dispersion>
+        <frequencies>
+            <parameter id="OTU.frequencies" value="0.25 0.25 0.5"/>
+        </frequencies>
+    </mvPolyaLikelihood>
+
+    <operators id="operators">
+        <deltaMixOperator delta=".5" weight="1">
+            <parameter idref="OTU.frequencies"/>
+        </deltaMixOperator>
+        <scaleOperator scaleFactor="0.54" weight="1">
+            <parameter idref="dirichletDispersion"/>
+        </scaleOperator>
+    </operators>
+
+    <mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+        <posterior id="posterior">
+            <likelihood id="likelihood">
+                <mvPolyaLikelihood idref="mvPolyaLike"/>
+            </likelihood>
+            <prior id="prior">
+                <gammaPrior id="prior.Gamma" shape="0.5" scale="1" offset="0.0">
+                    <parameter idref="dirichletDispersion"/>
+                </gammaPrior>
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="100">
+            <column label="Dispersion" sf="4" width="12">
+                <parameter idref="dirichletDispersion"/>
+            </column>
+            <column label="Abundances" sf="4" width="12">
+                <parameter idref="OTU.frequencies"/>
+            </column>
+            <column dp="8" label="Likelihood" width="12">
+                <likelihood idref="likelihood"/>
+            </column>
+            <column label="Prior" dp="8" width="12">
+                <prior idref="prior"/>
+            </column>
+            <column label="Posterior" dp="8" width="12">
+                <posterior idref="posterior"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testMVPolyaLike.log">
+            <likelihood idref="likelihood"/>
+            <prior idref="prior"/>
+            <parameter idref="dirichletDispersion"/>
+            <parameter idref="OTU.frequencies"/>
+        </log>
+    </mcmc>
+    <traceAnalysis fileName="testMVPolyaLike.log" stdError="true"/>
+
+    <report>
+        True multinomial frequencies 0.01 0.29 0.7
+    </report>
+
+</beast>

@@ -11,12 +11,12 @@ import dr.xml.*;
  */
 public class DeltaMixOperatorParser extends AbstractXMLObjectParser {
 
-    public static final String DELTA_EXCHANGE = "deltaMix";
+    public static final String DELTA_MIX = "deltaMixOperator";
     public static final String DELTA = "delta";
     public static final String PARAMETER_WEIGHTS = "parameterWeights";
 
     public String getParserName() {
-        return DELTA_EXCHANGE;
+        return DELTA_MIX;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

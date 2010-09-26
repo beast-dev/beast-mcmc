@@ -1068,32 +1068,71 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         return false;
     }
 
-    TreeTrait dmf = new TreeTrait.S() {
+//    TreeTrait dmf = new TreeTrait.S() {
+//        public String getTraitName() {
+//            return "dmf";
+//        }
+//
+//        public Intent getIntent() {
+//            return Intent.NODE;
+//        }
+//
+//        public String getTrait(Tree tree, NodeRef node) {
+//            assert tree == SpeciesTreeModel.this;
+//
+//            //final VDdemographicFunction df = getProps().get(node).demogf;
+//
+//            final DemographicFunction df = getNodeDemographic(node);
+//            return df.toString();
+//        }
+//    };
+
+    TreeTrait dmt = new TreeTrait.DA() {
         public String getTraitName() {
-            return "dmf";
+            return "dmt";
         }
 
         public Intent getIntent() {
             return Intent.NODE;
         }
 
-        public String getTrait(Tree tree, NodeRef node) {
+        public double[] getTrait(Tree tree, NodeRef node) {
             assert tree == SpeciesTreeModel.this;
 
-            //final VDdemographicFunction df = getProps().get(node).demogf;
-
-            final DemographicFunction df = getNodeDemographic(node);
-            return df.toString();
+            final VDdemographicFunction df = (VDdemographicFunction) getNodeDemographic(node);
+            return df.times();
         }
     };
 
+    TreeTrait dmv = new TreeTrait.DA() {
+        public String getTraitName() {
+            return "dmv";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public double[] getTrait(Tree tree, NodeRef node) {
+            assert tree == SpeciesTreeModel.this;
+
+            final VDdemographicFunction df = (VDdemographicFunction) getNodeDemographic(node);
+            return df.values();
+        }
+    };
+
+
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[]{dmf};
+        return new TreeTrait[]{dmt, dmv};
     }
 
     public TreeTrait getTreeTrait(String key) {
-        // ignore the key - it must be the one they wanted, no?
-        return dmf;
+        if (key.equals(dmt.getTraitName())) {
+            return dmt;
+        } else if (key.equals(dmv.getTraitName())) {
+            return dmv;
+        }
+        throw new IllegalArgumentException();
     }
 
 

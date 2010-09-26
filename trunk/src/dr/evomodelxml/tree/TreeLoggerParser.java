@@ -9,7 +9,6 @@ import dr.inference.model.Likelihood;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
-import java.io.File;
 import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -24,14 +23,15 @@ public class TreeLoggerParser extends LoggerParser {
 
     public static final String LOG_TREE = "logTree";
     public static final String NEXUS_FORMAT = "nexusFormat";
-    public static final String USING_RATES = "usingRates";
+//    public static final String USING_RATES = "usingRates";
     public static final String BRANCH_LENGTHS = "branchLengths";
     public static final String TIME = "time";
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
     public static final String MAP_NAMES = "mapNamesToNumbers";
     public static final String DECIMAL_PLACES = "dp";
-    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
+//    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
+    public static final String FILTER_TRAITS = "traitFilter";
 
     public String getParserName() {
         return LOG_TREE;
@@ -106,7 +106,24 @@ public class TreeLoggerParser extends LoggerParser {
                 taps.add((TreeAttributeProvider) cxo);
             }
             if (cxo instanceof TreeTraitProvider) {
-                ttps.add((TreeTraitProvider) cxo);
+                if (xo.hasAttribute(FILTER_TRAITS)) {
+                    String match = (String) xo.getAttribute(FILTER_TRAITS);
+                    TreeTraitProvider ttp = (TreeTraitProvider) cxo;
+                    TreeTrait[] traits = ttp.getTreeTraits();
+                    List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
+                    for (TreeTrait trait : traits) {
+                        if (trait.getTraitName().contains(match)) {
+                            filteredTraits.add(trait);
+                        }
+                    }
+                    if (filteredTraits.size() > 0) {
+                        ttps.add(new TreeTraitProvider.Helper(filteredTraits));
+                    }
+
+                } else {
+                    // Add all of them
+                    ttps.add((TreeTraitProvider) cxo);
+                }
             }
             // Without this next block, branch rates get ignored :-(
             if (cxo instanceof TreeTrait) {
@@ -138,7 +155,7 @@ public class TreeLoggerParser extends LoggerParser {
         // logEvery of zero only displays at the end
         final int logEvery = xo.getAttribute(LOG_EVERY, 0);
 
-        double normaliseMeanRateTo = xo.getAttribute(NORMALISE_MEAN_RATE_TO, Double.NaN);
+//        double normaliseMeanRateTo = xo.getAttribute(NORMALISE_MEAN_RATE_TO, Double.NaN);
 
         // decimal places
         final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
@@ -205,6 +222,7 @@ public class TreeLoggerParser extends LoggerParser {
             new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(TreeTraitProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(TreeLogger.LogUpon.class, true),
+            AttributeRule.newStringRule(FILTER_TRAITS, true),
             AttributeRule.newBooleanRule(MAP_NAMES, true),
             AttributeRule.newIntegerRule(DECIMAL_PLACES, true)
     };

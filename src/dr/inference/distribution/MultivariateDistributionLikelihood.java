@@ -25,10 +25,13 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.*;
+import dr.inference.model.DefaultModel;
+import dr.inference.model.Likelihood;
+import dr.inference.model.MatrixParameter;
+import dr.inference.model.Parameter;
 import dr.math.distributions.*;
-import dr.xml.*;
 import dr.util.Attribute;
+import dr.xml.*;
 
 
 /**
@@ -63,7 +66,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public double calculateLogLikelihood() {
         double logL = 0.0;
 
-        for( Attribute<double[]> data : dataList ) {
+        for (Attribute<double[]> data : dataList) {
             logL += distribution.logPdf(data.getAttributeValue());
         }
         return logL;
@@ -113,7 +116,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         };
 
         public String getParserDescription() {
-            return "Calculates the likelihood of some data under an Inverse-Wishart distribution.";
+            return "Calculates the likelihood of some data under a Dirichlet distribution.";
         }
 
         public Class getReturnType() {

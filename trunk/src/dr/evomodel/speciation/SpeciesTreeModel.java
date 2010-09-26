@@ -1081,7 +1081,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             //final VDdemographicFunction df = getProps().get(node).demogf;
 
             final DemographicFunction df = getNodeDemographic(node);
-            return df.toString();
+            return "{" + df.toString() + "}";
         }
     };
 

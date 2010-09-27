@@ -23,9 +23,9 @@
  * Boston, MA  02110-1301  USA
  */
 
-package test.dr.beauti;
+package test.dr.app.beauti;
 
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
 
 /**
  * @author Andrew Rambaut

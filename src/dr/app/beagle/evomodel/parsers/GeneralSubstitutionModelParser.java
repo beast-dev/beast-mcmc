@@ -73,7 +73,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-        boolean hasRelativeRates = cxo.getIntegerAttribute(RELATIVE_TO) > 0 || cxo.hasChildNamed(RELATIVE_TO);
+        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO) || (cxo.hasAttribute(RELATIVE_TO) && cxo.getIntegerAttribute(RELATIVE_TO) > 0);
 
         int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
         int reversibleRateCount = (nonReversibleRateCount / 2);

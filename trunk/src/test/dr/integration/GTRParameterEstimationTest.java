@@ -1,16 +1,19 @@
 package test.dr.integration;
 
-import java.io.*;
-import java.text.DecimalFormat;
-import java.util.*;
-
-import test.dr.beauti.BeautiTesterConfig;
-import dr.evomodel.substmodel.NucModelType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.util.Utils;
+import dr.evomodel.substmodel.NucModelType;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceException;
+import test.dr.app.beauti.BeautiTesterConfig;
+
+import java.io.*;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 
 
 

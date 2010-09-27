@@ -644,28 +644,25 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     }
 
     public double[] times() {
-
+        double[] valuesCopy = new double[times.length];
+        System.arraycopy(times, 0, valuesCopy, 0, times.length);
         // defensive copy
-        return Arrays.copyOf(times, times.length);
+        return valuesCopy;
     }
 
     /**
      * @return population values transformed depending on type (i.e. exp(value) for Type.EXPONENTIAL)
      */
     public double[] values() {
-
+        double[] valuesCopy = new double[values.length];
         if (type == VariableDemographicModel.Type.EXPONENTIAL) {
-
-            double[] valuesCopy = new double[values.length];
             for (int i = 0; i < values.length; i++) {
                 valuesCopy[i] = Math.exp(values[i]);
             }
-            return valuesCopy;
         } else {
-
-            // defensive copy
-            return Arrays.copyOf(values, values.length);
+            System.arraycopy(values, 0, valuesCopy, 0, values.length);            
         }
+        return valuesCopy;
     }
 
 //    public String toString() {

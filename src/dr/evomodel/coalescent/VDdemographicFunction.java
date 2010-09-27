@@ -644,8 +644,8 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
     }
 
     public double[] times() {
-        double[] valuesCopy = new double[times.length];
-        System.arraycopy(times, 0, valuesCopy, 0, times.length);
+        double[] valuesCopy = new double[times.length -2];
+        System.arraycopy(times, 1, valuesCopy, 0, times.length-2);
         // defensive copy
         return valuesCopy;
     }

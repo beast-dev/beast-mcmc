@@ -64,8 +64,8 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     public SpeciesTreeModel(SpeciesBindings species, Parameter sppSplitPopulations,
-                     Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree,
-                     boolean bmp, boolean nonConstRootPopulation, boolean constantPopulation) {
+                            Parameter coalPointsPops, Parameter coalPointsIndicator, Tree startTree,
+                            boolean bmp, boolean nonConstRootPopulation, boolean constantPopulation) {
         super(SpeciesTreeModelParser.SPECIES_TREE);
 
         this.species = species;
@@ -82,7 +82,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
         addModel(species);
 
-        if( coalPointsPops != null ) {
+        if (coalPointsPops != null) {
             assert coalPointsIndicator != null;
             assert !constantPopulation;
 
@@ -93,15 +93,15 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
             int start = 0;
             singleStartPoints = new int[pts.length];
-            for(int i = 0; i < pts.length; i++) {
+            for (int i = 0; i < pts.length; i++) {
                 singleStartPoints[i] = start;
                 start += pts[i].length;
             }
 
-            if( ! bmp ) {
+            if (!bmp) {
                 final double[][] ptp = species.getPopTimesPair();
                 pairStartPoints = new int[ptp.length];
-                for(int i = 0; i < ptp.length; i++) {
+                for (int i = 0; i < ptp.length; i++) {
                     pairStartPoints[i] = start;
                     start += ptp[i].length;
                 }
@@ -119,7 +119,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         children = new NodeRef[2 * nNodes + 1];
 
         // fixed properties
-        for(int k = 0; k < getExternalNodeCount(); ++k) {
+        for (int k = 0; k < getExternalNodeCount(); ++k) {
             final NodeRef nodeRef = getExternalNode(k);
             final int n = (Integer) getNodeAttribute(nodeRef, spIndexAttrName);
             final NodeProperties np = new NodeProperties(n);
@@ -127,7 +127,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             np.spSet.set(n);
         }
 
-        for(int k = 0; k < getInternalNodeCount(); ++k) {
+        for (int k = 0; k < getInternalNodeCount(); ++k) {
             final NodeRef nodeRef = getInternalNode(k);
             props.put(nodeRef, new NodeProperties(-1));
         }
@@ -139,14 +139,14 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         boolean check = spTree.getAttribute("check") != null;
         spTree.setAttribute("check", null);
 
-        if( check ) {
+        if (check) {
             // change only is needed - if the user provided a compatible state she may know
             // what she is doing
-            for( SpeciesBindings.GeneTreeInfo gt : species.getGeneTrees() ) {
-                if( ! isCompatible(gt) ) {
+            for (SpeciesBindings.GeneTreeInfo gt : species.getGeneTrees()) {
+                if (!isCompatible(gt)) {
 
                     species.makeCompatible(spTree.getRootHeight());
-                    for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
+                    for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
                         assert isCompatible(t);
                     }
                     anyChange = false;
@@ -161,6 +161,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     // Is gene tree compatible with species tree
+
     public boolean isCompatible(SpeciesBindings.GeneTreeInfo geneTreeInfo) {
         // can't set demographics if a tree is not compatible, but we need spSets.
         if (!nodePropsReady) {
@@ -172,11 +173,11 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     // Not very efficient, should do something better, based on traversing the cList once
 
     private int isCompatible(NodeRef node, SpeciesBindings.CoalInfo[] cList, int loc) {
-        if( !isExternal(node) ) {
+        if (!isExternal(node)) {
             int l = -1;
-            for(int nc = 0; nc < getChildCount(node); ++nc) {
+            for (int nc = 0; nc < getChildCount(node); ++nc) {
                 int l1 = isCompatible(getChild(node, nc), cList, loc);
-                if( l1 < 0 ) {
+                if (l1 < 0) {
                     return -1;
                 }
                 assert l == -1 || l1 == l;
@@ -188,7 +189,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             assert cList[loc].ctime >= getNodeHeight(node);
         }
 
-        if( node == getRoot() ) {
+        if (node == getRoot()) {
             return cList.length;
         }
 
@@ -197,25 +198,25 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
         final double limit = getNodeHeight(getParent(node));
 
-        while( loc < cList.length ) {
+        while (loc < cList.length) {
             final SpeciesBindings.CoalInfo ci = cList[loc];
-            if( ci.ctime >= limit ) {
+            if (ci.ctime >= limit) {
                 break;
             }
             boolean allIn = true, noneIn = true;
 
-            for(int i = 0; i < 2; ++i) {
+            for (int i = 0; i < 2; ++i) {
                 final FixedBitSet s = ci.sinfo[i];
 
                 final int in1 = s.intersectCardinality(nodeSps);
-                if( in1 > 0 ) {
+                if (in1 > 0) {
                     noneIn = false;
                 }
-                if( s.cardinality() != in1 ) {
+                if (s.cardinality() != in1) {
                     allIn = false;
                 }
             }
-            if( !(allIn || noneIn) ) {
+            if (!(allIn || noneIn)) {
                 return -1;
             }
             ++loc;
@@ -267,21 +268,21 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         }
 
         public double population(double t) {
-            if( t >= upperBound() ) {
-                return pops[pops.length-1];
+            if (t >= upperBound()) {
+                return pops[pops.length - 1];
             }
 
             int k = 0;
-            while( t > times[k] ) {
-               t -= times[k];
+            while (t > times[k]) {
+                t -= times[k];
                 ++k;
             }
-            double a = t  / (times[k] - (k > 0 ? times[k-1] : 0));
-            return a * pops[k] + (1-a) * pops[k+1];
+            double a = t / (times[k] - (k > 0 ? times[k - 1] : 0));
+            return a * pops[k] + (1 - a) * pops[k + 1];
         }
 
         public double upperBound() {
-            return times[times.length-1];
+            return times[times.length - 1];
         }
     }
     // Pass arguments of recursive functions in a compact format.
@@ -297,7 +298,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         final SimpleDemographicFunction[] dms;
 
         Args(Boolean bmp) {
-            if( ! bmp ) {
+            if (!bmp) {
                 cpp = species.getPopTimesPair();
                 iPair = new int[cpp.length];
                 dms = null;
@@ -306,15 +307,15 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
                 iPair = null;
                 int nsps = cps.length;
                 dms = new SimpleDemographicFunction[nsps];
-                for(int nsp = 0; nsp < nsps; ++nsp) {
+                for (int nsp = 0; nsp < nsps; ++nsp) {
                     final int start = singleStartPoints[nsp];
-                    final int stop = nsp < nsps - 1 ? singleStartPoints[nsp+1] : pops.length;
+                    final int stop = nsp < nsps - 1 ? singleStartPoints[nsp + 1] : pops.length;
 
-                    double[] pop = new double[1 + stop - start] ;
+                    double[] pop = new double[1 + stop - start];
                     pop[0] = sppSplitPopulations.getParameterValue(nsp); //  pops[nsp];
 
-                    for(int k = 0; k < stop-start; ++k) {
-                        pop[k+1] = pops[start + k];
+                    for (int k = 0; k < stop - start; ++k) {
+                        pop[k + 1] = pops[start + k];
                     }
                     dms[nsp] = new PLSD(pop, cps[nsp]);
                 }
@@ -343,11 +344,11 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             p[1] = pops[nsp + 2 * preOrderIndices[n.getNumber()] + nc];
 
             final NodeRef child = getChild(n, nc);
-            if( isExternal(child) ) {
+            if (isExternal(child)) {
                 p[0] = pops[props.get(child).speciesIndex];
             } else {
                 int k = nsp + 2 * preOrderIndices[child.getNumber()];
-                p[0] = pops[k] + pops[k+1];
+                p[0] = pops[k] + pops[k + 1];
             }
         }
 
@@ -364,23 +365,23 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         }
 
         public double[] getTimes(int ns) {
-            return ((PLSD)args.dms[ns]).times;
+            return ((PLSD) args.dms[ns]).times;
         }
 
         public double[] getPops(int ns) {
-            return ((PLSD)args.dms[ns]).pops;
+            return ((PLSD) args.dms[ns]).pops;
         }
 
         public void getRootPopulations(double[] p) {
             int k = nsp + 2 * preOrderIndices[getRoot().getNumber()];
-            p[0] = pops[k] + pops[k+1];
+            p[0] = pops[k] + pops[k + 1];
             p[1] = nonConstRootPopulation ? pops[pops.length - 1] : p[0];
         }
 
         public double geneTreesRootHeight() {
             //getNodeDemographic(getRoot()).
             double h = -1;
-            for(SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
+            for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
                 h = Math.max(h, t.tree.getNodeHeight(t.tree.getRoot()));
             }
             return h;
@@ -388,7 +389,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     RawPopulationHelper getPopulationHelper() {
-      return new RawPopulationHelper();
+        return new RawPopulationHelper();
     }
 
     static private class Points implements Comparable<Points> {
@@ -417,9 +418,9 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     setSPsets(NodeRef nodeID) {
         final NodeProperties nprop = props.get(nodeID);
 
-        if( !isExternal(nodeID) ) {
+        if (!isExternal(nodeID)) {
             nprop.spSet = new FixedBitSet(species.nSpecies());
-            for(int nc = 0; nc < getChildCount(nodeID); ++nc) {
+            for (int nc = 0; nc < getChildCount(nodeID); ++nc) {
                 NodeProperties p = setSPsets(getChild(nodeID, nc));
                 nprop.spSet.union(p.spSet);
             }
@@ -427,88 +428,88 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         return nprop;
     }
 
-    private int ti2f(int i,int j) {
-       return (i==0) ? j : 2*i + j + 1;
+    private int ti2f(int i, int j) {
+        return (i == 0) ? j : 2 * i + j + 1;
     }
 
     private VDdemographicFunction
     bestLinearFit(double[] xs, double[] ys, boolean[] use) {
 
-        assert (xs.length+1) == ys.length;
+        assert (xs.length + 1) == ys.length;
         assert ys.length == use.length + 2 || ys.length == use.length + 1;
 
         int N = ys.length;
-        if( N == 2  ) {
+        if (N == 2) {
             // cheaper
             return new VDdemographicFunction(xs, ys, getUnits());
         }
 
         List<Integer> iv = new ArrayList<Integer>(2);
         iv.add(0);
-        for(int k = 0; k < N-2; ++k) {
-            if( use[k] ) {
-                iv.add(k+1);
+        for (int k = 0; k < N - 2; ++k) {
+            if (use[k]) {
+                iv.add(k + 1);
             }
         }
-        iv.add(N-1);
+        iv.add(N - 1);
 
         double[] ati = new double[xs.length + 1];
         ati[0] = 0.0;
         System.arraycopy(xs, 0, ati, 1, xs.length);
         int n = iv.size();
 
-        double[] a = new double[3*n];
+        double[] a = new double[3 * n];
         double[] v = new double[n];
 
-        for(int k = 0; k < n-1; ++k) {
+        for (int k = 0; k < n - 1; ++k) {
             int i0 = iv.get(k);
-            int i1 = iv.get(k+1);
+            int i1 = iv.get(k + 1);
 
             double u0 = ati[i0];
             double u1 = ati[i1] - ati[i0];
             // on last interval add data for last point
-            if( i1 == N-1 ) {
+            if (i1 == N - 1) {
                 i1 += 1;
             }
 
-            final int l = ti2f(k,k);
-            final int l1 = ti2f(k+1,k);
+            final int l = ti2f(k, k);
+            final int l1 = ti2f(k + 1, k);
 
-            for(int j = i0; j < i1; ++j) {
+            for (int j = i0; j < i1; ++j) {
                 double t = ati[j];
                 double y = ys[j];
 
-                double z = (t - u0)/u1;
-                v[k] += y * (1-z);
+                double z = (t - u0) / u1;
+                v[k] += y * (1 - z);
 
-                a[l] += (1-z)*(1-z);
-                a[l+1] += z * (1-z);
+                a[l] += (1 - z) * (1 - z);
+                a[l + 1] += z * (1 - z);
 
-                a[l1] += z * (1-z);
-                a[l1+1] += z*z;
-                v[k+1] += y * z;
+                a[l1] += z * (1 - z);
+                a[l1 + 1] += z * z;
+                v[k + 1] += y * z;
             }
         }
 
-        for(int k = 0; k < n-1; ++k) {
+        for (int k = 0; k < n - 1; ++k) {
 
-            final double r = a[ti2f(k+1, k)] / a[ti2f(k,k)];
-            for(int j = k; j < k+3; ++j) {
-                a[ti2f((k+1) , j)] -=  a[ti2f(k, j)] * r;
+            final double r = a[ti2f(k + 1, k)] / a[ti2f(k, k)];
+            for (int j = k; j < k + 3; ++j) {
+                a[ti2f((k + 1), j)] -= a[ti2f(k, j)] * r;
             }
-            v[k+1] -= v[k] * r;
+            v[k + 1] -= v[k] * r;
         }
 
         double[] z = new double[n];
-        for(int k = n-1; k > 0; --k) {
-            z[k] = v[k]/a[ti2f(k, k)];
-            v[k-1] -= a[ti2f((k-1) , k)] * z[k];
+        for (int k = n - 1; k > 0; --k) {
+            z[k] = v[k] / a[ti2f(k, k)];
+            v[k - 1] -= a[ti2f((k - 1), k)] * z[k];
         }
 
-        z[0] = v[0]/a[ti2f(0,0)];
-        double[] t = new double[iv.size()-1];
-        for(int j = 0; j < t.length; ++j) {
-            t[j] = ati[iv.get(j+1)];
+        z[0] = v[0] / a[ti2f(0, 0)];
+        double[] t = new double[iv.size() - 1];
+        for (int j = 0; j < t.length; ++j) {
+            t[j] = ati[iv.get(j + 1)];
         }
         return new VDdemographicFunction(t, z, getUnits());
     }
@@ -519,21 +520,22 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     //  pointsList is indexed by node-id. Every element is a list of internal
     //  population points for the branch between nodeID and it's ancestor
     //
+
     private NodeProperties getDemographicPoints(final NodeRef nodeID, Args args, Points[][] pointsList) {
 
         final NodeProperties nprop = props.get(nodeID);
         final int nSpecies = species.nSpecies();
 
         // Species assignment from the tips never changes
-        if( ! isExternal(nodeID) ) {
+        if (!isExternal(nodeID)) {
             nprop.spSet = new FixedBitSet(nSpecies);
-            for(int nc = 0; nc < getChildCount(nodeID); ++nc) {
+            for (int nc = 0; nc < getChildCount(nodeID); ++nc) {
                 final NodeProperties p = getDemographicPoints(getChild(nodeID, nc), args, pointsList);
                 nprop.spSet.union(p.spSet);
             }
         }
 
-        if( args == null ) {
+        if (args == null) {
             return nprop;
         }
 
@@ -544,92 +546,92 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         // not sure what a good default size is?
         List<Points> allPoints = new ArrayList<Points>(5);
 
-        if( bmp ) {
-            for(int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
+        if (bmp) {
+            for (int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
                 final double[] cp = args.cps[isp];
                 final int upi = singleStartPoints[isp];
 
                 int i = args.iSingle[isp];
-                for(/**/; i < cp.length && cp[i] < cHeight; ++i) {
+                for (/**/; i < cp.length && cp[i] < cHeight; ++i) {
                     allPoints.add(new Points(cp[i], args.indicators[upi + i] > 0));
                 }
                 args.iSingle[isp] = i;
             }
-        }  else {
+        } else {
 
-        for(int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
-            final double nodeHeight = spTree.getNodeHeight(nodeID);
-            {
-                double[] cp = args.cps[isp];
-                final int upi = singleStartPoints[isp];
+            for (int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
+                final double nodeHeight = spTree.getNodeHeight(nodeID);
+                {
+                    double[] cp = args.cps[isp];
+                    final int upi = singleStartPoints[isp];
 
-                int i = args.iSingle[isp];
+                    int i = args.iSingle[isp];
 
-                while( i < cp.length && cp[i] < cHeight ) {
-                    if( args.indicators[upi + i] > 0 ) {
-                        //System.out.println("  popbit s");
-                        args.iSingle[isp] = i;
-                        double prev = args.findPrev(cp[i], nodeHeight);
-                        double mid = (prev + cp[i]) / 2.0;
-                        assert nodeHeight < mid;
-                        allPoints.add(new Points(mid, args.pops[upi + i]));
+                    while (i < cp.length && cp[i] < cHeight) {
+                        if (args.indicators[upi + i] > 0) {
+                            //System.out.println("  popbit s");
+                            args.iSingle[isp] = i;
+                            double prev = args.findPrev(cp[i], nodeHeight);
+                            double mid = (prev + cp[i]) / 2.0;
+                            assert nodeHeight < mid;
+                            allPoints.add(new Points(mid, args.pops[upi + i]));
+                        }
+                        ++i;
                     }
-                    ++i;
+                    args.iSingle[isp] = i;
                 }
-                args.iSingle[isp] = i;
-            }
 
-            final int kx = (isp * (2 * nSpecies - isp - 3)) / 2 - 1;
-            for(int y = nprop.spSet.nextOnBit(isp + 1); y >= 0; y = nprop.spSet.nextOnBit(y + 1)) {
+                final int kx = (isp * (2 * nSpecies - isp - 3)) / 2 - 1;
+                for (int y = nprop.spSet.nextOnBit(isp + 1); y >= 0; y = nprop.spSet.nextOnBit(y + 1)) {
 
-                assert isp < y;
-                int k = kx + y;
+                    assert isp < y;
+                    int k = kx + y;
 
-                double[] cp = args.cpp[k];
-                int i = args.iPair[k];
-                final int upi = pairStartPoints[k];
+                    double[] cp = args.cpp[k];
+                    int i = args.iPair[k];
+                    final int upi = pairStartPoints[k];
 
-                while( i < cp.length && cp[i] < cHeight ) {
-                    if( args.indicators[upi + i] > 0 ) {
-                        //System.out.println("  popbit p");
-                        args.iPair[k] = i;
-                        final double prev = args.findPrev(cp[i], nodeHeight);
-                        double mid = (prev + cp[i]) / 2.0;
-                        assert nodeHeight < mid;
-                        allPoints.add(new Points(mid, args.pops[upi + i]));
+                    while (i < cp.length && cp[i] < cHeight) {
+                        if (args.indicators[upi + i] > 0) {
+                            //System.out.println("  popbit p");
+                            args.iPair[k] = i;
+                            final double prev = args.findPrev(cp[i], nodeHeight);
+                            double mid = (prev + cp[i]) / 2.0;
+                            assert nodeHeight < mid;
+                            allPoints.add(new Points(mid, args.pops[upi + i]));
+                        }
+                        ++i;
                     }
-                    ++i;
+                    args.iPair[k] = i;
                 }
-                args.iPair[k] = i;
             }
-        }
         }
 
         Points[] all = null;
 
-        if( allPoints.size() > 0 ) {
+        if (allPoints.size() > 0) {
             all = allPoints.toArray(new Points[allPoints.size()]);
-            if( all.length > 1 ) {
+            if (all.length > 1) {
                 HeapSort.sort(all);
             }
 
             int len = all.length;
 
-            if( bmp ) {
+            if (bmp) {
                 int k = 0;
-                while( k + 1 < len ) {
+                while (k + 1 < len) {
                     final double t = all[k].time;
-                    if( t == all[k + 1].time ) {
+                    if (t == all[k + 1].time) {
                         int j = k + 2;
                         boolean use = all[k].use || all[k + 1].use;
 
-                        while( j < len && t == all[j].time ) {
+                        while (j < len && t == all[j].time) {
                             use = use || all[j].use;
                             j += 1;
                         }
                         int removed = (j - k - 1);
                         all[k] = new Points(t, use);
-                        for(int i = k + 1; i < len - removed; ++i) {
+                        for (int i = k + 1; i < len - removed; ++i) {
                             all[i] = all[i + removed];
                         }
                         len -= removed;
@@ -640,18 +642,18 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
                 // duplications
 
                 int k = 0;
-                while( k + 1 < len ) {
+                while (k + 1 < len) {
                     double t = all[k].time;
-                    if( t == all[k + 1].time ) {
+                    if (t == all[k + 1].time) {
                         int j = k + 2;
                         double v = all[k].population + all[k + 1].population;
-                        while( j < len && t == all[j].time ) {
+                        while (j < len && t == all[j].time) {
                             v += all[j].population;
                             j += 1;
                         }
                         int removed = (j - k - 1);
                         all[k] = new Points(t, v / (removed + 1));
-                        for(int i = k + 1; i < len - removed; ++i) {
+                        for (int i = k + 1; i < len - removed; ++i) {
                             all[i] = all[i + removed];
                         }
                         //System.arraycopy(all, j, all, k + 1, all.length - j + 1);
@@ -661,19 +663,19 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
                 }
             }
 
-            if( len != all.length ) {
+            if (len != all.length) {
                 Points[] a = new Points[len];
                 System.arraycopy(all, 0, a, 0, len);
                 all = a;
             }
 
-            if( bmp ) {
-                for( Points p : all ) {
+            if (bmp) {
+                for (Points p : all) {
                     double t = p.time;
                     assert p.population == 0;
-                    for(int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
+                    for (int isp = nprop.spSet.nextOnBit(0); isp >= 0; isp = nprop.spSet.nextOnBit(isp + 1)) {
                         SimpleDemographicFunction d = args.dms[isp];
-                        if( t <= d.upperBound() ) {
+                        if (t <= d.upperBound()) {
                             p.population += d.population(t);
                         }
                     }
@@ -693,7 +695,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
         int pEnd;
         double p0;
 
-        if( isExternal(nodeID) ) {
+        if (isExternal(nodeID)) {
             final int sps = nprop.speciesIndex;
             p0 = pops[sps];
             pEnd = pStart;
@@ -702,78 +704,78 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
             final int iHere = setDemographics(getChild(nodeID, 0), pStart, 0, pops, pointsList);
             pEnd = setDemographics(getChild(nodeID, 1), iHere + 1, 1, pops, pointsList);
-            if( constantPopulation ) {
-               final int i = nSpecies + iHere;
-               p0 = pops[i];
+            if (constantPopulation) {
+                final int i = nSpecies + iHere;
+                p0 = pops[i];
             } else {
-               final int i = nSpecies + iHere * 2;
-               p0 = pops[i] + pops[i + 1];
+                final int i = nSpecies + iHere * 2;
+                p0 = pops[i] + pops[i + 1];
             }
         }
 
-        if( constantPopulation ) {
+        if (constantPopulation) {
             double[] xs = {};
             double[] ys = {p0};
 
-           nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
+            nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
             // new ConstantPopulation(p0, getUnits());
         } else {
-        final double t0 = getNodeHeight(nodeID);
+            final double t0 = getNodeHeight(nodeID);
 
-        Points[] p = pointsList != null ? pointsList[nodeID.getNumber()] : null;
-        final int plen = p == null ? 0 : p.length;
+            Points[] p = pointsList != null ? pointsList[nodeID.getNumber()] : null;
+            final int plen = p == null ? 0 : p.length;
 
-        final boolean isRoot = nodeID == getRoot();
+            final boolean isRoot = nodeID == getRoot();
 //        double[] xs = new double[plen + (isRoot ? 1 : 1)];
 //        double[] ys = new double[plen + (isRoot ? 2 : 2)];
 
-        final boolean useBMP = bmp && pointsList != null;
-        // internal nodes add one population point for the branch end.
-        // on the root (with bmp) there is no such point.
-        final int len = plen + (useBMP ? (!isRoot ? 1 : 0) : 1);
-        double[] xs = new double[len];
-        double[] ys = new double[len+1];
-        boolean[] use = new boolean[len];
-        ys[0] = p0;
-        for(int i = 0; i < plen; ++i) {
-            xs[i] = p[i].time - t0;
-            ys[i + 1] = p[i].population;
-            use[i] = p[i].use;
-        }
-
-        if( !isRoot ) {
-            final int anccIndex = (side == 0) ? pEnd : pStart - 1;
-            final double pe = pops[nSpecies + anccIndex * 2 + side];
-            final double b = getBranchLength(nodeID);
-
-            xs[xs.length - 1] = b;
-            ys[ys.length - 1] = pe;
-        }
-
-        if( useBMP ) {
-          nprop.demogf = bestLinearFit(xs, ys, use);
-        } else {
-
-            if( isRoot ) {
-                // extend the last point to most ancient coalescent point. Has no effect on the demographic
-                // per se but for use when analyzing the results.
-
-                double h = -1;
-                for(SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
-                    h = Math.max(h, t.tree.getNodeHeight(t.tree.getRoot()));
-                }
-
-                final double rh = h - t0;
-                xs[xs.length - 1] = rh; //getNodeHeight(nodeID);
-                //spTree.setBranchLength(nodeID, rh);
-
-                // last value is for root branch end point
-                ys[ys.length - 1] = pointsList != null ? ys[ys.length - 2] :
-                        (nonConstRootPopulation ? pops[pops.length - 1] : ys[ys.length - 2]);
+            final boolean useBMP = bmp && pointsList != null;
+            // internal nodes add one population point for the branch end.
+            // on the root (with bmp) there is no such point.
+            final int len = plen + (useBMP ? (!isRoot ? 1 : 0) : 1);
+            double[] xs = new double[len];
+            double[] ys = new double[len + 1];
+            boolean[] use = new boolean[len];
+            ys[0] = p0;
+            for (int i = 0; i < plen; ++i) {
+                xs[i] = p[i].time - t0;
+                ys[i + 1] = p[i].population;
+                use[i] = p[i].use;
             }
 
-            nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
-        }
+            if (!isRoot) {
+                final int anccIndex = (side == 0) ? pEnd : pStart - 1;
+                final double pe = pops[nSpecies + anccIndex * 2 + side];
+                final double b = getBranchLength(nodeID);
+
+                xs[xs.length - 1] = b;
+                ys[ys.length - 1] = pe;
+            }
+
+            if (useBMP) {
+                nprop.demogf = bestLinearFit(xs, ys, use);
+            } else {
+
+                if (isRoot) {
+                    // extend the last point to most ancient coalescent point. Has no effect on the demographic
+                    // per se but for use when analyzing the results.
+
+                    double h = -1;
+                    for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
+                        h = Math.max(h, t.tree.getNodeHeight(t.tree.getRoot()));
+                    }
+
+                    final double rh = h - t0;
+                    xs[xs.length - 1] = rh; //getNodeHeight(nodeID);
+                    //spTree.setBranchLength(nodeID, rh);
+
+                    // last value is for root branch end point
+                    ys[ys.length - 1] = pointsList != null ? ys[ys.length - 2] :
+                            (nonConstRootPopulation ? pops[pops.length - 1] : ys[ys.length - 2]);
+                }
+
+                nprop.demogf = new VDdemographicFunction(xs, ys, getUnits());
+            }
         }
         return pEnd;
     }
@@ -781,10 +783,10 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     private void setNodeProperties() {
         Points[][] perBranchPoints = null;
 
-        if( coalPointsPops != null ) {
-          final Args args = new Args(bmp);
-          perBranchPoints = new Points[getNodeCount()][];
-          getDemographicPoints(getRoot(), args, perBranchPoints);
+        if (coalPointsPops != null) {
+            final Args args = new Args(bmp);
+            perBranchPoints = new Points[getNodeCount()][];
+            getDemographicPoints(getRoot(), args, perBranchPoints);
         } else {
             // sets species info
             getDemographicPoints(getRoot(), null, null);
@@ -817,42 +819,42 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     private Double setInitialSplitPopulations(FlexibleTree startTree, NodeRef node, int pos[]) {
-        if( ! startTree.isExternal(node) ) {
+        if (!startTree.isExternal(node)) {
             int loc = -1;
-            for(int nc = 0; nc < startTree.getChildCount(node); ++nc ) {
+            for (int nc = 0; nc < startTree.getChildCount(node); ++nc) {
                 final Double p = setInitialSplitPopulations(startTree, startTree.getChild(node, nc), pos);
-                if( nc == 0 ) {
+                if (nc == 0) {
                     loc = pos[0];
                     pos[0] += 1;
                 }
-                if( p != null ) {
-                    if( constantPopulation ) {
-                     //
+                if (p != null) {
+                    if (constantPopulation) {
+                        //
                     } else {
-                      sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + 2*loc + nc, p);
+                        sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + 2 * loc + nc, p);
                     }
                 }
             }
         }
 
-        final String comment = (String)startTree.getNodeAttribute(node, NewickImporter.COMMENT);
+        final String comment = (String) startTree.getNodeAttribute(node, NewickImporter.COMMENT);
         Double p0 = null;
-        if( comment != null ) {
+        if (comment != null) {
             StringTokenizer st = new StringTokenizer(comment);
 
             p0 = Double.parseDouble(st.nextToken());
-            if( startTree.isExternal(node) ) {
-              int ns = (Integer)startTree.getNodeAttribute(node, spIndexAttrName);
-              sppSplitPopulations.setParameterValueQuietly(ns, p0);
-            } else if( constantPopulation ) {
+            if (startTree.isExternal(node)) {
+                int ns = (Integer) startTree.getNodeAttribute(node, spIndexAttrName);
+                sppSplitPopulations.setParameterValueQuietly(ns, p0);
+            } else if (constantPopulation) {
                 // not tested code !!
                 sppSplitPopulations.setParameterValueQuietly(species.nSpecies() + pos[0], p0);
                 pos[0] += 1;
             }
 
             // if just one value const
-            if( st.hasMoreTokens()  ) {
-              p0 = Double.parseDouble(st.nextToken());
+            if (st.hasMoreTokens()) {
+                p0 = Double.parseDouble(st.nextToken());
             }
         }
         return p0;
@@ -861,44 +863,44 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     private SimpleTree compatibleUninformedSpeciesTree(Tree startTree) {
         double rootHeight = Double.MAX_VALUE;
 
-        for( SpeciesBindings.GeneTreeInfo t : species.getGeneTrees() ) {
+        for (SpeciesBindings.GeneTreeInfo t : species.getGeneTrees()) {
             rootHeight = Math.min(rootHeight, t.getCoalInfo()[0].ctime);
         }
 
         final SpeciesBindings.SPinfo[] spp = species.species;
 
-        if( startTree != null ) {
+        if (startTree != null) {
             // Allow start tree to be very basic basic - may be only partially resolved and no
             // branch lengths
 
-            if( startTree.getExternalNodeCount() != spp.length ) {
+            if (startTree.getExternalNodeCount() != spp.length) {
                 throw new Error("Start tree error - different number of tips");
             }
 
             final FlexibleTree tree = new FlexibleTree(startTree, true);
             tree.resolveTree();
             final double treeHeight = tree.getRootHeight();
-            if( treeHeight <= 0 ) {
+            if (treeHeight <= 0) {
                 tree.setRootHeight(1.0);
                 Utils.correctHeightsForTips(tree);
                 SimpleTree.Utils.scaleNodeHeights(tree, rootHeight / tree.getRootHeight());
             }
 
             SimpleTree sTree = new SimpleTree(tree);
-            for(int ns = 0; ns < spp.length; ns++) {
+            for (int ns = 0; ns < spp.length; ns++) {
                 SpeciesBindings.SPinfo sp = spp[ns];
                 final int i = sTree.getTaxonIndex(sp.name);
-                if( i < 0 ) {
+                if (i < 0) {
                     throw new Error(sp.name + " is not present in the start tree");
                 }
                 final SimpleNode node = sTree.getExternalNode(i);
                 node.setAttribute(spIndexAttrName, ns);
 
                 // set for possible pops
-                tree.setNodeAttribute( tree.getNode(tree.getTaxonIndex(sp.name)), spIndexAttrName, ns);
+                tree.setNodeAttribute(tree.getNode(tree.getTaxonIndex(sp.name)), spIndexAttrName, ns);
             }
 
-            if( treeHeight > 0 ) {
+            if (treeHeight > 0) {
                 sTree.setAttribute("check", new Double(rootHeight));
             }
 
@@ -917,7 +919,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
         List<SimpleNode> subs = new ArrayList<SimpleNode>(spp.length);
 
-        for(int ns = 0; ns < spp.length; ns++) {
+        for (int ns = 0; ns < spp.length; ns++) {
             SpeciesBindings.SPinfo sp = spp[ns];
             final SimpleNode node = new SimpleNode();
             node.setTaxon(new Taxon(sp.name));
@@ -926,7 +928,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             node.setAttribute(spIndexAttrName, ns);
         }
 
-        while( subs.size() > 1 ) {
+        while (subs.size() > 1) {
             final SimpleNode node = new SimpleNode();
             int i = 0, j = 1;
             node.addChild(subs.get(i));
@@ -945,10 +947,10 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     private int setPreorderIndices(NodeRef node, int loc, int[] indices) {
-        if( ! isExternal(node) ) {
+        if (!isExternal(node)) {
             int l = setPreorderIndices(getChild(node, 0), loc, indices);
             indices[node.getNumber()] = l;
-            loc = setPreorderIndices(getChild(node, 1), l+1, indices);
+            loc = setPreorderIndices(getChild(node, 1), l + 1, indices);
         }
         return loc;
     }
@@ -961,13 +963,13 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
     public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
         assert scaleFactor > 0;
-        if( nDims <= 0 ) {
+        if (nDims <= 0) {
             // actually when in an up down with operators on the gene trees the flags
             // may indicate a change
             //storeState();  // just checks assert really
             beginTreeEdit();
             final int count = getInternalNodeCount();
-            for(int i = 0; i < count; ++i) {
+            for (int i = 0; i < count; ++i) {
                 final NodeRef n = getInternalNode(i);
                 setNodeHeight(n, getNodeHeight(n) * scaleFactor);
             }
@@ -976,9 +978,9 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             return count;
         } else {
             if (nDims != 1) {
-               throw new OperatorFailedException("not implemented for count != 1");
+                throw new OperatorFailedException("not implemented for count != 1");
             }
-            if( internalTreeOP == null ) {
+            if (internalTreeOP == null) {
                 internalTreeOP = new TreeNodeSlide(this, species, 1);
             }
 
@@ -1012,24 +1014,24 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     protected void restoreState() {
-        if( verbose ) System.out.println(" SPtree: restore (" + treeChanged + "," + anyChange + ")");
+        if (verbose) System.out.println(" SPtree: restore (" + treeChanged + "," + anyChange + ")");
 
-        if( treeChanged ) {
+        if (treeChanged) {
             //
             spTree.beginTreeEdit();
 
-            for(int k = 0; k < getInternalNodeCount(); ++k) {
+            for (int k = 0; k < getInternalNodeCount(); ++k) {
                 final NodeRef node = getInternalNode(k);
                 final int index = node.getNumber();
                 final double h = heights[index];
-                if( getNodeHeight(node) != h ) {
+                if (getNodeHeight(node) != h) {
                     setNodeHeight(node, h);
                 }
-                for(int nc = 0; nc < 2; ++nc) {
+                for (int nc = 0; nc < 2; ++nc) {
                     final NodeRef child = getChild(node, nc);
 
                     final NodeRef child1 = children[2 * index + nc];
-                    if( child != child1 ) {
+                    if (child != child1) {
                         replaceChild(node, child, child1);
                     }
                     assert getParent(child1) == node;
@@ -1037,11 +1039,11 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             }
             setRoot(children[children.length - 1]);
 
-            if( verbose ) System.out.println("  restored to: " + spTree);
+            if (verbose) System.out.println("  restored to: " + spTree);
 
             spTree.endTreeEdit();
         }
-        if( treeChanged || anyChange ) {
+        if (treeChanged || anyChange) {
             setNodeProperties();
         }
         treeChanged = false;
@@ -1059,43 +1061,83 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
     public boolean logNow(int state) {
         final String curTop = Tree.Utils.uniqueNewick(spTree, spTree.getRoot());
-        if( state == 0 || !curTop.equals(previousTopology) ) {
+        if (state == 0 || !curTop.equals(previousTopology)) {
             previousTopology = curTop;
             return true;
         }
         return false;
     }
 
-    TreeTrait dmf = new TreeTrait.S() {
+//    TreeTrait dmf = new TreeTrait.S() {
+//        public String getTraitName() {
+//            return "dmf";
+//        }
+//
+//        public Intent getIntent() {
+//            return Intent.NODE;
+//        }
+//
+//        public String getTrait(Tree tree, NodeRef node) {
+//            assert tree == SpeciesTreeModel.this;
+//
+//            //final VDdemographicFunction df = getProps().get(node).demogf;
+//
+//            final DemographicFunction df = getNodeDemographic(node);
+//            return df.toString();
+//        }
+//    };
+
+    TreeTrait dmt = new TreeTrait.DA() {
         public String getTraitName() {
-            return "dmf";
+            return "dmt";
         }
 
         public Intent getIntent() {
             return Intent.NODE;
         }
 
-        public String getTrait(Tree tree, NodeRef node) {
+        public double[] getTrait(Tree tree, NodeRef node) {
             assert tree == SpeciesTreeModel.this;
 
-            //final VDdemographicFunction df = getProps().get(node).demogf;
-
-            final DemographicFunction df = getNodeDemographic(node);
-            return df.toString();
+            final VDdemographicFunction df = (VDdemographicFunction) getNodeDemographic(node);
+            return df.times();
         }
     };
 
+    TreeTrait dmv = new TreeTrait.DA() {
+        public String getTraitName() {
+            return "dmv";
+        }
+
+        public Intent getIntent() {
+            return Intent.NODE;
+        }
+
+        public double[] getTrait(Tree tree, NodeRef node) {
+            assert tree == SpeciesTreeModel.this;
+
+            final VDdemographicFunction df = (VDdemographicFunction) getNodeDemographic(node);
+            return df.values();
+        }
+    };
+
+
     public TreeTrait[] getTreeTraits() {
-        return new TreeTrait[] { dmf };
+        return new TreeTrait[]{dmt, dmv};
     }
 
     public TreeTrait getTreeTrait(String key) {
-        // ignore the key - it must be the one they wanted, no?
-        return dmf;
+        if (key.equals(dmt.getTraitName())) {
+            return dmt;
+        } else if (key.equals(dmv.getTraitName())) {
+            return dmv;
+        }
+        throw new IllegalArgumentException();
     }
 
 
     // boring delegation
+
     public SimpleTree getSimpleTree() {
         return spTree;
     }
@@ -1327,12 +1369,12 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
     public static Parameter createCoalPointsPopParameter(SpeciesBindings spb, Double value, Boolean bmp) {
         int dim = 0;
-        for( double[] d : spb.getPopTimesSingle() ) {
+        for (double[] d : spb.getPopTimesSingle()) {
             dim += d.length;
         }
 
-        if( ! bmp ) {
-            for( double[] d : spb.getPopTimesPair() ) {
+        if (!bmp) {
+            for (double[] d : spb.getPopTimesPair()) {
                 dim += d.length;
             }
         }
@@ -1341,13 +1383,13 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     public static Parameter createSplitPopulationsParameter(SpeciesBindings spb, double value, boolean root, boolean constPop) {
-        int dim ;
-        if( constPop ) {
+        int dim;
+        if (constPop) {
             // one per node
-           dim = 2 * spb.nSpecies() - 1;
+            dim = 2 * spb.nSpecies() - 1;
         } else {
-          // one per species leaf (ns) + 2 per internal node (2*(ns-1)) + optionally one for the root
-          dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
+            // one per species leaf (ns) + 2 per internal node (2*(ns-1)) + optionally one for the root
+            dim = 3 * spb.nSpecies() - 2 + (root ? 1 : 0);
         }
         return new Parameter.Default(dim, value);
     }

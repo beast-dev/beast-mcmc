@@ -65,6 +65,9 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
     Variable<Double> finalTimeInterval;
 
+    // the origin of the infection, x0 > tree.getRoot();
+    Variable<Double> origin;
+
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
             Variable<Double> mu,
@@ -73,9 +76,10 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             boolean relativeDeath,
             Variable<Double> r,
             Variable<Double> finalTimeInterval,
+            Variable<Double> origin,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, origin, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -87,6 +91,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             boolean relativeDeath,
             Variable<Double> r,
             Variable<Double> finalTimeInterval,
+            Variable<Double> origin,
             Type units) {
 
         super(modelName, units);
@@ -117,6 +122,11 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         addVariable(r);
         r.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
+        this.origin = origin;
+        if (origin != null) {
+            addVariable(origin);
+            origin.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
     }
 
     public static double p0(double b, double d, double p, double psi, double t) {
@@ -180,6 +190,14 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         return r.getValue(0);
     }
 
+    public boolean isSamplingOrigin() {
+        return origin != null;
+    }
+
+    public double x0() {
+        return origin.getValue(0);
+    }
+
     public double finalTimeInterval() {
         return finalTimeInterval.getValue(0);
     }
@@ -191,6 +209,10 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
      * @return log-likelihood of density
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
+
+        if (isSamplingOrigin() && x0() < tree.getNodeHeight(tree.getRoot())) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
         //System.out.println("calculating tree log likelihood");
         double time = finalTimeInterval();
@@ -215,9 +237,13 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         double b = birth();
         double p = p();
 
-        double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
-        double logL = Math.log(1 / bottom);
-
+        double logL;
+        if (isSamplingOrigin()) {
+            double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
+            logL = Math.log(1 / bottom);
+        } else {
+            logL = Math.log(q(x0()));
+        }
         if (n > 0) {
             logL += n * Math.log(4 * p);
         }
@@ -229,8 +255,8 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
             double y = tree.getNodeHeight(tree.getExternalNode(i)) + time;
 
             if (y > 0.0) {
-                logL += Math.log( psi() * (r() + (1-r())*p0(y))  * q(y) );
-                
+                logL += Math.log(psi() * (r() + (1 - r()) * p0(y)) * q(y));
+
 //                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
 //                    logL += Math.log(psi() * q(y) * p0(y));
 //                } else {

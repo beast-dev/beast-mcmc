@@ -239,10 +239,10 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
         double logL;
         if (isSamplingOrigin()) {
+            logL = Math.log(q(x0()));
+        } else {
             double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
             logL = Math.log(1 / bottom);
-        } else {
-            logL = Math.log(q(x0()));
         }
         if (n > 0) {
             logL += n * Math.log(4 * p);

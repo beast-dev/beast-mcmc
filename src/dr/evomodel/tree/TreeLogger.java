@@ -43,7 +43,7 @@ import java.util.*;
 public class TreeLogger extends MCLogger {
 
     private Tree tree;
-    private BranchRates branchRates = null;
+	private BranchRates branchRates = null;
 
     private TreeAttributeProvider[] treeAttributeProviders;
     private TreeTraitProvider[] treeTraitProviders;
@@ -250,4 +250,13 @@ public class TreeLogger extends MCLogger {
         logLine("End;");
         super.stopLogging();
     }
+
+    public Tree getTree() {
+		return tree;
+	}
+
+	public void setTree(Tree tree) {
+		this.tree = tree;
+	}
+
 }

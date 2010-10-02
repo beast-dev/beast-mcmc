@@ -37,18 +37,15 @@ public class TreeLoggerParser extends LoggerParser {
         return LOG_TREE;
     }
 
-    /**
-     * @return an object based on the XML element it was passed.
-     */
-    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    protected void parseXMLParameters(XMLObject xo) throws XMLParseException 
+    {
+        tree = (Tree) xo.getChild(Tree.class);
 
-        final Tree tree = (Tree) xo.getChild(Tree.class);
+        title = xo.getAttribute(TITLE, "");
 
-        String title = xo.getAttribute(TITLE, "");
+        nexusFormat = xo.getAttribute(NEXUS_FORMAT, false);
 
-        final boolean nexusFormat = xo.getAttribute(NEXUS_FORMAT, false);
-
-        final boolean sortTranslationTable = xo.getAttribute(SORT_TRANSLATION_TABLE, true);
+        sortTranslationTable = xo.getAttribute(SORT_TRANSLATION_TABLE, true);
 
         boolean substitutions = xo.getAttribute(BRANCH_LENGTHS, "").equals(SUBSTITUTIONS);
 
@@ -144,7 +141,7 @@ public class TreeLoggerParser extends LoggerParser {
             }
             //}
         }
-        BranchRates branchRates = null;
+
         if (substitutions) {
             branchRates = (BranchRates) xo.getChild(BranchRates.class);
         }
@@ -153,13 +150,12 @@ public class TreeLoggerParser extends LoggerParser {
         }
 
         // logEvery of zero only displays at the end
-        final int logEvery = xo.getAttribute(LOG_EVERY, 0);
+        logEvery = xo.getAttribute(LOG_EVERY, 0);
 
 //        double normaliseMeanRateTo = xo.getAttribute(NORMALISE_MEAN_RATE_TO, Double.NaN);
 
         // decimal places
         final int dp = xo.getAttribute(DECIMAL_PLACES, -1);
-        NumberFormat format = null;
         if (dp != -1) {
             format = NumberFormat.getNumberInstance(Locale.ENGLISH);
             format.setMaximumFractionDigits(dp);
@@ -167,19 +163,26 @@ public class TreeLoggerParser extends LoggerParser {
 
         final PrintWriter pw = getLogFile(xo, getParserName());
 
-        final LogFormatter formatter = new TabDelimitedFormatter(pw);
+        formatter = new TabDelimitedFormatter(pw);
 
-        TreeAttributeProvider[] treeAttributeProviders = new TreeAttributeProvider[taps.size()];
+        treeAttributeProviders = new TreeAttributeProvider[taps.size()];
         taps.toArray(treeAttributeProviders);
-        TreeTraitProvider[] treeTraitProviders = new TreeTraitProvider[ttps.size()];
+        treeTraitProviders = new TreeTraitProvider[ttps.size()];
         ttps.toArray(treeTraitProviders);
 
         // I think the default should be to have names rather than numbers, thus the false default - AJD
         // I think the default should be numbers - using names results in larger files and end user never
         // sees the numbers anyway as any software loading the nexus files does the translation - JH
-        final boolean mapNames = xo.getAttribute(MAP_NAMES, true);
+        mapNames = xo.getAttribute(MAP_NAMES, true);
 
-        final TreeLogger.LogUpon condition = logEvery == 0 ? (TreeLogger.LogUpon) xo.getChild(TreeLogger.LogUpon.class) : null;
+        condition = logEvery == 0 ? (TreeLogger.LogUpon) xo.getChild(TreeLogger.LogUpon.class) : null;
+    }
+
+    /**
+     * @return an object based on the XML element it was passed.
+     */
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    	parseXMLParameters(xo);
 
         TreeLogger logger = new TreeLogger(tree, branchRates,
                 treeAttributeProviders, treeTraitProviders,
@@ -192,6 +195,19 @@ public class TreeLoggerParser extends LoggerParser {
 
         return logger;
     }
+
+    protected Tree tree;
+    protected String title;
+    protected boolean nexusFormat;
+    protected boolean sortTranslationTable;
+    protected BranchRates branchRates = null;
+    protected NumberFormat format = null;
+    protected TreeLogger.LogUpon condition;
+    protected boolean mapNames;
+    protected LogFormatter formatter;
+    protected TreeAttributeProvider[] treeAttributeProviders;
+    protected TreeTraitProvider[] treeTraitProviders;
+    protected int logEvery;
 
     //************************************************************************
     // AbstractXMLObjectParser implementation

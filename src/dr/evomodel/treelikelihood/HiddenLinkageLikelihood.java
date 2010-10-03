@@ -1,8 +1,5 @@
 package dr.evomodel.treelikelihood;
 
-import java.util.ArrayList;
-import java.util.Set;
-
 import dr.evolution.LinkedGroup;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -12,6 +9,9 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
+
+import java.util.ArrayList;
+import java.util.Set;
 
 /**
  * @author Aaron Darling
@@ -31,38 +31,38 @@ public class HiddenLinkageLikelihood extends AbstractModelLikelihood
 	}
 
 
-	@Override
+
 	protected void acceptState() {
 		// nothing to do
 	}
 
 
-	@Override
+
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
 		// nothing to do
 	}
 
 
-	@Override
+
 	protected void handleVariableChangedEvent(Variable variable, int index,
 			ChangeType type) {
 		// nothing to do
 	}
 
 
-	@Override
+
 	protected void restoreState() {
 		// nothing to do
 	}
 
 
-	@Override
+
 	protected void storeState() {
 		// nothing to do
 	}
 
 
-	@Override
+
 	public double getLogLikelihood() {
 		double logL = 0;
 		// first check whether the reads are linked together
@@ -97,13 +97,13 @@ public class HiddenLinkageLikelihood extends AbstractModelLikelihood
 	}
 
 
-	@Override
+
 	public Model getModel() {
 		return this;
 	}
 
 
-	@Override
+	
 	public void makeDirty() {
 		// nothing to do
 	}

@@ -3,12 +3,7 @@ package dr.evomodelxml.treelikelihood;
 import dr.evomodel.tree.HiddenLinkageModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.HiddenLinkageLikelihood;
-import dr.evomodel.treelikelihood.TreeLikelihood;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 /**
  * @author Aaron Darling (koadman)
@@ -30,14 +25,14 @@ public class HiddenLinkageLikelihoodParser extends AbstractXMLObjectParser {
 		return rules;
 	}
 
-	@Override
+	
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 		HiddenLinkageModel hlm = (HiddenLinkageModel) xo.getChild(HiddenLinkageModel.class);
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
         return new HiddenLinkageLikelihood(hlm, tree);
 	}
 
-	@Override
+
 	public String getParserName() {
 		return "HiddenLinkageLikelihood";
 	}

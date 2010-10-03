@@ -1,8 +1,8 @@
 package dr.evolution;
 
-import java.util.ArrayList;
-
 import dr.util.Identifiable;
+
+import java.util.ArrayList;
 
 /**
  * @author Aaron Darling (koadman)
@@ -20,12 +20,12 @@ public class LinkageConstraints implements Identifiable {
 		return linkedGroups;
 	}
 	
-	@Override
+
 	public String getId() {
 		return id;
 	}
 
-	@Override
+	
 	public void setId(String id) {
 		this.id = id;
 	}

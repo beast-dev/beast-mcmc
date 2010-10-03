@@ -1,22 +1,15 @@
 package dr.evomodel.operators;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-
 import dr.evolution.alignment.Alignment;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.HiddenLinkageModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLObjectParser;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * @author Aaron Darling
@@ -96,12 +89,10 @@ public class LinkageGroupSwap extends SimpleMCMCOperator {
 		return 0;
 	}
 
-	@Override
 	public String getOperatorName() {
 		return "linkageGroupSwap";
 	}
 
-	@Override
 	public String getPerformanceSuggestion() {
 		return "Ask Aaron Darling to write a better operator";
 	}

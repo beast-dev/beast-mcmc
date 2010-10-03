@@ -3,18 +3,10 @@ package dr.evoxml;
 import dr.evolution.LinkageConstraints;
 import dr.evolution.MetagenomeData;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.PatternList;
-import dr.evolution.alignment.SitePatterns;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.xml.XORRule;
+import dr.xml.*;
 
 /**
  * @author Aaron Darling
@@ -55,7 +47,7 @@ public class MetagenomeDataParser extends AbstractXMLObjectParser {
         return md;
 	}
 
-	@Override
+	
 	public String getParserName() {
 		return "MetagenomeData";
 	}

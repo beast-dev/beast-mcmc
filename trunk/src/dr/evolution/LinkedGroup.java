@@ -1,9 +1,6 @@
 package dr.evolution;
 
-import java.util.Iterator;
-
 import dr.evolution.util.TaxonList;
-import dr.util.Attributable;
 import dr.util.Identifiable;
 
 /**
@@ -32,12 +29,12 @@ public class LinkedGroup implements Identifiable {
 		return taxa;
 	}
 
-	@Override
+
 	public String getId() {
 		return id;
 	}
 
-	@Override
+	
 	public void setId(String id) {
 		this.id = id;
 	}

@@ -88,7 +88,7 @@ public class Parameter {
         private boolean isCached = false;
         private PartitionOptions options = null;
 
-        private PriorType priorType = PriorType.NONE;
+        private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private double upper = Double.NaN;
         private double lower = Double.NaN;
         public double mean = 0.0;

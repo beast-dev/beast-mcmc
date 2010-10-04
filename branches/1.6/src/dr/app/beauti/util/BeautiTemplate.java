@@ -24,8 +24,6 @@
  */
 package dr.app.beauti.util;
 
-import java.util.List;
-
 import org.jdom.Document;
 import org.jdom.Element;
 
@@ -312,7 +310,7 @@ public class BeautiTemplate extends ModelOptions {
                       nodeHeightPrior = getIntegerChild(modelElement, "coalescentModel", CONSTANT);
                       nodeHeightPrior = getIntegerChild(modelElement, "nodeHeightPrior", nodeHeightPrior);
                       // we don't allow no nodeHeightPrior in BEAUti so switch it to Yule:
-                      if (nodeHeightPrior == NONE) nodeHeightPrior = YULE;
+                      if (nodeHeightPrior == NONE_TREE_PRIOR) nodeHeightPrior = YULE;
 
                       parameterization = getIntegerChild(modelElement, "parameterization", GROWTH_RATE);
                       skylineGroupCount = getIntegerChild(modelElement, "skylineGroupCount", 10);

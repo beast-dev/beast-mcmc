@@ -55,7 +55,7 @@ public class PriorDialog {
     private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
     private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
-    private JComboBox rootHeightPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
     private JCheckBox meanInRealSpaceCheck = new JCheckBox();
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
@@ -111,8 +111,8 @@ public class PriorDialog {
         this.parameter = parameter;
         PriorType priorType = parameter.priorType;
 
-        if (parameter.isNodeHeight) {
-            rootHeightPriorCombo.setSelectedItem(priorType);
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            nonPriorCombo.setSelectedItem(priorType);
         } else {
             priorCombo.setSelectedItem(priorType);
         }
@@ -150,7 +150,7 @@ public class PriorDialog {
             }
         });
 
-        rootHeightPriorCombo.addItemListener(new ItemListener() {
+        nonPriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
                 setupComponents();
                 dialog.validate();
@@ -317,9 +317,9 @@ public class PriorDialog {
     }
 
     private void getArguments() {
-        if (parameter.isNodeHeight) {
-            parameter.priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (parameter.priorType == PriorType.NONE) {
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            parameter.priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
                 parameter.initial = Double.NaN;
                 return;
             }
@@ -356,10 +356,10 @@ public class PriorDialog {
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
         PriorType priorType;
-        if (parameter.isNodeHeight) {
-            optionsPanel.addComponentWithLabel("Prior Distribution: ", rootHeightPriorCombo);
-            priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (priorType == PriorType.NONE) {
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            optionsPanel.addComponentWithLabel("Prior Distribution: ", nonPriorCombo);
+            priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE_TREE_PRIOR || priorType == PriorType.NONE_STATISTIC) {
                 return;
             }
         } else {
@@ -424,9 +424,9 @@ public class PriorDialog {
         chart.removeAllPlots();
 
         PriorType priorType;
-        if (parameter.isNodeHeight) {
-            priorType = (PriorType) rootHeightPriorCombo.getSelectedItem();
-            if (priorType == PriorType.NONE) {
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE_TREE_PRIOR || priorType == PriorType.NONE_STATISTIC) {
                 return;
             }
         } else {

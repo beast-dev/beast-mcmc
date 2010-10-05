@@ -26,9 +26,6 @@ package dr.app.beauti.options;
 
 import java.util.List;
 
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.PriorType;
-
 
 /**
  * @author Alexei Drummond
@@ -75,7 +72,7 @@ public class TreeModelOptions extends ModelOptions {
 //    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
 //    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
 //    	
-//    	if (rootHeight.priorType != PriorType.NONE) {
+//    	if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
 //    		return rootHeight.initial;
 //    	} else {    		
 //    		return calculateMeanDistance(model.getAllPartitionData());

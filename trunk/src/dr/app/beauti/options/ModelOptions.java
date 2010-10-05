@@ -104,7 +104,7 @@ public class ModelOptions {
     }
 
     protected void createStatistic(String name, String description, double lower, double upper) {
-        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.UNIFORM_PRIOR)
+        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC)
                   .lower(lower).upper(upper).build(parameters);
     }
 

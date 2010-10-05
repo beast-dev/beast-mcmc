@@ -55,7 +55,7 @@ public class InitialTreeGenerator extends Generator {
             case UPGMA:
                 // generate a upgma starting tree
                 writer.writeComment("Construct a rough-and-ready UPGMA tree as an starting tree");
-                if (rootHeight.priorType != PriorType.NONE) {
+                if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
                     writer.writeOpenTag(
                             UPGMATreeParser.UPGMA_TREE,
                             new Attribute[]{

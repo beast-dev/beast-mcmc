@@ -90,7 +90,7 @@ public class Parameter_Backup {
         this.isStatistic = false;
         this.taxa = null;
         this.options = null;
-        this.priorType = PriorType.NONE;
+        this.priorType = PriorType.NONE_TREE_PRIOR;
         this.initial = Double.NaN;
         this.lower = Double.NaN;
         this.upper = Double.NaN;
@@ -126,7 +126,7 @@ public class Parameter_Backup {
         
         this.isNodeHeight = true;
         this.isStatistic = true;
-        this.priorType = PriorType.NONE;
+        this.priorType = PriorType.NONE_TREE_PRIOR;
         this.scale = PriorScaleType.TIME_SCALE;
         this.priorEdited = false;
         this.lower = 0.0;
@@ -207,7 +207,7 @@ public class Parameter_Backup {
 
         this.isNodeHeight = isNodeHeight;
         this.isStatistic = false;
-        this.priorType = PriorType.NONE;
+        this.priorType = PriorType.NONE_TREE_PRIOR;
         this.scale = PriorScaleType.TIME_SCALE;
         this.priorEdited = false;
         this.lower = lower;

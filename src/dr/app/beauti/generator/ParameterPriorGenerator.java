@@ -75,7 +75,7 @@ public class ParameterPriorGenerator extends Generator {
 
         ArrayList<Parameter> parameters = options.selectParameters();
         for (Parameter parameter : parameters) {
-            if (parameter.priorType != PriorType.NONE) {
+            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                 if (parameter.isCached) {
                     writeCachedParameterPrior(parameter, writer);
                 } else if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {

@@ -27,10 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.LocationSubstModelType;
-import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.*;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
@@ -171,10 +168,17 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        //++++++++++++++++ clock model/tree model combination ++++++++++++++++++
-        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            // clock model/tree model combination not implemented by BEAST yet
-            validateClockTreeModelCombination(model);
+        //++++++++++++++++ Random local clock model validation ++++++++++++++++++
+        for (PartitionClockModel model : options.getPartitionNonTraitsClockModels()) {
+            // 1 random local clock CANNOT have different tree models
+            if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) { // || AUTOCORRELATED_LOGNORMAL
+                PartitionTreeModel treeModel = null;
+                for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
+                    if (treeModel != pd.getPartitionTreeModel()) {
+                        throw new IllegalArgumentException("One random local clock CANNOT have different tree models !");
+                    }
+                }
+            }
         }
 
         //++++++++++++++++ Tree Model ++++++++++++++++++
@@ -461,7 +465,7 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ MCMC ++++++++++++++++++
-        try{
+        try {
             // XMLWriter writer, List<PartitionSubstitutionModel> models,
             writeMCMC(writer);
             writer.writeText("");
@@ -473,7 +477,7 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++  ++++++++++++++++++
-        try{
+        try {
             writeTimerReport(writer);
             writer.writeText("");
             if (options.performTraceAnalysis) {
@@ -785,7 +789,7 @@ public class BeastGenerator extends Generator {
         for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
             // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
 //            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
-           if (model.isActivateBSSVS()) {
+            if (model.isActivateBSSVS()) {
                 writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
                 writer.writeText("");
             }

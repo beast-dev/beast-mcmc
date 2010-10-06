@@ -177,9 +177,10 @@ public class BeastGenerator extends Generator {
             if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) { // || AUTOCORRELATED_LOGNORMAL
                 PartitionTreeModel treeModel = null;
                 for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
-                    if (treeModel != pd.getPartitionTreeModel()) {
+                    if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
                         throw new IllegalArgumentException("One random local clock CANNOT have different tree models !");
                     }
+                    treeModel = pd.getPartitionTreeModel();
                 }
             }
         }

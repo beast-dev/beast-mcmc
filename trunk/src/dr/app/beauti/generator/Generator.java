@@ -264,25 +264,6 @@ public abstract class Generator {
             }
         }
     }
-    
-    protected int[] validateClockTreeModelCombination(PartitionTreeModel model) {
-    	int autocorrelatedClockCount = 0;
-        int randomLocalClockCount = 0;
-        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
-        	PartitionClockModel clockModel = pd.getPartitionClockModel();
-        	switch (clockModel.getClockType()) {
-//	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
-	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
-        	}
-        }
-        
-        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
-        	//FAIL
-            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet");
-        }
-
-        return new int[]{autocorrelatedClockCount, randomLocalClockCount};
-    }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
     

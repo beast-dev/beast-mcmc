@@ -118,7 +118,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     }
 
     public String toString() {
-        return RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+        return RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
     }
 
     //PRIVATE STUFF

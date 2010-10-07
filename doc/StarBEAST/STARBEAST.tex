@@ -24,7 +24,7 @@ You will need the following software at your disposal:
 
 \begin{itemize}
 
-\item {\bf BEAST} - this package contains the BEAST program, BEAUti, TreeAnnotator and other utility programs. This tutorial is written for BEAST v1.6.x, which will be available soon for download from \\* \texttt{http://beast.bio.ed.ac.uk/}.
+\item {\bf BEAST} - this package contains the BEAST program, BEAUti, TreeAnnotator and other utility programs. This tutorial is written for BEAST v1.6.x, which is available for download from  \texttt{http://beast.bio.ed.ac.uk/}.
 \item {\bf Tracer} - this program is used to explore the output of BEAST (and other Bayesian MCMC programs). It graphically and
 quantitively summarizes the distributions of continuous parameters and provides diagnostic information. At the time of
 writing, the current version is v1.5. It is available for download from \texttt{http://beast.bio.ed.ac.uk/}.
@@ -40,19 +40,18 @@ BEAST. At the time of writing, the current version is v1.3.1. It is available fo
 
 \section*{*BEAST}
 
-This tutorial will guide you through the analysis of three loci sampled from 26 individuals representing nine species of pocket gophers. This is a subset of previous published data \cite{belfiore2008multilocus}. 
+This tutorial will guide you through the analysis of three loci sampled from 26 individuals representing nine species of pocket gophers. This is a subset of previous published data \cite{belfiore2008multilocus}. The objective of this tutorial is to estimate the species tree that is most probably given the multi-individual multi-locus sequence data. The species tree has 9 taxa, whereas each gene tree has 26 taxa. *BEAST will co-estimate three gene trees embedded in a shared species tree (see Heled and Drummond, 2010 for details).
 
 The first step will be to convert a NEXUS file with a DATA or CHARACTERS block into a BEAST XML input file. This is done using the program BEAUti (Bayesian Evolutionary Analysis Utility). This is a user-friendly program for setting the evolutionary model and options for the MCMC analysis. The second step is to actually run BEAST using the input file that contains the data, model and settings. The final step is to explore the output of BEAST in order to diagnose problems and to summarize the results.
 
 \subsection*{BEAUti}
 
-The program BEAUti is a user-friendly program for setting the
-model parameters for BEAST. Run BEAUti by double clicking on its icon. 
+Run BEAUti by double clicking on its icon. 
 
 \subsubsection*{Loading the NEXUS file }
 
 To load a NEXUS format alignment, simply select the \texttt{Import
-Alignment...} option from the File menu: 
+Data...} option from the File menu: 
 
 \medskip{}
 
@@ -60,7 +59,7 @@ Alignment...} option from the File menu:
 
 \medskip{}
 
-Select three files called \texttt{26.nex, 29.nex, 47.nex} by holding \texttt{shift} key. Each file contains an alignment of sequences of          ALexei fill            . It looks like this (the content has been truncated):
+Select three files called \texttt{26.nex, 29.nex, 47.nex} by holding \texttt{shift} key. Each file contains an alignment of sequences of from an independent locus. The \texttt{26.nex} looks like this (content has been truncated):
 
 \begin{verbatim}
 #NEXUS
@@ -69,11 +68,11 @@ BEGIN DATA;
 	DIMENSIONS  NTAX =26 NCHAR=614;
 	FORMAT DATATYPE = DNA GAP = - MISSING = ?;
 	MATRIX	
-	Orthogeomys_heterodus   		         ATTCTAGGCAAAAAGAGCAATGC ...
-	Thomomys_bottae_awahnee_a 		????????????????????ATGCTG ...
-	Thomomys_bottae_awahnee_b  		????????????????????ATGCTG ...
-	Thomomys_bottae_xerophilus  		????????????????????ATGCTG ...
-	Thomomys_bottae_cactophilus  		????????????????AGCAATGCT ...
+	Orthogeomys_heterodus        ATTCTAGGCAAAAAGAGCAATGC ...
+	Thomomys_bottae_awahnee_a    ????????????????????ATGCTG ...
+	Thomomys_bottae_awahnee_b    ????????????????????ATGCTG ...
+	Thomomys_bottae_xerophilus   ????????????????????ATGCTG ...
+	Thomomys_bottae_cactophilus  ????????????????AGCAATGCT ...
 
          ... ...
 
@@ -144,11 +143,11 @@ For multi-locus analyses, BEAST can link or unlink substitutions models across t
 \medskip{}
 
 
-\subsubsection*{Create a new trait and then guess trait value from taxa name to fire *BEAST}
+\subsubsection*{Alternatively: Create a species trait from taxa names}
 
-The advantage of using {\bf Traits} panel is that we can guess species from the taxon name if they already contain the information of species. Let's click on the {\bf Traits} tab and select \texttt{species} trait in the trait table on the left side of the panel, and remove it by click \textbf{-} button on the bottom left corner. As we can see in the message bar on the bottom, the analysis has been changed from *BEAST back into common BEAST analysis.
+The advantage of using the {\bf Traits} panel is that we can extract species names from the taxa names if they already contain that information. Let's click on the {\bf Traits} tab and select the \texttt{species} trait in the trait table on the left side of the panel, and remove it by clicking the minus button `\textbf{-}' on the bottom left corner. As we can see in the status bar on the bottom, the analysis has been reverted to a standard BEAST analysis.
 
-To fire *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second from last} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
+To enable *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second from last} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
 
 \medskip{}
 
@@ -197,9 +196,9 @@ The \textbf{Estimate} check box is unchecked for the first clock model and check
 
 \subsubsection*{Trees}
 
-The {\bf Trees} panel allows priors to be specified for each parameter in the model, which can be defined on the top of the panel. *BEAST has a different tree prior panel where users can only configure species tree prior not gene tree priors (which are automatically specified by the multispecies coalescent). Currently, we have two species tree priors: \textbf{Yule Process} and \textbf{Birth-Death Process}; and three population size models: \textbf{Piecewise linear and constant root}, \textbf{Piecewise linear}, and \textbf{Piecewise constant}. In this analysis, we use their default options.
+The {\bf Trees} panel allows priors to be specified for each parameter in the model, which can be defined on the top of the panel. *BEAST has a different tree prior panel where users can only configure the species tree prior not gene tree priors (which are automatically specified by the multispecies coalescent). Currently, we have two species tree priors: \textbf{Yule Process} and \textbf{Birth-Death Process}; and three population size models: \textbf{Piecewise linear and constant root}, \textbf{Piecewise linear}, and \textbf{Piecewise constant}. In this analysis, we use the default options.
 
-The bottom right panel is used to configure the corresponding starting trees. The \textbf{Ploidy Type} menu determines the type of sequence (mitochondrial, nuclear, X, Y). This matters since different modes of inheritance gives rise to different effective population sizes. The \textbf{Starting Tree} menu provides three options, where the \textbf{user-specified} starting tree has to be loaded from the data file (e.g. NEXUS file) in advance. In this analysis, we simply use random starting tree. 
+The bottom right panel is used to configure the corresponding starting trees. The \textbf{Ploidy Type} menu determines the type of sequence (mitochondrial, nuclear, X, Y). This matters since different modes of inheritance gives rise to different effective population sizes. The \textbf{Starting Tree} menu provides three options, where the \textbf{user-specified} starting tree has to be loaded from the data file (e.g. NEXUS file) in advance. In this analysis, we simply use a random starting tree. 
 
 \medskip{}
 
@@ -209,7 +208,7 @@ The bottom right panel is used to configure the corresponding starting trees. Th
 
 \subsubsection*{Priors and Operators}
 
-The {\bf Priors} panel allows priors to be specified for each parameter in the model. The {\bf Operators} panel is used to configure technical settings the affect the efficiency of the MCMC program (see Notes for details). We leave these two panel unchanged in this analysis.
+The {\bf Priors} panel allows priors to be specified for each parameter in the model. The {\bf Operators} panel is used to configure technical settings that affect the efficiency of the MCMC program (see Notes for details). We leave these two panels unchanged in this analysis.
 
 \subsubsection*{Setting the MCMC options }
 
@@ -217,8 +216,7 @@ The next tab, {\bf MCMC}, provides more general
 settings to control the length of the MCMC and the file names. 
 
 Firstly we have the \textbf{Length of chain}. This is the number of
-steps the MCMC will make in the chain before finishing. How long this
-should be depends on the size of the data set, the complexity of the
+steps the MCMC will make in the chain before finishing. The appropriate length of the chain depends on the size of the data set, the complexity of the
 model and the accuracy of the answer required. The default value of 10,000,000
 is entirely arbitrary and should be adjusted according to the size
 of your data set. For this data set let's initially set the chain
@@ -277,7 +275,7 @@ created XML file as input by click \textbf{Choose File ...}, and then click \tex
 
 BEAST will then run until it has finished
 reporting information to the screen. The actual results files are
-save to the disk in the same location as your input file. The output to the screen will
+saved to the disk in the same location as your input file. The output to the screen will
 look something like this: 
 
 {\scriptsize   
@@ -457,7 +455,7 @@ on the left brings up analyses for this trace on the right hand side depending o
 `posterior' trace is selected and various statistics of this trace are shown under the Estimates tab.
 In the top right of the window is a table of calculated statistics for the selected trace. 
 
-Select \texttt{species.popSizesLikelihood} to look at the total likelihood of population sizes under the prior. Tracer will plot a (marginal posterior) distribution for the selected parameter and also give you statistics such as the mean and median. The \texttt{95\% HPD lower} or \texttt {upper} stands for {\it highest posterior density interval} and represents the most compact interval on the selected parameter that contains 95\% of the posterior probability. It can be thought of as a Bayesian analog to a confidence interval. 
+Tracer will plot a (marginal posterior) distribution for the selected parameter and also give you statistics such as the mean and median. The \texttt{95\% HPD lower} or \texttt {upper} stands for {\it highest posterior density interval} and represents the most compact interval on the selected parameter that contains 95\% of the posterior probability. It can be thought of as a Bayesian analog to a confidence interval. 
 
 Select the \texttt{treeModel.rootHeight} parameter and the next three (hold shift whilst selecting). This will show a display of the
 age of the root and the three gene trees. If you switch the tab at the top of the window to {\bf Marginal Density} then you will get a plot of the marginal posterior densities of each of these date estimates overlayed:
@@ -470,7 +468,7 @@ age of the root and the three gene trees. If you switch the tab at the top of th
 
 \subsection*{Obtaining an estimate of the phylogenetic tree}
 
-BEAST also produces a sample of plausible trees along with the associated sample of parameter values. 
+BEAST also produces a sample of plausible trees. 
 These need to be summarized using the program {\bf TreeAnnotator} (see Notes for details). This will take the set of trees and identify a single tree that best represents the posterior distribution. It will then annotate this selected tree topology with the mean ages of all the
 nodes as well as the 95\% HPD interval of divergence times for each clade in the selected tree. It will also calculate the posterior clade probability for each
 node. Run the {\bf TreeAnnotator} program and set it up to look like this:

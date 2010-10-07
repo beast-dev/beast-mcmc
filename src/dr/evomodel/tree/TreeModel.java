@@ -127,11 +127,19 @@ public class TreeModel extends AbstractModel implements MutableTree {
     }
 
 
+    boolean heightBoundsSetup = false;
+
     public void setupHeightBounds() {
+
+        if (heightBoundsSetup) {
+            throw new IllegalArgumentException("Node height bounds set up twice");
+        }
 
         for (int i = 0; i < nodeCount; i++) {
             nodes[i].setupHeightBounds();
         }
+
+        heightBoundsSetup = true;
     }
 
     /**
@@ -461,7 +469,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         root = (Node) newRoot;
 
         // We shouldn't need this because the addChild will already have fired appropriate events.
-         pushTreeChangedEvent(root);
+        pushTreeChangedEvent(root);
     }
 
     public void addChild(NodeRef p, NodeRef c) {
@@ -511,11 +519,11 @@ public class TreeModel extends AbstractModel implements MutableTree {
             swapParameterObjects(oldRoot, root);
         }
 
-        for (Node node : nodes) {
-            if (!node.heightParameter.isWithinBounds()) {
-                throw new InvalidTreeException("height parameter out of bounds");
-            }
-        }
+//        for (Node node : nodes) {
+//            if (!node.heightParameter.isWithinBounds()) {
+//                throw new InvalidTreeException("height parameter out of bounds");
+//            }
+//        }
 
         for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
@@ -877,13 +885,20 @@ public class TreeModel extends AbstractModel implements MutableTree {
             if (node.heightParameter == parameter) {
                 return node;
             }
-            if (hasRates && node.rateParameter == parameter) {
-                return node;
+        }
+
+        if (hasRates) {
+            for (Node node : nodes) {
+                if (node.rateParameter == parameter) {
+                    return node;
+                }
             }
         }
-        for (Node node : nodes) {
-            if (hasTraits && node.traitParameters.containsValue(parameter)) {
-                return node;
+        if (hasTraits) {
+            for (Node node : nodes) {
+                if (node.traitParameters.containsValue(parameter)) {
+                    return node;
+                }
             }
         }
         throw new RuntimeException("Parameter not found in any nodes:" + parameter.getId() + " " + parameter.hashCode());
@@ -1073,7 +1088,6 @@ public class TreeModel extends AbstractModel implements MutableTree {
             n1.rateParameter.setParameterValueQuietly(0, rate1);
             n2.rateParameter.setParameterValueQuietly(0, rate2);
         }
-
     }
 
     // **************************************************************

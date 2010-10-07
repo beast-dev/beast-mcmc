@@ -71,7 +71,7 @@ public class RandomWalkOperatorTest extends TestCase {
         assertEquals(test1, test1b);
         assertEquals(test2, test2b);
         assertEquals(test3, test3b);
-        assertEquals(test4, test4b);
+        assertTrue(Math.abs(test4 - test4b) < 0.001);
 
     }
 

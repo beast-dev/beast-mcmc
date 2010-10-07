@@ -94,10 +94,11 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
         // a random dimension to perturb
         int index;
-        if (updateMap == null)
+        if (updateMap == null) {
             index = MathUtils.nextInt(parameter.getDimension());
-        else
+        } else {
             index = updateMap.get(MathUtils.nextInt(updateMap.size()));
+        }
 
         // a random point around old value within windowSize * 2
         double newValue = parameter.getParameterValue(index) + ((2.0 * MathUtils.nextDouble() - 1.0) * windowSize);
@@ -106,28 +107,77 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerOperatorBound));
         final double upper = (upperOperatorBound == null ? bounds.getUpperLimit(index) : Math.min(bounds.getUpperLimit(index), upperOperatorBound));
 
-        while (newValue < lower || newValue > upper) {
-            if (newValue < lower) {
-                if (condition == BoundaryCondition.reflecting) {
-                    newValue = lower + (lower - newValue);
-                } else {
-                    throw new OperatorFailedException("proposed value outside boundaries");
-                }
-
-            }
-            if (newValue > upper) {
-                if (condition == BoundaryCondition.reflecting) {
-                    newValue = upper - (newValue - upper);
-                } else {
-                    throw new OperatorFailedException("proposed value outside boundaries");
-                }
-
-            }
+        if (condition == BoundaryCondition.reflecting) {
+            newValue = reflectValue(newValue, lower, upper);
+        } else if (newValue < lower || newValue > upper) {
+            throw new OperatorFailedException("proposed value outside boundaries");
         }
 
         parameter.setParameterValue(index, newValue);
 
         return 0.0;
+    }
+
+    public double reflectValue(double value, double lower, double upper) {
+
+        double newValue = value;
+
+        if (value < lower) {
+            if (Double.isInfinite(upper)) {
+                // we are only going to reflect once as the upper bound is at infinity...
+                newValue = lower + (lower - value);
+            } else {
+                double remainder = lower - value;
+
+                int widths = (int)Math.floor(remainder / (upper - lower));
+                remainder -= (upper - lower) * widths;
+
+                // even reflections
+                if (widths % 2 == 0) {
+                    newValue = lower + remainder;
+                    // odd reflections
+                } else {
+                    newValue = upper - remainder;
+                }
+            }
+        } else if (value > upper) {
+            if (Double.isInfinite(lower)) {
+                // we are only going to reflect once as the lower bound is at -infinity...
+                newValue = upper - (newValue - upper);
+            } else {
+
+                double remainder = value - upper;
+
+                int widths = (int)Math.floor(remainder / (upper - lower));
+                remainder -= (upper - lower) * widths;
+
+                // even reflections
+                if (widths % 2 == 0) {
+                    newValue = upper - remainder;
+                    // odd reflections
+                } else {
+                    newValue = lower + remainder;
+                }
+            }
+        }
+
+        return newValue;
+    }
+
+    public double reflectValueLoop(double value, double lower, double upper) {
+        double newValue = value;
+
+        while (newValue < lower || newValue > upper) {
+            if (newValue < lower) {
+                newValue = lower + (lower - newValue);
+            }
+            if (newValue > upper) {
+                newValue = upper - (newValue - upper);
+
+            }
+        }
+
+        return newValue;
     }
 
     //MCMCOperator INTERFACE

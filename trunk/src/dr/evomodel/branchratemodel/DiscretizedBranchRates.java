@@ -31,7 +31,10 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.*;
+import dr.inference.model.Model;
+import dr.inference.model.ModelListener;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 /**
  * @author Alexei Drummond
@@ -119,13 +122,14 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         }
 
         setupRates();
-        
+
         // Each parameter take any value in [1, \ldots, categoryCount]
         // NB But this depends on the transition kernel employed.  Using swap-only results in a different constant
-        logDensityNormalizationConstant = - rateCategoryParameter.getDimension()  * Math.log(categoryCount);
+        logDensityNormalizationConstant = -rateCategoryParameter.getDimension() * Math.log(categoryCount);
     }
 
     // compute scale factor
+
     private void computeFactor() {
 
 
@@ -137,18 +141,18 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
         //normalizeBranchRateTo = 1.0;
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
             NodeRef node = treeModel.getNode(i);
-            if(!treeModel.isRoot(node)) {
+            if (!treeModel.isRoot(node)) {
                 int rateCategory = (int) Math.round(rateCategories.getNodeValue(treeModel, node));
                 treeRate += rates[rateCategory] * treeModel.getBranchLength(node);
                 treeTime += treeModel.getBranchLength(node);
 
-                System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
+                //System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
             }
         }
         //treeRate /= treeTime;
 
         scaleFactor = normalizeBranchRateTo / (treeRate / treeTime);
-        System.out.println("scaleFactor\t\t\t\t\t" + scaleFactor);
+        //System.out.println("scaleFactor\t\t\t\t\t" + scaleFactor);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {

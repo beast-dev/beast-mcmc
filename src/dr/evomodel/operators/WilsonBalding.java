@@ -193,11 +193,15 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         tree.setNodeHeight(iP, newAge);
 
+        tree.endTreeEdit();
+
         try {
-            tree.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new OperatorFailedException(ite.toString());
+            tree.checkTreeIsValid();
+        } catch( MutableTree.InvalidTreeException ite ) {
+            throw new RuntimeException(ite.toString());
+//            throw new OperatorFailedException(ite.toString());
         }
+
 
         logq = Math.log(q);
     }

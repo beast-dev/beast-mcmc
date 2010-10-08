@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package dr.evomodel.operators;
 
@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * @author Sebastian Hoehna
- * 
+ *
  */
 public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
@@ -45,7 +45,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see dr.evomodel.operators.SimpleGibbsOperator#getStepCount()
      */
     @Override
@@ -415,11 +415,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         tree.addChild(jP, i);
         tree.addChild(iP, j);
 
-        try {
-            tree.endTreeEdit();
-        } catch( MutableTree.InvalidTreeException ite ) {
-            throw new OperatorFailedException(ite.toString());
-        }
+        tree.endTreeEdit();
 
         return tree;
     }

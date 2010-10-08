@@ -105,7 +105,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
         return logq;
     }
 
-/*	
+/*
     private ArrayList<NodeRef> getPotentialSubtreesToMerge() {
         ArrayList<NodeRef> potentials = new ArrayList<NodeRef>();
         int n = arg.getNodeCount();
@@ -254,12 +254,15 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
             if ((!recParent1.bifurcation && !recParent2.bifurcation) ||
                     (!recParent1.bifurcation && recParent2.isRoot()) ||
                     (!recParent2.bifurcation && recParent1.isRoot())) {
-                try {
-                    arg.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                            + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-                }
+
+                arg.endTreeEdit();
+
+//                try {
+//                    arg.checkTreeIsValid();
+//                } catch (MutableTree.InvalidTreeException ite) {
+//                    throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+//                            + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+//                }
                 throw new OperatorFailedException("Not reversible deletion.");
             }
             if (!recParent1.bifurcation || recParent1.isRoot()) { // One orientation is valid
@@ -283,7 +286,7 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
             if (otherChild == recNode)
                 otherChild = recParent1.rightChild;
 //			System.err.println("recChild   ="+recChild.number);
-//			System.err.println("otherChild ="+otherChild.number);			
+//			System.err.println("otherChild ="+otherChild.number);
             reverseReassortmentSpan = Math.min(arg.getNodeHeight(recParent1), arg.getNodeHeight(recParent2))
                     - arg.getNodeHeight(recChild);
             reverseBifurcationSpan = arg.getNodeHeight(recGrandParent)
@@ -326,19 +329,14 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 
             if ((recChild.getHeight() > recParent2.getHeight()) ||
                     (otherChild.getHeight() > recGrandParent.getHeight())) {
-                try {
-                    arg.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    //throw new OperatorFailedException("Not reversible deletion.");
-                }
-                System.err.println("How did I get here?");
-                System.exit(-1);
+                arg.endTreeEdit();
+                throw new RuntimeException("How did I get here?");
             }
             recParent = recParent1;
         }
         if (doneSomething) {
 //			System.err.println("Trying to remove "+recNode.number+" and "+recParent.number);
-//		
+//
             arg.contractARGWithRecombinant(recParent, recNode,
                     internalNodeParameters, internalAndRootNodeParameters, nodeRates);
         }
@@ -346,12 +344,13 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 
 
         arg.pushTreeSizeChangedEvent();
-        try {
-            arg.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-        }
+        arg.endTreeEdit();
+//        try {
+//            arg.checkTreeIsValid();
+//        } catch (MutableTree.InvalidTreeException ite) {
+//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+//        }
 
 //	    System.err.println("Checking remove validity.");
 
@@ -791,13 +790,14 @@ public class ObsoleteARGAddRemoveEventOperator extends AbstractCoercableOperator
 
         arg.pushTreeSizeChangedEvent();
 
+        arg.endTreeEdit();
 
-        try {
-            arg.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-        }
+//        try {
+//            arg.checkTreeIsValid();
+//        } catch (MutableTree.InvalidTreeException ite) {
+//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+//        }
 
 //	    System.err.println("Checking add validity.");
         // todo -- check all ARGTree.Roots

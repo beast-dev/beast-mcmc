@@ -158,8 +158,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
                     arg.pushTreeChangedEvent(swap.gp);
                     arg.pushTreeChangedEvent(swap.p);
 
+        arg.endTreeEdit();
 		try {
-			arg.endTreeEdit();
+			arg.checkTreeIsValid();
 		} catch (MutableTree.InvalidTreeException ite) {
 			System.out.println(swap);
 			System.out.println(before);
@@ -316,8 +317,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		assert nodeCheck();
 
+        arg.endTreeEdit();
 		try {
-			arg.endTreeEdit();
+			arg.checkTreeIsValid();
 		} catch (MutableTree.InvalidTreeException ite) {
 			System.out.println(before);
 			System.err.println(ite.getMessage());
@@ -458,8 +460,9 @@ public class ARGSwapOperator extends SimpleMCMCOperator {
 
 		arg.pushTreeChangedEvent();  // TODO Limit tree hit
 
+        arg.endTreeEdit();
 		try {
-			arg.endTreeEdit();
+			arg.checkTreeIsValid();
 		} catch (MutableTree.InvalidTreeException ite) {
 			System.err.println(ite.getMessage());
 			System.exit(-1);

@@ -308,8 +308,9 @@ public class ARGExchangeOperator extends SimpleMCMCOperator {
 					   tree.singleAddChild(iP, j);*/
 		}
 
+        tree.endTreeEdit();
 		try {
-			tree.endTreeEdit();
+            tree.checkTreeIsValid();
 		} catch (MutableTree.InvalidTreeException ite) {
 			throw new OperatorFailedException(ite.toString());
 		}

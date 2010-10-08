@@ -194,12 +194,7 @@ public class ColouredExchangeOperator extends SimpleMCMCOperator {
         tree.removeChild(jP, j);
         tree.addChild(jP, i);
         tree.addChild(iP, j);
-
-        try {
-            tree.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new OperatorFailedException(ite.toString());
-        }
+        tree.endTreeEdit();
     }
 
     public double getMinimumAcceptanceLevel() {

@@ -50,6 +50,8 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
     public static final String TREE_MODEL = "treeModel";
 
+    private static final boolean TEST_NODE_BOUNDS = true;
+
     public TreeModel(String name) {
         super(name);
         nodeCount = 0;
@@ -519,25 +521,13 @@ public class TreeModel extends AbstractModel implements MutableTree {
             swapParameterObjects(oldRoot, root);
         }
 
-//        for (Node node : nodes) {
-//            if (!node.heightParameter.isWithinBounds()) {
-//                throw new InvalidTreeException("height parameter out of bounds");
-//            }
-//        }
-
-        for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {
-            listenerHelper.fireModelChanged(this, treeChangedEvent);
-        }
-        treeChangedEvents.clear();
-    }
-
-    public void endTreeEditUnsafe() throws MutableTree.InvalidTreeException {
-        if (!inEdit) throw new RuntimeException("Not in edit transaction mode!");
-
-        inEdit = false;
-
-        if (root != oldRoot) {
-            swapParameterObjects(oldRoot, root);
+        if (TEST_NODE_BOUNDS) {
+            for (Node node : nodes) {
+                if (!node.heightParameter.isWithinBounds()) {
+                    throw new RuntimeException("height parameter out of bounds");
+//                    throw new InvalidTreeException("height parameter out of bounds");
+                }
+            }
         }
 
         for (TreeChangedEvent treeChangedEvent : treeChangedEvents) {

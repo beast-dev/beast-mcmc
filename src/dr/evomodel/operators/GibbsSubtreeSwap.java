@@ -416,7 +416,7 @@ public class GibbsSubtreeSwap extends SimpleMetropolizedGibbsOperator {
         tree.addChild(iP, j);
 
         try {
-            tree.endTreeEditUnsafe();
+            tree.endTreeEdit();
         } catch( MutableTree.InvalidTreeException ite ) {
             throw new OperatorFailedException(ite.toString());
         }

@@ -1,4 +1,4 @@
-                    BEAST v1.6.0 2002-2010
+                    BEAST v1.6.1 2002-2010
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,10 +17,25 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 15th September 2010
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
+
+Version 1.6.1 released 11th October 2010
+
+	Bug Fixes:
+	    Issue 399: Binary for TreeStat packaged with BEAST v1.6 has wrong version
+	               number and icon
+	    Issue 404: Make "Median heights" as the default of nodeHeightsCombo
+        Issue 405: RandomWalkOperator with reflecting boundary can grind to a halt
+        Issue 407: *BEAST needs to log species tree in { }, otherwise TreeAnnotator
+                   keeps coming up with null exception on species tree
+        Issue 410: "Improper priors" on posterior statistics
+        Issue 411: Incorrect validation and error message for random local clock
+                   in BEAUti
+	    Issue 412: BEAUti generates randomWalkOperator instead of randomWalkIntegerOperator
+	               for branchRates.categories
+
 
 Version 1.6.0 released 15th September 2010
 

@@ -142,11 +142,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
 
                 tree.setNodeHeight(iP, newHeight);
 
-                try {
-                    tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    throw new RuntimeException(ite.toString());
-                }
+                tree.endTreeEdit();
 
                 // 3.1.3 count the hypothetical sources of this destination.
                 int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
@@ -207,11 +203,7 @@ public class ColouredSubtreeSlideOperator extends AbstractTreeOperator implement
 
                 tree.setNodeHeight(iP, newHeight);
 
-                try {
-                    tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    throw new RuntimeException(ite.toString());
-                }
+                tree.endTreeEdit();
 
                 logq = Math.log((double) possibleDestinations);
             } else {

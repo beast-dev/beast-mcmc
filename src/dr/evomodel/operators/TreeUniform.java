@@ -48,7 +48,7 @@ public class TreeUniform extends AbstractTreeOperator {
 
     public TreeUniform(int n, TreeModel tree, double weight) {
         assert n == 2 || n == 3;
-        
+
         this.tree = tree;
         this.nodesToMove = n;
         setWeight(weight);
@@ -58,7 +58,7 @@ public class TreeUniform extends AbstractTreeOperator {
         if( tree.getInternalNodeCount() < 2 ) {
             throw new OperatorFailedException("no node found");
         }
-        
+
         tree.beginTreeEdit();
 
         switch( nodesToMove ) {
@@ -66,8 +66,11 @@ public class TreeUniform extends AbstractTreeOperator {
             case 3: move3(); break;
         }
 
+        tree.endTreeEdit();
+
+        // AR not sure whether this check is needed...
         try {
-            tree.endTreeEdit();
+            tree.checkTreeIsValid();
         } catch( MutableTree.InvalidTreeException ite ) {
             throw new OperatorFailedException(ite.toString());
         }
@@ -153,7 +156,7 @@ public class TreeUniform extends AbstractTreeOperator {
         }
 
         assert hMax > h[0] && h[0] > h[1] && h[0] > h[2] && h[1] > hMin0 && h[2] > hMin1;
-        
+
         NodeRef[] nodes = {i, child0, child1};
         for(int k = 0; k < nodes.length; ++k) {
             tree.setNodeHeight(nodes[k], h[k]);
@@ -218,7 +221,7 @@ public class TreeUniform extends AbstractTreeOperator {
 
         tree.setNodeHeight(iParent, h[1]);
         tree.setNodeHeight(i, h[0]);
-       
+
         tree.pushTreeChangedEvent(iParent);
         tree.pushTreeChangedEvent(i);
     }

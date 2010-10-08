@@ -122,12 +122,7 @@ public class RLCNarrowExchangeOperator extends SimpleMCMCOperator {
         tree.removeChild(jP, j);
         tree.addChild(jP, i);
         tree.addChild(iP, j);
-
-        try {
-            tree.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new OperatorFailedException(ite.toString());
-        }
+        tree.endTreeEdit();
 
         List<NodeRef> nodes = new ArrayList<NodeRef>();
         nodes.add(i);

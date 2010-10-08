@@ -50,7 +50,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
     public static final String TREE_MODEL = "treeModel";
 
-    private static final boolean TEST_NODE_BOUNDS = true;
+    private static final boolean TEST_NODE_BOUNDS = false;
 
     public TreeModel(String name) {
         super(name);

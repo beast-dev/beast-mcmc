@@ -195,12 +195,13 @@ public class WilsonBalding extends AbstractTreeOperator {
 
         tree.endTreeEdit();
 
-        try {
-            tree.checkTreeIsValid();
-        } catch( MutableTree.InvalidTreeException ite ) {
-            throw new RuntimeException(ite.toString());
-//            throw new OperatorFailedException(ite.toString());
-        }
+        // AR - I don't believe this check is needed and in tests it never fails...
+//        try {
+//            tree.checkTreeIsValid();
+//        } catch( MutableTree.InvalidTreeException ite ) {
+//            throw new RuntimeException(ite.toString());
+////            throw new OperatorFailedException(ite.toString());
+//        }
 
 
         logq = Math.log(q);

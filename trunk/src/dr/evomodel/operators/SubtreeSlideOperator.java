@@ -158,11 +158,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
                 tree.setNodeHeight(iP, newHeight);
 
-                try {
-                    tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    throw new RuntimeException(ite.toString());
-                }
+                tree.endTreeEdit();
 
                 // 3.1.3 count the hypothetical sources of this destination.
                 final int possibleSources = intersectingEdges(tree, newChild, oldHeight, null);
@@ -241,11 +237,7 @@ public class SubtreeSlideOperator extends AbstractTreeOperator implements Coerca
 
                 tree.setNodeHeight(iP, newHeight);
 
-                try {
-                    tree.endTreeEdit();
-                } catch (MutableTree.InvalidTreeException ite) {
-                    throw new RuntimeException(ite.toString());
-                }
+                tree.endTreeEdit();
 
                 logq = Math.log(possibleDestinations);
             } else {

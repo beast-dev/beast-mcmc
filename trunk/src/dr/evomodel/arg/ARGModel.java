@@ -1869,7 +1869,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         return false;
     }
 
-    public void endTreeEdit() throws MutableTree.InvalidTreeException {
+    public void endTreeEdit() {
         if (!inEdit)
             throw new RuntimeException("Not in edit transaction mode!");
 
@@ -1879,13 +1879,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             swapParameterObjects(oldRoot, root);
         }
 
-        // for (int i =0; i < nodes.length; i++) {
-        for (Node node : nodes) {
-            if (!node.heightParameter.isWithinBounds()) {
-                throw new MutableTree.InvalidTreeException(
-                        "height parameter out of bounds");
-            }
-        }
         // ystem.err.println("There are "+treeChangedEvents.size()+" events
         // waiting");
         // System.exit(-1);
@@ -1893,6 +1886,14 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();
+    }
+
+    public void checkTreeIsValid() throws MutableTree.InvalidTreeException {
+        for (Node node : nodes) {
+            if (!node.heightParameter.isWithinBounds()) {
+                throw new InvalidTreeException("height parameter out of bounds");
+            }
+        }
     }
 
     private void endTreeEditFast() {

@@ -206,8 +206,12 @@ public class ImportancePruneAndRegraft extends AbstractTreeOperator {
             pruneAndRegraft(tree, i, iP, j, jP);
             tree.pushTreeChangedEvent(i);
         }
+
+        tree.endTreeEdit();
+
+        // AR - not sure whether this check is necessary
         try {
-            tree.endTreeEdit();
+            tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
             throw new OperatorFailedException(e.getMessage());
         }

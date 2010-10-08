@@ -257,12 +257,13 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         }
 
         arg.pushTreeSizeChangedEvent();
-        try {
-            arg.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-        }
+        arg.endTreeEdit();
+//        try {
+//            arg.checkTreeIsValid();
+//        } catch (MutableTree.InvalidTreeException ite) {
+//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+//        }
 
 //	    double d1 = findPotentialAttachmentPoints(reverseBifurcationHeight,null);
 //	    double d2 = findPotentialAttachmentPoints(reverseReassortmentHeight,null);
@@ -514,12 +515,13 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
 
         arg.pushTreeSizeChangedEvent();
 
-        try {
-            arg.endTreeEdit();
-        } catch (MutableTree.InvalidTreeException ite) {
-            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-        }
+        arg.endTreeEdit();
+//        try {
+//            arg.checkTreeIsValid();
+//        } catch (MutableTree.InvalidTreeException ite) {
+//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+//        }
 
 //	    double d1 = findPotentialNodesToRemove(null);
 //	    System.err.printf("d1 = %5.4f\n",d1);

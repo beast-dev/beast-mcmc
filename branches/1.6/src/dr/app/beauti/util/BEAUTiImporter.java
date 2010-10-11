@@ -443,7 +443,7 @@ public class BEAUTiImporter {
 
                 if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
                     partition.setPartitionSubstitutionModel(model);
-                    model.addPartitionData(partition);
+//                    model.addPartitionData(partition);
 
                     // use same tree model and same tree prior in beginning
                     if (options.getPartitionTreeModels() != null
@@ -529,7 +529,7 @@ public class BEAUTiImporter {
                 }
             }
 
-            options.updateLinksBetweenPDPCMPSMPTMPTPP();
+//            options.updateLinksBetweenPDPCMPSMPTMPTPP();
             options.updatePartitionAllLinks();
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }
@@ -542,7 +542,7 @@ public class BEAUTiImporter {
                 options.addTrait(trait);
             }
 
-            options.updateLinksBetweenPDPCMPSMPTMPTPP();
+//            options.updateLinksBetweenPDPCMPSMPTMPTPP();
             options.updatePartitionAllLinks();
             options.clockModelOptions.fixRateOfFirstClockPartition();
         }

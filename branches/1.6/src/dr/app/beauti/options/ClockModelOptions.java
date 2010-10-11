@@ -364,7 +364,7 @@ public class ClockModelOptions extends ModelOptions {
 
         int k = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            for (PartitionData partition : model.getAllPartitionData()) {
+            for (PartitionData partition : options.getAllPartitionData(model)) {
                 int n = partition.getSiteCount();
                 weights[k] += n;
             }

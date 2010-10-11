@@ -269,7 +269,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireDataChanged() {
-        options.updateLinksBetweenPDPCMPSMPTMPTPP();
+//        options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionAllLinks();
 
         if (!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED

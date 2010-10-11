@@ -176,7 +176,7 @@ public class BeastGenerator extends Generator {
             // 1 random local clock CANNOT have different tree models
             if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) { // || AUTOCORRELATED_LOGNORMAL
                 PartitionTreeModel treeModel = null;
-                for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
+                for (PartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
                     if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
                         throw new IllegalArgumentException("One random local clock CANNOT have different tree models !");
                     }
@@ -189,7 +189,7 @@ public class BeastGenerator extends Generator {
         if (options.allowDifferentTaxa) {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 int numOfTaxa = -1;
-                for (PartitionData pd : model.getAllPartitionData()) {
+                for (PartitionData pd : options.getAllPartitionData(model)) {
                     if (pd.getAlignment() != null) {
                         if (numOfTaxa > 0) {
                             if (numOfTaxa != pd.getTaxaCount()) {

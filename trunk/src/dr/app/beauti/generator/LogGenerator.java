@@ -386,8 +386,8 @@ public class LogGenerator extends Generator {
 
             writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-            for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
-                if (model.getAllPartitionData().get(0).getTraitType() == null) {
+            for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
+                if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:
                             writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
@@ -418,7 +418,7 @@ public class LogGenerator extends Generator {
             }
 
             if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
-                for (PartitionData partitionData : tree.getAllPartitionData()) { // Each TD except Species has one AncestralTreeLikelihood
+                for (PartitionData partitionData : options.getAllPartitionData(tree)) { // Each TD except Species has one AncestralTreeLikelihood
                     if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString())) )
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
                                 partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
@@ -451,8 +451,8 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                for (PartitionClockModel model : options.getPartitionClockModels(tree.getAllPartitionData())) {
-                    if (model.getAllPartitionData().get(0).getTraitType() == null) {
+                for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
+                    if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
                         switch (model.getClockType()) {
                             case STRICT_CLOCK:
                                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);

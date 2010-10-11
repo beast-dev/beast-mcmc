@@ -37,7 +37,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class PartitionSubstitutionModel extends PartitionModelOptions {
+public class PartitionSubstitutionModel extends PartitionOptions {
 
     // Instance variables
 
@@ -68,11 +68,9 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
 
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
 
-        this(options, partition.getName(),
-                (partition.getTraitType() == null) ? partition.getAlignment().getDataType() : new GeneralDataType());
+        this(options, partition.getName(),(partition.getTraitType() == null)
+                ? partition.getAlignment().getDataType() : new GeneralDataType());
 
-        allPartitionData.clear();
-        addPartitionData(partition);
     }
 
     /**
@@ -84,11 +82,6 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
         this(options, name, source.dataType);
-
-        this.allPartitionData.clear();
-        for (PartitionData partition : source.allPartitionData) {
-            this.allPartitionData.add(partition);
-        }
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -789,7 +782,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
         int[] weights = new int[getCodonPartitionCount()];
 
         int k = 0;
-        for (PartitionData partition : allPartitionData) {
+        for (PartitionData partition : options.getAllPartitionData(this)) {
             if (partition.getPartitionSubstitutionModel() == this) {
                 addWeightsForPartition(partition, weights, k);
             }
@@ -972,7 +965,7 @@ public class PartitionSubstitutionModel extends PartitionModelOptions {
     public int getAveStates() {
         int aveStates = 0;
         int num = 0;
-        for (PartitionData partition : allPartitionData) {
+        for (PartitionData partition : options.getAllPartitionData(this)) {
              if (partition instanceof TraitData) {
                  aveStates = aveStates + ((TraitData) partition).getStatesListOfTrait(options.taxonList).size();
                  num++;

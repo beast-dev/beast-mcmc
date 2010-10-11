@@ -80,7 +80,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
                         + "which may be 1 of many aligments using this tree.");
-                writer.writeIDref(AlignmentParser.ALIGNMENT, model.getAllPartitionData().get(0).getAlignment().getId());
+                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getAlignment().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
@@ -130,7 +130,7 @@ public class InitialTreeGenerator extends Generator {
 //                        writeTaxaRef(taxaId, model, writer);
 //                        break; //only need 1 taxa ref
 //                    }
-                    taxaId = model.getAllPartitionData().get(0).getPrefix() + TaxaParser.TAXA;
+                    taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
                     writeTaxaRef(taxaId, model, writer);
 
                 } else {

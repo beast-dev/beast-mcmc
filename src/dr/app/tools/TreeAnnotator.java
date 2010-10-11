@@ -273,15 +273,27 @@ public class TreeAnnotator {
         fileReader.close();
 
         progressStream.println("Annotating target tree...");
-        cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
+
+        try {
+            cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
+        } catch (Exception e) {
+            System.err.println("Error to annotate tree: " + e.getMessage() + "\nPlease check the tree log file format.");
+            return;
+        }
 
         progressStream.println("Writing annotated tree....");
 
-        final PrintStream stream = outputFileName != null ?
-                new PrintStream(new FileOutputStream(outputFileName)) :
-                System.out;
+        try {
+            final PrintStream stream = outputFileName != null ?
+                    new PrintStream(new FileOutputStream(outputFileName)) :
+                    System.out;
 
-        new NexusExporter(stream).exportTree(targetTree);
+            new NexusExporter(stream).exportTree(targetTree);
+        } catch (Exception e) {
+            System.err.println("Error to write annotated tree file: " + e.getMessage());
+            return;
+        }
+
     }
 
     private void setupAttributes(Tree tree) {

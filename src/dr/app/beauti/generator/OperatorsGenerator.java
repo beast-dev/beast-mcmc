@@ -236,7 +236,7 @@ public class OperatorsGenerator extends Generator {
 
         int windowSize = (int) Math.round(operator.tuning);
         if (windowSize < 1) windowSize = 1;
-        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP;
+        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
         writer.writeOpenTag(
                 name,
                 new Attribute[]{

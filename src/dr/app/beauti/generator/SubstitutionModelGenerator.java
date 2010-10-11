@@ -306,11 +306,11 @@ public class SubstitutionModelGenerator extends Generator {
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
-                for (PartitionData partition : model.getAllPartitionData()) { //?
+                for (PartitionData partition : options.getAllPartitionData(model)) { //?
                     writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);
                 }
             } else {
-                for (PartitionData partition : model.getAllPartitionData()) { //?
+                for (PartitionData partition : options.getAllPartitionData(model)) { //?
                     writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
                 }
             }
@@ -370,7 +370,7 @@ public class SubstitutionModelGenerator extends Generator {
         // merge patterns then get frequencies.
 
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-            List<PartitionData> partitions = model.getAllPartitionData();
+            List<PartitionData> partitions = options.getAllPartitionData(model);
 
             Patterns patterns = new Patterns(partitions.get(0).getAlignment());
             for (int i = 1; i < partitions.size(); i++) {
@@ -423,11 +423,11 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, model.getAllPartitionData().get(0).getName()).size();
+        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, options.getAllPartitionData(model).get(0).getName()).size();
 
         if (numOfStates < 1) throw new IllegalArgumentException("The number of states must be greater than 1");
 
-        for (PartitionData partition : model.getAllPartitionData()) {
+        for (PartitionData partition : options.getAllPartitionData(model)) {
             if (numOfStates != TraitData.getStatesListOfTrait(options.taxonList, partition.getName()).size()) {
                 throw new IllegalArgumentException("Discrete Traits having different number of states " +
                         "\n" + "cannot share the same substitution model");
@@ -440,7 +440,7 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
 
-            for (PartitionData partition : model.getAllPartitionData()) { //?
+            for (PartitionData partition : options.getAllPartitionData(model)) { //?
                 writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
             }
 
@@ -470,7 +470,7 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL),
                     new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
 
-            for (PartitionData partition : model.getAllPartitionData()) { //?
+            for (PartitionData partition : options.getAllPartitionData(model)) { //?
                 writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
             }
 
@@ -503,7 +503,7 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
-        for (PartitionData partition : model.getAllPartitionData()) { //?
+        for (PartitionData partition : options.getAllPartitionData(model)) { //?
             writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
         }
 

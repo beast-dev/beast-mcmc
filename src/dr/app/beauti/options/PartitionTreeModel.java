@@ -36,7 +36,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionTreeModel extends PartitionModelOptions {
+public class PartitionTreeModel extends PartitionOptions {
 
     // Instance variables
 
@@ -65,9 +65,6 @@ public class PartitionTreeModel extends PartitionModelOptions {
     public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
         this.partitionName = partition.getName();
-        
-        allPartitionData.clear();
-        addPartitionData(partition);
 
         initTreeModelParaAndOpers();
     }
@@ -82,11 +79,6 @@ public class PartitionTreeModel extends PartitionModelOptions {
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
         this.options = options;
         this.partitionName = name;
-
-        this.allPartitionData.clear();
-        for (PartitionData partition: source.allPartitionData) {
-        	this.allPartitionData.add(partition);			
-		} 
 
         this.startingTreeType = source.startingTreeType;
         this.userStartingTree = source.userStartingTree;
@@ -168,7 +160,7 @@ public class PartitionTreeModel extends PartitionModelOptions {
     /////////////////////////////////////////////////////////////
     
     public boolean containsUncorrelatedRelaxClock() {
-        for (PartitionData partition: allPartitionData) {
+        for (PartitionData partition: options.getAllPartitionData(this)) {
             PartitionClockModel clockModel = partition.getPartitionClockModel();
             if (clockModel.getClockType() == ClockType.UNCORRELATED_EXPONENTIAL 
                     || clockModel.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
@@ -227,7 +219,7 @@ public class PartitionTreeModel extends PartitionModelOptions {
 	}
 	
 	private void calculateInitialRootHeightPerTree() {			
-		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(allPartitionData) [0];
+		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
 	}
     
     public String getPrefix() {

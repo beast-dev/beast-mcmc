@@ -34,9 +34,8 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
+import javax.swing.*;
 import java.util.List;
-
-import javax.swing.JCheckBox;
 
 
 
@@ -364,7 +363,7 @@ public class ClockModelOptions extends ModelOptions {
 
         int k = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            for (PartitionData partition : model.getAllPartitionData()) {
+            for (PartitionData partition : options.getAllPartitionData(model)) {
                 int n = partition.getSiteCount();
                 weights[k] += n;
             }

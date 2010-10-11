@@ -277,6 +277,36 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
+    public List<PartitionData> getAllPartitionData(PartitionSubstitutionModel model) {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getPartitionSubstitutionModel() == model) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<PartitionData> getAllPartitionData(PartitionClockModel model) {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getPartitionClockModel() == model) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<PartitionData> getAllPartitionData(PartitionTreeModel model) {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getPartitionTreeModel() == model) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
     public boolean isEBSPSharingSamePrior() {
         return getPartitionTreePriors().size() >= 1 &&
                 (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);
@@ -488,7 +518,7 @@ public class BeautiOptions extends ModelOptions {
         partitionClockSubstLinks.clear();
 
         for (PartitionClockModel model : getPartitionClockModels()) {
-            for (PartitionTreeModel tree : getPartitionTreeModels(model.getAllPartitionData())) {
+            for (PartitionTreeModel tree : getPartitionTreeModels(getAllPartitionData(model))) {
                 PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
 
                 if (!partitionClockTreeLinks.contains(clockTree)) {
@@ -498,7 +528,7 @@ public class BeautiOptions extends ModelOptions {
         }
 
         for (PartitionClockModel model : getPartitionTraitsClockModels()) {
-            for (PartitionSubstitutionModel subst : getPartitionSubstitutionModels(model.getAllPartitionData())) {
+            for (PartitionSubstitutionModel subst : getPartitionSubstitutionModels(getAllPartitionData(model))) {
                 PartitionClockModelSubstModelLink clockSubst = new PartitionClockModelSubstModelLink(this, model, subst);
 
                 if (!partitionClockSubstLinks.contains(clockSubst)) {
@@ -510,39 +540,39 @@ public class BeautiOptions extends ModelOptions {
 
     // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
 
-    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
-            model.clearAllPartitionData();
-        }
-
-        for (PartitionClockModel model : getPartitionClockModels()) {
-            model.clearAllPartitionData();
-        }
-
-        for (PartitionTreeModel tree : getPartitionTreeModels()) {
-            tree.clearAllPartitionData();
-        }
-
-        //TODO update PartitionTreePrior ?
-
-        for (PartitionData partition : dataPartitions) {
-            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-            if (!psm.getAllPartitionData().contains(partition)) {
-                psm.addPartitionData(partition);
-            }
-
-            PartitionClockModel pcm = partition.getPartitionClockModel();
-            if (!pcm.getAllPartitionData().contains(partition)) {
-                pcm.addPartitionData(partition);
-            }
-
-            PartitionTreeModel ptm = partition.getPartitionTreeModel();
-            if (!ptm.getAllPartitionData().contains(partition)) {
-                ptm.addPartitionData(partition);
-            }
-        }
-
-    }
+//    public void updateLinksBetweenPDPCMPSMPTMPTPP() {
+//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
+//            model.clearAllPartitionData();
+//        }
+//
+//        for (PartitionClockModel model : getPartitionClockModels()) {
+//            model.clearAllPartitionData();
+//        }
+//
+//        for (PartitionTreeModel tree : getPartitionTreeModels()) {
+//            tree.clearAllPartitionData();
+//        }
+//
+//        //TODO update PartitionTreePrior ?
+//
+//        for (PartitionData partition : dataPartitions) {
+//            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
+//            if (!psm.getAllPartitionData().contains(partition)) {
+//                psm.addPartitionData(partition);
+//            }
+//
+//            PartitionClockModel pcm = partition.getPartitionClockModel();
+//            if (!pcm.getAllPartitionData().contains(partition)) {
+//                pcm.addPartitionData(partition);
+//            }
+//
+//            PartitionTreeModel ptm = partition.getPartitionTreeModel();
+//            if (!ptm.getAllPartitionData().contains(partition)) {
+//                ptm.addPartitionData(partition);
+//            }
+//        }
+//
+//    }
 
     public double getAveWeightedMeanDistance(List<PartitionData> partitions) {
         double meanDistance = 0;
@@ -651,7 +681,7 @@ public class BeautiOptions extends ModelOptions {
 
         if (newTrait.getPartitionTreeModel() == null) {
             newTrait.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
-            getPartitionTreeModels().get(0).addPartitionData(newTrait);
+//            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }
 
         return selRow; // only for trait panel

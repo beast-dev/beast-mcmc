@@ -36,7 +36,7 @@ import java.util.List;
  * @author Walter Xie
  * @version $Id$
  */
-public class PartitionClockModel extends PartitionModelOptions {
+public class PartitionClockModel extends PartitionOptions {
 
     // Instance variables
     private final BeautiOptions options;
@@ -48,9 +48,6 @@ public class PartitionClockModel extends PartitionModelOptions {
     public PartitionClockModel(BeautiOptions options, PartitionData partition) {
         this.options = options;
         this.partitionName = partition.getName();
-
-        allPartitionData.clear();
-        addPartitionData(partition);
 
         initClockModelParaAndOpers();
     }
@@ -65,12 +62,6 @@ public class PartitionClockModel extends PartitionModelOptions {
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
         this.options = options;
         this.partitionName = name;
-
-        this.allPartitionData.clear();
-        for (PartitionData partition: source.allPartitionData) {
-            this.allPartitionData.add(partition);
-        }
-
         this.clockType = source.clockType;
 
         initClockModelParaAndOpers();
@@ -84,7 +75,7 @@ public class PartitionClockModel extends PartitionModelOptions {
     private void initClockModelParaAndOpers() {
 
         int dataLength = 0;
-        for (PartitionData partitionData : allPartitionData) {
+        for (PartitionData partitionData : options.getAllPartitionData(this)) {
             dataLength += partitionData.getSiteCount();
         }
         if (dataLength <= 1) { // TODO Discuss threshold

@@ -278,7 +278,9 @@ public class CoalescentSimulatorParser extends AbstractXMLObjectParser {
             new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
             new ElementRule(CONSTRAINED_TAXA, new XMLSyntaxRule[]{
                     new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
-                    // need more here
+                    new ElementRule(TMRCA_CONSTRAINT, new XMLSyntaxRule[]{
+                          new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
+                    }),
             }, true),
             new ElementRule(DemographicModel.class),
     };

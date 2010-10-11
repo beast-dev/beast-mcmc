@@ -26,6 +26,8 @@ Version 1.6.1 released 11th October 2010
 	Bug Fixes:
         Issue 399: Binary for TreeStat packaged with BEAST v1.6 has wrong version
                    number and icon
+        Issue 403: Starting tree generated with constraints by BEAUti is not correct
+                   XML for BEAST
         Issue 404: Make "Median heights" as the default of nodeHeightsCombo
         Issue 405: RandomWalkOperator with reflecting boundary can grind to a halt
         Issue 407: *BEAST needs to log species tree in { }, otherwise TreeAnnotator
@@ -35,6 +37,7 @@ Version 1.6.1 released 11th October 2010
                    in BEAUti
         Issue 412: BEAUti generates randomWalkOperator instead of randomWalkIntegerOperator
                    for branchRates.categories
+        Issue 413: BEAUti: duplicate class PartitionModelOptions causes model link conflict
 
 
 Version 1.6.0 released 15th September 2010

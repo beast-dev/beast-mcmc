@@ -573,7 +573,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public void setStatusMessage() {
-        int width = this.getWidth() - 200; // minus generate button size
+        int width = this.getWidth() - 260; // minus generate button size
         if (width < 100) width = 100; // prevent too narrow
         String tw = TextUtil.wrapText(options.statusMessage(), statusLabel, width);
 //        System.out.println(this.getWidth() + "   " + tw);

@@ -390,7 +390,7 @@ public class LogGenerator extends Generator {
                 if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:
-                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case UNCORRELATED_EXPONENTIAL:
@@ -399,7 +399,7 @@ public class LogGenerator extends Generator {
                             break;
 
                         case RANDOM_LOCAL_CLOCK:
-                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                             break;
 
                         case AUTOCORRELATED_LOGNORMAL:
@@ -455,7 +455,7 @@ public class LogGenerator extends Generator {
                     if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
                         switch (model.getClockType()) {
                             case STRICT_CLOCK:
-                                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                                 break;
 
                             case UNCORRELATED_EXPONENTIAL:
@@ -464,7 +464,7 @@ public class LogGenerator extends Generator {
                                 break;
 
                             case RANDOM_LOCAL_CLOCK:
-                                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
                                 break;
 
                             case AUTOCORRELATED_LOGNORMAL:

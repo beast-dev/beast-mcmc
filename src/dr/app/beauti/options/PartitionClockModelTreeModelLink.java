@@ -59,9 +59,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
                 PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false); 
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, 0.0, Double.POSITIVE_INFINITY, false);
-        createParameter(ClockType.LOCAL_CLOCK + ".changes", "random local clock rate change indicator");
 
 //        {
 //            final Parameter p = createParameter("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate", PriorScaleType.ROOT_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
@@ -92,9 +89,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", 
         		"branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
-        createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
-        createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
-         
         createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
                 tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
@@ -114,9 +108,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
         createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
-                0.0, Double.POSITIVE_INFINITY);
-        // Random local clock
-        createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
+                0.0, Double.POSITIVE_INFINITY);        
     }
 
     /**
@@ -126,8 +118,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      */
     public void selectParameters(List<Parameter> params) {
 	    getParameter("branchRates.categories");
-		getParameter(ClockType.LOCAL_CLOCK + ".relativeRates");
-		getParameter(ClockType.LOCAL_CLOCK + ".changes");
 		getParameter("treeModel.rootRate");
 		getParameter("treeModel.nodeRates");
 		getParameter("treeModel.allRates");
@@ -193,7 +183,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
                 case RANDOM_LOCAL_CLOCK:
                     ops.add(getOperator("upDownRateHeights"));
-                    addRandomLocalClockOperators(ops);
                     break;
 
                 default:
@@ -207,14 +196,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         ops.add(getOperator("randomWalkBranchRateCategories"));
         ops.add(getOperator("uniformBranchRateCategories"));        
     }
-
-    private void addRandomLocalClockOperators(List<Operator> ops) {
-    	ops.add(getOperator(ClockType.LOCAL_CLOCK + ".relativeRates"));
-        ops.add(getOperator(ClockType.LOCAL_CLOCK + ".changes"));
-                   
 //TODO    ops.add(tree.getOperator("treeBitMove"));
-        
-    }
 
     /**
      * return a list of parameters that are required
@@ -241,11 +223,6 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
             params.add(getParameter("meanRate"));
             params.add(getParameter("covariance"));
             params.add(getParameter(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        }
-
-        if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) {
-            params.add(getParameter("rateChanges"));
-            params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
         }
 
     }

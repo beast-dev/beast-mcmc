@@ -23,10 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.*;
 
 import java.util.List;
 
@@ -96,12 +93,20 @@ public class PartitionClockModel extends PartitionOptions {
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
         }
         createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
-                PriorScaleType.LOG_STDEV_SCALE, 1.0/3.0, 1.0/3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.LOG_STDEV_SCALE, 1.0 / 3.0, 1.0 / 3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
+        // Random local clock
+        createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, 0.0, Double.POSITIVE_INFINITY, false);
+        createParameter(ClockType.LOCAL_CLOCK + ".changes", "random local clock rate change indicator");
 
         createScaleOperator("clock.rate", demoTuning, rateWeights);
         createScaleOperator(ClockType.UCED_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_MEAN, demoTuning, rateWeights);
         createScaleOperator(ClockType.UCLD_STDEV, demoTuning, rateWeights);
+        // Random local clock
+        createScaleOperator(ClockType.LOCAL_CLOCK + ".relativeRates", demoTuning, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + ".changes", OperatorType.BITFLIP, 1, treeWeights);
+        createDiscreteStatistic("rateChanges", "number of random local clocks"); // POISSON_PRIOR
     }
 
     /**
@@ -122,8 +127,14 @@ public class PartitionClockModel extends PartitionOptions {
 
             switch (clockType) {
                 case STRICT_CLOCK:
-                case RANDOM_LOCAL_CLOCK:
                     rateParam = getParameter("clock.rate");
+                    break;
+
+                case RANDOM_LOCAL_CLOCK:
+                    rateParam = getParameter("clock.rate");                     
+                    getParameter(ClockType.LOCAL_CLOCK + ".changes");
+                    params.add(getParameter("rateChanges"));
+                    params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
                     break;
 
                 case UNCORRELATED_EXPONENTIAL:
@@ -176,12 +187,16 @@ public class PartitionClockModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if (  (!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN))
+            if ((!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN))
                     && isEstimatedRate) {
                 switch (clockType) {
                     case STRICT_CLOCK:
+                        ops.add(getOperator("clock.rate"));
+                        break;
+
                     case RANDOM_LOCAL_CLOCK:
                         ops.add(getOperator("clock.rate"));
+                        addRandomLocalClockOperators(ops);
                         break;
 
                     case UNCORRELATED_EXPONENTIAL:
@@ -205,8 +220,11 @@ public class PartitionClockModel extends PartitionOptions {
                     case STRICT_CLOCK:
                     case UNCORRELATED_EXPONENTIAL:
                     case AUTOCORRELATED_LOGNORMAL:
-                    case RANDOM_LOCAL_CLOCK:
                         // no parameter to operator on
+                        break;
+
+                    case RANDOM_LOCAL_CLOCK:
+                        addRandomLocalClockOperators(ops);
                         break;
 
                     case UNCORRELATED_LOGNORMAL:
@@ -220,14 +238,24 @@ public class PartitionClockModel extends PartitionOptions {
         }
     }
 
+    private void addRandomLocalClockOperators(List<Operator> ops) {
+        ops.add(getOperator(ClockType.LOCAL_CLOCK + ".relativeRates"));
+        ops.add(getOperator(ClockType.LOCAL_CLOCK + ".changes"));
+    }
+
     // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
 
     public void iniClockRateStarBEAST() {
         Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:
+                rateParam = getParameter("clock.rate");
+                break;
+
             case RANDOM_LOCAL_CLOCK:
                 rateParam = getParameter("clock.rate");
+                getParameter(ClockType.LOCAL_CLOCK + ".relativeRates");
+                getParameter(ClockType.LOCAL_CLOCK + ".changes");
                 break;
 
             case UNCORRELATED_EXPONENTIAL:

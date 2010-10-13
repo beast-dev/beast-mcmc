@@ -196,6 +196,7 @@ public class TreesPanel extends JPanel implements Exportable {
         setTree(tree);
     }
 
+
     private void treeSelectionChanged() {
         if (rootToTipPlot != null) {
             Set<Node> selectedTips = treePanel.getTreeViewer().getSelectedTips();
@@ -231,7 +232,7 @@ public class TreesPanel extends JPanel implements Exportable {
             }
 
             Regression r = temporalRooting.getRootToTipRegression(currentTree);
-            NodeRef mrca = Tree.Utils.getCommonAncestorNode(tree, selectedTaxa);
+            NodeRef mrca = Tree.Utils.getCommonAncestorNode(currentTree, selectedTaxa);
             double mrcaDistance1 = temporalRooting.getRootToTipDistance(currentTree, mrca);
             double mrcaTime1 = r.getX(mrcaDistance1);
             if (tree.isExternal(mrca)) {
@@ -242,7 +243,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
             mrcaPlot.setSelectedPoints(selectedPoints, mrcaTime, mrcaDistance);
         } else {
-            mrcaPlot.setSelectedPoints(selectedPoints);
+            mrcaPlot.clearSelection();
         }
         repaint();
     }

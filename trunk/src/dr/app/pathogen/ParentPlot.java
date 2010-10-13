@@ -51,14 +51,9 @@ public class ParentPlot extends Plot.AbstractPlot {
 
         this.xTipData = xData;
         this.yTipData = yData;
-    }
 
-    public ParentPlot(Variate xData, Variate yData, double mrcaTime, double mrcaDistance) {
-        super(new double[] { mrcaTime }, new double[] { mrcaDistance });
-
-        this.xTipData = xData;
-        this.yTipData = yData;
-
+        this.xParentData = new Variate.Double(xParentData);
+        this.yParentData = new Variate.Double(yParentData);
     }
 
     /**
@@ -72,8 +67,11 @@ public class ParentPlot extends Plot.AbstractPlot {
         if (getSelectedPoints() != null && getSelectedPoints().size() > 0) {
             for (int i : getSelectedPoints()) {
 
-                double x1 = transformX(xTipData.get(i));
-                double y1 = transformY(yTipData.get(i));
+                double x = xTipData.get(i);
+                double y = yTipData.get(i);
+                
+                double x1 = transformX(x);
+                double y1 = transformY(y);
 
                 double x2 = transformX(xData.get(0));
                 double y2 = transformY(yData.get(0));
@@ -109,9 +107,18 @@ public class ParentPlot extends Plot.AbstractPlot {
     private final Variate xTipData;
     private final Variate yTipData;
 
+    private final Variate xParentData;
+    private final Variate yParentData;
+
     public void setSelectedPoints(Set<Integer> selectedPoints, double mrcaTime, double mrcaDistance) {
+        setData(new double[] { mrcaTime }, new double[] { mrcaDistance });
         setSelectedPoints(selectedPoints);
-        setData(new double[] { mrcaTime }, new double[] { mrcaDistance });        
     }
+
+    public void clearSelection() {
+        setData(xParentData, yParentData);
+        super.clearSelection();
+    }
+
 }
 

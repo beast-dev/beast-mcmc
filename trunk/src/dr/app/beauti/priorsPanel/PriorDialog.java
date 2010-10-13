@@ -457,7 +457,7 @@ public class PriorDialog {
 
         public LaplaceOptionsPanel() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -511,7 +511,7 @@ public class PriorDialog {
         public NormalOptionsPanel() {
 
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -532,7 +532,7 @@ public class PriorDialog {
             } else {
                 addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
-            addField("Log(Stdev)", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Log(Stdev)", 1.0, 0.0, Double.MAX_VALUE);
             addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
             addCheckBox("Mean In Real Space", meanInRealSpaceCheck);
         }
@@ -603,7 +603,7 @@ public class PriorDialog {
         public TruncatedNormalOptionsPanel() {
 
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
             addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         }

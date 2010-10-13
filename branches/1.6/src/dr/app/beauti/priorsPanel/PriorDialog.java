@@ -454,7 +454,7 @@ public class PriorDialog {
 
         public LaplaceOptionsPanel() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE); //TODO Beta?
+            addField("Stdev", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -463,7 +463,7 @@ public class PriorDialog {
 
         public void setParameterPrior(Parameter parameter) {
             parameter.mean = getValue(0);
-            parameter.stdev = getValue(1); //TODO  stdev or  Scale
+            parameter.stdev = getValue(1);
         }
     }
 

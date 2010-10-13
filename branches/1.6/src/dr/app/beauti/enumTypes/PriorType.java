@@ -142,6 +142,8 @@ public enum PriorType {
             case LAPLACE_PRIOR:
                 buffer.append("Laplace [");
                 buffer.append(formatter.format(param.mean));
+                buffer.append(", ");
+                buffer.append(formatter.format(param.stdev));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:

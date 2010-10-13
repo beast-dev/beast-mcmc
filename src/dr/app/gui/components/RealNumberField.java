@@ -166,7 +166,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         public void insertString(int offs, String str, AttributeSet a)
                 throws BadLocationException {
 
-            if (str == null) return;
+            if (str == "" || str == null) return;
             if (str.equals("+INF") || str.equals("-INF") || str.equals("NaN")
                     || str.equals("MAX_VALUE") || str.equals("MIN_VALUE")) {
                 super.insertString(offs, str, a);

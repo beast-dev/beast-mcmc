@@ -110,11 +110,12 @@ public class PriorOptions extends ModelOptions {
 
                     case GROWTH_RATE_SCALE:
                         param.initial = avgInitialRootHeight / 1000;
+                        // use Laplace
                         if (param.getBaseName().startsWith("logistic")) {
-                            param.stdev = Math.log(1000) / avgInitialRootHeight;
+                            param.scale = Math.log(1000) / avgInitialRootHeight;
 //                            System.out.println("logistic");
                         } else {
-                            param.stdev = Math.log(10000) / avgInitialRootHeight;
+                            param.scale = Math.log(10000) / avgInitialRootHeight;
 //                            System.out.println("not logistic");
                         }
                         break;

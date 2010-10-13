@@ -124,7 +124,7 @@ public class ParameterPriorGenerator extends Generator {
                 writer.writeOpenTag(PriorParsers.LAPLACE_PRIOR,
                         new Attribute[]{
                                 new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
+                                new Attribute.Default<String>(PriorParsers.SCALE, "" + parameter.scale)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LAPLACE_PRIOR);

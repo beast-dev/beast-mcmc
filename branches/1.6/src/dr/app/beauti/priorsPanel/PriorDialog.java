@@ -286,7 +286,7 @@ public class PriorDialog {
             case LAPLACE_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.mean);
-                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(1).setValue(parameter.scale);
                 break;
 
             case GAMMA_PRIOR:
@@ -454,7 +454,7 @@ public class PriorDialog {
 
         public LaplaceOptionsPanel() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -463,7 +463,7 @@ public class PriorDialog {
 
         public void setParameterPrior(Parameter parameter) {
             parameter.mean = getValue(0);
-            parameter.stdev = getValue(1);
+            parameter.scale = getValue(1);
         }
     }
 

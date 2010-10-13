@@ -36,39 +36,39 @@ import java.util.List;
  */
 public class PriorOptions extends ModelOptions {
 
-	// Instance variables
+    // Instance variables
     private final BeautiOptions options;
-   
 
-    public PriorOptions(BeautiOptions options) {    	
-    	this.options = options;
+
+    public PriorOptions(BeautiOptions options) {
+        this.options = options;
     }
-       
-    
+
+
     /**
      * return a list of parameters that are required
      *
      * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> params) {    	    	
-        
+    public void selectParameters(List<Parameter> params) {
+
         double growthRateMaximum = 1E6;
 //        double birthRateMaximum = 1E6;
 //        double substitutionRateMaximum = 100;
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
-                
+
         double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getNonTraitsDataList());
         double avgInitialRootHeight = rootAndRate[0];
         double avgInitialRate = rootAndRate[1];
-        
+
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-    			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-        	
+                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+
             growthRateMaximum = 1E6 * avgInitialRate;
 //            birthRateMaximum = 1E6 * avgInitialRate;
         }
-        
+
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
 //            double rate = options.clockModelOptions.getMeanRelativeRate();
 //
@@ -101,34 +101,40 @@ public class PriorOptions extends ModelOptions {
                         //param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight;
                         break;
-                        
+
                     case T50_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(timeScaleMaximum, param.upper);
                         param.initial = avgInitialRootHeight / 5.0;
                         break;
-                        
+
                     case GROWTH_RATE_SCALE:
                         param.initial = avgInitialRootHeight / 1000;
-                        param.stdev = Math.log(10000)/avgInitialRootHeight;
+                        if (param.getBaseName().startsWith("logistic")) {
+                            param.stdev = Math.log(1000) / avgInitialRootHeight;
+//                            System.out.println("logistic");
+                        } else {
+                            param.stdev = Math.log(10000) / avgInitialRootHeight;
+//                            System.out.println("not logistic");
+                        }
                         break;
-                        
+
                     case BIRTH_RATE_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(birthRateMaximum, param.upper);
                         break;
-                        
+
                     case SUBSTITUTION_RATE_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(substitutionRateMaximum, param.upper);
-                        param.initial = avgInitialRate;                                             
+                        param.initial = avgInitialRate;
                         break;
-                        
+
                     case LOG_STDEV_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(logStdevMaximum, param.upper);
                         break;
-                        
+
                     case SUBSTITUTION_PARAMETER_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(substitutionParameterMaximum, param.upper);
@@ -152,7 +158,7 @@ public class PriorOptions extends ModelOptions {
                         break;
 
                 }
-                
+
                 if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
                     param.lower = options.maximumTipHeight;
 //                    param.upper = timeScaleMaximum;
@@ -167,8 +173,8 @@ public class PriorOptions extends ModelOptions {
         }
 
 //        dataReset = false;
-        
-        
+
+
     }
 
 }

@@ -9,6 +9,9 @@
 
 package dr.app.gui.components;
 
+import dr.util.NumberFormatter;
+import dr.app.beauti.util.NumberUtil;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.AttributeSet;
@@ -18,6 +21,7 @@ import javax.swing.text.PlainDocument;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.text.DecimalFormat;
 
 public class RealNumberField extends JTextField implements FocusListener, DocumentListener {
 
@@ -76,7 +80,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         } else if (value == Double.MIN_VALUE) {
             setText(MIN_VALUE);
         } else {
-            setText(Double.toString(value));
+            setText(NumberUtil.formatDecimal(value, 10, 6));
         }
     }
 

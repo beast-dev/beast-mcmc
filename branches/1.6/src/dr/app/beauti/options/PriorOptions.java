@@ -109,8 +109,8 @@ public class PriorOptions extends ModelOptions {
                         break;
                         
                     case GROWTH_RATE_SCALE:
-//                        param.lower = Math.max(-growthRateMaximum, param.lower);
-                        //param.upper = Math.min(growthRateMaximum, param.upper);
+                        param.initial = avgInitialRootHeight / 1000;
+                        param.stdev = Math.log(10000)/avgInitialRootHeight;
                         break;
                         
                     case BIRTH_RATE_SCALE:

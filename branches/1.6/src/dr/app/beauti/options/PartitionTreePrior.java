@@ -93,15 +93,15 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createParameterJeffreysPrior("exponential.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("exponential.growthRate", "coalescent growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createParameterLaplacePrior("exponential.growthRate", "coalescent growth rate parameter",
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("exponential.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
 
         createParameterJeffreysPrior("logistic.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterGammaPrior("logistic.growthRate", "coalescent logistic growth rate parameter",
-                PriorScaleType.NONE, 0.01, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
+        createParameterLaplacePrior("logistic.growthRate", "coalescent logistic growth rate parameter",
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("logistic.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
         createParameterGammaPrior("logistic.t50", "logistic shape parameter",
@@ -109,8 +109,8 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createParameterJeffreysPrior("expansion.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("expansion.growthRate", "coalescent logistic growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.001, 0.0, Double.POSITIVE_INFINITY);
+        createParameterLaplacePrior("expansion.growthRate", "coalescent expansion growth rate parameter",
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
         createParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion",
@@ -147,11 +147,13 @@ public class PartitionTreePrior extends PartitionOptions {
         createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
         createScaleOperator("exponential.doublingTime", demoTuning, demoWeights);
         createScaleOperator("logistic.popSize", demoTuning, demoWeights);
-        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
+        createOperator("logistic.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
+//        createScaleOperator("logistic.growthRate", demoTuning, demoWeights);
         createScaleOperator("logistic.doublingTime", demoTuning, demoWeights);
         createScaleOperator("logistic.t50", demoTuning, demoWeights);
         createScaleOperator("expansion.popSize", demoTuning, demoWeights);
-        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
+        createOperator("expansion.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
+//        createScaleOperator("expansion.growthRate", demoTuning, demoWeights);
         createScaleOperator("expansion.doublingTime", demoTuning, demoWeights);
         createScaleOperator("expansion.ancestralProportion", demoTuning, demoWeights);
         createScaleOperator("skyline.popSize", demoTuning, demoWeights * 5);

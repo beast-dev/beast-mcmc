@@ -43,7 +43,10 @@ Version 1.6.1 released 11th October 2010
         Issue 413: BEAUti: duplicate class PartitionModelOptions causes model link conflict
         Issue 414: BEAUti: incorrect xml for multi-alignment when given complex
                    combination of clock model and tree model
-
+        Issue 416: BEAUti: Laplace prior should use stdev same as parser
+        Issue 417: BEAUti growthRate related XML causes -INF likelihood
+        Issue 418: Set maximun fraction digits for numbers displayed in BEAUti prior panel
+        
 
 Version 1.6.0 released 15th September 2010
 

@@ -1,6 +1,7 @@
 package dr.app.beauti.enumTypes;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.util.NumberUtil;
 import dr.math.distributions.*;
 
 import java.text.NumberFormat;
@@ -100,7 +101,7 @@ public enum PriorType {
 
     public String getPriorString(Parameter param) {
 
-        NumberFormat formatter = NumberFormat.getNumberInstance();
+//        NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
         if (param.priorType == PriorType.UNDEFINED) {
@@ -126,9 +127,9 @@ public enum PriorType {
             case UNIFORM_PRIOR:
                 if (!param.isDiscrete && !param.isStatistic) {
                     buffer.append("Uniform [");
-                    buffer.append(formatter.format(param.lower));
+                    buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
                     buffer.append(", ");
-                    buffer.append(formatter.format(param.upper));
+                    buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
                     buffer.append("]");
                 } else {
                     buffer.append("Uniform");
@@ -136,43 +137,43 @@ public enum PriorType {
                 break;
             case EXPONENTIAL_PRIOR:
                 buffer.append("Exponential [");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append("]");
                 break;
             case LAPLACE_PRIOR:
                 buffer.append("Laplace [");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.stdev));
+                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:
                 buffer.append("Normal [");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.stdev));
+                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
                 buffer.append("]");
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
                 if (param.isMeanInRealSpace()) buffer.append("R");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.stdev));
+                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
                 buffer.append("]");
                 break;
             case GAMMA_PRIOR:
                 buffer.append("Gamma [");
-                buffer.append(formatter.format(param.shape));
+                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.scale));
+                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
                 buffer.append("]");
                 break;
             case INVERSE_GAMMA_PRIOR:
                 buffer.append("Inverse Gamma [");
-                buffer.append(formatter.format(param.shape));
+                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.scale));
+                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
                 buffer.append("]");
                 break;
             case ONE_OVER_X_PRIOR:
@@ -180,19 +181,19 @@ public enum PriorType {
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append("]");
                 break;
             case TRUNC_NORMAL_PRIOR:
                 buffer.append("Truncated Normal [");
-                buffer.append(formatter.format(param.mean));
+                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.stdev));
+                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
                 buffer.append("]");
                 buffer.append(" in [");
-                buffer.append(formatter.format(param.lower));
+                buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.upper));
+                buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
                 buffer.append("]");
 
                 break;
@@ -200,7 +201,7 @@ public enum PriorType {
                 throw new IllegalArgumentException("Unknown prior type");
         }
         if (param.priorType != PriorType.NONE_TREE_PRIOR && !param.isStatistic) {
-            buffer.append(", initial=").append(param.initial);
+            buffer.append(", initial=").append(NumberUtil.formatDecimal(param.initial, 10, 6));
         }
 
         return buffer.toString();
@@ -212,7 +213,7 @@ public enum PriorType {
             return "n/a";
         }
 
-        NumberFormat formatter = NumberFormat.getNumberInstance();
+//        NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
         switch (param.priorType) {
@@ -232,9 +233,9 @@ public enum PriorType {
             case POISSON_PRIOR:
             case TRUNC_NORMAL_PRIOR:
                 buffer.append("[");
-                buffer.append(formatter.format(param.lower));
+                buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
                 buffer.append(", ");
-                buffer.append(formatter.format(param.upper));
+                buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
                 buffer.append("]");
                 break;
             default:

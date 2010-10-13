@@ -97,6 +97,13 @@ public class ModelOptions {
                   .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
+    public void createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                double mean, double scale, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LAPLACE_PRIOR)
+                  .initial(initial).mean(mean).scale(scale).lower(lower).upper(upper).build(parameters);
+    }
+
+
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public void createDiscreteStatistic(String name, String description) { // Poisson Prior
         new Parameter.Builder(name, description).isDiscrete(true).isStatistic(true)

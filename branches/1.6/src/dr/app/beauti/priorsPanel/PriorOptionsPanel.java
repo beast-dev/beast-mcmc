@@ -40,7 +40,7 @@ public abstract class PriorOptionsPanel extends OptionsPanel {
     void addField(String name, RealNumberField field) {
         argumentNames.add(name);
 
-        field.setColumns(8);
+        field.setColumns(10);
         argumentFields.add(field);
         setupComponents();
     }

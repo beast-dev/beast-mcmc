@@ -72,7 +72,7 @@ public class PriorDialog {
     public PriorDialog(JFrame frame) {
         this.frame = frame;
 
-        initialField.setColumns(8);
+        initialField.setColumns(10);
 
         optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
         optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());

@@ -110,7 +110,13 @@ public class PriorOptions extends ModelOptions {
                         
                     case GROWTH_RATE_SCALE:
                         param.initial = avgInitialRootHeight / 1000;
-                        param.stdev = Math.log(10000)/avgInitialRootHeight;
+                        if (param.getBaseName().startsWith("logistic")) {
+                            param.stdev = Math.log(1000) / avgInitialRootHeight;
+//                            System.out.println("logistic");
+                        } else {
+                            param.stdev = Math.log(10000) / avgInitialRootHeight;
+//                            System.out.println("not logistic");
+                        }
                         break;
                         
                     case BIRTH_RATE_SCALE:

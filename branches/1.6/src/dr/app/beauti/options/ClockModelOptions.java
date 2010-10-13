@@ -34,9 +34,8 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
+import javax.swing.*;
 import java.util.List;
-
-import javax.swing.JCheckBox;
 
 
 

@@ -187,8 +187,15 @@ public class PriorDialog {
 
         KeyListener listener = new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
-                setupChart();
-                dialog.repaint();
+                if (e.getComponent() instanceof RealNumberField) {
+                    String number = ((RealNumberField) e.getComponent()).getText();
+                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E")
+                            || number.startsWith("-") || number.endsWith("-"))) {
+//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
+                        setupChart();
+                        dialog.repaint();
+                    }
+                }
             }
         };
         FocusListener flistener = new FocusAdapter() {
@@ -289,7 +296,7 @@ public class PriorDialog {
             case LAPLACE_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.mean);
-                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(1).setValue(parameter.scale);
                 break;
 
             case GAMMA_PRIOR:
@@ -457,7 +464,7 @@ public class PriorDialog {
 
         public LaplaceOptionsPanel() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
         }
 
         public Distribution getDistribution() {
@@ -466,7 +473,7 @@ public class PriorDialog {
 
         public void setParameterPrior(Parameter parameter) {
             parameter.mean = getValue(0);
-            parameter.stdev = getValue(1);
+            parameter.scale = getValue(1);
         }
     }
 

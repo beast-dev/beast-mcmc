@@ -69,7 +69,7 @@ public enum PriorType {
                 dist = new OffsetPositiveDistribution(new ExponentialDistribution(1/param.mean), param.offset);
                 break;
             case LAPLACE_PRIOR:
-                dist = new LaplaceDistribution(param.mean, param.stdev);
+                dist = new LaplaceDistribution(param.mean, param.scale);
                 break;
             case NORMAL_PRIOR:
                 dist = new NormalDistribution(param.mean, param.stdev);
@@ -142,7 +142,7 @@ public enum PriorType {
                 buffer.append("Laplace [");
                 buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:

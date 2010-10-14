@@ -27,7 +27,10 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.*;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.StartingTreeType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
@@ -200,12 +203,15 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        //++++++++++++++++ Species tree ++++++++++++++++++
-        if (options.useStarBEAST) {
-//        	if (!(options.nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH || options.nodeHeightPrior == TreePriorType.SPECIES_YULE)) {
-//        		//TODO: more species tree model
-//        		throw new IllegalArgumentException("Species analysis requires to define species tree prior in Tree panel.");
-//        	}
+        //++++++++++++++++ User Modified Prior ++++++++++++++++++
+        for (Parameter param : options.selectParameters()) {
+            if (param.isPriorEdited() && param.initial != Double.NaN) {
+                if (param.initial < param.lower || param.initial > param.upper) {
+                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
+                        "\ninitial value " + param.initial + " is NOT in the range [" + param.lower + ", " + param.upper + "]," + 
+                        "\nor this range is wrong. Please check the Prior panel.");
+                }
+            }
         }
 
         // add other tests and warnings here

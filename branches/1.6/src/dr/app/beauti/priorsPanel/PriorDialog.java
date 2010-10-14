@@ -27,7 +27,10 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
-import dr.app.gui.chart.*;
+import dr.app.gui.chart.Axis;
+import dr.app.gui.chart.JChart;
+import dr.app.gui.chart.LinearAxis;
+import dr.app.gui.chart.PDFPlot;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.math.distributions.*;
@@ -184,8 +187,15 @@ public class PriorDialog {
 
         KeyListener listener = new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
-                setupChart();
-                dialog.repaint();
+                if (e.getComponent() instanceof RealNumberField) {
+                    String number = ((RealNumberField) e.getComponent()).getText();
+                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E")
+                            || number.startsWith("-") || number.endsWith("-"))) {
+//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
+                        setupChart();
+                        dialog.repaint();
+                    }
+                }
             }
         };
         FocusListener flistener = new FocusAdapter() {

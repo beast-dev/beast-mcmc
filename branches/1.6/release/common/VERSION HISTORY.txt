@@ -21,7 +21,7 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.1 released 11th October 2010
+Version 1.6.1 released 15th October 2010
 
 	Bug Fixes:
         Issue 398: BEAUti text message overlaps with button

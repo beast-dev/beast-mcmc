@@ -39,7 +39,7 @@ import java.awt.*;
  */
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.3";
+        private static final String VERSION = "1.4";
 
         public String getVersion() {
             return VERSION;
@@ -54,7 +54,7 @@ public class PathogenApp extends MultiDocApplication {
         }
 
         public String getBuildString() {
-            return "Build r2010";
+            return "Build r3498";
         }
 
         public String[] getCredits() {

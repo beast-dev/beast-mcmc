@@ -49,7 +49,7 @@ public class BeastVersion implements Version {
 
     private static final String DATE_STRING = "2002-2010";
 
-    private static final String REVISION = "$Revision$";
+    private static final String REVISION = "$Rev$";
 
     /**
      * this used to parse the CVS ID string but there is no equivalent

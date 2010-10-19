@@ -122,29 +122,8 @@ public class TemporalRooting {
         if (contemporaneous) {
             throw new IllegalArgumentException("Cannot do a root to tip regression on contemporaneous tips");
         }
-
         double[] dates = getTipDates(tree);
         double[] distances = getRootToTipDistances(tree);
-
-        return new Regression(dates, distances);
-    }
-
-    public Regression getAncestorRootToTipRegression(Tree tree, Regression regression) {
-
-        if (contemporaneous) {
-            throw new IllegalArgumentException("Cannot do a root to tip regression on contemporaneous tips");
-        }
-
-        double[] dates = new double[tree.getExternalNodeCount()];
-        double[] distances = new double[tree.getExternalNodeCount()];
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef tip = tree.getExternalNode(i);
-            NodeRef parent = tree.getParent(tip);
-            distances[i] = getRootToTipDistance(tree, parent);
-
-            dates[i] = regression.getXIntercept() + (distances[i] / regression.getGradient());
-        }
-
         return new Regression(dates, distances);
     }
 
@@ -154,17 +133,6 @@ public class TemporalRooting {
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef tip = tree.getExternalNode(i);
             d[i] = getRootToTipDistance(tree, tip);
-        }
-        return d;
-    }
-
-    public double[] getParentRootToTipDistances(Tree tree) {
-
-        double[] d = new double[tree.getExternalNodeCount()];
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef tip = tree.getExternalNode(i);
-            NodeRef parent = tree.getParent(tip);
-            d[i] = getRootToTipDistance(tree, parent);
         }
         return d;
     }
@@ -326,7 +294,7 @@ public class TemporalRooting {
         return fminx;
     }
 
-    public double getRootToTipDistance(Tree tree, NodeRef node) {
+    private double getRootToTipDistance(Tree tree, NodeRef node) {
         double distance = 0;
         while (node != null) {
             distance += tree.getBranchLength(node);

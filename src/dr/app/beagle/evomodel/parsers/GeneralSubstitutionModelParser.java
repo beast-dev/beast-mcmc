@@ -1,13 +1,10 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.SVSGeneralSubstitutionModel;
+import dr.xml.*;
+import dr.inference.model.Parameter;
 import dr.evolution.datatype.DataType;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.model.Parameter;
-import dr.xml.*;
+import dr.app.beagle.evomodel.substmodel.*;
 
 import java.util.logging.Logger;
 
@@ -22,7 +19,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String RELATIVE_TO = "relativeTo";
     public static final String FREQUENCIES = "frequencies";
     public static final String INDICATOR = "rateIndicator";
-
+    
     public static final String SVS_GENERAL_SUBSTITUTION_MODEL = "svsGeneralSubstitutionModel";
     public static final String SVS_COMPLEX_SUBSTITUTION_MODEL = "svsComplexSubstitutionModel";
 
@@ -73,7 +70,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO) || (cxo.hasAttribute(RELATIVE_TO) && cxo.getIntegerAttribute(RELATIVE_TO) > 0);
+        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO);
 
         int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
         int reversibleRateCount = (nonReversibleRateCount / 2);

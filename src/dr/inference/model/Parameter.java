@@ -483,16 +483,9 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public void addBounds(Bounds<Double> boundary) {
             if (bounds == null) {
-                bounds = boundary;
-            } else {
-                if (!(bounds instanceof IntersectionBounds)) {
-                    IntersectionBounds newBounds = new IntersectionBounds(getDimension());
-                    newBounds.addBounds(bounds);
-                    bounds = newBounds;
-                }
-
-                ((IntersectionBounds)bounds).addBounds(boundary);
+                bounds = new IntersectionBounds(getDimension());
             }
+            bounds.addBounds(boundary);
 
             // can't change dimension after bounds are added!
             //hasBeenStored = true;
@@ -695,7 +688,7 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         // same as !storedValues && !bounds
         //private boolean hasBeenStored = false;
-        private Bounds<Double> bounds = null;
+        private IntersectionBounds bounds = null;
 
         public void addBounds(double lower, double upper) {
             addBounds(new DefaultBounds(upper, lower, getDimension()));
@@ -747,10 +740,6 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public int getBoundsDimension() {
             return uppers.length;
-        }
-
-        public boolean isConstant() {
-            return true;
         }
 
         private final double[] uppers, lowers;

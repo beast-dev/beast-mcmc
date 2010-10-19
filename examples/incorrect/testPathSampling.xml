@@ -198,9 +198,7 @@
     </mcmc>
 
     <marginalLikelihoodEstimator chainLength="100000" pathSteps="20" linear="false" lacing="true">
-        <samplers>
-            <mcmc idref="mcmc"/>
-        </samplers>
+        <mcmc idref="mcmc"/>
         <pathLikelihood id="pathLikelihood">
             <source>
                 <likelihood idref="posterior"/>

@@ -39,17 +39,17 @@ public interface MutableTree extends Tree, MutableTaxonList {
 
     public class InvalidTreeException extends Exception {
 		/**
-		 *
+		 * 
 		 */
 		private static final long serialVersionUID = 1955744780140327882L;
 
 		public InvalidTreeException(String message) { super(message); }
 	}
 
-    // return true if tree already in edit mode
+    // return true if tree already in edit mode   
     boolean beginTreeEdit();
 
-    void endTreeEdit();
+    void endTreeEdit() throws InvalidTreeException;
 
 	/**
 	 * Add child to the children of parent.
@@ -70,7 +70,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
      * @param newChild replacment child
      */
     void replaceChild(NodeRef node, NodeRef child, NodeRef newChild);
-
+    
     /**
 	 * Will throw an exception if any nodes have this node as their children.
 	 */

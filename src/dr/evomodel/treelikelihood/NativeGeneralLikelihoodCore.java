@@ -101,7 +101,6 @@ public class NativeGeneralLikelihoodCore extends AbstractLikelihoodCore {
 			System.loadLibrary("GeneralLikelihoodCore");
 			isNativeAvailable = true;
 		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Unable to load general core");
 		}
 	}
 }

@@ -31,7 +31,6 @@ import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -109,15 +108,9 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                         likelihoodCore = new AminoAcidLikelihoodCore();
                     }
 
-                    // The codon core was out of date and did nothing more than the general core...
                 } else if (dataType instanceof dr.evolution.datatype.Codons) {
-                    if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
-                        coreName = "native general";
-                        likelihoodCore = new NativeGeneralLikelihoodCore(patternList.getStateCount());
-                    } else {
-                        coreName = "Java general";
-                        likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
-                    }
+                    // The codon core was out of date and did nothing more than the general core...
+                    likelihoodCore = new GeneralLikelihoodCore(patternList.getStateCount());
                     useAmbiguities = true;
                 } else {
                     if (!forceJavaCore && NativeGeneralLikelihoodCore.isAvailable()) {
@@ -261,13 +254,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             updateAllNodes();
 
         } else if (model == tipPartialsModel) {
-        	if(object instanceof Taxon)
-        	{
-        		for(int i=0; i<treeModel.getNodeCount(); i++)
-        			if(treeModel.getNodeTaxon(treeModel.getNode(i))!=null && treeModel.getNodeTaxon(treeModel.getNode(i)).getId().equalsIgnoreCase(((Taxon)object).getId()))
-        				updateNode(treeModel.getNode(i));
-        	}else
-        		updateAllNodes();
+
+            updateAllNodes();
 
         } else if (model instanceof SiteModel) {
 

@@ -164,22 +164,6 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         return newValue;
     }
 
-    public double reflectValueLoop(double value, double lower, double upper) {
-        double newValue = value;
-
-        while (newValue < lower || newValue > upper) {
-            if (newValue < lower) {
-                newValue = lower + (lower - newValue);
-            }
-            if (newValue > upper) {
-                newValue = upper - (newValue - upper);
-
-            }
-        }
-
-        return newValue;
-    }
-
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
         return parameter.getParameterName();

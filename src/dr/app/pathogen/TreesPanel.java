@@ -28,7 +28,6 @@ package dr.app.pathogen;
 import dr.app.gui.util.LongTask;
 import dr.evolution.tree.*;
 import dr.app.gui.chart.*;
-import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
 import dr.stats.Variate;
@@ -81,11 +80,7 @@ public class TreesPanel extends JPanel implements Exportable {
     JChart residualChart;
     ScatterPlot residualPlot;
 
-    ParentPlot mrcaPlot;
-
     Map<Node, Integer> pointMap = new HashMap<Node, Integer>();
-
-    Set<Integer> selectedPoints = new HashSet<Integer>();
 
     private boolean bestFittingRoot;
     private TemporalRooting.RootingFunction rootingFunction;
@@ -196,56 +191,25 @@ public class TreesPanel extends JPanel implements Exportable {
         setTree(tree);
     }
 
-
     private void treeSelectionChanged() {
         if (rootToTipPlot != null) {
             Set<Node> selectedTips = treePanel.getTreeViewer().getSelectedTips();
-            selectedPoints = new HashSet<Integer>();
+            Set<Integer> selectedPoints = new HashSet<Integer>();
             for (Node node : selectedTips) {
                 selectedPoints.add(pointMap.get(node));
             }
             rootToTipPlot.setSelectedPoints(selectedPoints);
             residualPlot.setSelectedPoints(selectedPoints);
-
-            selectMRCA();
         }
     }
 
     private void plotSelectionChanged(final Set<Integer> selectedPoints) {
-        this.selectedPoints = selectedPoints;
         Set<String> selectedTaxa = new HashSet<String>();
         for (Integer i : selectedPoints) {
             selectedTaxa.add(tree.getTaxon(i).toString());
         }
 
         treePanel.getTreeViewer().selectTaxa(selectedTaxa);
-
-        selectMRCA();
-    }
-
-    private void selectMRCA() {
-        if (selectedPoints != null && selectedPoints.size() > 0) {
-
-            Set<String> selectedTaxa = new HashSet<String>();
-            for (Integer i : selectedPoints) {
-                selectedTaxa.add(tree.getTaxon(i).toString());
-            }
-
-            Regression r = temporalRooting.getRootToTipRegression(currentTree);
-            NodeRef mrca = Tree.Utils.getCommonAncestorNode(currentTree, selectedTaxa);
-            double mrcaDistance1 = temporalRooting.getRootToTipDistance(currentTree, mrca);
-            double mrcaTime1 = r.getX(mrcaDistance1);
-            if (tree.isExternal(mrca)) {
-                mrca = tree.getParent(mrca);
-            }
-            double mrcaDistance = temporalRooting.getRootToTipDistance(currentTree, mrca);
-            double mrcaTime = r.getX(mrcaDistance);
-
-            mrcaPlot.setSelectedPoints(selectedPoints, mrcaTime, mrcaDistance);
-        } else {
-            mrcaPlot.clearSelection();
-        }
-        repaint();
     }
 
     public void timeScaleChanged() {
@@ -371,7 +335,6 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
             } else {
                 Regression r = temporalRooting.getRootToTipRegression(currentTree);
-
                 double[] residuals = temporalRooting.getRootToTipResiduals(currentTree, r);
                 pointMap.clear();
                 for (int i = 0; i < currentTree.getExternalNodeCount(); i++) {
@@ -383,18 +346,6 @@ public class TreesPanel extends JPanel implements Exportable {
                 }
 
                 rootToTipChart.removeAllPlots();
-
-                double[] parentDistances = temporalRooting.getParentRootToTipDistances(currentTree);
-                double[] parentTimes = new double[parentDistances.length];
-                for (int i = 0; i < parentDistances.length; i++) {
-                    parentTimes[i] = r.getX(parentDistances[i]);
-                }
-                mrcaPlot = new ParentPlot(r.getXData(), r.getYData(), parentTimes, parentDistances);
-                mrcaPlot.setLineColor(new Color(105,202,105));
-                mrcaPlot.setLineStroke(new BasicStroke(0.5F));
-
-                rootToTipChart.addPlot(mrcaPlot);
-
                 rootToTipPlot = new ScatterPlot(r.getXData(), r.getYData());
                 rootToTipPlot.addListener(new Plot.Adaptor() {
                     public void selectionChanged(final Set<Integer> selectedPoints) {
@@ -403,11 +354,8 @@ public class TreesPanel extends JPanel implements Exportable {
                 });
                 rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
-
                 rootToTipChart.addPlot(rootToTipPlot);
-
                 rootToTipChart.addPlot(new RegressionPlot(r));
-
                 rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
                 rootToTipPanel.setXAxisTitle("time");
                 rootToTipPanel.setYAxisTitle("root-to-tip divergence");
@@ -420,9 +368,7 @@ public class TreesPanel extends JPanel implements Exportable {
                 double yOffset = dp.getYData().getMax() / 2;
                 double[] dummyValues = new double[values.getCount()];
                 for (int i = 0; i < dummyValues.length; i++) {
-                    // add a random y offset to give some visual spread
-                    double y = MathUtils.nextGaussian() * (dp.getYData().getMax() * 0.05);
-                    dummyValues[i] = yOffset + y;
+                    dummyValues[i] = yOffset;
                 }
                 Variate yOffsetValues = new Variate.Double(dummyValues);
                 residualPlot = new ScatterPlot(values, yOffsetValues);

@@ -1,4 +1,4 @@
-                    BEAST v1.6.0 2002-2010
+                    BEAST v1.6.1 2002-2010
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,10 +17,40 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 15th September 2010
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+* indicates critical issue.
 
 ================================================================================
+
+Version 1.6.1 released 15th October 2010
+
+	Bug Fixes:
+        Issue 398: BEAUti text message overlaps with button
+        Issue 399: Binary for TreeStat packaged with BEAST v1.6 has wrong version
+                   number and icon
+        Issue 403: Starting tree generated with constraints by BEAUti is not correct
+                   XML for BEAST
+        Issue 404: Make "Median heights" as the default of nodeHeightsCombo
+        Issue 405: RandomWalkOperator with reflecting boundary can grind to a halt
+      * Issue 407: *BEAST needs to log species tree in { }, otherwise TreeAnnotator
+                   keeps coming up with null exception on species tree
+        Issue 408: TreeAnnotator crashes with Null Pointer Exception on malformed
+                   metacomment
+      * Issue 410: "Improper priors" on posterior statistics
+        Issue 411: Incorrect validation and error message for random local clock
+                   in BEAUti
+      * Issue 412: BEAUti generates randomWalkOperator instead of randomWalkIntegerOperator
+                   for branchRates.categories
+        Issue 413: BEAUti: duplicate class PartitionModelOptions causes model link conflict
+        Issue 414: BEAUti: incorrect xml for multi-alignment when given complex
+                   combination of clock model and tree model
+        Issue 416: Laplace prior parser should use scale same as BEAUti
+        Issue 417: BEAUti growthRate related XML causes -INF likelihood
+        Issue 418: Set maximun fraction digits for numbers displayed in BEAUti prior panel
+        Issue 419: BEAUti RealNumberField should not throw Exception all the time
+        Issue 422: BEAUti: add validation to check whether modified prior initial value
+                   is between the boundary
+        
 
 Version 1.6.0 released 15th September 2010
 

@@ -4,6 +4,8 @@ import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.NumberUtil;
 import dr.math.distributions.*;
 
+import java.text.NumberFormat;
+
 /**
  * @author Alexei Drummond
  */

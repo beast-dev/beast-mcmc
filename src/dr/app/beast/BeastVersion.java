@@ -27,8 +27,6 @@ package dr.app.beast;
 
 import dr.util.Version;
 
-import java.util.regex.Pattern;
-
 /**
  * This class provides a mechanism for returning the version number of the
  * dr software. It relies on the administrator of the dr source using the
@@ -47,20 +45,22 @@ public class BeastVersion implements Version {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.7.0";
+    private static final String VERSION = "1.6.1";
 
     private static final String DATE_STRING = "2002-2010";
 
-    private static final boolean IS_PRERELEASE = true;
-
-    private static final String REVISION = "$Rev$";
+    /**
+     * this used to parse the CVS ID string but there is no equivalent
+     * for SVN. We must increment this manually.
+     */
+    private static final String BUILD_ID = "Build r3651";
 
     public String getVersion() {
         return VERSION;
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease " + getBuildString() : "");
+        return "v" + VERSION;
     }
 
     public String getDateString() {
@@ -121,6 +121,6 @@ public class BeastVersion implements Version {
     }
 
     public String getBuildString() {
-        return "r" + REVISION.split(" ")[1];
+        return BUILD_ID;
     }
 }

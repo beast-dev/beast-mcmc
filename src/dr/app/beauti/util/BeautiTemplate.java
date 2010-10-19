@@ -24,20 +24,21 @@
  */
 package dr.app.beauti.util;
 
+import org.jdom.Document;
+import org.jdom.Element;
+
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.xml.XMLParser;
-import org.jdom.Document;
-import org.jdom.Element;
 
 
 /**

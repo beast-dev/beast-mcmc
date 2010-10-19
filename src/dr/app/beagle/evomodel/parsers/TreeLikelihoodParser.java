@@ -113,7 +113,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
-        if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
+        if (instanceCount == 1) {
             return createTreeLikelihood(
                     patternList,
                     treeModel,

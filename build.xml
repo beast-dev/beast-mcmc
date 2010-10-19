@@ -30,7 +30,7 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-                  
+
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="test" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff with unit test">
@@ -46,7 +46,7 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
+		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath"
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="1024m">
@@ -61,7 +61,7 @@
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
             <include name="dr/app/treestat/**" />
-            <include name="dr/app/java16compat/**"/>			            
+            <include name="dr/app/java16compat/**"/>
 			<include name="dr/evolution/**" />
 			<include name="dr/evomodel/**" />
 			<include name="dr/evomodelxml/**" />
@@ -226,12 +226,11 @@
 			<batchtest fork="yes" todir="${report}">
 				<fileset dir="${src}">
                     <include name="test/dr/distibutions/**/*Test.java"/>
-                    <include name="test/dr/evolution/**/*Test.java" />
 					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
 					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
                     <include name="test/dr/evomodel/branchratemodel/**/*Test.java" />
 					<include name="test/dr/evomodel/coalescent/**/*Test.java" />
-                    <include name="test/dr/evomodel/operators/**/*Test.java" /> 
+                    <include name="test/dr/evomodel/operators/**/*Test.java" />
 					<include name="test/dr/evomodel/speciation/**/*Test.java" />
 					<include name="test/dr/evomodel/substmodel/**/*Test.java" />
                     <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
@@ -252,8 +251,8 @@
 	</target>
 
 
-	<property name="version" value="1.6.0" />
-    <property name="version_number" value="1.6.0" />
+	<property name="version" value="1.6.1" />
+    <property name="version_number" value="1.6.1" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />
@@ -282,7 +281,7 @@
 		<mkdir dir="${Windows_package_dir}" />
 
 		<property name="launch4j.dir" location="${Windows_dir}/launch4j" />
-		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" 
+		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
 			classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
 
 		<copy todir="${Windows_package_dir}/doc">
@@ -350,7 +349,7 @@
 				  productVersion="${version_number}.0"
 				  txtProductVersion="${version}"/>
 
-		<!-- LogAnalyser v?.?.?.exe 
+		<!-- LogAnalyser v?.?.?.exe
 		<launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
@@ -390,6 +389,7 @@
 		<copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
+        <copy file="${common_dir}/icons/TreeStat.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
 		<!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
@@ -448,7 +448,7 @@
 		<!-- create a jar bundle for the mac -->
 		<jarbundler dir="${Mac_package_dir}"
 		                name="${BEAST_name} v${version}"
-		                mainclass="dr.app.beast.BeastMain" 
+		                mainclass="dr.app.beast.BeastMain"
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
                         vmoptions="-Xmx1024M"
@@ -555,7 +555,7 @@
             <arg value="zlib-level=6"/>
             <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>
-        
+
 		<echo message="Mac version release is finished." />
 	</target>
 

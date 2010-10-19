@@ -188,8 +188,6 @@ public abstract class AbstractImportanceDistributionOperator extends
 //			extractClades(tree, tree.getRoot(), newClades, null);
 
             tree.endTreeEdit();
-
-            tree.checkTreeIsValid();
         } catch (InvalidTreeException e) {
             throw new OperatorFailedException(e.getMessage());
         }

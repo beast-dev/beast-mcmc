@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package test.dr.app.beauti;
+package test.dr.beauti;
 
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.options.BeautiOptions;

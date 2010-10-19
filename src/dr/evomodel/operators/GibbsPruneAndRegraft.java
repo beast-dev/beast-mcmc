@@ -1,5 +1,5 @@
 /**
- *
+ * 
  */
 package dr.evomodel.operators;
 
@@ -19,7 +19,7 @@ import java.util.List;
 
 /**
  * @author Sebastian Hoehna
- *
+ * 
  */
 public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
@@ -34,7 +34,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	private boolean pruned = true;
 
 	/**
-	 *
+	 * 
 	 */
 	public GibbsPruneAndRegraft(TreeModel tree, boolean pruned, double weight) {
 		this.tree = tree;
@@ -46,7 +46,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see
 	 * dr.evomodel.operators.SimpleGibbsOperator#doOperation(dr.inference.prior
 	 * .Prior, dr.inference.model.Likelihood)
@@ -273,7 +273,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 	}
 
 	private double calculateTreeLikelihood(Prior prior, Likelihood likelihood,
-			TreeModel tree) {
+			TreeModel tree) {		
 		return evaluate(likelihood, prior);
 	}
 
@@ -297,7 +297,11 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
 		// ****************************************************
 
-        tree.endTreeEdit();
+		try {
+			tree.endTreeEditUnsafe();
+		} catch (MutableTree.InvalidTreeException ite) {
+			throw new OperatorFailedException(ite.toString());
+		}
 	}
 
 	/**
@@ -320,7 +324,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see dr.evomodel.operators.SimpleGibbsOperator#getOperatorName()
 	 */
 	@Override
@@ -330,7 +334,7 @@ public class GibbsPruneAndRegraft extends SimpleMetropolizedGibbsOperator {
 
 	/*
 	 * (non-Javadoc)
-	 *
+	 * 
 	 * @see dr.evomodel.operators.SimpleGibbsOperator#getStepCount()
 	 */
 	@Override

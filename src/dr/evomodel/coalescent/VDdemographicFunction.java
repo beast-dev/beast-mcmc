@@ -660,7 +660,7 @@ public class VDdemographicFunction extends DemographicFunction.Abstract {
                 valuesCopy[i] = Math.exp(values[i]);
             }
         } else {
-            System.arraycopy(values, 0, valuesCopy, 0, values.length);            
+            System.arraycopy(values, 0, valuesCopy, 0, values.length);
         }
         return valuesCopy;
     }

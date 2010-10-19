@@ -96,7 +96,7 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
         Variable<Double> r = new Variable.D("r", 0.5);
         Variable<Double> fTime = new Variable.D("time", 0.0);
 
-        SpeciationModel speciationModel = new BirthDeathSerialSamplingModel(b, d, psi, p, false, r, fTime, null, Units.Type.YEARS);
+        SpeciationModel speciationModel = new BirthDeathSerialSamplingModel(b, d, psi, p, false, r, fTime, Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bdss.like");
 
         assertEquals(logL, likelihood.getLogLikelihood());

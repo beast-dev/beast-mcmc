@@ -323,27 +323,6 @@ public class Polygon2D {
         return (Math.abs(area / 2));
     }
 
-    public Point2D getCentroid() {
-
-        Point2D centroid = new Point2D.Double();
-        double area = calculateArea();
-        double cx=0,cy=0;
-        
-        double factor;
-
-        //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
-        for (int i = 0; i < length; i++) {
-            factor = (x[i] * y[i + 1] - x[i + 1] * y[i]);
-            cx += (x[i] * x[i + 1])*factor;
-            cy += (y[i] * y[i + 1])*factor;
-        }
-        double constant = 1/(area*6);
-        cx*=constant;
-        cy*=constant;
-        centroid.setLocation(cx,cy);
-        return centroid;
-    }
-
     private static LinkedList<Point2D> getCirclePoints(double centerLat, double centerLong, int numberOfPoints, double radius) {
 
         LinkedList<Point2D> Point2Ds = new LinkedList<Point2D>();

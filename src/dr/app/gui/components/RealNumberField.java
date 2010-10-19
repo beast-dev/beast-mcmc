@@ -9,6 +9,8 @@
 
 package dr.app.gui.components;
 
+import dr.app.beauti.util.NumberUtil;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.AttributeSet;
@@ -59,7 +61,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                     errorMsg();
                 }
             } catch (NumberFormatException e) {
-                errorMsg();
+                JOptionPane.showMessageDialog(this, "Unable to parse number correctly:\n" + e.getMessage(),
+                        "Number Format Exception",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -76,7 +80,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         } else if (value == Double.MIN_VALUE) {
             setText(MIN_VALUE);
         } else {
-            setText(Double.toString(value));
+            setText(NumberUtil.formatDecimal(value, 10, 6));
         }
     }
 
@@ -130,7 +134,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return new Double(getText());
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Unable to parse number correctly",
+            JOptionPane.showMessageDialog(this, "Unable to parse number correctly:\n" + e.getMessage(),
                         "Number Format Exception",
                         JOptionPane.ERROR_MESSAGE);
             return null;

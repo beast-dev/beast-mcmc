@@ -9,13 +9,13 @@ import dr.xml.*;
  */
 public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
 
-    public static final String RANDOM_WALK_INTEGER_OPERATOR = "randomWalkIntegerOperator";
+    public static final String RANDOM_WALK_INT_OP = "randomWalkIntegerOperator";
 
     public static final String WINDOW_SIZE = "windowSize";
     public static final String UPDATE_INDEX = "updateIndex";
 
     public String getParserName() {
-        return RANDOM_WALK_INTEGER_OPERATOR;
+        return RANDOM_WALK_INT_OP;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -24,7 +24,7 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
 
         double d = xo.getDoubleAttribute(WINDOW_SIZE);
         if (d != Math.floor(d)) {
-            throw new XMLParseException("The window size of a " + RANDOM_WALK_INTEGER_OPERATOR + " should be an integer");
+            throw new XMLParseException("The window size of a " + RANDOM_WALK_INT_OP + " should be an integer");
         }
 
         int windowSize = (int)d;

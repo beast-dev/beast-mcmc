@@ -25,8 +25,8 @@
 
 package dr.app.treestat;
 
-import dr.app.beast.BeastVersion;
 import dr.app.util.OSType;
+import dr.app.beast.BeastVersion;
 import dr.util.Version;
 import jam.framework.SingleDocApplication;
 import jam.mac.Utils;

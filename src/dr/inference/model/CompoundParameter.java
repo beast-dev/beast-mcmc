@@ -131,22 +131,13 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
     public void addBounds(Bounds<Double> boundary) {
 
-        if (bounds == null) {
-            bounds = new CompoundBounds();
-            return;
-        } else {
-            IntersectionBounds newBounds = new IntersectionBounds(getDimension());
-            newBounds.addBounds(bounds);
-
-        }
-        ((IntersectionBounds)bounds).addBounds(boundary);
+        if (bounds == null) createBounds();
+        bounds.addBounds(boundary);
     }
 
     public Bounds<Double> getBounds() {
 
-        if (bounds == null) {
-            bounds = new CompoundBounds();
-        }
+        if (bounds == null) createBounds();
         return bounds;
     }
 
@@ -179,6 +170,10 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         return v;
     }
 
+    private void createBounds() {
+        bounds = new IntersectionBounds(getDimension());
+        bounds.addBounds(new CompoundBounds());
+    }
 
     public double getParameterValue(int dim) {
         return parameters.get(dim).getParameterValue(pindex.get(dim));
@@ -277,7 +272,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
     private final ArrayList<Parameter> parameters = new ArrayList<Parameter>();
     private final ArrayList<Integer> pindex = new ArrayList<Integer>();
-    private Bounds bounds = null;
+    private IntersectionBounds bounds = null;
     private int dimension;
     private String name;
 

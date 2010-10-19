@@ -47,7 +47,6 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
     public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousRate";
     public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
-    public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
 
     public String getParserName() {
@@ -60,7 +59,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         final Parameter finalTimeInterval = (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-
+        
         boolean relativeDeath = xo.hasChildNamed(RELATIVE_MU);
         Parameter mu;
         if (relativeDeath) {
@@ -76,17 +75,12 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
 
-        Parameter origin = null;
-        if (xo.hasChildNamed(ORIGIN)) {
-            origin = (Parameter) xo.getElementFirstChild(ORIGIN);
-        }
-
         Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
 
         final String modelName = xo.getId();
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                r, finalTimeInterval, origin, units);
+                r, finalTimeInterval, units);
     }
 
     //************************************************************************
@@ -109,7 +103,6 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             AttributeRule.newStringRule(TREE_TYPE, true),
 //            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
             new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

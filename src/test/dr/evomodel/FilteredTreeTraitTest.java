@@ -1,4 +1,4 @@
-package test.dr.evolution;
+package test.dr.evomodel;
 
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.tree.*;

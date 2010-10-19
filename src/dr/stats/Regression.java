@@ -148,8 +148,6 @@ public class Regression {
     }
 
     public double getSumResidualsSquared() {
-        if (!regressionKnown)
-            calculateRegression();
         return sumResidualsSquared;
     }
 
@@ -169,14 +167,6 @@ public class Regression {
 
     public double getResidual(final double x, final double y) {
         return y - ((getGradient() * x) + getIntercept());
-    }
-
-    public double getX(final double y) {
-        return (y - getIntercept()) / getGradient();
-    }
-
-    public double getY(final double x) {
-        return x * getGradient() + getIntercept();
     }
 
     public Variate getXData() {

@@ -25,6 +25,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
     public static final String USE_UNIFORMIZATION = "useUniformization";
     public static final String INCLUDE_EXTERNAL = "includeExternalBranches";
     public static final String INCLUDE_INTERNAL = "includeInternalBranches";
+    public static final String DO_UNCONDITIONED_PER_BRANCH = "unconditionedPerBranch";
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -81,6 +82,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         boolean useUniformization = xo.getAttribute(USE_UNIFORMIZATION, false);
         boolean includeExternalBranches = xo.getAttribute(INCLUDE_EXTERNAL, true);
         boolean includeInternalBranches = xo.getAttribute(INCLUDE_INTERNAL, true);
+        boolean doUnconditionedPerBranch = xo.getAttribute(DO_UNCONDITIONED_PER_BRANCH, false);
 
         return new CodonPartitionedRobustCounting(
                 xo.getId(),
@@ -91,6 +93,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
                 useUniformization,
                 includeExternalBranches,
                 includeInternalBranches,
+                doUnconditionedPerBranch,
                 branchFormat,
                 logFormat);
     }
@@ -115,6 +118,7 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
             AttributeRule.newBooleanRule(USE_UNIFORMIZATION, true),
             AttributeRule.newBooleanRule(INCLUDE_EXTERNAL, true),
             AttributeRule.newBooleanRule(INCLUDE_INTERNAL, true),
+            AttributeRule.newBooleanRule(DO_UNCONDITIONED_PER_BRANCH, true),
             AttributeRule.newStringRule(LABELING),
     };
 

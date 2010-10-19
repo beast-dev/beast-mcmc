@@ -1,0 +1,116 @@
+%% LyX 1.4.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[a4paper, english]{article}
+ \usepackage{graphicx}
+ \usepackage{amssymb}
+ \usepackage{epstopdf}
+ \usepackage[usenames]{color}
+ 
+\IfFileExists{url.sty}{\usepackage{url}}
+                      {\newcommand{\url}{\texttt}}
+                                           
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+\newcommand{\noun}[1]{\textsc{#1}}
+%% Bold symbol macro for standard LaTeX users
+\providecommand{\boldsymbol}[1]{\mbox{\boldmath $#1$}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Textclass specific LaTeX commands.
+\newenvironment{lyxlist}[1]
+{\begin{list}{}
+{\settowidth{\labelwidth}{#1}
+ \setlength{\leftmargin}{\labelwidth}
+ \addtolength{\leftmargin}{\labelsep}
+ \renewcommand{\makelabel}[1]{##1\hfil}}}
+{\end{list}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
+
+\definecolor{XMLColor}{rgb}{0.0,0.0,0.0} 
+\newcommand{\xml}[1]{\textcolor{XMLColor}{\texttt{#1}}}
+
+\usepackage{babel}
+\makeatother
+\begin{document}
+
+\title{\textbf{The serially-sampled coalescent}}
+
+\author{\textsc{Alexei J. Drummond}}
+
+\maketitle
+
+\section{A simple example}
+
+Consider the situation in which there are 4 individuals sampled, two in the present (A, B) and two sampled $\tau$ time units in the past. Going back in time, the probability that there is no coalescent between A and B before time $\tau$ is:
+
+\begin{equation}
+p_{nc} = e^{-\tau/\theta}
+\end{equation}
+
+And consequently the probability of coalescence is:
+
+\begin{equation}
+p_{c} = 1 - p_{nc}
+\end{equation}
+
+If there is a coalescence before time $\tau$ then the tree must be one of the following topologies: ((A,B),(C,D)), (((A,B),C),D), (((A,B),D),C).
+
+Now consider the topology ((A,B),(C,D)). Conditional on coalescence of (A,B) before time $\tau$ it has a probability of $\frac{1}{3}$. However if there is no coalescence before time $\tau$ it has it normal coalescent probability of $\frac{1}{9}$ (being a symmetrical tree shape). This gives a total probability for this tree shape of:
+
+\begin{equation}
+p_{((A,B),(C,D))} = \frac{p_c}{3} + \frac{p_{nc}}{9}
+\end{equation}
+
+Likewise the probability of topologies (((A,B),C),D) and (((A,B),D),C) can be calculated as:
+
+\begin{equation}
+p_{(((A,B),C),D)} = \frac{p_c}{3} + \frac{p_{nc}}{18}
+\end{equation}
+
+\begin{equation}
+p_{(((A,B),D),C)} = \frac{p_c}{3} + \frac{p_{nc}}{18}
+\end{equation}
+
+The probability of the two remaining symmetrical trees are:
+
+\begin{equation}
+p_{((A,C),(B,D))} = \frac{p_{nc}}{9} 
+\end{equation}
+
+\begin{equation}
+p_{((A,D),(B,C))} = \frac{p_{nc}}{9}
+\end{equation}
+
+The probability of each of the remaining asymmetric trees is:
+
+\begin{equation}
+\frac{p_{nc}}{18}
+\end{equation}
+
+Taking $\tau/\theta = 0.5$ then $p_{nc} = 0.607$ and $p_c = 0.393$ giving a probability of ((A,B),(C,D)) of:
+
+\begin{equation}
+p_{((A,B),(C,D))} = 0.199
+\end{equation}
+
+the probability of (((A,B),C),D) is:
+
+\begin{equation}
+p_{(((A,B),C),D)} = 0.165
+\end{equation}
+
+the probability of ((A,C),(B,D)) is:
+
+\begin{equation}
+p_{((A,C),(B,D))} = 0.0674
+\end{equation}
+
+and the probability of (((C,D),B),A) is:
+
+\begin{equation}
+p_{(((C,D),B),A)} = 0.0337
+\end{equation}
+
+Work out the rest :-) Check out examples/testCoalescent.xml to see these results from an MCMC run.
+
+\end{document}
+

@@ -1,0 +1,106 @@
+<project name="CoalGen" default="all" basedir=".">
+    <description>
+        Build file for CoalGen versions
+        $Id: build_release.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
+    </description>
+    <!-- set global properties for this build -->
+    <property name="src" location="src"/>
+    <property name="build" location="build"/>
+    <property name="lib" location="lib"/>
+    <property name="dist" location="dist"/>
+
+    <property environment="env"/>
+
+    <target name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <!-- Create the build directory structure used by compile -->
+        <mkdir dir="${build}"/>
+        <mkdir dir="${dist}"/>
+    </target>
+
+    <target name="all"
+            depends="compile-all"
+            description="Build all run-time stuff">
+    </target>
+
+    <target name="compile-all"
+            depends="compile-basic">
+    </target>
+
+    <path id="classpath">
+		<fileset dir="${lib}" includes="**/*.jar"/>
+	</path>
+
+    <target name="compile-basic" depends="init">
+        <!-- Compile the java code from ${src} into ${build} -->
+        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}"
+               classpathref="classpath">
+            <include name="dr/app/coalgen/**"/>
+            <include name="dr/app/util/**"/>
+            <include name="dr/evolution/alignment/**"/>
+            <include name="dr/evolution/coalescent/**"/>
+            <include name="dr/evolution/colouring/**"/>
+            <include name="dr/evolution/datatype/**"/>
+            <include name="dr/evolution/distance/**"/>
+            <include name="dr/evolution/io/**"/>
+            <include name="dr/evolution/parsimony/**"/>
+            <include name="dr/evolution/sequence/**"/>
+            <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/util/**"/>
+            <include name="dr/evoxml/**"/>
+            <include name="dr/gui/table/**"/>
+            <include name="dr/inference/trace/**"/>
+            <include name="dr/math/**"/>
+            <include name="dr/matrix/**"/>
+            <include name="dr/stats/**"/>
+            <include name="dr/util/**"/>
+            <include name="dr/xml/**"/>
+        </javac>
+    </target>
+
+    <target name="dist" depends="compile-all"
+            description="generate the distribution">
+        <!-- Create the distribution directory -->
+        <mkdir dir="${dist}"/>
+
+        <!-- Put everything in ${build} into the treestat.jar file -->
+        <jar jarfile="${dist}/coalgen.jar">
+            <manifest>
+                <attribute name="Built-By" value="${user.name}"/>
+                <attribute name="Main-Class" value="dr.app.coalgen.CoalGenApp"/>
+            </manifest>
+            <fileset dir="${build}">
+                <include name="dr/app/coalgen/**/*.class"/>
+                <include name="dr/app/util/**/*.class"/>
+                <include name="dr/evolution/alignment/**/*.class"/>
+                <include name="dr/evolution/coalescent/**/*.class"/>
+                <include name="dr/evolution/colouring/**/*.class"/>
+                <include name="dr/evolution/datatype/**/*.class"/>
+                <include name="dr/evolution/distance/**/*.class"/>
+                <include name="dr/evolution/io/**/*.class"/>
+                <include name="dr/evolution/parsimony/**/*.class"/>
+                <include name="dr/evolution/sequence/**/*.class"/>
+                <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/util/**/*.class"/>
+                <include name="dr/evoxml/**/*.class"/>
+                <include name="dr/gui/table/**/*.class"/>
+                <include name="dr/inference/trace/**/*.class"/>
+                <include name="dr/math/**/*.class"/>
+                <include name="dr/matrix/**/*.class"/>
+                <include name="dr/stats/**/*.class"/>
+                <include name="dr/util/**/*.class"/>
+                <include name="dr/xml/**/*.class"/>
+            </fileset>
+            <fileset dir="">
+                <include name="images/*.png"/>
+            </fileset>
+            <fileset dir="${src}">
+                <include name="dr/**/*.png"/>
+            </fileset>
+            <zipgroupfileset dir="${lib}" includes="**/jebl.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/jam.jar"/>
+            <zipgroupfileset dir="${lib}" includes="**/commons-math-2.0.jar"/>
+        </jar>
+    </target>
+</project>

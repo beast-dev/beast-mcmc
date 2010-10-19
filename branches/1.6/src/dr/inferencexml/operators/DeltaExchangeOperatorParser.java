@@ -65,7 +65,7 @@ public class DeltaExchangeOperatorParser extends AbstractXMLObjectParser {
     //************************************************************************
 
     public String getParserDescription() {
-        return "This element returns a scale operator on a given parameter.";
+        return "This element returns a delta exchange operator on a given parameter.";
     }
 
     public Class getReturnType() {

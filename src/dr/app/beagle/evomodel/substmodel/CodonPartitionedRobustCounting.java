@@ -39,6 +39,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     public static final String SITE_SPECIFIC_PREFIX = "c_";
     public static final String TOTAL_PREFIX = "total_";
     public static final String BASE_TRAIT_PREFIX = "base_";
+    public static final String UNCONDITIONED_PER_BRANCH_PREFIX = "b_u_";
 
 //    public CodonPartitionedRobustCounting(String name, TreeModel tree,
 //                                          AncestralStateBeagleTreeLikelihood[] partition,
@@ -57,6 +58,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean useUniformization,
                                           boolean includeExternalBranches,
                                           boolean includeInternalBranches,
+                                          boolean doUnconditionalPerBranch,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -107,8 +109,17 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
         this.includeExternalBranches = includeExternalBranches;
         this.includeInternalBranches = includeInternalBranches;
+        this.doUnconditionedPerBranch = doUnconditionalPerBranch;
 
         setupTraits();
+    }
+
+    public double[] getUnconditionalCountsForBranch(NodeRef child) {
+        if (!unconditionsPerBranchKnown) {
+            computeAllUnconditionalCountsPerBranch();
+            unconditionsPerBranchKnown = true;
+        }
+        return unconditionedCountsPerBranch[child.getNumber()];
     }
 
     public double[] getExpectedCountsForBranch(NodeRef child) { // TODO This function will implement TraitProvider
@@ -296,6 +307,38 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         treeTraits.addTrait(sumOverTreeTrait);
         treeTraits.addTrait(sumOverSitesAndTreeTrait);
 
+        if (doUnconditionedPerBranch) {
+            TreeTrait unconditionedBase = new TreeTrait.DA() {
+
+                public String getTraitName() {
+                    return UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText();
+                }
+
+                public Intent getIntent() {
+                    return Intent.BRANCH;
+                }
+
+                public double[] getTrait(Tree tree, NodeRef node) {
+                    return getUnconditionalCountsForBranch(node);
+                }
+
+                public boolean getLoggable() {
+                    return false;
+                }
+            };
+
+            TreeTrait sumUnconditionedOverSitesTrait = new TreeTrait.SumAcrossArrayD(
+                    UNCONDITIONED_PER_BRANCH_PREFIX + codonLabeling.getText(),
+                    unconditionedBase) {
+                @Override
+                public boolean getLoggable() {
+                    return true;
+                }
+            };
+
+            treeTraits.addTrait(unconditionedBase);
+            treeTraits.addTrait(sumUnconditionedOverSitesTrait);
+        }
     }
 
     public TreeTrait[] getTreeTraits() {
@@ -331,26 +374,57 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         return numCodons;
     }
 
+    private void computeAllUnconditionalCountsPerBranch() {
+        if (unconditionedCountsPerBranch == null) {
+            unconditionedCountsPerBranch = new double[tree.getNodeCount()][numCodons];
+        }
+        double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            if (!tree.isRoot(node)) {
+                final double expectedLength = getExpectedBranchLength(node);
+                fillInUnconditionalTraitValues(expectedLength, rootDistribution, unconditionedCountsPerBranch[node.getNumber()]);
+            }
+        }
+    }
+
     private void computeUnconditionedTraitValues() {
         if (unconditionedCounts == null) {
             unconditionedCounts = new double[numCodons];
         }
         final double treeLength = getExpectedTreeLength();
         double[] rootDistribution = productChainModel.getFrequencyModel().getFrequencies();
+//        final int stateCount = 64;
+//        double[] lambda = new double[stateCount * stateCount];
+//        productChainModel.getInfinitesimalMatrix(lambda);
+//        for (int i = 0; i < numCodons; i++) {
+//            final int startingState = MathUtils.randomChoicePDF(rootDistribution);
+//            StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
+//                    0.0,
+//                    startingState,
+//                    treeLength,
+//                    lambda,
+//                    stateCount
+//            );
+//            unconditionedCounts[i] = markovJumps.getProcessForSimulant(history);
+//        }
+        fillInUnconditionalTraitValues(treeLength, rootDistribution, unconditionedCounts);
+    }
+
+    private void fillInUnconditionalTraitValues(double expectedLength, double[] freq, double[] out) {
         final int stateCount = 64;
         double[] lambda = new double[stateCount * stateCount];
         productChainModel.getInfinitesimalMatrix(lambda);
         for (int i = 0; i < numCodons; i++) {
-            final int startingState = MathUtils.randomChoicePDF(rootDistribution);
+            final int startingState = MathUtils.randomChoicePDF(freq);
             StateHistory history = StateHistory.simulateUnconditionalOnEndingState(
                     0.0,
                     startingState,
-                    treeLength,
+                    expectedLength,
                     lambda,
                     stateCount
             );
-            unconditionedCounts[i] = markovJumps.getProcessForSimulant(history);
-
+            out[i] = markovJumps.getProcessForSimulant(history);
         }
     }
 
@@ -409,6 +483,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         countsKnown = false;
         unconditionsKnown = false;
+        unconditionsPerBranchKnown = false;
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -423,6 +498,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     protected void restoreState() {
         countsKnown = false;
         unconditionsKnown = false;
+        unconditionsPerBranchKnown = false;
     }
 
     protected void acceptState() {
@@ -449,7 +525,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private boolean countsKnown = false;
     private boolean unconditionsKnown = false;
+    private boolean unconditionsPerBranchKnown = false;
     private double[] unconditionedCounts;
+    private double[][] unconditionedCountsPerBranch;
     private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
 
     protected Helper treeTraits = new Helper();
@@ -457,6 +535,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private final boolean includeExternalBranches;
     private final boolean includeInternalBranches;
+    private final boolean doUnconditionedPerBranch;
 
     private static final boolean TRIAL = true;
+
 }

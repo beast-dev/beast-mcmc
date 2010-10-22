@@ -65,6 +65,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
+    private static List<Integer> preferredOrder = null;
+    private static List<Integer> requiredOrder = null;
+    private static List<String> scalingOrder = null;
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
@@ -136,34 +139,22 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
             // Attempt to get the resource order from the System Property
-            if (resourceOrder == null) {
-                resourceOrder = new ArrayList<Integer>();
-                String r = System.getProperty(RESOURCE_ORDER_PROPERTY);
-                if (r != null) {
-                    String[] parts = r.split(",");
-                    for (String part : parts) {
-                        try {
-                            int n = Integer.parseInt(part.trim());
-                            resourceOrder.add(n);
-                        } catch (NumberFormatException nfe) {
-                            System.err.println("Invalid entry '" + part + "' in " + RESOURCE_ORDER_PROPERTY);
-                        }
-                    }
-                }
-            }
+            parseSystemPropertyIntegerArray(resourceOrder, RESOURCE_ORDER_PROPERTY);
+            parseSystemPropertyIntegerArray(preferredOrder, PREFERRED_FLAGS_PROPERTY);
+            parseSystemPropertyIntegerArray(requiredOrder, REQUIRED_FLAGS_PROPERTY);
+            parseSystemPropertyStringArray(scalingOrder, SCALING_PROPERTY);
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
-
-            // then allow it to be overriden from the command line
-            if (System.getProperty(SCALING_PROPERTY) != null) {
-                this.rescalingScheme = PartialsRescalingScheme.parseFromString(System.getProperty(SCALING_PROPERTY));
-            }
-
             int[] resourceList = null;
             long preferenceFlags = 0;
             long requirementFlags = 0;
 
+            if (scalingOrder.size() > 0) {
+                this.rescalingScheme = PartialsRescalingScheme.parseFromString(
+                        scalingOrder.get(instanceCount % scalingOrder.size()));
+            }
+        
             if (resourceOrder.size() > 0) {
                 // added the zero on the end so that a CPU is selected if requested resource fails
                 resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
@@ -172,12 +163,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 }
             }
 
-            if (System.getProperty(PREFERRED_FLAGS_PROPERTY) != null) {
-                preferenceFlags = Long.valueOf(System.getProperty(PREFERRED_FLAGS_PROPERTY));
+            if (preferredOrder.size() > 0) {
+                preferenceFlags = preferredOrder.get(instanceCount % preferredOrder.size());
             }
 
-            if (System.getProperty(REQUIRED_FLAGS_PROPERTY) != null) {
-                requirementFlags = Long.valueOf(System.getProperty(REQUIRED_FLAGS_PROPERTY));
+            if (requiredOrder.size() > 0) {
+                requirementFlags = requiredOrder.get(instanceCount % requiredOrder.size());
             }
 
             // Define default behaviour here
@@ -309,6 +300,42 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             throw new RuntimeException(mte.toString());
         }
         hasInitialized = true;
+    }
+
+    private static void parseSystemPropertyIntegerArray(List<Integer> order, String propertyName) {
+        if (order == null) {
+            order = new ArrayList<Integer>();
+            String r = System.getProperty(propertyName);
+            if (r != null) {
+                String[] parts = r.split(",");
+                for (String part : parts) {
+                    try {
+                        int n = Integer.parseInt(part.trim());
+                        order.add(n);
+                    } catch (NumberFormatException nfe) {
+                        System.err.println("Invalid entry '" + part + "' in " + propertyName);
+                    }
+                }
+            }
+        }
+    }
+
+    private void parseSystemPropertyStringArray(List<String> order, String propertyName) {
+        if (order == null) {
+            order = new ArrayList<String>();
+            String r = System.getProperty(propertyName);
+            if (r != null) {
+                String[] parts = r.split(",");
+                for (String part : parts) {
+                    try {
+                        String s = part.trim();
+                        order.add(s);
+                    } catch (NumberFormatException nfe) {
+                        System.err.println("Invalid entry '" + part + "' in " + propertyName);
+                    }
+                }
+            }
+        }
     }
 
     public TreeModel getTreeModel() {

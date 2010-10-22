@@ -57,7 +57,7 @@ public class TraitGuesser {
     public TraitData getTraitData() {
         return traitData;
     }
-    
+
     public GuessType getGuessType() {
         return guessType;
     }
@@ -162,9 +162,9 @@ public class TraitGuesser {
                 throw new GuessTraitException("Trait value group not defined in regular expression");
             }
 
-            t = matcher.group(0); // TODO: not working?
+            t = matcher.group(1); // TODO: not working?
         } catch (NumberFormatException nfe) {
-            throw new GuessTraitException("Badly formated trait value in taxon label, " + label);
+            throw new GuessTraitException("Badly formatted trait value in taxon label, " + label);
         }
 
         return t;

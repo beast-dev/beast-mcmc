@@ -25,7 +25,6 @@
 
 package dr.app.beauti.traitspanel;
 
-import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
 import jam.panels.OptionsPanel;
 
@@ -43,11 +42,10 @@ import java.awt.event.ItemListener;
  */
 public class GuessTraitDialog {
 
-    private TraitGuesser guesser;
     private JFrame frame;
     private final OptionsPanel optionPanel;
 
-    //    private JComboBox traitTypeComb = new JComboBox(TraitGuesser.TraitType.values());
+    JLabel descriptionText = new JLabel();
 
     private final JRadioButton orderRadio = new JRadioButton("Defined by its order", true);
     private final JComboBox orderCombo = new JComboBox(new String[]{"first", "second", "third",
@@ -57,40 +55,11 @@ public class GuessTraitDialog {
     private final JRadioButton regexRadio = new JRadioButton("Defined by regular expression (REGEX)", false);
     private final JTextField regexText = new JTextField(16);
 
-    public GuessTraitDialog(JFrame frame, TraitGuesser guesser) {
+    public GuessTraitDialog(JFrame frame) {
         this.frame = frame;
-        this.guesser = guesser;
 
         optionPanel = new OptionsPanel(12, 12);
-
-        JTextField traitNameField = new JTextField(18);
-        traitNameField.setText(guesser.getTraitData().getName());
-        traitNameField.setEnabled(false);
-        optionPanel.addComponentWithLabel("The trait name: ", traitNameField);
-//        traitNameField.addKeyListener(new java.awt.event.KeyListener() {
-//            public void keyTyped(KeyEvent e) {}
-//            public void keyPressed(KeyEvent e) {}
-//
-//            public void keyReleased(KeyEvent e) {
-//               guesser.setTraitName(traitNameField.getText());
-//            }
-//        } );
-
-//        optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
-//        traitTypeComb.setEnabled(false);
-//        traitTypeComb.addItemListener(
-//                new ItemListener() {
-//                    public void itemStateChanged(ItemEvent ev) {
-//                    	setTrait(traitNameField.getText(), (TraitGuesser.TraitType) traitTypeComb.getSelectedItem());
-//                    }
-//                }
-//        );
-        JComboBox traitTypeComb = new JComboBox(TraitData.TraitType.values());
-        traitTypeComb.setSelectedItem(guesser.getTraitData().getTraitType());
-        traitTypeComb.setEnabled(false);
-        optionPanel.addComponentWithLabel("The trait type: ", traitTypeComb);
-
-        optionPanel.addSeparator();
+        optionPanel.addSpanningComponent(descriptionText);
 
         optionPanel.addLabel("The trait value is given by a part of string in the taxon label that is:");
 
@@ -114,8 +83,10 @@ public class GuessTraitDialog {
         };
         orderRadio.addItemListener(listener);
         regexRadio.addItemListener(listener);
+    }
 
-//        setupGuesser();
+    public void setDescription(String description) {
+        descriptionText.setText(description);
     }
 
     public int showDialog() {
@@ -142,7 +113,7 @@ public class GuessTraitDialog {
         return result;
     }
 
-    public void setupGuesser() {
+    public void setupGuesserFromDialog(final TraitGuesser guesser) {
         if (orderRadio.isSelected()) {
             int order = orderCombo.getSelectedIndex();
             if (order > 3) {

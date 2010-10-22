@@ -51,7 +51,7 @@ public class CreateTraitDialog {
     JTextField nameField;
 //    JComboBox nameCombo;
     JComboBox typeCombo;
-    private final JRadioButton createRadio = new JRadioButton("Create a new trait and then guess trait value from taxa name", true);
+    private final JRadioButton createRadio = new JRadioButton("Create a new trait", true);
     private final JRadioButton importRadio = new JRadioButton("Import trait(s) from a mapping file", false);
     JButton exampleButton = new JButton("Show example of mapping file format");
 

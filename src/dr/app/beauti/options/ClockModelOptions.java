@@ -23,10 +23,10 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.enumTypes.RelativeRatesType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.RelativeRatesType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
@@ -34,7 +34,6 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
-import javax.swing.*;
 import java.util.List;
 
 
@@ -99,7 +98,7 @@ public class ClockModelOptions extends ModelOptions {
         }
 
         //up down all rates and trees operator only available for *BEAST and EBSP
-        if (rateOptionClockModel == FixRateType.RELATIVE_TO && //TODO what about Calibration? 
+        if (rateOptionClockModel == FixRateType.RELATIVE_TO && //TODO what about Calibration?
                 (options.useStarBEAST || options.isEBSPSharingSamePrior())) {
             ops.add(getOperator("upDownAllRatesHeights"));
         }
@@ -174,7 +173,7 @@ public class ClockModelOptions extends ModelOptions {
             case FIX_MEAN:
                 selectedRate = meanRelativeRate;
                 break;
-                
+
             case RELATIVE_TO:
                 List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
                 // fix ?th partition
@@ -208,10 +207,10 @@ public class ClockModelOptions extends ModelOptions {
             default:
                 throw new IllegalArgumentException("Unknown fix rate type");
         }
-        
+
         return selectedRate;
     }
-    
+
 //    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
 //
 //        List<PartitionData> allData = new ArrayList<PartitionData>();
@@ -232,7 +231,7 @@ public class ClockModelOptions extends ModelOptions {
         // TODO - shouldn't this method be in the PartitionTreeModel??
 
         List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) { // tmrca statistic 
+        if (taxonSets != null && taxonSets.size() > 0) { // tmrca statistic
 
             // estimated root times based on each of the taxon sets
             double[] rootTimes = new double[taxonSets.size()];
@@ -281,7 +280,7 @@ public class ClockModelOptions extends ModelOptions {
 
             // return the mean estimate of the root time for this set of partitions
             return DiscreteStatistics.mean(rootTimes);
-        
+
         } else { // prior on treeModel.rootHight
             double avgInitialRootHeight = 0;
             double count = 0;
@@ -292,7 +291,7 @@ public class ClockModelOptions extends ModelOptions {
             if (count != 0) avgInitialRootHeight = avgInitialRootHeight / count;
             return avgInitialRootHeight;
         }
-        
+
     }
 
     // FixRateType.FIX_MEAN
@@ -315,7 +314,7 @@ public class ClockModelOptions extends ModelOptions {
         if (count > 0) {
             averageRate = averageRate / count;
         } else {
-            averageRate = 1; //TODO how to calculate rate when estimate all 
+            averageRate = 1; //TODO how to calculate rate when estimate all
         }
 
         return averageRate;
@@ -338,10 +337,10 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     public boolean isNodeCalibrated(Parameter para) {
-        return (para.taxa != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
+        return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
                 || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
     }
-    
+
     private boolean hasProperPriorOn(Parameter para) {
         return para.priorType == PriorType.LOGNORMAL_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR
@@ -422,7 +421,7 @@ public class ClockModelOptions extends ModelOptions {
             model.setEstimatedRate(true);
         }
     }
-    
+
     public String statusMessageClockModel() {
         if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
             if (options.getPartitionClockModels().size() == 1) { // single partition clock
@@ -431,7 +430,7 @@ public class ClockModelOptions extends ModelOptions {
                 } else {
                     return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
                 }
-                
+
             } else {
                 String t = rateOptionClockModel.toString() + " ";
                 int c = 0;
@@ -439,33 +438,33 @@ public class ClockModelOptions extends ModelOptions {
                     if (!model.isEstimatedRate()) {
                         if (c > 0) t = t + ", ";
                         c = c + 1;
-                        t = t + model.getName();                    
+                        t = t + model.getName();
                     }
                 }
-                
+
                 if (c == 0) t = "Estimate all clock rates";
                 if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
-                
-                return t;                
+
+                return t;
             }
-            
+
         } else {
             return rateOptionClockModel.toString();
         }
     }
 
     //+++++++++++++++++++++++ Validation ++++++++++++++++++++++++++++++++
-    // true => valid, false => warning message 
-    public boolean validateFixMeanRate(JCheckBox fixedMeanRateCheck) {
-        return !(fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2);
+    // true => valid, false => warning message
+    public boolean validateFixMeanRate(boolean fixedMeanRateCheck) {
+        return !(fixedMeanRateCheck && options.getPartitionClockModels().size() < 2);
     }
-    
+
 //    public boolean validateRelativeTo() {
 //        for (PartitionClockModel model : options.getPartitionClockModels()) {
 //            if (!model.isEstimatedRate()) { // fixed
 //                return true;
 //            }
-//        }        
+//        }
 //        return false;
 //    }
 

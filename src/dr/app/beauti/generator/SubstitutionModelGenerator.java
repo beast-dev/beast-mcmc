@@ -1,8 +1,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.LocationSubstModelType;
+import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.LocationSubstModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
@@ -274,7 +274,7 @@ public class SubstitutionModelGenerator extends Generator {
                     writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                             new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
                             new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")}, true);
-                } else { // multiple partitions but linked frequency                    
+                } else { // multiple partitions but linked frequency
                     if (num == 1) {
                         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "frequencies"),
@@ -288,7 +288,7 @@ public class SubstitutionModelGenerator extends Generator {
             case EMPIRICAL:
                 if (num == -1 || model.isUnlinkedFrequencyModel()) { // single partition, or multiple partitions unlinked frequency
                     writeParameter(prefix + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
-                } else { // multiple partitions but linked frequency                    
+                } else { // multiple partitions but linked frequency
                     if (num == 1) {
                         writeParameter(model.getPrefix() + "frequencies", 4, Double.NaN, Double.NaN, Double.NaN, writer);
                     } else {
@@ -441,7 +441,7 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
 
             for (PartitionData partition : options.getAllPartitionData(model)) { //?
-                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
             }
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
@@ -471,7 +471,7 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
 
             for (PartitionData partition : options.getAllPartitionData(model)) { //?
-                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
             }
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
@@ -504,7 +504,7 @@ public class SubstitutionModelGenerator extends Generator {
         }
 
         for (PartitionData partition : options.getAllPartitionData(model)) { //?
-            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + GeneralTraitGenerator.DATA);
+            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
         }
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
@@ -956,7 +956,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + SiteModel.SITE_MODEL)});
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(DiscreteTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
 //        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);

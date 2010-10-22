@@ -37,11 +37,12 @@ public class PartitionData {  // extends PartitionOptions {
 
     private final String fileName;
     private final Alignment alignment;
+    private final TraitData trait;
+
     private final double meanDistance;
     final DistanceMatrix distances;
 
     private String name;
-    private boolean coding;
 
     private int fromSite;
     private int toSite;
@@ -63,7 +64,6 @@ public class PartitionData {  // extends PartitionOptions {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
-        this.coding = false;
 
         this.fromSite = fromSite;
         this.toSite = toSite;
@@ -77,10 +77,24 @@ public class PartitionData {  // extends PartitionOptions {
             distances = null;
             meanDistance = 0.0;
         }
+
+        trait = null;
     }
 
-    public TraitData.TraitType getTraitType() {
-        return null; // if null, then PartitionData, otherwise TraitData
+    public PartitionData(BeautiOptions options, String name, TraitData trait) {
+        this.options = options;
+        this.name = name;
+        this.fileName = null;
+        this.alignment = null;
+
+        this.fromSite = -1;
+        this.toSite = -1;
+        this.every = 1;
+
+        distances = null;
+        meanDistance = 0.0;
+
+        this.trait = trait;
     }
 
     public double getMeanDistance() {
@@ -107,6 +121,10 @@ public class PartitionData {  // extends PartitionOptions {
         return getName();
     }
 
+    public TraitData getTrait() {
+        return trait;
+    }
+
     public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
         this.model = model;
     }
@@ -131,14 +149,6 @@ public class PartitionData {  // extends PartitionOptions {
         this.treeModel = treeModel;
     }
 
-    public boolean isCoding() {
-        return coding;
-    }
-
-    public void setCoding(boolean coding) {
-        this.coding = coding;
-    }
-
     public int getFromSite() {
         return fromSite;
     }
@@ -151,30 +161,45 @@ public class PartitionData {  // extends PartitionOptions {
         return every;
     }
 
-    public int getSiteCount() {
-        int from = getFromSite();
-        if (from < 1) {
-            from = 1;
-        }
-        int to = getToSite();
-        if (to < 1) {
-            to = alignment.getSiteCount();
-        }
-        return (to - from + 1) / every;
-    }
-
     public int getTaxaCount() {
-        int n = alignment.getSequenceCount();
+        if (alignment != null) {
+            int n = alignment.getSequenceCount();
 
-        if (n > 0) {
-            return n;
+            if (n > 0) {
+                return n;
+            } else {
+                return 0;
+            }
         } else {
+            // is a trait
             return 0;
         }
     }
 
+
+    public int getSiteCount() {
+        if (alignment != null) {
+            int from = getFromSite();
+            if (from < 1) {
+                from = 1;
+            }
+            int to = getToSite();
+            if (to < 1) {
+                to = alignment.getSiteCount();
+            }
+            return (to - from + 1) / every;
+        } else {
+            // must be a trait
+            return 1;
+        }
+    }
+
     public String getDataType() {
-        return alignment.getDataType().getDescription();
+        if (alignment != null) {
+            return alignment.getDataType().getDescription();
+        }
+
+        return trait.getTraitType().toString();
     }
 
     public String getPrefix() {

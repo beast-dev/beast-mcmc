@@ -1,9 +1,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionTreeModel;
@@ -39,7 +39,7 @@ public class InitialTreeGenerator extends Generator {
      */
     public void writeStartingTree(PartitionTreeModel model, XMLWriter writer) {
 
-    	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1)
+        setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreeModels().size() > 1)
 
         Parameter rootHeight = model.getParameter("treeModel.rootHeight");
 
@@ -92,26 +92,26 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeComment("Generate a random starting tree under the coalescent process");
 
                 if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-            			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+                        || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 
 //            		writer.writeComment("No calibration");
-	            	writer.writeOpenTag(
-	                        CoalescentSimulatorParser.COALESCENT_TREE,
-	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-	                                new Attribute.Default<String>(CoalescentSimulatorParser.ROOT_HEIGHT, "" + rootHeight.initial)
-	                        }
-	                );
+                    writer.writeOpenTag(
+                            CoalescentSimulatorParser.COALESCENT_TREE,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+                                    new Attribute.Default<String>(CoalescentSimulatorParser.ROOT_HEIGHT, "" + rootHeight.initial)
+                            }
+                    );
 
                 } else {
 //            		writer.writeComment("Has calibration");
-            		writer.writeOpenTag(
-	                        CoalescentSimulatorParser.COALESCENT_TREE,
-	                        new Attribute[]{
-	                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
-	                        }
-	                );
-            	}
+                    writer.writeOpenTag(
+                            CoalescentSimulatorParser.COALESCENT_TREE,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
+                            }
+                    );
+                }
 
                 String taxaId;
                 if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
@@ -134,8 +134,8 @@ public class InitialTreeGenerator extends Generator {
                     writeTaxaRef(taxaId, model, writer);
 
                 } else {
-                	taxaId = TaxaParser.TAXA;
-                	writeTaxaRef(taxaId, model, writer);
+                    taxaId = TaxaParser.TAXA;
+                    writeTaxaRef(taxaId, model, writer);
                 }
 
                 writeInitialDemoModelRef(model, writer);
@@ -155,25 +155,25 @@ public class InitialTreeGenerator extends Generator {
             writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {
-                if (taxa.getTreeModel().equals(model)) {
-                Parameter statistic = options.getStatistic(taxa);
+                if (options.taxonSetsTreeModel.get(taxa).equals(model)) {
+                    Parameter statistic = options.getStatistic(taxa);
 
-                Attribute mono = new Attribute.Default<Boolean>(
-                        CoalescentSimulatorParser.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
+                    Attribute mono = new Attribute.Default<Boolean>(
+                            CoalescentSimulatorParser.IS_MONOPHYLETIC, options.taxonSetsMono.get(taxa));
 
-                writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
+                    writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
-                writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                if (statistic.isNodeHeight) {
-                    if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                        writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                        writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.lower, true);
-                        writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.upper, true);
-                        writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                    writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+                    if (statistic.isNodeHeight) {
+                        if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                            writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.lower, true);
+                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.upper, true);
+                            writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                        }
                     }
-                }
 
-                writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
+                    writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
                 }
             }
             writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
@@ -183,14 +183,14 @@ public class InitialTreeGenerator extends Generator {
     }
 
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {
-    	PartitionTreePrior prior = model.getPartitionTreePrior();
+        PartitionTreePrior prior = model.getPartitionTreePrior();
 
-		if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
-        	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
+        if (prior.getNodeHeightPrior() == TreePriorType.CONSTANT || options.useStarBEAST) {
+            writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "constant");
         } else if (prior.getNodeHeightPrior() == TreePriorType.EXPONENTIAL) {
-        	writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
+            writer.writeIDref(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL, prior.getPrefix() + "exponential");
         } else {
-        	writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
+            writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, prior.getPrefix() + "initialDemo");
         }
 
     }
@@ -262,7 +262,7 @@ public class InitialTreeGenerator extends Generator {
         );
 
         if (tree.getChildCount(node) == 0) {
-        	writer.writeIDref(TaxonParser.TAXON, tree.getNodeTaxon(node).getId());
+            writer.writeIDref(TaxonParser.TAXON, tree.getNodeTaxon(node).getId());
         }
         for (int i = 0; i < tree.getChildCount(node); i++) {
             writeSimpleNode(tree, tree.getChild(node, i), writer);

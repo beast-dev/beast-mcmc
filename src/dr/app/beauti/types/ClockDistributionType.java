@@ -21,27 +21,25 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  */
-public enum TreePriorParameterizationType {
+public enum ClockDistributionType {
 
-    GROWTH_RATE("Growth Rate"),
-    DOUBLING_TIME("Doubling Time"),
-    CONSTANT_SKYLINE("Piecewise-constant"),
-    LINEAR_SKYLINE("Piecewise-linear"),
-    UNIFORM_SKYRIDE("Uniform"),
-    TIME_AWARE_SKYRIDE("Time-aware");
+    LOGNORMAL("Lognormal"),
+    GAMMA("Gamma"),
+    COUCHY("Couchy"),
+    EXPONENTIAL ("Exponential");
 
-    TreePriorParameterizationType(String name) {
-        this.name = name;
+    ClockDistributionType(String displayName) {
+        this.displayName = displayName;
     }
 
     public String toString() {
-        return name;
+        return displayName;
     }
 
-    private final String name;
+    private final String displayName;
 }

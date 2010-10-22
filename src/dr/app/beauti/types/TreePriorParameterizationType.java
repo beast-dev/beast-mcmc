@@ -21,17 +21,21 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
- * @author Walter Xie
  */
-public enum RelativeRatesType {
-	MU_RELATIVE_RATES("Codon relative rates"), 
-    CLOCK_RELATIVE_RATES("Clock relative rates"); 
-    
-	RelativeRatesType(String name) {
+public enum TreePriorParameterizationType {
+
+    GROWTH_RATE("Growth Rate"),
+    DOUBLING_TIME("Doubling Time"),
+    CONSTANT_SKYLINE("Piecewise-constant"),
+    LINEAR_SKYLINE("Piecewise-linear"),
+    UNIFORM_SKYRIDE("Uniform"),
+    TIME_AWARE_SKYRIDE("Time-aware");
+
+    TreePriorParameterizationType(String name) {
         this.name = name;
     }
 

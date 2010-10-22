@@ -26,7 +26,6 @@
 package dr.app.oldbeauti;
 
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.generator.InitialTreeGenerator;
 import dr.evolution.alignment.SitePatterns;
 import dr.evolution.datatype.DataType;
@@ -697,7 +696,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
                             new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                     });
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, ClockType.LOCAL_CLOCK + "." + "rates"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, LOCAL_CLOCK + "." + "rates"), true);
             writer.writeCloseTag(TreeModelParser.NODE_RATES);
 
             writer.writeOpenTag(TreeModelParser.NODE_TRAITS,
@@ -706,7 +705,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES, "true"),
                             new Attribute.Default<String>(TreeModelParser.LEAF_NODES, "true")
                     });
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, ClockType.LOCAL_CLOCK + "." + "changes"), true);
+            writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag(TreeModelParser.NODE_TRAITS);
         }
 
@@ -1241,11 +1240,11 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeTag(TreeModel.TREE_MODEL, new Attribute.Default<String>(XMLParser.IDREF, "treeModel"), true);
 
             writer.writeOpenTag("rates");
-            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, ClockType.LOCAL_CLOCK + "." + "rates"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, LOCAL_CLOCK + "." + "rates"), true);
             writer.writeCloseTag("rates");
 
             writer.writeOpenTag("rateIndicator");
-            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, ClockType.LOCAL_CLOCK + "." + "changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag("rateIndicator");
 
             writer.writeOpenTag("clockRate");
@@ -1263,7 +1262,7 @@ public class BeastGenerator extends BeautiOptions {
                             new Attribute.Default<String>("elementwise", "true"),
                     }
             );
-            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, ClockType.LOCAL_CLOCK + "." + "changes"), true);
+            writer.writeTag("parameter", new Attribute.Default<String>(XMLParser.IDREF, LOCAL_CLOCK + "." + "changes"), true);
             writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
             writer.writeText("");
@@ -1319,27 +1318,27 @@ public class BeastGenerator extends BeautiOptions {
             writer.writeOpenTag("distribution");
             if (clockModel == UNCORRELATED_EXPONENTIAL) {
                 if (fixedSubstitutionRate) {
-                    fixParameter(ClockType.UCED_MEAN, meanSubstitutionRate);
+                    fixParameter(UCED_MEAN, meanSubstitutionRate);
                 }
 
                 final String eModelName = ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL;
                 writer.writeOpenTag(eModelName);
                 writer.writeOpenTag("mean");
-                writeParameter(ClockType.UCED_MEAN, writer);
+                writeParameter(UCED_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeCloseTag(eModelName);
             } else if (clockModel == UNCORRELATED_LOGNORMAL) {
                 if (fixedSubstitutionRate) {
-                    fixParameter(ClockType.UCLD_MEAN, meanSubstitutionRate);
+                    fixParameter(UCLD_MEAN, meanSubstitutionRate);
                 }
 
                 writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
                         new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
                 writer.writeOpenTag("mean");
-                writeParameter(ClockType.UCLD_MEAN, writer);
+                writeParameter(UCLD_MEAN, writer);
                 writer.writeCloseTag("mean");
                 writer.writeOpenTag("stdev");
-                writeParameter(ClockType.UCLD_STDEV, writer);
+                writeParameter(UCLD_STDEV, writer);
                 writer.writeCloseTag("stdev");
                 writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
             } else {
@@ -2701,10 +2700,10 @@ public class BeastGenerator extends BeautiOptions {
         if (clockModel != STRICT_CLOCK) {
 //			if (!fixedSubstitutionRate) {
             if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCED_MEAN), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, UCED_MEAN), true);
             } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_MEAN), true);
-                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, ClockType.UCLD_STDEV), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, UCLD_MEAN), true);
+                writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.IDREF, UCLD_STDEV), true);
             }
 //			}
             writer.writeTag(RateStatisticParser.RATE_STATISTIC, new Attribute.Default<String>(XMLParser.IDREF, RateStatisticParser.COEFFICIENT_OF_VARIATION), true);

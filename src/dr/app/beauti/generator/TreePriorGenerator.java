@@ -26,9 +26,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.TreePriorParameterizationType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorParameterizationType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Units;
@@ -82,7 +82,7 @@ public class TreePriorGenerator extends Generator {
         TreePriorParameterizationType parameterization = prior.getParameterization();
 
         switch (nodeHeightPrior) {
-        	case CONSTANT:  
+        	case CONSTANT:
 	            writer.writeComment("A prior assumption that the population size has remained constant",
                         "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
@@ -92,17 +92,17 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
-	
+
 	            writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
 	            writeParameter("constant.popSize", prior, writer);
 	            writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
 	            writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
-	            
+
 	            break;
 
         	case EXPONENTIAL:
 	            // generate an exponential prior tree
-	
+
 	            writer.writeComment("A prior assumption that the population size has grown exponentially",
                         "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
@@ -112,12 +112,12 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
-	
+
 	            // write pop size socket
 	            writer.writeOpenTag(ExponentialGrowthModelParser.POPULATION_SIZE);
 	            writeParameter("exponential.popSize", prior, writer);
 	            writer.writeCloseTag(ExponentialGrowthModelParser.POPULATION_SIZE);
-	
+
 	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writer.writeOpenTag(ExponentialGrowthModelParser.GROWTH_RATE);
@@ -129,14 +129,14 @@ public class TreePriorGenerator extends Generator {
 	                writeParameter("exponential.doublingTime", prior, writer);
 	                writer.writeCloseTag(ExponentialGrowthModelParser.DOUBLING_TIME);
 	            }
-	
+
 	            writer.writeCloseTag(ExponentialGrowthModelParser.EXPONENTIAL_GROWTH_MODEL);
-	            
+
 	            break;
-	            
+
         	case LOGISTIC:
 	            // generate an exponential prior tree
-	
+
 	            writer.writeComment("A prior assumption that the population size has grown logistically",
                     "throughout the time spanned by the genealogy.");
 	            writer.writeOpenTag(
@@ -146,12 +146,12 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
-	
+
 	            // write pop size socket
 	            writer.writeOpenTag(LogisticGrowthModelParser.POPULATION_SIZE);
 	            writeParameter("logistic.popSize", prior, writer);
 	            writer.writeCloseTag(LogisticGrowthModelParser.POPULATION_SIZE);
-	
+
 	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writer.writeOpenTag(LogisticGrowthModelParser.GROWTH_RATE);
@@ -163,10 +163,10 @@ public class TreePriorGenerator extends Generator {
 	                writeParameter("logistic.doublingTime", prior, writer);
 	                writer.writeCloseTag(LogisticGrowthModelParser.DOUBLING_TIME);
 	            }
-	
+
 	            // write logistic t50 socket
 	            writer.writeOpenTag(LogisticGrowthModelParser.TIME_50);
-	            
+
 //	            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
 //	        			|| options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 //            		writer.writeComment("No calibration");
@@ -194,14 +194,14 @@ public class TreePriorGenerator extends Generator {
 //	            	//TODO
 //	            	throw new IllegalArgumentException("This function is not available in this release !");
 //	            }
-	            
+
 	            writeParameter("logistic.t50", prior, writer);
 	            writer.writeCloseTag(LogisticGrowthModelParser.TIME_50);
-	
+
 	            writer.writeCloseTag(LogisticGrowthModelParser.LOGISTIC_GROWTH_MODEL);
-	
+
 	            initialPopSize = "logistic.popSize";
-	            
+
 	            break;
 
         	case EXPANSION:
@@ -215,10 +215,10 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
-	
+
 	            // write pop size socket
 	            writeParameter(ExpansionModelParser.POPULATION_SIZE, "expansion.popSize", prior, writer);
-	
+
 	            if (parameterization == TreePriorParameterizationType.GROWTH_RATE) {
 	                // write growth rate socket
 	                writeParameter(ExpansionModelParser.GROWTH_RATE, "expansion.growthRate", prior, writer);
@@ -226,14 +226,14 @@ public class TreePriorGenerator extends Generator {
 	                // write doubling time socket
 	                writeParameter(ExpansionModelParser.DOUBLING_TIME, "expansion.doublingTime", prior, writer);
 	            }
-	
+
 	            // write ancestral proportion socket
 	            writeParameter(ExpansionModelParser.ANCESTRAL_POPULATION_PROPORTION, "expansion.ancestralProportion", prior, writer);
-	
+
 	            writer.writeCloseTag(ExpansionModelParser.EXPANSION_MODEL);
-	
+
 	            initialPopSize = "expansion.popSize";
-	            
+
 	            break;
 
         	case YULE:
@@ -246,12 +246,12 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
 	                    }
 	            );
-	
+
 	            writeParameter(YuleModelParser.BIRTH_RATE, "yule.birthRate", prior, writer);
 	            writer.writeCloseTag(YuleModelParser.YULE_MODEL);
-	            
+
 	            break;
-	            
+
         	case BIRTH_DEATH:
 	            writer.writeComment("A prior on the distribution node heights defined given");
 	            writer.writeComment("a Birth-Death speciation process (Gernhard 2008).");
@@ -262,13 +262,13 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
 	                    }
 	            );
-	
+
 	            writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, prior, writer);
 	            writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
 	            writer.writeCloseTag(BirthDeathGernhard08Model.BIRTH_DEATH_MODEL);
-	            
+
 	            break;
-	            
+
         	case SPECIES_BIRTH_DEATH:
         	case SPECIES_YULE:
 	            writer.writeComment("A prior assumption that the population size has remained constant");
@@ -280,17 +280,17 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
 	                    }
 	            );
-	            
+
 	            // initial value for pop mean is the same as what used to be the value for the population size
 	            Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
 	            prior.getParameter("constant.popSize").initial = para.initial;
-	
+
 	            writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
 	            writeParameter("constant.popSize", prior, writer);
 	            writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
 	            writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
-	            
-	            break;	            
+
+	            break;
         }
 
         if ((!options.useStarBEAST) && nodeHeightPrior != TreePriorType.CONSTANT && nodeHeightPrior != TreePriorType.EXPONENTIAL) {
@@ -326,13 +326,13 @@ public class TreePriorGenerator extends Generator {
      * @param writer the writer
      */
     void writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
-    	
+
     	//tree model prefix
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
     	String priorPrefix = prior.getPrefix();
 
         TreePriorType treePrior = prior.getNodeHeightPrior();
-        
+
         switch (treePrior) {
     		case YULE:
     		case BIRTH_DEATH:
@@ -344,7 +344,7 @@ public class TreePriorGenerator extends Generator {
 	                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "speciation")
 	                    }
 	            );
-	
+
 	            // write pop size socket
 	            writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
 	            writeNodeHeightPriorModelRef(prior, writer);
@@ -352,9 +352,9 @@ public class TreePriorGenerator extends Generator {
 	            writer.writeOpenTag(SpeciationLikelihoodParser.TREE);
 	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
-	
+
 	            writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
-	            
+
 	            break;
 
             // AR - removed this special case for Logistic - it causes terrible problems.
@@ -392,7 +392,7 @@ public class TreePriorGenerator extends Generator {
 //	            writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
 //
 //    	        break;
-	            
+
     		case SKYLINE:
 	            // generate a Bayesian skyline plot
 	            writer.writeComment("Generate a generalizedSkyLineLikelihood for Bayesian Skyline");
@@ -404,7 +404,7 @@ public class TreePriorGenerator extends Generator {
 	                                    prior.getSkylineModel() == TreePriorParameterizationType.LINEAR_SKYLINE ? "true" : "false")
 	                    }
 	            );
-	
+
 	            // write pop size socket
 	            writer.writeOpenTag(BayesianSkylineLikelihoodParser.POPULATION_SIZES);
 	            if (prior.getSkylineModel() == TreePriorParameterizationType.LINEAR_SKYLINE) {
@@ -413,27 +413,27 @@ public class TreePriorGenerator extends Generator {
 	                writeParameter(prior.getParameter("skyline.popSize"), prior.getSkylineGroupCount(), writer);
 	            }
 	            writer.writeCloseTag(BayesianSkylineLikelihoodParser.POPULATION_SIZES);
-	
+
 	            // write group size socket
 	            writer.writeOpenTag(BayesianSkylineLikelihoodParser.GROUP_SIZES);
 	            writeParameter(prior.getParameter("skyline.groupSize"), prior.getSkylineGroupCount(), writer);
 	            writer.writeCloseTag(BayesianSkylineLikelihoodParser.GROUP_SIZES);
-	
+
 	            writer.writeOpenTag(CoalescentLikelihoodParser.POPULATION_TREE);
 	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(CoalescentLikelihoodParser.POPULATION_TREE);
-	
+
 	            writer.writeCloseTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
-	            
+
 	            writer.writeText("");
 	            writeExponentialMarkovLikelihood(writer);
-	            
+
 	            break;
-	            
-    		case EXTENDED_SKYLINE:        	
-	            // different format	            
+
+    		case EXTENDED_SKYLINE:
+	            // different format
 	            break;
-            
+
     		case GMRF_SKYRIDE:
 	            writer.writeComment("Generate a gmrfSkyrideLikelihood for GMRF Bayesian Skyride process");
 	            writer.writeOpenTag(
@@ -447,34 +447,34 @@ public class TreePriorGenerator extends Generator {
 	                                    prior.getTreeModel().getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
 	                    }
 	            );
-	
+
 	            int skyrideIntervalCount = options.taxonList.getTaxonCount() - 1;
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
                 writer.writeComment("skyride.logPopSize is in log units unlike other popSize");
 	            writeParameter(prior.getParameter("skyride.logPopSize"), skyrideIntervalCount, writer);
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_PARAMETER);
-	
+
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.GROUP_SIZES);
 	            writeParameter(prior.getParameter("skyride.groupSize"), skyrideIntervalCount, writer);
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.GROUP_SIZES);
-	
+
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
 	            writeParameter(prior.getParameter("skyride.precision"), 1, writer);
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.PRECISION_PARAMETER);
-	
+
 	            writer.writeOpenTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
 	            writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.POPULATION_TREE);
-	
+
 	            writer.writeCloseTag(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 
 	            break;
-	        
+
     		case SPECIES_YULE:
             case SPECIES_BIRTH_DEATH:
             	break;
-            	
-    		default: 
+
+    		default:
 	            // generate a coalescent process
 	            writer.writeComment("Generate a coalescent likelihood");
 	            writer.writeOpenTag(
@@ -491,10 +491,10 @@ public class TreePriorGenerator extends Generator {
         }
     }
 
-    void writeNodeHeightPriorModelRef(PartitionTreePrior prior, XMLWriter writer) {    	
+    void writeNodeHeightPriorModelRef(PartitionTreePrior prior, XMLWriter writer) {
     	TreePriorType treePrior = prior.getNodeHeightPrior();
     	String priorPrefix = prior.getPrefix();
-    	
+
         switch (treePrior) {
             case CONSTANT:
             case SPECIES_YULE:
@@ -526,13 +526,13 @@ public class TreePriorGenerator extends Generator {
                 throw new RuntimeException("No tree prior has been specified so cannot refer to it");
         }
     }
-    
+
     void writeEBSPVariableDemographic(PartitionTreePrior prior, XMLWriter writer) {
-    	
+
     	if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
-    		
+
 	    	setModelPrefix(prior.getPrefix());
-	    	    	
+
 	    	final String tagName = VariableDemographicModelParser.MODEL_NAME;
 	        writer.writeComment("Generate a variableDemographic for extended Bayesian skyline process");
 	        writer.writeOpenTag(tagName, new Attribute[]{
@@ -542,16 +542,16 @@ public class TreePriorGenerator extends Generator {
 	                new Attribute.Default<String>(VariableDemographicModelParser.USE_MIDPOINTS, "true")
 	            }
 	        );
-	        
+
 	        Parameter popSize = prior.getParameter(VariableDemographicModelParser.demoElementName + ".popSize");
 	        Parameter populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
 	        popSize.initial = populationMean.initial;
-	        
+
 	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_SIZES);
 	        writer.writeComment("popSize value = populationMean value");
 	        writer.writeTag(ParameterParser.PARAMETER,
                     new Attribute[]{
-	                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"), 
+	                     new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".popSize"),
                          new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSize.initial))}, true);
 //	        writeParameter(popSize, -1, writer);
 	        writer.writeCloseTag(VariableDemographicModelParser.POPULATION_SIZES);
@@ -564,9 +564,9 @@ public class TreePriorGenerator extends Generator {
                          new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(0.0))}, true); // also 0.0
 //	        writeParameter(prior.getParameter(VariableDemographicModelParser.demoElementName + ".indicators"), -1, writer); // not need dimension
 	        writer.writeCloseTag(VariableDemographicModelParser.INDICATOR_PARAMETER);
-	
+
 	        writer.writeOpenTag(VariableDemographicModelParser.POPULATION_TREES);
-	        
+
 	        if (options.isShareSameTreePrior()) {
 	            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
 		            writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
@@ -584,18 +584,18 @@ public class TreePriorGenerator extends Generator {
 	        	writer.writeIDref(TreeModel.TREE_MODEL, prior.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
 	            writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
 	        }
-	        
+
 	        writer.writeCloseTag(VariableDemographicModelParser.POPULATION_TREES);
-	
+
 	        writer.writeCloseTag(tagName);
-	
+
 	        writer.writeOpenTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, new Attribute.Default<String>(XMLParser.ID, modelPrefix + COALESCENT));
 	        writer.writeOpenTag(CoalescentLikelihoodParser.MODEL);
 	        writer.writeIDref(tagName, modelPrefix + VariableDemographicModelParser.demoElementName);
 	        writer.writeCloseTag(CoalescentLikelihoodParser.MODEL);
 	        writer.writeComment("Take population Tree from demographic");
 	        writer.writeCloseTag(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD);
-	
+
 	        writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationSizeChanges"),
@@ -609,14 +609,14 @@ public class TreePriorGenerator extends Generator {
 	                        //,new Attribute.Default<String>("elementwise", "true")
 	                });
 	        writer.writeOpenTag(DistributionModelParser.MEAN);
-	        
-	        writer.writeComment("prefer populationMean value = 1");	        
+
+	        writer.writeComment("prefer populationMean value = 1");
 	        populationMean = prior.getParameter(VariableDemographicModelParser.demoElementName + ".populationMean");
 	        writer.writeTag(ParameterParser.PARAMETER,
 	                new Attribute[]{
 	                        new Attribute.Default<String>(XMLParser.ID, modelPrefix + VariableDemographicModelParser.demoElementName + ".populationMean"),
 	                        new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(populationMean.initial))}, true);
-	        
+
 	        writer.writeCloseTag(DistributionModelParser.MEAN);
 	        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
     	}
@@ -628,7 +628,7 @@ public class TreePriorGenerator extends Generator {
 
         switch (prior.getNodeHeightPrior()) {
 
-            case CONSTANT:            
+            case CONSTANT:
                 writer.writeIDref(ParameterParser.PARAMETER, modelPrefix + "constant.popSize");
                 break;
             case EXPONENTIAL:
@@ -689,9 +689,9 @@ public class TreePriorGenerator extends Generator {
     }
 
     void writeEBSPAnalysisToCSVfile(PartitionTreePrior prior, XMLWriter writer) {
-    	
+
     	setModelPrefix(prior.getPrefix());
-    	
+
         String logFileName = options.logFileName;
 
         if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
@@ -755,7 +755,7 @@ public class TreePriorGenerator extends Generator {
     public void writePriorLikelihoodReferenceLog(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
     	//tree model prefix
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
-    	
+
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
@@ -779,16 +779,16 @@ public class TreePriorGenerator extends Generator {
             case SPECIES_BIRTH_DEATH:
                 // do not need
                 break;
-            default: 
+            default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
         }
     }
-    
+
     // id is written in writePriorLikelihood (PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer)
     public void writePriorLikelihoodReference(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
         //tree model prefix
     	setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
-    	
+
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
@@ -812,20 +812,20 @@ public class TreePriorGenerator extends Generator {
             case SPECIES_BIRTH_DEATH:
                 // do not need
                 break;
-            default: 
+            default:
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT);
-        }        
+        }
     }
-    
+
     public void writeEBSPVariableDemographicReference(PartitionTreePrior prior, XMLWriter writer) {
-        
+
         setModelPrefix(prior.getPrefix());
-        	
+
         //TODO: make suitable for *BEAST
-        if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) { 
-        	
+        if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE) {
+
         	writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, modelPrefix + COALESCENT); // only 1 coalescent
-        	
+
             writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD);
 
             writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);

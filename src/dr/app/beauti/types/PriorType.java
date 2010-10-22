@@ -1,4 +1,4 @@
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.NumberUtil;
@@ -91,7 +91,7 @@ public enum PriorType {
             case TRUNC_NORMAL_PRIOR:
                 dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.lower, param.upper);
                 break;
-//            default: // wrong Exception for other priors without distribution implementation  
+//            default: // wrong Exception for other priors without distribution implementation
 //                throw new IllegalArgumentException("Distribution class not available for this prior");
         }
         return dist;

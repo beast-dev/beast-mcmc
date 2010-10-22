@@ -1,8 +1,8 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.SequenceErrorType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.options.*;
 
 import java.util.List;

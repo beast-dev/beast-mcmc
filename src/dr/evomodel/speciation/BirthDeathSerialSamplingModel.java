@@ -60,7 +60,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
 //    the additional parameter 0 <= r <= 1 has to be estimated.
 //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
-//    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+    //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
     Variable<Double> r;
 
     Variable<Double> finalTimeInterval;
@@ -239,7 +239,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
         double logL;
         if (isSamplingOrigin()) {
-            logL = Math.log(q(x0()));
+            logL = Math.log(1 / q(x0()));
         } else {
             double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
             logL = Math.log(1 / bottom);

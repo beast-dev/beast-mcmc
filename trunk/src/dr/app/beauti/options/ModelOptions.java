@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.PriorType;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;

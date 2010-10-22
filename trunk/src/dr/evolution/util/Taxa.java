@@ -26,7 +26,6 @@
 package dr.evolution.util;
 
 import dr.util.Identifiable;
-import dr.app.beauti.options.PartitionTreeModel;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,15 +37,15 @@ import java.util.List;
  *
  * @version $Id: Taxa.java,v 1.29 2006/09/05 13:29:34 rambaut Exp $
  *
+ * @author Andrew Rambaut
  * @author Alexei Drummond
  */
 public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
-        
+
 	private final ArrayList<MutableTaxonListListener> mutableTaxonListListeners = new ArrayList<MutableTaxonListListener>();
 	ArrayList<Taxon> taxa = new ArrayList<Taxon>();
 
-    private String id = null;    
-    private PartitionTreeModel treeModel;
+    private String id = null;
 
 	public Taxa() {
 	}
@@ -62,11 +61,6 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
     public Taxa(Collection<Taxon> taxa) {
         addTaxa(taxa);
     }
-
-    public Taxa(String id, PartitionTreeModel treeModel) {
-		this.id = id;
-        this.treeModel = treeModel;
-	}
 
     /**
      * Adds the given taxon and returns its index. If the taxon is already in the list then it is not
@@ -301,15 +295,6 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
         for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
             mutableTaxonListListener.taxaChanged(this);
         }
-    }
-
-    public PartitionTreeModel getTreeModel() {
-        return treeModel;
-    }
-
-    public void setTreeModel(PartitionTreeModel treeModel) {
-        this.treeModel = treeModel;
-    }
-    
+    }    
 
 }

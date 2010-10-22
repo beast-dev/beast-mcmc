@@ -1,7 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.BinaryModelType;
+import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.util.XMLWriter;
@@ -37,9 +37,9 @@ public class AlignmentGenerator extends Generator {
     public void writeAlignments(XMLWriter writer) {
         List<Alignment> alignments = new ArrayList<Alignment>();
 
-        for (PartitionData partition : options.getNonTraitsDataList()) {
+        for (PartitionData partition : options.dataPartitions) {
             Alignment alignment = partition.getAlignment();
-            if (!alignments.contains(alignment)) {
+            if (alignment != null && !alignments.contains(alignment)) {
                 alignments.add(alignment);
             }
         }

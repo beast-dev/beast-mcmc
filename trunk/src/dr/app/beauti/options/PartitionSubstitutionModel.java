@@ -23,7 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.*;
+import dr.app.beauti.types.*;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
@@ -68,7 +68,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
 
-        this(options, partition.getName(),(partition.getTraitType() == null)
+        this(options, partition.getName(),(partition.getTrait() == null)
                 ? partition.getAlignment().getDataType() : new GeneralDataType());
 
     }
@@ -123,7 +123,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3",
                 PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0);
 
-        //This prior is moderately diffuse with a median of 2.718 
+        //This prior is moderately diffuse with a median of 2.718
         createParameterLognormalPrior("kappa", "HKY transition-transversion parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1.kappa", "HKY transition-transversion parameter for codon position 1",
@@ -458,12 +458,24 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (activateBSSVS) {
                     getParameter("trait.indicators");
                     Parameter nonZeroRates = getParameter("trait.nonZeroRates");
-                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
-                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
-                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
-                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
-                    }
-                    params.add(nonZeroRates);
+
+                    // AR - we can't use the average number of states across all defined traits!
+//                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+//                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
+//                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+//                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
+//                    }
+
+                    throw new UnsupportedOperationException("Not implemented yet");
+//                    int K = 0; // AR this should be the number of states for the trait being analysed...
+//                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+//                         nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
+//                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+//                         nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+//                    }
+
+
+//                    params.add(nonZeroRates);
                 }
                 break;
 
@@ -530,7 +542,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void selectOperators(List<Operator> ops) {
-        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
+        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
         switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
@@ -944,7 +956,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public String getPrefixCodon(int codonPartitionNumber) {
-        String prefix = "";        
+        String prefix = "";
         if (getCodonPartitionCount() > 1 && codonPartitionNumber > 0) {
             if (getCodonHeteroPattern().equals("123")) {
                 prefix += "CP" + codonPartitionNumber + ".";
@@ -960,19 +972,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         }
         return prefix;
-    }
-
-    public int getAveStates() {
-        int aveStates = 0;
-        int num = 0;
-        for (PartitionData partition : options.getAllPartitionData(this)) {
-             if (partition instanceof TraitData) {
-                 aveStates = aveStates + ((TraitData) partition).getStatesListOfTrait(options.taxonList).size();
-                 num++;
-             }
-        }
-        if (num != 0) aveStates = aveStates / num;
-        return aveStates;
     }
 
 }

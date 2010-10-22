@@ -27,8 +27,8 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.util.PanelUtils;

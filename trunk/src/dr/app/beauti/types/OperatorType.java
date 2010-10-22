@@ -21,7 +21,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodelxml.operators.TreeNodeSlideParser;

@@ -26,9 +26,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
@@ -170,10 +170,8 @@ public class LogGenerator extends Generator {
             writer.writeCloseTag(ColumnsParser.COLUMN);
         }
 
-        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
-            for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
-                substitutionModelGenerator.writeStatisticLog(model, writer);
-            }
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            substitutionModelGenerator.writeStatisticLog(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
@@ -191,11 +189,14 @@ public class LogGenerator extends Generator {
      * @param branchRatesModelGenerator  BranchRatesModelGenerator
      * @param substitutionModelGenerator SubstitutionModelGenerator
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
-     * @param generalTraitGenerator
+     * @param discreteTraitGenerator
      */
-    public void writeLogToFile(XMLWriter writer, TreePriorGenerator treePriorGenerator, BranchRatesModelGenerator branchRatesModelGenerator,
-                               SubstitutionModelGenerator substitutionModelGenerator, TreeLikelihoodGenerator treeLikelihoodGenerator,
-                               GeneralTraitGenerator generalTraitGenerator) {
+    public void writeLogToFile(XMLWriter writer,
+                               TreePriorGenerator treePriorGenerator,
+                               BranchRatesModelGenerator branchRatesModelGenerator,
+                               SubstitutionModelGenerator substitutionModelGenerator,
+                               TreeLikelihoodGenerator treeLikelihoodGenerator,
+                               DiscreteTraitGenerator discreteTraitGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -251,7 +252,8 @@ public class LogGenerator extends Generator {
 
         for (Taxa taxa : options.taxonSets) {
             // make tmrca(tree.name) eay to read in log for Tracer
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")");
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior
@@ -274,8 +276,22 @@ public class LogGenerator extends Generator {
         if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
             writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
             for (PartitionClockModel model : options.getPartitionClockModels()) {
-                if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL)
-                    writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                if (model.getClockType() == ClockType.UNCORRELATED) {
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                            break;
+                        case GAMMA:
+                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+//                            break;
+                        case COUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Couchy model not implemented yet");
+//                            break;
+                        case EXPONENTIAL:
+                            // nothing required
+                            break;
+                    }
+                }
             }
         } else {
             for (PartitionClockModel model : options.getPartitionClockModels()) {
@@ -289,9 +305,9 @@ public class LogGenerator extends Generator {
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
-        if (options.hasData()) {
-            treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        }
+        treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
+        discreteTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
+        branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
 
@@ -305,10 +321,6 @@ public class LogGenerator extends Generator {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             if (prior.getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE)
                 writer.writeIDref(CoalescentLikelihoodParser.COALESCENT_LIKELIHOOD, prior.getPrefix() + COALESCENT); // only 1 coalescent
-        }
-
-        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
-            generalTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
         }
 
         writer.writeCloseTag(LoggerParser.LOG);
@@ -387,28 +399,25 @@ public class LogGenerator extends Generator {
             writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
             for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
-                if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
-                    switch (model.getClockType()) {
-                        case STRICT_CLOCK:
-                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
-                            break;
+                switch (model.getClockType()) {
+                    case STRICT_CLOCK:
+                        writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        break;
 
-                        case UNCORRELATED_EXPONENTIAL:
-                        case UNCORRELATED_LOGNORMAL:
-                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                            break;
+                    case UNCORRELATED:
+                        writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                        break;
 
-                        case RANDOM_LOCAL_CLOCK:
-                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
-                            break;
+                    case RANDOM_LOCAL_CLOCK:
+                        writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                        break;
 
-                        case AUTOCORRELATED_LOGNORMAL:
-                            writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                            break;
+                    case AUTOCORRELATED:
+                        writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                        break;
 
-                        default:
-                            throw new IllegalArgumentException("Unknown clock model");
-                    }
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
                 }
             }
 
@@ -417,11 +426,14 @@ public class LogGenerator extends Generator {
                 writer.writeIDref("posterior", "posterior");
             }
 
-            if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
-                for (PartitionData partitionData : options.getAllPartitionData(tree)) { // Each TD except Species has one AncestralTreeLikelihood
-                    if (partitionData.getTraitType() != null && (!partitionData.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString())) )
+            for (PartitionData partition : options.dataPartitions) {
+                if (partition.getPartitionTreeModel() == tree) {
+                    TraitData trait = partition.getTrait();
+
+                    if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
                         writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                                partitionData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                                partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                    }
                 }
             }
 
@@ -452,28 +464,26 @@ public class LogGenerator extends Generator {
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
                 for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
-                    if (options.getAllPartitionData(model).get(0).getTraitType() == null) {
-                        switch (model.getClockType()) {
-                            case STRICT_CLOCK:
-                                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
-                                break;
 
-                            case UNCORRELATED_EXPONENTIAL:
-                            case UNCORRELATED_LOGNORMAL:
-                                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                                break;
+                    switch (model.getClockType()) {
+                        case STRICT_CLOCK:
+                            writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            break;
 
-                            case RANDOM_LOCAL_CLOCK:
-                                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
-                                break;
+                        case UNCORRELATED:
+                            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            break;
 
-                            case AUTOCORRELATED_LOGNORMAL:
-                                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
-                                break;
+                        case RANDOM_LOCAL_CLOCK:
+                            writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
+                            break;
 
-                            default:
-                                throw new IllegalArgumentException("Unknown clock model");
-                        }
+                        case AUTOCORRELATED:
+                            writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES);
+                            break;
+
+                        default:
+                            throw new IllegalArgumentException("Unknown clock model");
                     }
                 }
 
@@ -488,29 +498,21 @@ public class LogGenerator extends Generator {
 //    <parameter idref="locations.trait.indicators"/>
 //    <parameter idref="locations.clock.rate"/>
 
-    public void writeAdditionalLogToFile(XMLWriter writer, BranchRatesModelGenerator branchRatesModelGenerator,
-                                         SubstitutionModelGenerator substitutionModelGenerator) {
-        if (options.hasDiscreteIntegerTraitsExcludeSpecies()) {
-            writer.writeComment("write rate matrix log to file");
+    public void writeDiscreteTraitLogToFile(XMLWriter writer,
+                                            PartitionData partition,
+                                            BranchRatesModelGenerator branchRatesModelGenerator,
+                                            SubstitutionModelGenerator substitutionModelGenerator) {
 
-            String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + "_rateMatrix.log";
-            writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, "rateMatrixLog"),
-                    new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
-                    new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
+        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + partition.getPrefix() + "_rates.og";
+        writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + "_RateMatrixLog"),
+                new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
+                new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
 
-            for (PartitionSubstitutionModel model : options.getPartitionTraitsSubstitutionModels()) {
-                substitutionModelGenerator.writeRateLog(model, writer);
-            }
+        substitutionModelGenerator.writeRateLog(partition.getPartitionSubstitutionModel(), writer);
+        branchRatesModelGenerator.writeLog(partition.getPartitionClockModel(), writer);
 
-            for (PartitionClockModel model : options.getPartitionTraitsClockModels()) {
-                branchRatesModelGenerator.writeLog(model, writer);
-            }
-
-            writer.writeCloseTag(LoggerParser.LOG);
-
-        }
-
+        writer.writeCloseTag(LoggerParser.LOG);
     }
 
 }

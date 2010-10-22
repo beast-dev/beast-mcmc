@@ -26,7 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
@@ -90,7 +90,7 @@ public class ParameterPriorGenerator extends Generator {
 
         writeParameterPrior(parameter, writer);
         writeParameterIdref(writer, parameter);
-        
+
         writer.writeCloseTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
     }
 

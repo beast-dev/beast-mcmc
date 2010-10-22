@@ -21,19 +21,19 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  * @author Walter Xie
  */
 public enum FixRateType {
-	FIX_MEAN("Estimate relative clock rates (fixed mean)"), // 
+	FIX_MEAN("Estimate relative clock rates (fixed mean)"), //
     RELATIVE_TO("Estimate clock rates relative to"),
-	TIP_CALIBRATED("Tip times calibrated"), // 
-	NODE_CALIBRATED("Internal node(s) calibrated"), // 
-	RATE_CALIBRATED("Rate is calibrated"); // 
-    
+	TIP_CALIBRATED("Tip times calibrated"), //
+	NODE_CALIBRATED("Internal node(s) calibrated"), //
+	RATE_CALIBRATED("Rate is calibrated"); //
+
 	FixRateType(String name) {
         this.name = name;
     }

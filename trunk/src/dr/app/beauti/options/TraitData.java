@@ -1,5 +1,7 @@
 package dr.app.beauti.options;
 
+import dr.evolution.alignment.Alignment;
+import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
@@ -9,33 +11,32 @@ import java.util.List;
 /**
  *
  */
-public class TraitData extends PartitionData {
+public class TraitData {
     public static final String TRAIT_SPECIES = "species";
 
     public static enum TraitType {
         DISCRETE,
         INTEGER,
-        CONTINUOUS
+        CONTINUOUS;
+
+        public String toString() {
+            return name().toLowerCase();
+        }
     }
 
-//    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
     private TraitType traitType = TraitType.DISCRETE;
 
+    private final String fileName;
+    private String name;
 
-    public TraitData(BeautiOptions options, String traitName, String fileName, TraitType traitType) {
-        super(options, traitName, fileName, null);
+    protected final BeautiOptions options;
+
+    public TraitData(BeautiOptions options, String name, String fileName, TraitType traitType) {
+        this.options = options;
+        this.name = name;
+        this.fileName = fileName;
         this.traitType = traitType;
-
-//        createTraitOptions();
-    }   
-
-//    private void createTraitOptions(){
-//        if (traitType == TraitOptions.TraitType.DISCRETE) {
-//            traitOptions = new DiscreteTraitOptions(this);
-//        } else {
-//            traitOptions = null; //TODO integer and continuous
-//        }
-//    }
+    }
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -63,9 +64,16 @@ public class TraitData extends PartitionData {
         return getTraitType().toString();
     }
 
+    public String getFileName() {
+        return fileName;
+    }
 
-    public boolean isSpecifiedTraitAnalysis(String traitName) {
-        return  getName().equalsIgnoreCase(traitName);
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
     }
 
     public List<String> getStatesListOfTrait(Taxa taxonList) {
@@ -92,11 +100,12 @@ public class TraitData extends PartitionData {
         }
     }
 
+    // todo this needs to go somewhere else...
     public static String getPhylogeographicDescription() {
         return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
     }
 
-    
+
     public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
         List<String> states = new ArrayList<String>();
         String attr;
@@ -117,5 +126,8 @@ public class TraitData extends PartitionData {
             return null;
         }
     }
-    
+
+    public String toString() {
+        return name;
+    }
 }

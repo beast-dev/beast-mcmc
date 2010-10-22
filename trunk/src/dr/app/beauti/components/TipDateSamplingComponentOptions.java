@@ -1,9 +1,9 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.enumTypes.TipDateSamplingType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.options.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;

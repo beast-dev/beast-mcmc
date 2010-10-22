@@ -21,28 +21,35 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  */
-public enum StartingTreeType {
+public enum ClockType {
 
-    RANDOM("randomly generated"),
-    UPGMA("UPGMA generated"),
-    USER("user-specified");
+    STRICT_CLOCK("Strict Clock"),
+    UNCORRELATED("Relaxed Clock: Uncorrelated"),
+    RANDOM_LOCAL_CLOCK("Random local clock model"),
+    AUTOCORRELATED("Relaxed Clock: Autocorrelated");
 
-    StartingTreeType(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
+    ClockType(String displayName) {
+        this.displayName = displayName;
     }
 
     public String toString() {
-        return name;
+        return displayName;
     }
 
-    private final String name;
+    private final String displayName;
+
+    final public static String LOCAL_CLOCK = "localClock";
+    final public static String UCED_MEAN = "uced.mean";
+    final public static String UCLD_MEAN = "ucld.mean";
+    final public static String UCLD_STDEV = "ucld.stdev";
+    final public static String UCGD_SCALE = "ucgd.scale";
+    final public static String UCGD_SHAPE = "ucgd.shape";
+
+    final public static String ACLD_MEAN = "acld.mean";
+    final public static String ACLD_STDEV = "acld.stdev";
 }

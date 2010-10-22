@@ -28,12 +28,12 @@ import java.util.List;
 /**
  * @author Walter Xie
  */
-public class GeneralTraitGenerator extends Generator {
+public class DiscreteTraitGenerator extends Generator {
 
-    public static final String DATA = "Data";
+    public static final String DATA = "DataType";
 
 
-    public GeneralTraitGenerator(BeautiOptions options, ComponentFactory[] components) {
+    public DiscreteTraitGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
     }
 
@@ -58,9 +58,10 @@ public class GeneralTraitGenerator extends Generator {
      * @throws dr.app.util.Arguments.ArgumentException
      *          ArgumentException
      */
-    public void writeAttrTrait(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
-        for (TraitData trait : options.getDiscreteIntegerTraits()) {
-            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+    public void writeTaxonTraits(Taxon taxon, XMLWriter writer) throws Arguments.ArgumentException {
+        for (TraitData trait : options.traits) {
+            // may as well write the species traits - may be useful...
+//            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
 
                 if (!taxon.containsAttribute(trait.getName())) {
                     throw new Arguments.ArgumentException("Cannot find trait " + trait.getName()
@@ -72,7 +73,7 @@ public class GeneralTraitGenerator extends Generator {
 
                 writer.writeText(taxon.getAttribute(trait.getName()).toString());
                 writer.writeCloseTag(AttributeParser.ATTRIBUTE);
-            }
+//            }
         }
     }
 
@@ -89,7 +90,7 @@ public class GeneralTraitGenerator extends Generator {
 
         // <generalDataType>
         writer.writeOpenTag(GeneralDataTypeParser.GENERAL_DATA_TYPE, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getPrefix() + DATA)});
+                new Attribute.Default<String>(XMLParser.ID, traitData.getName() + DATA)});
 
         int numOfSates = generalData.size();
         writer.writeComment("Number Of Sates = " + numOfSates);
@@ -103,10 +104,10 @@ public class GeneralTraitGenerator extends Generator {
 
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
+                new Attribute.Default<String>(XMLParser.ID, traitData.getName() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
                 new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, traitData.getName())});
         writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
-        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, traitData.getPrefix() + DATA);
+        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, traitData.getName() + DATA);
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);
     }
 
@@ -114,18 +115,18 @@ public class GeneralTraitGenerator extends Generator {
     /**
      * Ancestral Tree Likelihood
      *
-     * @param traitData TraitData
+     * @param partition PartitionData
      * @param writer    XMLWriter
      */
-    public void writeAncestralTreeLikelihood(TraitData traitData, XMLWriter writer) {
-        PartitionSubstitutionModel substModel = traitData.getPartitionSubstitutionModel();
-        PartitionTreeModel treeModel = traitData.getPartitionTreeModel();
-        PartitionClockModel clockModel = traitData.getPartitionClockModel();
+    public void writeAncestralTreeLikelihood(PartitionData partition, XMLWriter writer) {
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD)});
+                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD)});
 
-        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, traitData.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);
+        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         writer.writeIDref(getLocationSubstModelTag(substModel), substModel.getPrefix() + AbstractSubstitutionModel.MODEL);
@@ -135,8 +136,7 @@ public class GeneralTraitGenerator extends Generator {
                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
-            case UNCORRELATED_EXPONENTIAL:
-            case UNCORRELATED_LOGNORMAL:
+            case UNCORRELATED:
                 writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
@@ -144,7 +144,7 @@ public class GeneralTraitGenerator extends Generator {
             	writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
-            case AUTOCORRELATED_LOGNORMAL:
+            case AUTOCORRELATED:
                 writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
@@ -157,10 +157,13 @@ public class GeneralTraitGenerator extends Generator {
     }
 
     public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
-        for (TraitData traitData : options.getDiscreteIntegerTraits()) { // Each TD except Species has one AncestralTreeLikelihood
-            if (!traitData.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))
+        for (PartitionData partition : options.dataPartitions) {
+            TraitData trait = partition.getTrait();
+
+            if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                        traitData.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                        partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+            }
         }
     }
 

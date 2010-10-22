@@ -75,8 +75,6 @@ public class BeautiFrame extends DocumentFrame {
     private TaxaPanel taxaPanel;
     private SiteModelsPanel siteModelsPanel;
     private ClockModelsPanel clockModelsPanel;
-    private OldTreesPanel oldTreesPanel;
-//    private SpeciesTreesPanel speciesTreesPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -115,11 +113,11 @@ public class BeautiFrame extends DocumentFrame {
         generator = new BeastGenerator(options, components);
 
         this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener(){
-			public void ancestorMoved(HierarchyEvent e) {}
-			public void ancestorResized(HierarchyEvent e) {
-				setStatusMessage();
-			}
-		});
+            public void ancestorMoved(HierarchyEvent e) {}
+            public void ancestorResized(HierarchyEvent e) {
+                setStatusMessage();
+            }
+        });
     }
 
     public void initializeComponents() {
@@ -178,15 +176,6 @@ public class BeautiFrame extends DocumentFrame {
 
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
-
-//        if (OSType.isMac()) {
-//            getContentPane().add(panel, BorderLayout.CENTER);
-////            setMinimumSize(new java.awt.Dimension(800, 600));
-//        } else {
-////            JScrollPane scrollPane = new JScrollPane(panel);
-////            getContentPane().add(scrollPane, BorderLayout.CENTER);
-//            getContentPane().add(panel, BorderLayout.CENTER);
-//        }
 
         add(basePanel, BorderLayout.CENTER);
 
@@ -424,18 +413,6 @@ public class BeautiFrame extends DocumentFrame {
         getExportAction().setEnabled(true);
     }
 
-//    public int allowDifferentTaxaJOptionPane() {
-//        // AR - Yes and No are perfectly good answers to this question
-//        return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
-//                + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
-//                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
-//                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
-//    }
-
-    public boolean createImportTraits() {
-        return traitsPanel.addTrait();
-    }
-
     public boolean createImportTraits(String traitName) {
         return traitsPanel.addTrait(traitName);
     }
@@ -504,7 +481,7 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         // check that the trait name doesn't exist
-        if (options.containTrait(traitName)) {
+        if (options.traitExists(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -527,21 +504,19 @@ public class BeautiFrame extends DocumentFrame {
 
             dataPanel.unlinkAll();
 
-//        if (options.getPartitionClockModels().size() > 1) {
-//        	dataPanel.linkClocks();
-//        }
-
-//            treesPanel.updatePriorPanelForSpeciesAnalysis();
-
             options.starBEASTOptions = new STARBEASTOptions(options);
             options.fileNameStem = "StarBEASTLog";
 
-            if (!createImportTraits(TraitData.TRAIT_SPECIES)) {
-                dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
-                useStarBEAST = false;
+            if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
+                if (!createImportTraits(TraitData.TRAIT_SPECIES)) {
+                    dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
+                    useStarBEAST = false;
+                }
+
+                // why delete this? The user may want to use it again
+//        } else { // remove species
+//            options.removeTrait(TraitData.TRAIT_SPECIES);
             }
-        } else { // remove species
-            options.removeTrait(TraitData.TRAIT_SPECIES);
         }
 
         options.useStarBEAST = useStarBEAST;

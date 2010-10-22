@@ -1,4 +1,4 @@
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 
 /**
@@ -6,7 +6,7 @@ package dr.app.beauti.enumTypes;
  * @author Walter Xie
  */
 public enum PriorScaleType {
-	
+
 	NONE,
 	TIME_SCALE,
     GROWTH_RATE_SCALE,

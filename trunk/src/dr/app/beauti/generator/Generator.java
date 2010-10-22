@@ -1,7 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.inference.model.ParameterParser;
@@ -26,12 +26,12 @@ public abstract class Generator {
 	protected static final String SPOPS = TraitData.TRAIT_SPECIES + "." + "popSizesLikelihood";
 
     protected final BeautiOptions options;
-    
+
 //    protected PartitionSubstitutionModel model;
 	protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
 
     protected Generator(BeautiOptions options) {
-        this.options = options;        
+        this.options = options;
     }
 
     public Generator(BeautiOptions options, ComponentFactory[] components) {
@@ -40,7 +40,7 @@ public abstract class Generator {
             for (ComponentFactory component : components) {
                 this.components.add(component.getGenerator(options));
             }
-        }        
+        }
     }
 
     public String getModelPrefix() {
@@ -50,7 +50,7 @@ public abstract class Generator {
 	public void setModelPrefix(String modelPrefix) {
 		this.modelPrefix = modelPrefix;
 	}
-	
+
     /**
      * fix a parameter
      *
@@ -90,7 +90,7 @@ public abstract class Generator {
     public void writeParameter(String id, PartitionOptions options, XMLWriter writer) {
         Parameter parameter = options.getParameter(id);
         String prefix = options.getPrefix();
-        
+
         if (parameter == null) {
             throw new IllegalArgumentException("parameter with name, " + id + ", is unknown; and its prefix is " + options.getPrefix());
         }
@@ -104,9 +104,9 @@ public abstract class Generator {
             }
         }
     }
-    
+
     public void writeParameter(int num, String id, PartitionSubstitutionModel model, XMLWriter writer) {
-        Parameter parameter = model.getParameter(model.getPrefixCodon(num) + id);        
+        Parameter parameter = model.getParameter(model.getPrefixCodon(num) + id);
         String prefix = model.getPrefix(num);
 
         if (parameter == null) {
@@ -152,7 +152,7 @@ public abstract class Generator {
         writeParameter(num, id, model, writer);
         writer.writeCloseTag(wrapperName);
     }
-    
+
     public void writeParameter(String wrapperName, String id, PartitionOptions options, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, options, writer);
@@ -266,7 +266,7 @@ public abstract class Generator {
     }
 
     private final List<ComponentGenerator> components = new ArrayList<ComponentGenerator>();
-    
+
     public class GeneratorException extends Exception {
         public GeneratorException(String message) {
             super(message);

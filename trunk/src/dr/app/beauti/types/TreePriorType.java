@@ -21,24 +21,32 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  */
-public enum FrequencyPolicyType {
+public enum TreePriorType {
 
-    ESTIMATED("Estimated"), 
-    EMPIRICAL("Empirical"), 
-    ALLEQUAL("All equal");
+    CONSTANT("Coalescent: Constant Size"),
+    EXPONENTIAL("Coalescent: Exponential Growth"),
+    LOGISTIC("Coalescent: Logistic Growth"),
+    EXPANSION("Coalescent: Expansion Growth"),
+    SKYLINE("Coalescent: Bayesian Skyline"),
+    EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline Plot"),
+    GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
+    YULE("Speciation: Yule Process"),
+    BIRTH_DEATH("Speciation: Birth-Death Process"),
+    SPECIES_YULE("Species Tree: Yule Process"),
+    SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
 
-    FrequencyPolicyType (String displayName) {
-        this.displayName = displayName;
+    TreePriorType(String name) {
+        this.name = name;
     }
 
     public String toString() {
-        return displayName;
+        return name;
     }
 
-    private String displayName;
+    private final String name;
 }

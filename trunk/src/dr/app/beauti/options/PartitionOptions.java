@@ -23,8 +23,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.PriorType;
 
 import java.util.List;
 
@@ -41,7 +41,7 @@ public abstract class PartitionOptions extends ModelOptions {
 	protected abstract void selectParameters(List<Parameter> params);
     protected abstract void selectOperators(List<Operator> ops);
 
-    public abstract String getPrefix();    
+    public abstract String getPrefix();
 
     protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
             double initial, double lower, double upper) {
@@ -61,7 +61,7 @@ public abstract class PartitionOptions extends ModelOptions {
                 shape(shape).scale(scale).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
-    public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType, 
+    public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType,
             double initial, double mean, double offset, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
                   .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).partitionOptions(options).build(parameters);
@@ -71,7 +71,7 @@ public abstract class PartitionOptions extends ModelOptions {
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
             double lower, double upper) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
-                .initial(value).lower(lower).upper(upper).partitionOptions(options).build(parameters);        
+                .initial(value).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createAllMusParameter(PartitionOptions options, String name, String description) {
@@ -101,7 +101,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
         return operator;
     }
- 
+
     public String getName() {
         return partitionName;
     }

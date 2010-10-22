@@ -21,21 +21,18 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  */
-public enum ClockType {
+public enum FrequencyPolicyType {
 
-    STRICT_CLOCK("Strict Clock"),
-    UNCORRELATED_EXPONENTIAL("Relaxed Clock: Uncorrelated Exp"),
-    UNCORRELATED_LOGNORMAL("Relaxed Clock: Uncorrelated Lognormal"),
-    RANDOM_LOCAL_CLOCK("Random local clock model"),
-    AUTOCORRELATED_LOGNORMAL("Relaxed Clock: Autocorrelated Lognormal");
+    ESTIMATED("Estimated"),
+    EMPIRICAL("Empirical"),
+    ALLEQUAL("All equal");
 
-
-    ClockType(String displayName) {
+    FrequencyPolicyType (String displayName) {
         this.displayName = displayName;
     }
 
@@ -43,10 +40,5 @@ public enum ClockType {
         return displayName;
     }
 
-    private final String displayName;
-
-    final public static String LOCAL_CLOCK = "localClock";
-    final public static String UCED_MEAN = "uced.mean";
-    final public static String UCLD_MEAN = "ucld.mean";
-    final public static String UCLD_STDEV = "ucld.stdev";
+    private String displayName;
 }

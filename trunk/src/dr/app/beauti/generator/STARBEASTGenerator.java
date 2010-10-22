@@ -26,8 +26,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.PopulationSizeModelType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.PopulationSizeModelType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionTreeModel;
@@ -114,7 +114,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeComment("Collection of Gene Trees");
 
         writer.writeOpenTag(SpeciesBindingsParser.GENE_TREES, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SpeciesBindingsParser.GENE_TREES)});
-        
+
         boolean isSameAllPloidyType = true;
         PloidyType checkSamePloidyType = options.getPartitionTreeModels().get(0).getPloidyType();
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -123,7 +123,7 @@ public class STARBEASTGenerator extends Generator {
         		break;
         	}
         }
-        
+
         if (isSameAllPloidyType) {
 	        // generate gene trees regarding each data partition
 	        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -140,7 +140,7 @@ public class STARBEASTGenerator extends Generator {
 	            writer.writeCloseTag(SpeciesBindingsParser.GTREE);
 	        }
         }
-        
+
         writer.writeCloseTag(SpeciesBindingsParser.GENE_TREES);
     }
 
@@ -159,9 +159,9 @@ public class STARBEASTGenerator extends Generator {
         }
 
         writer.writeOpenTag(SpeciesTreeModelParser.SPECIES_TREE, attributes);
-        
+
         writer.writeIDref(TraitData.TRAIT_SPECIES, TraitData.TRAIT_SPECIES);
-                
+
         // take sppSplitPopulations value from partionModel(?).constant.popSize
         // *BEAST always share same tree prior
         double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
@@ -275,11 +275,11 @@ public class STARBEASTGenerator extends Generator {
 
     private void writeSpeciesTreeRootHeight(XMLWriter writer) {
     	writer.writeComment("Species Tree: tmrcaStatistic");
-    	
+
     	writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT),
                 new Attribute.Default<String>(AttributeParser.NAME, SpeciesTreeModelParser.SPECIES_TREE + "." + TreeModelParser.ROOT_HEIGHT)});
-    	
+
     	writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
         writer.writeOpenTag(TMRCAStatisticParser.MRCA);
@@ -288,13 +288,13 @@ public class STARBEASTGenerator extends Generator {
         for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
         	writer.writeIDref(SpeciesBindingsSPinfoParser.SP, eachSp);
         }
-        
+
         writer.writeCloseTag(TaxaParser.TAXA);
         writer.writeCloseTag(TMRCAStatisticParser.MRCA);
         writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
-    	
+
     }
-    
+
     private void writeGeneUnderSpecies(XMLWriter writer) {
 
         writer.writeComment("Species Tree: Coalescent likelihood for gene trees under species tree");
@@ -325,27 +325,27 @@ public class STARBEASTGenerator extends Generator {
 //        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
 //        if (options.speciesTreePrior == TreePriorType.SPECIES_YULE) {
-        
+
         writer.writeComment("Species tree prior: gama2 + gamma4");
         writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION_LIKELIHOOD, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SPOPS)});
-        
+
         // change exponential + gamma2 into gama2 + gamma4
         // <distribution0>
         writer.writeOpenTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
-//        writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST); 
+//        writer.writeIDref(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL, PDIST);
         writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
         writer.writeOpenTag(DistributionModelParser.SHAPE);
         writer.writeText("2");
         writer.writeCloseTag(DistributionModelParser.SHAPE);
 
         writer.writeOpenTag(DistributionModelParser.SCALE);
-        
-        Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);         
+
+        Parameter para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + options.starBEASTOptions.POP_MEAN);
         writeParameter(para, 1, writer);
         writer.writeCloseTag(DistributionModelParser.SCALE);
 
-        writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);   
+        writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
         writer.writeCloseTag(MixedDistributionLikelihoodParser.DISTRIBUTION0);
 
         // <distribution1>
@@ -411,7 +411,7 @@ public class STARBEASTGenerator extends Generator {
 
         // CONTINUOUS_CONSTANT    N  1      2(N-1) 0
         // CONTINUOUS             N  1      2N-1   0
-        // CONSTANT                         2N-1   0   
+        // CONSTANT                         2N-1   0
         if (options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS_CONSTANT
                 || options.getPartitionTreePriors().get(0).getPopulationSizeModel() == PopulationSizeModelType.CONTINUOUS) {
             for (int i = 0; i < numOfSpecies; i++) {
@@ -438,7 +438,7 @@ public class STARBEASTGenerator extends Generator {
                 v = v + " 0 0"; // 2(N-1) 0
             }
         }
-        
+
         return v;
     }
 }

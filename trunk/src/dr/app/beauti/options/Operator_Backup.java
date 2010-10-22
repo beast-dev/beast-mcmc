@@ -23,7 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.types.OperatorType;
 
 /**
  * @author Alexei Drummond
@@ -60,7 +60,7 @@ public class Operator_Backup {
         this.parameter1 = parameter1;
         this.parameter2 = parameter2;
         this.tag = null;
-        
+
         this.type = operatorType;
         this.tuningEdited = false;
         this.tuning = tuning;
@@ -68,23 +68,23 @@ public class Operator_Backup {
 
         this.inUse = true;
     }
-    
+
     public Operator_Backup(String name, String description,
 		            Parameter parameter, String tag, String idref,
 		            OperatorType operatorType, double tuning, double weight) {
 		this.baseName = name;
 		this.description = description;
 		this.parameter1 = parameter;
-		this.parameter2 = null;	
-		
+		this.parameter2 = null;
+
 		this.tag = tag;
 		this.idref = idref;
-		
+
 		this.type = operatorType;
 		this.tuningEdited = false;
 		this.tuning = tuning;
 		this.weight = weight;
-		
+
 		this.inUse = true;
 	}
 
@@ -132,10 +132,10 @@ public class Operator_Backup {
     public double tuning;
     public double weight;
     public boolean inUse;
-    
+
     public final String tag;
     public String idref;
-    
+
     public final Parameter parameter1;
-    public final Parameter parameter2;    
+    public final Parameter parameter2;
 }

@@ -1,8 +1,6 @@
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.generator.GeneralTraitGenerator;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
+import dr.app.beauti.types.OperatorType;
 
 import java.util.List;
 

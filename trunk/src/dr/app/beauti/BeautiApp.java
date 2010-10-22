@@ -45,8 +45,6 @@ import java.util.Set;
 public class BeautiApp extends MultiDocApplication {
     private final static Version version = new BeastVersion();
 
-    private static final boolean COMPILING_MAC_UI = false;
-
     public BeautiApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
         super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);

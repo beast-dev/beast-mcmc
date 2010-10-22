@@ -30,7 +30,7 @@ import dr.app.beauti.alignmentviewer.AlignmentViewer;
 import dr.app.beauti.alignmentviewer.AminoAcidDecorator;
 import dr.app.beauti.alignmentviewer.NucleotideDecorator;
 import dr.app.beauti.alignmentviewer.StateCellDecorator;
-import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
@@ -50,10 +50,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -84,6 +82,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     SelectModelDialog selectModelDialog = null;
     SelectClockDialog selectClockDialog = null;
     SelectTreeDialog selectTreeDialog = null;
+
+    SelectTraitDialog selectTraitDialog = null;
 
     BeautiFrame frame = null;
 
@@ -224,7 +224,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 frame.setupStarBEAST(useStarBEASTCheck.isSelected());
                 dataTableModel.fireTableDataChanged();
             }
-        });       
+        });
 
     }
 
@@ -292,7 +292,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         col.setCellEditor(new ComboBoxCellEditor());
 
         col = dataTable.getColumnModel().getColumn(7);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getNonTraitPartitionTreeModels().toArray())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(options.getPartitionTreeModels().toArray())));
 
     }
 
@@ -306,25 +306,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
                                                      int row, int column) {
 
             ((JComboBox) editorComponent).removeAllItems();
-            if (options.containTrait(table.getValueAt(row, 0).toString())) {
-                if (column == 5) {
-                    for (Object ob : options.getPartitionTraitsSubstitutionModels()) {
-                        ((JComboBox) editorComponent).addItem(ob);
-                    }
-                } else if (column == 6) {
-                    for (Object ob : options.getPartitionTraitsClockModels()) {
-                        ((JComboBox) editorComponent).addItem(ob);
-                    }
+
+            if (column == 5) {
+                for (Object ob : options.getPartitionSubstitutionModels()) {
+                    ((JComboBox) editorComponent).addItem(ob);
                 }
-            } else {
-                if (column == 5) {
-                    for (Object ob : options.getPartitionNonTraitsSubstitutionModels()) {
-                        ((JComboBox) editorComponent).addItem(ob);
-                    }
-                } else if (column == 6) {
-                    for (Object ob : options.getPartitionNonTraitsClockModels()) {
-                        ((JComboBox) editorComponent).addItem(ob);
-                    }
+            } else if (column == 6) {
+                for (Object ob : options.getPartitionClockModels()) {
+                    ((JComboBox) editorComponent).addItem(ob);
                 }
             }
 
@@ -361,8 +350,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         modelsChanged();
 
-        useStarBEASTCheck.setEnabled(options.getNonTraitsDataList().size() > 0); // single partition is allowed
-        createImportTraitButton.setEnabled(options.getNonTraitsDataList().size() > 0);
+        boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
+
+        useStarBEASTCheck.setEnabled(taxaAvailable);
+        createImportTraitButton.setEnabled(taxaAvailable);
 
         dataTableModel.fireTableDataChanged();
     }
@@ -388,7 +379,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //            uncheckAllowDifferentTaxa();
 //        }
 
-        if (options.getNonTraitsDataList().size() == 0) {
+        if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
             options.reset();
             useStarBEASTCheck.setSelected(false);
@@ -407,8 +398,37 @@ public class DataPanel extends BeautiPanel implements Exportable {
     }
 
     public void createFromTraits() {
-        frame.createImportTraits();
+        int selRow = -1;
+
+        if (selectTraitDialog == null) {
+            selectTraitDialog = new SelectTraitDialog(frame);
+        }
+
+        List<TraitData> traits = new ArrayList<TraitData>();
+        for (TraitData trait : options.traits) {
+            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+                traits.add(trait);
+            }
+        }
+        int result = selectTraitDialog.showDialog(traits);
+        if (result != JOptionPane.CANCEL_OPTION) {
+            TraitData trait = selectTraitDialog.getTrait();
+            String name = trait.getName();
+            if (selectTraitDialog.getMakeCopy()) {
+                name = selectTraitDialog.getName();
+            }
+
+            selRow = options.createPartitionForTrait(name, trait);
+        }
+
+        modelsChanged();
         dataTableModel.fireTableDataChanged();
+
+        if (selRow != -1) {
+            dataTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
+        fireDataChanged();
+        repaint();
     }
 
     public void unlinkModels() {
@@ -445,6 +465,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                             JOptionPane.ERROR_MESSAGE);
 
                 }
+                return;
             }
 
             if (!selectedPartitionData.contains(partition))
@@ -533,7 +554,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionData partition = options.dataPartitions.get(row);
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
-            if (!model.getName().equals(partition.getName()) && partition.getTraitType() == null) {// not a trait
+            if (!model.getName().equals(partition.getName()) && partition.getTrait() == null) {// not a trait
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
 
                 // this prevents partition not broken, and used for unsharing tree prior only,
@@ -613,7 +634,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     class DataTableModel extends AbstractTableModel {
 
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Data Type", "Subst. Model", "Clock Model", "Partition Tree"};
+        String[] columnNames = {"Partition Name", "File Name", "Taxa", "Sites", "Data Type", "Site Model", "Clock Model", "Partition Tree"};
 
         public DataTableModel() {
         }
@@ -625,12 +646,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public int getRowCount() {
             if (options == null) return 0;
 //            return options.getPartitionDataNoSpecies().size();
-            return options.getNonTraitsDataList().size();
+            return options.dataPartitions.size();
         }
 
         public Object getValueAt(int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
-            PartitionData partition = options.getNonTraitsDataList().get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
@@ -657,7 +678,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
-            PartitionData partition = options.getNonTraitsDataList().get(row);
+            PartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
@@ -813,8 +834,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public class CreateAction extends AbstractAction {
         public CreateAction() {
-            super("Create or Import Trait ...");
-            setToolTipText("Create a data partition from one or more traits, or import from a mapping file");
+            super("Create partition from trait ...");
+            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
         }
 
         public void actionPerformed(ActionEvent ae) {

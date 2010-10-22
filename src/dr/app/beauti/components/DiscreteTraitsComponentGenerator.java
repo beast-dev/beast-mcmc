@@ -1,15 +1,8 @@
 package dr.app.beauti.components;
 
 import dr.app.beauti.util.XMLWriter;
-import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
-import dr.evoxml.TaxonParser;
-import dr.inference.model.ParameterParser;
-import dr.util.Attribute;
-import dr.xml.XMLParser;
 
 /**
  * @author Andrew Rambaut

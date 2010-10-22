@@ -26,10 +26,9 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
-import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.enumTypes.BinaryModelType;
-import dr.app.beauti.enumTypes.FrequencyPolicyType;
-import dr.app.beauti.enumTypes.LocationSubstModelType;
+import dr.app.beauti.types.BinaryModelType;
+import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.LocationSubstModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
@@ -41,7 +40,6 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;

@@ -1,10 +1,10 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.RelativeRatesType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.RelativeRatesType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
@@ -402,9 +402,9 @@ public class OperatorsGenerator extends Generator {
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
-        writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(DiscreteTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
         // <svsGeneralSubstitutionModel idref="originModel"/>
-        writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);        
+        writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);
     }
 
     private void writeRateBitExchangeOperator(Operator operator, XMLWriter writer) {
@@ -555,17 +555,26 @@ public class OperatorsGenerator extends Generator {
 	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
 	                break;
 
-	            case UNCORRELATED_EXPONENTIAL:
-	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+	            case UNCORRELATED:
+                    switch (model.getClockDistributionType()) {
+                        case LOGNORMAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                            break;
+                        case GAMMA:
+                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
+//                            break;
+                        case COUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Couchy relaxed clock model not implemented yet");
+//                            break;
+                        case EXPONENTIAL:
+                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                            break;
+                    }
 	            	break;
 
-	            case UNCORRELATED_LOGNORMAL:
-	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-	                break;
-
-	            case AUTOCORRELATED_LOGNORMAL:
-	                //TODO
-	                break;
+	            case AUTOCORRELATED:
+                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+//	                break;
 
 	            default:
 	                throw new IllegalArgumentException("Unknown clock model");

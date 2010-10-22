@@ -89,6 +89,17 @@ public class BEAUTiImporter {
             for (Alignment alignment : alignments) {
                 setData(taxa, alignment, null, null, null, null, file.getName());
             }
+
+            // assume that any additional taxon lists are taxon sets...
+            for (int i = 1; i < taxonLists.size(); i++) {
+                Taxa taxonSet = (Taxa)taxonLists.get(i);
+
+                options.taxonSets.add(taxonSet);
+                options.taxonSetsMono.put(taxonSet, false);
+                options.taxonSetsIncludeStem.put(taxonSet, false);
+                options.taxonSetsTreeModel.put(taxonSet, options.getPartitionTreeModels().get(0));
+            }
+
         } catch (JDOMException e) {
             throw new JDOMException(e.getMessage());
         } catch (ImportException e) {
@@ -312,7 +323,7 @@ public class BEAUTiImporter {
         }
 
         // check that the trait name doesn't exist
-        if (options.containTrait(traitName)) {
+        if (options.traitExists(traitName)) {
             int option = JOptionPane.showConfirmDialog(frame,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -364,6 +375,30 @@ public class BEAUTiImporter {
 
                     dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
                     taxa.getTaxon(i).setAttribute("date", date);
+                }
+            }
+
+            if (traits == null) {
+                Set<String> traitNames = new HashSet<String>();
+                for (Taxon taxon : taxa) {
+                    Iterator iter = taxon.getAttributeNames();
+                    while (iter.hasNext()) {
+                        String name = (String)iter.next();
+                        traitNames.add(name);
+                    }
+                }
+
+                traits = new ArrayList<TraitData>();
+
+                for (String name : traitNames) {
+                    if (!name.equalsIgnoreCase("date")) {
+                        // todo  - need to work out what type it is...
+
+
+                        TraitData.TraitType type = TraitData.TraitType.CONTINUOUS;
+                        TraitData trait = new TraitData(options, name, "", type);
+                        traits.add(trait);
+                    }
                 }
             }
 

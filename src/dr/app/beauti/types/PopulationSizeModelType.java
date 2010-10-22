@@ -21,23 +21,25 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public enum BinaryModelType {
+public enum PopulationSizeModelType {
 
-    BIN_SIMPLE("Simple model"), BIN_COVARION("Covarion model");
+    CONTINUOUS_CONSTANT("Piecewise linear & constant root"),
+    CONTINUOUS("Piecewise linear"),
+    CONSTANT("Piecewise constant");
 
-    BinaryModelType (String displayName) {
-        this.displayName = displayName;
+    PopulationSizeModelType(String name) {
+        this.name = name;
     }
 
     public String toString() {
-        return displayName;
+        return name;
     }
 
-    private String displayName;
+    private final String name;
 }

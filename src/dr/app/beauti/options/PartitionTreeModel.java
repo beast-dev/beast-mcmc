@@ -23,9 +23,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.StartingTreeType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.StartingTreeType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -47,7 +46,7 @@ public class PartitionTreeModel extends PartitionOptions {
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-    
+
     private double initialRootHeight = 1.0;
 
 	private boolean fixedTree = false;
@@ -87,7 +86,7 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     private void initTreeModelParaAndOpers() {
-        
+
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
@@ -118,18 +117,18 @@ public class PartitionTreeModel extends PartitionOptions {
      */
     public void selectParameters(List<Parameter> params) {
     	calculateInitialRootHeightPerTree();
-    	
+
     	getParameter("tree");
     	getParameter("treeModel.internalNodeHeights");
-    	getParameter("treeModel.allInternalNodeHeights");    	
-    	
+    	getParameter("treeModel.allInternalNodeHeights");
+
     	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
-//    	rootHeightPara.initial = initialRootHeight; 
+//    	rootHeightPara.initial = initialRootHeight;
 //    	rootHeightPara.priorEdited = true;
     	if (!options.useStarBEAST) {
     		params.add(rootHeightPara);
     	}
-    	     
+
     }
 
     /**
@@ -146,29 +145,18 @@ public class PartitionTreeModel extends PartitionOptions {
             if (!subtreeSlideOp.tuningEdited) {
             	subtreeSlideOp.tuning = initialRootHeight / 10.0;
             }
-        	
+
         	ops.add(subtreeSlideOp);
             ops.add(getOperator("narrowExchange"));
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
         }
-        
+
         ops.add(getOperator("treeModel.rootHeight"));
         ops.add(getOperator("uniformHeights"));
     }
 
     /////////////////////////////////////////////////////////////
-    
-    public boolean containsUncorrelatedRelaxClock() {
-        for (PartitionData partition: options.getAllPartitionData(this)) {
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
-            if (clockModel.getClockType() == ClockType.UNCORRELATED_EXPONENTIAL 
-                    || clockModel.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     public PartitionTreePrior getPartitionTreePrior() {
         return treePrior;
@@ -201,7 +189,7 @@ public class PartitionTreeModel extends PartitionOptions {
     public void setNewick(boolean newick) {
         isNewick = newick;
     }
-    
+
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;
     }
@@ -209,7 +197,7 @@ public class PartitionTreeModel extends PartitionOptions {
     public PloidyType getPloidyType() {
         return ploidyType;
     }
-    
+
     public double getInitialRootHeight() {
 		return initialRootHeight;
 	}
@@ -217,11 +205,11 @@ public class PartitionTreeModel extends PartitionOptions {
 	public void setInitialRootHeight(double initialRootHeight) {
 		this.initialRootHeight = initialRootHeight;
 	}
-	
-	private void calculateInitialRootHeightPerTree() {			
+
+	private void calculateInitialRootHeightPerTree() {
 		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
 	}
-    
+
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionTreeModels().size() > 1) { //|| options.isSpeciesAnalysis()

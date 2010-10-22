@@ -26,8 +26,8 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.StartingTreeType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.gui.components.RealNumberField;

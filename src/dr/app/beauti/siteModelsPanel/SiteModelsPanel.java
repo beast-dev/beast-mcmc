@@ -28,7 +28,7 @@ package dr.app.beauti.siteModelsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.enumTypes.SequenceErrorType;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;

@@ -23,7 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.types.OperatorType;
 import java.util.Map;
 
 /**
@@ -177,5 +177,5 @@ public class Operator {
     public String getBaseName() {
         return baseName;
     }
-    
+
 }

@@ -24,9 +24,9 @@
 package dr.app.beauti.options;
 
 
-import dr.app.beauti.enumTypes.OperatorType;
-import dr.app.beauti.enumTypes.PriorScaleType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.generator.Generator;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
@@ -148,19 +148,19 @@ public class STARBEASTOptions extends ModelOptions {
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
             ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            
+
 //            ops.add(getOperator("upDownBirthDeathSpeciesTree"));
 //            ops.add(getOperator("upDownBirthDeathSTPop"));
-//            
+//
 //            for (PartitionTreeModel tree : getPartitionTreeModels()) {
 //            	ops.add(getOperator(tree.getPrefix() + "upDownBirthDeathGeneTree"));
 //            }
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
             ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE));
-            
+
 //            ops.add(getOperator("upDownYuleSpeciesTree"));
 //            ops.add(getOperator("upDownYuleSTPop"));
-//            
+//
 //            for (PartitionTreeModel tree : getPartitionTreeModels()) {
 //            	ops.add(getOperator(tree.getPrefix() + "upDownYuleGeneTree"));
 //            }
@@ -171,7 +171,7 @@ public class STARBEASTOptions extends ModelOptions {
         ops.add(getOperator(TraitData.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT));
         //TODO: more
     }
-    
+
     /////////////////////////////////////////////////////////////
 
     public List<String> getSpeciesList() {

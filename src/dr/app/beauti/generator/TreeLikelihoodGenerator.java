@@ -26,7 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
@@ -37,7 +37,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
-import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.MergePatternsParser;
@@ -106,44 +105,44 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
-            	writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, substModel.getPrefix(num) + partition.getPrefix()
-                                + SitePatternsParser.PATTERNS);
+                writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, substModel.getPrefix(num) + partition.getPrefix()
+                        + SitePatternsParser.PATTERNS);
             } else {
-            	writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
+                writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
             }
         } else {
             // We just need to use the dummy alignment
-        	writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
+            writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
         }
 
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
 
         if (num > 0) {
-        	writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
+            writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num) + SiteModel.SITE_MODEL);
         } else {
-        	writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+            writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
 
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
-            	writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
+                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
                         + BranchRateModel.BRANCH_RATES);
                 break;
-            case UNCORRELATED_EXPONENTIAL:
-            case UNCORRELATED_LOGNORMAL:
-            	writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+            case UNCORRELATED:
+                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
                         + BranchRateModel.BRANCH_RATES);
                 break;
             case RANDOM_LOCAL_CLOCK:
-            	writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
+                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
                         + BranchRateModel.BRANCH_RATES);
                 break;
 
-            case AUTOCORRELATED_LOGNORMAL:
-            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
-                        + BranchRateModel.BRANCH_RATES);
-                break;
+            case AUTOCORRELATED:
+                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+//            	writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+//                        + BranchRateModel.BRANCH_RATES);
+//                break;
 
             default:
                 throw new IllegalArgumentException("Unknown clock model");
@@ -161,20 +160,17 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-//        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-        for (PartitionData partition : options.getNonTraitsDataList()) { // Each PD has one TreeLikelihood
-            PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-            if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
-                for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                    writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+            if (partition.getAlignment() != null) {
+                // is an alignment data partition
+                PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+                if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
+                    for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
+                        writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                    }
+                } else {
+                    writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
-            } else {
-                writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-            }
-
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
-            if (clockModel.getClockType() == ClockType.AUTOCORRELATED_LOGNORMAL) {
-                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
             }
         }
     }

@@ -21,32 +21,23 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
+ * @author Walter Xie
  */
-public enum TreePriorType {
+public enum BinaryModelType {
 
-    CONSTANT("Coalescent: Constant Size"),
-    EXPONENTIAL("Coalescent: Exponential Growth"),
-    LOGISTIC("Coalescent: Logistic Growth"),
-    EXPANSION("Coalescent: Expansion Growth"),
-    SKYLINE("Coalescent: Bayesian Skyline"),
-    EXTENDED_SKYLINE("Coalescent: Extended Bayesian Skyline Plot"),
-    GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
-    YULE("Speciation: Yule Process"),
-    BIRTH_DEATH("Speciation: Birth-Death Process"),
-    SPECIES_YULE("Species Tree: Yule Process"),
-    SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
+    BIN_SIMPLE("Simple model"), BIN_COVARION("Covarion model");
 
-    TreePriorType(String name) {
-        this.name = name;
+    BinaryModelType (String displayName) {
+        this.displayName = displayName;
     }
 
     public String toString() {
-        return name;
+        return displayName;
     }
 
-    private final String name;
+    private String displayName;
 }

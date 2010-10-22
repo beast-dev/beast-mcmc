@@ -28,7 +28,7 @@ package dr.app.beauti.tipdatepanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.TipDateSamplingComponentOptions;
-import dr.app.beauti.enumTypes.TipDateSamplingType;
+import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
 import dr.app.beauti.util.PanelUtils;

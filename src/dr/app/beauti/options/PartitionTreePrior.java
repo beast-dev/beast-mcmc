@@ -23,7 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.enumTypes.*;
+import dr.app.beauti.types.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 
@@ -87,7 +87,7 @@ public class PartitionTreePrior extends PartitionOptions {
     }
 
     private void initTreePriorParaAndOpers() {
-       
+
         createParameterJeffreysPrior("constant.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
 

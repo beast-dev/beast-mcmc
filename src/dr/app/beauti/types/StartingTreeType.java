@@ -21,20 +21,23 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.enumTypes;
+package dr.app.beauti.types;
 
 /**
  * @author Alexei Drummond
- * @author Walter Xie
  */
-public enum PopulationSizeModelType {
+public enum StartingTreeType {
 
-    CONTINUOUS_CONSTANT("Piecewise linear & constant root"),
-    CONTINUOUS("Piecewise linear"),
-    CONSTANT("Piecewise constant");
+    RANDOM("randomly generated"),
+    UPGMA("UPGMA generated"),
+    USER("user-specified");
 
-    PopulationSizeModelType(String name) {
+    StartingTreeType(String name) {
         this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public String toString() {

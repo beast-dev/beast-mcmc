@@ -591,7 +591,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa!",
+                    JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
                             "Illegal Configuration",
                             JOptionPane.ERROR_MESSAGE);
                     return;

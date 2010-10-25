@@ -956,7 +956,7 @@ public class SubstitutionModelGenerator extends Generator {
                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + SiteModel.SITE_MODEL)});
 
         writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        writer.writeIDref(DiscreteTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
         writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
 //        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);

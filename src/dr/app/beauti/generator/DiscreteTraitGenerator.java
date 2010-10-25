@@ -23,7 +23,9 @@ import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Walter Xie
@@ -35,19 +37,6 @@ public class DiscreteTraitGenerator extends Generator {
 
     public DiscreteTraitGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
-    }
-
-    public static String getLocationSubstModelTag(PartitionSubstitutionModel substModel) {
-        // AR - switch to a unified GeneralSubstitutionModel parser.
-        return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
-
-//        if (substModel.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
-//            return GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL;
-//        } else if (substModel.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
-//            return ComplexSubstitutionModelParser.COMPLEX_SUBSTITUTION_MODEL;
-//        } else {
-//            return null;
-//        }
     }
 
     /**
@@ -86,16 +75,19 @@ public class DiscreteTraitGenerator extends Generator {
     public void writeGeneralDataType(TraitData traitData, XMLWriter writer) {
         writer.writeComment("trait = " + traitData.getName() + " trait_type = " + traitData.getTraitType());
 
-        List<String> generalData = TraitData.getStatesListOfTrait(options.taxonList, traitData.getName());
+        Set<String> states = new HashSet<String>();
+        for (PartitionData partition : options.getAllPartitionData(traitData)) {
+            states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
+        }
 
         // <generalDataType>
         writer.writeOpenTag(GeneralDataTypeParser.GENERAL_DATA_TYPE, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, traitData.getName() + DATA)});
 
-        int numOfSates = generalData.size();
-        writer.writeComment("Number Of Sates = " + numOfSates);
+        int numOfStates = states.size();
+        writer.writeComment("Number Of States = " + numOfStates);
 
-        for (String eachGD : generalData) {
+        for (String eachGD : states) {
             writer.writeTag(GeneralDataTypeParser.STATE, new Attribute[]{
                     new Attribute.Default<String>(GeneralDataTypeParser.CODE, eachGD)}, true);
         }
@@ -129,7 +121,7 @@ public class DiscreteTraitGenerator extends Generator {
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
-        writer.writeIDref(getLocationSubstModelTag(substModel), substModel.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getPrefix() + AbstractSubstitutionModel.MODEL);
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:

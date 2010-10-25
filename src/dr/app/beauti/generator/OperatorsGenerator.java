@@ -18,6 +18,7 @@ import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
@@ -402,7 +403,7 @@ public class OperatorsGenerator extends Generator {
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
-        writer.writeIDref(DiscreteTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
         // <svsGeneralSubstitutionModel idref="originModel"/>
         writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);
     }

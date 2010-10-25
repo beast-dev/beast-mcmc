@@ -52,15 +52,16 @@ public class DiscreteTraitGenerator extends Generator {
             // may as well write the species traits - may be useful...
 //            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
 
-                if (!taxon.containsAttribute(trait.getName())) {
-                    throw new Arguments.ArgumentException("Cannot find trait " + trait.getName()
-                            + "\nin taxon " + taxon.getId());
-                }
+//                if (!taxon.containsAttribute(trait.getName())) {
+//                    throw new Arguments.ArgumentException("Cannot find trait '" + trait.getName()
+//                            + "' in taxon '" + taxon.getId() + "'");
+//                }
 
                 writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
                         new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                writer.writeText(taxon.getAttribute(trait.getName()).toString());
+                // denotes missing data using '?'
+                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
                 writer.writeCloseTag(AttributeParser.ATTRIBUTE);
 //            }
         }

@@ -423,7 +423,8 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, options.getAllPartitionData(model).get(0).getName()).size();
+        TraitData trait = options.getAllPartitionData(model).get(0).getTrait();
+        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, trait.getName()).size();
 
         if (numOfStates < 1) throw new IllegalArgumentException("The number of states must be greater than 1");
 

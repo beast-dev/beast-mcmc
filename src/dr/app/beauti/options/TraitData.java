@@ -79,23 +79,7 @@ public class TraitData {
     }
 
     public Set<String> getStatesOfTrait(Taxa taxonList) {
-        Set<String> states = new HashSet<String>();
-        String attr;
-
-        if (taxonList != null) {
-            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = taxonList.getTaxon(i);
-                attr = (String) taxon.getAttribute(getName());
-
-                if (attr != null) {
-                    states.add(attr);
-                }
-
-            }
-            return states;
-        } else {
-            throw new IllegalArgumentException("taxon list is null");
-        }
+        return getStatesListOfTrait(taxonList, getName());
     }
 
     // todo this needs to go somewhere else...
@@ -104,25 +88,25 @@ public class TraitData {
     }
 
 
-    public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
-        List<String> states = new ArrayList<String>();
-        String attr;
+    public static Set<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
+        Set<String> states = new HashSet<String>();
 
-        if (taxonList != null) {
-            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-                Taxon taxon = taxonList.getTaxon(i);
-                attr = (String) taxon.getAttribute(traitName);
-
-                if (attr == null) return null;
-
-                if (!states.contains(attr)) {
-                    states.add(attr);
-                }
-            }
-            return states;
-        } else {
-            return null;
+        if (taxonList == null) {
+            throw new IllegalArgumentException("taxon list is null");
         }
+
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Taxon taxon = taxonList.getTaxon(i);
+            String attr = (String) taxon.getAttribute(traitName);
+
+            // ? is used to denote missing data so is not a state...
+            if (attr != null && !attr.equals("?")) {
+                states.add(attr);
+            }
+        }
+
+
+        return states;
     }
 
     public String toString() {

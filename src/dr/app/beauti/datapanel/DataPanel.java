@@ -30,8 +30,8 @@ import dr.app.beauti.alignmentviewer.AlignmentViewer;
 import dr.app.beauti.alignmentviewer.AminoAcidDecorator;
 import dr.app.beauti.alignmentviewer.NucleotideDecorator;
 import dr.app.beauti.alignmentviewer.StateCellDecorator;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
@@ -50,8 +50,10 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -589,7 +591,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    JOptionPane.showMessageDialog(this, "To accommodate different taxa for each partition trees cannot be linked.",
+                    JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa!",
                             "Illegal Configuration",
                             JOptionPane.ERROR_MESSAGE);
                     return;

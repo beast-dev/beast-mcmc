@@ -30,7 +30,9 @@ import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.operators.RateBitExchangeOperator;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexei Drummond
@@ -466,16 +468,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
 //                    }
 
-                    throw new UnsupportedOperationException("Not implemented yet");
-//                    int K = 0; // AR this should be the number of states for the trait being analysed...
-//                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
-//                         nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
-//                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
-//                         nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
-//                    }
+                    Set<String> states = getDiscreteStateSet();
+                    int K = states.size();
+                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+                         nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
+                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+                         nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+                    }
 
 
-//                    params.add(nonZeroRates);
+                    params.add(nonZeroRates);
                 }
                 break;
 
@@ -972,6 +974,20 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         }
         return prefix;
+    }
+
+    /**
+     * returns the union of the set of states for all traits using this discrete CTMC model
+     * @return
+     */
+    public Set<String> getDiscreteStateSet() {
+        Set<String> states = new HashSet<String>();
+        for (PartitionData partition : options.getAllPartitionData(this)) {
+             if (partition.getTrait() != null) {
+                 states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
+             }
+        }
+        return states;
     }
 
 }

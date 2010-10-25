@@ -33,6 +33,7 @@ import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -175,7 +176,7 @@ public class STARBEASTOptions extends ModelOptions {
     /////////////////////////////////////////////////////////////
 
     public List<String> getSpeciesList() {
-        return TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES.toString());
+        return new ArrayList<String>(TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES.toString()));
     }
 
     public String getDescription() {

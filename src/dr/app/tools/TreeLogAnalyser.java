@@ -56,20 +56,22 @@ public class TreeLogAnalyser {
 
         if (inputFile.isDirectory()) {
             System.out.println("Analysing all tree files below directory: " + inputFileName);
+
+            collectFiles(inputFile, files);
         } else if (inputFile.isFile()) {
             System.out.println("Analysing tree file: " + inputFileName);
+
+            files.add(inputFile);
         } else {
             System.err.println(inputFileName + " does not exist!");
             System.exit(0);
         }
 
-        collectFiles(inputFile, files);
-
         if( files.size() == 0 ) {
            System.err.println("No valid files");
            System.exit(0);
         }
-        
+
         if (outputFileName != null) {
             FileOutputStream outputStream = new FileOutputStream(outputFileName);
             System.setOut(new PrintStream(outputStream));

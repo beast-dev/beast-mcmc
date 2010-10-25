@@ -65,6 +65,11 @@ public class TreeLogAnalyser {
 
         collectFiles(inputFile, files);
 
+        if( files.size() == 0 ) {
+           System.err.println("No valid files");
+           System.exit(0);
+        }
+        
         if (outputFileName != null) {
             FileOutputStream outputStream = new FileOutputStream(outputFileName);
             System.setOut(new PrintStream(outputStream));

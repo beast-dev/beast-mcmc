@@ -52,7 +52,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
-    private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
+    private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
     private boolean activateBSSVS = false;
 
     public boolean useAmbiguitiesTreeLikelihood = false;
@@ -462,17 +462,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     Parameter nonZeroRates = getParameter("trait.nonZeroRates");
 
                     // AR - we can't use the average number of states across all defined traits!
-//                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+//                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
 //                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
-//                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+//                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
 //                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
 //                    }
 
                     Set<String> states = getDiscreteStateSet();
                     int K = states.size();
-                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
                          nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
-                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
                          nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     }
 
@@ -667,7 +667,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     ops.add(getOperator("trait.indicators"));
 //                    ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()+ "mu"));
 
-                    if (locationSubstType == LocationSubstModelType.ASYM_SUBST)
+                    if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST)
                         ops.add(getOperator(RateBitExchangeOperator.OPERATOR_NAME));
                 }
                 break;
@@ -834,12 +834,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public LocationSubstModelType getLocationSubstType() {
-        return locationSubstType;
+    public DiscreteSubstModelType getDiscreteSubstType() {
+        return discreteSubstType;
     }
 
-    public void setLocationSubstType(LocationSubstModelType locationSubstType) {
-        this.locationSubstType = locationSubstType;
+    public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
+        this.discreteSubstType = discreteSubstType;
     }
 
     public boolean isActivateBSSVS() {

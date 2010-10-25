@@ -27,8 +27,8 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
 import dr.app.beauti.types.BinaryModelType;
+import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.types.LocationSubstModelType;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
@@ -84,7 +84,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
-    private JComboBox discreteTraitSiteModelCombo = new JComboBox(LocationSubstModelType.values());
+    private JComboBox discreteTraitSiteModelCombo = new JComboBox(DiscreteSubstModelType.values());
     private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
 
     protected final PartitionSubstitutionModel model;
@@ -199,7 +199,7 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(discreteTraitSiteModelCombo);
         discreteTraitSiteModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model.setLocationSubstType((LocationSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
+                model.setDiscreteSubstType((DiscreteSubstModelType) discreteTraitSiteModelCombo.getSelectedItem());
             }
         });
 
@@ -252,7 +252,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.GENERAL:
-                discreteTraitSiteModelCombo.setSelectedItem(model.getLocationSubstType());
+                discreteTraitSiteModelCombo.setSelectedItem(model.getDiscreteSubstType());
                 activateBSSVS.setSelected(model.isActivateBSSVS());
                 break;
 

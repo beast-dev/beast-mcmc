@@ -4,11 +4,11 @@ package dr.app.beauti.types;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public enum LocationSubstModelType {
+public enum DiscreteSubstModelType {
     SYM_SUBST("Symmetric substitution model"),
         ASYM_SUBST("Asymmetric substitution model");
 
-        LocationSubstModelType(String name) {
+        DiscreteSubstModelType(String name) {
             this.name = name;
         }
 

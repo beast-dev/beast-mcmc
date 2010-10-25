@@ -304,7 +304,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ General Data of Traits ++++++++++++++++++
         try {
-            for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+            for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+                PartitionData partition = options.getAllPartitionData(model).get(0);
                 TraitData trait = partition.getTrait();
                 if (trait != null) {
                     discreteTraitGenerator.writeGeneralDataType(trait, writer);
@@ -828,7 +829,7 @@ public class BeastGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
-//            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
+//            if (!(model.getLocationSubstType() == DiscreteSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
             if (model.isActivateBSSVS()) {
                 writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
                 writer.writeText("");

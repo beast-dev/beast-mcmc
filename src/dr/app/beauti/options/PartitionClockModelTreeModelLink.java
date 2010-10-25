@@ -163,8 +163,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                         case GAMMA:
                             throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                        case COUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
                         case EXPONENTIAL:
                             ops.add(getOperator("upDownUCEDMeanHeights"));

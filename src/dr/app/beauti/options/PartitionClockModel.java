@@ -149,8 +149,8 @@ public class PartitionClockModel extends PartitionOptions {
 //                            rateParam = getParameter(ClockType.UCGD_SCALE);
 //                            params.add(getParameter(ClockType.UCGD_SHAPE));
 //                            break;
-                        case COUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                            break;
                         case EXPONENTIAL:
                             rateParam = getParameter(ClockType.UCED_MEAN);
@@ -223,7 +223,7 @@ public class PartitionClockModel extends PartitionOptions {
 //                                ops.add(getOperator(ClockType.UCGD_SCALE));
 //                                ops.add(getOperator(ClockType.UCGD_SHAPE));
 //                                break;
-                            case COUCHY:
+                            case CAUCHY:
                                 throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
 //                                break;
                             case EXPONENTIAL:
@@ -254,8 +254,8 @@ public class PartitionClockModel extends PartitionOptions {
                                 throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
 //                                ops.add(getOperator(ClockType.UCGD_SCALE));
 //                                break;
-                            case COUCHY:
-                                throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                                break;
                             case EXPONENTIAL:
                                 break;
@@ -307,8 +307,8 @@ public class PartitionClockModel extends PartitionOptions {
                         throw new UnsupportedOperationException("Uncorrelated Gamma clock not implemented yet");
 //                        rateParam = getParameter(ClockType.UCGD_SCALE);
 //                        break;
-                    case COUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy clock not implemented yet");
+                    case CAUCHY:
+                        throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                        break;
                     case EXPONENTIAL:
                         rateParam = getParameter(ClockType.UCED_MEAN);

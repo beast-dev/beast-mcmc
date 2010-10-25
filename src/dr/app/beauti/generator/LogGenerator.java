@@ -26,10 +26,10 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -284,8 +284,8 @@ public class LogGenerator extends Generator {
                         case GAMMA:
                             throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                        case COUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
                         case EXPONENTIAL:
                             // nothing required

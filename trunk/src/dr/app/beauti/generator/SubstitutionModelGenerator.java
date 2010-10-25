@@ -1,8 +1,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.types.LocationSubstModelType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
@@ -435,7 +435,7 @@ public class SubstitutionModelGenerator extends Generator {
             }
         }
 
-        if (model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST) {
+        if (model.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
@@ -464,7 +464,7 @@ public class SubstitutionModelGenerator extends Generator {
             writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
-        } else if (model.getLocationSubstType() == LocationSubstModelType.ASYM_SUBST) {
+        } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{

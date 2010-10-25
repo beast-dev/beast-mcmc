@@ -229,7 +229,9 @@ public class TimeSlicer {
                 documentElement = new Element("Document");
                 documentElement.addContent(documentNameElement);
                 documentElement.addContent(contourFolderElement);
-                documentElement.addContent(nodeFolderElement);
+                if (sliceMode == SliceMode.NODES) {
+                    documentElement.addContent(nodeFolderElement);
+                }
 
                 rootElement = new Element("kml");
                 rootElement.addContent(documentElement);
@@ -660,8 +662,8 @@ public class TimeSlicer {
                             }
                             numberOfPointsInPolygons += getNumberOfPointsInPolygon(dest, testPolygon);
                         }
-
-                        contourFolderElement.addContent(placemarkElement);
+                        sliceElement.addContent(placemarkElement);
+//                        contourFolderElement.addContent(placemarkElement);
                     }
                     pathCounter ++;
                 }
@@ -693,7 +695,7 @@ public class TimeSlicer {
         //if (outputFormat == OutputFormat.TAB)
         //    throw new RuntimeException("Only XML/KML output is implemented");
 
-        Element sliceElement = null;
+        Element sliceElement = new Element("Folder");
 
         if (outputFormat == OutputFormat.XML) {
             sliceElement = new Element(SLICE_ELEMENT);
@@ -703,12 +705,38 @@ public class TimeSlicer {
         List<List<Trait>> thisSlice = values.get(slice);
         int traitCount = thisSlice.size();
 
+//        Element folder =  new Element("Folder");
+//        if (outputFormat == OutputFormat.KML) {
+//            Element name =  new Element("name");
+//            name.addContent("sliceValue");
+//            folder.addContent(name);
+//        }
+
+        if (outputFormat == OutputFormat.KML) {
+            Element name =  new Element("name");
+            name.addContent(Double.toString(sliceValue));
+            sliceElement.addContent(name);
+        }
+
         for (int traitIndex = 0; traitIndex < traitCount; traitIndex++) {
 
-            summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
-                    outputFormat,
-                    hpdValue);
+//            if (outputFormat == OutputFormat.KML) {
+//                summarizeSliceTrait(folder, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+//                        outputFormat,
+//                        hpdValue);
+//
+//            } else {
+                summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+                        outputFormat,
+                        hpdValue);
+
+//            }
         }
+
+        if (outputFormat == OutputFormat.KML) {
+            contourFolderElement.addContent(sliceElement);
+        }
+
 
         if (outputFormat == OutputFormat.XML) {
             rootElement.addContent(sliceElement);
@@ -820,7 +848,7 @@ public class TimeSlicer {
 
                 begin.addContent(dateFormat.format(calendar.getTime()));
             } else {
-                begin.addContent(Double.toString(Math.round(date)));
+                begin.addContent(Integer.toString((int)Math.round(date)));
             }
             timeSpan.addContent(begin);
 //            if (sliceInteger > 1) {
@@ -893,7 +921,7 @@ public class TimeSlicer {
 
                     begin.addContent(dateFormat.format(calendar.getTime()));
                 } else {
-                    begin.addContent(Double.toString(Math.round(date)));
+                    begin.addContent(Integer.toString((int)Math.round(date)));
                 }
                 timeSpan.addContent(begin);
                 placemarkElement.addContent(timeSpan);

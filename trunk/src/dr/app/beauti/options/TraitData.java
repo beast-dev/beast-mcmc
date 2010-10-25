@@ -6,7 +6,9 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  *
@@ -76,8 +78,8 @@ public class TraitData {
         this.name = name;
     }
 
-    public List<String> getStatesListOfTrait(Taxa taxonList) {
-        List<String> states = new ArrayList<String>();
+    public Set<String> getStatesOfTrait(Taxa taxonList) {
+        Set<String> states = new HashSet<String>();
         String attr;
 
         if (taxonList != null) {
@@ -85,18 +87,14 @@ public class TraitData {
                 Taxon taxon = taxonList.getTaxon(i);
                 attr = (String) taxon.getAttribute(getName());
 
-                if (attr == null) {
-                     throw new IllegalArgumentException("Trait (" + getName() + ") has no value in taxon " + taxon.getId() +
-                     ".\nPlease go to Traits panel to import value.");
-                }
-
-                if (!states.contains(attr)) {
+                if (attr != null) {
                     states.add(attr);
                 }
+
             }
             return states;
         } else {
-            return null;
+            throw new IllegalArgumentException("taxon list is null");
         }
     }
 

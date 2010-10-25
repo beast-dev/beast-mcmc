@@ -280,6 +280,16 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
+    public List<PartitionData> getAllPartitionData(TraitData trait) {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (PartitionData pd : dataPartitions) {
+            if (pd.getTrait() == trait) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
     public List<PartitionData> getAllPartitionData(PartitionSubstitutionModel model) {
         List<PartitionData> pdList = new ArrayList<PartitionData>();
         for (PartitionData pd : dataPartitions) {

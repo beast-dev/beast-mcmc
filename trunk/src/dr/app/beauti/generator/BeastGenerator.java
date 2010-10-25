@@ -44,6 +44,7 @@ import dr.evolution.util.Units;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
+import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evoxml.*;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
@@ -829,7 +830,7 @@ public class BeastGenerator extends Generator {
             // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
 //            if (!(model.getLocationSubstType() == LocationSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
             if (model.isActivateBSSVS()) {
-                writer.writeIDref(DiscreteTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
+                writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
                 writer.writeText("");
             }
         }

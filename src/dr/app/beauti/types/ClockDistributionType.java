@@ -30,7 +30,7 @@ public enum ClockDistributionType {
 
     LOGNORMAL("Lognormal"),
     GAMMA("Gamma"),
-    COUCHY("Couchy"),
+    CAUCHY("Cauchy"),
     EXPONENTIAL ("Exponential");
 
     ClockDistributionType(String displayName) {

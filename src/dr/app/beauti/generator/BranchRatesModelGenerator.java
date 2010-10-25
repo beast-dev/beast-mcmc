@@ -24,10 +24,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.types.ClockType;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.ClockType;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.clock.RateEvolutionLikelihood;
 import dr.evomodel.tree.TreeModel;
@@ -38,7 +37,6 @@ import dr.evomodelxml.clock.ACLikelihoodParser;
 import dr.evomodelxml.tree.RateCovarianceStatisticParser;
 import dr.evomodelxml.tree.RateStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
@@ -133,8 +131,8 @@ public class BranchRatesModelGenerator extends Generator {
                         case GAMMA:
                             throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                        case COUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
                         case EXPONENTIAL:
                             writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
@@ -440,8 +438,8 @@ public class BranchRatesModelGenerator extends Generator {
                     case GAMMA:
                         throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
 //                        return modelPrefix + ClockType.UCGD_SCALE;
-                    case COUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
+                    case CAUCHY:
+                        throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
 //                        return modelPrefix + ClockType.UCCD_MEAN;
                     case EXPONENTIAL:
                         return modelPrefix + ClockType.UCED_MEAN;
@@ -474,7 +472,7 @@ public class BranchRatesModelGenerator extends Generator {
                         break;
                     case GAMMA:
                         throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-                    case COUCHY:
+                    case CAUCHY:
                         throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
                     case EXPONENTIAL:
                         writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);

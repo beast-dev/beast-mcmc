@@ -1,11 +1,11 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.RelativeRatesType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
@@ -564,8 +564,8 @@ public class OperatorsGenerator extends Generator {
                         case GAMMA:
                             throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
 //                            break;
-                        case COUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Couchy relaxed clock model not implemented yet");
+                        case CAUCHY:
+                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
 //                            break;
                         case EXPONENTIAL:
                             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);

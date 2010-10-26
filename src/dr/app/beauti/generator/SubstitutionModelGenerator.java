@@ -6,7 +6,6 @@ import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.TraitData;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
@@ -423,17 +422,8 @@ public class SubstitutionModelGenerator extends Generator {
      * @param writer XMLWriter
      */
     private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        TraitData trait = options.getAllPartitionData(model).get(0).getTrait();
-        int numOfStates = TraitData.getStatesListOfTrait(options.taxonList, trait.getName()).size();
 
-        if (numOfStates < 1) throw new IllegalArgumentException("The number of states must be greater than 1");
-
-        for (PartitionData partition : options.getAllPartitionData(model)) {
-            if (numOfStates != TraitData.getStatesListOfTrait(options.taxonList, partition.getName()).size()) {
-                throw new IllegalArgumentException("Discrete Traits having different number of states " +
-                        "\n" + "cannot share the same substitution model");
-            }
-        }
+        int stateCount = options.getStatesForDiscreteModel(model).size();
 
         if (model.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
             writer.writeComment("symmetric CTMC model for discrete state reconstructions");
@@ -441,13 +431,11 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
 
-            for (PartitionData partition : options.getAllPartitionData(model)) { //?
-                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
-            }
+            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeFrequencyModel(model, numOfStates, true, writer);
+            writeDiscreteFrequencyModel(model, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
@@ -461,7 +449,7 @@ public class SubstitutionModelGenerator extends Generator {
 //            } else {
 //                writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
 //            }
-            writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
+            writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
@@ -471,18 +459,16 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL),
                     new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
 
-            for (PartitionData partition : options.getAllPartitionData(model)) { //?
-                writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
-            }
+            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
 
             writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
-            writeFrequencyModel(model, numOfStates, true, writer);
+            writeDiscreteFrequencyModel(model, stateCount, true, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
 
             //---------------- rates and indicators -----------------
-            writeRatesAndIndicators(model, numOfStates * (numOfStates - 1), null, writer);
+            writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
@@ -494,7 +480,7 @@ public class SubstitutionModelGenerator extends Generator {
             writeStatisticModel(model, writer);
     }
 
-    private void writeFrequencyModel(PartitionSubstitutionModel model, int numOfSates, Boolean normalize, XMLWriter writer) {
+    private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, int stateCount, Boolean normalize, XMLWriter writer) {
         if (normalize == null) {
             writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + FrequencyModelParser.FREQUENCY_MODEL)});
@@ -504,12 +490,10 @@ public class SubstitutionModelGenerator extends Generator {
                     new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
         }
 
-        for (PartitionData partition : options.getAllPartitionData(model)) { //?
-            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPrefix() + DiscreteTraitGenerator.DATA);
-        }
+        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-        writeParameter(model.getPrefix() + "trait.frequencies", numOfSates, Double.NaN, Double.NaN, Double.NaN, writer);
+        writeParameter(model.getPrefix() + "trait.frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
         writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
         writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);

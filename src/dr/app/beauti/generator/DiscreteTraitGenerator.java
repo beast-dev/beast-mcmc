@@ -23,8 +23,6 @@ import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
-import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -32,7 +30,7 @@ import java.util.Set;
  */
 public class DiscreteTraitGenerator extends Generator {
 
-    public static final String DATA = "DataType";
+    public static final String DATA_TYPE = "dataType";
 
 
     public DiscreteTraitGenerator(BeautiOptions options, ComponentFactory[] components) {
@@ -68,22 +66,20 @@ public class DiscreteTraitGenerator extends Generator {
     }
 
     /**
-     * write <generalDataType> and <attributePatterns>
+     * write <generalDataType>
      *
-     * @param traitData TraitData
+     * @param model     PartitionSubstitutionModel
      * @param writer    XMLWriter
      */
-    public void writeGeneralDataType(TraitData traitData, XMLWriter writer) {
-        writer.writeComment("trait = " + traitData.getName() + " trait_type = " + traitData.getTraitType());
+    public void writeGeneralDataType(PartitionSubstitutionModel model, XMLWriter writer) {
 
-        Set<String> states = new HashSet<String>();
-        for (PartitionData partition : options.getAllPartitionData(traitData)) {
-            states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
-        }
+        writer.writeComment("general data type for discrete trait model, '" + model.getName() + "'");
+
+        Set<String> states = options.getStatesForDiscreteModel(model);
 
         // <generalDataType>
         writer.writeOpenTag(GeneralDataTypeParser.GENERAL_DATA_TYPE, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getName() + DATA)});
+                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + DATA_TYPE)});
 
         int numOfStates = states.size();
         writer.writeComment("Number Of States = " + numOfStates);
@@ -94,16 +90,25 @@ public class DiscreteTraitGenerator extends Generator {
         }
 
         writer.writeCloseTag(GeneralDataTypeParser.GENERAL_DATA_TYPE);
+    }
+
+    /**
+     * write <attributePatterns>
+     *
+     * @param partition PartitionData
+     * @param writer    XMLWriter
+     */
+    public void writeAttributePatterns(PartitionData partition, XMLWriter writer) {
+        writer.writeComment("Data pattern for discrete trait, '" + partition.getTrait().getName() + "'");
 
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitData.getName() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
-                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, traitData.getName())});
+                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
+                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, partition.getTrait().getName())});
         writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
-        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, traitData.getName() + DATA);
+        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPartitionSubstitutionModel().getPrefix() + DATA_TYPE);
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);
     }
-
 
     /**
      * Ancestral Tree Likelihood
@@ -118,7 +123,7 @@ public class DiscreteTraitGenerator extends Generator {
 
         writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD),
-                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, partition.getPrefix() + "_" + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, partition.getPrefix() + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);

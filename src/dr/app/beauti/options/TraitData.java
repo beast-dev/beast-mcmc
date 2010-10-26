@@ -5,10 +5,7 @@ import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  *
@@ -89,7 +86,7 @@ public class TraitData {
 
 
     public static Set<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
-        Set<String> states = new HashSet<String>();
+        Set<String> states = new TreeSet<String>();
 
         if (taxonList == null) {
             throw new IllegalArgumentException("taxon list is null");

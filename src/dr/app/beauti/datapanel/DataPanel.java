@@ -408,7 +408,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         List<TraitData> traits = new ArrayList<TraitData>();
         for (TraitData trait : options.traits) {
-            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES) && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
                 traits.add(trait);
             }
         }

@@ -32,14 +32,13 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
+import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.management.openmbean.TabularData;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -335,16 +334,6 @@ public class BeautiOptions extends ModelOptions {
 //    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels() {
 //        return partitionModels;
 //    }
-
-    public List<PartitionData> getPartitionDataNoSpecies() {
-        List<PartitionData> pdList = new ArrayList<PartitionData>();
-        for (PartitionData pd : dataPartitions) {
-            if (!pd.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {// species excluded
-                pdList.add(pd);
-            }
-        }
-        return pdList;
-    }
 
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
@@ -754,6 +743,31 @@ public class BeautiOptions extends ModelOptions {
         return false;
     }
 
+    public Set<String> getStatesForDiscreteModel(PartitionSubstitutionModel model) {
+        Set<String> states = new TreeSet<String>();
+        for (PartitionData partition : getAllPartitionData(model)) {
+            Set<String> newStates = partition.getTrait().getStatesOfTrait(taxonList);
+
+            if (states.size() > 0) {
+                Set<String> shared = new HashSet<String>(states);
+                shared.retainAll(newStates);
+                if (shared.size() == 0) {
+                    throw new IllegalArgumentException("For discrete trait partitions to have a linked model they must share states");
+                }
+            }
+
+            states.addAll(newStates);
+        }
+
+        if (states.size() < 1) throw new IllegalArgumentException("The number of states must be greater than 1");
+
+        return states;
+    }
+
+    public static TraitData.TraitType guessTraitType(TaxonList taxa, String name) {
+        TraitData.TraitType type = TraitData.TraitType.DISCRETE;
+        return type;
+    }
 
     // ++++++++++++++++++++ message bar +++++++++++++++++
 
@@ -880,4 +894,5 @@ public class BeautiOptions extends ModelOptions {
 //    public static ArrayList<TraitData> getDiscreteTraitsExcludeSpecies() {
 //        return new ArrayList<TraitData>();  //Todo remove after
 //    }
+
 }

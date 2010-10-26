@@ -59,7 +59,9 @@ public class SelectTraitDialog {
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addComponentWithLabel("Partition Model:", traitCombo);
+        optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
+        optionPanel.addSpanningComponent(new JLabel("At present, this is limited to discrete traits:"));
+        optionPanel.addComponentWithLabel("Trait:", traitCombo);
         optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(

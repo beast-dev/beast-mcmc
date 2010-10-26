@@ -943,7 +943,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1) { // || options.isSpeciesAnalysis()) {
+        if (options.getPartitionSubstitutionModels().size() > 1) { 
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

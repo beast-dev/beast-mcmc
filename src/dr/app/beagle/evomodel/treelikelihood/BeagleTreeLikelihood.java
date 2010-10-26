@@ -139,10 +139,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
 
             // Attempt to get the resource order from the System Property
-            parseSystemPropertyIntegerArray(resourceOrder, RESOURCE_ORDER_PROPERTY);
-            parseSystemPropertyIntegerArray(preferredOrder, PREFERRED_FLAGS_PROPERTY);
-            parseSystemPropertyIntegerArray(requiredOrder, REQUIRED_FLAGS_PROPERTY);
-            parseSystemPropertyStringArray(scalingOrder, SCALING_PROPERTY);
+            if (resourceOrder == null) {
+                resourceOrder = parseSystemPropertyIntegerArray(RESOURCE_ORDER_PROPERTY);
+            }
+            if (preferredOrder == null) {
+                preferredOrder = parseSystemPropertyIntegerArray(PREFERRED_FLAGS_PROPERTY);
+            }
+            if (requiredOrder == null) {
+                requiredOrder = parseSystemPropertyIntegerArray(REQUIRED_FLAGS_PROPERTY);
+            }
+            if (scalingOrder == null) {
+                scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
+            }
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;
@@ -302,40 +310,40 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         hasInitialized = true;
     }
 
-    private static void parseSystemPropertyIntegerArray(List<Integer> order, String propertyName) {
-        if (order == null) {
-            order = new ArrayList<Integer>();
-            String r = System.getProperty(propertyName);
-            if (r != null) {
-                String[] parts = r.split(",");
-                for (String part : parts) {
-                    try {
-                        int n = Integer.parseInt(part.trim());
-                        order.add(n);
-                    } catch (NumberFormatException nfe) {
-                        System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                    }
+    private static List<Integer> parseSystemPropertyIntegerArray(String propertyName) {
+        List<Integer> order = new ArrayList<Integer>();
+        String r = System.getProperty(propertyName);
+        if (r != null) {
+            String[] parts = r.split(",");
+            for (String part : parts) {
+                try {
+                    int n = Integer.parseInt(part.trim());
+                    order.add(n);
+                } catch (NumberFormatException nfe) {
+                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
                 }
             }
         }
+        return order;
     }
 
-    private void parseSystemPropertyStringArray(List<String> order, String propertyName) {
-        if (order == null) {
-            order = new ArrayList<String>();
-            String r = System.getProperty(propertyName);
-            if (r != null) {
-                String[] parts = r.split(",");
-                for (String part : parts) {
-                    try {
-                        String s = part.trim();
-                        order.add(s);
-                    } catch (NumberFormatException nfe) {
-                        System.err.println("Invalid entry '" + part + "' in " + propertyName);
-                    }
+    private static List<String> parseSystemPropertyStringArray(String propertyName) {
+
+        List<String> order = new ArrayList<String>();
+
+        String r = System.getProperty(propertyName);
+        if (r != null) {
+            String[] parts = r.split(",");
+            for (String part : parts) {
+                try {
+                    String s = part.trim();
+                    order.add(s);
+                } catch (NumberFormatException nfe) {
+                    System.err.println("Invalid entry '" + part + "' in " + propertyName);
                 }
             }
         }
+        return order;
     }
 
     public TreeModel getTreeModel() {

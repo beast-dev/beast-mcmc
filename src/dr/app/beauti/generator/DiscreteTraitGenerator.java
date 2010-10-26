@@ -117,7 +117,9 @@ public class DiscreteTraitGenerator extends Generator {
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD)});
+                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD),
+                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, partition.getPrefix() + "_" + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+        });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);

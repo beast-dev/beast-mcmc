@@ -305,11 +305,20 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ General Data of Traits ++++++++++++++++++
         try {
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-                PartitionData partition = options.getAllPartitionData(model).get(0);
-                TraitData trait = partition.getTrait();
-                if (trait != null) {
-                    discreteTraitGenerator.writeGeneralDataType(trait, writer);
+                // first write the general data type for this model
+                PartitionData partition1 = options.getAllPartitionData(model).get(0);
+                if (partition1.getTrait() != null) {
+                    discreteTraitGenerator.writeGeneralDataType(model, writer);
                     writer.writeText("");
+                }
+
+                // now create an attribute pattern for each trait that uses it
+                for (PartitionData partition : options.getAllPartitionData(model)) {
+                    if (partition.getTrait() != null) {
+                        discreteTraitGenerator.writeAttributePatterns(partition, writer);
+                        writer.writeText("");
+
+                    }
                 }
             }
 
@@ -859,7 +868,7 @@ public class BeastGenerator extends Generator {
 
         // write log to screen
         logGenerator.writeLogToScreen(writer, branchRatesModelGenerator, substitutionModelGenerator);
-        
+
         // write log to file
         logGenerator.writeLogToFile(writer, treePriorGenerator, branchRatesModelGenerator,
                 substitutionModelGenerator, treeLikelihoodGenerator, discreteTraitGenerator);
@@ -868,9 +877,10 @@ public class BeastGenerator extends Generator {
             writer.writeComment("write discrete trait rate information to log");
         }
 
-        for (PartitionData partition : options.dataPartitions) {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
+            PartitionData partition = options.getAllPartitionData(model).get(0);
             if (partition.getTrait() != null && partition.getTrait().getTraitType() == TraitData.TraitType.DISCRETE) {
-                logGenerator.writeDiscreteTraitLogToFile(writer, partition, branchRatesModelGenerator, substitutionModelGenerator);
+                logGenerator.writeDiscreteTraitLogToFile(writer, model, substitutionModelGenerator);
             }
         }
 

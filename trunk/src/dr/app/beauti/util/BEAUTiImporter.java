@@ -393,9 +393,7 @@ public class BEAUTiImporter {
                 for (String name : traitNames) {
                     if (!name.equalsIgnoreCase("date")) {
                         // todo  - need to work out what type it is...
-
-
-                        TraitData.TraitType type = TraitData.TraitType.CONTINUOUS;
+                        TraitData.TraitType type = options.guessTraitType(taxa, name);
                         TraitData trait = new TraitData(options, name, "", type);
                         traits.add(trait);
                     }

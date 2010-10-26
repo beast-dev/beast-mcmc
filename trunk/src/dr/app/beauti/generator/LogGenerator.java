@@ -499,18 +499,18 @@ public class LogGenerator extends Generator {
 //    <parameter idref="locations.clock.rate"/>
 
     public void writeDiscreteTraitLogToFile(XMLWriter writer,
-                                            PartitionData partition,
-                                            BranchRatesModelGenerator branchRatesModelGenerator,
+                                            PartitionSubstitutionModel model,
                                             SubstitutionModelGenerator substitutionModelGenerator) {
 
-        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + partition.getPrefix() + "_rates.og";
+        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getPrefix();
+        fileName = (fileName.endsWith(".") ? "" : ".") + "rates.log";
+        
         writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + "_RateMatrixLog"),
+                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "RateMatrixLog"),
                 new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
                 new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
 
-        substitutionModelGenerator.writeRateLog(partition.getPartitionSubstitutionModel(), writer);
-        branchRatesModelGenerator.writeLog(partition.getPartitionClockModel(), writer);
+        substitutionModelGenerator.writeRateLog(model, writer);
 
         writer.writeCloseTag(LoggerParser.LOG);
     }

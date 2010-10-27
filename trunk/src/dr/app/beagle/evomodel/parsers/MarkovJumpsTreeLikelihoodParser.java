@@ -156,6 +156,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
+            new ElementRule(BranchSubstitutionModel.class, true),                
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class),
             AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),

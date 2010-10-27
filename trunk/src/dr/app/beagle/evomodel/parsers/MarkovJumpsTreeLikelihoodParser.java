@@ -1,6 +1,6 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -42,7 +42,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
+                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
@@ -67,7 +67,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
-                branchSiteModel,
+                branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,

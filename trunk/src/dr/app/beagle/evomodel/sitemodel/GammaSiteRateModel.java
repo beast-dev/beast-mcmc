@@ -332,7 +332,7 @@ public class GammaSiteRateModel extends AbstractModel implements SiteRateModel {
 
 
     // This is here solely to allow the GammaSiteModelParser to pass on the substitution model to the
-    // HomogenousBranchSiteModel so that the XML will be compatible with older BEAST versions. To be removed
+    // HomogenousBranchSubstitutionModel so that the XML will be compatible with older BEAST versions. To be removed
     // at some point.
     public SubstitutionModel getSubstitutionModel() {
         return substitutionModel;

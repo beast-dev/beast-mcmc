@@ -12,7 +12,6 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.CommonCitations;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +20,16 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
-public class ExternalInternalBranchSiteModel extends AbstractModel implements BranchSiteModel, Citable {
-    public ExternalInternalBranchSiteModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList) {
-        super("ExternalInternalBranchSiteModel");
+public class ExternalInternalBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel, Citable {
+    public ExternalInternalBranchSubstitutionModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList) {
+        super("ExternalInternalBranchSubstitutionModel");
 
         if (substModelList.size() != 2) {
-            throw new IllegalArgumentException("ExternalInternalBranchSiteModel requires two SubstitutionModels");
+            throw new IllegalArgumentException("ExternalInternalBranchSubstitutionModel requires two SubstitutionModels");
         }
 
         if (frequencyModelList.size() != 1) {
-            throw new IllegalArgumentException("ExternalInternalBranchSiteModel requires one FrequencyModel");
+            throw new IllegalArgumentException("ExternalInternalBranchSubstitutionModel requires one FrequencyModel");
         }
 
         this.substModelList = substModelList;

@@ -1,13 +1,13 @@
 package dr.app.beagle.evomodel.parsers;
 
 //import dr.app.beagle.evomodel.treelikelihood.RestrictedPartialsSequenceLikelihood;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SitePatterns;
-import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.tree.Tree;
@@ -45,7 +45,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                     BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
+                                                     BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                      BranchRateModel branchRateModel,
                                                      boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                      Map<Set<String>, Parameter> partialsRestrictions,
@@ -53,7 +53,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
            return new BeagleTreeLikelihood(
                     patternList,
                     treeModel,
-                    branchSiteModel,
+                   branchSubstitutionModel,
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
@@ -81,9 +81,9 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
-        BranchSiteModel branchSiteModel = (BranchSiteModel) xo.getChild(BranchSiteModel.class);
-        if (branchSiteModel == null) {
-            branchSiteModel = new HomogenousBranchSiteModel(
+        BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
+        if (branchSubstitutionModel == null) {
+            branchSubstitutionModel = new HomogenousBranchSubstitutionModel(
                 siteRateModel.getSubstitutionModel(),
                 (rootFreqModel != null ? rootFreqModel :
                 siteRateModel.getSubstitutionModel().getFrequencyModel())
@@ -120,7 +120,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             return createTreeLikelihood(
                     patternList,
                     treeModel,
-                    branchSiteModel,
+                    branchSubstitutionModel,
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
@@ -137,7 +137,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
                     subPatterns,
                     treeModel,
-                    branchSiteModel,
+                    branchSubstitutionModel,
                     siteRateModel,
                     branchRateModel,
                     useAmbiguities,
@@ -169,7 +169,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
-            new ElementRule(BranchSiteModel.class, true),
+            new ElementRule(BranchSubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {

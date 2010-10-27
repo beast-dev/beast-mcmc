@@ -1,6 +1,6 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -35,7 +35,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         implements MarkovJumpsRegisterAcceptor {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                           BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
+                                           BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme,
                                            Map<Set<String>, Parameter> partialsRestrictions,
@@ -47,7 +47,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
-        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities,
                 scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;

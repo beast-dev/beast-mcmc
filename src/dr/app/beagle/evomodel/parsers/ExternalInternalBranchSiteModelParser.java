@@ -1,7 +1,7 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
-import dr.app.beagle.evomodel.sitemodel.ExternalInternalBranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.ExternalInternalBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.xml.*;
@@ -27,7 +27,7 @@ public class ExternalInternalBranchSiteModelParser extends AbstractXMLObjectPars
 
         List<FrequencyModel> freqList = new ArrayList<FrequencyModel>();
         freqList.add((FrequencyModel) xo.getChild(FrequencyModel.class));
-        return new ExternalInternalBranchSiteModel(modelList, freqList);
+        return new ExternalInternalBranchSubstitutionModel(modelList, freqList);
     }
 
     /**
@@ -50,7 +50,7 @@ public class ExternalInternalBranchSiteModelParser extends AbstractXMLObjectPars
 
     @Override
     public Class getReturnType() {
-        return BranchSiteModel.class;
+        return BranchSubstitutionModel.class;
     }
 
     /**

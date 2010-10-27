@@ -15,9 +15,9 @@ import dr.inference.model.Variable;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class HomogenousBranchSiteModel extends AbstractModel implements BranchSiteModel {
-    public HomogenousBranchSiteModel(SubstitutionModel substModel, FrequencyModel frequencyModel) {
-        super("HomogenousBranchSiteModel");
+public class HomogenousBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel {
+    public HomogenousBranchSubstitutionModel(SubstitutionModel substModel, FrequencyModel frequencyModel) {
+        super("HomogenousBranchSubstitutionModel");
         
         this.substModel = substModel;
         addModel(substModel);

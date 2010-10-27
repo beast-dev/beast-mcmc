@@ -9,7 +9,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
@@ -28,18 +28,18 @@ import java.util.logging.Logger;
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider {
 
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-//                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
+//                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
 //                                              PartialsRescalingScheme scalingScheme,
 //                                              DataType dataType,
 //                                              String tag,
 //                                              SubstitutionModel substModel) {
-//        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+//        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
 //                dataType, tag, substModel, false, true);
 //    }
 
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
+                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
                                               Map<Set<String>, Parameter> partialsRestrictions,
@@ -49,7 +49,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
               partialsRestrictions);
 
         if (useAmbiguities) {
@@ -351,7 +351,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
                     System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
 
-                    double[] frequencies = branchSiteModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
+                    double[] frequencies = branchSubstitutionModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
                     for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] *= frequencies[i];
                     }

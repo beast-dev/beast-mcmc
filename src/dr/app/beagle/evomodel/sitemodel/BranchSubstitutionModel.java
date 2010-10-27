@@ -10,7 +10,7 @@ import dr.inference.model.Model;
  * @author Alexei Drummond
  * @version $Id$
  */
-public interface BranchSiteModel extends Model {
+public interface BranchSubstitutionModel extends Model {
 
     EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);
 

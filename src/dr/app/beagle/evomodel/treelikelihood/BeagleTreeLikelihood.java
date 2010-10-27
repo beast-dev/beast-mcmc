@@ -28,6 +28,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evolution.alignment.AscertainedSitePatterns;
@@ -40,6 +41,7 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.util.Citable;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -104,6 +106,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             addModel(this.siteRateModel);
 
             this.branchSiteModel = branchSiteModel;
+            if (!(branchSiteModel instanceof HomogenousBranchSiteModel)) {
+                logger.info("  Branch site model used: " + branchSiteModel.getModelName());
+                if (branchSiteModel instanceof Citable) {
+                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable)branchSiteModel,"",""));
+                }
+            }
+            eigenCount = this.branchSiteModel.getEigenCount();
             addModel(branchSiteModel);
 
             if (branchRateModel != null) {
@@ -129,8 +138,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // one partials buffer for each tip and two for each internal node (for store restore)
             partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
-            // two eigen buffers: for store and restore.
-            eigenBufferHelper = new BufferIndexHelper(1, 0);
+            // two eigen buffers for each decomposition for store and restore.
+            eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 
             // two matrices for each node less the root
             matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
@@ -571,8 +580,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         if (matrixUpdateIndices == null) {
-            matrixUpdateIndices = new int[nodeCount];
-            branchLengths = new double[nodeCount];
+            matrixUpdateIndices = new int[eigenCount][nodeCount];
+            branchLengths = new double[eigenCount][nodeCount];
+            branchUpdateCount = new int[eigenCount];
             scaleBufferIndices = new int[internalNodeCount];
             storedScaleBufferIndices = new int[internalNodeCount];
         }
@@ -603,7 +613,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
-        branchUpdateCount = 0;
+        for (int i = 0; i < eigenCount; i++) {
+            branchUpdateCount[i] = 0;
+        }
         operationListCount = 0;
 
         if (hasRestrictedPartials) {
@@ -617,17 +629,19 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, true);
 
-        if (updateSubstitutionModel) {
-            // we are currently assuming a homogeneous model...
-            EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
+        if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
+            // we are currently assuming a no-category model...
+            for (int i = 0; i < eigenCount; i++) {
+                EigenDecomposition ed = branchSiteModel.getEigenDecomposition(i, 0);
 
-            eigenBufferHelper.flipOffset(0);
+                eigenBufferHelper.flipOffset(i);
 
-            beagle.setEigenDecomposition(
-                    eigenBufferHelper.getOffsetIndex(0),
+                beagle.setEigenDecomposition(
+                    eigenBufferHelper.getOffsetIndex(i),
                     ed.getEigenVectors(),
                     ed.getInverseEigenVectors(),
                     ed.getEigenValues());
+            }
         }
 
         if (updateSiteModel) {
@@ -635,19 +649,23 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             beagle.setCategoryRates(categoryRates);
         }
 
-        beagle.updateTransitionMatrices(
-                eigenBufferHelper.getOffsetIndex(0),
-                matrixUpdateIndices,
-                null,
-                null,
-                branchLengths,
-                branchUpdateCount);
-
-        if (COUNT_TOTAL_OPERATIONS) {
-            totalMatrixUpdateCount += branchUpdateCount;
+        for (int i = 0; i < eigenCount; i++) {
+            if (branchUpdateCount[i] > 0) {
+                beagle.updateTransitionMatrices(
+                    eigenBufferHelper.getOffsetIndex(i),
+                    matrixUpdateIndices[i],
+                    null,
+                    null,
+                    branchLengths[i],
+                    branchUpdateCount[i]);
+            }
         }
 
         if (COUNT_TOTAL_OPERATIONS) {
+            for (int i = 0; i < eigenCount; i++) {
+                totalMatrixUpdateCount += branchUpdateCount[i];
+            }
+            
             for (int i = 0; i <= numRestrictedPartials; i++) {
                 totalOperationCount += operationCount[i];
             }
@@ -717,7 +735,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     useScaleFactors = true;
                     recomputeScaleFactors = true;
 
-                    branchUpdateCount = 0;
+                    for (int i = 0; i < eigenCount; i++) {
+                        branchUpdateCount[i] = 0;
+                    }
 
                     if (hasRestrictedPartials) {
                         for (int i = 0; i <= numRestrictedPartials; i++) {
@@ -858,10 +878,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             // then set which matrix to update
-            matrixUpdateIndices[branchUpdateCount] = matrixBufferHelper.getOffsetIndex(nodeNum);
+            final int eigenIndex = branchSiteModel.getBranchIndex(tree, node);
+            final int updateCount = branchUpdateCount[eigenIndex];
+            matrixUpdateIndices[eigenIndex][updateCount] = matrixBufferHelper.getOffsetIndex(nodeNum);
 
-            branchLengths[branchUpdateCount] = branchTime;
-            branchUpdateCount++;
+            branchLengths[eigenIndex][updateCount] = branchTime;
+            branchUpdateCount[eigenIndex]++;
 
             update = true;
         }
@@ -951,9 +973,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    private int[] matrixUpdateIndices;
-    private double[] branchLengths;
-    private int branchUpdateCount;
+    private int eigenCount;
+    private int[][] matrixUpdateIndices;
+    private double[][] branchLengths;
+    private int[] branchUpdateCount;
     private int[] scaleBufferIndices;
     private int[] storedScaleBufferIndices;
 

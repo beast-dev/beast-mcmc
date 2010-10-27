@@ -3,6 +3,8 @@ package dr.app.beagle.evomodel.sitemodel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -48,6 +50,20 @@ public class HomogenousBranchSiteModel extends AbstractModel implements BranchSi
      */
     public boolean canReturnComplexDiagonalization() {
         return substModel.canReturnComplexDiagonalization();
+    }
+
+    /**
+     * Homogenous model - always returns model 0
+     * @param tree
+     * @param node
+     * @return
+     */    
+    public int getBranchIndex(final Tree tree, final NodeRef node) {
+        return 0;
+    }
+
+    public int getEigenCount() {
+        return 1;
     }
 
     private final SubstitutionModel substModel;

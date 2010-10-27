@@ -1,6 +1,8 @@
 package dr.app.beagle.evomodel.sitemodel;
 
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.inference.model.Model;
 
 /**
@@ -10,9 +12,13 @@ import dr.inference.model.Model;
  */
 public interface BranchSiteModel extends Model {
 
-    EigenDecomposition getEigenDecomposition(int branchIndex, int categoryIndex);
+    EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);
 
     double[] getStateFrequencies(int categoryIndex);
+
+    public int getBranchIndex(final Tree tree, final NodeRef node);
+
+    public int getEigenCount();
 
     boolean canReturnComplexDiagonalization();
 }

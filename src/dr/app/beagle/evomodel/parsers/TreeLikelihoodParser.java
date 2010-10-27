@@ -81,11 +81,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
-        BranchSiteModel branchSiteModel = new HomogenousBranchSiteModel(
+        BranchSiteModel branchSiteModel = (BranchSiteModel) xo.getChild(BranchSiteModel.class);
+        if (branchSiteModel == null) {
+            branchSiteModel = new HomogenousBranchSiteModel(
                 siteRateModel.getSubstitutionModel(),
                 (rootFreqModel != null ? rootFreqModel :
                 siteRateModel.getSubstitutionModel().getFrequencyModel())
-        );
+            );
+        }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -101,9 +104,9 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         Map<Set<String>, Parameter> partialsRestrictions = null;
 
         if (xo.hasChildNamed(PARTIALS_RESTRICTION)) {
-            XMLObject cxo = (XMLObject) xo.getChild(PARTIALS_RESTRICTION);
+            XMLObject cxo = xo.getChild(PARTIALS_RESTRICTION);
             TaxonList taxonList = (TaxonList) cxo.getChild(TaxonList.class);
-            Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
+//            Parameter parameter = (Parameter) cxo.getChild(Parameter.class);
             try {
                 Tree.Utils.getLeavesForTaxa(treeModel, taxonList);
             } catch (Tree.MissingTaxonException e) {
@@ -166,6 +169,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
+            new ElementRule(BranchSiteModel.class, true),
             new ElementRule(BranchRateModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {

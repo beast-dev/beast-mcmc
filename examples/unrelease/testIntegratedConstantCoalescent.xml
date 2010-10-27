@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+
+<beast>
+
+    <taxa id="taxa">
+        <taxon id="A"/>
+        <taxon id="B"/>
+        <taxon id="C"/>
+    </taxa>
+
+    <!-- create a demographic model and intialize currentPopulationSize parameter -->
+    <constantSize id="demo" units="years">
+        <populationSize>
+            <parameter id="demo.pop" value="2.0"/>
+        </populationSize>
+    </constantSize>
+
+    <!-- starting tree -->
+    <newick id="startingTree">
+        ((A:1,B:1):1,C:2);
+    </newick>
+
+
+    <!--
+
+    t_1 = 1, t_2 = 1,
+    w_1 = 1, w_2 = 3
+
+    Therefore: \sum w_i t_i = 4 and Posterior is InvGamma( 2 + 1, 1 + 4 ) where E() = 2.5, Var() =
+    
+    -->
+
+    <treeModel id="treeModel">
+        <coalescentTree idref="startingTree"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights rootNode="false" internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights rootNode="true" internalNodes="true">
+            <parameter id="treeModel.allNodeHeights"/>
+        </nodeHeights>
+    </treeModel>
+
+    <!-- create a coalescent model from a tree model and demographic model -->
+    <coalescentLikelihood id="coalescent">
+        <model>
+            <constantSize idref="demo"/>
+        </model>
+        <populationTree>
+            <treeModel idref="treeModel"/>
+        </populationTree>
+    </coalescentLikelihood>
+
+    <dummyModel id="dummy">
+        <parameter idref="demo.pop"/>
+    </dummyModel>
+
+    <mcmc id="mcmc" chainLength="10000000" verbose="false">
+        <posterior>
+<!--            <dummyLikelihood>   -->
+            <coalescentLikelihood idref="coalescent"/>
+<!--            </dummyLikelihood>   -->
+            <invgammaPrior shape="1" scale="1" offset="0">
+                <parameter idref="demo.pop"/>
+            </invgammaPrior>
+        </posterior>
+        <log id="logScreen2" logEvery="5000">
+            <column dp="4">
+<!--                <coalescentLikelihood idref="coalescent"/> -->
+                <parameter idref="demo.pop"/>
+            </column>
+        </log>
+        <log id="log1" logEvery="100" fileName="coalescentPrior.log">
+<!--            <coalescentLikelihood idref="coalescent"/>            -->
+            <parameter idref="demo.pop"/>
+        </log>
+        <operators>
+            <scaleOperator scaleFactor="0.75" weight="1">
+                <parameter idref="demo.pop"/>
+            </scaleOperator>
+            <randomWalkOperator windowSize="1.0" weight="1">
+                <parameter idref="demo.pop"/>
+            </randomWalkOperator>
+        </operators>
+    </mcmc>
+
+    <traceAnalysis fileName="coalescentPrior.log" stdError="true"/>
+           
+</beast>

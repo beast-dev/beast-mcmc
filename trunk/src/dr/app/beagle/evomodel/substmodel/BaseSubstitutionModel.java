@@ -146,7 +146,9 @@ public abstract class BaseSubstitutionModel extends AbstractModel
 
         System.arraycopy(relativeRates, 0, storedRelativeRates, 0, rateCount);
 
-        storedEigenDecomposition = eigenDecomposition.copy();
+        if (eigenDecomposition != null) {
+            storedEigenDecomposition = eigenDecomposition.copy();
+        }
     }
 
     /**

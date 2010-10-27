@@ -12,9 +12,9 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
-public class ExternalInternalBranchSiteModelParser extends AbstractXMLObjectParser {
+public class ExternalInternalBranchSubstitutionModelParser extends AbstractXMLObjectParser {
 
-    public static final String PARSER_NAME = "tipBranchSiteModel";
+    public static final String PARSER_NAME = "tipBranchSubstitutionModel";
     public static final String INTERNAL = "internal";
     public static final String EXTERNAL = "external";
 

@@ -43,7 +43,7 @@ public class PartitionClockModelPanel extends OptionsPanel {
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
-    private JComboBox clockTypeCombo = new JComboBox(ClockType.values());
+//    private JComboBox clockTypeCombo = new JComboBox(ClockType.values());
     private JComboBox clockDistributionCombo = new JComboBox(ClockDistributionType.values());
 
     protected final PartitionClockModel model;
@@ -54,16 +54,27 @@ public class PartitionClockModelPanel extends OptionsPanel {
 
         this.model = partitionModel;
 
-        PanelUtils.setupComponent(clockTypeCombo);
-        clockTypeCombo.addItemListener(new ItemListener() {
+//        PanelUtils.setupComponent(clockTypeCombo);
+//        clockTypeCombo.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent ev) {
+//                model.setClockType((ClockType) clockTypeCombo.getSelectedItem());
+//                setupPanel();
+//            }
+//        });
+//        clockTypeCombo.setToolTipText("<html>Select the type of molecular clock model.</html>");
+//
+//        clockTypeCombo.setSelectedItem(model.getClockType());
+
+        PanelUtils.setupComponent(clockDistributionCombo);
+        clockDistributionCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model.setClockType((ClockType) clockTypeCombo.getSelectedItem());
+                model.setClockDistributionType((ClockDistributionType) clockDistributionCombo.getSelectedItem());
                 setupPanel();
             }
         });
-        clockTypeCombo.setToolTipText("<html>Select the type of molecular clock model.</html>");
+        clockDistributionCombo.setToolTipText("<html>Select the distribution that describes the variation in rate.</html>");
 
-        clockTypeCombo.setSelectedItem(model.getClockType());
+        clockDistributionCombo.setSelectedItem(model.getClockDistributionType());
 
         setupPanel();
         setOpaque(false);
@@ -73,9 +84,9 @@ public class PartitionClockModelPanel extends OptionsPanel {
     /**
      * Lays out the appropriate components in the panel for this partition model.
      */
-    private void setupPanel() {
+    public void setupPanel() {
         removeAll();
-        addComponentWithLabel("Clock Type:", clockTypeCombo);
+//        addComponentWithLabel("Clock Type:", clockTypeCombo);
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:

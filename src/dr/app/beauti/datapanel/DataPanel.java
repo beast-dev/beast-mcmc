@@ -99,8 +99,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable = new JTable(dataTableModel);
 
         dataTable.getTableHeader().setReorderingAllowed(false);
-        dataTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        dataTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = dataTable.getColumnModel().getColumn(5);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();

@@ -75,8 +75,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         priorTable.getTableHeader().setReorderingAllowed(false);
-        priorTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        priorTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         priorTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));

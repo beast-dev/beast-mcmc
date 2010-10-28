@@ -102,8 +102,8 @@ public class OldTreesPanel extends BeautiPanel {
 
         treesTable.getTableHeader().setReorderingAllowed(false);
         treesTable.getTableHeader().setResizingAllowed(false);
-        treesTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        treesTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = treesTable.getColumnModel();
 

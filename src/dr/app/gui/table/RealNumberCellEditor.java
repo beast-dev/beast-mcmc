@@ -17,6 +17,8 @@ public class RealNumberCellEditor extends DefaultCellEditor {
 
         editor = (RealNumberField) getComponent();
 
+        editor.setBorder(BorderFactory.createLineBorder(Color.black));
+
         setClickCountToStart(2); //This is usually 1 or 2.
 
         // Must do this so that editing stops when appropriate.

@@ -172,7 +172,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
     private void initTable(JTable dataTable){
         dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         dataTable.getTableHeader().setReorderingAllowed(false);
-        dataTable.getTableHeader().setDefaultRenderer(new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        dataTable.getTableHeader().setDefaultRenderer(
+//              new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = dataTable.getColumnModel().getColumn(0);
         col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));

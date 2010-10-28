@@ -104,8 +104,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         treesTable.getTableHeader().setReorderingAllowed(false);
         treesTable.getTableHeader().setResizingAllowed(false);
-        treesTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        treesTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = treesTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);

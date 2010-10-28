@@ -96,8 +96,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         sorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
-        dataTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        dataTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));

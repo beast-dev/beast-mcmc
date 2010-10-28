@@ -73,8 +73,8 @@ public class OperatorsPanel extends BeautiPanel implements Exportable {
 
         operatorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         operatorTable.getTableHeader().setReorderingAllowed(false);
-        operatorTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        operatorTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         operatorTable.getColumnModel().getColumn(0).setMinWidth(40);
 

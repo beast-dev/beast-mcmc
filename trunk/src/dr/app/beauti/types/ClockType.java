@@ -28,10 +28,10 @@ package dr.app.beauti.types;
  */
 public enum ClockType {
 
-    STRICT_CLOCK("Strict Clock"),
-    UNCORRELATED("Relaxed Clock: Uncorrelated"),
-    RANDOM_LOCAL_CLOCK("Random local clock model"),
-    AUTOCORRELATED("Relaxed Clock: Autocorrelated");
+    STRICT_CLOCK("Strict clock"),
+    UNCORRELATED("Uncorrelated relaxed clock"),
+    RANDOM_LOCAL_CLOCK("Random local clock"),
+    AUTOCORRELATED("Autocorrelated relaxed clock");
 
     ClockType(String displayName) {
         this.displayName = displayName;

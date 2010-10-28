@@ -97,8 +97,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         modelTable.getTableHeader().setReorderingAllowed(false);
         modelTable.getTableHeader().setResizingAllowed(false);
-        modelTable.getTableHeader().setDefaultRenderer(
-                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+//        modelTable.getTableHeader().setDefaultRenderer(
+//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = modelTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);

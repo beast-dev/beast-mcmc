@@ -38,7 +38,7 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  */
-public class BirthDeathSerialSamplingModel extends SpeciationModel {
+public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     // birth rate
     Variable<Double> lambda;
@@ -59,7 +59,7 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
 
 //    the additional parameter 0 <= r <= 1 has to be estimated.
-//    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+    //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
     //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
     Variable<Double> r;
 
@@ -145,20 +145,21 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         return res;
     }
 
-    public double p0(double t) {
-        return p0(birth(), death(), p(), psi(), t);
-    }
-
-    public double q(double t) {
-        return q(birth(), death(), p(), psi(), t);
-    }
-
     private static double c1(double b, double d, double psi) {
         return Math.abs(Math.sqrt(Math.pow(b - d - psi, 2.0) + 4.0 * b * psi));
     }
 
     private static double c2(double b, double d, double p, double psi) {
         return -(b - d - 2.0 * b * p - psi) / c1(b, d, psi);
+    }
+
+
+    public double p0(double t) {
+        return p0(birth(), death(), p(), psi(), t);
+    }
+
+    public double q(double t) {
+        return q(birth(), death(), p(), psi(), t);
     }
 
     private double c1() {
@@ -170,25 +171,37 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
     }
 
     public double birth() {
+        if (mask != null) return mask.birth();
         return lambda.getValue(0);
     }
 
     public double death() {
+        if (mask != null) return mask.death();
         return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
     }
 
     public double psi() {
+        if (mask != null) return mask.psi();
+
         return psi.getValue(0);
     }
 
     public double p() {
-        if (finalTimeInterval() == 0.0) return p.getValue(0);
+
+        if (finalTimeInterval() == 0.0) {
+            if (mask != null) return mask.p.getValue(0);
+            return p.getValue(0);
+        }
         return 0;
     }
 
     public double r() {
+        if (mask != null) return mask.r();
+
         return r.getValue(0);
     }
+
+    // The mask does not affect the following three methods
 
     public boolean isSamplingOrigin() {
         return origin != null;
@@ -256,12 +269,6 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
             if (y > 0.0) {
                 logL += Math.log(psi() * (r() + (1 - r()) * p0(y)) * q(y));
-
-//                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
-//                    logL += Math.log(psi() * q(y) * p0(y));
-//                } else {
-//                    logL += Math.log(psi() * q(y));
-//                }
             }
         }
 
@@ -272,4 +279,19 @@ public class BirthDeathSerialSamplingModel extends SpeciationModel {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
     }
+
+    public void mask(SpeciationModel mask) {
+        if (mask instanceof BirthDeathSerialSamplingModel) {
+            this.mask = (BirthDeathSerialSamplingModel) mask;
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public void unmask() {
+        mask = null;
+    }
+
+    // if a mask exists then use the mask's parameters instead (except for origin and finalTimeInterval)
+    BirthDeathSerialSamplingModel mask = null;
 }

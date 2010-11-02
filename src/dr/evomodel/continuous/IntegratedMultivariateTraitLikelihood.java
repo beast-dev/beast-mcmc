@@ -38,7 +38,22 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
 
-        super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches, scaleByTime,
+        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
+                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+    }
+
+    public IntegratedMultivariateTraitLikelihood(String traitName,
+                                                 TreeModel treeModel,
+                                                 MultivariateDiffusionModel diffusionModel,
+                                                 CompoundParameter traitParameter,
+                                                 Parameter deltaParameter,
+                                                 List<Integer> missingIndices,
+                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
+                                                 BranchRateModel rateModel, Model samplingDensity,
+                                                 boolean reportAsMultivariate,
+                                                 boolean reciprocalRates) {
+
+        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         dimTrait = diffusionModel.getPrecisionmatrix().length;
@@ -683,4 +698,5 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] Ay;
     protected double[][] tmpM;
     protected double[] tmp2;
+
 }

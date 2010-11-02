@@ -2,8 +2,7 @@ package dr.evomodel.continuous;
 
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.math.distributions.WishartSufficientStatistics;
 
 import java.util.List;
@@ -21,6 +20,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      TreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
+                                                     Parameter deltaParameter,
                                                      List<Integer> missingIndices,
                                                      boolean cacheBranches,
                                                      boolean scaleByTime,
@@ -32,7 +32,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      double rootPriorSampleSize,
                                                      boolean reciprocalRates) {
 
-        super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches, scaleByTime,
+        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         // fully-conjugate multivariate normal with own mean and prior sample size

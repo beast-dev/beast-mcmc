@@ -8,8 +8,7 @@
  */
 package dr.app.pathogen;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
+import dr.evolution.io.*;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
@@ -24,7 +23,7 @@ import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.io.*;
-import java.util.ArrayList;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -93,57 +92,26 @@ public class PathogenFrame extends DocumentFrame {
     }
 
     protected boolean readFromFile(File file) throws IOException {
+        Reader reader = new FileReader(file);
 
+        BufferedReader bufferedReader = new BufferedReader(reader);
+        String line = bufferedReader.readLine();
+        while (line != null && line.length() == 0) {
+            line = bufferedReader.readLine();
+        }
+
+        boolean isNexus = (line != null && line.toUpperCase().contains("#NEXUS"));
+
+        reader = new FileReader(file);
+
+        Tree tree = null;
         try {
-            FileReader reader = new FileReader(file);
-
-            NexusImporter importer = new NexusImporter(reader);
-
-            boolean done = false;
-
-            int count = 0;
-
-            while (!done) {
-                try {
-
-                    NexusImporter.NexusBlock block = importer.findNextBlock();
-
-                    if (block == NexusImporter.TAXA_BLOCK) {
-
-                        if (taxa != null) {
-                            throw new NexusImporter.MissingBlockException("TAXA block already defined");
-                        }
-
-                        taxa = importer.parseTaxaBlock();
-
-                    } else if (block == NexusImporter.TREES_BLOCK) {
-
-                        Tree[] treeArray = importer.parseTreesBlock(taxa);
-                        for (Tree tree : treeArray) {
-                            // get a rooted version of the tree to clone
-                            FlexibleTree binaryTree = new FlexibleTree(tree, true);
-                            binaryTree.resolveTree();
-
-                            String id = binaryTree.getId();
-                            if (id == null || id.trim().length() == 0) {
-                                count++;
-                                binaryTree.setId("tree_" + (count + 1));
-                            }
-                            trees.add(binaryTree);
-                        }
-
-                        if (taxa == null && trees.size() > 0) {
-                            taxa = trees.get(0);
-                        }
-
-
-                    } else {
-                        // Ignore the block..
-                    }
-
-                } catch (EOFException ex) {
-                    done = true;
-                }
+            if (isNexus) {
+                NexusImporter importer = new NexusImporter(reader);
+                tree = importer.importTree(taxa);
+            } else {
+                NewickImporter importer = new NewickImporter(reader);
+                tree = importer.importTree(taxa);
             }
 
         } catch (Importer.ImportException ime) {
@@ -164,6 +132,21 @@ public class PathogenFrame extends DocumentFrame {
                     JOptionPane.ERROR_MESSAGE);
             ex.printStackTrace();
             return false;
+        }
+
+
+        if (tree == null) {
+            JOptionPane.showMessageDialog(this, "The file is not in a suitable format or contains no trees.",
+                    "Error reading file",
+                    JOptionPane.ERROR_MESSAGE);
+            return false;
+        }
+
+        FlexibleTree binaryTree = new FlexibleTree(tree, true);
+        binaryTree.resolveTree();
+        trees.add(tree);
+        if (taxa == null) {
+            taxa = tree;
         }
 
         getExportTreeAction().setEnabled(true);
@@ -207,8 +190,8 @@ public class PathogenFrame extends DocumentFrame {
 //            NewickExporter newickExporter = new NewickExporter(ps);
 //            newickExporter.exportTree(tree);
 //        } else {
-            NexusExporter nexusExporter = new NexusExporter(new PrintStream(ps));
-            nexusExporter.exportTree(tree);
+        NexusExporter nexusExporter = new NexusExporter(new PrintStream(ps));
+        nexusExporter.exportTree(tree);
 //        }
     }
 

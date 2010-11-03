@@ -200,10 +200,15 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
+            // The assay table should be read from a file? Could contain many more viruses than are present in the
+            // tree.
             double[][] assayTable = null;
             String[] virusNames = null;
             String[] serumNames = null;
 
+            // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
+            // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
+            // updates accordingly.
             CompoundParameter tipTraitParameter = null;
             CompoundParameter virusLocationsParameter = null;
             CompoundParameter serumLocationsParameter = null;

@@ -71,6 +71,7 @@ public class TreesPanel extends JPanel implements Exportable {
     PathogenFrame frame = null;
     JTabbedPane tabbedPane = new JTabbedPane();
     JTextArea textArea = new JTextArea();
+    JCheckBox showMRCACheck = new JCheckBox("Show ancestor traces");
 
     //    JTreeDisplay treePanel;
     FigTreePanel treePanel;
@@ -149,9 +150,12 @@ public class TreesPanel extends JPanel implements Exportable {
         ChartSelector selector1 = new ChartSelector(rootToTipChart);
 
         rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
-        rootToTipPanel.setOpaque(false);
+        JPanel panel =  new JPanel(new BorderLayout());
+        panel.add(rootToTipPanel, BorderLayout.CENTER);
+        panel.add(showMRCACheck, BorderLayout.SOUTH);
+        panel.setOpaque(false);
 
-        tabbedPane.add("Root-to-tip", rootToTipPanel);
+        tabbedPane.add("Root-to-tip", panel);
 
         residualChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
 
@@ -192,6 +196,13 @@ public class TreesPanel extends JPanel implements Exportable {
                 setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction)rootingFunctionCombo.getSelectedItem());
             }
         });
+
+        showMRCACheck.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                setupPanel();
+            }
+        });
+
 
         setTree(tree);
     }
@@ -345,9 +356,11 @@ public class TreesPanel extends JPanel implements Exportable {
                 double yOffset = dp.getYData().getMax() / 2;
                 double[] dummyValues = new double[values.length];
                 for (int i = 0; i < dummyValues.length; i++) {
-                    dummyValues[i] = yOffset;
+                    // add a random y offset to give some visual spread
+                    double y = MathUtils.nextGaussian() * (dp.getYData().getMax() * 0.05);
+                    dummyValues[i] = yOffset + y;
                 }
-
+                
                 rootToTipPlot = new ScatterPlot(values, dummyValues);
                 rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
@@ -369,6 +382,8 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append(", coefficient of variation: " + nf.format(DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values)));
                 sb.append(", stdev: " + nf.format(DiscreteStatistics.stdev(values)));
                 sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
+
+                showMRCACheck.setVisible(false);
             } else {
                 Regression r = temporalRooting.getRootToTipRegression(currentTree);
 
@@ -384,16 +399,18 @@ public class TreesPanel extends JPanel implements Exportable {
 
                 rootToTipChart.removeAllPlots();
 
-                double[] parentDistances = temporalRooting.getParentRootToTipDistances(currentTree);
-                double[] parentTimes = new double[parentDistances.length];
-                for (int i = 0; i < parentDistances.length; i++) {
-                    parentTimes[i] = r.getX(parentDistances[i]);
-                }
-                mrcaPlot = new ParentPlot(r.getXData(), r.getYData(), parentTimes, parentDistances);
-                mrcaPlot.setLineColor(new Color(105,202,105));
-                mrcaPlot.setLineStroke(new BasicStroke(0.5F));
+                if (showMRCACheck.isSelected()) {
+                    double[] parentDistances = temporalRooting.getParentRootToTipDistances(currentTree);
+                    double[] parentTimes = new double[parentDistances.length];
+                    for (int i = 0; i < parentDistances.length; i++) {
+                        parentTimes[i] = r.getX(parentDistances[i]);
+                    }
+                    mrcaPlot = new ParentPlot(r.getXData(), r.getYData(), parentTimes, parentDistances);
+                    mrcaPlot.setLineColor(new Color(105,202,105));
+                    mrcaPlot.setLineStroke(new BasicStroke(0.5F));
 
-                rootToTipChart.addPlot(mrcaPlot);
+                    rootToTipChart.addPlot(mrcaPlot);
+                }
 
                 rootToTipPlot = new ScatterPlot(r.getXData(), r.getYData());
                 rootToTipPlot.addListener(new Plot.Adaptor() {
@@ -456,6 +473,8 @@ public class TreesPanel extends JPanel implements Exportable {
                 sb.append(", x-intercept (TMRCA): " + nf.format(r.getXIntercept()));
                 sb.append(", corr. coeff: " + nf.format(r.getCorrelationCoefficient()));
                 sb.append(", R^2: " + nf.format(r.getRSquared()));
+
+                showMRCACheck.setVisible(true);
             }
 
             treePanel.setTree(jtree);

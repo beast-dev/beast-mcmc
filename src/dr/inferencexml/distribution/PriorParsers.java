@@ -413,9 +413,9 @@ public class PriorParsers {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double mean = xo.getDoubleAttribute(MEAN);
-            double stdev = xo.getDoubleAttribute(STDEV);
+            double scale = xo.getDoubleAttribute(SCALE);
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new LaplaceDistribution(mean, stdev));
+            DistributionLikelihood likelihood = new DistributionLikelihood(new LaplaceDistribution(mean, scale));
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -433,7 +433,7 @@ public class PriorParsers {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MEAN),
-                AttributeRule.newDoubleRule(STDEV),
+                AttributeRule.newDoubleRule(SCALE),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

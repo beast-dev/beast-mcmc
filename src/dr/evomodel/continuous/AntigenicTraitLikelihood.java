@@ -1,15 +1,13 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Variable;
+import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
+import dr.inference.model.*;
+import dr.xml.*;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -20,13 +18,16 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
+    public final static String TIP_TRAIT = "tipTrait";
+    public final static String VIRUS_LOCATIONS = "virusLocations";
+    public final static String SERUM_LOCATIONS = "serumLocations";
+
     public AntigenicTraitLikelihood(
-            String traitName,
             TreeModel tree,
             MultivariateDiffusionModel diffusionModel,
             CompoundParameter tipTraitParameter,
-            CompoundParameter virusTraitParameter,
-            CompoundParameter serumTraitParameter,
+            CompoundParameter virusLocationsParameter,
+            CompoundParameter serumLocationsParameter,
             double[][] assayTable,
             String[] virusNames,
             String[] serumNames) {
@@ -51,8 +52,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             throw new IllegalArgumentException("The number of columns in the assay table doesn't match the serum name list");
         }
 
-        this.assayTable = new double[virusCount][serumCount];
-
         // the tip -> virus map
         tipIndices = new int[tree.getExternalNodeCount()];
 
@@ -64,8 +63,18 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             tipIndices[i] = -1;
         }
 
+
         // the virus -> tip map
         virusIndices = new int[virusCount];
+
+        // a set of vectors for each virus giving serum indices for which assay data is available
+        measuredSerumIndices = new int[virusCount][];
+
+        // a compressed (no missing values) set of measured assay values between virus and sera.
+        this.assayTable = new double[virusCount][];
+
+        // a cache of virus to serum distances (serum indices given by array above).
+        cachedDistances = new double[virusCount][];
 
         for (int i = 0; i < virusCount; i++) {
             virusIndices[i] = -1;
@@ -79,8 +88,24 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 System.err.println("Virus, " + virusNames[i] + ", not found in tree");
             }
 
+            int measuredCount = 0;
             for (int j = 0; j < serumCount; i++) {
-                this.assayTable[i][j] = transform(assayTable[i][j]);
+                if (!Double.isNaN(assayTable[i][j]) && assayTable[i][j] > 0) {
+                    measuredCount ++;
+                }
+            }
+
+            assayTable[i] = new double[measuredCount];
+            measuredSerumIndices[i] = new int[measuredCount];
+            cachedDistances[i] = new double[measuredCount];
+
+            int k = 0;
+            for (int j = 0; j < serumCount; i++) {
+                if (!Double.isNaN(assayTable[i][j]) && assayTable[i][j] > 0) {
+                    this.assayTable[i][k] = transform(assayTable[i][k]);
+                    measuredSerumIndices[i][k] = j;
+                    k ++;
+                }
             }
         }
 
@@ -91,11 +116,15 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        virusTraitParameter.setDimension(virusCount);
-        addVariable(virusTraitParameter);
+        this.tipTraitParameter = tipTraitParameter;
 
-        serumTraitParameter.setDimension(serumCount);
-        addVariable(serumTraitParameter);
+        this.virusLocationsParameter = virusLocationsParameter;
+        virusLocationsParameter.setDimension(virusCount);
+        addVariable(virusLocationsParameter);
+
+        this.serumLocationsParameter = serumLocationsParameter;
+        serumLocationsParameter.setDimension(serumCount);
+        addVariable(serumLocationsParameter);
 
         // we don't listen to the tip trait parameter because we are setting that
     }
@@ -131,12 +160,86 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
+        calculateDistances();
+
+
+
         return 0;
+    }
+
+    private void calculateDistances() {
+        for (int i = 0; i < assayTable.length; i++) {
+            for (int j = 0; j < assayTable[i].length; i++) {
+                cachedDistances[i][j] = calculateDistance(virusLocationsParameter.getParameter(i), serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
+            }
+        }
+    }
+
+    private double calculateDistance(Parameter X, Parameter Y) {
+        double d1 = X.getParameterValue(0) - Y.getParameterValue(0);
+        double d2 = X.getParameterValue(1) - Y.getParameterValue(1);
+
+        return Math.sqrt(d1*d1 + d2*d2);
     }
 
     public void makeDirty() {
     }
 
+    // **************************************************************
+    // XMLObjectParser
+    // **************************************************************
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return ANTIGENIC_TRAIT_LIKELIHOOD;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
+            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+
+            double[][] assayTable = null;
+            String[] virusNames = null;
+            String[] serumNames = null;
+
+            CompoundParameter tipTraitParameter = null;
+            CompoundParameter virusLocationsParameter = null;
+            CompoundParameter serumLocationsParameter = null;
+
+
+            return new AntigenicTraitLikelihood(treeModel, diffusionModel, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusNames, serumNames);
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Provides the likelihood of immunological assay data such as Hemagglutinin inhibition (HI) given vectors of coordinates" +
+                    "for viruses and sera/antisera in some multidimensional 'antigenic' space.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new StringAttributeRule(TreeTraitParserUtilities.TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
+                new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
+                        new ElementRule(Parameter.class)
+                }),
+                new ElementRule(MultivariateDiffusionModel.class),
+                new ElementRule(TreeModel.class),
+                new ElementRule(Parameter.class, true)
+        };
+
+
+        public Class getReturnType() {
+            return AntigenicTraitLikelihood.class;
+        }
+    };
 
     private final double[][] assayTable;
     private final String[] virusNames;
@@ -144,4 +247,15 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private final int[] tipIndices;
     private final int[] virusIndices;
+
+    private final CompoundParameter tipTraitParameter;
+    private final CompoundParameter virusLocationsParameter;
+    private final CompoundParameter serumLocationsParameter;
+
+    // a set of vectors for each virus giving serum indices for which assay data is available
+    private final int[][] measuredSerumIndices;
+
+    // a cache of virus to serum distances (serum indices given by array above).
+    private final double[][] cachedDistances;
+
 }

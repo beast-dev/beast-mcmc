@@ -144,9 +144,9 @@ public class PathogenFrame extends DocumentFrame {
 
         FlexibleTree binaryTree = new FlexibleTree(tree, true);
         binaryTree.resolveTree();
-        trees.add(tree);
+        trees.add(binaryTree);
         if (taxa == null) {
-            taxa = tree;
+            taxa = binaryTree;
         }
 
         getExportTreeAction().setEnabled(true);

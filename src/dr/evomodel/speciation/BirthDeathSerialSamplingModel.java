@@ -225,6 +225,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         if (isSamplingOrigin() && x0() < tree.getNodeHeight(tree.getRoot())) {
             return Double.NEGATIVE_INFINITY;
+//            throw new RuntimeException("Orign value (" + x0() + ") cannot < tree root height (" + tree.getNodeHeight(tree.getRoot()) + ")");
         }
 
         //System.out.println("calculating tree log likelihood");

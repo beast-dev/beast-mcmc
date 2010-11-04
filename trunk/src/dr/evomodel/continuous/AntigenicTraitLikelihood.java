@@ -4,6 +4,7 @@ import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
+import dr.math.distributions.NormalDistribution;
 import dr.xml.*;
 
 import java.util.HashMap;
@@ -21,10 +22,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     public final static String TIP_TRAIT = "tipTrait";
     public final static String VIRUS_LOCATIONS = "virusLocations";
     public final static String SERUM_LOCATIONS = "serumLocations";
+    public static final String MDS_PRECISION = "mdsPrecision";
 
     public AntigenicTraitLikelihood(
             TreeModel tree,
-            MultivariateDiffusionModel diffusionModel,
+            Parameter mdsPrecision,
             CompoundParameter tipTraitParameter,
             CompoundParameter virusLocationsParameter,
             CompoundParameter serumLocationsParameter,
@@ -37,7 +39,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         this.virusNames = virusNames;
         this.serumNames = serumNames;
 
-        int tipCount = tipTraitParameter.getDimension();
+//        int tipCount = tipTraitParameter.getDimension();
 
         // the total number of viruses is the number of rows in the table
         int virusCount = assayTable.length;
@@ -76,6 +78,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // a cache of virus to serum distances (serum indices given by array above).
         cachedDistances = new double[virusCount][];
 
+        int totalMeasurementCount = 0;
         for (int i = 0; i < virusCount; i++) {
             virusIndices[i] = -1;
 
@@ -107,7 +110,10 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                     k ++;
                 }
             }
+            totalMeasurementCount += measuredCount;
         }
+
+        this.totalMeasurementCount = totalMeasurementCount;
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             Taxon taxon = tree.getNodeTaxon(tree.getExternalNode(i));
@@ -127,6 +133,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         addVariable(serumLocationsParameter);
 
         // we don't listen to the tip trait parameter because we are setting that
+
+        this.mdsParameter = mdsPrecision;
+        addVariable(mdsPrecision);
+
+        this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
     }
 
     private double transform(final double value) {
@@ -140,6 +151,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        // TODO Flag which cachedDistances or mdsPrecision need to be updated
     }
 
     @Override
@@ -160,26 +172,69 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        calculateDistances();
+        // TODO Only recompute when not known: distances or mdsPrecision changed
+        return calculateLogLikelihood();
+    }
 
+    private double calculateLogLikelihood() {
 
+        // TODO Only recompute if distances changed
+        calculateDistances(); // There is no easy way to loop through non-missing entries of double[][] cachedDistances
 
-        return 0;
+        return computeLogLikelihood();
+    }
+
+    // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
+    protected double computeLogLikelihood() {
+        double SSR = calculateSumOfSquaredResiduals();
+
+        double precision = mdsParameter.getParameterValue(0);
+        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 2.0 * precision * SSR;
+
+        if (isLeftTruncated) {
+            logLikelihood -= calculateTruncation(precision);
+        }
+        return logLikelihood;
+    }
+
+    private double calculateTruncation(double precision) {
+        double sum = 0.0;
+        double sd = 1.0 / Math.sqrt(precision);
+        for (int i = 0; i < assayTable.length; i++) {
+            for (int j = 0; j < assayTable[i].length; j++) {
+                sum += Math.log(NormalDistribution.cdf(cachedDistances[i][j], 0.0, sd));
+            }
+        }
+        return sum;
+    }
+
+    private double calculateSumOfSquaredResiduals() {
+        double sum = 0.0;
+        for (int i = 0; i < assayTable.length; i++) {
+            for (int j = 0; j < assayTable[i].length; j++) {
+                double residual = cachedDistances[i][j] - assayTable[i][j];
+                sum += residual * residual;
+            }
+        }
+        return sum;
     }
 
     private void calculateDistances() {
         for (int i = 0; i < assayTable.length; i++) {
-            for (int j = 0; j < assayTable[i].length; i++) {
-                cachedDistances[i][j] = calculateDistance(virusLocationsParameter.getParameter(i), serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
+            for (int j = 0; j < assayTable[i].length; j++) {
+                cachedDistances[i][j] = calculateDistance(virusLocationsParameter.getParameter(i),
+                        serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
             }
         }
     }
 
     private double calculateDistance(Parameter X, Parameter Y) {
-        double d1 = X.getParameterValue(0) - Y.getParameterValue(0);
-        double d2 = X.getParameterValue(1) - Y.getParameterValue(1);
-
-        return Math.sqrt(d1*d1 + d2*d2);
+        double sum = 0.0;
+        for (int i = 0; i < mdsDim; i++) {
+            double difference = X.getParameterValue(i) - Y.getParameterValue(i);
+            sum += difference * difference;
+        }
+        return Math.sqrt(sum);
     }
 
     public void makeDirty() {
@@ -197,7 +252,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
             // The assay table should be read from a file? Could contain many more viruses than are present in the
@@ -213,8 +267,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             CompoundParameter virusLocationsParameter = null;
             CompoundParameter serumLocationsParameter = null;
 
+            Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(treeModel, diffusionModel, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusNames, serumNames);
+            return new AntigenicTraitLikelihood(treeModel, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusNames, serumNames);
         }
 
         //************************************************************************
@@ -235,7 +290,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
-                new ElementRule(MultivariateDiffusionModel.class),
+                new ElementRule(MDS_PRECISION, Parameter.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(Parameter.class, true)
         };
@@ -256,6 +311,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final CompoundParameter tipTraitParameter;
     private final CompoundParameter virusLocationsParameter;
     private final CompoundParameter serumLocationsParameter;
+    private final Parameter mdsParameter;
+
+    private final int totalMeasurementCount;
 
     // a set of vectors for each virus giving serum indices for which assay data is available
     private final int[][] measuredSerumIndices;
@@ -263,4 +321,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     // a cache of virus to serum distances (serum indices given by array above).
     private final double[][] cachedDistances;
 
+    private final boolean isLeftTruncated;
+    private final int mdsDim = 2;
 }

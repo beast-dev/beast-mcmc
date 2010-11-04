@@ -79,7 +79,7 @@ public class TreeAnnotatorDialog {
         optionPanel.addComponentWithLabel("Burnin: ", burninText);
 
 		limitText.setColumns(12);
-		limitText.setValue(0.5);
+		limitText.setValue(0.0);
 		optionPanel.addComponentWithLabel("Posterior probability limit: ", limitText);
 
         optionPanel.addComponentWithLabel("Target tree type: ", summaryTreeCombo);

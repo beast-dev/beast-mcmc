@@ -5,8 +5,11 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
+import dr.util.DataTable;
 import dr.xml.*;
 
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,6 +22,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
+    public final static String FILE_NAME = "fileName";
+
     public final static String TIP_TRAIT = "tipTrait";
     public final static String VIRUS_LOCATIONS = "virusLocations";
     public final static String SERUM_LOCATIONS = "serumLocations";
@@ -30,29 +35,19 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             CompoundParameter tipTraitParameter,
             CompoundParameter virusLocationsParameter,
             CompoundParameter serumLocationsParameter,
-            double[][] assayTable,
-            String[] virusNames,
-            String[] serumNames) {
+            DataTable<double[]> dataTable) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
-        this.virusNames = virusNames;
-        this.serumNames = serumNames;
+        String[] virusNames = dataTable.getRowLabels();
+        String[] serumNames = dataTable.getColumnLabels();
 
 //        int tipCount = tipTraitParameter.getDimension();
 
         // the total number of viruses is the number of rows in the table
-        int virusCount = assayTable.length;
+        int virusCount = dataTable.getRowCount();
         // the number of sera is the number of columns
-        int serumCount = assayTable[0].length;
-
-        if (assayTable.length != virusNames.length) {
-            throw new IllegalArgumentException("The number of rows in the assay table doesn't match the virus name list");
-        }
-
-        if (assayTable[0].length != serumNames.length) {
-            throw new IllegalArgumentException("The number of columns in the assay table doesn't match the serum name list");
-        }
+        int serumCount = dataTable.getColumnCount();
 
         // the tip -> virus map
         tipIndices = new int[tree.getExternalNodeCount()];
@@ -82,6 +77,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         for (int i = 0; i < virusCount; i++) {
             virusIndices[i] = -1;
 
+            double[] dataRow = dataTable.getRow(i);
+
             // if the virus is in the tree then add a entry to map tip to virus
             Integer tipIndex = tipNameMap.get(virusNames[i]);
             if (tipIndex != null) {
@@ -93,7 +90,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             int measuredCount = 0;
             for (int j = 0; j < serumCount; i++) {
-                if (!Double.isNaN(assayTable[i][j]) && assayTable[i][j] > 0) {
+                if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     measuredCount ++;
                 }
             }
@@ -104,8 +101,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             int k = 0;
             for (int j = 0; j < serumCount; i++) {
-                if (!Double.isNaN(assayTable[i][j]) && assayTable[i][j] > 0) {
-                    this.assayTable[i][k] = transform(assayTable[i][k]);
+                if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
+                    this.assayTable[i][k] = transform(dataRow[k]);
                     measuredSerumIndices[i][k] = j;
                     k ++;
                 }
@@ -254,11 +251,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            // The assay table should be read from a file? Could contain many more viruses than are present in the
-            // tree.
-            double[][] assayTable = null;
-            String[] virusNames = null;
-            String[] serumNames = null;
+            String fileName = xo.getStringAttribute(FILE_NAME);
+            DataTable<double[]> assayTable;
+            try {
+                assayTable = DataTable.Double.parse(new FileReader(fileName));
+            } catch (IOException e) {
+                throw new XMLParseException("Unable to read assay data from file, " + fileName);
+            }
 
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
@@ -269,7 +268,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(treeModel, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusNames, serumNames);
+            return new AntigenicTraitLikelihood(treeModel, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable);
         }
 
         //************************************************************************
@@ -286,7 +285,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(TreeTraitParserUtilities.TRAIT_NAME, "The name of the trait for which a likelihood should be calculated"),
+                new StringAttributeRule(FILE_NAME, "The name of the file containing the assay table"),
                 new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
                         new ElementRule(Parameter.class)
                 }),
@@ -302,8 +301,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     };
 
     private final double[][] assayTable;
-    private final String[] virusNames;
-    private final String[] serumNames;
 
     private final int[] tipIndices;
     private final int[] virusIndices;

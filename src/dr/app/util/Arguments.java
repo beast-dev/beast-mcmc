@@ -156,17 +156,17 @@ public class Arguments {
 
 	public static class RealArrayOption extends RealOption {
 
-        public RealArrayOption(String label, String description) {
-            this(label, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
-        }
-
+//        public RealArrayOption(String label, String description) {
+//            this(label, 0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
+//        }
+        // A count of -1 means any length
 		public RealArrayOption(String label, int count, String description) {
             this(label, count, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, description);
 		}
 
-        public RealArrayOption(String label, double minValue, double maxValue, String description) {
-            this(label, 0, minValue, maxValue, description);
-        }
+//        public RealArrayOption(String label, double minValue, double maxValue, String description) {
+//            this(label, 0, minValue, maxValue, description);
+//        }
 
 		public RealArrayOption(String label, int count, double minValue, double maxValue, String description) {
 			super(label, minValue, maxValue, description);
@@ -314,49 +314,84 @@ public class Arguments {
                             " has a bad long integer value: " + arg);
                     }
 				} else if (option instanceof RealArrayOption) {
-
+                    // I fixed only the real case to handle a variable sized array
+                    // I don't have the time to figure out the right way, so I duplicated some code so
+                    // that I do not break code by mistake
 					RealArrayOption o = (RealArrayOption)option;
-					o.values = new double[o.count];
-					int k = index;
-					int j = 0;
+                    if (o.count >= 0) {
+                        final int count = o.count;
+                        o.values = new double[count];
+                        int k = index;
+                        int j = 0;
 
-					while (j < o.count) {
-						if (arg.length() > 0) {
-							StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
-							while (tokenizer.hasMoreTokens()) {
-								String token = tokenizer.nextToken();
-								if (token.length() > 0) {
-									try {
-										o.values[j] = Double.parseDouble(token);
-									} catch (NumberFormatException nfe) {
-										throw new ArgumentException("Argument, " + arguments[index] +
-											" has a bad real value: " + token);
-									}
-									if (o.values[j] > o.maxValue || o.values[j] < o.minValue) {
-										throw new ArgumentException("Argument, " + arguments[index] +
-											" has a bad real value: " + token);
-									}
-									j++;
-								}
-							}
-						}
+                        while (j < count ) {
+                            if (arg.length() > 0) {
+                                StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
+                                while (tokenizer.hasMoreTokens()) {
+                                    String token = tokenizer.nextToken();
+                                    if (token.length() > 0) {
+                                        try {
+                                            o.values[j] = Double.parseDouble(token);
+                                        } catch (NumberFormatException nfe) {
+                                            throw new ArgumentException("Argument, " + arguments[index] +
+                                                    " has a bad real value: " + token);
+                                        }
+                                        if (o.values[j] > o.maxValue || o.values[j] < o.minValue) {
+                                            throw new ArgumentException("Argument, " + arguments[index] +
+                                                    " has a bad real value: " + token);
+                                        }
+                                        j++;
+                                    }
+                                }
+                            }
 
-						k++;
+                            k++;
 
-						if (j < o.count) {
-							if (k >= arguments.length) {
-								throw new ArgumentException("Argument, " + arguments[index] +
-									" is missing one or more values: expecting " + o.count + " integers");
-							}
+                            if (j < count ) {
+                                if (k >= arguments.length) {
+                                    throw new ArgumentException("Argument, " + arguments[index] +
+                                            " is missing one or more values: expecting " + count + " integers");
+                                }
 
-							if (optionIndex[k] != -1) {
-								throw new ArgumentException("Argument, " + arguments[index] + " overlaps with another argument");
-							}
+                                if (optionIndex[k] != -1) {
+                                    throw new ArgumentException("Argument, " + arguments[index] + " overlaps with another argument");
+                                }
 
-							arg = arguments[k];
-							optionIndex[k] = i;
-						}
-					}
+                                arg = arguments[k];
+                                optionIndex[k] = i;
+                            }
+                        }
+                    } else {
+
+                        double[] values = new double[100];
+                        index += 1;
+                        arg = arguments[index];
+                        optionIndex[index] = i;
+                        
+                        int j = 0;
+
+                        if (arg.length() > 0) {
+                            StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
+                            while (tokenizer.hasMoreTokens()) {
+                                String token = tokenizer.nextToken();
+                                if (token.length() > 0) {
+                                    try {
+                                        values[j] = Double.parseDouble(token);
+                                    } catch (NumberFormatException nfe) {
+                                        throw new ArgumentException("Argument, " + arguments[index] +
+                                                " has a bad real value: " + token);
+                                    }
+                                    if (values[j] > o.maxValue || values[j] < o.minValue) {
+                                        throw new ArgumentException("Argument, " + arguments[index] +
+                                                " has a bad real value: " + token);
+                                    }
+                                    j++;
+                                }
+                            }
+                        }
+                        o.values = new double[j];
+                        System.arraycopy(values, 0, o.values,  0, j);
+                    }
 				} else if (option instanceof RealOption) {
 
 					RealOption o = (RealOption)option;

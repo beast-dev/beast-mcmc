@@ -8,7 +8,10 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxa;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.MicrosatelliteModel;
+import dr.math.MathUtils;
 
 /**
  * @author Chieh-Hsi Wu
@@ -19,6 +22,16 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 public class MicrosatelliteSimulator extends SequenceSimulator{
     private Taxa taxa;
     private Microsatellite dataType;
+
+    public MicrosatelliteSimulator(
+            Microsatellite dataType,
+            Taxa taxa,
+            Tree tree,
+            MicrosatelliteModel msatModel,
+            BranchRateModel branchRateModel){
+        this(dataType, taxa, tree, new GammaSiteModel(msatModel), branchRateModel);
+
+    }
 
     public MicrosatelliteSimulator(
             Microsatellite dataType,
@@ -54,6 +67,11 @@ public class MicrosatelliteSimulator extends SequenceSimulator{
         }
         Patterns patterns = new Patterns(dataType,taxa);
         patterns.addPattern(pattern);
+        for(int i = 0; i < pattern.length;i++){
+            System.out.print(pattern[i]+",");
+        }
+        System.out.println();
+        
         return patterns;
     }
 

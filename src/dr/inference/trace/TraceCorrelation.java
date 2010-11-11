@@ -58,7 +58,7 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
          if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
              double[] doubleValues = new double[values.length];
              for (int i = 0; i < values.length; i++) {
-                doubleValues[i] = ((Double) values[i]).doubleValue();
+                doubleValues[i] = (Double) values[i];
             }
              analyseCorrelationContinuous(doubleValues, stepSize);
 

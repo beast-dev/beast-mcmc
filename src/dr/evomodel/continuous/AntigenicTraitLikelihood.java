@@ -262,9 +262,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
-            CompoundParameter tipTraitParameter = null;
-            CompoundParameter virusLocationsParameter = null;
-            CompoundParameter serumLocationsParameter = null;
+            CompoundParameter tipTraitParameter = (MatrixParameter) xo.getElementFirstChild(TIP_TRAIT);
+            CompoundParameter virusLocationsParameter = (Parameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
+            CompoundParameter serumLocationsParameter = (Parameter) xo.getElementFirstChild(SERUM_LOCATIONS);
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
@@ -286,13 +286,16 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         private final XMLSyntaxRule[] rules = {
                 new StringAttributeRule(FILE_NAME, "The name of the file containing the assay table"),
-                new ElementRule(TreeTraitParserUtilities.TRAIT_PARAMETER, new XMLSyntaxRule[]{
-                        new ElementRule(Parameter.class)
-                }),
+                new ElementRule(TIP_TRAIT, Parameter.class),
+                new ElementRule(VIRUS_LOCATIONS, Parameter.class),
+                new ElementRule(SERUM_LOCATIONS, Parameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(Parameter.class, true)
         };
+        public final static String TIP_TRAIT = "tipTrait";
+        public final static String VIRUS_LOCATIONS = "virusLocations";
+        public final static String SERUM_LOCATIONS = "serumLocations";
 
 
         public Class getReturnType() {

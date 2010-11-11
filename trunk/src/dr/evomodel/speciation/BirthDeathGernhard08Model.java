@@ -29,7 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.inference.model.Parameter;
-
+import dr.math.distributions.Distribution;
 import static org.apache.commons.math.special.Gamma.logGamma;
 
 /**
@@ -60,14 +60,18 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
+    /*
+     * mu/lambda
+     *
+     * null means default (0), or pure birth (Yule)
+     */
     private Parameter relativeDeathRateParameter;
+
     /**
-     * mu/lambda *
+     *    lambda - mu
      */
     private Parameter birthDiffRateParameter;
-    /**
-     * lambda - mu *
-     */
+   
     private Parameter sampleProbability;
 
     private TreeType type;
@@ -101,8 +105,10 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         birthDiffRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.relativeDeathRateParameter = relativeDeathRateParameter;
-        addVariable(relativeDeathRateParameter);
-        relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        if( relativeDeathRateParameter != null ) {
+          addVariable(relativeDeathRateParameter);
+          relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        }
 
         this.sampleProbability = sampleProbability;
         if (sampleProbability != null) {
@@ -118,12 +124,16 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         this.type = type;
     }
 
+    public boolean supportsInternalCalibration() {
+        return relativeDeathRateParameter == null && sampleProbability == null && !conditionalOnRoot;
+    }
+
     public double getR() {
         return birthDiffRateParameter.getParameterValue(0);
     }
 
     public double getA() {
-        return relativeDeathRateParameter.getParameterValue(0);
+        return relativeDeathRateParameter != null ? relativeDeathRateParameter.getParameterValue(0) : 0;
     }
 
     public double getRho() {
@@ -153,6 +163,21 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
             c1 += (taxonCount - 1) * Math.log(getR() * getRho()) + taxonCount * Math.log(1 - getA());
         }
         return c1;
+    }
+
+    @Override
+    public double logTreeProbability(Tree tree, Distribution dist, NodeRef c, int nClade) {
+        final double h = tree.getNodeHeight(c);
+        double lgp;
+        if( nClade == 1 ) {
+            // for parent of taxon
+            double twol = 2 * getR();
+            lgp = -twol * h + Math.log(twol);
+        } else {
+            double l = getR();
+            lgp = -3 * l * h + (nClade-2) * Math.log(1 - Math.exp(-l*h)) + Math.log(l);
+        }
+        return dist.logPdf(h) - lgp;
     }
 
     public double logNodeProbability(Tree tree, NodeRef node) {

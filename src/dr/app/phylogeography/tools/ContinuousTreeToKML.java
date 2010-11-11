@@ -79,7 +79,7 @@ public class ContinuousTreeToKML {
         boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
         if (args.length > 4) {
             try{
-                sliceTimes = BetterDiscreteTreeToKML.parseVariableLengthDoubleArray(args[4]);
+                sliceTimes = DiscreteTreeToKML.parseVariableLengthDoubleArray(args[4]);
             } catch (Arguments.ArgumentException ae){
                 System.err.println("error reading slice heights");
                 ae.printStackTrace();

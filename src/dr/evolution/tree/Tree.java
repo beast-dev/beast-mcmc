@@ -572,6 +572,31 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
             return false;
         }
 
+        public static NodeRef getCommonAncestor(Tree tree, NodeRef n1, NodeRef n2) {
+            while( n1 != n2 ) {
+                if( tree.getNodeHeight(n1) < tree.getNodeHeight(n2) ) {
+                    n1 = tree.getParent(n1);
+                } else {
+                    n2 = tree.getParent(n2);
+                }
+            }
+            return n1;
+        }
+
+        // A lightweight version for finding the most recent common ancestor of a group of taxa.
+        // return the node-ref of the MRCA.
+
+        // would be nice to use nodeRef's, but they are not preserved :(
+        public static NodeRef getCommonAncestor(Tree tree, int[] nodes) {
+            NodeRef cur = tree.getNode(nodes[0]);
+
+            for(int k = 1; k < nodes.length; ++k) {
+                cur = getCommonAncestor(tree, cur, tree.getNode(nodes[k]));
+            }
+            return cur;
+        }
+
+
         /**
          * @param tree
          * @param range

@@ -26,6 +26,7 @@
 package dr.evomodel.speciation;
 
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
@@ -33,6 +34,7 @@ import dr.inference.model.AbstractModelLikelihood;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.distributions.Distribution;
 
 import java.util.Set;
 
@@ -62,6 +64,17 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
 
         this(tree, speciationModel, null, id);
+    }
+
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
+                                Distribution dist, Taxa taxa) {
+        this(tree, speciationModel, id);
+        this.distribution = dist;
+
+        this.taxa = new int[taxa.getTaxonCount()];
+        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+            this.taxa[nt] = tree.getTaxonIndex(taxa.getTaxon(nt));
+        }
     }
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
@@ -149,6 +162,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
             return speciationModel.calculateTreeLogLikelihood(tree, exclude);
         }
 
+        if ( distribution != null ) {
+            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution);
+        }
+
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
@@ -213,6 +230,9 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      */
     Tree tree = null;
     private final Set<Taxon> exclude;
+
+    private  Distribution distribution = null;
+    private  int[] taxa = null;
 
     private double logLikelihood;
     private double storedLogLikelihood;

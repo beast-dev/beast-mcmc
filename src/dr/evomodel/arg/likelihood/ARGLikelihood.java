@@ -360,7 +360,12 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 			}
 		}
 
-		traverse(tree, root);
+        try {
+		    traverse(tree, root);
+        } catch (NegativeBranchLengthException e) {
+            System.err.println("Negative branch length found, trying to return 0 likelihood");
+            return Double.NEGATIVE_INFINITY;
+        }
 
 		//********************************************************************
 		// after traverse all nodes and patterns have been updated --
@@ -380,12 +385,16 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 		return logL;
 	}
 
+    class NegativeBranchLengthException extends Exception {
+
+    }
+
 	/**
 	 * Traverse the tree calculating partial likelihoods.
 	 *
 	 * @return whether the partials for this node were recalculated.
 	 */
-	private boolean traverse(Tree tree, NodeRef node) {
+	private boolean traverse(Tree tree, NodeRef node) throws NegativeBranchLengthException {
 
 		boolean update = false;
 
@@ -405,7 +414,11 @@ public class ARGLikelihood extends AbstractARGLikelihood {
 			// Get the operational time of the branch
 			double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
 			if (branchTime < 0.0) {
-				throw new RuntimeException("Negative branch length: " + branchTime);
+                if (!DEBUG) {
+				    throw new RuntimeException("Negative branch length: " + branchTime);
+                } else{
+                    throw new NegativeBranchLengthException();
+                }
 			}
 
 			for (int i = 0; i < categoryCount; i++) {
@@ -600,4 +613,6 @@ public class ARGLikelihood extends AbstractARGLikelihood {
     private Map<NodeRef,Integer> oldMapARGNodesToInts;
 
     private Map<NodeRef,NodeRef> mapARGNodesToTreeNodes = null;
+
+    private static final boolean DEBUG = true;
 }

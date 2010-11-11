@@ -82,7 +82,8 @@ public class DiscreteTreeToKML {
     public static final String[] arch = new String[] {"distance","time"};
     public static final String[] falseTrue = new String[] {"false","true"};
     private static final PrintStream progressStream = System.out;
-    private static final String commandName = "phylogeo";
+
+    private static final String commandName = "discrete_tree_to_kml";
 
     public static void printUsage(Arguments arguments) {
 
@@ -207,7 +208,7 @@ public class DiscreteTreeToKML {
         double altitudeFactor = 100; // this is the factor with which to multiply the time of the branch to get the altitude for that branch in the surface Tree
         boolean temporary = false;
 
-        double mostRecentDate = 2009;  // required to convert heights to calendar dates
+        double mostRecentDate = 2010;  // required to convert heights to calendar dates
 
         //circles
         int numberOfIntervals = 100;
@@ -232,7 +233,7 @@ public class DiscreteTreeToKML {
                         new Arguments.StringOption(COORDINATES, "coordinate file", "specifies a tab-delimited file with coordinates for the locations"),
                         new Arguments.StringOption(ANNOTATION, "location state annotation string", "specifies the string used for location state annotation [default=state]"),
                         new Arguments.RealOption(TIMESCALER,"specifies the scaling factor by which to rescale time [default=1]"),
-                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2009]"),
+                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
                         new Arguments.RealOption(BWC,"specifies the branch width constant [default=2]"),
                         new Arguments.RealOption(BWM,"specifies the branch width multiplier [default=5]"),
                         new Arguments.StringOption(USP, falseTrue, false,
@@ -270,7 +271,7 @@ public class DiscreteTreeToKML {
             System.exit(1);
         }
 
-        if (arguments.hasOption(HELP)) {
+        if (args.length == 0 || arguments.hasOption(HELP)) {
             printUsage(arguments);
             System.exit(0);
         }
@@ -287,7 +288,7 @@ public class DiscreteTreeToKML {
                 locations = new String[counts[0]][counts[1]];
                 readLocationsCoordinates(coordinatesFileString,locations);
             } else {
-                progressStream.print("no coordinates for taxa??");
+                progressStream.println("no coordinates for taxa??");
                 System.exit(1);
             }
 

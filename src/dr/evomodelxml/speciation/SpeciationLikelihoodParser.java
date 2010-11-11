@@ -6,10 +6,8 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLSyntaxRule;
+import dr.math.distributions.Distribution;
+import dr.xml.*;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,11 +23,13 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
 
+    public static final String CALIBRATION = "calibration";
+
     public String getParserName() {
         return SPECIATION_LIKELIHOOD;
     }
 
-    public Object parseXMLObject(XMLObject xo) {
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxo = xo.getChild(MODEL);
         SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
@@ -69,6 +69,20 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                     (tree.getTaxonCount() - excludeTaxa.size()) + " taxa remaining.");
         }
 
+        final XMLObject cal = xo.getChild(CALIBRATION);
+        if( cal != null ) {
+            if( excludeTaxa != null ) {
+                throw new XMLParseException("Sorry, not implemented: internal calibration point + excluded taxa");
+            }
+            if( ! specModel.supportsInternalCalibration() ) {
+              throw new XMLParseException("Sorry, not implemented: internal calibration point for this model.");
+            }
+
+            return new SpeciationLikelihood(tree, specModel, null,
+                    (Distribution) cal.getChild(Distribution.class),
+                    (Taxa) cal.getChild(Taxa.class));
+        }
+
         return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
     }
 
@@ -88,6 +102,11 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
         return rules;
     }
 
+    private final XMLSyntaxRule[] calibration = {
+            new ElementRule(Distribution.class),
+            new ElementRule(Taxa.class)
+    };
+
     private final XMLSyntaxRule[] rules = {
             new ElementRule(MODEL, new XMLSyntaxRule[]{
                     new ElementRule(SpeciationModel.class)
@@ -102,7 +121,9 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
             new ElementRule(EXCLUDE, new XMLSyntaxRule[]{
                     new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
-            }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true)
+            }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true),
+
+             new ElementRule(CALIBRATION, calibration, true),
     };
 
 }

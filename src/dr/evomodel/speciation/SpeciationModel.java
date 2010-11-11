@@ -32,6 +32,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.distributions.Distribution;
 
 import java.util.Set;
 
@@ -53,6 +54,23 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     public abstract double calculateTreeLogLikelihood(Tree tree);
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
+
+    // True if model has correct implementation of internal calibration for one
+    // monophyletic clade.
+    //
+    // Not abstract - non supporting derived classes do not need to override anything
+    public boolean supportsInternalCalibration() {
+        return false;
+    }
+
+    // Likelihhod for the speciation model conditional on the clade containing 'taxa' being
+    // monophyletic, and the root of the clade following the distribution in 'distribution'
+    //
+    // The likelihood enforces the monophyly, so there is no need to specifiy it again in the XML.
+
+    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution) {
+        return Double.NEGATIVE_INFINITY;
+    }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // no intermediates need to be recalculated...

@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.math.distributions.Distribution;
 
 import java.util.Set;
 
@@ -61,6 +62,19 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * @return node contribution to density
      */
     public abstract double logNodeProbability(Tree tree, NodeRef node);
+
+    /**
+     * The adjustment for a monophyletic clade 'taxa' inside 'tree', where root of clade is
+     * to follow a prior of 'dist'
+     * @param tree
+     * @param c
+     * @param nClade
+     * @param dist
+     * @return
+     */
+    public double logTreeProbability(Tree tree, Distribution dist, NodeRef c, int nClade) {
+        return 0.0;
+    }
 
     /**
      * @return true if calls to logNodeProbability for terminal nodes (tips) are required
@@ -145,5 +159,24 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
             // if at least one of the children has included tips then return 1 otherwise 0
             return count > 0 ? 1 : 0;
         }
+    }
+
+    @Override
+    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution) {
+        NodeRef c;
+        if( taxa.length > 1 ) {
+            // check if monophyly and find node
+            c = Tree.Utils.getCommonAncestor(tree, taxa);
+
+            if( Tree.Utils.getLeafCount(tree, c) != taxa.length ) {
+                return Double.NEGATIVE_INFINITY;
+            }
+        } else {
+            c = tree.getParent(tree.getNode(taxa[0]));
+        }
+
+        double logL = calculateTreeLogLikelihood(tree);
+        logL += logTreeProbability(tree, distribution, c, taxa.length);
+        return logL;
     }
 }

@@ -37,6 +37,5 @@ public interface NodeRef {
 
 	int getNumber();
 
-          void setNumber(int n);
-	
+    void setNumber(int n);	
 }

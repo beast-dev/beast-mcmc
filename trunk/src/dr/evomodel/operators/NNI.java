@@ -76,7 +76,7 @@ public class NNI extends AbstractTreeOperator {
 
         // now calculate the new height for father between the height of the
         // uncle and the grandparent
-        double newHeightFather = minHeightFather + (ran * (heightGrandfather - minHeightFather));
+        final double newHeightFather = minHeightFather + (ran * (heightGrandfather - minHeightFather));
         // set the new height for the father
         tree.setNodeHeight(iParent, newHeightFather);
 

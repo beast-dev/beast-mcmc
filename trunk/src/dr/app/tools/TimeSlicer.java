@@ -91,7 +91,7 @@ public class TimeSlicer {
     public static final double[] BANDWIDTHS = new double[]{1.0,1.0};
 
 
-    public static final String[] falseTrue = new String[]{"false", "true"};
+    public static final String[] falseTrue = {"false", "true"};
 
     private final static Calendar calendar = GregorianCalendar.getInstance();
     private final static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");

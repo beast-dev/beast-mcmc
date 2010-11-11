@@ -73,4 +73,35 @@
         </jar>
     </target>
 
+    <property name="version" value="1.0" />
+    <property name="release_dir" value="release_phylogeography" />
+    <property name="name" value="PhylogeographyTools" />
+
+    <property name="common_dir" value="${release_dir}/common" />
+
+    <property name="package_dir" value="${release_dir}/${name}_v${version}" />
+
+    <target name="package" depends="build" description="release Linux/Unix version">
+        <delete dir="${package_dir}" />
+        <!-- Create the release directory -->
+        <mkdir dir="${package_dir}" />
+
+        <copy todir="${package_dir}/bin">
+            <fileset dir="${common_dir}/bin"/>
+        </copy>
+
+        <copy file="${dist}/phylogeography.jar" todir="${package_dir}/lib"/>
+        <copy file="${common_dir}/README.txt" todir="${package_dir}"/>
+
+        <tar destfile="${release_dir}/${name}_v${version}.tgz" compression="gzip">
+            <tarfileset dir="${package_dir}" prefix="${name}_v${version}"/>
+        </tar>
+        
+        <zip destfile="${release_dir}/${name} v${version}.zip">
+            <zipfileset dir="${package_dir}" prefix="${name} v${version}"/>
+        </zip>
+
+        <echo message="Linux/Unix version release is finished." />
+    </target>
+
 </project>

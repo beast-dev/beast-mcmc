@@ -48,7 +48,7 @@ import jebl.evolution.trees.RootedTree;
  * @author Marc A. Suchard
  */
 
-public class BetterDiscreteTreeToKML {
+public class DiscreteTreeToKML {
 
     public static final String HELP = "help";
     public static final String ANNOTATION = "annotation";

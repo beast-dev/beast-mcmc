@@ -39,14 +39,129 @@ import java.io.*;
  * @author Marc A. Suchard
  */
 public class ContinuousTreeToKML {
+    public static final String HELP = "help";
+    public static final String ANNOTATION = "annotation";
+    public static final String ALTITUDE = "altitude";
+    public static final String MRSD = "mrsd";
+    public static final String SLICES = "slices";
+    public static final String SLICEBW = "slicebw";
+    public static final String SLICEMIDPOINT = "slicemidpoint";
+
+    private static final String commandName = "continuous_tree_to_kml";
+    private static final PrintStream progressStream = System.out;
+
+    public static final String[] falseTrue = new String[] {"false","true"};
+
+    public static void printUsage(Arguments arguments) {
+
+        arguments.printUsage(commandName, "[<inputTree-file-name>] [<output-file-name>]"); //TODO: set this right
+        progressStream.println();
+        progressStream.println("  Example: " + commandName + " input.tre output.kml");
+        progressStream.println();
+    }
+
     public static void main(String[] args) {
 
+        double altitude = 0;            // altitutude of the root of the 3D trees
+        double mostRecentDate = 2010;  // required to convert heights to calendar dates
+        String coordinateLabel = "location";
 
-        String inputTreeFile = args[0];
-        RootedTree tree = null;
-        
+        boolean makeTreeSlices = false;
+        double[] sliceTimes = null;
+        double treeSliceBranchWidth = 3;
+        boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
+
+        Arguments arguments = new Arguments(
+                new Arguments.Option[]{
+                        new Arguments.StringOption(ANNOTATION, "location annotation label", "specifies the label used for location coordinates annotation [default=location]"),
+                        new Arguments.RealOption(ALTITUDE,"specifies the altitude of the root of the 3D tree [default=no 3D tree]"),
+                        new Arguments.RealOption(MRSD,"specifies the most recent sampling data in fractional years to rescale time [default=2010]"),
+
+                        new Arguments.StringOption(SLICES,"time","specifies a slice time-list [default=none]"),
+                        new Arguments.StringOption(SLICEMIDPOINT, falseTrue, false,
+                                "shows complete branch for sliced tree if time is more recent than the branch's midpoint [default=false"),
+
+                        new Arguments.Option(HELP, "option to print this message")
+                });
+
         try {
-            TreeImporter importer = new NexusImporter(new FileReader(inputTreeFile));
+            arguments.parseArguments(args);
+        } catch (Arguments.ArgumentException ae) {
+            progressStream.println(ae);
+            printUsage(arguments);
+            System.exit(1);
+        }
+
+        if (args.length == 0 || arguments.hasOption(HELP)) {
+            printUsage(arguments);
+            System.exit(0);
+        }
+
+
+        if (arguments.hasOption(MRSD)) {
+            mostRecentDate = arguments.getRealOption(MRSD);
+        }
+
+        if (arguments.hasOption(ALTITUDE)) {
+            altitude = arguments.getRealOption(ALTITUDE);
+        }
+
+        String annotationLabel = arguments.getStringOption(ANNOTATION);
+        if (annotationLabel != null){
+            coordinateLabel = annotationLabel;
+        }
+
+        String sliceString = arguments.getStringOption(SLICES);
+        if (sliceString != null) {
+            makeTreeSlices = true;
+            try{
+                sliceTimes = DiscreteTreeToKML.parseVariableLengthDoubleArray(sliceString);
+            } catch (Arguments.ArgumentException ae){
+                System.err.println("error reading slice heights");
+                ae.printStackTrace();
+                return;
+            }
+            makeTreeSlices = true;
+        }
+
+        if (arguments.hasOption(SLICEBW)) {
+            treeSliceBranchWidth = arguments.getRealOption(SLICEBW);
+        }
+
+        String midpointString = arguments.getStringOption(SLICEMIDPOINT);
+        if (midpointString != null && midpointString.compareToIgnoreCase("true") == 0) {
+            showBranchAtMidPoint = true;
+        }
+
+        final String[] args2 = arguments.getLeftoverArguments();
+
+        String inputFileName = null;
+        String outputFileName = null;
+
+        switch (args2.length) {
+            case 0:
+                printUsage(arguments);
+                System.exit(1);
+            case 1:
+                inputFileName = args2[0];
+                outputFileName = inputFileName + ".kml";
+                break;
+            case 2:
+                inputFileName = args2[0];
+                outputFileName = args2[1];
+                break;
+            default: {
+                System.err.println("Unknown option: " + args2[2]);
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
+        }
+
+        RootedTree tree = null;
+
+        try {
+            TreeImporter importer = new NexusImporter(new FileReader(inputFileName));
             tree = (RootedTree)importer.importNextTree();
         } catch (ImportException e) {
             e.printStackTrace();
@@ -56,46 +171,10 @@ public class ContinuousTreeToKML {
             return;
         }
 
-        double height = 1000000;
-        if (args.length > 1) {
-            height = Double.parseDouble(args[1]);
-        }
-
-        System.out.println("plot height " + height);
-
-        double date = 2000;
-        if (args.length > 2) {
-            date = Double.parseDouble(args[2]);
-        }
-
-        String coordinateName = "location";
-        if (args.length > 3) {
-            coordinateName = args[3];
-        }
-
-        boolean makeTreeSlices = false;
-        double[] sliceTimes = null;
-        double treeSliceBranchWidth = 3;
-        boolean showBranchAtMidPoint = false; // shows complete branch for slice if time is more recent than the branch's midpoint
-        if (args.length > 4) {
-            try{
-                sliceTimes = DiscreteTreeToKML.parseVariableLengthDoubleArray(args[4]);
-            } catch (Arguments.ArgumentException ae){
-                System.err.println("error reading slice heights");
-                ae.printStackTrace();
-                return;
-            }
-//            for (int a = 0; a < sliceTimes.length; a++){
-//                sliceTimes[a] = date - sliceTimes[a];
-//            }
-            makeTreeSlices = true;
-        }
-
-
-        ContinuousKML exporter = new ContinuousKML(tree, args[0], height, date, coordinateName);
+        ContinuousKML exporter = new ContinuousKML(tree, inputFileName, altitude, mostRecentDate, annotationLabel);
 
         try {
-            BufferedWriter out1 = new BufferedWriter(new FileWriter(args[0]+".kml"));
+            BufferedWriter out1 = new BufferedWriter(new FileWriter(outputFileName));
             StringBuffer buffer = new StringBuffer();
 
             //we write the general tree stuff, but when making slices we do not include everything in the buffer compilation

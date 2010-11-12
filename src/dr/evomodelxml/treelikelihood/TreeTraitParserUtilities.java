@@ -65,7 +65,7 @@ public class TreeTraitParserUtilities {
                       Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                       double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
                       boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
-                      jitter(traits, length, missingIndices, window, duplicates, true);                   
+                      jitter(traits, length, missingIndices, window, duplicates, true);
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {
@@ -189,7 +189,7 @@ public class TreeTraitParserUtilities {
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
             String inTraitName,
-            TreeModel treeModel,           
+            TreeModel treeModel,
             boolean integrateOutInternalStates) throws XMLParseException {
 
         XMLObject xoc = xo.getChild(TRAIT_PARAMETER);
@@ -223,7 +223,10 @@ public class TreeTraitParserUtilities {
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {
                 String taxonName = treeModel.getTaxonId(i);
-                String paramName = taxonName + "." + traitName;
+//                String paramName = taxonName + "." + traitName;
+
+                // changed to just label the rows by the taxonName so it can be picked up elsewhere
+                String paramName = taxonName;
 
                 String object = (String) treeModel.getTaxonAttribute(i, traitName);
                 if (object == null)
@@ -264,7 +267,7 @@ public class TreeTraitParserUtilities {
                         String oneValue = st.nextToken();
                         if (randomSampleSizeFlag == -1 || randomSample.contains(j)) {
                             double value = Double.NaN;
-                            if (oneValue.compareTo("NA") == 0) {
+                            if (oneValue.equals("NA") || oneValue.equals("?") ) {
                                 Logger.getLogger("dr.evomodel.continuous").info(
                                         "Warning: Missing value in tip for taxon " + taxonName +
                                                 " (filling with 0 as starting value when sampling only)"   // See comment below

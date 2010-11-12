@@ -20,6 +20,7 @@ public class MatrixParameter extends CompoundParameter {
 
     public MatrixParameter(String name, Parameter[] parameters) {
         super(parameters);
+        dimensionsEstablished = true;
     }
 
     public double getParameterValue(int row, int col) {
@@ -35,6 +36,34 @@ public class MatrixParameter extends CompoundParameter {
                 parameterAsMatrix[i][j] = getParameterValue(i, j);
         }
         return parameterAsMatrix;
+    }
+
+    public void setColumnDimension(int columnDimension) {
+        if (dimensionsEstablished) {
+            throw new IllegalArgumentException("Attempt to change dimensions after initialization");
+        }
+        this.columnDimension = columnDimension;
+        setupParameters();
+    }
+
+    public void setRowDimension(int rowDimension) {
+        if (dimensionsEstablished) {
+            throw new IllegalArgumentException("Attempt to change dimensions after initialization");
+        }
+        this.rowDimension = rowDimension;
+        setupParameters();
+    }
+
+    private void setupParameters() {
+        if (columnDimension > 0 && rowDimension > 0) {
+            dimensionsEstablished = true;
+
+            for (int i = 0; i < rowDimension; i++) {
+                Parameter row = new Parameter.Default(columnDimension);
+                addParameter(row);
+            }
+        }
+
     }
 
     public int getColumnDimension() {
@@ -96,6 +125,10 @@ public class MatrixParameter extends CompoundParameter {
         return new MatrixParameter(null, parameter);
     }
 
+    private boolean dimensionsEstablished = false;
+    private int columnDimension = 0;
+    private int rowDimension = 0;
+
     // **************************************************************
     // XMLElement IMPLEMENTATION
     // **************************************************************
@@ -103,6 +136,9 @@ public class MatrixParameter extends CompoundParameter {
 //    public Element createElement(Document d) {
 //        throw new RuntimeException("Not implemented yet!");
 //    }
+
+    private static final String ROW_DIMENSION = "rows";
+    private static final String COLUMN_DIMENSION = "columns";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -114,8 +150,17 @@ public class MatrixParameter extends CompoundParameter {
 
             MatrixParameter matrixParameter = new MatrixParameter(MATRIX_PARAMETER);
 
-            int dim = 0;
+            if (xo.hasAttribute(ROW_DIMENSION)) {
+                int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
+                matrixParameter.setRowDimension(rowDimension);
+            }
 
+            if (xo.hasAttribute(COLUMN_DIMENSION)) {
+                int columnDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
+                matrixParameter.setColumnDimension(columnDimension);
+            }
+
+            int dim = 0;
             for (int i = 0; i < xo.getChildCount(); i++) {
                 Parameter parameter = (Parameter) xo.getChild(i);
                 matrixParameter.addParameter(parameter);
@@ -140,7 +185,9 @@ public class MatrixParameter extends CompoundParameter {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(Parameter.class, 1, Integer.MAX_VALUE),
+                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+                AttributeRule.newIntegerRule(ROW_DIMENSION, true),
+                AttributeRule.newIntegerRule(COLUMN_DIMENSION, true)
         };
 
         public Class getReturnType() {

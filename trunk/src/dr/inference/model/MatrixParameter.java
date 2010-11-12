@@ -60,6 +60,7 @@ public class MatrixParameter extends CompoundParameter {
 
             for (int i = 0; i < rowDimension; i++) {
                 Parameter row = new Parameter.Default(columnDimension);
+                row.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, columnDimension));
                 addParameter(row);
             }
         }

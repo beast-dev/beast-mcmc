@@ -104,7 +104,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             int k = 0;
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
-                    this.assayTable[i][k] = transform(dataRow[k]);
+                    this.assayTable[i][k] = transform(dataRow[j]); // TODO Code review here, was dataRow[k]
                     measuredSerumIndices[i][k] = j;
                     k ++;
                 }
@@ -197,8 +197,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private double calculateLogLikelihood() {
 
         // TODO Only recompute if distances changed
-        calculateDistances(); // There is no easy way to loop through non-missing entries of double[][] cachedDistances
-
+        calculateDistances();
+        
         return computeLogLikelihood();
     }
 
@@ -207,7 +207,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         double SSR = calculateSumOfSquaredResiduals();
 
         double precision = mdsParameter.getParameterValue(0);
-        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 2.0 * precision * SSR;
+        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 0.5 * precision * SSR;
 
         if (isLeftTruncated) {
             logLikelihood -= calculateTruncation(precision);

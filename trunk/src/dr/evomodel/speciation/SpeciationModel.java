@@ -68,7 +68,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     //
     // The likelihood enforces the monophyly, so there is no need to specifiy it again in the XML.
 
-    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution) {
+    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution, double[] coefficients) {
         return Double.NEGATIVE_INFINITY;
     }
 

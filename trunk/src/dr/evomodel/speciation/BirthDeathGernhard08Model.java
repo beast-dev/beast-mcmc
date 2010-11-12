@@ -29,7 +29,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.inference.model.Parameter;
-import dr.math.distributions.Distribution;
 import static org.apache.commons.math.special.Gamma.logGamma;
 
 /**
@@ -166,18 +165,31 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
     }
 
     @Override
-    public double logTreeProbability(Tree tree, Distribution dist, NodeRef c, int nClade) {
-        final double h = tree.getNodeHeight(c);
+    public double logCalibrationCorrectionDensity(Tree tree, final double h, int nClade, double[] coefficients) {
         double lgp;
-        if( nClade == 1 ) {
-            // for parent of taxon
-            double twol = 2 * getR();
-            lgp = -twol * h + Math.log(twol);
+        if( coefficients != null ) {
+            final double l = getR();
+            final double hLam = -h * l;
+            lgp = coefficients[0] *  hLam + Math.log(l);
+            final double z = Math.exp(hLam);
+            double zn = 1.0;
+            double s = 0.0;
+            for(int k = 1; k < coefficients.length; ++k) {
+                s += zn * coefficients[k];
+                zn *= z;
+            }
+            lgp += Math.log(s);
         } else {
-            double l = getR();
-            lgp = -3 * l * h + (nClade-2) * Math.log(1 - Math.exp(-l*h)) + Math.log(l);
+            if( nClade == 1 ) {
+                // for parent of taxon
+                double twol = 2 * getR();
+                lgp = -twol * h + Math.log(twol);
+            } else {
+                double l = getR();
+                lgp = -3 * l * h + (nClade-2) * Math.log(1 - Math.exp(-l*h)) + Math.log(l);
+            }
         }
-        return dist.logPdf(h) - lgp;
+        return lgp;
     }
 
     public double logNodeProbability(Tree tree, NodeRef node) {

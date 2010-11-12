@@ -67,12 +67,12 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * The adjustment for a monophyletic clade 'taxa' inside 'tree', where root of clade is
      * to follow a prior of 'dist'
      * @param tree
-     * @param c
+     * @param h
      * @param nClade
-     * @param dist
+     * @param coefficients
      * @return
      */
-    public double logTreeProbability(Tree tree, Distribution dist, NodeRef c, int nClade) {
+    public double logCalibrationCorrectionDensity(Tree tree, double h, int nClade, double[] coefficients) {
         return 0.0;
     }
 
@@ -162,7 +162,7 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     }
 
     @Override
-    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution) {
+    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution, double[] coefficients) {
         NodeRef c;
         if( taxa.length > 1 ) {
             // check if monophyly and find node
@@ -176,7 +176,11 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
         }
 
         double logL = calculateTreeLogLikelihood(tree);
-        logL += logTreeProbability(tree, distribution, c, taxa.length);
+        final double h = tree.getNodeHeight(c);
+        logL += distribution.logPdf(h);
+
+        logL -= logCalibrationCorrectionDensity(tree, h, taxa.length, coefficients);
+
         return logL;
     }
 }

@@ -67,9 +67,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     }
 
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
-                                Distribution dist, Taxa taxa) {
+                                Distribution dist, Taxa taxa, double[] coefficients) {
         this(tree, speciationModel, id);
         this.distribution = dist;
+        this.coefficients = coefficients;
 
         this.taxa = new int[taxa.getTaxonCount()];
         for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
@@ -163,7 +164,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
 
         if ( distribution != null ) {
-            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution);
+            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, coefficients);
         }
 
         return speciationModel.calculateTreeLogLikelihood(tree);
@@ -233,6 +234,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
     private  Distribution distribution = null;
     private  int[] taxa = null;
+    private double[] coefficients = null;
 
     private double logLikelihood;
     private double storedLogLikelihood;

@@ -1,8 +1,5 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.util.Taxon;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.treelikelihood.TreeTraitParserUtilities;
 import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
@@ -27,22 +24,27 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     public final static String TIP_TRAIT = "tipTrait";
     public final static String VIRUS_LOCATIONS = "virusLocations";
     public final static String SERUM_LOCATIONS = "serumLocations";
+    public static final String MDS_DIMENSION = "mdsDimension";
     public static final String MDS_PRECISION = "mdsPrecision";
 
     public AntigenicTraitLikelihood(
-            TreeModel tree,
+            int mdsDimension,
             Parameter mdsPrecision,
             CompoundParameter tipTraitParameter,
-            CompoundParameter virusLocationsParameter,
-            CompoundParameter serumLocationsParameter,
+            MatrixParameter virusLocationsParameter,
+            MatrixParameter serumLocationsParameter,
             DataTable<double[]> dataTable) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
+        this.mdsDimension = mdsDimension;
+
         String[] virusNames = dataTable.getRowLabels();
         String[] serumNames = dataTable.getColumnLabels();
 
-//        int tipCount = tipTraitParameter.getDimension();
+//        mdsDimension = virusLocationsParameter.getColumnDimension();
+
+        tipCount = tipTraitParameter.getNumberOfParameters();
 
         // the total number of viruses is the number of rows in the table
         int virusCount = dataTable.getRowCount();
@@ -50,12 +52,12 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         int serumCount = dataTable.getColumnCount();
 
         // the tip -> virus map
-        tipIndices = new int[tree.getExternalNodeCount()];
+        tipIndices = new int[tipCount];
 
         Map<String, Integer> tipNameMap = new HashMap<String, Integer>();
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            Taxon taxon = tree.getNodeTaxon(tree.getExternalNode(i));
-            tipNameMap.put(taxon.getId(), i);
+        for (int i = 0; i < tipCount; i++) {
+            String label = tipTraitParameter.getParameter(i).getParameterName();
+            tipNameMap.put(label, i);
 
             tipIndices[i] = -1;
         }
@@ -89,7 +91,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
 
             int measuredCount = 0;
-            for (int j = 0; j < serumCount; i++) {
+            for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     measuredCount ++;
                 }
@@ -100,7 +102,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             cachedDistances[i] = new double[measuredCount];
 
             int k = 0;
-            for (int j = 0; j < serumCount; i++) {
+            for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     this.assayTable[i][k] = transform(dataRow[k]);
                     measuredSerumIndices[i][k] = j;
@@ -112,21 +114,24 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         this.totalMeasurementCount = totalMeasurementCount;
 
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            Taxon taxon = tree.getNodeTaxon(tree.getExternalNode(i));
+        for (int i = 0; i < tipCount; i++) {
             if (tipIndices[i] == -1) {
-                System.err.println("Tree tip, " + taxon.getId() + ", not found in virus assay table");
+                String label = tipTraitParameter.getParameter(i).getParameterName();
+                System.err.println("Tree tip, " + label + ", not found in virus assay table");
             }
         }
 
+        // we don't need to listen to tipTraitParameter as this class will be setting it
         this.tipTraitParameter = tipTraitParameter;
 
         this.virusLocationsParameter = virusLocationsParameter;
-        virusLocationsParameter.setDimension(virusCount);
+        virusLocationsParameter.setColumnDimension(mdsDimension);
+        virusLocationsParameter.setRowDimension(virusCount);
         addVariable(virusLocationsParameter);
 
         this.serumLocationsParameter = serumLocationsParameter;
-        serumLocationsParameter.setDimension(serumCount);
+        serumLocationsParameter.setColumnDimension(mdsDimension);
+        serumLocationsParameter.setRowDimension(serumCount);
         addVariable(serumLocationsParameter);
 
         // we don't listen to the tip trait parameter because we are setting that
@@ -149,6 +154,22 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         // TODO Flag which cachedDistances or mdsPrecision need to be updated
+
+        if (variable == virusLocationsParameter) {
+            // the virus locations have changed so update the tipTraitParameter
+            int k = 0;
+            for (int i = 0; i < tipCount; i++) {
+                if (tipIndices[i] != -1) {
+                    Parameter virusLoc = virusLocationsParameter.getParameter(tipIndices[i]);
+                    for (int j = 0; j < mdsDimension; j++) {
+                        tipTraitParameter.setParameterValue(k, virusLoc.getValue(j));
+                        k++;
+                    }
+                } else {
+                    k += mdsDimension;
+                }
+            }
+        }                
     }
 
     @Override
@@ -227,7 +248,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private double calculateDistance(Parameter X, Parameter Y) {
         double sum = 0.0;
-        for (int i = 0; i < mdsDim; i++) {
+        for (int i = 0; i < mdsDimension; i++) {
             double difference = X.getParameterValue(i) - Y.getParameterValue(i);
             sum += difference * difference;
         }
@@ -249,8 +270,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-
             String fileName = xo.getStringAttribute(FILE_NAME);
             DataTable<double[]> assayTable;
             try {
@@ -259,16 +278,22 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 throw new XMLParseException("Unable to read assay data from file, " + fileName);
             }
 
+            int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
+
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
             CompoundParameter tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
-            CompoundParameter virusLocationsParameter = (CompoundParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
-            CompoundParameter serumLocationsParameter = (CompoundParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            MatrixParameter virusLocationsParameter = (MatrixParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
+            MatrixParameter serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+
+            if (serumLocationsParameter.getColumnDimension() != virusLocationsParameter.getColumnDimension()) {
+                throw new XMLParseException("Virus Locations parameter and Serum Locations parameter have different column dimensions");
+            }
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(treeModel, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable);
         }
 
         //************************************************************************
@@ -285,13 +310,12 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(FILE_NAME, "The name of the file containing the assay table"),
+                AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
+                AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class),
-                new ElementRule(VIRUS_LOCATIONS, CompoundParameter.class),
-                new ElementRule(SERUM_LOCATIONS, CompoundParameter.class),
-                new ElementRule(MDS_PRECISION, Parameter.class),
-                new ElementRule(TreeModel.class),
-                new ElementRule(Parameter.class, true)
+                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
+                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
+                new ElementRule(MDS_PRECISION, Parameter.class)
         };
         public final static String TIP_TRAIT = "tipTrait";
         public final static String VIRUS_LOCATIONS = "virusLocations";
@@ -305,12 +329,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private final double[][] assayTable;
 
+    private final int tipCount;
     private final int[] tipIndices;
     private final int[] virusIndices;
 
     private final CompoundParameter tipTraitParameter;
-    private final CompoundParameter virusLocationsParameter;
-    private final CompoundParameter serumLocationsParameter;
+    private final MatrixParameter virusLocationsParameter;
+    private final MatrixParameter serumLocationsParameter;
     private final Parameter mdsParameter;
 
     private final int totalMeasurementCount;
@@ -322,5 +347,5 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final double[][] cachedDistances;
 
     private final boolean isLeftTruncated;
-    private final int mdsDim = 2;
-}
+    private final int mdsDimension;
+    }

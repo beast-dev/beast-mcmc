@@ -89,19 +89,19 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         this.frame = parent;
 
         clockTableModel = new ClockTableModel();
-        clockTable = new JTable(clockTableModel) {
+        clockTable = new JTable(clockTableModel); // {
             //Implement table header tool tips.
-            protected JTableHeader createDefaultTableHeader() {
-                return new JTableHeader(columnModel) {
-                    public String getToolTipText(MouseEvent e) {
-                        Point p = e.getPoint();
-                        int index = columnModel.getColumnIndexAtX(p.x);
-                        int realIndex = columnModel.getColumn(index).getModelIndex();
-                        return columnToolTips[realIndex];
-                    }
-                };
-            }
-        };
+//            protected JTableHeader createDefaultTableHeader() {
+//                return new JTableHeader(columnModel) {
+//                    public String getToolTipText(MouseEvent e) {
+//                        Point p = e.getPoint();
+//                        int index = columnModel.getColumnIndexAtX(p.x);
+//                        int realIndex = columnModel.getColumn(index).getModelIndex();
+//                        return columnToolTips[realIndex];
+//                    }
+//                };
+//            }
+//        };
 
         initTable(clockTable);
 
@@ -281,9 +281,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
 
     private void fireModelsChanged() {
-        selectionChanged();
         options.updatePartitionAllLinks();
-        frame.setStatusMessage();
         frame.setDirty();
     }
 
@@ -311,7 +309,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                 panel = new PartitionClockModelPanel(model);
                 modelPanels.put(model, panel);
             }
-            panel.setupPanel();
 
             currentModel = model;
             modelPanelParent.add(panel);
@@ -321,7 +318,27 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void updateBorder() {
-        modelBorder.setTitle(currentModel.getClockType().toString() + " - " + currentModel.getName());
+
+        String title;
+
+//        switch (currentModel.getClockType()) {
+//            case DataType.NUCLEOTIDES:
+//                title = "Nucleotide";
+//                break;
+//            case DataType.AMINO_ACIDS:
+//                title = "Amino Acid";
+//                break;
+//            case DataType.TWO_STATES:
+//                title = "Binary";
+//                break;
+//            case DataType.GENERAL:
+//                title = "Discrete Traits";
+//                break;
+//            default:
+//                throw new IllegalArgumentException("Unsupported data type");
+//
+//        }
+        modelBorder.setTitle("Clock Model - " + currentModel.getName());
         repaint();
     }
 
@@ -338,6 +355,114 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     public JComponent getExportableComponent() {
         return this;
     }
+
+    class ModelTableModel extends AbstractTableModel {
+
+        /**
+         *
+         */
+        private static final long serialVersionUID = -6707994233020715574L;
+        String[] columnNames = {"Clock Model"};
+
+        public ModelTableModel() {
+        }
+
+        public int getColumnCount() {
+            return columnNames.length;
+        }
+
+        public int getRowCount() {
+            if (options == null) return 0;
+            return options.getPartitionClockModels().size();
+        }
+
+        public Object getValueAt(int row, int col) {
+            PartitionClockModel model = options.getPartitionClockModels().get(row);
+            switch (col) {
+                case 0:
+                    return model.getName();
+                default:
+                    throw new IllegalArgumentException("unknown column, " + col);
+            }
+        }
+
+        public boolean isCellEditable(int row, int col) {
+            return true;
+        }
+
+        public void setValueAt(Object value, int row, int col) {
+            String name = ((String) value).trim();
+            if (name.length() > 0) {
+                PartitionClockModel model = options.getPartitionClockModels().get(row);
+                model.setName(name); //TODO: update every same model in diff PD?
+                updateBorder();
+                fireModelsChanged();
+            }
+        }
+
+        public String getColumnName(int column) {
+            return columnNames[column];
+        }
+
+        public Class getColumnClass(int c) {
+            if (getRowCount() == 0) {
+                return Object.class;
+            }
+            return getValueAt(0, c).getClass();
+        }
+
+        public String toString() {
+            StringBuffer buffer = new StringBuffer();
+
+            buffer.append(getColumnName(0));
+            for (int j = 1; j < getColumnCount(); j++) {
+                buffer.append("\t");
+                buffer.append(getColumnName(j));
+            }
+            buffer.append("\n");
+
+            for (int i = 0; i < getRowCount(); i++) {
+                buffer.append(getValueAt(i, 0));
+                for (int j = 1; j < getColumnCount(); j++) {
+                    buffer.append("\t");
+                    buffer.append(getValueAt(i, j));
+                }
+                buffer.append("\n");
+            }
+
+            return buffer.toString();
+        }
+    }
+
+    class ModelsTableCellRenderer extends TableRenderer {
+
+        public ModelsTableCellRenderer(int alignment, Insets insets) {
+            super(alignment, insets);
+        }
+
+        public Component getTableCellRendererComponent(JTable aTable,
+                                                       Object value,
+                                                       boolean aIsSelected,
+                                                       boolean aHasFocus,
+                                                       int aRow, int aColumn) {
+
+            if (value == null) return this;
+
+            Component renderer = super.getTableCellRendererComponent(aTable,
+                    value,
+                    aIsSelected,
+                    aHasFocus,
+                    aRow, aColumn);
+
+            if (!isUsed(aRow))
+                renderer.setForeground(Color.gray);
+            else
+                renderer.setForeground(Color.black);
+            return this;
+        }
+
+    }
+
 
     class ClockTableModel extends AbstractTableModel {
         private static final long serialVersionUID = -2852144669936634910L;
@@ -377,9 +502,8 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
                     return model.isEstimatedRate();
                 case 3:
                     return model.getRate();
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
             }
+            return null;
         }
 
         public void setValueAt(Object aValue, int row, int col) {

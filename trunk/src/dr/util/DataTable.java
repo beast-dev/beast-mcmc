@@ -42,6 +42,9 @@ public interface DataTable<T> {
                 columnLabels.add(label);
             }
 
+            this.columnLabels = new String[columnLabels.size()];
+            columnLabels.toArray(this.columnLabels);
+           
             List<String> rowLabels = new ArrayList<String>();
             List<double[]> rows = new ArrayList<double[]>();
 
@@ -62,8 +65,9 @@ public interface DataTable<T> {
                     try {
                         row[columnIndex] = java.lang.Double.valueOf(value);
                     } catch (NumberFormatException nfe) {
-                        throw new IllegalArgumentException("Non numerical value at row " + (rowIndex + 1) +
-                                ", column " + (columnIndex + 1));
+                        row[columnIndex] = java.lang.Double.NaN;
+//                        throw new IllegalArgumentException("Non numerical value at row " + (rowIndex + 1) +
+//                                ", column " + (columnIndex + 1));
                     }
 
                     columnIndex ++;
@@ -79,10 +83,12 @@ public interface DataTable<T> {
                 rowIndex++;
             }
 
-            this.rowLabels = rowLabels.toArray(this.rowLabels);
-            data = rows.toArray(data);
+            this.rowLabels = new String[rowLabels.size()];
+            rowLabels.toArray(this.rowLabels);
 
-            this.columnLabels = columnLabels.toArray(this.columnLabels);
+            data = new double[rows.size()][];
+            rows.toArray(data);
+
         }
 
         public int getColumnCount() {

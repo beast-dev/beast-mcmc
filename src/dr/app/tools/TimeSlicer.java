@@ -166,9 +166,6 @@ public class TimeSlicer {
 
     }
 
-    public void output(String outFileName, boolean summaryOnly) {
-        output(outFileName, summaryOnly, OutputFormat.XML, 0.80, null);
-    }
 
     private Element rootElement;
     private Element documentElement;
@@ -176,7 +173,7 @@ public class TimeSlicer {
     private Element nodeFolderElement;
     private StringBuffer tabOutput = new StringBuffer();
 
-    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double hpdValue, String sdrFile) {
+    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double[] hpdValues, String sdrFile) {
 
         resultsStream = System.out;
 
@@ -221,21 +218,33 @@ public class TimeSlicer {
                         .setAttribute("name", "Time")
                         .setAttribute("type", "double")
                         .addContent(new Element("displayName").addContent("Time")));
+                hpdSchema.addContent(new Element("SimpleField")
+                        .setAttribute("name", "Height")
+                        .setAttribute("type", "double")
+                        .addContent(new Element("displayName").addContent("Height")));
+                hpdSchema.addContent(new Element("SimpleField")
+                        .setAttribute("name", "HPD")
+                        .setAttribute("type", "double")
+                        .addContent(new Element("displayName").addContent("HPD")));
 
-                Element tipSchema = new Element("Schema");
-                tipSchema.setAttribute("schemaUrl", "Tip_Schema");
-                tipSchema.addContent(new Element("SimpleField")
+                Element nodeSchema = new Element("Schema");
+                nodeSchema.setAttribute("schemaUrl", "Node_Schema");
+                nodeSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Name")
                         .setAttribute("type", "string")
                         .addContent(new Element("displayName").addContent("Name")));
-                tipSchema.addContent(new Element("SimpleField")
+                nodeSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Description")
                         .setAttribute("type", "string")
                         .addContent(new Element("displayName").addContent("Description")));
-                tipSchema.addContent(new Element("SimpleField")
+                nodeSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Time")
                         .setAttribute("type", "double")
                         .addContent(new Element("displayName").addContent("Time")));
+                nodeSchema.addContent(new Element("SimpleField")
+                        .setAttribute("name", "Height")
+                        .setAttribute("type", "double")
+                        .addContent(new Element("displayName").addContent("Height")));
 
                 contourFolderElement = new Element("Folder");
                 Element contourFolderNameElement = new Element("name");
@@ -260,7 +269,7 @@ public class TimeSlicer {
                 documentElement = new Element("Document");
                 documentElement.addContent(documentNameElement);
                 documentElement.addContent(hpdSchema);
-                documentElement.addContent(tipSchema);
+                documentElement.addContent(nodeSchema);
                 documentElement.addContent(contourFolderElement);
                 if (sliceMode == SliceMode.NODES) {
                     documentElement.addContent(nodeFolderElement);
@@ -270,9 +279,11 @@ public class TimeSlicer {
                 rootElement.addContent(documentElement);
             }
 
-            if (sliceHeights == null)
-                summarizeSlice(0, Double.NaN, outputFormat, hpdValue);
-            else {
+            if (sliceHeights == null) {
+                for (double hpdValue : hpdValues) {
+                    summarizeSlice(0, Double.NaN, outputFormat, hpdValue);
+                }
+            } else {
                 if (outputFormat == OutputFormat.TAB) {
                     if (mostRecentSamplingDate > 0) {
                         tabOutput.append("trait\t" + "sliceTime\t" + "mean\t" + "stdev\t" + "HPDlow\t" + "HPDup");
@@ -280,10 +291,15 @@ public class TimeSlicer {
                         tabOutput.append("trait\t" + "sliceHeight\t" + "mean\t" + "stdev\t" + "HPDlow\t" + "HPDup");
                     }
                 }
-                for (int i = 0; i < sliceHeights.length; i++)
-                    summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
+                for (int i = 0; i < sliceHeights.length; i++) {
+                    for (double hpdValue : hpdValues) {
+                        summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
+                    }
+                }
             }
-            summarizeRoot(outputFormat, hpdValue);
+            for (double hpdValue : hpdValues) {
+                summarizeRoot(outputFormat, hpdValue);
+            }
 
             if (outputFormat == OutputFormat.TAB) {
                 resultsStream.println(tabOutput);
@@ -541,7 +557,7 @@ public class TimeSlicer {
                                 if (outputFormat == OutputFormat.KML) {
                                     //because KML polygons require long,lat,alt we need to switch lat and long first
                                     coords.switchXY();
-                                    Element placemarkElement = generatePlacemarkElementWithPolygon(Double.NaN, coords, -1, pathCounter);
+                                    Element placemarkElement = generatePlacemarkElementWithPolygon(hpdValue, Double.NaN, coords, -1, pathCounter);
                                     //testing how many points are within the polygon
                                     contourFolderElement.addContent(placemarkElement);
                                 }
@@ -572,6 +588,7 @@ public class TimeSlicer {
         boolean isBivariate = isMultivariate && dim == 2;
         if (sliceProgressReport) {
             progressStream.print("slice " + sliceValue + "\t");
+            progressStream.print("hpd " + (hpdValue * 100) + "\t");
             if (mostRecentSamplingDate > 0) {
                 progressStream.print("time=" + (mostRecentSamplingDate - sliceValue) + "\t");
             }
@@ -685,7 +702,7 @@ public class TimeSlicer {
                     if (outputFormat == OutputFormat.KML) {
                         //because KML polygons require long,lat,alt we need to switch lat and long first
                         coords.switchXY();
-                        Element placemarkElement = generatePlacemarkElementWithPolygon(sliceValue, coords, slice, pathCounter);
+                        Element placemarkElement = generatePlacemarkElementWithPolygon(hpdValue, sliceValue, coords, slice, pathCounter);
                         //testing how many points are within the polygon
                         if (checkSliceContours) {
                             Element testElement = new Element("test");
@@ -756,7 +773,7 @@ public class TimeSlicer {
 
         if (outputFormat == OutputFormat.KML) {
             Element name =  new Element("name");
-            name.addContent(Double.toString(sliceValue));
+            name.addContent("height" + Double.toString(sliceValue) + "_hpd" + (hpdValue * 100));
             sliceElement.addContent(name);
         }
 
@@ -858,7 +875,7 @@ public class TimeSlicer {
         styleElement.addContent(iconStyle);
     }
 
-    private Element generatePlacemarkElementWithPolygon(double sliceValue, KMLCoordinates coords, int sliceInteger, int pathCounter) {
+    private Element generatePlacemarkElementWithPolygon(double hpdValue, double sliceValue, KMLCoordinates coords, int sliceInteger, int pathCounter) {
         double date;
         Element placemarkElement = new Element("Placemark");
 
@@ -915,7 +932,7 @@ public class TimeSlicer {
             placemarkElement.addContent(style);
         }
 
-        placemarkElement.addContent(generateExtendedData(name, date));
+        placemarkElement.addContent(generateContourData(name, date, sliceValue, hpdValue));
 
         Element polygonElement = new Element("Polygon");
         Element altitudeMode = new Element("altitudeMode");
@@ -978,7 +995,7 @@ public class TimeSlicer {
                 placemarkElement.addContent(timeSpan);
             }
 
-            placemarkElement.addContent(generateExtendedData(name, date));
+            placemarkElement.addContent(generateNodeData(name, date, sliceValue));
 
             if (useStyles) {
                 Element style = new Element("styleUrl");
@@ -1010,17 +1027,31 @@ public class TimeSlicer {
         return nodeSliceElement;
     }
 
-    private Element generateExtendedData(String name, double date) {
+    private Element generateContourData(String name, double date, double height, double hpd) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "HPD_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
 //        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Description"));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
+        if (hpd > 0) {
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "HPD").addContent(Double.toString(hpd)));
+        }
         data.addContent(schemaData);
         return data;
     }
 
+    private Element generateNodeData(String name, double date, double height) {
+        Element data = new Element("ExtendedData");
+        Element schemaData = new Element("SchemaData");
+        schemaData.setAttribute("schemaUrl", "Node_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
+        data.addContent(schemaData);
+        return data;
+    }
     private void outputHeader(String[] traits) {
         StringBuffer sb = new StringBuffer("slice");
         for (int i = 0; i < traits.length; i++) {
@@ -1978,7 +2009,7 @@ public class TimeSlicer {
         int burnin = -1;
         int skipEvery = 1;
         double mrsd = 0;
-        double hpdValue = 0.80;
+        double[] hpdValues = { 0.80 };
         String outputFileSDR = null;
         boolean getSDR = false;
         String progress = null;
@@ -2016,7 +2047,7 @@ public class TimeSlicer {
                                 "compute summary statistics [default = true]"),
                         new Arguments.StringOption(FORMAT, enumNamesToStringArray(OutputFormat.values()), false,
                                 "summary output format [default = KML]"),
-                        new Arguments.IntegerOption(HPD, "mass (1 - 99%) to include in HPD regions [default = 80]"),
+                        new Arguments.StringOption(HPD, "hpd", "mass (1 - 99%) to include in HPD regions (or list) [default = 80]"),
                         new Arguments.StringOption(CONTOUR_MODE, enumNamesToStringArray(ContourMode.values()), false,
                                 "contouring model [default = snyder]"),
                         new Arguments.StringOption(NORMALIZATION, enumNamesToStringArray(Normalization.values()), false,
@@ -2089,13 +2120,21 @@ public class TimeSlicer {
                 skipEvery = 1;
             }
 
-            if (arguments.hasOption(HPD)) {
-                int intValue = arguments.getIntegerOption(HPD);
-                if (intValue < 1 || intValue > 99) {
-                    progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
-                    System.exit(-1);
+            String hpdString = arguments.getStringOption(HPD);
+            if (hpdString != null) {
+                hpdValues = parseVariableLengthDoubleArray(hpdString);
+                if (hpdValues.length > 0) {
+                    for (int i = 0; i < hpdValues.length; i++) {
+                        if (hpdValues[i] < 1 || hpdValues[i] > 99) {
+                            progressStream.println("HPD Region mass falls outside of 1 - 99% range.");
+                            System.exit(-1);
+                        }
+                        hpdValues[i] = hpdValues[i] / 100.0;
+                    }
+
+                } else {
+                    hpdValues = new double[] { 80.0 };
                 }
-                hpdValue = intValue / 100.0;
             }
 
             String traitString = arguments.getStringOption(TRAIT);
@@ -2251,7 +2290,7 @@ public class TimeSlicer {
 
         TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, skipEvery, traitNames, sliceHeights, impute,
                 trueNoise, mrsd, contourMode, sliceMode, normalize, getSDR, progress, branchNormalization, set, backboneTaxa);
-        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValue, outputFileSDR);
+        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValues, outputFileSDR);
 
         System.exit(0);
     }

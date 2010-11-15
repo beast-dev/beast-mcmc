@@ -59,7 +59,7 @@ public class TimeSlicer {
     public static final String ID = "id";
     public static final String WIDTH = "0.5";
     public static final String startHPDColor = "FFFFFF"; //blue=B36600
-    public static final String endHPDColor = "0000FF"; //red=0000FF
+    public static final String endHPDColor = "00F1D6"; //red=0000FF
     public static final String opacity = "6f";
 
     public static final String BURNIN = "burnin";

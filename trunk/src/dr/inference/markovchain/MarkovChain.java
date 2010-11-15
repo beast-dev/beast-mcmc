@@ -309,8 +309,8 @@ public final class MarkovChain {
                     if( d1.length() > 0 ) {
                         logger.severe(d1);
                         final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
-                        logger.severe(d1);
-                        logger.severe(d2);
+                        logger.severe("Before: " + d1);
+                        logger.severe("After: " + d2);
                     }
                     fullEvaluationError = true;
                 }

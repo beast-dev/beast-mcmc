@@ -19,14 +19,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
-    public final static String FILE_NAME = "fileName";
-
-    public final static String TIP_TRAIT = "tipTrait";
-    public final static String VIRUS_LOCATIONS = "virusLocations";
-    public final static String SERUM_LOCATIONS = "serumLocations";
-    public static final String MDS_DIMENSION = "mdsDimension";
-    public static final String MDS_PRECISION = "mdsPrecision";
-
     public AntigenicTraitLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
@@ -263,6 +255,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     // **************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        public final static String FILE_NAME = "fileName";
+
+        public final static String TIP_TRAIT = "tipTrait";
+        public final static String VIRUS_LOCATIONS = "virusLocations";
+        public final static String SERUM_LOCATIONS = "serumLocations";
+        public static final String MDS_DIMENSION = "mdsDimension";
+        public static final String MDS_PRECISION = "mdsPrecision";
 
         public String getParserName() {
             return ANTIGENIC_TRAIT_LIKELIHOOD;
@@ -317,10 +316,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
-        public final static String TIP_TRAIT = "tipTrait";
-        public final static String VIRUS_LOCATIONS = "virusLocations";
-        public final static String SERUM_LOCATIONS = "serumLocations";
-
 
         public Class getReturnType() {
             return AntigenicTraitLikelihood.class;

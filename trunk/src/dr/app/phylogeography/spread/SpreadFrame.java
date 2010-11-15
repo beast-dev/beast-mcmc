@@ -104,13 +104,13 @@ public class SpreadFrame extends DocumentFrame {
 //        generateButton.putClientProperty("JButton.buttonType", "roundRect");
 
         JPanel panel2 = new JPanel(new BorderLayout(6, 6));
-        panel2.add(statusLabel, BorderLayout.CENTER);
+        panel2.add(statusLabel, BorderLayout.NORTH);
 //        panel2.add(generateButton, BorderLayout.EAST);
 
         panel.add(panel2, BorderLayout.SOUTH);
 
         getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-        getContentPane().add(panel2, BorderLayout.CENTER);
+        getContentPane().add(panel, BorderLayout.CENTER);
 
 //        setAllOptions();
 

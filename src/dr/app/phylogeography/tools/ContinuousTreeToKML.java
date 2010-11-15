@@ -171,7 +171,7 @@ public class ContinuousTreeToKML {
             return;
         }
 
-        ContinuousKML exporter = new ContinuousKML(tree, inputFileName, altitude, mostRecentDate, annotationLabel);
+        ContinuousKML exporter = new ContinuousKML(tree, inputFileName, altitude, mostRecentDate, coordinateLabel);
 
         try {
             BufferedWriter out1 = new BufferedWriter(new FileWriter(outputFileName));

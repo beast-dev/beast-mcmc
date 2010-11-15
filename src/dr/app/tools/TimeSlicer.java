@@ -124,11 +124,12 @@ public class TimeSlicer {
             doSlices = true;
 
             this.sliceHeights = sliceHeights;
+
+            if ((mostRecentSamplingDate - sliceHeights[sliceHeights.length - 1]) < 0) {
+                ancient = true;
+            }
         }
 
-        if ((mostRecentSamplingDate - sliceHeights[sliceHeights.length - 1]) < 0) {
-            ancient = true;
-        }
 
         values = new ArrayList<List<List<Trait>>>(sliceCount);
         for (int i = 0; i < sliceCount; i++) {
@@ -205,17 +206,6 @@ public class TimeSlicer {
                 rootElement = new Element("xml");
 
             } else if (outputFormat == OutputFormat.KML) {
-//                <Schema name="HPD_Schema" id="HPD_Schema">
-//                    <SimpleField name="Name" type="string">
-//                        <displayName>Name</displayName>
-//                    </SimpleField>
-//                    <SimpleField name="Description" type="string">
-//                        <displayName>Description</displayName>
-//                    </SimpleField>
-//                    <SimpleField name="Time" type="double">
-//                        <displayName>Time</displayName>
-//                    </SimpleField>
-//                </Schema>
 
                 Element hpdSchema = new Element("Schema");
                 hpdSchema.setAttribute("schemaUrl", "HPD_Schema");
@@ -719,6 +709,9 @@ public class TimeSlicer {
                 if (checkSliceContours) {
                     progressStream.print("numberOfContours=" + paths.length + "\tfreqOfPointsInContour=" + numberOfPointsInPolygons / count + "\ttotalArea = " + totalArea);
                 }
+                if (paths.length == 0 && !sliceProgressReport) {
+                    progressStream.println("Warning: slice at height " + sliceValue + ", contains no contours.");
+                }
 
             }
             if (outputFormat == OutputFormat.XML)
@@ -824,7 +817,7 @@ public class TimeSlicer {
         styleElement.addContent(lineStyle);
         styleElement.addContent(polyStyle);
     }
-    
+
     private void constructNodeStyleElement(Element styleElement, double sliceValue) {
         double date;
         if (Double.isNaN(sliceValue)){
@@ -874,7 +867,6 @@ public class TimeSlicer {
         if (sliceInteger == -1){
             date = Double.NaN;
             name = "hpdRegion"+"_"+ROOT_ELEMENT+"_path_"+pathCounter;
-            placemarkNameElement.addContent(name);
         } else {
             date = mostRecentSamplingDate - sliceValue;
             name = "hpdRegion" + date + "_path_" + pathCounter;
@@ -989,14 +981,14 @@ public class TimeSlicer {
             placemarkElement.addContent(generateExtendedData(name, date));
 
             if (useStyles) {
-            Element style = new Element("styleUrl");
-            if (sliceInteger == -1){
-                style.addContent("#" + ROOT_ELEMENT + date + "_style");
-            } else {
-                style.addContent("#" + NODE_ELEMENT + date + "_style");
-            }
+                Element style = new Element("styleUrl");
+                if (sliceInteger == -1){
+                    style.addContent("#" + ROOT_ELEMENT + date + "_style");
+                } else {
+                    style.addContent("#" + NODE_ELEMENT + date + "_style");
+                }
 
-            placemarkElement.addContent(style);
+                placemarkElement.addContent(style);
             }
 
             Element pointElement = new Element("Point");
@@ -1541,7 +1533,7 @@ public class TimeSlicer {
     private ContourMode contourMode;
     private SliceMode sliceMode;
     private boolean ancient = false;
-    private boolean useStyles = false;
+    private boolean useStyles = true;
 
 
 //  employed to get dispersal rates across the whole tree
@@ -2168,7 +2160,9 @@ public class TimeSlicer {
             }
 
             //sorting sliceHeights
-            Arrays.sort(sliceHeights);
+            if (sliceHeights != null) {
+                Arrays.sort(sliceHeights);
+            }
 
             String imputeString = arguments.getStringOption(IMPUTE);
             if (imputeString != null && imputeString.compareToIgnoreCase("true") == 0)

@@ -112,7 +112,7 @@ public class ContinuousKML {
     double opacity_tipSpades = 1.0;
 
     // general location HPD variables
-    String locationHPDpercentage = "95%";
+    String locationHPDpercentage = "80%";
 
     // contour variables
     boolean iniVisi_contours = false;
@@ -169,7 +169,7 @@ public class ContinuousKML {
     // additional variables
     double[] rateMinMaxMedian; // used to calibrate the color range for the branches
     double[] heightMinAndMax;   // used to calibrate the color range for branches or node hpd polygons
-    double mostRecentDate;  // required to convert heights to calendar dates 
+    double mostRecentDate;  // required to convert heights to calendar dates
     boolean ancient = false;
 
     //everything is written to separate buffers, and than collected in structured KML document by compileBuffer
@@ -251,79 +251,92 @@ public class ContinuousKML {
 
                 Node parentNode = treeToExport.getParent(node);
                 Double parentLongitude = (Double)parentNode.getAttribute(longitudeName);
-                Double parentLatitude = (Double)parentNode.getAttribute(latitudeName);
-                double parentAltitude = (treeToExport.getHeight(parentNode)*scaleFactor);
-   
-                rectangleTreeBuffer.append("\t\t<Placemark>\r");
 
-                rectangleTreeBuffer.append("\t\t\t<visibility>"+visibility_RT+"</visibility>\r");
-
-                rectangleTreeBuffer.append("\t\t\t<name>rectangleTreeBranch"+ nodeNumber +"</name>\r");
-                rectangleTreeBuffer.append("\t\t\t<styleUrl>#rectangleTreeBranch"+ nodeNumber +"_style</styleUrl>\r");
-                rectangleTreeBuffer.append("\t\t\t<LineString>\r");
-
-                rectangleTreeBuffer.append("\t\t\t\t<tessellate>1</tessellate>\r");
-                rectangleTreeBuffer.append("\t\t\t\t<altitudeMode>relativeToGround</altitudeMode>\r");
-
-                rectangleTreeBuffer.append("\t\t\t\t<coordinates>\r");
-                rectangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+altitude+"\r");
-                rectangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+parentAltitude+"\r");
-                if (branchChop_RT > 0) {
-                    double longInterval = parentLongitude - longitude;
-                    double latInterval = parentLatitude - latitude;
-                    double steps;
-                    double longStepSize;
-                    double latStepSize;
-
-                    if (Math.abs(longInterval) > Math.abs(latInterval)) {
-
-                        steps = (Math.abs(longInterval)/branchChop_RT) - 1;
-                        if (longInterval > 0) {
-                            longStepSize = branchChop_RT;
-                        } else {
-                            longStepSize = -branchChop_RT;
-                        }
-                        latStepSize = latInterval/(steps + 1);
-
-                    } else {
-
-                        steps = (Math.abs(latInterval)/branchChop_RT) - 1;
-                        if (latInterval > 0) {
-                            latStepSize = branchChop_RT;
-                        } else {
-                            latStepSize = -branchChop_RT;
-                        }
-                        longStepSize = longInterval/(steps + 1);
-                    }
-
-                    for (int x = 0; x < steps; x++) {
-                        rectangleTreeBuffer.append("\t\t\t\t\t"+(longitude + (x+1)*longStepSize)+","+(latitude + (x+1)*latStepSize)+","+parentAltitude+"\r");                        
-                    }
+                if (parentLongitude == null) {
+                    throw new RuntimeException("Longitude attribute, " + latitudeName + ", not found in tree");
                 }
 
-                rectangleTreeBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+","+parentAltitude+"\r");
-                rectangleTreeBuffer.append("\t\t\t\t</coordinates>\r");
+                Double parentLatitude = (Double)parentNode.getAttribute(latitudeName);
 
-                rectangleTreeBuffer.append("\t\t\t</LineString>\r");
+                if (parentLatitude == null) {
+                    throw new RuntimeException("Latitude attribute, " + latitudeName + ", not found in tree");
+                }
 
-                rectangleTreeBuffer.append("\t\t</Placemark>\r");
+                double parentAltitude = (treeToExport.getHeight(parentNode)*scaleFactor);
 
-                triangleTreeBuffer.append("\t\t<Placemark>\r");
-                triangleTreeBuffer.append("\t\t\t<visibility>"+visibility_TT+"</visibility>\r");
+                if (plotHeight > 0) {
 
-                triangleTreeBuffer.append("\t\t\t<name>triangleTreeBranch"+ nodeNumber +"</name>\r");
-                triangleTreeBuffer.append("\t\t\t<styleUrl>#triangleTreeBranch"+ nodeNumber +"_style</styleUrl>\r");
-                triangleTreeBuffer.append("\t\t\t<LineString>\r");
+                    rectangleTreeBuffer.append("\t\t<Placemark>\r");
 
-                triangleTreeBuffer.append("\t\t\t\t<altitudeMode>relativeToGround</altitudeMode>\r");
+                    rectangleTreeBuffer.append("\t\t\t<visibility>"+visibility_RT+"</visibility>\r");
 
-                triangleTreeBuffer.append("\t\t\t\t<coordinates>\r");
-                triangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+altitude+"\r");
-                triangleTreeBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+","+parentAltitude+"\r");
-                triangleTreeBuffer.append("\t\t\t\t</coordinates>\r");
+                    rectangleTreeBuffer.append("\t\t\t<name>rectangleTreeBranch"+ nodeNumber +"</name>\r");
+                    rectangleTreeBuffer.append("\t\t\t<styleUrl>#rectangleTreeBranch"+ nodeNumber +"_style</styleUrl>\r");
+                    rectangleTreeBuffer.append("\t\t\t<LineString>\r");
 
-                triangleTreeBuffer.append("\t\t\t</LineString>\r");
-                triangleTreeBuffer.append("\t\t</Placemark>\r");
+                    rectangleTreeBuffer.append("\t\t\t\t<tessellate>1</tessellate>\r");
+                    rectangleTreeBuffer.append("\t\t\t\t<altitudeMode>relativeToGround</altitudeMode>\r");
+
+                    rectangleTreeBuffer.append("\t\t\t\t<coordinates>\r");
+                    rectangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+altitude+"\r");
+                    rectangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+parentAltitude+"\r");
+                    if (branchChop_RT > 0) {
+                        double longInterval = parentLongitude - longitude;
+                        double latInterval = parentLatitude - latitude;
+                        double steps;
+                        double longStepSize;
+                        double latStepSize;
+
+                        if (Math.abs(longInterval) > Math.abs(latInterval)) {
+
+                            steps = (Math.abs(longInterval)/branchChop_RT) - 1;
+                            if (longInterval > 0) {
+                                longStepSize = branchChop_RT;
+                            } else {
+                                longStepSize = -branchChop_RT;
+                            }
+                            latStepSize = latInterval/(steps + 1);
+
+                        } else {
+
+                            steps = (Math.abs(latInterval)/branchChop_RT) - 1;
+                            if (latInterval > 0) {
+                                latStepSize = branchChop_RT;
+                            } else {
+                                latStepSize = -branchChop_RT;
+                            }
+                            longStepSize = longInterval/(steps + 1);
+                        }
+
+                        for (int x = 0; x < steps; x++) {
+                            rectangleTreeBuffer.append("\t\t\t\t\t"+(longitude + (x+1)*longStepSize)+","+(latitude + (x+1)*latStepSize)+","+parentAltitude+"\r");
+                        }
+                    }
+
+                    rectangleTreeBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+","+parentAltitude+"\r");
+                    rectangleTreeBuffer.append("\t\t\t\t</coordinates>\r");
+
+                    rectangleTreeBuffer.append("\t\t\t</LineString>\r");
+
+                    rectangleTreeBuffer.append("\t\t</Placemark>\r");
+
+                    triangleTreeBuffer.append("\t\t<Placemark>\r");
+                    triangleTreeBuffer.append("\t\t\t<visibility>"+visibility_TT+"</visibility>\r");
+
+                    triangleTreeBuffer.append("\t\t\t<name>triangleTreeBranch"+ nodeNumber +"</name>\r");
+                    triangleTreeBuffer.append("\t\t\t<styleUrl>#triangleTreeBranch"+ nodeNumber +"_style</styleUrl>\r");
+                    triangleTreeBuffer.append("\t\t\t<LineString>\r");
+
+                    triangleTreeBuffer.append("\t\t\t\t<altitudeMode>relativeToGround</altitudeMode>\r");
+
+                    triangleTreeBuffer.append("\t\t\t\t<coordinates>\r");
+                    triangleTreeBuffer.append("\t\t\t\t\t"+longitude+","+latitude+","+altitude+"\r");
+                    triangleTreeBuffer.append("\t\t\t\t\t"+parentLongitude+","+parentLatitude+","+parentAltitude+"\r");
+                    triangleTreeBuffer.append("\t\t\t\t</coordinates>\r");
+
+                    triangleTreeBuffer.append("\t\t\t</LineString>\r");
+                    triangleTreeBuffer.append("\t\t</Placemark>\r");
+                }
 
                 //variables required for chopping up the branches of the surface Tree
                 double maxAltitude = (treeToExport.getHeight(parentNode) - treeToExport.getHeight(node))*altitudeFactor;
@@ -527,7 +540,7 @@ public class ContinuousKML {
                             }
                             styleBuffer.append("\t\t</PolyStyle>\r");
                             styleBuffer.append("\t</Style>\r");
-                        //spade
+                            //spade
                         }   else {
                             styleBuffer.append("\t<Style id=\"spade"+ nodeNumber +"_style\">\r");
                             styleBuffer.append("\t\t<LineStyle>\r");
@@ -567,7 +580,7 @@ public class ContinuousKML {
                             styleBuffer.append("\t\t\t<outline>0</outline>\r");
                             styleBuffer.append("\t\t</PolyStyle>\r");
                             styleBuffer.append("\t</Style>\r");
-                        //spade
+                            //spade
                         }  else {
                             styleBuffer.append("\t<Style id=\"groundSpade"+ nodeNumber +"_style\">\r");
                             styleBuffer.append("\t\t<LineStyle>\r");
@@ -602,7 +615,7 @@ public class ContinuousKML {
                     Double posterior = (Double)node.getAttribute("posterior");
 
                     // line style for internal rectangleTree branches, based on posterior
-                   styleBuffer.append("\t<Style id=\"rectangleTreeBranch"+ nodeNumber +"_style\">\r");
+                    styleBuffer.append("\t<Style id=\"rectangleTreeBranch"+ nodeNumber +"_style\">\r");
                     styleBuffer.append("\t\t<LineStyle>\r");
                     if (usePosterior_RT) {
                         styleBuffer.append("\t\t\t<width>"+(branchWidthConstant+posterior*branchWidthMultiplier)+"</width>\r");
@@ -690,7 +703,7 @@ public class ContinuousKML {
                         }
                         styleBuffer.append("\t\t</PolyStyle>\r");
                         styleBuffer.append("\t</Style>\r");
-                    //spade
+                        //spade
                     }   else {
                         styleBuffer.append("\t<Style id=\"spade"+ nodeNumber +"_style\">\r");
                         styleBuffer.append("\t\t<LineStyle>\r");
@@ -730,7 +743,7 @@ public class ContinuousKML {
                         styleBuffer.append("\t\t\t<outline>0</outline>\r");
                         styleBuffer.append("\t\t</PolyStyle>\r");
                         styleBuffer.append("\t</Style>\r");
-                    //spade
+                        //spade
                     }  else {
                         styleBuffer.append("\t<Style id=\"groundSpade"+ nodeNumber +"_style\">\r");
                         styleBuffer.append("\t\t<LineStyle>\r");
@@ -952,12 +965,12 @@ public class ContinuousKML {
                 double parentHeight = treeToExport.getHeight(parentNode);
 
                 if ((parentHeight > time) && (nodeHeight <= time)) {
-                        //extrapolate lat/long
-                        if (!showBranchAtMidPoint) {
+                    //extrapolate lat/long
+                    if (!showBranchAtMidPoint) {
 
-                            latitude = parentLatitude + (latitude-parentLatitude)*((parentHeight-time)/(parentHeight-nodeHeight));
-                            longitude = parentLongitude + (longitude-parentLongitude)*((parentHeight-time)/(parentHeight-nodeHeight));
-                        }
+                        latitude = parentLatitude + (latitude-parentLatitude)*((parentHeight-time)/(parentHeight-nodeHeight));
+                        longitude = parentLongitude + (longitude-parentLongitude)*((parentHeight-time)/(parentHeight-nodeHeight));
+                    }
                 }
                 if (((parentHeight > time) && !(showBranchAtMidPoint)) || (showBranchAtMidPoint && (time < ((nodeHeight+((parentHeight-nodeHeight)/2.0)))))) {
 
@@ -980,7 +993,7 @@ public class ContinuousKML {
                     styleBuffer.append("\t\t<LineStyle>\r");
                     styleBuffer.append("\t\t\t<width>"+treeSliceBranchWidth+"</width>\r");
                     styleBuffer.append("\t\t\t<color>"+"FF"+ ContinuousKML.getKMLColor((nodeHeight+((parentHeight-nodeHeight)/2.0)),
-                                heightMinAndMax, startBranchColor_TS, endBranchColor_TS)+"</color>\r");
+                            heightMinAndMax, startBranchColor_TS, endBranchColor_TS)+"</color>\r");
                     styleBuffer.append("\t\t</LineStyle>\r");
                     styleBuffer.append("\t</Style>\r");
 
@@ -1134,7 +1147,7 @@ public class ContinuousKML {
 
             buffer.append("\t\t</Folder>\r");
 
-    }  else {
+        }  else {
 
             buffer.append(treeSliceBuffer);
             buffer.append("\t<Folder>\r");
@@ -1144,7 +1157,7 @@ public class ContinuousKML {
             buffer.append("\t</Folder>\r");
             buffer.append(contourSliceBuffer);
 
-                        
+
         }
 
         buffer.append("</Document>\r");
@@ -1773,7 +1786,7 @@ public class ContinuousKML {
                     area += ( Double.valueOf((longitudeHPDs[y]).toString()).doubleValue() *
                             Double.valueOf((latitudeHPDs[y+1]).toString()).doubleValue() ) -
                             ( Double.valueOf((longitudeHPDs[y+1]).toString()).doubleValue() *
-                            Double.valueOf((latitudeHPDs[y]).toString()).doubleValue() );
+                                    Double.valueOf((latitudeHPDs[y]).toString()).doubleValue() );
 
                 }
             }

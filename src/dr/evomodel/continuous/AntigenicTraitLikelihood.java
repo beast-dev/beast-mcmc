@@ -64,8 +64,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // a compressed (no missing values) set of measured assay values between virus and sera.
         this.assayTable = new double[virusCount][];
 
-        // a cache of virus to serum distances (serum indices given by array above).
-        cachedDistances = new double[virusCount][];
 
         int totalMeasurementCount = 0;
         for (int i = 0; i < virusCount; i++) {
@@ -91,7 +89,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             assayTable[i] = new double[measuredCount];
             measuredSerumIndices[i] = new int[measuredCount];
-            cachedDistances[i] = new double[measuredCount];
 
             int k = 0;
             for (int j = 0; j < serumCount; j++) {
@@ -106,6 +103,14 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         this.totalMeasurementCount = totalMeasurementCount;
 
+        // a cache of virus to serum distances (serum indices given by array above).
+        distances = new double[totalMeasurementCount];
+        storedDistances = new double[totalMeasurementCount];
+
+        // a cache of individual truncations
+//        truncations = new double[totalMeasurementCount];
+//        storedTruncations = new double[totalMeasurementCount];
+
         for (int i = 0; i < tipCount; i++) {
             if (tipIndices[i] == -1) {
                 String label = tipTraitParameter.getParameter(i).getParameterName();
@@ -113,8 +118,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        // we don't need to listen to tipTraitParameter as this class will be setting it
+        // add tipTraitParameter to enable store / restore
         this.tipTraitParameter = tipTraitParameter;
+        addVariable(tipTraitParameter);
 
         this.virusLocationsParameter = virusLocationsParameter;
         virusLocationsParameter.setColumnDimension(mdsDimension);
@@ -126,7 +132,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         serumLocationsParameter.setRowDimension(serumCount);
         addVariable(serumLocationsParameter);
 
-        // we don't listen to the tip trait parameter because we are setting that
 
         this.mdsParameter = mdsPrecision;
         addVariable(mdsPrecision);
@@ -161,20 +166,57 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                     k += mdsDimension;
                 }
             }
-        }                
+
+            distancesKnown = false;
+        } else  if (variable == serumLocationsParameter) {
+            distancesKnown = false;
+        }
+        distancesKnown = false;
+        truncationKnown = false;
+        likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
+//        System.arraycopy(distances, 0, storedDistances, 0, distances.length);
+//        System.arraycopy(truncations, 0, storedTruncations, 0, truncations.length);
+
+        storedLogLikelihood = logLikelihood;
+        storedTruncation = truncation;
+        storedSumOfSquaredResiduals = sumOfSquaredResiduals;
     }
 
     @Override
     protected void restoreState() {
+//        double[] tmp = storedDistances;
+//        storedDistances = distances;
+//        distances = tmp;
+//        distancesKnown = true;
+
+//        tmp = storedTruncations;
+//        storedTruncations = truncations;
+//        truncations = tmp;
+
+        logLikelihood = storedLogLikelihood;
+        likelihoodKnown = true;
+
+        truncation = storedTruncation;
+        truncationKnown = true;
+
+        sumOfSquaredResiduals = storedSumOfSquaredResiduals;
+
+        makeDirty();
     }
 
     @Override
     protected void acceptState() {
         // do nothing
+    }
+
+    public void makeDirty() {
+        distancesKnown = false;
+        likelihoodKnown = false;
+        truncationKnown = false;
     }
 
     public Model getModel() {
@@ -183,26 +225,32 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
         // TODO Only recompute when not known: distances or mdsPrecision changed
-        return calculateLogLikelihood();
-    }
+        if (!likelihoodKnown) {
+            if (!distancesKnown) {
+                calculateDistances();
+                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+                distancesKnown = true;
+            }
 
-    private double calculateLogLikelihood() {
+            logLikelihood = computeLogLikelihood();
+            likelihoodKnown = true;
+        }
 
-        // TODO Only recompute if distances changed
-        calculateDistances();
-        
-        return computeLogLikelihood();
+        return logLikelihood;
     }
 
     // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
     protected double computeLogLikelihood() {
-        double SSR = calculateSumOfSquaredResiduals();
 
         double precision = mdsParameter.getParameterValue(0);
-        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 0.5 * precision * SSR;
+        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
 
         if (isLeftTruncated) {
-            logLikelihood -= calculateTruncation(precision);
+            if (!truncationKnown) {
+                truncation = calculateTruncation(precision);
+                truncationKnown = true;
+            }
+            logLikelihood -= truncation;
         }
         return logLikelihood;
     }
@@ -210,9 +258,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private double calculateTruncation(double precision) {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
+        int k = 0;
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
-                sum += Math.log(NormalDistribution.cdf(cachedDistances[i][j], 0.0, sd));
+                double t = Math.log(NormalDistribution.cdf(distances[k], 0.0, sd));
+//                truncations[k] = t;
+                sum += t;
+                k++;
             }
         }
         return sum;
@@ -220,20 +272,24 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private double calculateSumOfSquaredResiduals() {
         double sum = 0.0;
+        int k = 0;
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
-                double residual = cachedDistances[i][j] - assayTable[i][j];
+                double residual = distances[k] - assayTable[i][j];
                 sum += residual * residual;
+                k++;
             }
         }
         return sum;
     }
 
     private void calculateDistances() {
+        int k = 0;
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
-                cachedDistances[i][j] = calculateDistance(virusLocationsParameter.getParameter(i),
+                distances[k] = calculateDistance(virusLocationsParameter.getParameter(i),
                         serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
+                k++;
             }
         }
     }
@@ -245,9 +301,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             sum += difference * difference;
         }
         return Math.sqrt(sum);
-    }
-
-    public void makeDirty() {
     }
 
     // **************************************************************
@@ -338,9 +391,24 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     // a set of vectors for each virus giving serum indices for which assay data is available
     private final int[][] measuredSerumIndices;
 
-    // a cache of virus to serum distances (serum indices given by array above).
-    private final double[][] cachedDistances;
+
+    private boolean likelihoodKnown = false;
+    private double logLikelihood;
+    private double storedLogLikelihood;
+
+    private boolean distancesKnown = false;
+    private double sumOfSquaredResiduals;
+    private double storedSumOfSquaredResiduals;
+    private double[] distances;
+    private double[] storedDistances;
+
+    private boolean truncationKnown = false;
+    private double truncation;
+    private double storedTruncation;
+//    private double[] truncations;
+//    private double[] storedTruncations;
+
 
     private final boolean isLeftTruncated;
     private final int mdsDimension;
-    }
+}

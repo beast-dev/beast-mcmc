@@ -223,15 +223,15 @@ public class TreeTraitParserUtilities {
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {
                 String taxonName = treeModel.getTaxonId(i);
-//                String paramName = taxonName + "." + traitName;
 
                 // changed to just label the rows by the taxonName so it can be picked up elsewhere
                 String paramName = taxonName;
+                String altParamName = taxonName + "." + traitName;
 
                 String object = (String) treeModel.getTaxonAttribute(i, traitName);
-                if (object == null)
+                if (object == null) {
                     throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
-                else {
+                } else {
                     StringTokenizer st = new StringTokenizer(object);
                     int count = st.countTokens();
 
@@ -239,7 +239,11 @@ public class TreeTraitParserUtilities {
                     if (existingTraitParameter) {
                         traitParam = getTraitParameterByName(traitParameter, paramName);
                         if (traitParam == null) {
-                            throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                            // try the alternative param name
+                            traitParam = getTraitParameterByName(traitParameter, altParamName);
+                            if (traitParam == null) {
+                                throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                            }
                         }
                     } else {
                         // Make multidimensional, in earlier revisions only first dimension was stored

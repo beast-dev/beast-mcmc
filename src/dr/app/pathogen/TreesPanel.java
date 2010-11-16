@@ -235,6 +235,8 @@ public class TreesPanel extends JPanel implements Exportable {
     }
 
     private void selectMRCA() {
+        if (mrcaPlot == null) return;
+
         if (selectedPoints != null && selectedPoints.size() > 0) {
 
             Set<String> selectedTaxa = new HashSet<String>();
@@ -360,7 +362,7 @@ public class TreesPanel extends JPanel implements Exportable {
                     double y = MathUtils.nextGaussian() * (dp.getYData().getMax() * 0.05);
                     dummyValues[i] = yOffset + y;
                 }
-                
+
                 rootToTipPlot = new ScatterPlot(values, dummyValues);
                 rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));

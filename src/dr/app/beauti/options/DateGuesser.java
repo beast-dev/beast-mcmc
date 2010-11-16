@@ -28,6 +28,9 @@ import dr.evolution.util.Date;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 
+import java.text.*;
+import java.util.Calendar;
+import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +54,8 @@ public class DateGuesser {
     public double offset = 0.0;
     public double unlessLessThan = 0.0;
     public double offset2 = 0.0;
+
+    DateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
 
     public void guessDates(TaxonList taxonList) {
 
@@ -203,20 +208,28 @@ public class DateGuesser {
             regex = "(" + regex + ")";
         }
 
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(label);
+        if (!matcher.find()) {
+            throw new GuessDatesException("Regular expression doesn't find a match in taxon label, " + label);
+        }
+
+        if (matcher.groupCount() < 1) {
+            throw new GuessDatesException("Date group not defined in regular expression");
+        }
+
+        String value = matcher.group(0);
         try {
-            Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(label);
-            if (!matcher.find()) {
-                throw new GuessDatesException("Regular expression doesn't find a match in taxon label, " + label);
-            }
-
-            if (matcher.groupCount() < 1) {
-                throw new GuessDatesException("Date group not defined in regular expression");
-            }
-
-            d = Double.parseDouble(matcher.group(0));
+            d = Double.parseDouble(value);
         } catch (NumberFormatException nfe) {
-            throw new GuessDatesException("Badly formated date in taxon label, " + label);
+            try {
+                Date date = new Date(dateFormat.parse(value));
+                
+                d = date.getTimeValue();
+            } catch (ParseException pe) {
+                throw new GuessDatesException("Badly formated date in taxon label, " + label);
+            }
+
         }
 
         return d;

@@ -23,7 +23,7 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.phylogeography.tools ;
+package dr.app.phylogeography.tools;
 
 import dr.stats.DiscreteStatistics;
 import jebl.evolution.trees.RootedTree;

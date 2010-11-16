@@ -453,7 +453,7 @@ public class LogFileTraces extends AbstractTraceList {
      */
     private void addParsedValue(int nTrace, String value) {
         Trace thisTrace = getTrace(nTrace);
-
+//        System.out.println(thisTrace.getTraceType() + "   " + value);
         if (thisTrace.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
             Double v = Double.parseDouble(value);
             thisTrace.add(v);

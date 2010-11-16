@@ -141,7 +141,7 @@ public class TraceDistribution<T> {
     }
 
     /**
-     * @param values the values to analyze
+     * @param valuesC the values to analyze
      */
     private void analyseDistributionContinuous(double[] valuesC, double proportion) {
 //        this.values = values;   // move to TraceDistribution(T[] values)

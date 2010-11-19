@@ -18,6 +18,7 @@ public class DnDsPerSiteAnalysis implements Citable {
     public static final String CUTOFF = "cutoff";
     public static final String INCLUDE_SIGNIFICANT_SYMBOL = "includeSymbol";
     public static final String INCLUDE_SIGNIFICANCE_LEVEL = "includeLevel";
+    public static final String INCLUDE_SITE_CLASSIFICATION = "includeClassification";
     public static final String SIGNIFICANCE_TEST = "test";
     public static final String SEPARATOR_STRING = "separator";
 
@@ -50,6 +51,10 @@ public class DnDsPerSiteAnalysis implements Citable {
         format.includeSignificantSymbol = b;
     }
 
+    public void setIncludeSiteClassification(boolean b) {
+        format.includeSiteClassification = b;
+    }
+
     public void setCutoff(double d) {
         format.cutoff = d;
     }
@@ -77,42 +82,68 @@ public class DnDsPerSiteAnalysis implements Citable {
             sb.append(format.separator);
             sb.append(numberFormatter.format(distribution.getUpperHPD()));
         }
-        if (format.includeSignificanceLevel || format.includeSignificantSymbol) {
+        if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification) {
             boolean isSignificant = false;
+            String classification = "N";
             String level;
             if (format.test == SignificanceTest.NOT_EQUAL) {
                 double lower = distribution.getLowerHPD();
                 double upper = distribution.getUpperHPD();
-                if ((lower < format.cutoff && upper < format.cutoff) ||
-                        (lower > format.cutoff && upper > format.cutoff)) {
+//                if ((lower < format.cutoff && upper < format.cutoff) ||
+//                        (lower > format.cutoff && upper > format.cutoff)) {
+                if (lower < format.cutoff && upper < format.cutoff) {
                     level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
                     isSignificant = true;
+                    classification = "-";
+                } else if (lower > format.cutoff && upper > format.cutoff) {
+                    level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
+                    isSignificant = true;
+                    classification = "+";
                 } else {
                     level = numberFormatter.formatToFieldWidth("<=0.95", fieldWidth);
                 }
             } else {
                 Object[] values = distribution.getValues();
-                double levelValue = 0.0;
+                double levelPosValue = 0.0;
+                double levelNegValue = 0.0;
                 int total = 0;
                 for (Object obj : values) {
                     double d = (Double) obj;
-                    if ((format.test == SignificanceTest.LESS_THAN && d < format.cutoff) ||
-                            (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff)) {
-                        levelValue++;
+//                    if ((format.test == SignificanceTest.LESS_THAN && d < format.cutoff) ||
+//                            (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff)) {
+                    if (format.test == SignificanceTest.LESS_THAN && d < format.cutoff) {
+                        levelNegValue++;
+                    } else if (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff){
+                        levelPosValue++;
                     }
                     total++;
                 }
-                levelValue /= total;
-                if (levelValue > 0.95) {
+                levelPosValue /= total;
+                levelNegValue /= total;
+                if (levelPosValue > 0.95) {
                     isSignificant = true;
+                    classification = "+";
+                } else if (levelNegValue > 0.95) {
+                    isSignificant = true;
+                    classification = "-";
                 }
-                level = numberFormatter.format(levelValue);
+                if (levelPosValue > levelNegValue) {
+                    level = numberFormatter.format(levelPosValue);
+                                    } else {
+                    level = numberFormatter.format(levelNegValue);
+                                    }
             }
 
             if (format.includeSignificanceLevel) {
                 sb.append(format.separator);
                 sb.append(level);
             }
+
+            if (format.includeSiteClassification) {
+                sb.append(format.separator);
+                sb.append(classification);
+            }
+
 
             if (format.includeSignificantSymbol) {
                 sb.append(format.separator);
@@ -122,6 +153,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                     // Do nothing?
                 }
             }
+
         }
         sb.append("\n");
         return sb.toString();
@@ -150,6 +182,11 @@ public class DnDsPerSiteAnalysis implements Citable {
         if (format.includeSignificanceLevel) {
             sb.append(format.separator);
             sb.append(numberFormatter.formatToFieldWidth("Level", fieldWidth));
+        }
+
+        if (format.includeSiteClassification) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("Classification", fieldWidth));
         }
 
         if (format.includeSignificantSymbol) {
@@ -191,18 +228,20 @@ public class DnDsPerSiteAnalysis implements Citable {
         boolean includeHPD;
         boolean includeSignificanceLevel;
         boolean includeSignificantSymbol;
+        boolean includeSiteClassification;
         double cutoff;
         SignificanceTest test;
         String separator;
 
         OutputFormat() {
-            this(true, true, true, true, 1.0, SignificanceTest.NOT_EQUAL, "\t");
+            this(true, true, true, true, true, 1.0, SignificanceTest.NOT_EQUAL, "\t");
         }
 
         OutputFormat(boolean includeMean,
                      boolean includeHPD,
                      boolean includeSignificanceLevel,
                      boolean includeSignificantSymbol,
+                     boolean includeSiteClassification,
                      double cutoff,
                      SignificanceTest test,
                      String separator) {
@@ -291,6 +330,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                 analysis.setSeparator(xo.getAttribute(SEPARATOR_STRING, "\t"));
                 analysis.setIncludeSignificanceLevel(xo.getAttribute(INCLUDE_SIGNIFICANCE_LEVEL, false));
                 analysis.setIncludeSignificantSymbol(xo.getAttribute(INCLUDE_SIGNIFICANT_SYMBOL, true));
+                analysis.setIncludeSiteClassification(xo.getAttribute(INCLUDE_SITE_CLASSIFICATION, true));
 
                 return analysis;
 
@@ -323,6 +363,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                 AttributeRule.newDoubleArrayRule(CUTOFF, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANT_SYMBOL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANCE_LEVEL, true),
+                AttributeRule.newBooleanRule(INCLUDE_SITE_CLASSIFICATION, true),
                 AttributeRule.newStringRule(SIGNIFICANCE_TEST, true),
                 AttributeRule.newStringRule(SEPARATOR_STRING, true),
                 new StringAttributeRule(FileHelpers.FILE_NAME,

@@ -25,7 +25,7 @@ public class RPNexpressionCalculator {
         double get(String name);
     }
 
-   private enum OP { OP_ADD, OP_SUB, OP_MULT, OP_DIV, OP_CONST, OP_REF }
+   private enum OP { OP_ADD, OP_SUB, OP_MULT, OP_DIV, OP_LOG, OP_EXP, OP_CHS, OP_CONST, OP_REF }
 
     private class Eelement {
         OP op;
@@ -66,6 +66,12 @@ public class RPNexpressionCalculator {
                 element = new Eelement(OP.OP_MULT);
             } else if( tok.equals("/") ) {
                 element = new Eelement(OP.OP_DIV);
+            } else if( tok.equals("log") ) {
+                element = new Eelement(OP.OP_LOG);
+            } else if( tok.equals("exp") ) {
+                element = new Eelement(OP.OP_EXP);
+            } else if( tok.equals("chs") ) {
+                element = new Eelement(OP.OP_CHS);
             } else {
                 try {
                     double val =  Double.parseDouble(tok);
@@ -110,6 +116,24 @@ public class RPNexpressionCalculator {
                     final Double y = stack.pop();
                     final Double x = stack.pop();
                     stack.push(x/y);
+                    break;
+                }
+                case OP_CHS: {
+                    final Double x = stack.pop();
+                    stack.push(-x);
+                    break;
+                }
+                case OP_LOG: {
+                    final Double x = stack.pop();
+                    if( x <= 0.0 ) {
+                        return Double.NaN;
+                    }
+                    stack.push(Math.log(x));
+                    break;
+                }
+                case OP_EXP: {
+                    final Double x = stack.pop();
+                    stack.push(Math.exp(x));
                     break;
                 }
                 case OP_CONST: {

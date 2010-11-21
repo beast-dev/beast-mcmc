@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
+import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
 
 import java.util.Set;
@@ -69,10 +70,9 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * @param tree
      * @param h
      * @param nClade
-     * @param coefficients
      * @return
      */
-    public double logCalibrationCorrectionDensity(Tree tree, double h, int nClade, double[] coefficients) {
+    public double logCalibrationCorrectionDensity(Tree tree, double h, int nClade) {
         return 0.0;
     }
 
@@ -162,24 +162,39 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     }
 
     @Override
-    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution, double[] coefficients) {
-        NodeRef c;
-        if( taxa.length > 1 ) {
-            // check if monophyly and find node
-            c = Tree.Utils.getCommonAncestor(tree, taxa);
+    public double calculateTreeLogLikelihood(Tree tree, int[][] taxas, Distribution[] distributions, Statistic calPDF) {
+        double logL = calculateTreeLogLikelihood(tree);
 
-            if( Tree.Utils.getLeafCount(tree, c) != taxa.length ) {
-                return Double.NEGATIVE_INFINITY;
+        for(int k = 0; k < distributions.length; ++k) {
+            NodeRef c;
+            int[] taxa = taxas[k];
+            if( taxa.length > 1 ) {
+                // check if monophyly and find node
+                c = Tree.Utils.getCommonAncestor(tree, taxa);
+
+                if( Tree.Utils.getLeafCount(tree, c) != taxa.length ) {
+                    return Double.NEGATIVE_INFINITY;
+                }
+            } else {
+                c = tree.getParent(tree.getNode(taxa[0]));
             }
-        } else {
-            c = tree.getParent(tree.getNode(taxa[0]));
+            final double h = tree.getNodeHeight(c);
+            logL += distributions[k].logPdf(h);
+
+            if( calPDF == null ) {  
+                assert k == 0;
+                logL -= logCalibrationCorrectionDensity(tree, h, taxa.length);
+            }
         }
 
-        double logL = calculateTreeLogLikelihood(tree);
-        final double h = tree.getNodeHeight(c);
-        logL += distribution.logPdf(h);
-
-        logL -= logCalibrationCorrectionDensity(tree, h, taxa.length, coefficients);
+        if( calPDF != null ) {
+            final double value = calPDF.getStatisticValue(0);
+            if( Double.isNaN(value) || Double.isInfinite(value) )  {
+                logL = Double.NEGATIVE_INFINITY;
+            } else {
+                logL -= value;
+            }
+        }
 
         return logL;
     }

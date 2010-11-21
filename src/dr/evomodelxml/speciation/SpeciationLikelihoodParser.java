@@ -6,10 +6,13 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
@@ -22,7 +25,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE = "speciesTree";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
-    public static final String COEFFS = "coefficients";
+   // public static final String COEFFS = "coefficients";
 
     public static final String CALIBRATION = "calibration";
 
@@ -73,17 +76,41 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
         final XMLObject cal = xo.getChild(CALIBRATION);
         if( cal != null ) {
             if( excludeTaxa != null ) {
-                throw new XMLParseException("Sorry, not implemented: internal calibration point + excluded taxa");
+                throw new XMLParseException("Sorry, not implemented: internal calibration prior + excluded taxa");
             }
 
             if( ! specModel.supportsInternalCalibration() ) {
-              throw new XMLParseException("Sorry, not implemented: internal calibration point for this model.");
+              throw new XMLParseException("Sorry, not implemented: internal calibration prior for this model.");
             }
 
-            return new SpeciationLikelihood(tree, specModel, null,
-                    (Distribution) cal.getChild(Distribution.class),
-                    (Taxa) cal.getChild(Taxa.class),
-                    cal.getDoubleArrayAttribute(COEFFS) );
+            //final double[] coef = cal.hasAttribute(COEFFS) ? cal.getDoubleArrayAttribute(COEFFS) : null;
+
+            List<Distribution> dists = new ArrayList<Distribution>();
+            List<Taxa> taxa = new ArrayList<Taxa>();
+            for(int k = 0; k < cal.getChildCount(); ++k) {
+                final Object ck = cal.getChild(k);
+                if ( Distribution.class.isInstance(ck) ) {
+                    dists.add((Distribution) ck);
+                }
+                if ( Taxa.class.isInstance(ck) ) {
+                    taxa.add((Taxa) ck);
+                }
+            }
+
+            if( dists.size() != taxa.size() ) {
+                throw new XMLParseException("Mismatch in number of distributions and taxa specs");
+            }
+
+            final Statistic s = (Statistic) cal.getChild(Statistic.class);
+            if( dists.size() > 1 && s == null ) {
+                throw new XMLParseException("Sorry, not implemented: multiple internal calibrations - please provide the " +
+                        "correction explicitly.");
+            }
+
+            return new SpeciationLikelihood(tree, specModel, null, dists, taxa, s);
+//                    (Distribution) cal.getChild(Distribution.class),
+//                    (Taxa) cal.getChild(Taxa.class),
+//                    coef);
         }
 
         return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
@@ -107,10 +134,11 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
 
     private final XMLSyntaxRule[] calibration = {
-            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
-                    "as a calibration correction instead of default - used when additional constarints are put on the topology."),
-            new ElementRule(Distribution.class),
-            new ElementRule(Taxa.class)
+//            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
+//                    "as a calibration correction instead of default - used when additional constarints are put on the topology."),
+            new ElementRule(Statistic.class, true),
+            new ElementRule(Distribution.class, 1, 100),
+            new ElementRule(Taxa.class,1, 100)
     };
 
     private final XMLSyntaxRule[] rules = {
@@ -129,7 +157,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(Taxa.class, 1, Integer.MAX_VALUE)
             }, "One or more subsets of taxa which should be excluded from calculate the likelihood (which is calculated on the remaining subtree)", true),
 
-             new ElementRule(CALIBRATION, calibration, true),
+            new ElementRule(CALIBRATION, calibration, true),
     };
 
 }

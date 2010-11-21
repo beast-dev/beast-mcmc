@@ -28,10 +28,7 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.inference.model.AbstractModel;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.distributions.Distribution;
 
 import java.util.Set;
@@ -68,7 +65,7 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
     //
     // The likelihood enforces the monophyly, so there is no need to specifiy it again in the XML.
 
-    public double calculateTreeLogLikelihood(Tree tree, int[] taxa, Distribution distribution, double[] coefficients) {
+    public double calculateTreeLogLikelihood(Tree tree, int[][] taxa, Distribution[] distribution, Statistic calPDF) {
         return Double.NEGATIVE_INFINITY;
     }
 

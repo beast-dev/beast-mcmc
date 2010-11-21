@@ -30,12 +30,10 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.distributions.Distribution;
 
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -66,16 +64,32 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         this(tree, speciationModel, null, id);
     }
 
-    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
-                                Distribution dist, Taxa taxa, double[] coefficients) {
-        this(tree, speciationModel, id);
-        this.distribution = dist;
-        this.coefficients = coefficients;
+//    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
+//                                Distribution dist, Taxa taxa, double[] coefficients) {
+//        this(tree, speciationModel, id);
+//        this.distribution = dist;
+//        this.coefficients = coefficients;
+//
+//        this.taxa = new int[taxa.getTaxonCount()];
+//        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
+//            this.taxa[nt] = tree.getTaxonIndex(taxa.getTaxon(nt));
+//        }
+//    }
 
-        this.taxa = new int[taxa.getTaxonCount()];
-        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
-            this.taxa[nt] = tree.getTaxonIndex(taxa.getTaxon(nt));
+    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
+                                List<Distribution> dists, List<Taxa> taxa, Statistic s) {
+        this(tree, speciationModel, id);
+        this.distribution = dists.toArray(new Distribution[dists.size()]);
+        this.taxa = new int[taxa.size()][];
+        for(int k = 0; k < taxa.size(); ++k) {
+            final Taxa tk = taxa.get(k);
+            final int tkcount = tk.getTaxonCount();
+            this.taxa[k] = new int[tkcount];
+            for(int nt = 0; nt < tkcount; ++nt) {
+                this.taxa[k][nt] = tree.getTaxonIndex(tk.getTaxon(nt));
+            }
         }
+        this.calibrationLogPDF = s;
     }
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
@@ -164,7 +178,8 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         }
 
         if ( distribution != null ) {
-            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, coefficients);
+            //return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, coefficients);
+            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, calibrationLogPDF);
         }
 
         return speciationModel.calculateTreeLogLikelihood(tree);
@@ -232,9 +247,10 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     Tree tree = null;
     private final Set<Taxon> exclude;
 
-    private  Distribution distribution = null;
-    private  int[] taxa = null;
-    private double[] coefficients = null;
+    private  Distribution[] distribution = null;
+    private  int[][] taxa = null;
+    private  Statistic calibrationLogPDF = null;
+    //private double[] coefficients = null;
 
     private double logLikelihood;
     private double storedLogLikelihood;

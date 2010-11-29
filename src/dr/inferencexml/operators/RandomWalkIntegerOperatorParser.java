@@ -1,6 +1,7 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RandomWalkIntegerOperator;
 import dr.xml.*;
@@ -28,12 +29,12 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
         }
 
         int windowSize = (int)d;
-        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+        Variable parameter = (Variable) xo.getChild(Variable.class);
 
         if (xo.hasChildNamed(UPDATE_INDEX)) {
             XMLObject cxo = xo.getChild(UPDATE_INDEX);
             Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
-            return new RandomWalkIntegerOperator(parameter, updateIndex, windowSize, weight);
+            return new RandomWalkIntegerOperator((Parameter) parameter, updateIndex, windowSize, weight);
         }
 
         return new RandomWalkIntegerOperator(parameter, windowSize, weight);
@@ -58,7 +59,7 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WINDOW_SIZE),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            new ElementRule(Parameter.class)
+            new ElementRule(Variable.class)
     };
 
 }

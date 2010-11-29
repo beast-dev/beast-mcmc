@@ -25,6 +25,8 @@
 
 package dr.inference.model;
 
+import java.util.ArrayList;
+
 /**
  * Represents a multi-dimensional 'regular' boundary (a hypervolume)
  *
@@ -109,5 +111,18 @@ public interface Bounds<V> {
         public int getBoundsDimension() {
             return size;
         }
+
+        private ArrayList<Bounds<Integer>> bounds = null;
+
+        public void addBounds(Bounds<Integer> boundary) {
+            if (boundary.getBoundsDimension() != size) {
+                throw new IllegalArgumentException("Incorrect dimension of bounds, expected " +
+                        size + " but received " + boundary.getBoundsDimension());
+            }
+            if (bounds == null) {
+                bounds = new ArrayList<Bounds<Integer>>();
+            }
+            bounds.add(boundary);
+        }        
     }
 }	

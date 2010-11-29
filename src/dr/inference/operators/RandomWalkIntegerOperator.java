@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inferencexml.operators.RandomWalkIntegerOperatorParser;
 import dr.math.MathUtils;
 
@@ -15,7 +16,7 @@ import java.util.List;
  */
 public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
-    public RandomWalkIntegerOperator(Parameter parameter, int windowSize, double weight) {
+    public RandomWalkIntegerOperator(Variable parameter, int windowSize, double weight) {
         this.parameter = parameter;
         this.windowSize = windowSize;
         setWeight(weight);
@@ -38,7 +39,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
      * @return the parameter this operator acts on.
      */
     public Parameter getParameter() {
-        return parameter;
+        return (Parameter) parameter;
     }
 
     public final int getWindowSize() {
@@ -53,34 +54,59 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         // a random dimension to perturb
         int index;
         if (updateMap == null)
-            index = MathUtils.nextInt(parameter.getDimension());
+            index = MathUtils.nextInt(parameter.getSize()); // use getSize(), which = getDimension()
         else
             index = updateMap.get(MathUtils.nextInt(updateMap.size()));
 
-        // a random non zero integer around old value within windowSize * 2
-        int oldValue = (int) parameter.getParameterValue(index);
-        int newValue;
-        int roll = MathUtils.nextInt(2 * windowSize);
-        if (roll >= windowSize) {
-            newValue = oldValue + 1 + roll - windowSize;
-
-            if (newValue > parameter.getBounds().getUpperLimit(index))
-                newValue = 2 * (int)(double)parameter.getBounds().getUpperLimit(index) - newValue;
-        } else {
-            newValue = oldValue - 1 - roll;
-
-            if (newValue < parameter.getBounds().getLowerLimit(index))
-                newValue = 2 * (int)(double)parameter.getBounds().getLowerLimit(index) - newValue;
+        int newValue = calculateNewValue(index);
+        if (parameter instanceof Parameter) {
+            ((Parameter) parameter).setParameterValue(index, newValue);
+        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
+            ((Variable<Integer>) parameter).setValue(index, newValue);
         }
-
-        parameter.setParameterValue(index, newValue);
 
         return 0.0;
     }
 
+    protected int calculateNewValue(int index) {
+        // a random non zero integer around old value within windowSize * 2
+        int oldValue;
+        int upper;
+        int lower;
+        if (parameter instanceof Parameter) {
+            oldValue = (int) ((Parameter) parameter).getParameterValue(index);
+            upper = (int)(double)((Parameter) parameter).getBounds().getUpperLimit(index);
+            lower = (int)(double)((Parameter) parameter).getBounds().getLowerLimit(index);
+        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
+            oldValue = ((Variable<Integer>) parameter).getValue(index);
+            upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
+            lower = ((Variable<Integer>) parameter).getBounds().getLowerLimit(index);
+        } else {
+            throw new RuntimeException("The parameter (" + parameter.getId() + ") uses invalid class!");
+        }
+//        System.out.println("index = " + index + ";  oldValue = " + oldValue + ";  upper = " + upper + ";  lower = " + lower);
+        if (upper == lower) return upper;
+
+        int newValue;
+        int roll = MathUtils.nextInt(2 * windowSize); // windowSize="1"; roll = {0, 1}
+        if (roll >= windowSize) { // roll = 1
+            newValue = oldValue + 1 + roll - windowSize;
+
+            if (newValue > upper)
+                newValue = 2 * upper - newValue;
+        } else {  // roll = 0
+            newValue = oldValue - 1 - roll;
+
+            if (newValue < lower)
+                newValue = 2 * lower - newValue;
+        }
+
+        return newValue;
+    }
+
     //MCMCOperator INTERFACE
     public String getOperatorName() {
-        return "randomWalkInteger(" + parameter.getParameterName() + ")";
+        return "randomWalkInteger(" + parameter.getId() + ")";
     }
 
     public double getTargetAcceptanceProbability() {
@@ -108,7 +134,13 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         double prob = Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();
 
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, parameter.getParameterValue(0) * 2.0, prob, targetProb);
+        double maxDelta = 0;
+        if (parameter instanceof Parameter) {
+            maxDelta = ((Parameter) parameter).getParameterValue(0)  * 2.0;
+        } else if (parameter instanceof Variable) {
+            maxDelta = ((Variable<Integer>) parameter).getValue(0) * 2.0;
+        }
+        double ws = OperatorUtils.optimizeWindowSize(windowSize, maxDelta * 2.0, prob, targetProb);
 
         if (prob < getMinimumGoodAcceptanceLevel()) {
             return "Try decreasing windowSize to about " + ws;
@@ -118,12 +150,12 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     }
 
     public String toString() {
-        return RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ", " + windowSize + ", " + getWeight() + ")";
+        return RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR + "(" + parameter.getId() + ", " + windowSize + ", " + getWeight() + ")";
     }
 
     //PRIVATE STUFF
 
-    protected Parameter parameter = null;
+    protected Variable parameter = null;
     protected int windowSize = 1;
     protected List<Integer> updateMap = null;
 }

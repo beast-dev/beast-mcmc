@@ -29,7 +29,10 @@ import dr.inference.parallel.MPIServices;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Represents a multi-dimensional continuous parameter.
@@ -329,7 +332,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         /**
          * @return the size of this variable - i.e. the length of the vector
          */
-        public final int getSize() {
+        public int getSize() {
             return getDimension();
         }
 
@@ -504,6 +507,10 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public final int getDimension() {
             return values.length;
+        }
+
+        public final int getSize() {
+            return getDimension();
         }
 
         public final double getParameterValue(int i) {

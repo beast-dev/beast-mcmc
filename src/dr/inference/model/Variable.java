@@ -474,4 +474,172 @@ public interface Variable<V> extends Identifiable {
         double[] lower;
         double[] upper;
     }
+
+    public class I implements Variable<Integer>, Loggable {
+
+        public I(int value, int size) {
+            values = new int[size];
+            storedValues = new int[values.length];
+
+            for (int i = 0; i < size; i++) {
+                values[i] = value;
+            }
+        }
+
+        public I(int[] v) {
+            values = new int[v.length];
+            System.arraycopy(v, 0, values, 0, v.length);
+            storedValues = new int[values.length];
+        }
+
+        public I(String name, int[] v) {
+            this(v);
+            setId(name);
+        }
+
+        public I(String name, int value) {
+            this(name, new int[]{value});
+        }
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+
+        public String getVariableName() {
+            return id;
+        }
+
+        public Integer getValue(int index) {
+            return values[index];
+        }
+
+        public Integer[] getValues() {
+            Integer[] copyOfValues = new Integer[values.length];
+            for (int i = 0; i < values.length; i++) {
+                copyOfValues[i] = values[i];
+            }
+            return copyOfValues;
+        }
+
+        public void setValue(int index, Integer value) {
+            values[index] = value;
+            fireVariableChanged(index);
+        }
+
+        private void fireVariableChanged(int index) {
+            for (VariableListener listener : listeners) {
+                listener.variableChangedEvent(this, index, ChangeType.VALUE_CHANGED);
+            }
+        }
+
+        public int getSize() {
+            return values.length;
+        }
+
+        public void addVariableListener(VariableListener listener) {
+            listeners.add(listener);
+        }
+
+        public void removeVariableListener(VariableListener listener) {
+            listeners.remove(listener);
+        }
+
+        public void storeVariableValues() {
+            System.arraycopy(values, 0, storedValues, 0, storedValues.length);
+        }
+
+        public void restoreVariableValues() {
+            int[] temp = storedValues;
+            storedValues = values;
+            values = temp;
+        }
+
+        public void acceptVariableValues() {
+        }
+
+        public Bounds<Integer> getBounds() {
+            if (bounds == null) {
+                return new Bounds<Integer>() {
+                    public Integer getUpperLimit(int dimension) {
+                        return Integer.MAX_VALUE;
+                    }
+
+                    public Integer getLowerLimit(int dimension) {
+                        return -Integer.MAX_VALUE;
+                    }
+
+                    public int getBoundsDimension() {
+                        return getSize();
+                    }
+                };
+            } else return bounds;
+        }
+
+        // **************************************************************
+        // Loggable IMPLEMENTATION
+        // **************************************************************
+
+        /**
+         * @return the log columns.
+         */
+        public LogColumn[] getColumns() {
+            LogColumn[] columns = new LogColumn[getSize()];
+            if (getSize() == 1) {
+                columns[0] = new StatisticColumn(getVariableName(), 0);
+            } else {
+                for (int i = 0; i < getSize(); i++) {
+                    columns[i] = new StatisticColumn(getVariableName() + "[" + i + "]", i);
+                }
+            }
+            return columns;
+        }
+
+        /**
+         * Careful use! Do not write to the array provided!!
+         *
+         * @return the underlying array of doubles
+         */
+        public int[] peekValues() {
+            return values;
+        }
+
+        public void addBounds(Bounds<Integer> b) {
+            if (bounds == null) {
+                bounds = b;
+            } else {
+                if (!(bounds instanceof Bounds.Staircase)) {
+                    Bounds.Staircase newBounds = new Bounds.Staircase(getSize());
+                    newBounds.addBounds(bounds);
+                    bounds = newBounds;
+                }
+
+                ((Bounds.Staircase)bounds).addBounds(b);
+            }
+
+        }
+
+        private class StatisticColumn extends NumberColumn {
+            private final int dim;
+
+            public StatisticColumn(String label, int dim) {
+                super(label);
+                this.dim = dim;
+            }
+
+            public double getDoubleValue() {
+                return getValue(dim);
+            }
+        }
+
+        String id;
+        int[] values;
+        int[] storedValues;
+        List<VariableListener> listeners = new ArrayList<VariableListener>();
+        private Bounds<Integer> bounds = null;
+    }
 }

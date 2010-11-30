@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.inferencexml.operators.UniformIntegerOperatorParser;
 import dr.math.MathUtils;
 
@@ -14,24 +15,27 @@ import dr.math.MathUtils;
 public class UniformIntegerOperator extends SimpleMCMCOperator {
     private final int howMany;
 
-    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight,
-                                  int howMany) {
-        this.parameter = parameter;
+    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight, int howMany) {
+        this(parameter, weight, howMany);
         this.lower = lower;
         this.upper = upper;
+    }
+
+    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
+        this(parameter, lower, upper, weight, 1);
+    }
+
+    public UniformIntegerOperator(Variable parameter, double weight, int howMany) { // Bounds.Staircase
+        this.parameter = parameter;
         this.howMany = howMany;
         setWeight(weight);
     }
 
-    public UniformIntegerOperator(Parameter parameter, int lower, int upper, double weight) {
-      this(parameter, lower, upper, weight, 1);
-    }
-    
     /**
      * @return the parameter this operator acts on.
      */
     public Parameter getParameter() {
-        return parameter;
+        return (Parameter) parameter;
     }
 
     /**
@@ -39,12 +43,20 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
      */
     public final double doOperation() {
 
-        for(int n = 0; n < howMany; ++n) {
+        for (int n = 0; n < howMany; ++n) {
             // do not worry about duplication, does not matter
-            int index = MathUtils.nextInt(parameter.getDimension());
-            int newValue = MathUtils.nextInt(upper - lower) + lower;
+            int index = MathUtils.nextInt(parameter.getSize());
 
-            parameter.setParameterValue(index, newValue);
+            if (parameter instanceof Parameter) {
+                int newValue = MathUtils.nextInt(upper - lower + 1) + lower; // from 0 to n-1, n must > 0,
+                ((Parameter) parameter).setParameterValue(index, newValue);
+            } else { // Variable<Integer>, Bounds.Staircase
+                int upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
+                int lower = ((Variable<Integer>) parameter).getBounds().getLowerLimit(index);
+                int newValue = MathUtils.nextInt(upper - lower + 1) + lower; // from 0 to n-1, n must > 0,
+                ((Variable<Integer>) parameter).setValue(index, newValue);
+            }
+
         }
 
         return 0.0;
@@ -52,7 +64,7 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return "uniformInteger(" + parameter.getParameterName() + ")";
+        return "uniformInteger(" + parameter.getId() + ")";
     }
 
     public final void optimize(double targetProb) {
@@ -95,12 +107,12 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     }
 
     public String toString() {
-        return UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR + "(" + parameter.getParameterName() + ")";
+        return UniformIntegerOperatorParser.UNIFORM_INTEGER_OPERATOR + "(" + parameter.getId() + ")";
     }
 
     //PRIVATE STUFF
 
-    private Parameter parameter = null;
-    private final int upper;
-    private final int lower;
+    private Variable parameter = null;
+    private int upper;
+    private int lower;
 }

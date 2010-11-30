@@ -99,10 +99,10 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(HKYParser.KAPPA, kappaStats, 18.3053);
 
         TraceCorrelation ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.MEAN));
-        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.28472E-4);
+        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.18686E-4);
 
         ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.STDEV));
-        assertExpectation(LogNormalDistributionModelParser.STDEV, ucldStats, 0.18861552057676576);
+        assertExpectation(LogNormalDistributionModelParser.STDEV, ucldStats, 0.16846023066431434);
 
         TraceCorrelation rateStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("meanRate"));
         assertExpectation("meanRate", rateStats, 8.010906E-4);
@@ -140,7 +140,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(TREE_HEIGHT, treeHeightStats, 84.3529526);
 
         TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 17.98589);
+        assertExpectation(HKYParser.KAPPA, kappaStats, 18.38065);
 
         TraceCorrelation ucedStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(DistributionModelParser.MEAN));
         assertExpectation(DistributionModelParser.MEAN, ucedStats, 0.0019344134887784579);

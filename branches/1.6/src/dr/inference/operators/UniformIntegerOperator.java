@@ -42,7 +42,7 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
         for(int n = 0; n < howMany; ++n) {
             // do not worry about duplication, does not matter
             int index = MathUtils.nextInt(parameter.getDimension());
-            int newValue = MathUtils.nextInt(upper - lower) + lower;
+            int newValue = MathUtils.nextInt(upper - lower + 1) + lower;
 
             parameter.setParameterValue(index, newValue);
         }

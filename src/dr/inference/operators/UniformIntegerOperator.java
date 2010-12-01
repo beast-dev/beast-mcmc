@@ -39,6 +39,13 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
     }
 
     /**
+     * @return the Variable this operator acts on.
+     */
+    public Variable getVariable() {
+        return parameter;
+    }
+
+    /**
      * change the parameter and return the hastings ratio.
      */
     public final double doOperation() {
@@ -51,10 +58,12 @@ public class UniformIntegerOperator extends SimpleMCMCOperator {
                 int newValue = MathUtils.nextInt(upper - lower + 1) + lower; // from 0 to n-1, n must > 0,
                 ((Parameter) parameter).setParameterValue(index, newValue);
             } else { // Variable<Integer>, Bounds.Staircase
-                int upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
-                int lower = ((Variable<Integer>) parameter).getBounds().getLowerLimit(index);
-                int newValue = MathUtils.nextInt(upper - lower + 1) + lower; // from 0 to n-1, n must > 0,
-                ((Variable<Integer>) parameter).setValue(index, newValue);
+                if (index > 0) { // if Bounds.Staircase, value of index 0 is fixed to constant 0
+                    int upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
+                    int lower = ((Variable<Integer>) parameter).getBounds().getLowerLimit(index);
+                    int newValue = MathUtils.nextInt(upper - lower + 1) + lower; // from 0 to n-1, n must > 0,
+                    ((Variable<Integer>) parameter).setValue(index, newValue);
+                }
             }
 
         }

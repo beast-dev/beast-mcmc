@@ -58,11 +58,14 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         else
             index = updateMap.get(MathUtils.nextInt(updateMap.size()));
 
-        int newValue = calculateNewValue(index);
         if (parameter instanceof Parameter) {
+            int newValue = calculateNewValue(index);
             ((Parameter) parameter).setParameterValue(index, newValue);
         } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
-            ((Variable<Integer>) parameter).setValue(index, newValue);
+            if (index > 0) { // if Bounds.Staircase, value of index 0 is fixed to constant 0
+                int newValue = calculateNewValue(index);
+                ((Variable<Integer>) parameter).setValue(index, newValue);
+            }
         }
 
         return 0.0;

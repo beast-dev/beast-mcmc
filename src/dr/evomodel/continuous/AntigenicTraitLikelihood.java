@@ -76,7 +76,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         int totalMeasurementCount = 0;
         for (int i = 0; i < virusCount; i++) {
             virusIndices[i] = -1;
-                                                                                                           
+
             double[] dataRow = dataTable.getRow(i);
 
             if (tipIndices != null) {
@@ -117,9 +117,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         distances = new double[totalMeasurementCount];
         storedDistances = new double[totalMeasurementCount];
 
+        virusUpdates = new boolean[virusCount];
+        serumUpdates = new boolean[serumCount];
+        distanceUpdate = new boolean[totalMeasurementCount];
+
         // a cache of individual truncations
-//        truncations = new double[totalMeasurementCount];
-//        storedTruncations = new double[totalMeasurementCount];
+        truncations = new double[totalMeasurementCount];
+        storedTruncations = new double[totalMeasurementCount];
 
         if (tipIndices != null) {
             for (int i = 0; i < tipCount; i++) {
@@ -182,46 +186,52 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                     }
                 }
             }
-            
+
+            virusUpdates[index / mdsDimension] = true;
             distancesKnown = false;
-        } else  if (variable == serumLocationsParameter) {
+        } else if (variable == serumLocationsParameter) {
+            serumUpdates[index / mdsDimension] = true;
             distancesKnown = false;
+        } else if (variable == mdsParameter) {
+            for (int i = 0; i < distanceUpdate.length; i++) {
+                distanceUpdate[i] = true;
+            }
+        } else {
+            throw new IllegalArgumentException("Unknown parameter");
         }
-        distancesKnown = false;
+
         truncationKnown = false;
         likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
-//        System.arraycopy(distances, 0, storedDistances, 0, distances.length);
-//        System.arraycopy(truncations, 0, storedTruncations, 0, truncations.length);
+        System.arraycopy(distances, 0, storedDistances, 0, distances.length);
+        System.arraycopy(truncations, 0, storedTruncations, 0, truncations.length);
 
         storedLogLikelihood = logLikelihood;
-        storedTruncation = truncation;
+        storedTruncationSum = truncationSum;
         storedSumOfSquaredResiduals = sumOfSquaredResiduals;
     }
 
     @Override
     protected void restoreState() {
-//        double[] tmp = storedDistances;
-//        storedDistances = distances;
-//        distances = tmp;
-//        distancesKnown = true;
+        double[] tmp = storedDistances;
+        storedDistances = distances;
+        distances = tmp;
+        distancesKnown = true;
 
-//        tmp = storedTruncations;
-//        storedTruncations = truncations;
-//        truncations = tmp;
+        tmp = storedTruncations;
+        storedTruncations = truncations;
+        truncations = tmp;
 
         logLikelihood = storedLogLikelihood;
         likelihoodKnown = true;
 
-        truncation = storedTruncation;
+        truncationSum = storedTruncationSum;
         truncationKnown = true;
 
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
-
-        makeDirty();
     }
 
     @Override
@@ -233,6 +243,18 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         distancesKnown = false;
         likelihoodKnown = false;
         truncationKnown = false;
+
+        for (int i = 0; i < virusUpdates.length; i++) {
+            virusUpdates[i] = true;
+        }
+
+        for (int i = 0; i < serumUpdates.length; i++) {
+            serumUpdates[i] = true;
+        }
+
+        for (int i = 0; i < distanceUpdate.length; i++) {
+            distanceUpdate[i] = true;
+        }
     }
 
     public Model getModel() {
@@ -240,16 +262,28 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        // TODO Only recompute when not known: distances or mdsPrecision changed
         if (!likelihoodKnown) {
             if (!distancesKnown) {
                 calculateDistances();
                 sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
                 distancesKnown = true;
+
             }
 
             logLikelihood = computeLogLikelihood();
             likelihoodKnown = true;
+        }
+
+        for (int i = 0; i < virusUpdates.length; i++) {
+            virusUpdates[i] = false;
+        }
+
+        for (int i = 0; i < serumUpdates.length; i++) {
+            serumUpdates[i] = false;
+        }
+
+        for (int i = 0; i < distanceUpdate.length; i++) {
+            distanceUpdate[i] = false;
         }
 
         return logLikelihood;
@@ -263,11 +297,12 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         if (isLeftTruncated) {
             if (!truncationKnown) {
-                truncation = calculateTruncation(precision);
+                truncationSum = calculateTruncation(precision);
                 truncationKnown = true;
             }
-            logLikelihood -= truncation;
+            logLikelihood -= truncationSum;
         }
+
         return logLikelihood;
     }
 
@@ -277,12 +312,17 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         int k = 0;
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
-                double t = Math.log(NormalDistribution.cdf(distances[k], 0.0, sd));
-//                truncations[k] = t;
-                sum += t;
+                if (distanceUpdate[k]) {
+                    truncations[k] = Math.log(NormalDistribution.cdf(distances[k], 0.0, sd));
+                }
                 k++;
             }
         }
+
+        for ( k = 0; k < truncations.length; k++) {
+            sum += truncations[k];
+        }
+
         return sum;
     }
 
@@ -303,8 +343,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         int k = 0;
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
-                distances[k] = calculateDistance(virusLocationsParameter.getParameter(i),
-                        serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
+                if (virusUpdates[i] || serumUpdates[measuredSerumIndices[i][j]]) {
+                    distances[k] = calculateDistance(virusLocationsParameter.getParameter(i),
+                            serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
+                    distanceUpdate[k] = true;
+                }
                 k++;
             }
         }
@@ -422,11 +465,15 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private double[] distances;
     private double[] storedDistances;
 
+    private boolean[] virusUpdates;
+    private boolean[] serumUpdates;
+    private boolean[] distanceUpdate;
+
     private boolean truncationKnown = false;
-    private double truncation;
-    private double storedTruncation;
-//    private double[] truncations;
-//    private double[] storedTruncations;
+    private double truncationSum;
+    private double storedTruncationSum;
+    private double[] truncations;
+    private double[] storedTruncations;
 
 
     private final boolean isLeftTruncated;

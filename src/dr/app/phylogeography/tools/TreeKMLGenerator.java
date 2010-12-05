@@ -225,7 +225,7 @@ public class TreeKMLGenerator {
         }
 
         doc.addContent(schema);
-        doc.addContent(styles);
+//        doc.addContent(styles);
         doc.addContent(trees);
 
         if (projections.size() > 0) {
@@ -966,7 +966,7 @@ public class TreeKMLGenerator {
         settings.setPlotAltitude(0);
         settings.setMostRecentDate(2007);
         //settings.setAgeCutOff(1995);
-        settings.setTimeDivisionCount(10);
+        settings.setTimeDivisionCount(0);
 
 //        settings.setTraitName("longLat");
 //        settings.setLatitudeName("longLat1");

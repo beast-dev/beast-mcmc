@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.*;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
 import dr.xml.*;
@@ -49,7 +50,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 System.err.println("Tree has different number of tips than the number of viruses");
             }
 
-            // the tip -> virus map
+            //  the tip -> virus map
             tipIndices = new int[tipCount];
 
             tipNameMap = new HashMap<String, Integer>();
@@ -144,16 +145,33 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             addVariable(tipTraitParameter);
         }
 
+
         this.virusLocationsParameter = virusLocationsParameter;
         virusLocationsParameter.setColumnDimension(mdsDimension);
         virusLocationsParameter.setRowDimension(virusCount);
         addVariable(virusLocationsParameter);
+
+        // some random initial locations
+        for (int i = 0; i < virusCount; i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
+                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+            }
+        }
 
         this.serumLocationsParameter = serumLocationsParameter;
         if (virusLocationsParameter != serumLocationsParameter) {
             serumLocationsParameter.setColumnDimension(mdsDimension);
             serumLocationsParameter.setRowDimension(serumCount);
             addVariable(serumLocationsParameter);
+        }
+
+        // some random initial locations
+        for (int i = 0; i < serumCount; i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
+                serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+            }
         }
 
         this.mdsParameter = mdsPrecision;

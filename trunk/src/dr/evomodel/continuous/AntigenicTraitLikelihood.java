@@ -7,8 +7,7 @@ import dr.xml.*;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -25,7 +24,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             CompoundParameter tipTraitParameter,
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
-            DataTable<double[]> dataTable) {
+            DataTable<double[]> dataTable,
+            final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
@@ -103,7 +103,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             int k = 0;
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
-                    this.assayTable[i][k] = transform(dataRow[j]); // TODO Code review here, was dataRow[k]
+                    if (log2Transform) {
+                    this.assayTable[i][k] = transform(dataRow[j]);
+                    } else {
+                        this.assayTable[i][k] = dataRow[j];
+                    }
                     measuredSerumIndices[i][k] = j;
                     k ++;
                 }
@@ -146,10 +150,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         addVariable(virusLocationsParameter);
 
         this.serumLocationsParameter = serumLocationsParameter;
-        serumLocationsParameter.setColumnDimension(mdsDimension);
-        serumLocationsParameter.setRowDimension(serumCount);
-        addVariable(serumLocationsParameter);
-
+        if (virusLocationsParameter != serumLocationsParameter) {
+            serumLocationsParameter.setColumnDimension(mdsDimension);
+            serumLocationsParameter.setRowDimension(serumCount);
+            addVariable(serumLocationsParameter);
+        }
 
         this.mdsParameter = mdsPrecision;
         addVariable(mdsPrecision);
@@ -262,6 +267,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
+        makeDirty();
         if (!likelihoodKnown) {
             if (!distancesKnown) {
                 calculateDistances();
@@ -375,6 +381,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
 
+        public static final String LOG_2_TRANSFORM = "log2Transform";
+
         public String getParserName() {
             return ANTIGENIC_TRAIT_LIKELIHOOD;
         }
@@ -390,6 +398,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
+
+            boolean log2Transform = false;
+            if (xo.hasAttribute(LOG_2_TRANSFORM)) {
+                xo.getBooleanAttribute(LOG_2_TRANSFORM);
+            }
 
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
@@ -408,7 +421,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
         }
 
         //************************************************************************
@@ -427,6 +440,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
+                AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
@@ -437,6 +451,79 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             return AntigenicTraitLikelihood.class;
         }
     };
+
+    public static void main(String[] argv) {
+        DataTable<double[]> assayTable = null;
+        try {
+            assayTable = DataTable.Double.parse(new FileReader(argv[0]));
+        } catch (IOException e) {
+            System.err.println("Unable to read assay data from file, " + argv[0]);
+            System.exit(1);
+        }
+
+        String[] virusNames = assayTable.getRowLabels();
+        String[] serumNames = assayTable.getColumnLabels();
+
+        Set<String> serumSet = new HashSet<String>();
+        Map<String, String> serumMap = new HashMap<String, String>();
+        Map<String, String> virusMap = new HashMap<String, String>();
+
+        for (String serum : serumNames) {
+            String[] bits = serum.split("/");
+            String country = bits[0];
+
+            String name = "";
+            if (bits.length > 1) {
+                bits = bits[1].split("-");
+                String code = bits[0];
+                name = country + "_" + code;
+            } else {
+                if (country.startsWith("IVR-134")) {
+                    name = "WYOMING_3";
+                } else if (country.startsWith("IVR-135")) {
+                    name = "KUMAMOTO_102";
+                } else if (country.startsWith("RESVIR")) {
+                    name = "PANAMA_2007";
+                } else {
+                    throw new RuntimeException("Unknown virus");
+                }
+            }
+
+            serumSet.add(name);
+            serumMap.put(serum, name);
+
+            for (String virus : virusNames) {
+                if (virus.toUpperCase().contains(name + "_")) {
+                    virusMap.put(virus, name);
+                }
+            }
+        }
+
+        Map<String, double[]> columnMap = new HashMap<String, double[]>();
+
+        for (int j = 0; j < serumNames.length; j++) {
+            String serum = serumNames[j];
+
+            double[] column = assayTable.getColumn(j);
+            String code = serumMap.get(serum);
+
+            double[] column0 = columnMap.get(code);
+            if (column0 != null) {
+                for (int i = 0; i < virusNames.length; i++) {
+                    if (!Double.isNaN(column[i]) && !Double.isNaN(column0[i])) {
+                        System.out.println("Duplicate - " + serum + ": " + column[i] +  ", " + column0[i]);
+                    }
+                }
+            } else {
+                columnMap.put(code, column);
+            }
+
+
+        }
+
+        System.out.println("Unique serum count: " + serumSet.size());
+        System.out.println("Unique serum+virus count: " + virusMap.keySet().size());
+    }
 
     private final double[][] assayTable;
 
@@ -474,7 +561,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private double storedTruncationSum;
     private double[] truncations;
     private double[] storedTruncations;
-
 
     private final boolean isLeftTruncated;
     private final int mdsDimension;

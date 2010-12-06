@@ -117,7 +117,6 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
     }
 
     public final String getDimensionName(int dim) {
-
         return parameters.get(dim).getDimensionName(pindex.get(dim));
     }
 

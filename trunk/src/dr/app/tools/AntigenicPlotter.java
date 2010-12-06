@@ -135,7 +135,7 @@ public class AntigenicPlotter {
         documentElement.addContent(documentNameElement);
 //        documentElement.addContent(hpdSchema);
 //        documentElement.addContent(nodeSchema);
-        documentElement.addContent(contourFolderElement);
+//        documentElement.addContent(contourFolderElement);
         documentElement.addContent(traceFolderElement);
 
         rootElement = new Element("kml");
@@ -156,30 +156,30 @@ public class AntigenicPlotter {
             Element traceElement = generateTraceElement(i + 1, xy);
             traceFolderElement.addContent(traceElement);
 
-            ContourMaker contourMaker;
-            if (CONTOUR_MODE == ContourMode.JAVA)
-                contourMaker = new KernelDensityEstimator2D(xy[0], xy[1], GRIDSIZE);
-            else if (CONTOUR_MODE == ContourMode.R)
-                contourMaker = new ContourWithR(xy[0], xy[1], GRIDSIZE);
-            else if (CONTOUR_MODE == ContourMode.SNYDER)
-                contourMaker = new ContourWithSynder(xy[0], xy[1], GRIDSIZE);
-            else
-                throw new RuntimeException("Unimplemented ContourModel!");
-
-            ContourPath[] paths = contourMaker.getContourPaths(HPD_VALUE);
-            int pathCounter = 1;
-            for (ContourPath path : paths) {
-
-                KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
-
-                //because KML polygons require long,lat,alt we need to switch lat and long first
-                coords.switchXY();
-                Element placemarkElement = generatePlacemarkElementWithPolygon(HPD_VALUE, Double.NaN, coords, -1, pathCounter);
-                //testing how many points are within the polygon
-                contourFolderElement.addContent(placemarkElement);
-
-                pathCounter ++;
-            }
+//            ContourMaker contourMaker;
+//            if (CONTOUR_MODE == ContourMode.JAVA)
+//                contourMaker = new KernelDensityEstimator2D(xy[0], xy[1], GRIDSIZE);
+//            else if (CONTOUR_MODE == ContourMode.R)
+//                contourMaker = new ContourWithR(xy[0], xy[1], GRIDSIZE);
+//            else if (CONTOUR_MODE == ContourMode.SNYDER)
+//                contourMaker = new ContourWithSynder(xy[0], xy[1], GRIDSIZE);
+//            else
+//                throw new RuntimeException("Unimplemented ContourModel!");
+//
+//            ContourPath[] paths = contourMaker.getContourPaths(HPD_VALUE);
+//            int pathCounter = 1;
+//            for (ContourPath path : paths) {
+//
+//                KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
+//
+//                //because KML polygons require long,lat,alt we need to switch lat and long first
+//                coords.switchXY();
+//                Element placemarkElement = generatePlacemarkElementWithPolygon(HPD_VALUE, Double.NaN, coords, -1, pathCounter);
+//                //testing how many points are within the polygon
+//                contourFolderElement.addContent(placemarkElement);
+//
+//                pathCounter ++;
+//            }
 
 
         }

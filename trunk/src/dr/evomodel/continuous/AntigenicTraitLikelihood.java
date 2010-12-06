@@ -26,6 +26,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             DataTable<double[]> dataTable,
+            String constraint1,
+            String constraint2,
             final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
@@ -73,6 +75,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // a compressed (no missing values) set of measured assay values between virus and sera.
         this.assayTable = new double[virusCount][];
 
+        int ci1 = -1;
+        int ci2 = -1;
 
         int totalMeasurementCount = 0;
         for (int i = 0; i < virusCount; i++) {
@@ -91,6 +95,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 }
             }
 
+            if (virusNames[i].equals(constraint1)) {
+                ci1 = i;
+            }
+            if (virusNames[i].equals(constraint2)) {
+                ci2 = i;
+            }
+
             int measuredCount = 0;
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
@@ -105,7 +116,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     if (log2Transform) {
-                    this.assayTable[i][k] = transform(dataRow[j]);
+                        this.assayTable[i][k] = transform(dataRow[j]);
                     } else {
                         this.assayTable[i][k] = dataRow[j];
                     }
@@ -115,6 +126,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
             totalMeasurementCount += measuredCount;
         }
+
+        constraintIndex1 = ci1;
+        constraintIndex2 = ci2;
 
         this.totalMeasurementCount = totalMeasurementCount;
 
@@ -153,6 +167,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         // some random initial locations
         for (int i = 0; i < virusCount; i++) {
+            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 virusLocationsParameter.getParameter(i).setParameterValue(j, r);
@@ -168,6 +183,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         // some random initial locations
         for (int i = 0; i < serumCount; i++) {
+            virusLocationsParameter.getParameter(i).setId(serumNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 serumLocationsParameter.getParameter(i).setParameterValue(j, r);
@@ -208,6 +224,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                         k += mdsDimension;
                     }
                 }
+            }
+
+            if (constraintIndex1 >= 0) {
+                virusLocationsParameter.getParameter(constraintIndex1).setParameterValueQuietly(0, 0.0);
+            }
+            if (constraintIndex2 >= 0) {
+                virusLocationsParameter.getParameter(constraintIndex2).setParameterValueQuietly(0, 0.0);
             }
 
             virusUpdates[index / mdsDimension] = true;
@@ -398,6 +421,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         public final static String SERUM_LOCATIONS = "serumLocations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
+        public static final String CONSTRAINT_1 = "constraint1";
+        public static final String CONSTRAINT_2 = "constraint2";
 
         public static final String LOG_2_TRANSFORM = "log2Transform";
 
@@ -422,6 +447,15 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
+            String constraint1 = null;
+            if (xo.hasAttribute(CONSTRAINT_1)) {
+                constraint1 = xo.getStringAttribute(CONSTRAINT_1);
+            }
+            String constraint2 = null;
+            if (xo.hasAttribute(CONSTRAINT_2)) {
+                constraint2 = xo.getStringAttribute(CONSTRAINT_2);
+            }
+
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -439,7 +473,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, constraint1, constraint2, log2Transform);
         }
 
         //************************************************************************
@@ -459,6 +493,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
+                AttributeRule.newStringRule(CONSTRAINT_1, true, "The name of a virus to act as a constraint"),
+                AttributeRule.newStringRule(CONSTRAINT_2, true, "The name of a virus to act as a constraint"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
@@ -548,6 +584,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final int tipCount;
     private final int[] tipIndices;
     private final int[] virusIndices;
+
+    private final int constraintIndex1;
+    private final int constraintIndex2;
 
     private final CompoundParameter tipTraitParameter;
     private final MatrixParameter virusLocationsParameter;

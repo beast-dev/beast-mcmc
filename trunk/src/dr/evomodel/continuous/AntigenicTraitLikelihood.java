@@ -228,6 +228,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             if (constraintIndex1 >= 0) {
                 virusLocationsParameter.getParameter(constraintIndex1).setParameterValueQuietly(0, 0.0);
+                virusLocationsParameter.getParameter(constraintIndex1).setParameterValueQuietly(1, 0.0);
             }
             if (constraintIndex2 >= 0) {
                 virusLocationsParameter.getParameter(constraintIndex2).setParameterValueQuietly(0, 0.0);

@@ -29,8 +29,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             DataTable<double[]> dataTable,
-            String constraint1,
-            String constraint2,
             final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
@@ -72,6 +70,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // the virus -> tip map
         virusIndices = new int[virusCount];
 
+        locations = new double[serumCount][mdsDimension];
+
         // a set of vectors for each virus giving serum indices for which assay data is available
         measuredSerumIndices = new int[virusCount][];
 
@@ -98,13 +98,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 }
             }
 
-            if (virusNames[i].equals(constraint1)) {
-                ci1 = i;
-            }
-            if (virusNames[i].equals(constraint2)) {
-                ci2 = i;
-            }
-
             int measuredCount = 0;
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
@@ -129,9 +122,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
             totalMeasurementCount += measuredCount;
         }
-
-        constraintIndex1 = ci1;
-        constraintIndex2 = ci2;
 
         this.totalMeasurementCount = totalMeasurementCount;
 
@@ -168,12 +158,14 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         addVariable(virusLocationsParameter);
 
         // some random initial locations
+        int k = 0;
         for (int i = 0; i < virusCount; i++) {
             virusLocationsParameter.getParameter(i).setId(virusNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 virusLocationsParameter.getParameter(i).setParameterValue(j, r);
             }
+            k++;
         }
 
         this.serumLocationsParameter = serumLocationsParameter;
@@ -190,14 +182,18 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 double r = MathUtils.nextGaussian();
                 serumLocationsParameter.getParameter(i).setParameterValue(j, r);
             }
+            k++;
         }
 
         this.mdsParameter = mdsPrecision;
         addVariable(mdsPrecision);
-   
-        this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
 
-        addStatistic(pcaStatistic);
+        this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
+
+        addStatistic(pcStatistic);
+        addStatistic(pcXStatistic);
+        addStatistic(pcYStatistic);
+        addStatistic(meanStatistic);
     }
 
     private double transform(final double value) {
@@ -230,19 +226,14 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 }
             }
 
-            if (constraintIndex1 >= 0) {
-                virusLocationsParameter.getParameter(constraintIndex1).setParameterValueQuietly(0, 0.0);
-                virusLocationsParameter.getParameter(constraintIndex1).setParameterValueQuietly(1, 0.0);
-            }
-            if (constraintIndex2 >= 0) {
-                virusLocationsParameter.getParameter(constraintIndex2).setParameterValueQuietly(0, 0.0);
-            }
-
             virusUpdates[index / mdsDimension] = true;
             distancesKnown = false;
         } else if (variable == serumLocationsParameter) {
             serumUpdates[index / mdsDimension] = true;
+
             distancesKnown = false;
+            statsKnown = false;
+
         } else if (variable == mdsParameter) {
             for (int i = 0; i < distanceUpdate.length; i++) {
                 distanceUpdate[i] = true;
@@ -283,6 +274,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         truncationKnown = true;
 
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
+
+        statsKnown = false;
     }
 
     @Override
@@ -414,22 +407,28 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         return Math.sqrt(sum);
     }
 
-    private double[][] calculatePCA() {
-        double[][] locations = new double[virusCount + serumCount][mdsDimension];
-        int k = 0;
-        for (int i = 0; i < virusCount; i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                locations[k][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
-            }
-            k++;
-        }
+    private final double[][] locations;
+    private boolean statsKnown = false;
+
+    private void calculateStats() {
+        locationMean = new double[mdsDimension];
+
         for (int i = 0; i < serumCount; i++) {
             for (int j = 0; j < mdsDimension; j++) {
-                locations[k][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+                locationMean[j] += locations[i][j];
             }
-            k++;
+        }
+        for (int j = 0; j < mdsDimension; j++) {
+            locationMean[j] /= serumCount;
         }
 
+        for (int i = 0; i < serumCount; i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                locations[i][j] -= locationMean[j];
+            }
+        }
+        
         RealMatrix data = MatrixUtils.createRealMatrix(locations);
         // compute the covariance matrix
         RealMatrix covMatrix = null;
@@ -462,13 +461,33 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         //transform the data
         RealMatrix pcs = data.multiply(eigenVectors);
 
-        return pcs.getData();
+        locationPrincipalAxis = pcs.getRow(0);
+        statsKnown = true;
     }
 
-    private final Statistic pcaStatistic = new Statistic.Abstract() {
+    private final Statistic pcStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
-            return "pca";
+            return "PC";
+        }
+
+        public int getDimension() {
+            return mdsDimension;
+        }
+
+        public double getStatisticValue(int dim) {
+            if (!statsKnown) {
+                calculateStats();
+            }
+            return locationPrincipalAxis[dim];
+        }
+
+    };
+
+    private final Statistic pcXStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "PCx";
         }
 
         public int getDimension() {
@@ -476,12 +495,52 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         }
 
         public double getStatisticValue(int dim) {
-            double[][] pcs  = calculatePCA();
-            return pcs[0][0];
+            if (!statsKnown) {
+                calculateStats();
+            }
+            return locationPrincipalAxis[0];
         }
 
     };
-                       
+
+    private final Statistic pcYStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "PCy";
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int dim) {
+            if (!statsKnown) {
+                calculateStats();
+            }
+            return locationPrincipalAxis[1];
+        }
+
+    };
+
+   private final Statistic meanStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "mean";
+        }
+
+        public int getDimension() {
+            return mdsDimension;
+        }
+
+        public double getStatisticValue(int dim) {
+            if (!statsKnown) {
+                calculateStats();
+            }
+            return locationMean[dim];
+        }
+
+    };
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -494,8 +553,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         public final static String SERUM_LOCATIONS = "serumLocations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
-        public static final String CONSTRAINT_1 = "constraint1";
-        public static final String CONSTRAINT_2 = "constraint2";
 
         public static final String LOG_2_TRANSFORM = "log2Transform";
 
@@ -520,15 +577,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
-            String constraint1 = null;
-            if (xo.hasAttribute(CONSTRAINT_1)) {
-                constraint1 = xo.getStringAttribute(CONSTRAINT_1);
-            }
-            String constraint2 = null;
-            if (xo.hasAttribute(CONSTRAINT_2)) {
-                constraint2 = xo.getStringAttribute(CONSTRAINT_2);
-            }
-
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -546,7 +594,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, constraint1, constraint2, log2Transform);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
         }
 
         //************************************************************************
@@ -566,8 +614,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
-                AttributeRule.newStringRule(CONSTRAINT_1, true, "The name of a virus to act as a constraint"),
-                AttributeRule.newStringRule(CONSTRAINT_2, true, "The name of a virus to act as a constraint"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
@@ -660,9 +706,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final int[] tipIndices;
     private final int[] virusIndices;
 
-    private final int constraintIndex1;
-    private final int constraintIndex2;
-
     private final CompoundParameter tipTraitParameter;
     private final MatrixParameter virusLocationsParameter;
     private final MatrixParameter serumLocationsParameter;
@@ -677,6 +720,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
+
+    private double[] locationMean;
+    private double[] locationPrincipalAxis;
 
     private boolean distancesKnown = false;
     private double sumOfSquaredResiduals;

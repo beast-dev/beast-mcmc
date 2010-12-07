@@ -11,15 +11,15 @@ import java.awt.geom.Point2D;
  */
 public class ContourWithSynder extends KernelDensityEstimator2D  {
 
-    public ContourWithSynder(double[] x, double[] y, double[] h, int n, double[] lims) {
+    public ContourWithSynder(final double[] x, final double[] y, final double[] h, final int n, final double[] lims) {
         super(x, y, h, n, lims);
     }
 
-    public ContourWithSynder(double[] x, double[] y) {
+    public ContourWithSynder(final double[] x, final double[] y) {
         super(x, y);
     }
 
-    public ContourWithSynder(double[] x, double[] y, int n) {
+    public ContourWithSynder(final double[] x, final double[] y, int n) {
         super(x, y, n);
     }
 

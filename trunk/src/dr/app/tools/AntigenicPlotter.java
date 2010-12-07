@@ -94,25 +94,25 @@ public class AntigenicPlotter {
 
     private void writeKML(String fileName, LogFileTraces traces) {
         Element hpdSchema = new Element("Schema");
-        hpdSchema.setAttribute("schemaUrl", "HPD_Schema");
+        hpdSchema.setAttribute("id", "HPD_Schema");
         hpdSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Name")
                 .setAttribute("type", "string")
                 .addContent(new Element("displayName").addContent("Name")));
         hpdSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Point")
-                .setAttribute("type", "integer")
+                .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("Point")));
         hpdSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "HPD")
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("HPD")));
 
-        Element nodeSchema = new Element("Schema");
-        nodeSchema.setAttribute("schemaUrl", "Trace_Schema");
-        nodeSchema.addContent(new Element("SimpleField")
+        Element traceSchema = new Element("Schema");
+        traceSchema.setAttribute("id", "Trace_Schema");
+        traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "State")
-                .setAttribute("type", "integer")
+                .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("State")));
 
         contourFolderElement = new Element("Folder");
@@ -133,8 +133,8 @@ public class AntigenicPlotter {
 
         documentElement = new Element("Document");
         documentElement.addContent(documentNameElement);
-//        documentElement.addContent(hpdSchema);
-//        documentElement.addContent(nodeSchema);
+        documentElement.addContent(hpdSchema);
+        documentElement.addContent(traceSchema);
 //        documentElement.addContent(contourFolderElement);
         documentElement.addContent(traceFolderElement);
 
@@ -209,7 +209,7 @@ public class AntigenicPlotter {
         for (int a = 0; a < points[0].length; a++)  {
             Element placemarkElement = new Element("Placemark");
 
-//            placemarkElement.addContent(generateTraceData(a));
+            placemarkElement.addContent(generateTraceData(a));
 
 
             Element pointElement = new Element("Point");
@@ -229,7 +229,7 @@ public class AntigenicPlotter {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "Trace_Schema");
-        schemaData.addContent(new Element("SimpleData").setAttribute("state", "State").addContent(Integer.toString(state)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "State").addContent(Integer.toString(state)));
         data.addContent(schemaData);
         return data;
     }
@@ -244,7 +244,7 @@ public class AntigenicPlotter {
         placemarkNameElement.addContent(name);
         placemarkElement.addContent(placemarkNameElement);
 
-//        placemarkElement.addContent(generateContourData(name, pointNumber, hpdValue));
+        placemarkElement.addContent(generateContourData(name, pointNumber, hpdValue));
 
         Element polygonElement = new Element("Polygon");
         Element altitudeMode = new Element("altitudeMode");
@@ -268,7 +268,7 @@ public class AntigenicPlotter {
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "HPD_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
-        schemaData.addContent(new Element("SimpleData").setAttribute("point", "Point").addContent(Integer.toString(point)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Point").addContent(Integer.toString(point)));
         if (hpd > 0) {
             schemaData.addContent(new Element("SimpleData").setAttribute("name", "HPD").addContent(Double.toString(hpd)));
         }

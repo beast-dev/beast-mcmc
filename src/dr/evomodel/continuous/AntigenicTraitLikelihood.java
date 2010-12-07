@@ -5,6 +5,9 @@ import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
 import dr.xml.*;
+import org.apache.commons.math.linear.*;
+import org.apache.commons.math.stat.StatUtils;
+import org.apache.commons.math.stat.correlation.Covariance;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -40,9 +43,9 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 //        mdsDimension = virusLocationsParameter.getColumnDimension();
 
         // the total number of viruses is the number of rows in the table
-        int virusCount = dataTable.getRowCount();
+        virusCount = dataTable.getRowCount();
         // the number of sera is the number of columns
-        int serumCount = dataTable.getColumnCount();
+        serumCount = dataTable.getColumnCount();
 
         tipCount = virusCount;
 
@@ -159,7 +162,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             addVariable(tipTraitParameter);
         }
 
-
         this.virusLocationsParameter = virusLocationsParameter;
         virusLocationsParameter.setColumnDimension(mdsDimension);
         virusLocationsParameter.setRowDimension(virusCount);
@@ -192,8 +194,10 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         this.mdsParameter = mdsPrecision;
         addVariable(mdsPrecision);
-
+   
         this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
+
+        addStatistic(pcaStatistic);
     }
 
     private double transform(final double value) {
@@ -410,6 +414,74 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         return Math.sqrt(sum);
     }
 
+    private double[][] calculatePCA() {
+        double[][] locations = new double[virusCount + serumCount][mdsDimension];
+        int k = 0;
+        for (int i = 0; i < virusCount; i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                locations[k][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
+            }
+            k++;
+        }
+        for (int i = 0; i < serumCount; i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                locations[k][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+            }
+            k++;
+        }
+
+        RealMatrix data = MatrixUtils.createRealMatrix(locations);
+        // compute the covariance matrix
+        RealMatrix covMatrix = null;
+
+        if ( data.getColumnDimension() > 1) {
+
+            // compute covariance matrix if we have more than 1 attribute
+            Covariance c = new Covariance(data);
+            covMatrix = c.getCovarianceMatrix();
+
+        } else {
+
+            // if we only have one attribute calculate the variance instead
+            covMatrix = MatrixUtils.createRealMatrix(1,1);
+            covMatrix.setEntry(0, 0, StatUtils.variance(data.getColumn(0)));
+
+        }
+
+        // get the eigenvalues and eigenvectors of the covariance matrixE
+        EigenDecomposition eDecomp = new EigenDecompositionImpl(covMatrix,0.0);
+
+        // set the eigenVectors matrix
+        // the columns of the eigenVectors matrix are the eigenVectors of
+        // the covariance matrix
+        RealMatrix eigenVectors = eDecomp.getV();
+
+        // set the eigenValues vector
+//        RealVector eigenValues = new ArrayRealVector(eDecomp.getRealEigenvalues());
+
+        //transform the data
+        RealMatrix pcs = data.multiply(eigenVectors);
+
+        return pcs.getData();
+    }
+
+    private final Statistic pcaStatistic = new Statistic.Abstract() {
+
+        public String getStatisticName() {
+            return "pca";
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int dim) {
+            double[][] pcs  = calculatePCA();
+            return pcs[0][0];
+        }
+
+    };
+                       
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -583,6 +655,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final double[][] assayTable;
 
     private final int tipCount;
+    private final int virusCount;
+    private final int serumCount;
     private final int[] tipIndices;
     private final int[] virusIndices;
 

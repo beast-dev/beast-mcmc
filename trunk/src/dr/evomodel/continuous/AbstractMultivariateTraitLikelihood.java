@@ -59,7 +59,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                                                Model samplingDensity,
                                                boolean reportAsMultivariate,
                                                boolean reciprocalRates) {
-        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, 
+        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches,
                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
     }
 
@@ -173,11 +173,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         if (scaleByTime) {
             length /= treeLength;
         }
-        
+
         if (deltaParameter != null && treeModel.isExternal(node)) {
             length += deltaParameter.getParameterValue(0);
         }
-        
+
         return length;
     }
 
@@ -284,6 +284,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == deltaParameter) {
+            likelihoodKnown = false;
+        }
+
+        if (variable == traitParameter) {
             likelihoodKnown = false;
         }
 
@@ -654,6 +658,6 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     protected boolean[] storedValidLogLikelihoods;
 
     private final Parameter deltaParameter;
-    
+
 }
 

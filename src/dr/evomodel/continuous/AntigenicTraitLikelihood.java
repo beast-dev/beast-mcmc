@@ -59,6 +59,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             tipNameMap = new HashMap<String, Integer>();
             for (int i = 0; i < tipCount; i++) {
                 String label = tipTraitParameter.getParameter(i).getParameterName();
+                for (String virus : virusNames) {
+                    if (label.startsWith(virus)) {
+                        label = virus;
+                        break;
+                    }
+                }
+
                 tipNameMap.put(label, i);
 
                 tipIndices[i] = -1;
@@ -70,7 +77,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // the virus -> tip map
         virusIndices = new int[virusCount];
 
-        locations = new double[serumCount][mdsDimension];
+        locations = new double[virusCount][mdsDimension];
+//        locations = new double[serumCount][mdsDimension];
 
         // a set of vectors for each virus giving serum indices for which assay data is available
         measuredSerumIndices = new int[virusCount][];
@@ -78,8 +86,22 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // a compressed (no missing values) set of measured assay values between virus and sera.
         this.assayTable = new double[virusCount][];
 
-        int ci1 = -1;
-        int ci2 = -1;
+        double[] maxSerum = null;
+
+        if (log2Transform) {
+            maxSerum = new double[serumCount];
+            for (int j = 0; j < serumCount; j++) {
+                maxSerum[j] = 0;
+                double[] dataColumn = dataTable.getColumn(j);
+                for (int i = 0; i < virusCount; i++) {
+                    if (!Double.isNaN(dataColumn[i]) && dataColumn[i] > 0) {
+                        if (dataColumn[i] > maxSerum[j]) {
+                            maxSerum[j] = dataColumn[i];
+                        }
+                    }
+                }
+            }
+        }
 
         int totalMeasurementCount = 0;
         for (int i = 0; i < virusCount; i++) {
@@ -112,7 +134,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     if (log2Transform) {
-                        this.assayTable[i][k] = transform(dataRow[j]);
+                        this.assayTable[i][k] = transform(dataRow[j], maxSerum[j]);
                     } else {
                         this.assayTable[i][k] = dataRow[j];
                     }
@@ -158,31 +180,30 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         addVariable(virusLocationsParameter);
 
         // some random initial locations
-        int k = 0;
-        for (int i = 0; i < virusCount; i++) {
-            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
-            for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
-            }
-            k++;
-        }
+//        for (int i = 0; i < virusCount; i++) {
+//            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
+//            for (int j = 0; j < mdsDimension; j++) {
+//                double r = MathUtils.nextGaussian();
+//                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+//            }
+//        }
 
-        this.serumLocationsParameter = serumLocationsParameter;
-        if (virusLocationsParameter != serumLocationsParameter) {
+        if (serumLocationsParameter != null) {
+            this.serumLocationsParameter = serumLocationsParameter;
             serumLocationsParameter.setColumnDimension(mdsDimension);
             serumLocationsParameter.setRowDimension(serumCount);
             addVariable(serumLocationsParameter);
-        }
 
-        // some random initial locations
-        for (int i = 0; i < serumCount; i++) {
-            virusLocationsParameter.getParameter(i).setId(serumNames[i]);
-            for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                serumLocationsParameter.getParameter(i).setParameterValue(j, r);
-            }
-            k++;
+            // some random initial locations
+//            for (int i = 0; i < serumCount; i++) {
+//                serumLocationsParameter.getParameter(i).setId(serumNames[i]);
+//                for (int j = 0; j < mdsDimension; j++) {
+//                    double r = MathUtils.nextGaussian();
+//                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+//                }
+//            }
+        } else {
+            this.serumLocationsParameter = virusLocationsParameter;
         }
 
         this.mdsParameter = mdsPrecision;
@@ -196,9 +217,10 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         addStatistic(meanStatistic);
     }
 
-    private double transform(final double value) {
+    private double transform(final double value, final double maxValue) {
         // transform to log_2
-        return Math.log(value) / Math.log(2.0);
+        double t =  Math.log(maxValue / value) / Math.log(2.0);
+        return t;
     }
 
     @Override
@@ -210,34 +232,33 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // TODO Flag which cachedDistances or mdsPrecision need to be updated
 
         if (variable == virusLocationsParameter) {
+            int virusIndex = index / mdsDimension;
+            int dim = index % mdsDimension;
+
             if (tipTraitParameter != null) {
-                // the virus locations have changed so update the tipTraitParameter
-                int k = 0;
-                for (int i = 0; i < tipCount; i++) {
-                    if (tipIndices[i] != -1) {
-                        Parameter virusLoc = virusLocationsParameter.getParameter(tipIndices[i]);
-                        for (int j = 0; j < mdsDimension; j++) {
-                            tipTraitParameter.setParameterValue(k, virusLoc.getValue(j));
-                            k++;
-                        }
-                    } else {
-                        k += mdsDimension;
-                    }
+                if (tipIndices[virusIndex] != -1) {
+                    double value = virusLocationsParameter.getParameterValue(index);
+                    tipTraitParameter.setParameterValue((virusIndex * mdsDimension) + dim, value);
                 }
             }
 
             virusUpdates[index / mdsDimension] = true;
             distancesKnown = false;
+
+            statsKnown = false;
+
+            makeDirty();
         } else if (variable == serumLocationsParameter) {
             serumUpdates[index / mdsDimension] = true;
 
             distancesKnown = false;
-            statsKnown = false;
 
         } else if (variable == mdsParameter) {
             for (int i = 0; i < distanceUpdate.length; i++) {
                 distanceUpdate[i] = true;
             }
+        } else if (variable == tipTraitParameter) {
+            // do nothing
         } else {
             throw new IllegalArgumentException("Unknown parameter");
         }
@@ -413,22 +434,38 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private void calculateStats() {
         locationMean = new double[mdsDimension];
 
-        for (int i = 0; i < serumCount; i++) {
+        for (int i = 0; i < virusCount; i++) {
             for (int j = 0; j < mdsDimension; j++) {
-                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+                locations[i][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
                 locationMean[j] += locations[i][j];
             }
         }
         for (int j = 0; j < mdsDimension; j++) {
-            locationMean[j] /= serumCount;
+            locationMean[j] /= virusCount;
         }
 
-        for (int i = 0; i < serumCount; i++) {
+        for (int i = 0; i < virusCount; i++) {
             for (int j = 0; j < mdsDimension; j++) {
                 locations[i][j] -= locationMean[j];
             }
         }
-        
+
+//        for (int i = 0; i < serumCount; i++) {
+//            for (int j = 0; j < mdsDimension; j++) {
+//                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+//                locationMean[j] += locations[i][j];
+//            }
+//        }
+//        for (int j = 0; j < mdsDimension; j++) {
+//            locationMean[j] /= serumCount;
+//        }
+//
+//        for (int i = 0; i < serumCount; i++) {
+//            for (int j = 0; j < mdsDimension; j++) {
+//                locations[i][j] -= locationMean[j];
+//            }
+//        }
+
         RealMatrix data = MatrixUtils.createRealMatrix(locations);
         // compute the covariance matrix
         RealMatrix covMatrix = null;
@@ -522,7 +559,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     };
 
-   private final Statistic meanStatistic = new Statistic.Abstract() {
+    private final Statistic meanStatistic = new Statistic.Abstract() {
 
         public String getStatisticName() {
             return "mean";
@@ -574,7 +611,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             boolean log2Transform = false;
             if (xo.hasAttribute(LOG_2_TRANSFORM)) {
-                xo.getBooleanAttribute(LOG_2_TRANSFORM);
+                log2Transform = xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
@@ -586,9 +623,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
 
             MatrixParameter virusLocationsParameter = (MatrixParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
-            MatrixParameter serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            MatrixParameter serumLocationsParameter = null;
 
-            if (serumLocationsParameter.getColumnDimension() != virusLocationsParameter.getColumnDimension()) {
+            if (xo.hasChildNamed(SERUM_LOCATIONS)) {
+                serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            }
+
+            if (serumLocationsParameter != null && serumLocationsParameter.getColumnDimension() != virusLocationsParameter.getColumnDimension()) {
                 throw new XMLParseException("Virus Locations parameter and Serum Locations parameter have different column dimensions");
             }
 
@@ -616,7 +657,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
-                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class),
+                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "An optional set of serum locations", true),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

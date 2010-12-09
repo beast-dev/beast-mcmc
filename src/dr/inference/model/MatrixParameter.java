@@ -59,7 +59,7 @@ public class MatrixParameter extends CompoundParameter {
             dimensionsEstablished = true;
 
             for (int i = 0; i < rowDimension; i++) {
-                Parameter row = new Parameter.Default(columnDimension);
+                Parameter row = new Parameter.Default(columnDimension, 0.0);
                 row.addBounds(new DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, columnDimension));
                 addParameter(row);
             }

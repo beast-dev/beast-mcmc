@@ -111,6 +111,10 @@ public class AntigenicPlotter {
         Element traceSchema = new Element("Schema");
         traceSchema.setAttribute("id", "Trace_Schema");
         traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Trace")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("State")));
+        traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "State")
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("State")));
@@ -195,7 +199,7 @@ public class AntigenicPlotter {
             System.err.println("Error opening file: " + fileName);
             System.exit(-1);
         }
-        
+
     }
 
     private Element generateTraceElement(int pointNumber, double[][] points) {
@@ -209,7 +213,7 @@ public class AntigenicPlotter {
         for (int a = 0; a < points[0].length; a++)  {
             Element placemarkElement = new Element("Placemark");
 
-            placemarkElement.addContent(generateTraceData(a));
+            placemarkElement.addContent(generateTraceData(pointNumber, a));
 
 
             Element pointElement = new Element("Point");
@@ -225,10 +229,11 @@ public class AntigenicPlotter {
         return traceElement;
     }
 
-    private Element generateTraceData(int state) {
+    private Element generateTraceData(int trace, int state) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "Trace_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "State").addContent(Integer.toString(state)));
         data.addContent(schemaData);
         return data;

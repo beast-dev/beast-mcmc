@@ -123,14 +123,14 @@ public enum PriorType {
                 buffer.append("Not yet specified");
                 break;
             case UNIFORM_PRIOR:
-                if (!param.isDiscrete && !param.isStatistic) {
+                if (!param.isDiscrete) { // && !param.isStatistic) {
                     buffer.append("Uniform [");
                     buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
                     buffer.append(", ");
                     buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
                     buffer.append("]");
-                } else {
-                    buffer.append("Uniform");
+//                } else {
+//                    buffer.append("Uniform");
                 }
                 break;
             case EXPONENTIAL_PRIOR:
@@ -198,7 +198,7 @@ public enum PriorType {
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
-        if (param.priorType != PriorType.NONE_TREE_PRIOR && !param.isStatistic) {
+        if (param.priorType != PriorType.NONE_TREE_PRIOR && (!param.isStatistic) && param.initial != Double.NaN) {
             buffer.append(", initial=").append(NumberUtil.formatDecimal(param.initial, 10, 6));
         }
 

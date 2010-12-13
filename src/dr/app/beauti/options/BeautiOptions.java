@@ -24,9 +24,9 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -37,7 +37,6 @@ import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
 import dr.inference.operators.OperatorSchedule;
 
-import javax.management.openmbean.TabularData;
 import java.util.*;
 
 /**
@@ -71,7 +70,8 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         taxonSetsIncludeStem.clear();
-
+        taxonSetsTreeModel.clear();
+        
 //        meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
@@ -147,8 +147,8 @@ public class BeautiOptions extends ModelOptions {
 
                     statistic = new Parameter.Builder(taxa.getId(), "")
                             .taxaId(treeModel.getPrefix() + taxa.getId())
-                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.TIME_SCALE)
-                            .lower(0.0).upper(Double.MAX_VALUE).build();
+                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.NONE)
+                            .initial(Double.NaN).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
                     statistics.put(taxa, statistic);
                 }
                 params.add(statistic);

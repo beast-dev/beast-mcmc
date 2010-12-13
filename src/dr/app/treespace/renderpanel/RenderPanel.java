@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread.renderpanel;
+package dr.app.treespace.renderpanel;
 
 import jam.framework.Exportable;
 

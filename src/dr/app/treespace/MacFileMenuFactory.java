@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread;
+package dr.app.treespace;
 
 import jam.framework.AbstractFrame;
 import jam.framework.Application;
@@ -31,7 +31,7 @@ public class MacFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
-        if (frame instanceof SpreadFrame) {
+        if (frame instanceof TreeSpaceFrame) {
             item = new JMenuItem(frame.getImportAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);

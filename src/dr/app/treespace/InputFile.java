@@ -1,6 +1,5 @@
-package dr.app.phylogeography.spread;
+package dr.app.treespace;
 
-import dr.evolution.tree.Tree;
 import dr.util.NumberFormatter;
 import dr.app.gui.table.MultiLineTableCellContent;
 
@@ -8,6 +7,7 @@ import javax.swing.*;
 import java.io.File;
 
 import jam.util.IconUtils;
+import jebl.evolution.trees.RootedTree;
 
 public class InputFile implements MultiLineTableCellContent {
     private final Icon treeIcon = IconUtils.getIcon(this.getClass(), "images/tree.png");
@@ -40,7 +40,7 @@ public class InputFile implements MultiLineTableCellContent {
         this.type = Type.LOG_FILE;
     }
 
-    InputFile(File file, Tree tree) {
+    InputFile(File file, RootedTree tree) {
         if (file == null) {
             throw new IllegalArgumentException("File argument to InputFile cannot be null");
         }
@@ -50,7 +50,7 @@ public class InputFile implements MultiLineTableCellContent {
         this.type = Type.MODAL_TREE;
     }
 
-    InputFile(File file, Tree tree, int treeCount) {
+    InputFile(File file, RootedTree tree, int treeCount) {
         if (file == null) {
             throw new IllegalArgumentException("File argument to InputFile cannot be null");
         }
@@ -68,7 +68,7 @@ public class InputFile implements MultiLineTableCellContent {
         return type;
     }
 
-    public Tree getTree() {
+    public RootedTree getTree() {
         return tree;
     }
 
@@ -111,19 +111,19 @@ public class InputFile implements MultiLineTableCellContent {
         sb.append("<html>");
         sb.append("<b>").append(file.getName()).append(": </b>").append(type.toString()).append("<br>");
         if (type != Type.LOG_FILE) {
-            sb.append("<small>Tip count: ").append(tree.getExternalNodeCount());
+            sb.append("<small>Tip count: ").append(tree.getExternalNodes().size());
             if (mostRecentSampleDate != 0.0) {
                 if (type == Type.POSTERIOR_TREES) {
                     sb.append(" | Tree count: ").append(treeCount);
                 } else {
-                    sb.append(" | Root TMRCA: ").append(nf.format(mostRecentSampleDate - tree.getNodeHeight(tree.getRoot())));
+                    sb.append(" | Root TMRCA: ").append(nf.format(mostRecentSampleDate - tree.getHeight(tree.getRootNode())));
                 }
                 sb.append(" | Most recent tip: ").append(mostRecentSampleDate);
             } else {
                 if (type == Type.POSTERIOR_TREES) {
                     sb.append(" | Tree count: ").append(treeCount);
                 } else {
-                    sb.append(" | Root height: ").append(nf.format(tree.getNodeHeight(tree.getRoot())));
+                    sb.append(" | Root height: ").append(nf.format(tree.getHeight(tree.getRootNode())));
                 }
             }
             if (type == Type.POSTERIOR_TREES) {
@@ -151,6 +151,6 @@ public class InputFile implements MultiLineTableCellContent {
     private final int treeCount;
     private int burnin = 0;
 
-    private Tree tree = null;
+    private RootedTree tree = null;
     private double mostRecentSampleDate = 0.0;
 }

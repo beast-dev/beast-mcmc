@@ -1,6 +1,4 @@
-package dr.app.phylogeography.spread;
-
-import dr.app.phylogeography.builder.Builder;
+package dr.app.treespace;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -12,9 +10,8 @@ import java.util.Set;
  * @author Alexei Drummond
  * @version $Id$
  */
-public class SpreadDocument {
+public class TreeSpaceDocument {
     private final List<InputFile> inputFiles = new ArrayList<InputFile>();
-    private final List<Builder> layerBuilders = new ArrayList<Builder>();
 
     public void addTreeFile(InputFile inputFile) {
         inputFiles.add(inputFile);
@@ -25,14 +22,14 @@ public class SpreadDocument {
         return inputFiles;
     }
 
-    public void addLayerBuilder(Builder builder) {
-        layerBuilders.add(builder);
-        fireSettingsChanged();
-    }
-
-    public List<Builder> getLayerBuilders() {
-        return layerBuilders;
-    }
+//    public void addLayerBuilder(Builder builder) {
+//        layerBuilders.add(builder);
+//        fireSettingsChanged();
+//    }
+//
+//    public List<Builder> getLayerBuilders() {
+//        return layerBuilders;
+//    }
 
     public void fireDataChanged() {
         for (Listener listener : listeners) {

@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread;
+package dr.app.treespace;
 
 import jam.panels.OptionsPanel;
 
@@ -13,11 +13,11 @@ public class TimelinePanel extends JPanel {
 
     private static final long serialVersionUID = -3710586474593827540L;
 
-    private final SpreadFrame frame;
+    private final TreeSpaceFrame frame;
 
-    private final SpreadDocument document;
+    private final TreeSpaceDocument document;
 
-    public TimelinePanel(final SpreadFrame parent, final SpreadDocument document) {
+    public TimelinePanel(final TreeSpaceFrame parent, final TreeSpaceDocument document) {
 
         this.frame = parent;
         this.document = document;

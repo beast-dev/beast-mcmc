@@ -1,20 +1,16 @@
-package dr.app.phylogeography.spread;
+package dr.app.treespace;
 
 import dr.app.gui.DeleteActionResponder;
 import dr.app.gui.SelectAllActionResponder;
 import dr.app.java16compat.FileNameExtensionFilter;
-import dr.app.phylogeography.generator.Generator;
-import dr.app.phylogeography.generator.KMLGenerator;
-import dr.app.phylogeography.spread.layerspanel.LayersPanel;
-import dr.app.phylogeography.spread.inputpanel.InputPanel;
+import dr.app.treespace.inputpanel.InputPanel;
 import dr.app.util.Utils;
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.TaxonList;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
+import jebl.evolution.io.ImportException;
+import jebl.evolution.io.NexusImporter;
+import jebl.evolution.trees.RootedTree;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -28,29 +24,22 @@ import java.util.ArrayList;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class SpreadFrame extends DocumentFrame {
+public class TreeSpaceFrame extends DocumentFrame {
     private static final long serialVersionUID = 2114148696789612509L;
 
-    private final SpreadDocument document = new SpreadDocument();
-//    private final BeastGenerator generator;
+    private final TreeSpaceDocument document = new TreeSpaceDocument();
 
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
     private final InputPanel inputPanel;
-    private final LayersPanel layersPanel = new LayersPanel(this, document);
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
 
     private final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
 
-    private final java.util.List<Generator> generators;
-
-    public SpreadFrame(String title) {
+    public TreeSpaceFrame(String title) {
         super();
-
-        generators = new ArrayList<Generator>();
-        generators.add(new KMLGenerator());
 
         setTitle(title);
 
@@ -73,7 +62,7 @@ public class SpreadFrame extends DocumentFrame {
             }
         });
 
-        document.addListener(new SpreadDocument.Listener() {
+        document.addListener(new TreeSpaceDocument.Listener() {
             public void dataChanged() {
                 setDirty();
             }
@@ -87,12 +76,9 @@ public class SpreadFrame extends DocumentFrame {
     public void initializeComponents() {
 
         final TimelinePanel timeLinePanel = new TimelinePanel(this, document);
-        final OutputPanel outputPanel = new OutputPanel(this, document, generators);
 
         tabbedPane.addTab("Input", inputPanel);
-        tabbedPane.addTab("Layers", layersPanel);
         tabbedPane.addTab("Timeline", timeLinePanel);
-        tabbedPane.addTab("Output", outputPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
@@ -218,7 +204,7 @@ public class SpreadFrame extends DocumentFrame {
                                 "Missing Block in Nexus File",
                                 JOptionPane.ERROR_MESSAGE);
 
-                    } catch (Importer.ImportException ime) {
+                    } catch (ImportException ime) {
                         JOptionPane.showMessageDialog(this, "Error parsing imported file: " + ime,
                                 "Error reading file",
                                 JOptionPane.ERROR_MESSAGE);
@@ -237,7 +223,7 @@ public class SpreadFrame extends DocumentFrame {
         }
     }
 
-    public void importDataFile(File file) throws IOException, Importer.ImportException {
+    public void importDataFile(File file) throws IOException, ImportException {
         Reader reader = new FileReader(file);
 
         BufferedReader bufferedReader = new BufferedReader(reader);
@@ -261,7 +247,7 @@ public class SpreadFrame extends DocumentFrame {
             }
 
             // is a NEXUS file
-            Tree tree = importFirstTree(file);
+            RootedTree tree = importFirstTree(file);
             if (tree != null) {
                 if (treeCount > 0) {
                     InputFile inputFile = new InputFile(file, tree, treeCount);
@@ -279,16 +265,14 @@ public class SpreadFrame extends DocumentFrame {
     }
 
     // nexus
-    private Tree importFirstTree(File file) throws IOException, Importer.ImportException {
-        TaxonList taxa = null;
-        Tree tree = null;
+    private RootedTree importFirstTree(File file) throws IOException, ImportException {
+        RootedTree tree = null;
 
         FileReader reader = new FileReader(file);
 
         NexusImporter importer = new NexusImporter(reader);
 
-        tree = importer.importTree(taxa);
-
+        tree = (RootedTree)importer.importNextTree();
 
         return tree;
     }

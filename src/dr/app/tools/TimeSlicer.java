@@ -2003,7 +2003,7 @@ public class TimeSlicer {
         OutputFormat outputFormat = OutputFormat.KML;
         boolean impute = false;
         boolean trueNoise = true;
-        boolean summaryOnly = false;
+        boolean summaryOnly = true;
         ContourMode contourMode = ContourMode.SNYDER;
         Normalization normalize = Normalization.LENGTH;
         int burnin = -1;

@@ -72,7 +72,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         taxonSetsIncludeStem.clear();
-        
+
 //        meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
@@ -145,8 +145,8 @@ public class BeautiOptions extends ModelOptions {
                 Parameter statistic = statistics.get(taxa);
                 if (statistic == null) {
                     statistic = new Parameter.Builder(taxa.getId(), "").taxa(taxa)
-                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.TIME_SCALE)
-                            .lower(0.0).upper(Double.MAX_VALUE).build();
+                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.NONE)
+                            .initial(Double.NaN).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
                     statistics.put(taxa, statistic);
                 }
                 params.add(statistic);

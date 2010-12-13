@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread;
+package dr.app.treespace;
 
 import jam.framework.*;
 import jam.mac.Utils;
@@ -10,19 +10,16 @@ import java.awt.*;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class SpreadApp extends MultiDocApplication {
+public class TreeSpaceApp extends MultiDocApplication {
 
-    public SpreadApp(String nameString, String aboutString, Icon icon,
+    public TreeSpaceApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
-        super(new SpreadMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
+        super(new TreeSpaceMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
     }
 
     /**
      * In a departure from the standard UI, there is no "Open" command for this application
-     * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
-     * None of these operations result in a file being associated with the DocumentFrame. All
-     * these actions are located in the BeautiFrame class. This overriden method should never
-     * be called and throw a RuntimeException if it is.
+     * This overriden method should never be called and throw a RuntimeException if it is.
      *
      * @return the action
      */
@@ -82,29 +79,29 @@ public class SpreadApp extends MultiDocApplication {
                     UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
                 }
 
-                java.net.URL url = SpreadApp.class.getResource("images/phylogeography.png");
+                java.net.URL url = TreeSpaceApp.class.getResource("images/phylogeography.png");
                 Icon icon = null;
 
                 if (url != null) {
                     icon = new ImageIcon(url);
                 }
 
-                final String nameString = "S.P.R.E.A.D.";
+                final String nameString = "TreeSpace";
                 final String versionString = "v1.0";
                 String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
-                        "<div style=\"font-size:12;\"><p>Spatial Phylogenetic Reconstruction<br>" +
+                        "<div style=\"font-size:12;\"><p>Phylogenetic Tree Space Exploration<br>" +
                         "Version " + versionString + ", 2009</p>" +
-                        "<p>by Philippe Lemey, Marc Suchard & Andrew Rambaut</p></div>" +
+                        "<p>by Andrew Rambaut</p></div>" +
                         "</div></html>";
 
                 String websiteURLString = "http://beast.bio.ed.ac.uk/";
                 String helpURLString = "http://beast.bio.ed.ac.uk/phylogeography/";
 
-                SpreadApp app = new SpreadApp(nameString, aboutString, icon,
+                TreeSpaceApp app = new TreeSpaceApp(nameString, aboutString, icon,
                         websiteURLString, helpURLString);
                 app.setDocumentFrameFactory(new DocumentFrameFactory() {
                     public DocumentFrame createDocumentFrame(final Application application, final MenuBarFactory menuBarFactory) {
-                        return new SpreadFrame(nameString);
+                        return new TreeSpaceFrame(nameString);
                     }
                 });
                 app.initialize();

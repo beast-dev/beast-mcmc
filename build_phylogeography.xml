@@ -33,6 +33,7 @@
             <include name="dr/app/util/**"/>
             <include name="dr/evolution/io/**"/>
             <include name="dr/evolution/tree/**"/>
+            <include name="dr/evolution/sequences/**"/>
             <include name="dr/evolution/util/**"/>
             <include name="dr/inference/trace/**"/>
             <include name="dr/geo/**"/>
@@ -60,6 +61,7 @@
                 <include name="dr/app/util/**/*.class"/>
                 <include name="dr/evolution/io/**/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
+                <include name="dr/evolution/sequences/**/*.class"/>
                 <include name="dr/evolution/util/**/*.class"/>
                 <include name="dr/inference/trace/**/*.class"/>
                 <include name="dr/geo/**/*.class"/>

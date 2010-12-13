@@ -98,8 +98,19 @@ public class PriorOptions extends ModelOptions {
                 switch (param.scaleType) {
                     case TIME_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
-                        //param.upper = Math.min(timeScaleMaximum, param.upper);
-                        param.initial = avgInitialRootHeight;
+//                        param.upper = Math.min(timeScaleMaximum, param.upper);
+
+                        if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
+                            param.lower = options.maximumTipHeight;
+//                    param.upper = timeScaleMaximum;
+//                    param.initial = avgInitialRootHeight;
+                            if (param.getOptions() instanceof PartitionTreeModel) {
+                                param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
+                            }
+                        } else {
+                            param.initial = avgInitialRootHeight;
+                        }
+
                         break;
 
                     case T50_SCALE:
@@ -160,16 +171,6 @@ public class PriorOptions extends ModelOptions {
 
                 }
 
-                if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
-                    param.lower = options.maximumTipHeight;
-//                    param.upper = timeScaleMaximum;
-//                    param.initial = avgInitialRootHeight;
-                    if (param.getOptions() instanceof PartitionTreeModel) {
-                        param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
-                    } else {
-                        param.initial = avgInitialRootHeight;
-                    }
-                }
             }
         }
 

@@ -129,8 +129,8 @@ public enum PriorType {
                     buffer.append(", ");
                     buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
                     buffer.append("]");
-//                } else {
-//                    buffer.append("Uniform");
+                } else {
+                    buffer.append("Uniform");
                 }
                 break;
             case EXPONENTIAL_PRIOR:

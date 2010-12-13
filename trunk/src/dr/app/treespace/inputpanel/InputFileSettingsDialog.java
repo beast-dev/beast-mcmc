@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread.inputpanel;
+package dr.app.treespace.inputpanel;
 
 import dr.app.gui.components.RealNumberField;
 import jam.panels.OptionsPanel;
@@ -7,7 +7,7 @@ import dr.app.gui.components.WholeNumberField;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
-import dr.app.phylogeography.spread.InputFile;
+import dr.app.treespace.InputFile;
 
 /**
  * @author Andrew Rambaut

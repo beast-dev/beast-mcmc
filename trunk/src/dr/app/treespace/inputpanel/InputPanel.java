@@ -1,4 +1,4 @@
-package dr.app.phylogeography.spread.inputpanel;
+package dr.app.treespace.inputpanel;
 
 import dr.app.gui.DeleteActionResponder;
 import dr.app.gui.table.MultiLineTableCellRenderer;
@@ -24,7 +24,8 @@ import java.io.File;
 import java.io.IOException;
 
 import dr.evolution.io.Importer;
-import dr.app.phylogeography.spread.*;
+import dr.app.treespace.*;
+import jebl.evolution.io.ImportException;
 
 /**
  * @author Andrew Rambaut
@@ -35,12 +36,12 @@ public class InputPanel extends JPanel implements DeleteActionResponder, Exporta
     private JTable dataTable = null;
     private DataTableModel dataTableModel = null;
 
-    private SpreadFrame frame = null;
+    private TreeSpaceFrame frame = null;
 
     private InputFileSettingsDialog inputFileSettingsDialog = null;
-    private final SpreadDocument document;
+    private final TreeSpaceDocument document;
 
-    public InputPanel(final SpreadFrame parent, final SpreadDocument document, final Action addDataAction) {
+    public InputPanel(final TreeSpaceFrame parent, final TreeSpaceDocument document, final Action addDataAction) {
 
         this.frame = parent;
         this.document = document;
@@ -109,7 +110,7 @@ public class InputPanel extends JPanel implements DeleteActionResponder, Exporta
         add(scrollPane, BorderLayout.CENTER);
         add(controlPanel1, BorderLayout.SOUTH);
 
-        document.addListener(new SpreadDocument.Listener() {
+        document.addListener(new TreeSpaceDocument.Listener() {
             public void dataChanged() {
                 dataTableModel.fireTableDataChanged();
             }
@@ -258,7 +259,7 @@ public class InputPanel extends JPanel implements DeleteActionResponder, Exporta
                 System.err.println("Ack! we should not be here.\nBad Flavor.");
             } catch (IOException ioe) {
                 System.out.println("Something failed during import:\n" + ioe);
-            } catch (Importer.ImportException e) {
+            } catch (ImportException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
             return false;

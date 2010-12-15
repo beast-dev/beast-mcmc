@@ -93,7 +93,7 @@ public interface Bounds<V> {
      */
     public class Staircase implements Bounds<Integer> {
 
-        int size = 1;
+        int size = 0;
 
         public Staircase(int size) {
             this.size = size;

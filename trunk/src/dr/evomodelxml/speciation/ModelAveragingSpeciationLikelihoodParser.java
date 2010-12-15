@@ -59,7 +59,7 @@ public class ModelAveragingSpeciationLikelihoodParser extends AbstractXMLObjectP
             throw new XMLParseException("It requires at least one tree or one speciation model.");
         } else if (indexLength != trees.size()) {
             throw new XMLParseException("The number of trees and the number of speciation models should be equal.");
-        } else if (indexLength != index.getSize()) {
+        } else if (indexLength != index.getSize() + 1) { // integer index parameter size = real size - 1
             throw new XMLParseException("Index parameter must be same size as the number of trees.");
         }
 

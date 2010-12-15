@@ -47,10 +47,10 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
             }
         }
 
-        if (indexVariable.getSize() != trees.size()) {
+        if ( (indexVariable.getSize() + 1) != trees.size()) { // integer index parameter size = real size - 1
             throw new IllegalArgumentException("Index parameter must be same size as the number of trees.");
         }
-        this.indexVariable = indexVariable; // integer index parameter size = real size - 1
+        this.indexVariable = indexVariable;
         for (int i = 0; i < indexVariable.getSize(); i++) {
             indexVariable.setValue(i, 0);
         }

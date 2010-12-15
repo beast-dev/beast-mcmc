@@ -489,8 +489,8 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    private final File file;
-    private final String name;
+    protected final File file;
+    protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
     // List traces is added before having types

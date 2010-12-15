@@ -18,12 +18,14 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
      * @param speciationModels the model of speciation
      * @param id               a unique identifier for this likelihood
      */
-    public ModelAveragingSpeciationLikelihood(List<Tree> trees, List<MaskableSpeciationModel> speciationModels, Variable<Integer> indexVariable, String id) {
-        this(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, trees, speciationModels, indexVariable);
+    public ModelAveragingSpeciationLikelihood(List<Tree> trees, List<MaskableSpeciationModel> speciationModels,
+                                              Variable<Integer> indexVariable, Variable<Double> maxIndexVariable, String id) {
+        this(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, trees, speciationModels, indexVariable, maxIndexVariable);
         setId(id);
     }
 
-    public ModelAveragingSpeciationLikelihood(String name, List<Tree> trees, List<MaskableSpeciationModel> speciationModels, Variable<Integer> indexParameter) {
+    public ModelAveragingSpeciationLikelihood(String name, List<Tree> trees, List<MaskableSpeciationModel> speciationModels,
+                                              Variable<Integer> indexVariable, Variable<Double> maxIndexVariable) {
 
         super(name);
 
@@ -45,13 +47,21 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
             }
         }
 
-
-        if (indexParameter.getSize() != trees.size()) {
+        if (indexVariable.getSize() != trees.size()) {
             throw new IllegalArgumentException("Index parameter must be same size as the number of trees.");
         }
-        indexParameter.addBounds(new Bounds.Staircase(indexParameter));
-        addVariable(indexParameter);
+        this.indexVariable = indexVariable; // integer index parameter size = real size - 1
+        for (int i = 0; i < indexVariable.getSize(); i++) {
+            indexVariable.setValue(i, 0);
+        }
+        indexVariable.addBounds(new Bounds.Staircase(indexVariable));
+        addVariable(indexVariable);
 
+        for (int i = 0; i < maxIndexVariable.getSize(); i++) {
+            maxIndexVariable.setValue(i, 0.0);
+        }
+        this.maxIndexVariable = maxIndexVariable;
+        addVariable(maxIndexVariable);
     }
 
     // **************************************************************
@@ -67,6 +77,7 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
     // **************************************************************
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        likelihoodKnown = false;
     } // No parameters to respond to
 
     // **************************************************************
@@ -121,20 +132,66 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
     private double calculateLogLikelihood() {
 
         double logL = 0;
+
+        // Rule: index k cannot be appeared unless k-1 appeared
+        if (!isValidate(indexVariable.getValues())) { 
+//                output("illegal index variable", indexVariable);
+            return Double.NEGATIVE_INFINITY;
+        }
+
         for (int i = 0; i < trees.size(); i++) {
-
             MaskableSpeciationModel model = speciationModels.get(i);
-            SpeciationModel mask = speciationModels.get(indexVariable.getValue(i));
-            if (model != mask) {
-                model.mask(mask);
-            } else {
-                model.unmask();
+            if (i > 0) {
+                SpeciationModel mask = speciationModels.get(indexVariable.getValue(i-1)); // integer index parameter size = real size - 1
+                if (model != mask) {
+                    model.mask(mask);
+                } else {
+                    model.unmask();
+                }
             }
-
             logL += model.calculateTreeLogLikelihood(trees.get(i));
         }
 
+        Double maxI = (double) (int) getMaxIndex(indexVariable.getValues());
+        maxIndexVariable.setValue(0, maxI);
+
         return logL;
+    }
+
+    private boolean isValidate(Integer[] pattern) {
+        // Rule: index k cannot be appeared unless k-1 appeared before it appears
+        int[] indexFreq = new int[pattern.length];
+        for (int i = 0; i < pattern.length; i++) {
+            indexFreq[pattern[i]] += 1;
+
+            if (i > 0 && (pattern[i] - pattern[i - 1] > 1)) {
+                for (int f = 0; f < i; f++) {
+                    if (indexFreq[f] < 1) return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private int getMaxIndex(Integer[] pattern) {
+        int max = 0;
+
+        for (int p : pattern) {
+            if (p > max) {
+                max = p;
+            }
+        }
+
+        return max;
+    }
+
+    private void output(String message, Variable<Integer> indexVariable) {
+        System.out.print(message + ": ");
+        for (int i = 0; i < indexVariable.getSize(); i++) {
+            System.out.print(indexVariable.getValue(i) + "\t");
+        }
+        System.out.println();
     }
 
     // **************************************************************
@@ -200,7 +257,8 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
      */
     List<Tree> trees = null;
 
-    Variable<Integer> indexVariable = null;
+    Variable<Integer> indexVariable = null; // integer index parameter size = real size - 1
+    Variable<Double> maxIndexVariable = null;
 
     private double logLikelihood;
     private double storedLogLikelihood;

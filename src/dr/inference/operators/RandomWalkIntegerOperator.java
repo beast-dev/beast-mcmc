@@ -62,10 +62,10 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
             int newValue = calculateNewValue(index);
             ((Parameter) parameter).setParameterValue(index, newValue);
         } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
-            if (index > 0) { // if Bounds.Staircase, value of index 0 is fixed to constant 0
-                int newValue = calculateNewValue(index);
-                ((Variable<Integer>) parameter).setValue(index, newValue);
-            }
+
+            int newValue = calculateNewValue(index);
+            ((Variable<Integer>) parameter).setValue(index, newValue);
+
         }
 
         return 0.0;
@@ -78,8 +78,8 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         int lower;
         if (parameter instanceof Parameter) {
             oldValue = (int) ((Parameter) parameter).getParameterValue(index);
-            upper = (int)(double)((Parameter) parameter).getBounds().getUpperLimit(index);
-            lower = (int)(double)((Parameter) parameter).getBounds().getLowerLimit(index);
+            upper = (int) (double) ((Parameter) parameter).getBounds().getUpperLimit(index);
+            lower = (int) (double) ((Parameter) parameter).getBounds().getLowerLimit(index);
         } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
             oldValue = ((Variable<Integer>) parameter).getValue(index);
             upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
@@ -139,7 +139,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
         double maxDelta = 0;
         if (parameter instanceof Parameter) {
-            maxDelta = ((Parameter) parameter).getParameterValue(0)  * 2.0;
+            maxDelta = ((Parameter) parameter).getParameterValue(0) * 2.0;
         } else if (parameter instanceof Variable) {
             maxDelta = ((Variable<Integer>) parameter).getValue(0) * 2.0;
         }

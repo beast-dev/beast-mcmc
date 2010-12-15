@@ -37,8 +37,8 @@ public class UniformIntegerOperatorTest extends TestCase {
 
     public void testIntegerParameterStaircaseBound() {
         count = new int[dimension][3]; // 3 vaules
-        Variable<Integer> parameterInt = new Variable.I(new int[dimension]); // dimension = 3
-        parameterInt.addBounds(new Bounds.Staircase(parameterInt));
+        Variable<Integer> parameterInt = new Variable.I(new int[dimension-1]); // dimension = 3
+        parameterInt.addBounds(new Bounds.Staircase(parameterInt)); // integer index parameter size = real size - 1
         UniformIntegerOperator uniformIntegerOperator = new UniformIntegerOperator(parameterInt, 10, 1);
         for (int i = 0; i < 300; i++) {
             uniformIntegerOperator.doOperation();
@@ -46,7 +46,7 @@ public class UniformIntegerOperatorTest extends TestCase {
         }
         printCount("Integer Parameter using Staircase Bound");
 
-        assertTrue("Expected count[0][0] > 0", count[0][0] > 0);
+//        assertTrue("Expected count[0][0] > 0", count[0][0] > 0);
         assertTrue("Expected count[1][0] && [1][1] > 0", count[1][0] > 0 && count[1][1] > 0);
         assertTrue("Expected count[2][0] && [2][1] && [2][2] > 0", count[2][0] > 0 && count[2][1] > 0 && count[2][2] > 0);
     }
@@ -56,11 +56,11 @@ public class UniformIntegerOperatorTest extends TestCase {
             int j;
             if (para.getValue(i) instanceof Double) {
                 j = (int) (double) (Double) para.getValue(i);
+                count[i][j] += 1;
             } else {
                 j = (Integer) para.getValue(i);
+                count[i+1][j] += 1; // integer index parameter size = real size - 1
             }
-
-            count[i][j] += 1;
         }
     }
 

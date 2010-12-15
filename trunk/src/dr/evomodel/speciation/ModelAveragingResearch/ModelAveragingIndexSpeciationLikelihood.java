@@ -111,7 +111,8 @@ public class ModelAveragingIndexSpeciationLikelihood extends AbstractModelLikeli
         // Rule: index k cannot be appeared unless k-1 appeared before it appears
         int[] indexFreq = new int[pattern.length];
         for (int i = 0; i < pattern.length; i++) {
-            indexFreq[pattern[i]] += 1;
+            if (pattern[i] > 0) // not validate 0
+                indexFreq[pattern[i] - 1] += 1; // integer index parameter size = real size - 1
 
             if (i > 0 && (pattern[i] - pattern[i - 1] > 1)) {
                 for (int f = 0; f < i; f++) {

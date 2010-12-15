@@ -86,6 +86,10 @@ public interface Bounds<V> {
      * A staircase bound is used for model averaging and requires each index to have an upper bound equal to its
      * index. Thus there is always a value 0 in the first entry of the parameter, whereas there is a value of 0 or 1
      * in the second entry, {0,1,2} in the third entry et cetera. AJD
+     *
+     * But in the code, for simplicity, first entry of the parameter is not implemented,
+     * so that integer parameter size = real size - 1, and 1st digital of paramter = 2nd position of proposed index,
+     * namely {0, 1}.  Walter
      */
     public class Staircase implements Bounds<Integer> {
 
@@ -101,7 +105,7 @@ public interface Bounds<V> {
 
 
         public Integer getUpperLimit(int dimension) {
-            return dimension;
+            return dimension + 1; // integer index parameter size = real size - 1
         }
 
         public Integer getLowerLimit(int dimension) {

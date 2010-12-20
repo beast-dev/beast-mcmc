@@ -80,7 +80,7 @@ public class KernelDensityEstimator2D implements ContourMaker {
     }
 
     public KernelDensityEstimator2D(final double[] x, final double[] y, final int n) {
-        this(x,y,new double[]{1.0,1.0},n,null);
+        this(x,y,null,n,null);
     }
 
     public void doKDE2D() {

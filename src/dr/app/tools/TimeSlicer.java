@@ -1030,7 +1030,7 @@ public class TimeSlicer {
     private Element generateContourData(String name, double date, double height, double hpd) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
-        schemaData.setAttribute("schemaUrl", "HPD_Schema");
+        schemaData.setAttribute("schemaUrl", "#HPD_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
 //        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Description"));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
@@ -1045,7 +1045,7 @@ public class TimeSlicer {
     private Element generateNodeData(String name, double date, double height) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
-        schemaData.setAttribute("schemaUrl", "Node_Schema");
+        schemaData.setAttribute("schemaUrl", "#Node_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));

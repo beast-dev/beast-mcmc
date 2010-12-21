@@ -57,7 +57,7 @@ public class TreeKMLGenerator {
     double maxHeight;
     double maxBranchLength;
 
-    String altitudeMode = "relativeToGround";
+    String altitudeMode = "clampToGround";
 
     private final RootedTree tree;
     private final Map<String, Location> locationMap;
@@ -139,14 +139,13 @@ public class TreeKMLGenerator {
     public Element generate(String documentName, Settings settings) {
 
         Element root = new Element("kml");
-        root.setNamespace(Namespace.getNamespace("http://earth.google.com/kml/2.2"));
 
         Element doc = new Element("Document");
         doc.addContent(generateElement("name", documentName));
 
         List<Element> schema = new ArrayList<Element>();
         Element branchSchema = new Element("Schema");
-        branchSchema.setAttribute("schemaUrl", "Branch_Schema");
+        branchSchema.setAttribute("id", "Branch_Schema");
         branchSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Name")
                 .setAttribute("type", "string")
@@ -571,7 +570,7 @@ public class TreeKMLGenerator {
     private void annotateBranch(final Element placeMark, final double height, final double startDate, final double finishDate, final Double rate, final Double support) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
-        schemaData.setAttribute("schemaUrl", "Branch_Schema");
+        schemaData.setAttribute("schemaUrl", "#Branch_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "StartTime").addContent(Double.toString(startDate)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "FinishTime").addContent(Double.toString(finishDate)));
@@ -964,7 +963,7 @@ public class TreeKMLGenerator {
         settings.getGroundTreeSettings().setTreeType(TreeType.SURFACE_TREE);
         settings.getGroundTreeSettings().getBranchStyle().setColorProperty("height");
         settings.setPlotAltitude(0);
-        settings.setMostRecentDate(2007);
+        settings.setMostRecentDate(2008.427);
         //settings.setAgeCutOff(1995);
         settings.setTimeDivisionCount(0);
 

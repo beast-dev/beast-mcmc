@@ -111,9 +111,9 @@ public class Settings {
 
     private AnalysisType analysisType;
 
-    private String traitName = "antigenic";
-    private String latitudeName = "antigenic1";
-    private String longitudeName = "antigenic2";
+    private String traitName = "location";
+    private String latitudeName = "location1";
+    private String longitudeName = "location2";
 
     private double ageCutOff = 0.0; // upper bound for when time starts - 0 to include entire tree
     private double mostRecentDate;

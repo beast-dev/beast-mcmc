@@ -205,7 +205,7 @@ public class TimeSlicer {
             } else if (outputFormat == OutputFormat.KML) {
 
                 Element hpdSchema = new Element("Schema");
-                hpdSchema.setAttribute("schemaUrl", "HPD_Schema");
+                hpdSchema.setAttribute("id", "HPD_Schema");
                 hpdSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Name")
                         .setAttribute("type", "string")
@@ -228,7 +228,7 @@ public class TimeSlicer {
                         .addContent(new Element("displayName").addContent("HPD")));
 
                 Element nodeSchema = new Element("Schema");
-                nodeSchema.setAttribute("schemaUrl", "Node_Schema");
+                nodeSchema.setAttribute("id", "Node_Schema");
                 nodeSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Name")
                         .setAttribute("type", "string")

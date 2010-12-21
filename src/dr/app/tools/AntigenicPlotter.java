@@ -32,10 +32,15 @@ import dr.geo.KernelDensityEstimator2D;
 import dr.geo.contouring.*;
 import dr.inference.trace.*;
 import dr.util.Version;
+import org.apache.commons.math.linear.*;
+import org.apache.commons.math.stat.StatUtils;
+import org.apache.commons.math.stat.correlation.Covariance;
 import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.io.*;
 import java.util.Calendar;
 
@@ -82,7 +87,20 @@ public class AntigenicPlotter {
             System.out.println("maxState  = " + traces.getMaxState());
             System.out.println();
 
-            writeKML(outputFileName, traces);
+            int traceCount = traces.getTraceCount() / 2;
+            int stateCount = traces.getStateCount();
+            double[][][] data = new double[stateCount][traceCount][2];
+
+            for (int i = 0; i < traceCount; i++) {
+                for (int j = 0; j < stateCount; j++) {
+                    data[j][i][0] = traces.getStateValue(i * 2, j);
+                    data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
+                }
+            }
+
+            rotateData(data);
+
+            writeKML(outputFileName, data);
 
         } catch (Exception e) {
             System.err.println("Error Parsing Input File: " + e.getMessage());
@@ -92,7 +110,118 @@ public class AntigenicPlotter {
 
     }
 
-    private void writeKML(String fileName, LogFileTraces traces) {
+    private void rotateData(final double[][][] data) {
+        for (int i = 0; i < data.length - 1; i++) {
+            rotateData(data[data.length - 1], data[i]);
+        }
+    }
+
+    private void rotateData(final double[][] reference, final double[][] locations) {
+
+        double[] angles = new double[reference.length];
+
+        for (int i = 0; i < locations.length; i++) {
+            double theta1 = Math.atan2(reference[i][0], reference[i][1]);
+            double theta2 = Math.atan2(locations[i][0], locations[i][1]);
+            System.out.println(theta1 + "\t" + theta2);
+        }
+//
+//        double[] principalAxis = getPCA(locations);
+//
+//        AffineTransform transform = AffineTransform.getRotateInstance(principalAxis[0], -principalAxis[1]);
+//
+//        for (int i = 0; i < locations.length; i++) {
+//            System.out.print("" + (i+1) + "\t" + locations[i][0] + "\t" + locations[i][1]);
+//            Point2D point = new Point2D.Double(locations[i][0], locations[i][1]);
+//            transform.transform(point, point);
+//            locations[i][0] = point.getX();
+//            locations[i][1] = point.getY();
+//            System.out.println("\t" + locations[i][0] + "\t" + locations[i][1]);
+//        }
+//
+//        double[] principalAxis2 = getPCA(locations);
+//        System.out.println("PCA\t" + principalAxis[0] + "\t" + principalAxis[1] + "\t" + principalAxis2[0] + "\t" + principalAxis2[1]);
+
+        System.out.println();
+    }
+
+    private void rotateData(final double[][] locations) {
+
+
+        double[] principalAxis = getPCA(locations);
+
+        AffineTransform transform = AffineTransform.getRotateInstance(principalAxis[0], -principalAxis[1]);
+
+        for (int i = 0; i < locations.length; i++) {
+            System.out.print("" + (i+1) + "\t" + locations[i][0] + "\t" + locations[i][1]);
+            Point2D point = new Point2D.Double(locations[i][0], locations[i][1]);
+            transform.transform(point, point);
+            locations[i][0] = point.getX();
+            locations[i][1] = point.getY();
+            System.out.println("\t" + locations[i][0] + "\t" + locations[i][1]);
+        }
+
+        double[] principalAxis2 = getPCA(locations);
+        System.out.println("PCA\t" + principalAxis[0] + "\t" + principalAxis[1] + "\t" + principalAxis2[0] + "\t" + principalAxis2[1]);
+
+        System.out.println();
+    }
+
+    private double[] getPCA(final double[][] locations) {
+
+        double[] locationMean = new double[2];
+
+        for (int i = 0; i < locations.length; i++) {
+            for (int j = 0; j < 2; j++) {
+                locationMean[j] += locations[i][j];
+            }
+        }
+        for (int j = 0; j < 2; j++) {
+            locationMean[j] /= locations.length;
+        }
+
+        for (int i = 0; i < locations.length; i++) {
+            for (int j = 0; j < 2; j++) {
+                locations[i][j] -= locationMean[j];
+            }
+        }
+
+        RealMatrix data = MatrixUtils.createRealMatrix(locations);
+        // compute the covariance matrix
+        RealMatrix covMatrix = null;
+
+        if ( data.getColumnDimension() > 1) {
+
+            // compute covariance matrix if we have more than 1 attribute
+            Covariance c = new Covariance(data);
+            covMatrix = c.getCovarianceMatrix();
+
+        } else {
+
+            // if we only have one attribute calculate the variance instead
+            covMatrix = MatrixUtils.createRealMatrix(1,1);
+            covMatrix.setEntry(0, 0, StatUtils.variance(data.getColumn(0)));
+
+        }
+
+        // get the eigenvalues and eigenvectors of the covariance matrixE
+        EigenDecomposition eDecomp = new EigenDecompositionImpl(covMatrix,0.0);
+
+        // set the eigenVectors matrix
+        // the columns of the eigenVectors matrix are the eigenVectors of
+        // the covariance matrix
+        RealMatrix eigenVectors = eDecomp.getV();
+
+        // set the eigenValues vector
+//        RealVector eigenValues = new ArrayRealVector(eDecomp.getRealEigenvalues());
+
+        //transform the data
+        RealMatrix pcs = data.multiply(eigenVectors);
+
+        return pcs.getRow(0);
+    }
+
+    private void writeKML(String fileName, double[][][] data) {
         Element hpdSchema = new Element("Schema");
         hpdSchema.setAttribute("id", "HPD_Schema");
         hpdSchema.addContent(new Element("SimpleField")
@@ -137,7 +266,7 @@ public class AntigenicPlotter {
 
         documentElement = new Element("Document");
         documentElement.addContent(documentNameElement);
-        documentElement.addContent(hpdSchema);
+//        documentElement.addContent(hpdSchema);
         documentElement.addContent(traceSchema);
 //        documentElement.addContent(contourFolderElement);
         documentElement.addContent(traceFolderElement);
@@ -145,20 +274,8 @@ public class AntigenicPlotter {
         rootElement = new Element("kml");
         rootElement.addContent(documentElement);
 
-        int pointCount = traces.getTraceCount() / 2;
-
-        int stateCount = traces.getStateCount();
-        double[][] xy = new double[2][stateCount];
-
-        for (int i = 0; i < pointCount; i++) {
-
-            for (int j = 0; j < stateCount; j++) {
-                xy[0][j] = traces.getStateValue(i * 2, j) / 1000.0;
-                xy[1][j] = traces.getStateValue((i * 2) + 1, j) / 1000.0;
-            }
-
-            Element traceElement = generateTraceElement(i + 1, xy);
-            traceFolderElement.addContent(traceElement);
+        Element traceElement = generateTraceElement(data);
+        traceFolderElement.addContent(traceElement);
 
 //            ContourMaker contourMaker;
 //            if (CONTOUR_MODE == ContourMode.JAVA)
@@ -186,8 +303,6 @@ public class AntigenicPlotter {
 //            }
 
 
-        }
-
         PrintStream resultsStream;
 
         try {
@@ -202,30 +317,32 @@ public class AntigenicPlotter {
 
     }
 
-    private Element generateTraceElement(int pointNumber, double[][] points) {
+    private Element generateTraceElement(double[][][] points) {
         Element traceElement = new Element("Folder");
         Element nameKDEElement = new Element("name");
-        String name = "trace_" + pointNumber;
+        String name = "points";
 
         nameKDEElement.addContent(name);
         traceElement.addContent(nameKDEElement);
 
-        for (int a = 0; a < points[0].length; a++)  {
-            Element placemarkElement = new Element("Placemark");
+        for (int i = 0; i < points.length; i++)  {
+            for (int j = 0; j < points[i].length; j++)  {
+                Element placemarkElement = new Element("Placemark");
 
-            placemarkElement.addContent(generateTraceData(pointNumber, a));
+                placemarkElement.addContent(generateTraceData(j, i));
 
 
-            Element pointElement = new Element("Point");
-            Element coordinates = new Element("coordinates");
-            coordinates.addContent(points[1][a]+","+points[0][a]+",0");
-            pointElement.addContent(coordinates);
-            placemarkElement.addContent(pointElement);
+                Element pointElement = new Element("Point");
+                Element coordinates = new Element("coordinates");
+                coordinates.addContent(points[i][j][1]+","+points[i][j][0]+",0");
+                pointElement.addContent(coordinates);
+                placemarkElement.addContent(pointElement);
 
-            traceElement.addContent(placemarkElement);
+                traceElement.addContent(placemarkElement);
+
+            }
 
         }
-
         return traceElement;
     }
 

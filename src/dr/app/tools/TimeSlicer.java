@@ -13,7 +13,6 @@ import dr.geo.KernelDensityEstimator2D;
 import dr.geo.Polygon2D;
 import dr.geo.contouring.*;
 import dr.geo.math.SphericalPolarCoordinates;
-import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.util.HeapSort;
@@ -71,6 +70,8 @@ public class TimeSlicer {
     public static final String SLICE_FILE_HEIGHTS = "sliceFileHeights";
     public static final String SLICE_FILE_TIMES = "sliceFileTimes";
     public static final String SLICE_MODE = "sliceMode";
+    public static final String ROOT = "root";
+    public static final String TIPS = "tips";
     public static final String MRSD = "mrsd";
     public static final String HELP = "help";
     public static final String NOISE = "noise";
@@ -98,7 +99,7 @@ public class TimeSlicer {
 
     public TimeSlicer(String treeFileName, int burnin, int skipEvery, String[] traits, double[] sliceHeights, boolean impute,
                       boolean trueNoise, double mrsd, ContourMode contourMode, SliceMode sliceMode,
-                      Normalization normalize, boolean getSRD, String progress, boolean branchNormalization, BranchSet branchset, Set backboneTaxa) {
+                      final boolean summarizeRoot, final boolean summarizeTips, Normalization normalize, boolean getSRD, String progress, boolean branchNormalization, BranchSet branchset, Set backboneTaxa) {
 
         this.traits = traits;
         traitCount = traits.length;
@@ -130,7 +131,6 @@ public class TimeSlicer {
             }
         }
 
-
         values = new ArrayList<List<List<Trait>>>(sliceCount);
         for (int i = 0; i < sliceCount; i++) {
             List<List<Trait>> thisSlice = new ArrayList<List<Trait>>(traitCount);
@@ -140,10 +140,16 @@ public class TimeSlicer {
                 thisSlice.add(thisTraitSlice);
             }
         }
-        rootValues = new ArrayList<List<Trait>>(traitCount);
-        for (int k = 0; k < traitCount; k++) {
-            List<Trait> thisTrait = new ArrayList<Trait>();
-            rootValues.add(thisTrait);
+        if (summarizeRoot) {
+            rootValues = new ArrayList<List<Trait>>(traitCount);
+            for (int k = 0; k < traitCount; k++) {
+                List<Trait> thisTrait = new ArrayList<Trait>();
+                rootValues.add(thisTrait);
+            }
+        }
+        if (summarizeTips) {
+            tipValues = new ArrayList<List<List<Trait>>>();
+            tipNames = new ArrayList<String>();
         }
 
         try {
@@ -173,7 +179,7 @@ public class TimeSlicer {
     private Element nodeFolderElement;
     private StringBuffer tabOutput = new StringBuffer();
 
-    public void output(String outFileName, boolean summaryOnly, OutputFormat outputFormat, double[] hpdValues, String sdrFile) {
+    public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, OutputFormat outputFormat, double[] hpdValues, String sdrFile) {
 
         resultsStream = System.out;
 
@@ -297,8 +303,17 @@ public class TimeSlicer {
                     }
                 }
             }
-            for (double hpdValue : hpdValues) {
-                summarizeRoot(outputFormat, hpdValue);
+
+            if (summarizeRoot) {
+                for (double hpdValue : hpdValues) {
+                    summarizeRoot(outputFormat, hpdValue);
+                }
+            }
+
+            if (summarizeTips) {
+                for (double hpdValue : hpdValues) {
+                    summarizeTips(outputFormat, hpdValue);
+                }
             }
 
             if (outputFormat == OutputFormat.TAB) {
@@ -504,65 +519,71 @@ public class TimeSlicer {
 
             if (isNumber) {
                 if (isBivariate) {
-                    if(sliceMode == SliceMode.NODES) {
+
+                    if (outputFormat == OutputFormat.KML) {
+
+                        int count = thisTrait.size();
+                        double[][] y = new double[dim][count];
+                        for (int i = 0; i < count; i++) {
+                            Trait trait = thisTrait.get(i);
+                            double[] value = trait.getValue();
+                            for (int j = 0; j < dim; j++) {
+                                y[j][i] = value[j];
+                            }
+                        }
+
+                        if(sliceMode == SliceMode.NODES) {
+                            Element nodeSliceElement = generateNodeSliceElement(Double.NaN, y, -1);
+                            nodeFolderElement.addContent(nodeSliceElement);
+                        }
+
+                        String name = "root_hpd" + hpdValue;
+
+                        generateContours(name, contourFolderElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
+
+                    }
+                }
+
+            }
+
+        }
+
+    }
+
+    private void summarizeTips(OutputFormat outputFormat, double hpdValue){
+
+        for (int traitIndex = 0; traitIndex < tipValues.size(); traitIndex++) {
+
+            List<List<Trait>> thisTrait = tipValues.get(traitIndex);
+            for (int tipIndex = 0; tipIndex < thisTrait.size(); tipIndex++) {
+                List<Trait> thisTip = thisTrait.get(tipIndex);
+                if (thisTip.size() == 0) {
+                    return;
+                }
+                boolean isNumber = thisTip.get(0).isNumber();
+                boolean isMultivariate = thisTip.get(0).isMultivariate();
+                int dim = thisTip.get(0).getDim();
+                boolean isBivariate = isMultivariate && dim == 2;
+
+                if (isNumber) {
+                    if (isBivariate) {
 
                         if (outputFormat == OutputFormat.KML) {
 
                             int count = thisTrait.size();
-                            Double[][] x = new Double[dim][count];
                             double[][] y = new double[dim][count];
                             for (int i = 0; i < count; i++) {
-                                Trait trait = thisTrait.get(i);
+                                Trait trait = thisTip.get(i);
                                 double[] value = trait.getValue();
                                 for (int j = 0; j < dim; j++) {
-                                    x[j][i] = value[j];
-                                    y[j][i] = x[j][i];
+                                    y[j][i] = value[j];
                                 }
                             }
 
-                            Element nodeSliceElement = generateNodeSliceElement(Double.NaN, y, -1);
-                            nodeFolderElement.addContent(nodeSliceElement);
+                            String name = tipNames.get(tipIndex) + "_hpd";
 
-                            if (useStyles) {
-                                Element styleElement = new Element(STYLE);
-                                constructNodeStyleElement(styleElement, Double.NaN);
-                                documentElement.addContent(styleElement);
+                            generateContours(name, contourFolderElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
 
-                                //also add contour
-                                Element stylePolygonElement = new Element(STYLE);
-                                constructPolygonStyleElement(stylePolygonElement, Double.NaN);
-                                documentElement.addContent(stylePolygonElement);
-                            }
-
-                            ContourMaker contourMaker;
-                            if (contourMode == ContourMode.JAVA)
-                                contourMaker = new KernelDensityEstimator2D(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                            else if (contourMode == ContourMode.R)
-                                contourMaker = new ContourWithR(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                            else if (contourMode == ContourMode.SNYDER)
-                                contourMaker = new ContourWithSynder(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                            else
-                                throw new RuntimeException("Unimplemented ContourModel!");
-
-                            ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
-                            int pathCounter = 1;
-                            for (ContourPath path : paths) {
-
-                                KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
-                                if (outputFormat == OutputFormat.XML) {
-                                    // to be implemented
-                                }
-
-                                // only if the trait is location we will write KML
-                                if (outputFormat == OutputFormat.KML) {
-                                    //because KML polygons require long,lat,alt we need to switch lat and long first
-                                    coords.switchXY();
-                                    Element placemarkElement = generatePlacemarkElementWithPolygon(hpdValue, Double.NaN, coords, -1, pathCounter);
-                                    //testing how many points are within the polygon
-                                    contourFolderElement.addContent(placemarkElement);
-                                }
-                                pathCounter ++;
-                            }
                         }
                     }
 
@@ -571,7 +592,6 @@ public class TimeSlicer {
             }
 
         }
-
     }
 
     private void summarizeSliceTrait(Element sliceElement, int slice, List<Trait> thisTrait, int traitIndex, double sliceValue,
@@ -611,21 +631,23 @@ public class TimeSlicer {
             }
 
             int count = thisTrait.size();
-            Double[][] x = new Double[dim][count];
             double[][] y = new double[dim][count];
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
                 double[] value = trait.getValue();
                 for (int j = 0; j < dim; j++) {
-                    x[j][i] = value[j];
-                    y[j][i] = x[j][i];
+                    y[j][i] = value[j];
                 }
             }
 
             if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 // Compute marginal means and standard deviations
                 for (int j = 0; j < dim; j++) {
-                    TraceDistribution trace = new TraceDistribution(x[j]);
+                    Double[] x = new Double[y[dim].length];
+                    for (int k = 0; k < y[dim].length; k++) {
+                        x[k] = y[dim][k];
+                    }
+                    TraceDistribution trace = new TraceDistribution(x);
                     Element statsElement = new Element("stats");
                     addDimInfo(statsElement, j, dim);
                     StringBuffer sb = new StringBuffer();
@@ -672,63 +694,12 @@ public class TimeSlicer {
                     }
                 }
 
-                //to test how much points are within the polygons
-                double numberOfPointsInPolygons = 0;
-                double totalArea = 0;
 
-                ContourMaker contourMaker;
-                if (contourMode == ContourMode.JAVA)
-                    contourMaker = new KernelDensityEstimator2D(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                else if (contourMode == ContourMode.R)
-                    contourMaker = new ContourWithR(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                else if (contourMode == ContourMode.SNYDER)
-                    contourMaker = new ContourWithSynder(Trace.arrayConvert(x[0]), Trace.arrayConvert(x[1]), GRIDSIZE);
-                else
-                    throw new RuntimeException("Unimplemented ContourModel!");
+                double date = mostRecentSamplingDate - sliceValue;
+                String name = "" + date + "_hpd" + hpdValue;
 
-                ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
-                int pathCounter = 1;
-                for (ContourPath path : paths) {
+                generateContours(name, sliceElement, traitElement, y, slice, date, sliceValue, hpdValue);
 
-                    KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
-                    if (outputFormat == OutputFormat.XML) {
-                        Element regionElement = new Element(REGIONS_ELEMENT);
-                        regionElement.setAttribute(DENSITY_VALUE, Double.toString(hpdValue));
-                        regionElement.addContent(coords.toXML());
-                        traitElement.addContent(regionElement);
-                    }
-
-                    // only if the trait is location we will write KML
-                    if (outputFormat == OutputFormat.KML) {
-                        //because KML polygons require long,lat,alt we need to switch lat and long first
-                        coords.switchXY();
-                        Element placemarkElement = generatePlacemarkElementWithPolygon(hpdValue, sliceValue, coords, slice, pathCounter);
-                        //testing how many points are within the polygon
-                        if (checkSliceContours) {
-                            Element testElement = new Element("test");
-                            testElement.addContent(coords.toXML());
-                            Polygon2D testPolygon = new Polygon2D(testElement);
-                            totalArea += testPolygon.calculateArea();
-
-                            double[][] dest = new double[x.length][x[0].length];
-                            for (int i = 0; i < x.length; i++) {
-                                for (int j = 0; j < x[0].length; j++) {
-                                    dest[i][j] = x[j][i].doubleValue();
-                                }
-                            }
-                            numberOfPointsInPolygons += getNumberOfPointsInPolygon(dest, testPolygon);
-                        }
-                        sliceElement.addContent(placemarkElement);
-//                        contourFolderElement.addContent(placemarkElement);
-                    }
-                    pathCounter ++;
-                }
-                if (checkSliceContours) {
-                    progressStream.print("numberOfContours=" + paths.length + "\tfreqOfPointsInContour=" + numberOfPointsInPolygons / count + "\ttotalArea = " + totalArea);
-                }
-                if (paths.length == 0 && !sliceProgressReport) {
-                    progressStream.println("Warning: slice at height " + sliceValue + ", contains no contours.");
-                }
 
             }
             if (outputFormat == OutputFormat.XML)
@@ -736,6 +707,70 @@ public class TimeSlicer {
         } // else skip
         if (sliceProgressReport) {
             progressStream.print("\r");
+        }
+    }
+
+    private void generateContours(String name, Element sliceElement, Element traitElement, double[][] y, int slice, double date, double height, double hpdValue) {
+        //to test how much points are within the polygons
+        double numberOfPointsInPolygons = 0;
+        double totalArea = 0;
+
+        ContourMaker contourMaker;
+        if (contourMode == ContourMode.JAVA)
+            contourMaker = new KernelDensityEstimator2D(y[0], y[1], GRIDSIZE);
+        else if (contourMode == ContourMode.R)
+            contourMaker = new ContourWithR(y[0], y[1], GRIDSIZE);
+        else if (contourMode == ContourMode.SNYDER)
+            contourMaker = new ContourWithSynder(y[0], y[1], GRIDSIZE);
+        else
+            throw new RuntimeException("Unimplemented ContourModel!");
+
+        ContourPath[] paths = contourMaker.getContourPaths(hpdValue);
+        int pathCounter = 1;
+        for (ContourPath path : paths) {
+
+            KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
+            if (traitElement != null) {
+                Element regionElement = new Element(REGIONS_ELEMENT);
+                regionElement.setAttribute(DENSITY_VALUE, Double.toString(hpdValue));
+                regionElement.addContent(coords.toXML());
+                traitElement.addContent(regionElement);
+            }
+
+            // only if the trait is location we will write KML
+            if (sliceElement != null) {
+                //because KML polygons require long,lat,alt we need to switch lat and long first
+                coords.switchXY();
+
+                String name1 = name + "_path_"+pathCounter;
+
+                Element placemarkElement = generatePlacemarkElementWithPolygon(name1, date, hpdValue, height, coords, slice, pathCounter);
+
+                //testing how many points are within the polygon
+                if (checkSliceContours) {
+                    Element testElement = new Element("test");
+                    testElement.addContent(coords.toXML());
+                    Polygon2D testPolygon = new Polygon2D(testElement);
+                    totalArea += testPolygon.calculateArea();
+
+                    double[][] dest = new double[y.length][y[0].length];
+                    for (int i = 0; i < y.length; i++) {
+                        for (int j = 0; j < y[0].length; j++) {
+                            dest[i][j] = y[i][j];
+                        }
+                    }
+                    numberOfPointsInPolygons += getNumberOfPointsInPolygon(dest, testPolygon);
+                }
+                sliceElement.addContent(placemarkElement);
+            }
+            pathCounter ++;
+        }
+
+        if (checkSliceContours) {
+            progressStream.print("numberOfContours=" + paths.length + "\tfreqOfPointsInContour=" + numberOfPointsInPolygons / y[0].length + "\ttotalArea = " + totalArea);
+        }
+        if (paths.length == 0 && !sliceProgressReport) {
+            progressStream.println("Warning: slice at height " + height + ", contains no contours.");
         }
     }
 
@@ -875,19 +910,10 @@ public class TimeSlicer {
         styleElement.addContent(iconStyle);
     }
 
-    private Element generatePlacemarkElementWithPolygon(double hpdValue, double sliceValue, KMLCoordinates coords, int sliceInteger, int pathCounter) {
-        double date;
+    private Element generatePlacemarkElementWithPolygon(String name, double date, double hpdValue, double sliceValue, KMLCoordinates coords, int sliceInteger, int pathCounter) {
         Element placemarkElement = new Element("Placemark");
 
-        String name;
         Element placemarkNameElement = new Element("name");
-        if (sliceInteger == -1){
-            date = Double.NaN;
-            name = "hpdRegion"+"_"+ROOT_ELEMENT+"_path_"+pathCounter;
-        } else {
-            date = mostRecentSamplingDate - sliceValue;
-            name = "hpdRegion" + date + "_path_" + pathCounter;
-        }
         placemarkNameElement.addContent(name);
         placemarkElement.addContent(placemarkNameElement);
 
@@ -900,7 +926,7 @@ public class TimeSlicer {
         }
         placemarkElement.addContent(visibility);
 
-        if (sliceCount > 1) {
+        if (!Double.isNaN(date)) {
             Element timeSpan = new Element("TimeSpan");
             Element begin = new Element("begin");
 
@@ -1217,6 +1243,8 @@ public class TimeSlicer {
 
     private List<List<List<Trait>>> values;
     private List<List<Trait>> rootValues;
+    private List<List<List<Trait>>> tipValues;
+    private List<String> tipNames;
 
     private void outputSlice(int slice, double sliceValue) {
 
@@ -1267,7 +1295,8 @@ public class TimeSlicer {
     }
 
     private void analyzeTree(Tree treeTime, String[] traits, double[] slices, boolean impute,
-                             boolean trueNoise, Normalization normalize, boolean divideByBranchlength, BranchSet branchset, Set backboneTaxa) {
+                             boolean trueNoise, Normalization normalize, boolean divideByBranchlength,
+                             BranchSet branchset, Set backboneTaxa) {
 
         double[][] precision = null;
 
@@ -1294,6 +1323,20 @@ public class TimeSlicer {
             }
         }
 
+        if (tipValues != null && tipValues.size() == 0) {
+            // this is the first tree so initialize the tip value lists
+            for (int i = 0; i < treeTime.getExternalNodeCount(); i++) {
+                List<List<Trait>> thisTip = new ArrayList<List<Trait>>(traitCount);
+                tipValues.add(thisTip);
+                for (int j = 0; j < traitCount; j++) {
+                    List<Trait> thisTipTrait = new ArrayList<Trait>();
+                    thisTip.add(thisTipTrait);
+                }
+
+                tipNames.add(treeTime.getNodeTaxon(treeTime.getExternalNode(i)).getId());
+            }
+
+        }
 
 //  employed to get dispersal rates across the whole tree
 //        double treeNativeDistance = 0;
@@ -1437,6 +1480,21 @@ public class TimeSlicer {
                         }
                     }
                 }
+
+                if (tipValues != null && treeTime.isExternal(node)) {
+                    List<List<Trait>> thisTip = tipValues.get(x);
+
+                    for (int j = 0; j < traitCount; j++) {
+                        Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
+                        if (tmpTrait == null) {
+                            System.err.println("Trait '" + traits[j] + "' not found for tip.");
+                            System.exit(-1);
+                        }
+                        thisTip.get(j).add(new Trait(tmpTrait));
+
+                    }
+                }
+
             } else {
                 if (sliceMode == SliceMode.NODES) {
                     double nodeHeight = treeTime.getNodeHeight(node);
@@ -1462,6 +1520,9 @@ public class TimeSlicer {
                         }
 
                     }
+                }
+
+                if (rootValues != null) {
                     for (int j = 0; j < traitCount; j++) {
                         List<Trait> thisRootTrait = rootValues.get(j);
                         Object tmpTrait = treeTime.getNodeAttribute(node, traits[j]);
@@ -2009,6 +2070,8 @@ public class TimeSlicer {
         int burnin = -1;
         int skipEvery = 1;
         double mrsd = 0;
+        boolean summarizeRoot = false;
+        boolean summarizeTips = false;
         double[] hpdValues = { 0.80 };
         String outputFileSDR = null;
         boolean getSDR = false;
@@ -2036,6 +2099,8 @@ public class TimeSlicer {
                         new Arguments.StringOption(SLICE_FILE_TIMES, "Times_file", "specifies a file with a slice Times-list, is overwritten by command-line specification of slice times [default=none]"),
                         new Arguments.IntegerOption(SLICE_COUNT, "the number of time slices to use [default=0]"),
                         new Arguments.StringOption(SLICE_MODE, "Slice_mode", "specifies how to perform the slicing [default=branches]"),
+                        new Arguments.Option(ROOT, "include a summary for the root [default=off]"),
+                        new Arguments.Option(TIPS, "include a summary for the tips [default=off]"),
                         new Arguments.RealOption(START_TIME, "the time of the earliest slice [default=0]"),
                         new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
                         new Arguments.Option(HELP, "option to print this message"),
@@ -2202,6 +2267,14 @@ public class TimeSlicer {
                 }
             }
 
+            if (arguments.hasOption(ROOT)) {
+                summarizeRoot = true;
+            }
+
+            if (arguments.hasOption(TIPS)) {
+                summarizeTips = true;
+            }
+
             //sorting sliceHeights
             if (sliceHeights != null) {
                 Arrays.sort(sliceHeights);
@@ -2293,8 +2366,9 @@ public class TimeSlicer {
         }
 
         TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, skipEvery, traitNames, sliceHeights, impute,
-                trueNoise, mrsd, contourMode, sliceMode, normalize, getSDR, progress, branchNormalization, set, backboneTaxa);
-        timeSlicer.output(outputFileName, summaryOnly, outputFormat, hpdValues, outputFileSDR);
+                trueNoise, mrsd, contourMode, sliceMode,summarizeRoot, summarizeTips, normalize, getSDR, progress,
+                branchNormalization, set, backboneTaxa);
+        timeSlicer.output(outputFileName, summaryOnly, summarizeRoot, summarizeTips, outputFormat, hpdValues, outputFileSDR);
 
         System.exit(0);
     }

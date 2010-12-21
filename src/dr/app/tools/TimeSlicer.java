@@ -506,6 +506,11 @@ public class TimeSlicer {
 
     private void summarizeRoot(OutputFormat outputFormat, double hpdValue){
 
+        if (sliceProgressReport) {
+            progressStream.print("summarizing root" + "\t");
+            progressStream.print("hpd " + (hpdValue * 100) + "\t");
+        }
+
         for (int traitIndex = 0; traitIndex < rootValues.size(); traitIndex++) {
 
             List<Trait> thisTrait = rootValues.get(traitIndex);
@@ -547,11 +552,18 @@ public class TimeSlicer {
             }
 
         }
+        if (sliceProgressReport) {
+            progressStream.print("\r");
+        }
 
     }
 
     private void summarizeTips(OutputFormat outputFormat, double hpdValue){
 
+        if (sliceProgressReport) {
+            progressStream.print("summarizing tips" + "\t");
+            progressStream.print("hpd " + (hpdValue * 100) + "\t");
+        }
         for (int traitIndex = 0; traitIndex < tipValues.size(); traitIndex++) {
 
             List<List<Trait>> thisTrait = tipValues.get(traitIndex);
@@ -592,6 +604,10 @@ public class TimeSlicer {
             }
 
         }
+        if (sliceProgressReport) {
+            progressStream.print("\r");
+        }
+
     }
 
     private void summarizeSliceTrait(Element sliceElement, int slice, List<Trait> thisTrait, int traitIndex, double sliceValue,

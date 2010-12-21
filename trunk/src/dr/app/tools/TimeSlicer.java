@@ -2104,7 +2104,11 @@ public class TimeSlicer {
 
             String sliceModeString = arguments.getStringOption(SLICE_MODE);
             if (sliceModeString != null) {
-                sliceMode = SliceMode.valueOf(sliceModeString.toUpperCase());
+                try {
+                    sliceMode = SliceMode.valueOf(sliceModeString.toUpperCase());
+                } catch (IllegalArgumentException iae) {
+                    System.err.println("Unrecognized slice mode: " + sliceModeString);
+                }
             }
 
             if (arguments.hasOption(BURNIN)) {

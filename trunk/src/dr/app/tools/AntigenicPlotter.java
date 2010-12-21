@@ -98,7 +98,7 @@ public class AntigenicPlotter {
                 }
             }
 
-            rotateData(data);
+//            rotateData(data);
 
             writeKML(outputFileName, data);
 
@@ -110,21 +110,43 @@ public class AntigenicPlotter {
 
     }
 
-    private void rotateData(final double[][][] data) {
-        for (int i = 0; i < data.length - 1; i++) {
-            rotateData(data[data.length - 1], data[i]);
-        }
-    }
-
-    private void rotateData(final double[][] reference, final double[][] locations) {
-
-        double[] angles = new double[reference.length];
-
-        for (int i = 0; i < locations.length; i++) {
-            double theta1 = Math.atan2(reference[i][0], reference[i][1]);
-            double theta2 = Math.atan2(locations[i][0], locations[i][1]);
-            System.out.println(theta1 + "\t" + theta2);
-        }
+//    private void rotateData(final double[][][] data) {
+//        for (int i = 0; i < data.length - 1; i++) {
+//            rotateData(data[data.length - 1], data[i]);
+//        }
+//    }
+//
+//    private void rotateData(final double[][] reference, final double[][] locations) {
+//
+//        double[] angles = new double[reference.length];
+//
+//        for (int i = 0; i < locations.length; i++) {
+//            double theta1 = Math.atan2(reference[i][0], reference[i][1]);
+//            double theta2 = Math.atan2(locations[i][0], locations[i][1]);
+//            System.out.println(theta1 + "\t" + theta2);
+//        }
+////
+////        double[] principalAxis = getPCA(locations);
+////
+////        AffineTransform transform = AffineTransform.getRotateInstance(principalAxis[0], -principalAxis[1]);
+////
+////        for (int i = 0; i < locations.length; i++) {
+////            System.out.print("" + (i+1) + "\t" + locations[i][0] + "\t" + locations[i][1]);
+////            Point2D point = new Point2D.Double(locations[i][0], locations[i][1]);
+////            transform.transform(point, point);
+////            locations[i][0] = point.getX();
+////            locations[i][1] = point.getY();
+////            System.out.println("\t" + locations[i][0] + "\t" + locations[i][1]);
+////        }
+////
+////        double[] principalAxis2 = getPCA(locations);
+////        System.out.println("PCA\t" + principalAxis[0] + "\t" + principalAxis[1] + "\t" + principalAxis2[0] + "\t" + principalAxis2[1]);
+//
+//        System.out.println();
+//    }
+//
+//    private void rotateData(final double[][] locations) {
+//
 //
 //        double[] principalAxis = getPCA(locations);
 //
@@ -141,31 +163,9 @@ public class AntigenicPlotter {
 //
 //        double[] principalAxis2 = getPCA(locations);
 //        System.out.println("PCA\t" + principalAxis[0] + "\t" + principalAxis[1] + "\t" + principalAxis2[0] + "\t" + principalAxis2[1]);
-
-        System.out.println();
-    }
-
-    private void rotateData(final double[][] locations) {
-
-
-        double[] principalAxis = getPCA(locations);
-
-        AffineTransform transform = AffineTransform.getRotateInstance(principalAxis[0], -principalAxis[1]);
-
-        for (int i = 0; i < locations.length; i++) {
-            System.out.print("" + (i+1) + "\t" + locations[i][0] + "\t" + locations[i][1]);
-            Point2D point = new Point2D.Double(locations[i][0], locations[i][1]);
-            transform.transform(point, point);
-            locations[i][0] = point.getX();
-            locations[i][1] = point.getY();
-            System.out.println("\t" + locations[i][0] + "\t" + locations[i][1]);
-        }
-
-        double[] principalAxis2 = getPCA(locations);
-        System.out.println("PCA\t" + principalAxis[0] + "\t" + principalAxis[1] + "\t" + principalAxis2[0] + "\t" + principalAxis2[1]);
-
-        System.out.println();
-    }
+//
+//        System.out.println();
+//    }
 
     private double[] getPCA(final double[][] locations) {
 

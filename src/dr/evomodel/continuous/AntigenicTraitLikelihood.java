@@ -1,7 +1,6 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.*;
-import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
 import dr.xml.*;
@@ -29,11 +28,14 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             DataTable<double[]> dataTable,
-            final boolean log2Transform) {
+            final boolean log2Transform,
+            final double threshold) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
         this.mdsDimension = mdsDimension;
+
+        this.titrationThreshold = threshold;
 
         String[] virusNames = dataTable.getRowLabels();
         String[] serumNames = dataTable.getColumnLabels();
@@ -134,7 +136,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             for (int j = 0; j < serumCount; j++) {
                 if (!Double.isNaN(dataRow[j]) && dataRow[j] > 0) {
                     if (log2Transform) {
-                        this.assayTable[i][k] = transform(dataRow[j], maxSerum[j]);
+                        if (dataRow[j] < titrationThreshold) {
+                            this.assayTable[i][k] = Double.POSITIVE_INFINITY;
+                        } else {
+                            this.assayTable[i][k] = transform(dataRow[j], maxSerum[j]);
+                        }
                     } else {
                         this.assayTable[i][k] = dataRow[j];
                     }
@@ -211,9 +217,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
 
-        addStatistic(pcStatistic);
-        addStatistic(pcXStatistic);
-        addStatistic(pcYStatistic);
         addStatistic(meanStatistic);
     }
 
@@ -444,120 +447,64 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             locationMean[j] /= virusCount;
         }
 
-        for (int i = 0; i < virusCount; i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                locations[i][j] -= locationMean[j];
-            }
-        }
-
-//        for (int i = 0; i < serumCount; i++) {
-//            for (int j = 0; j < mdsDimension; j++) {
-//                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
-//                locationMean[j] += locations[i][j];
-//            }
-//        }
-//        for (int j = 0; j < mdsDimension; j++) {
-//            locationMean[j] /= serumCount;
-//        }
-//
-//        for (int i = 0; i < serumCount; i++) {
+//        for (int i = 0; i < virusCount; i++) {
 //            for (int j = 0; j < mdsDimension; j++) {
 //                locations[i][j] -= locationMean[j];
 //            }
 //        }
-
-        RealMatrix data = MatrixUtils.createRealMatrix(locations);
-        // compute the covariance matrix
-        RealMatrix covMatrix = null;
-
-        if ( data.getColumnDimension() > 1) {
-
-            // compute covariance matrix if we have more than 1 attribute
-            Covariance c = new Covariance(data);
-            covMatrix = c.getCovarianceMatrix();
-
-        } else {
-
-            // if we only have one attribute calculate the variance instead
-            covMatrix = MatrixUtils.createRealMatrix(1,1);
-            covMatrix.setEntry(0, 0, StatUtils.variance(data.getColumn(0)));
-
-        }
-
-        // get the eigenvalues and eigenvectors of the covariance matrixE
-        EigenDecomposition eDecomp = new EigenDecompositionImpl(covMatrix,0.0);
-
-        // set the eigenVectors matrix
-        // the columns of the eigenVectors matrix are the eigenVectors of
-        // the covariance matrix
-        RealMatrix eigenVectors = eDecomp.getV();
-
-        // set the eigenValues vector
-//        RealVector eigenValues = new ArrayRealVector(eDecomp.getRealEigenvalues());
-
-        //transform the data
-        RealMatrix pcs = data.multiply(eigenVectors);
-
-        locationPrincipalAxis = pcs.getRow(0);
+//
+////        for (int i = 0; i < serumCount; i++) {
+////            for (int j = 0; j < mdsDimension; j++) {
+////                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
+////                locationMean[j] += locations[i][j];
+////            }
+////        }
+////        for (int j = 0; j < mdsDimension; j++) {
+////            locationMean[j] /= serumCount;
+////        }
+////
+////        for (int i = 0; i < serumCount; i++) {
+////            for (int j = 0; j < mdsDimension; j++) {
+////                locations[i][j] -= locationMean[j];
+////            }
+////        }
+//
+//        RealMatrix data = MatrixUtils.createRealMatrix(locations);
+//        // compute the covariance matrix
+//        RealMatrix covMatrix = null;
+//
+//        if ( data.getColumnDimension() > 1) {
+//
+//            // compute covariance matrix if we have more than 1 attribute
+//            Covariance c = new Covariance(data);
+//            covMatrix = c.getCovarianceMatrix();
+//
+//        } else {
+//
+//            // if we only have one attribute calculate the variance instead
+//            covMatrix = MatrixUtils.createRealMatrix(1,1);
+//            covMatrix.setEntry(0, 0, StatUtils.variance(data.getColumn(0)));
+//
+//        }
+//
+//        // get the eigenvalues and eigenvectors of the covariance matrixE
+//        EigenDecomposition eDecomp = new EigenDecompositionImpl(covMatrix,0.0);
+//
+//        // set the eigenVectors matrix
+//        // the columns of the eigenVectors matrix are the eigenVectors of
+//        // the covariance matrix
+//        RealMatrix eigenVectors = eDecomp.getV();
+//
+//        // set the eigenValues vector
+////        RealVector eigenValues = new ArrayRealVector(eDecomp.getRealEigenvalues());
+//
+//        //transform the data
+//        RealMatrix pcs = data.multiply(eigenVectors);
+//
+//        locationPrincipalAxis = pcs.getRow(0);
+        
         statsKnown = true;
     }
-
-    private final Statistic pcStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "PC";
-        }
-
-        public int getDimension() {
-            return mdsDimension;
-        }
-
-        public double getStatisticValue(int dim) {
-            if (!statsKnown) {
-                calculateStats();
-            }
-            return locationPrincipalAxis[dim];
-        }
-
-    };
-
-    private final Statistic pcXStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "PCx";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            if (!statsKnown) {
-                calculateStats();
-            }
-            return locationPrincipalAxis[0];
-        }
-
-    };
-
-    private final Statistic pcYStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "PCy";
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int dim) {
-            if (!statsKnown) {
-                calculateStats();
-            }
-            return locationPrincipalAxis[1];
-        }
-
-    };
 
     private final Statistic meanStatistic = new Statistic.Abstract() {
 
@@ -592,6 +539,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         public static final String MDS_PRECISION = "mdsPrecision";
 
         public static final String LOG_2_TRANSFORM = "log2Transform";
+        public static final String TITRATION_THRESHOLD = "titrationThreshold";
 
         public String getParserName() {
             return ANTIGENIC_TRAIT_LIKELIHOOD;
@@ -614,6 +562,12 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 log2Transform = xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
+            double threshold = 0.0;
+            if (xo.hasAttribute(TITRATION_THRESHOLD)) {
+                threshold = xo.getDoubleAttribute(TITRATION_THRESHOLD);
+            }
+
+
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -635,7 +589,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform, threshold);
         }
 
         //************************************************************************
@@ -655,6 +609,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
+                AttributeRule.newDoubleRule(TITRATION_THRESHOLD, true, "Titration threshold below which the measurement is not valid"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "An optional set of serum locations", true),
@@ -757,6 +712,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     // a set of vectors for each virus giving serum indices for which assay data is available
     private final int[][] measuredSerumIndices;
 
+    private final double titrationThreshold;
 
     private boolean likelihoodKnown = false;
     private double logLikelihood;

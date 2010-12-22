@@ -72,6 +72,8 @@ public class TimeSlicer {
     public static final String SLICE_MODE = "sliceMode";
     public static final String ROOT = "root";
     public static final String TIPS = "tips";
+    public static final String CONTOURS = "contours";
+    public static final String POINTS = "points";
     public static final String MRSD = "mrsd";
     public static final String HELP = "help";
     public static final String NOISE = "noise";
@@ -176,10 +178,11 @@ public class TimeSlicer {
     private Element rootElement;
     private Element documentElement;
     private Element contourFolderElement;
+    private Element pointsFolderElement;
     private Element nodeFolderElement;
     private StringBuffer tabOutput = new StringBuffer();
 
-    public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, OutputFormat outputFormat, double[] hpdValues, String sdrFile) {
+    public void output(String outFileName, boolean summaryOnly, final boolean summarizeRoot, final boolean summarizeTips, boolean contours, boolean points, OutputFormat outputFormat, double[] hpdValues, String sdrFile) {
 
         resultsStream = System.out;
 
@@ -234,7 +237,7 @@ public class TimeSlicer {
                         .addContent(new Element("displayName").addContent("HPD")));
 
                 Element nodeSchema = new Element("Schema");
-                nodeSchema.setAttribute("id", "Node_Schema");
+                nodeSchema.setAttribute("id", "Point_Schema");
                 nodeSchema.addContent(new Element("SimpleField")
                         .setAttribute("name", "Name")
                         .setAttribute("type", "string")
@@ -252,18 +255,29 @@ public class TimeSlicer {
                         .setAttribute("type", "double")
                         .addContent(new Element("displayName").addContent("Height")));
 
-                contourFolderElement = new Element("Folder");
-                Element contourFolderNameElement = new Element("name");
-                contourFolderNameElement.addContent("surface HPD regions");
-                //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
-                contourFolderElement.addContent(contourFolderNameElement);
+                if (contours) {
+                    contourFolderElement = new Element("Folder");
+                    Element contourFolderNameElement = new Element("name");
+                    contourFolderNameElement.addContent("surface HPD regions");
+                    //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
+                    contourFolderElement.addContent(contourFolderNameElement);
+                }
 
-                nodeFolderElement = new Element("Folder");
-                Element nodeFolderNameElement = new Element("name");
-                nodeFolderNameElement.addContent("nodes");
-                //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
-                nodeFolderElement.addContent(nodeFolderNameElement);
+                if (points) {
+                    pointsFolderElement = new Element("Folder");
+                    Element pointsFolderNameElement = new Element("name");
+                    pointsFolderNameElement.addContent("points");
+                    //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
+                    pointsFolderElement.addContent(pointsFolderNameElement);
+                }
 
+                if (sliceMode == TimeSlicer.SliceMode.NODES) {
+                    nodeFolderElement = new Element("Folder");
+                    Element nodeFolderNameElement = new Element("name");
+                    nodeFolderNameElement.addContent("nodes");
+                    //rootElement.setAttribute("xmlns","http://earth.google.com/kml/2.2");
+                    nodeFolderElement.addContent(nodeFolderNameElement);
+                }
                 Element documentNameElement = new Element("name");
                 String documentName = outFileName;
                 if (documentName == null)
@@ -276,8 +290,13 @@ public class TimeSlicer {
                 documentElement.addContent(documentNameElement);
                 documentElement.addContent(hpdSchema);
                 documentElement.addContent(nodeSchema);
-                documentElement.addContent(contourFolderElement);
-                if (sliceMode == SliceMode.NODES) {
+                if (contourFolderElement != null) {
+                    documentElement.addContent(contourFolderElement);
+                }
+                if (pointsFolderElement != null) {
+                    documentElement.addContent(pointsFolderElement);
+                }
+                if (nodeFolderElement != null) {
                     documentElement.addContent(nodeFolderElement);
                 }
 
@@ -287,7 +306,7 @@ public class TimeSlicer {
 
             if (sliceHeights == null) {
                 for (double hpdValue : hpdValues) {
-                    summarizeSlice(0, Double.NaN, outputFormat, hpdValue);
+                    summarizeSlice(0, Double.NaN, contours, points, outputFormat, hpdValue);
                 }
             } else {
                 if (outputFormat == OutputFormat.TAB) {
@@ -299,20 +318,20 @@ public class TimeSlicer {
                 }
                 for (int i = 0; i < sliceHeights.length; i++) {
                     for (double hpdValue : hpdValues) {
-                        summarizeSlice(i, sliceHeights[i], outputFormat, hpdValue);
+                        summarizeSlice(i, sliceHeights[i], contours, points, outputFormat, hpdValue);
                     }
                 }
             }
 
             if (summarizeRoot) {
                 for (double hpdValue : hpdValues) {
-                    summarizeRoot(outputFormat, hpdValue);
+                    summarizeRoot(contours, points, outputFormat, hpdValue);
                 }
             }
 
             if (summarizeTips) {
                 for (double hpdValue : hpdValues) {
-                    summarizeTips(outputFormat, hpdValue);
+                    summarizeTips(contours, points, outputFormat, hpdValue);
                 }
             }
 
@@ -504,11 +523,27 @@ public class TimeSlicer {
             element.setAttribute("dim", Integer.toString(j + 1));
     }
 
-    private void summarizeRoot(OutputFormat outputFormat, double hpdValue){
+    private void summarizeRoot(boolean contours, boolean points, OutputFormat outputFormat, double hpdValue){
 
         if (sliceProgressReport) {
             progressStream.print("summarizing root" + "\t");
             progressStream.print("hpd " + (hpdValue * 100) + "\t");
+        }
+
+        Element contourElement = null;
+        Element pointsElement = null;
+        if (contours) {
+            contourElement = new Element("Folder");
+            Element name =  new Element("name");
+            name.addContent("root_hpd" + (hpdValue * 100));
+            contourElement.addContent(name);
+        }
+
+        if (points) {
+            pointsElement = new Element("Folder");
+            Element name =  new Element("name");
+            name.addContent("root_points");
+            pointsElement.addContent(name);
         }
 
         for (int traitIndex = 0; traitIndex < rootValues.size(); traitIndex++) {
@@ -529,9 +564,11 @@ public class TimeSlicer {
 
                         int count = thisTrait.size();
                         double[][] y = new double[dim][count];
+                        double[] h = new double[count];
                         for (int i = 0; i < count; i++) {
                             Trait trait = thisTrait.get(i);
                             double[] value = trait.getValue();
+                            h[i] = trait.getHeight();
                             for (int j = 0; j < dim; j++) {
                                 y[j][i] = value[j];
                             }
@@ -542,28 +579,59 @@ public class TimeSlicer {
                             nodeFolderElement.addContent(nodeSliceElement);
                         }
 
-                        String name = "root_hpd" + hpdValue;
+                        if (contourElement != null) {
+                            String name = "root_hpd" + (hpdValue * 100);
+                            generateContours(name, contourElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
+                        }
 
-                        generateContours(name, contourFolderElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
+                        if (pointsElement != null) {
+                            String name = "root_points";
+                            generatePoints(name, pointsElement, y, 0, 0, h) ;
+                        }
 
                     }
                 }
 
             }
-
         }
+
+        if (contourFolderElement != null) {
+            contourFolderElement.addContent(contourElement);
+        }
+
+        if (pointsFolderElement != null) {
+            pointsFolderElement.addContent(pointsElement);
+        }
+
         if (sliceProgressReport) {
             progressStream.print("\r");
         }
 
     }
 
-    private void summarizeTips(OutputFormat outputFormat, double hpdValue){
+    private void summarizeTips(boolean contours, boolean points, OutputFormat outputFormat, double hpdValue){
 
         if (sliceProgressReport) {
             progressStream.print("summarizing tips" + "\t");
             progressStream.print("hpd " + (hpdValue * 100) + "\t");
         }
+
+        Element contourElement = null;
+        Element pointsElement = null;
+        if (contours) {
+            contourElement = new Element("Folder");
+            Element name =  new Element("name");
+            name.addContent("tips_hpd" + (hpdValue * 100));
+            contourElement.addContent(name);
+        }
+
+        if (points) {
+            pointsElement = new Element("Folder");
+            Element name =  new Element("name");
+            name.addContent("tips_points");
+            pointsElement.addContent(name);
+        }
+
         for (int traitIndex = 0; traitIndex < tipValues.size(); traitIndex++) {
 
             List<List<Trait>> thisTrait = tipValues.get(traitIndex);
@@ -584,17 +652,27 @@ public class TimeSlicer {
 
                             int count = thisTrait.size();
                             double[][] y = new double[dim][count];
+                            double[] h = new double[count];
+
                             for (int i = 0; i < count; i++) {
                                 Trait trait = thisTip.get(i);
+                                h[i] = trait.getHeight();
                                 double[] value = trait.getValue();
                                 for (int j = 0; j < dim; j++) {
                                     y[j][i] = value[j];
                                 }
                             }
 
-                            String name = tipNames.get(tipIndex) + "_hpd";
 
-                            generateContours(name, contourFolderElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
+                            if (contourElement != null) {
+                                String name = tipNames.get(tipIndex) + "_hpd";
+                                generateContours(name, contourElement, null, y, -1, Double.NaN, Double.NaN, hpdValue);
+                            }
+
+                            if (pointsElement != null) {
+                                String name = tipNames.get(tipIndex) + "_points";
+                                generatePoints(name, pointsElement, y, 0, 0, h) ;
+                            }
 
                         }
                     }
@@ -604,13 +682,88 @@ public class TimeSlicer {
             }
 
         }
+
+        if (contourFolderElement != null) {
+            contourFolderElement.addContent(contourElement);
+        }
+
+        if (pointsFolderElement != null) {
+            pointsFolderElement.addContent(pointsElement);
+        }
+
         if (sliceProgressReport) {
             progressStream.print("\r");
         }
 
     }
 
-    private void summarizeSliceTrait(Element sliceElement, int slice, List<Trait> thisTrait, int traitIndex, double sliceValue,
+    private void summarizeSlice(int slice, double sliceValue, boolean contours, boolean points, OutputFormat outputFormat, double hpdValue) {
+
+        //if (outputFormat == OutputFormat.TAB)
+        //    throw new RuntimeException("Only XML/KML output is implemented");
+
+        Element contourElement = null;
+        Element pointsElement = null;
+
+        if (outputFormat == OutputFormat.XML) {
+            if (contours) {
+                contourElement = new Element(SLICE_ELEMENT);
+                contourElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
+            }
+        } else if (outputFormat == OutputFormat.KML) {
+            if (contours) {
+                contourElement = new Element("Folder");
+                Element name =  new Element("name");
+                name.addContent("slice" + Double.toString(sliceValue) + "_hpd" + (hpdValue * 100));
+                contourElement.addContent(name);
+            }
+
+            if (points) {
+                pointsElement = new Element("Folder");
+                Element name =  new Element("name");
+                name.addContent("slice" + Double.toString(sliceValue) + "_points");
+                pointsElement.addContent(name);
+            }
+        }
+
+        List<List<Trait>> thisSlice = values.get(slice);
+        int traitCount = thisSlice.size();
+
+        for (int traitIndex = 0; traitIndex < traitCount; traitIndex++) {
+
+//            if (outputFormat == OutputFormat.KML) {
+//                summarizeSliceTrait(folder, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+//                        outputFormat,
+//                        hpdValue);
+//
+//            } else {
+            summarizeSliceTrait(contourElement, pointsElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
+                    outputFormat,
+                    hpdValue);
+
+//            }
+        }
+
+        if (outputFormat == OutputFormat.KML) {
+            if (contourFolderElement != null) {
+                contourFolderElement.addContent(contourElement);
+            }
+
+            if (pointsFolderElement != null) {
+                pointsFolderElement.addContent(pointsElement);
+            }
+        } else if (outputFormat == OutputFormat.XML && contourElement != null) {
+            if (contourElement != null) {
+                rootElement.addContent(contourElement);
+            }
+
+            if (pointsElement != null) {
+                rootElement.addContent(pointsElement);
+            }
+        }
+    }
+
+    private void summarizeSliceTrait(Element contourElement, Element pointsElement, int slice, List<Trait> thisTrait, int traitIndex, double sliceValue,
                                      OutputFormat outputFormat,
                                      double hpdValue) {
 
@@ -698,9 +851,10 @@ public class TimeSlicer {
 
             if (isBivariate) {
 
-                if(sliceMode == SliceMode.NODES) {
+                Element nodeSliceElement = null;
 
-                    Element nodeSliceElement = generateNodeSliceElement(sliceValue, y, slice);
+                if(sliceMode == SliceMode.NODES) {
+                    nodeSliceElement = generateNodeSliceElement(sliceValue, y, slice);
                     nodeFolderElement.addContent(nodeSliceElement);
 
                     if (useStyles) {
@@ -710,19 +864,83 @@ public class TimeSlicer {
                     }
                 }
 
-
                 double date = mostRecentSamplingDate - sliceValue;
-                String name = "" + date + "_hpd" + hpdValue;
 
-                generateContours(name, sliceElement, traitElement, y, slice, date, sliceValue, hpdValue);
+                if (pointsElement != null) {
+                    String name = "" + date + "_points";
+                    generatePointsElement(name, pointsElement, y, date, sliceValue);
+                }
 
+                if (contourElement != null) {
+                    String name = "" + date + "_hpd" + hpdValue;
+                    generateContours(name, contourElement, traitElement, y, slice, date, sliceValue, hpdValue);
+                }
 
             }
             if (outputFormat == OutputFormat.XML)
-                sliceElement.addContent(traitElement);
+                contourElement.addContent(traitElement);
         } // else skip
         if (sliceProgressReport) {
             progressStream.print("\r");
+        }
+    }
+
+    private void generatePointsElement(String name, Element pointsFolderElement, double[][] y, double date, double height) {
+        Element pointsElement = new Element("Folder");
+        Element nameElement = new Element("name");
+        nameElement.addContent(name);
+        pointsElement.addContent(nameElement);
+
+        for (int a = 0; a < y[0].length; a++)  {
+            Element placemarkElement = new Element("Placemark");
+
+            if (sliceCount > 1) {
+                Element timeSpan = new Element("TimeSpan");
+                Element begin = new Element("begin");
+
+                if (!ancient) {
+                    calendar.set(Calendar.YEAR, (int) Math.floor(date));
+                    calendar.set(Calendar.DAY_OF_YEAR, (int) (365 * (date - Math.floor(date))));
+
+                    begin.addContent(dateFormat.format(calendar.getTime()));
+                } else {
+                    begin.addContent(Integer.toString((int)Math.round(date)));
+                }
+                timeSpan.addContent(begin);
+                placemarkElement.addContent(timeSpan);
+            }
+
+            placemarkElement.addContent(generatePointData(name, height));
+
+            Element pointElement = new Element("Point");
+            Element coordinates = new Element("coordinates");
+            coordinates.addContent(y[1][a]+","+y[0][a]+",0");
+            pointElement.addContent(coordinates);
+            placemarkElement.addContent(pointElement);
+
+            pointsElement.addContent(placemarkElement);
+        }
+
+        pointsFolderElement.addContent(pointsElement);
+    }
+
+    private void generatePoints(String name, Element pointsFolderElement, double[][] y, double date, double height, double[] heights) {
+        for (int a = 0; a < y[0].length; a++)  {
+            Element placemarkElement = new Element("Placemark");
+
+            if (heights == null) {
+                placemarkElement.addContent(generatePointData(name, height));
+            } else {
+                placemarkElement.addContent(generatePointData(name, heights[a]));
+            }
+
+            Element pointElement = new Element("Point");
+            Element coordinates = new Element("coordinates");
+            coordinates.addContent(y[1][a]+","+y[0][a]+",0");
+            pointElement.addContent(coordinates);
+            placemarkElement.addContent(pointElement);
+
+            pointsFolderElement.addContent(placemarkElement);
         }
     }
 
@@ -798,59 +1016,6 @@ public class TimeSlicer {
             }
         }
         return numberOfPointsInPolygon;
-    }
-
-    private void summarizeSlice(int slice, double sliceValue, OutputFormat outputFormat, double hpdValue) {
-
-        //if (outputFormat == OutputFormat.TAB)
-        //    throw new RuntimeException("Only XML/KML output is implemented");
-
-        Element sliceElement = new Element("Folder");
-
-        if (outputFormat == OutputFormat.XML) {
-            sliceElement = new Element(SLICE_ELEMENT);
-            sliceElement.setAttribute(SLICE_VALUE, Double.toString(sliceValue));
-        }
-
-        List<List<Trait>> thisSlice = values.get(slice);
-        int traitCount = thisSlice.size();
-
-//        Element folder =  new Element("Folder");
-//        if (outputFormat == OutputFormat.KML) {
-//            Element name =  new Element("name");
-//            name.addContent("sliceValue");
-//            folder.addContent(name);
-//        }
-
-        if (outputFormat == OutputFormat.KML) {
-            Element name =  new Element("name");
-            name.addContent("height" + Double.toString(sliceValue) + "_hpd" + (hpdValue * 100));
-            sliceElement.addContent(name);
-        }
-
-        for (int traitIndex = 0; traitIndex < traitCount; traitIndex++) {
-
-//            if (outputFormat == OutputFormat.KML) {
-//                summarizeSliceTrait(folder, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
-//                        outputFormat,
-//                        hpdValue);
-//
-//            } else {
-            summarizeSliceTrait(sliceElement, slice, thisSlice.get(traitIndex), traitIndex, sliceValue,
-                    outputFormat,
-                    hpdValue);
-
-//            }
-        }
-
-        if (outputFormat == OutputFormat.KML) {
-            contourFolderElement.addContent(sliceElement);
-        }
-
-
-        if (outputFormat == OutputFormat.XML) {
-            rootElement.addContent(sliceElement);
-        }
     }
 
     private void constructPolygonStyleElement(Element styleElement, double sliceValue) {
@@ -1000,7 +1165,7 @@ public class TimeSlicer {
         String name;
         if (sliceInteger == -1){
             date = Double.NaN;
-            name = ROOT_ELEMENT+"_"+date;
+            name = ROOT_ELEMENT;
         } else {
             date = mostRecentSamplingDate - sliceValue;
             name = "nodeSlice_"+sliceInteger+"_"+date;
@@ -1037,7 +1202,7 @@ public class TimeSlicer {
                 placemarkElement.addContent(timeSpan);
             }
 
-            placemarkElement.addContent(generateNodeData(name, date, sliceValue));
+            placemarkElement.addContent(generatePointData(name, sliceValue));
 
             if (useStyles) {
                 Element style = new Element("styleUrl");
@@ -1084,10 +1249,11 @@ public class TimeSlicer {
         return data;
     }
 
-    private Element generateNodeData(String name, double date, double height) {
+    private Element generatePointData(String name, double height) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
-        schemaData.setAttribute("schemaUrl", "#Node_Schema");
+        schemaData.setAttribute("schemaUrl", "#Point_Schema");
+        double date = mostRecentSamplingDate - height;
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
@@ -1202,6 +1368,16 @@ public class TimeSlicer {
                 isMultivariate = true;
                 array = (Object[]) obj;
             }
+            this.height = 0.0;
+        }
+
+        Trait(Object obj, double height) {
+            this.obj = obj;
+            if (obj instanceof Object[]) {
+                isMultivariate = true;
+                array = (Object[]) obj;
+            }
+            this.height = height;
         }
 
         public boolean isMultivariate() {
@@ -1233,6 +1409,10 @@ public class TimeSlicer {
             return result;
         }
 
+        public double getHeight() {
+            return height;
+        }
+
         public void multiplyBy(double factor) {
             if (!isMultivariate) {
                 obj = ((Double) obj * factor);
@@ -1246,6 +1426,7 @@ public class TimeSlicer {
         private Object obj;
         private Object[] array;
         private boolean isMultivariate = false;
+        private double height;
 
         public String toString() {
             if (!isMultivariate)
@@ -1506,7 +1687,7 @@ public class TimeSlicer {
                             System.err.println("Trait '" + traits[j] + "' not found for tip.");
                             System.exit(-1);
                         }
-                        thisTip.get(j).add(new Trait(tmpTrait));
+                        thisTip.get(j).add(new Trait(tmpTrait, treeTime.getNodeHeight(node)));
 
                     }
                 }
@@ -1546,7 +1727,7 @@ public class TimeSlicer {
                             System.err.println("Trait '" + traits[j] + "' not found on root node.");
                             System.exit(-1);
                         }
-                        Trait trait = new Trait(tmpTrait);
+                        Trait trait = new Trait(tmpTrait, treeTime.getNodeHeight(node));
                         thisRootTrait.add(trait);
 
                     }
@@ -2088,6 +2269,8 @@ public class TimeSlicer {
         double mrsd = 0;
         boolean summarizeRoot = false;
         boolean summarizeTips = false;
+        boolean contours = true;
+        boolean points = false;
         double[] hpdValues = { 0.80 };
         String outputFileSDR = null;
         boolean getSDR = false;
@@ -2115,8 +2298,10 @@ public class TimeSlicer {
                         new Arguments.StringOption(SLICE_FILE_TIMES, "Times_file", "specifies a file with a slice Times-list, is overwritten by command-line specification of slice times [default=none]"),
                         new Arguments.IntegerOption(SLICE_COUNT, "the number of time slices to use [default=0]"),
                         new Arguments.StringOption(SLICE_MODE, "Slice_mode", "specifies how to perform the slicing [default=branches]"),
-                        new Arguments.Option(ROOT, "include a summary for the root [default=off]"),
-                        new Arguments.Option(TIPS, "include a summary for the tips [default=off]"),
+                        new Arguments.StringOption(ROOT, falseTrue, false, "include a summary for the root [default=off]"),
+                        new Arguments.StringOption(TIPS, falseTrue, false, "include a summary for the tips [default=off]"),
+                        new Arguments.StringOption(CONTOURS, falseTrue, true, "include contours in summary [default=true]"),
+                        new Arguments.StringOption(POINTS, falseTrue, false, "include all points for the summary [default=off]"),
                         new Arguments.RealOption(START_TIME, "the time of the earliest slice [default=0]"),
                         new Arguments.RealOption(MRSD, "specifies the most recent sampling data in fractional years to rescale time [default=0]"),
                         new Arguments.Option(HELP, "option to print this message"),
@@ -2283,12 +2468,24 @@ public class TimeSlicer {
                 }
             }
 
-            if (arguments.hasOption(ROOT)) {
+            String optionString = arguments.getStringOption(ROOT);
+            if (optionString != null && optionString.compareToIgnoreCase("true") == 0) {
                 summarizeRoot = true;
             }
 
-            if (arguments.hasOption(TIPS)) {
+            optionString = arguments.getStringOption(TIPS);
+            if (optionString != null && optionString.compareToIgnoreCase("true") == 0) {
                 summarizeTips = true;
+            }
+
+            optionString = arguments.getStringOption(CONTOURS);
+            if (optionString != null && optionString.compareToIgnoreCase("false") == 0) {
+                contours = false;
+            }
+
+            optionString = arguments.getStringOption(POINTS);
+            if (optionString != null && optionString.compareToIgnoreCase("true") == 0) {
+                points = true;
             }
 
             //sorting sliceHeights
@@ -2384,7 +2581,7 @@ public class TimeSlicer {
         TimeSlicer timeSlicer = new TimeSlicer(inputFileName, burnin, skipEvery, traitNames, sliceHeights, impute,
                 trueNoise, mrsd, contourMode, sliceMode,summarizeRoot, summarizeTips, normalize, getSDR, progress,
                 branchNormalization, set, backboneTaxa);
-        timeSlicer.output(outputFileName, summaryOnly, summarizeRoot, summarizeTips, outputFormat, hpdValues, outputFileSDR);
+        timeSlicer.output(outputFileName, summaryOnly, summarizeRoot, summarizeTips, contours, points, outputFormat, hpdValues, outputFileSDR);
 
         System.exit(0);
     }

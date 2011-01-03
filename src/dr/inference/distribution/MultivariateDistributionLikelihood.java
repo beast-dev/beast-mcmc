@@ -273,7 +273,9 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                         Parameter data = (Parameter) cxo.getChild(j);
                         likelihood.addData(data);
                         if (data.getDimension() != mean.getDimension())
-                            throw new XMLParseException("dim(" + data.getStatisticName() + ") != dim(" + mean.getStatisticName() + ") in " + xo.getName() + "element");
+                            throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + data.getDimension()
+                                    + " is not equal to dim(" + mean.getStatisticName() + ") = " + mean.getDimension()
+                                    + " in " + xo.getName() + "element");
                     } else {
                         throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }

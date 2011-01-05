@@ -30,6 +30,8 @@ import dr.app.util.Arguments;
 import dr.util.HeapSort;
 
 import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.StringTokenizer;
 
 import org.jdom.Element;
@@ -89,11 +91,11 @@ public class RateIndicatorBF {
         int numberOfRateIndicators = getNumberOfEntries(inputFileName, firstRateIndicator, rateIndicatorString);
 
         if (numberOfStates > 0) {
-           statesCounter = numberOfStates;
-           progressStream.println("number of states provided = "+statesCounter);
+            statesCounter = numberOfStates;
+            progressStream.println("number of states provided = "+statesCounter);
         } else {
-           statesCounter = locations.length;
-           progressStream.println("number of states in coordinates file = "+statesCounter);
+            statesCounter = locations.length;
+            progressStream.println("number of states in coordinates file = "+statesCounter);
         }
 
         this.bayesFactor = bayesFactor;
@@ -106,12 +108,12 @@ public class RateIndicatorBF {
 
 
         if (numberOfRateIndicators != ((statesCounter*(statesCounter-1.0))/2.0)) {
-              if (numberOfRateIndicators == (statesCounter*(statesCounter-1.0))) {
+            if (numberOfRateIndicators == (statesCounter*(statesCounter-1.0))) {
                 progressStream.println("K*(K-1) rateIndicators, with K = "+ statesCounter+". So, nonreversible matrix!");
                 nonreversible = true;
-              } else {
-              System.err.println("the number of rateIndicators ("+numberOfRateIndicators+") does not match (K*(K-1)/2) states ("+((statesCounter*(statesCounter-1.0))/2.0)+"; with K = "+statesCounter+").");
-              }
+            } else {
+                System.err.println("the number of rateIndicators ("+numberOfRateIndicators+") does not match (K*(K-1)/2) states ("+((statesCounter*(statesCounter-1.0))/2.0)+"; with K = "+statesCounter+").");
+            }
         }
 
         // so now we know the dimension of the rateIndicator array
@@ -170,6 +172,7 @@ public class RateIndicatorBF {
         }
 
         double[] supportedIndicators = new double[indicatorCounter];
+        supportedBFs = new double[indicatorCounter];
         supportedLocations = new String[indicatorCounter][2];
         supportedLatitudes = new double[indicatorCounter][2];
         supportedLongitudes = new double[indicatorCounter][2];
@@ -180,28 +183,22 @@ public class RateIndicatorBF {
         for (int o = 0; o < expectedRateIndicators.length; o++){
             //we order rate indicators in decreasing order
             double indicator = expectedRateIndicators[indices[expectedRateIndicators.length - o - 1]];
-            if (!bayesFactor) {
-                if (indicator > cutoff) {
-                    supportedIndicators[fillCount] = indicator;
-                    supportedLocations[fillCount][0] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLocations[fillCount][1] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    supportedLatitudes[fillCount][0] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLatitudes[fillCount][1] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    supportedLongitudes[fillCount][0] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLongitudes[fillCount][1] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    fillCount ++;
-                }
-            }  else {
-                if (indicator > getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible)) {
-                    supportedIndicators[fillCount] = indicator;
-                    supportedLocations[fillCount][0] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLocations[fillCount][1] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    supportedLatitudes[fillCount][0] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLatitudes[fillCount][1] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    supportedLongitudes[fillCount][0] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
-                    supportedLongitudes[fillCount][1] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
-                    fillCount ++;
-                }
+            double BF = getBayesFactor(indicator, meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, 0);
+            if (BF == Double.POSITIVE_INFINITY) {
+                BF = getBayesFactor(indicator, meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount);
+            }
+
+            double threshold = (bayesFactor ? getBayesFactorCutOff(cutoff, meanPoissonPrior, offsetPoissonPrior, statesCounter, nonreversible) : cutoff);
+            if (indicator > threshold) {
+                supportedIndicators[fillCount] = indicator;
+                supportedBFs[fillCount] = BF;
+                supportedLocations[fillCount][0] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][0];
+                supportedLocations[fillCount][1] =  locationNames[indices[(expectedRateIndicators.length - o - 1)]][1];
+                supportedLatitudes[fillCount][0] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
+                supportedLatitudes[fillCount][1] =  latitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
+                supportedLongitudes[fillCount][0] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][0];
+                supportedLongitudes[fillCount][1] =  longitudes[indices[(expectedRateIndicators.length - o - 1)]][1];
+                fillCount ++;
             }
         }
         return supportedIndicators;
@@ -215,38 +212,38 @@ public class RateIndicatorBF {
 
             secondCounter ++;
 
-                for (int j = secondCounter; j < statesCounter; j++) {
+            for (int j = secondCounter; j < statesCounter; j++) {
 
-                    if (locations != null) {
-                        locationNames[elementCounter][0] = locations[i][0];
-                        longitudes[elementCounter][0] = Double.parseDouble(locations[i][2]);
-                        latitudes[elementCounter][0] = Double.parseDouble(locations[i][1]);
-                        locationNames[elementCounter][1] = locations[j][0];
-                        longitudes[elementCounter][1] = Double.parseDouble(locations[j][2]);
-                        latitudes[elementCounter][1] = Double.parseDouble(locations[j][1]);
-                    } else {
-                        locationNames[elementCounter][0] = "location"+(i+1);
-                        longitudes[elementCounter][0] = Double.NaN;
-                        latitudes[elementCounter][0] = Double.NaN;
-                        locationNames[elementCounter][1] = "location"+(j+1);
-                        longitudes[elementCounter][1] = Double.NaN;
-                        latitudes[elementCounter][1] = Double.NaN;
-                    }
-
-                    elementCounter ++;
+                if (locations != null) {
+                    locationNames[elementCounter][0] = locations[i][0];
+                    longitudes[elementCounter][0] = Double.parseDouble(locations[i][2]);
+                    latitudes[elementCounter][0] = Double.parseDouble(locations[i][1]);
+                    locationNames[elementCounter][1] = locations[j][0];
+                    longitudes[elementCounter][1] = Double.parseDouble(locations[j][2]);
+                    latitudes[elementCounter][1] = Double.parseDouble(locations[j][1]);
+                } else {
+                    locationNames[elementCounter][0] = "location"+(i+1);
+                    longitudes[elementCounter][0] = Double.NaN;
+                    latitudes[elementCounter][0] = Double.NaN;
+                    locationNames[elementCounter][1] = "location"+(j+1);
+                    longitudes[elementCounter][1] = Double.NaN;
+                    latitudes[elementCounter][1] = Double.NaN;
                 }
+
+                elementCounter ++;
+            }
         }
         // for nonreversible models, we keep on filling the arrays
         if (nonreversible) {
-               for (int k = 0; k < elementCounter; k++) {
+            for (int k = 0; k < elementCounter; k++) {
 
-                   locationNames[elementCounter + k][0] = locationNames[k][1];
-                   longitudes[elementCounter + k][0] = longitudes[k][1];
-                   latitudes[elementCounter + k][0] = latitudes[k][1];
-                   locationNames[elementCounter + k][1] = locationNames[k][0];
-                   longitudes[elementCounter + k][1] = longitudes[k][0];
-                   latitudes[elementCounter + k][1] = latitudes[k][0];
-               }
+                locationNames[elementCounter + k][0] = locationNames[k][1];
+                longitudes[elementCounter + k][0] = longitudes[k][1];
+                latitudes[elementCounter + k][0] = latitudes[k][1];
+                locationNames[elementCounter + k][1] = locationNames[k][0];
+                longitudes[elementCounter + k][1] = longitudes[k][0];
+                latitudes[elementCounter + k][1] = latitudes[k][0];
+            }
         }
 
     }
@@ -273,12 +270,42 @@ public class RateIndicatorBF {
         documentNameElement.addContent(KMLoutputFile);
         documentElement.addContent(documentNameElement);
 
+        List<Element> schema = new ArrayList<Element>();
+        Element locationSchema = new Element("Schema");
+        locationSchema.setAttribute("id", "Locations_Schema");
+        locationSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Name")
+                .setAttribute("type", "string"));
+        locationSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "In")
+                .setAttribute("type", "number"));
+        locationSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Out")
+                .setAttribute("type", "number"));
+        locationSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Total")
+                .setAttribute("type", "number"));
+        Element ratesSchema = new Element("Schema");
+        ratesSchema.setAttribute("id", "Rates_Schema");
+        ratesSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Name")
+                .setAttribute("type", "string"));
+        ratesSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "BF")
+                .setAttribute("type", "double"));
+        ratesSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Indicator")
+                .setAttribute("type", "double"));
+        schema.add(ratesSchema);
+
+        documentElement.addContent(schema);
+
         Element folderNameElement = new Element("name");
         String cutoffString;
         if (bayesFactor) {
-           cutoffString = "bayes factor";
+            cutoffString = "bayes factor";
         } else {
-           cutoffString = "indicator";
+            cutoffString = "indicator";
         }
         folderNameElement.addContent("discrete rates with "+cutoffString+" larger than "+cutoff);
         folderElement.addContent(folderNameElement);
@@ -297,9 +324,21 @@ public class RateIndicatorBF {
         }
 
         //add locations
+        Element folder1Element = new Element("Folder");
+        Element folderName1Element = new Element("name");
+        folderName1Element.addContent("Rates");
+        folder1Element.addContent(folderName1Element);
+        addLocations(folder1Element);
+        documentElement.addContent(folder1Element);
+
+        for (int p = 0; p < supportedRateIndicators.length; p++){
+            addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedLocations[p][0], supportedLocations[p][1], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, folder1Element);
+        }
+
+        //add locations
         Element folder2Element = new Element("Folder");
         Element folderName2Element = new Element("name");
-        folderName2Element.addContent("locations");
+        folderName2Element.addContent("Locations");
         folder2Element.addContent(folderName2Element);
         addLocations(folder2Element);
         documentElement.addContent(folder2Element);
@@ -314,16 +353,40 @@ public class RateIndicatorBF {
             System.err.println("IO Exception encountered: "+e.getMessage());
             System.exit(-1);
         }
-        
+
     }
 
-    private void  addLocations(Element folderElement){
+    private void addLocations(Element folderElement){
+
 
         for (int i = 0; i < locations.length ; i++) {
             Element placemarkElement  = new Element("Placemark");
             Element placemarkNameElement = new Element("name");
             placemarkNameElement.addContent(locations[i][0]);
             placemarkElement.addContent(placemarkNameElement);
+
+            int inCount = 0;
+            int outCount = 0;
+
+            for (int j = 0; j < supportedRateIndicators.length; j++) {
+                if (supportedLocations[j][0].equals(locations[i][0])) {
+                    inCount ++;
+                }
+                if (supportedLocations[j][1].equals(locations[i][0])) {
+                    outCount ++;
+                }
+            }
+            int totalCount = inCount + outCount;
+
+            Element data = new Element("ExtendedData");
+            Element schemaData = new Element("SchemaData");
+            schemaData.setAttribute("schemaUrl", "#Location_Schema");
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(locations[i][0]));
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "In").addContent(Integer.toString(inCount)));
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "Out").addContent(Integer.toString(outCount)));
+            schemaData.addContent(new Element("SimpleData").setAttribute("name", "Total").addContent(Integer.toString(totalCount)));
+            data.addContent(schemaData);
+            placemarkElement.addContent(data);
 
             Element pointElement  = new Element("Point");
             Element altitude  = new Element("altitudeMode");
@@ -341,7 +404,7 @@ public class RateIndicatorBF {
     private void  addRateAndStyle(double rateIndicator, double startLongitude, double startLatitude, double endLongitude, double endLatitude, int number, double branchWidthConstant, double branchWidthMultiplier, double[] minAndMaxRateIndicator, double altitudeFactor, double divider, String lowerLinkColor, String upperLinkColor, Element folderElement, Element documentElement) {
 
         String opacity = "FF";
-        
+
         double distance = (3958*Math.PI*Math.sqrt((endLatitude-startLatitude)*(endLatitude-startLatitude)+Math.cos(endLatitude/57.29578)*Math.cos(startLatitude/57.29578)*(endLongitude-startLongitude)*(endLongitude-startLongitude))/180);
 
         double maxAltitude = distance*altitudeFactor;
@@ -349,27 +412,27 @@ public class RateIndicatorBF {
         double longitudeDifference = endLongitude - startLongitude;
 
 
-           boolean longitudeBreak = false; //if we go through the 180
-           if (endLongitude*startLongitude < 0) {
+        boolean longitudeBreak = false; //if we go through the 180
+        if (endLongitude*startLongitude < 0) {
 
-               double trialDistance = 0;
+            double trialDistance = 0;
 
-               if (endLongitude < 0) {
-                   trialDistance += (endLongitude + 180);
-                   trialDistance += (180 - startLongitude);
-                   //System.out.println(parentLongitude+"\t"+longitude+"\t"+trialDistance+"\t"+longitudeDifference);
-               } else {
-                   trialDistance += (startLongitude + 180);
-                   trialDistance += (180 - endLongitude);
-                   //System.out.println(parentLongitude+"\t"+longitude+"\t"+trialDistance+"\t"+longitudeDifference);
-                }
+            if (endLongitude < 0) {
+                trialDistance += (endLongitude + 180);
+                trialDistance += (180 - startLongitude);
+                //System.out.println(parentLongitude+"\t"+longitude+"\t"+trialDistance+"\t"+longitudeDifference);
+            } else {
+                trialDistance += (startLongitude + 180);
+                trialDistance += (180 - endLongitude);
+                //System.out.println(parentLongitude+"\t"+longitude+"\t"+trialDistance+"\t"+longitudeDifference);
+            }
 
-               if (trialDistance < Math.abs(longitudeDifference)) {
-                   longitudeDifference = trialDistance;
-                   longitudeBreak = true;
-                   //System.out.println("BREAK!"+longitudeDifference);
-               }
-           }
+            if (trialDistance < Math.abs(longitudeDifference)) {
+                longitudeDifference = trialDistance;
+                longitudeBreak = true;
+                //System.out.println("BREAK!"+longitudeDifference);
+            }
+        }
 
         Element styleElement = new Element("Style");
         styleElement.setAttribute("id","rate"+number+"_style");
@@ -392,7 +455,8 @@ public class RateIndicatorBF {
             Element placemarkElement  = new Element("Placemark");
 
             Element placemarkNameElement = new Element("name");
-            placemarkNameElement.addContent("rate"+number+"_part"+(a+1));
+            String name = "rate"+number+"_part"+(a+1);
+            placemarkNameElement.addContent(name);
             placemarkElement.addContent(placemarkNameElement);
 
             Element placemarkStyleElement = new Element("styleUrl");
@@ -410,62 +474,62 @@ public class RateIndicatorBF {
             StringBuffer coordinatesStartBuffer = new StringBuffer();
             StringBuffer coordinatesEndBuffer = new StringBuffer();
 
-                        if (longitudeBreak) {
+            if (longitudeBreak) {
 
-                            if (startLongitude > 0) {
-                                currentLongitude1 = startLongitude+a*(longitudeDifference/divider);
+                if (startLongitude > 0) {
+                    currentLongitude1 = startLongitude+a*(longitudeDifference/divider);
 
-                                if (currentLongitude1 < 180) {
-                                   coordinatesStartBuffer.append(currentLongitude1+",");
-                                   //System.out.println("1 currentLongitude1 < 180\t"+currentLongitude1+"\t"+longitude);
+                    if (currentLongitude1 < 180) {
+                        coordinatesStartBuffer.append(currentLongitude1+",");
+                        //System.out.println("1 currentLongitude1 < 180\t"+currentLongitude1+"\t"+longitude);
 
-                                } else {
-                                   coordinatesStartBuffer.append((-180-(180-currentLongitude1))+",");
-                                   //System.out.println("2 currentLongitude1 > 180\t"+currentLongitude1+"\t"+(-180-(180-currentLongitude1))+"\t"+longitude);
-                                }
-                            } else {
-                                currentLongitude1 = startLongitude-a*(longitudeDifference/divider);
+                    } else {
+                        coordinatesStartBuffer.append((-180-(180-currentLongitude1))+",");
+                        //System.out.println("2 currentLongitude1 > 180\t"+currentLongitude1+"\t"+(-180-(180-currentLongitude1))+"\t"+longitude);
+                    }
+                } else {
+                    currentLongitude1 = startLongitude-a*(longitudeDifference/divider);
 
-                                if (currentLongitude1 > (-180)) {
-                                    coordinatesStartBuffer.append(currentLongitude1+",");
-                                    //System.out.println("currentLongitude1 > -180\t"+currentLongitude1+"\t"+longitude);
-                                 } else {
-                                    coordinatesStartBuffer.append((180+(currentLongitude1+180))+",");
-                                    //System.out.println("currentLongitude1 > -180\t"+(180+(currentLongitude1+180))+"\t"+longitude);
-                                 }
-                            }
+                    if (currentLongitude1 > (-180)) {
+                        coordinatesStartBuffer.append(currentLongitude1+",");
+                        //System.out.println("currentLongitude1 > -180\t"+currentLongitude1+"\t"+longitude);
+                    } else {
+                        coordinatesStartBuffer.append((180+(currentLongitude1+180))+",");
+                        //System.out.println("currentLongitude1 > -180\t"+(180+(currentLongitude1+180))+"\t"+longitude);
+                    }
+                }
 
-                        } else {
-                            coordinatesStartBuffer.append((startLongitude+a*(longitudeDifference/divider))+",");
-                        }
+            } else {
+                coordinatesStartBuffer.append((startLongitude+a*(longitudeDifference/divider))+",");
+            }
 
-                        coordinatesStartBuffer.append((startLatitude+a*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0))))));
+            coordinatesStartBuffer.append((startLatitude+a*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - a*(1.0/(divider/2.0))))));
 
-                        if (longitudeBreak) {
+            if (longitudeBreak) {
 
-                            if (startLongitude > 0) {
-                                currentLongitude2 = startLongitude+(a+1)*(longitudeDifference/divider);
+                if (startLongitude > 0) {
+                    currentLongitude2 = startLongitude+(a+1)*(longitudeDifference/divider);
 
-                                if (currentLongitude2 < 180) {
-                                    coordinatesEndBuffer.append((currentLongitude2)+",");
-                                } else {
-                                    coordinatesEndBuffer.append((-180-(180-currentLongitude2))+",");
-                                }
-                            } else {
-                                currentLongitude2 = startLongitude-(a+1)*(longitudeDifference/divider);
+                    if (currentLongitude2 < 180) {
+                        coordinatesEndBuffer.append((currentLongitude2)+",");
+                    } else {
+                        coordinatesEndBuffer.append((-180-(180-currentLongitude2))+",");
+                    }
+                } else {
+                    currentLongitude2 = startLongitude-(a+1)*(longitudeDifference/divider);
 
-                                if (currentLongitude2 > (-180)) {
-                                    coordinatesEndBuffer.append(currentLongitude2+",");
-                                } else {
-                                    coordinatesEndBuffer.append((180+(currentLongitude2+180))+",");
-                                }
-                            }
+                    if (currentLongitude2 > (-180)) {
+                        coordinatesEndBuffer.append(currentLongitude2+",");
+                    } else {
+                        coordinatesEndBuffer.append((180+(currentLongitude2+180))+",");
+                    }
+                }
 
-                        } else {
-                            coordinatesEndBuffer.append((startLongitude+(a+1)*(longitudeDifference/divider))+",");
-                        }
+            } else {
+                coordinatesEndBuffer.append((startLongitude+(a+1)*(longitudeDifference/divider))+",");
+            }
 
-                        coordinatesEndBuffer.append((startLatitude+(a+1)*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0))))));
+            coordinatesEndBuffer.append((startLatitude+(a+1)*(latitudeDifference/divider))+","+(maxAltitude*Math.sin(Math.acos(1 - (a+1)*(1.0/(divider/2.0))))));
 
             coordinatesElement.addContent(coordinatesStartBuffer.toString());
             coordinatesElement.addContent(" ");
@@ -474,6 +538,42 @@ public class RateIndicatorBF {
             placemarkElement.addContent(lineStringElement);
             folderElement.addContent(placemarkElement);
         }
+    }
+
+    private void  addRateWithData(double rateIndicator, double BF, String fromLocation, String toLocation, double startLongitude, double startLatitude, double endLongitude, double endLatitude, int number, Element folderElement) {
+
+
+
+        Element placemarkElement  = new Element("Placemark");
+
+        Element placemarkNameElement = new Element("name");
+        String name = "rate"+number;
+        placemarkNameElement.addContent(name);
+        placemarkElement.addContent(placemarkNameElement);
+
+        Element data = new Element("ExtendedData");
+        Element schemaData = new Element("SchemaData");
+        schemaData.setAttribute("schemaUrl", "#Rate_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "From").addContent(fromLocation));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "To").addContent(toLocation));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "BF").addContent(Double.toString(BF)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Indicator").addContent(Double.toString(rateIndicator)));
+        data.addContent(schemaData);
+        placemarkElement.addContent(data);
+
+        Element lineStringElement = new Element("LineString");
+        Element altitudeMode = new Element("altitudeMode");
+        altitudeMode.addContent("clampToGround");
+        lineStringElement.addContent(altitudeMode);
+        Element tessellate = new Element("tessellate");
+        tessellate.addContent("1");
+        lineStringElement.addContent(tessellate);
+        Element coordinatesElement = new Element("coordinates");
+        coordinatesElement.addContent(startLongitude + "," + startLatitude + " " + endLongitude + "," + endLatitude);
+        lineStringElement.addContent(coordinatesElement);
+        placemarkElement.addContent(lineStringElement);
+        folderElement.addContent(placemarkElement);
     }
 
     public void outputTextFile(String outFileName) {
@@ -501,13 +601,13 @@ public class RateIndicatorBF {
             for (int o = 0; o < supportedRateIndicators.length; o++){
 
                 outFile.print(
-                    "I="+supportedRateIndicators[o]+"\tBF");
+                        "I="+supportedRateIndicators[o]+"\tBF");
 
                 double BF = getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, 0);
                 if (BF == Double.POSITIVE_INFINITY) {
-                     outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount));
+                    outFile.print(">"+getBayesFactor(supportedRateIndicators[o], meanPoissonPrior, statesCounter, offsetPoissonPrior, nonreversible, generationCount));
                 }  else {
-                     outFile.print("="+BF);
+                    outFile.print("="+BF);
                 }
 
                 StringBuilder sb = new StringBuilder();
@@ -534,7 +634,7 @@ public class RateIndicatorBF {
             }
             outFile.close();
         } catch(IOException io) {
-           System.err.print("Error writing to file: " + outFileName);
+            System.err.print("Error writing to file: " + outFileName);
         }
 
     }
@@ -549,6 +649,7 @@ public class RateIndicatorBF {
     private double[][] supportedLongitudes;  // contains start and end longitudes for transitions
     private double[][] supportedLatitudes;  // contains start and end latitudes for transitions
     private int statesCounter;
+    private double[] supportedBFs;
     private double[] supportedRateIndicators;
     private boolean bayesFactor;
     private double cutoff;
@@ -600,25 +701,25 @@ public class RateIndicatorBF {
     }
 
     private static double[] meanCol(double[][] x)    {
-         double[] returnArray = new double[x[0].length];
+        double[] returnArray = new double[x[0].length];
 
-         for (int i = 0; i < x[0].length; i++) {
+        for (int i = 0; i < x[0].length; i++) {
 
-             double m = 0.0;
-             int len = 0;
+            double m = 0.0;
+            int len = 0;
 
-             for (int j = 0; j < x.length; j++) {
+            for (int j = 0; j < x.length; j++) {
 
                 m += x[j][i];
                 len += 1;
 
-             }
+            }
 
-             returnArray[i] = m / (double) len;
+            returnArray[i] = m / (double) len;
 
-         }
-         return returnArray;
-     }
+        }
+        return returnArray;
+    }
 
     private static void fillRateIndicatorArray(String RateIndicatorLog, double[][] rateIndicators, int burnin, int firstRateIndicator, int numberOfRateIndicators){
 
@@ -700,13 +801,13 @@ public class RateIndicatorBF {
             rateIndicator = tokens.nextToken();
             //find first rateIndicator..
             while (startCounter < firstRateIndicator) {
-                  rateIndicator = tokens.nextToken();
-                  startCounter ++;
+                rateIndicator = tokens.nextToken();
+                startCounter ++;
             }
             // and continue counting from thereon
             while(rateIndicator.contains(rateIndicatorString)) {
-                  rateIndicator = tokens.nextToken();
-                  numberOfRateIndicators ++;
+                rateIndicator = tokens.nextToken();
+                numberOfRateIndicators ++;
             }
 
         } catch (IOException e) {
@@ -833,24 +934,24 @@ public class RateIndicatorBF {
     }
 
     private static void readLocationsCoordinates(String coordinatesFileString, String[][] locationsAndCoordinates){
-            try {
-                BufferedReader reader2 = new BufferedReader(new FileReader(coordinatesFileString));
-                String current2 = reader2.readLine();
-                int counter2 = 0;
-                while (current2 != null && !reader2.equals("")) {
-                    StringTokenizer tokens2 = new StringTokenizer(current2);
-                    for (int i = 0; i < locationsAndCoordinates[0].length; i++) {
-                        locationsAndCoordinates[counter2][i] = tokens2.nextToken();
-                        progressStream.print(locationsAndCoordinates[counter2][i]+"\t");
-                    }
-                    progressStream.print("\r");
-                    counter2 ++;
-                    current2 = reader2.readLine();
+        try {
+            BufferedReader reader2 = new BufferedReader(new FileReader(coordinatesFileString));
+            String current2 = reader2.readLine();
+            int counter2 = 0;
+            while (current2 != null && !reader2.equals("")) {
+                StringTokenizer tokens2 = new StringTokenizer(current2);
+                for (int i = 0; i < locationsAndCoordinates[0].length; i++) {
+                    locationsAndCoordinates[counter2][i] = tokens2.nextToken();
+                    progressStream.print(locationsAndCoordinates[counter2][i]+"\t");
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
-                return;
+                progressStream.print("\r");
+                counter2 ++;
+                current2 = reader2.readLine();
             }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
     }
 
     public static void main(String[] args) throws IOException {
@@ -907,7 +1008,7 @@ public class RateIndicatorBF {
                         new Arguments.RealOption(BWM,"specifies the connection (rate)  width multiplier [default=7.0]"),
                         new Arguments.RealOption(ALTITUDE,"specifies the altitudefactor for the connections (rate) [default=500]"),
                         //new Arguments.RealOption(WIDTH,"width for KML rates [default=3.0]"),
-                 });
+                });
 
         try {
             arguments.parseArguments(args);
@@ -947,7 +1048,7 @@ public class RateIndicatorBF {
             readLocationsCoordinates(locationsFileName,locations);
 
             if (numberOfStates == 0) {
-                numberOfStates = counts[0];    
+                numberOfStates = counts[0];
             }
 
         } else {
@@ -973,7 +1074,7 @@ public class RateIndicatorBF {
             meanPoissonPrior = arguments.getRealOption(PMEAN);
             progressStream.println("Poisson prior with mean "+meanPoissonPrior);
         }  else {
-           progressStream.println("Poisson prior with mean "+meanPoissonPrior+" (default)");
+            progressStream.println("Poisson prior with mean "+meanPoissonPrior+" (default)");
         }
 
         if (arguments.hasOption(POFFSET)) {

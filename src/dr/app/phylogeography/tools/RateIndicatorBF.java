@@ -319,20 +319,12 @@ public class RateIndicatorBF {
             System.err.println("No rate indicators above the specified cut-off!");
         }
 
-        for (int p = 0; p < supportedRateIndicators.length; p++){
-            addRateAndStyle(supportedRateIndicators[p], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, branchWidthConstant, branchWidthMultiplier, minMax, altitudeFactor, divider, lowerLinkColor, upperLinkColor, folderElement, documentElement);
-        }
-
-        //add locations
-        Element folder1Element = new Element("Folder");
-        Element folderName1Element = new Element("name");
-        folderName1Element.addContent("Rates");
-        folder1Element.addContent(folderName1Element);
-        addLocations(folder1Element);
-        documentElement.addContent(folder1Element);
+//        for (int p = 0; p < supportedRateIndicators.length; p++){
+//            addRateAndStyle(supportedRateIndicators[p], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, branchWidthConstant, branchWidthMultiplier, minMax, altitudeFactor, divider, lowerLinkColor, upperLinkColor, folderElement, documentElement);
+//        }
 
         for (int p = 0; p < supportedRateIndicators.length; p++){
-            addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedLocations[p][0], supportedLocations[p][1], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, folder1Element);
+            addRateWithData(supportedRateIndicators[p], supportedBFs[p], supportedLocations[p][0], supportedLocations[p][1], supportedLongitudes[p][0], supportedLatitudes[p][0], supportedLongitudes[p][1], supportedLatitudes[p][1], p+1, folderElement);
         }
 
         //add locations
@@ -767,7 +759,9 @@ public class RateIndicatorBF {
                     rateIndicators[rowCounter][columnCounter] = rateIndicator;
                     columnCounter ++;
                     rateIndicatorCounter ++;
-                    rateIndicator = Double.parseDouble(tokens.nextToken());
+                    if (rateIndicatorCounter < numberOfRateIndicators) {
+                        rateIndicator = Double.parseDouble(tokens.nextToken());
+                    }
 
                 }
 
@@ -979,7 +973,7 @@ public class RateIndicatorBF {
         boolean bayesFactor = true; // if false, we will use an indicator cut off value
 
         boolean rateSummary = false;
-        String rateIndicatorString	= "rates";
+        String rateIndicatorString	= "indicators";
         String actualRateString = "productStatistic";
         String relativeRateString = "rates";
         //this is for rate (dist/time) summaries

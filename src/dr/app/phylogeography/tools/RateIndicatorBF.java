@@ -979,7 +979,7 @@ public class RateIndicatorBF {
         boolean bayesFactor = true; // if false, we will use an indicator cut off value
 
         boolean rateSummary = false;
-        String rateIndicatorString	= "indicators";
+        String rateIndicatorString	= "rates";
         String actualRateString = "productStatistic";
         String relativeRateString = "rates";
         //this is for rate (dist/time) summaries

@@ -15,6 +15,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
     public static final String PRECISION = "precision";
     public static final String OFFSET = "offset";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
+    public static final String STDEV_IN_REAL_SPACE = "stdevInRealSpace";
 
     public String getParserName() {
         return LOGNORMAL_DISTRIBUTION_MODEL;
@@ -26,6 +27,11 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
         final double offset = xo.getAttribute(OFFSET, 0.0);
 
         final boolean meanInRealSpace = xo.getAttribute(MEAN_IN_REAL_SPACE, false);
+        final boolean stdevInRealSpace = xo.getAttribute(STDEV_IN_REAL_SPACE, false);
+        if(!meanInRealSpace && stdevInRealSpace) {
+            throw new RuntimeException("Cannot parameterise Lognormal model with M and Stdev");
+        }
+
 
         {
             final XMLObject cxo = xo.getChild(MEAN);
@@ -45,8 +51,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                 } else {
                     precParam = new Parameter.Default(cxo.getDoubleChild(0));
                 }
-
-                return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace, false);
+                return new LogNormalDistributionModel(meanParam, precParam, offset, meanInRealSpace,stdevInRealSpace, false);
             }
         }
         {
@@ -58,7 +63,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
                 stdevParam = new Parameter.Default(cxo.getDoubleChild(0));
             }
 
-            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace);
+            return new LogNormalDistributionModel(meanParam, stdevParam, offset, meanInRealSpace, stdevInRealSpace);
         }
     }
 
@@ -72,6 +77,7 @@ public class LogNormalDistributionModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(MEAN_IN_REAL_SPACE, true),
+            AttributeRule.newBooleanRule(STDEV_IN_REAL_SPACE, true),
             AttributeRule.newDoubleRule(OFFSET, true),
             new ElementRule(MEAN,
                     new XMLSyntaxRule[]{

@@ -29,6 +29,7 @@ import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inference.loggers.Logger;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.NormalDistribution;
@@ -45,16 +46,18 @@ import org.w3c.dom.Element;
 public class LogNormalDistributionModel extends AbstractModel implements ParametricDistributionModel {
 
     boolean isMeanInRealSpace;
+    boolean isStdevInRealSpace;
     boolean usesStDev = true;
 
     /**
      * Constructor.
      */
-    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace) {
+    public LogNormalDistributionModel(Parameter meanParameter, Parameter stdevParameter, double offset, boolean meanInRealSpace, boolean stdevInRealSpace) {
 
         super(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 
         isMeanInRealSpace = meanInRealSpace;
+        isStdevInRealSpace = stdevInRealSpace;
 
         this.meanParameter = meanParameter;
         this.scaleParameter = stdevParameter;
@@ -70,11 +73,12 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     }
 
     public LogNormalDistributionModel(Parameter meanParameter, Parameter scaleParameter,
-                                      double offset, boolean meanInRealSpace, boolean usesStDev) {
+                                      double offset, boolean meanInRealSpace, boolean stdevInRealSpace, boolean usesStDev) {
 
         super(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
 
         isMeanInRealSpace = meanInRealSpace;
+        isStdevInRealSpace = stdevInRealSpace;
         this.usesStDev = usesStDev;
 
         this.meanParameter = meanParameter;
@@ -92,6 +96,16 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
 
 
     public final double getS() {
+        //System.out.println(isStdevInRealSpace+"\t" + isMeanInRealSpace + "\t" + Math.sqrt(Math.log(1 + scaleParameter.getParameterValue(0)/Math.pow(meanParameter.getParameterValue(0), 2))) + "\t" + scaleParameter.getParameterValue(0));
+        if(isStdevInRealSpace) {
+
+            if(isMeanInRealSpace) {
+                return Math.sqrt(Math.log(1 + scaleParameter.getParameterValue(0)/Math.pow(meanParameter.getParameterValue(0), 2)));
+            }
+            else {
+                throw new RuntimeException("S can not be computed with M and stdev");
+            }
+        }
         return scaleParameter.getParameterValue(0);
     }
 
@@ -103,7 +117,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         return scaleParameter;
     }
 
-
+    /* StDev in this class is actually incorrectly named the S parameter */
     private double getStDev() {
         return usesStDev ? getS() : Math.sqrt(1.0 / getS());
     }
@@ -149,6 +163,7 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
         return NormalDistribution.pdf(Math.log(x - offset), getM(), getStDev()) / (x - offset);
     }
 
+
     public double logPdf(double x) {
         if (x - offset <= 0.0) return Double.NEGATIVE_INFINITY;
         return NormalDistribution.logPdf(Math.log(x - offset), getM(), getStDev()) - Math.log(x - offset);
@@ -171,12 +186,13 @@ public class LogNormalDistributionModel extends AbstractModel implements Paramet
     }
 
     /**
-     * @return the variance of the log normal distribution.
+     * @return the variance of the log normal distribution.  Not really the variance of the lognormal but the S^2
+     * parameter
      */
     public double variance() {
         if (usesStDev) {
-            double stdev = scaleParameter.getParameterValue(0);
-            return stdev * stdev;
+            //double stdev = getStDev();//scaleParameter.getParameterValue(0);
+            return getStDev() * getStDev();
         }
         return 1.0 / scaleParameter.getParameterValue(0);
     }

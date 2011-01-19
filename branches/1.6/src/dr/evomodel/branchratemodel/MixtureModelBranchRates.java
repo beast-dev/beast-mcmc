@@ -95,7 +95,7 @@ public class MixtureModelBranchRates extends AbstractBranchRateModel {
         rateCategoryQuantilesParameter.addBounds(bound);
 
         
-        Parameter.DefaultBounds bound2 = new Parameter.DefaultBounds(models.length, 0.0, 1);
+        Parameter.DefaultBounds bound2 = new Parameter.DefaultBounds(models.length - 1, 0.0, 1);
         distributionIndexParameter.addBounds(bound2);
         distributionIndexParameter.setParameterValue(0, 0);
 

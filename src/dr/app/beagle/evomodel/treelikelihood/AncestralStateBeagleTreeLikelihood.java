@@ -52,12 +52,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
               partialsRestrictions);
 
-        if (useAmbiguities) {
-            Logger.getLogger("dr.app.beagle.evomodel").info("Ancestral reconstruction using ambiguities is currently "+
-            "not support with BEAGLE");
-            System.exit(-1);
-        }
-
         this.dataType = dataType;
 //        this.tag = tag;
 
@@ -438,6 +432,16 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
+
+                    if (!dataType.isUnknownState(thisState)) { // Not completely unknown
+                        boolean[] stateSet = dataType.getStateSet(thisState);
+
+                        for (int k = 0; k < stateCount; k++) {
+                            if (!stateSet[k]) {
+                                conditionalProbabilities[k] = 0.0;
+                            }
+                        }
+                    }
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
                 }
 

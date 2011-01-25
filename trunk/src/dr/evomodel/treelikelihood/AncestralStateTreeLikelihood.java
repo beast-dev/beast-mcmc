@@ -13,6 +13,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.math.MathUtils;
 
+import java.util.logging.Logger;
+
 /**
  * @author Marc A. Suchard
  */
@@ -74,6 +76,13 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
                 return formattedState(getStatesForNode(tree,node), dataType);
             }
         });
+
+        if (useAmbiguities) {
+            Logger.getLogger("dr.evomodel.treelikelihood").info("Ancestral reconstruction using ambiguities is currently "+
+            "not support without BEAGLE");
+            System.exit(-1);
+        }
+
     }
 
     public AncestralStateTreeLikelihood(PatternList patternList, TreeModel treeModel,

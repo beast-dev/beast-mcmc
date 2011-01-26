@@ -1,5 +1,10 @@
 package dr.app.treespace;
 
+import dr.evolution.io.*;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.AbstractCladeImportanceDistribution;
+
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,6 +17,7 @@ import java.util.Set;
  */
 public class TreeSpaceDocument {
     private final List<InputFile> inputFiles = new ArrayList<InputFile>();
+    private final CladeSystem cladeSystem = new CladeSystem();
 
     public void addTreeFile(InputFile inputFile) {
         inputFiles.add(inputFile);
@@ -22,14 +28,9 @@ public class TreeSpaceDocument {
         return inputFiles;
     }
 
-//    public void addLayerBuilder(Builder builder) {
-//        layerBuilders.add(builder);
-//        fireSettingsChanged();
-//    }
-//
-//    public List<Builder> getLayerBuilders() {
-//        return layerBuilders;
-//    }
+    public CladeSystem getCladeSystem() {
+        return cladeSystem;
+    }
 
     public void fireDataChanged() {
         for (Listener listener : listeners) {

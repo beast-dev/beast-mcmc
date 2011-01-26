@@ -76,6 +76,10 @@ public class InputFile implements MultiLineTableCellContent {
         return treeCount;
     }
 
+    public void setTreeCount(final int treeCount) {
+        this.treeCount = treeCount;
+    }
+
     public int getBurnin() {
         return burnin;
     }
@@ -114,14 +118,14 @@ public class InputFile implements MultiLineTableCellContent {
             sb.append("<small>Tip count: ").append(tree.getExternalNodes().size());
             if (mostRecentSampleDate != 0.0) {
                 if (type == Type.POSTERIOR_TREES) {
-                    sb.append(" | Tree count: ").append(treeCount);
+                    sb.append(" | Tree count: ").append(treeCount < 0 ? " counting..." : treeCount);
                 } else {
                     sb.append(" | Root TMRCA: ").append(nf.format(mostRecentSampleDate - tree.getHeight(tree.getRootNode())));
                 }
                 sb.append(" | Most recent tip: ").append(mostRecentSampleDate);
             } else {
                 if (type == Type.POSTERIOR_TREES) {
-                    sb.append(" | Tree count: ").append(treeCount);
+                    sb.append(" | Tree count: ").append(treeCount < 0 ? " counting..." : treeCount);
                 } else {
                     sb.append(" | Root height: ").append(nf.format(tree.getHeight(tree.getRootNode())));
                 }
@@ -148,7 +152,7 @@ public class InputFile implements MultiLineTableCellContent {
 
     private final Type type;
     private final File file;
-    private final int treeCount;
+    private int treeCount;
     private int burnin = 0;
 
     private RootedTree tree = null;

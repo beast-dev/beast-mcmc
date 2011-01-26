@@ -5,6 +5,9 @@ import dr.app.gui.SelectAllActionResponder;
 import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.treespace.inputpanel.InputPanel;
 import dr.app.util.Utils;
+import dr.evolution.io.Importer;
+import dr.evolution.io.TreeImporter;
+import dr.evolution.tree.Tree;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
@@ -18,7 +21,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
-import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -32,11 +34,15 @@ public class TreeSpaceFrame extends DocumentFrame {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
     private final InputPanel inputPanel;
+    private final CladePanel cladePanel;
+    private final TreePanel treePanel;
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
 
     private final Icon gearIcon = IconUtils.getIcon(this.getClass(), "images/gear.png");
+
+    private CladeSystem cladeSystem = new CladeSystem();
 
     public TreeSpaceFrame(String title) {
         super();
@@ -55,6 +61,8 @@ public class TreeSpaceFrame extends DocumentFrame {
         getZoomWindowAction().setEnabled(false);
 
         inputPanel = new InputPanel(this, document, getImportAction());
+        cladePanel = new CladePanel(this, document);
+        treePanel = new TreePanel(this, document);
 
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent e) {
@@ -75,10 +83,9 @@ public class TreeSpaceFrame extends DocumentFrame {
 
     public void initializeComponents() {
 
-        final TimelinePanel timeLinePanel = new TimelinePanel(this, document);
-
         tabbedPane.addTab("Input", inputPanel);
-        tabbedPane.addTab("Timeline", timeLinePanel);
+        tabbedPane.addTab("Trees", treePanel);
+        tabbedPane.addTab("Clades", cladePanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
@@ -147,22 +154,22 @@ public class TreeSpaceFrame extends DocumentFrame {
 
 
     public boolean requestClose() {
-        if (isDirty()) {
-            int option = JOptionPane.showConfirmDialog(this,
-                    "You have made changes but have not generated\n" +
-                            "an output file. Do you wish to generate\n" +
-                            "before closing this window?",
-                    "Unused changes",
-                    JOptionPane.YES_NO_CANCEL_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-
-            if (option == JOptionPane.YES_OPTION) {
-                return !doGenerate();
-            } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
-                return false;
-            }
-            return true;
-        }
+//        if (isDirty()) {
+//            int option = JOptionPane.showConfirmDialog(this,
+//                    "You have made changes but have not generated\n" +
+//                            "an output file. Do you wish to generate\n" +
+//                            "before closing this window?",
+//                    "Unused changes",
+//                    JOptionPane.YES_NO_CANCEL_OPTION,
+//                    JOptionPane.WARNING_MESSAGE);
+//
+//            if (option == JOptionPane.YES_OPTION) {
+//                return !doGenerate();
+//            } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
+//                return false;
+//            }
+//            return true;
+//        }
         return true;
     }
 
@@ -242,6 +249,9 @@ public class TreeSpaceFrame extends DocumentFrame {
             while (line != null) {
                 if (line.startsWith("tree STATE")) {
                     treeCount++;
+                    if (treeCount > 1) {
+                        break;
+                    }
                 }
                 line = bufferedReader.readLine();
             }
@@ -249,9 +259,14 @@ public class TreeSpaceFrame extends DocumentFrame {
             // is a NEXUS file
             RootedTree tree = importFirstTree(file);
             if (tree != null) {
-                if (treeCount > 0) {
-                    InputFile inputFile = new InputFile(file, tree, treeCount);
+                if (treeCount > 1) {
+                    InputFile inputFile = new InputFile(file, tree, -1);
                     document.addTreeFile(inputFile);
+
+                    treeCount = processTrees(inputFile);
+                    inputFile.setTreeCount(treeCount);
+
+                    document.fireDataChanged();
                 } else {
                     InputFile inputFile = new InputFile(file, tree);
                     document.addTreeFile(inputFile);
@@ -277,6 +292,72 @@ public class TreeSpaceFrame extends DocumentFrame {
         return tree;
     }
 
+    private int processTrees(InputFile inputFile) throws IOException {
+
+        PrintStream progressStream = System.out;
+
+        int totalTrees = 10000;
+        int totalTreesUsed = 0;
+
+        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
+
+        int stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
+        CladeSystem cladeSystem = document.getCladeSystem();
+
+        FileReader fileReader = new FileReader(inputFile.getFile());
+        TreeImporter importer = new dr.evolution.io.NexusImporter(fileReader);
+        try {
+            totalTrees = 0;
+            while (importer.hasTree()) {
+                Tree tree = importer.importNextTree();
+
+                if (totalTrees >= inputFile.getBurnin()) {
+                    cladeSystem.add(tree, false);
+
+                    totalTreesUsed += 1;
+                }
+
+                if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                    progressStream.print("*");
+                    progressStream.flush();
+                }
+                totalTrees++;
+            }
+
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            return 0;
+        }
+        fileReader.close();
+        progressStream.println();
+        progressStream.println();
+
+        if (totalTrees < 1) {
+            System.err.println("No trees");
+            return 0;
+        }
+        if (totalTreesUsed <= 1) {
+            if (inputFile.getBurnin() > 0) {
+                System.err.println("No trees to use: burnin too high");
+                return 0;
+            }
+        }
+        cladeSystem.calculateCladeCredibilities(totalTreesUsed);
+
+        progressStream.println("Total trees read: " + totalTrees);
+        if (inputFile.getBurnin() > 0) {
+            progressStream.println("Ignoring first " + inputFile.getBurnin() + " trees.");
+        }
+
+        progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
+        progressStream.println();
+
+        return totalTreesUsed;
+    }
 
     public void setStatusMessage(String text) {
         statusLabel.setText(text);

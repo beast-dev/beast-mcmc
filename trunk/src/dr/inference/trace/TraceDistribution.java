@@ -233,17 +233,6 @@ public class TraceDistribution<T> {
         return values;
     }
 
-    public String[] getRangeAll() { // only use for integer and string
-        List<String> valuesList = new ArrayList<String>();
-        for (T value : values) {
-            if (!valuesList.contains(value.toString()))
-                valuesList.add(value.toString());
-        }
-        Collections.sort(valuesList);
-        return valuesList.toArray(new String[valuesList.size()]);
-    }
-
-
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
         public Map<T, Integer> valuesMap = new HashMap<T, Integer>();

@@ -98,7 +98,8 @@ public class FilterDialog {
             String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
             filterPanel = new FilterContinuousPanel(minMax, sel);
         } else {// integer and string
-            String[] all = td.getRangeAll();
+            List<String> allNames = td.credSet.getRange();
+            String[] all = allNames.toArray(new String[allNames.size()]);
             filterPanel = new FilterDiscretePanel(all, sel);
         }
 

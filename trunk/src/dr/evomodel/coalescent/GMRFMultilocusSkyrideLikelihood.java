@@ -6,6 +6,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,12 +106,21 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     // coalEvent[i] = k if i-th "w" interval ends with coalescent event in tree k
     int[] coalEvent;
 
+    // treesOfEndpoints[i][0] and treesOfEndpoints[i][1] tell us which trees induce the starting and ending points
+    // of the i-th coalescent interval
+    int[][] treesOfEndpoints;
+
+
     int index;
 
 
     protected void setupSufficientStatistics() {
 
         index = 0;
+
+
+        treesOfEndpoints = new int[getCorrectFieldLength()][2];
+
 
         if (countsOfLineages == null) { // Allocate once
             int N = 0;
@@ -155,6 +165,8 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         // Once we find the currentTree, we update corresponding nextIntervals entry
         // note that the next interval may have have same starting time as current interval
         nextIntervals[currentTree] = nextIntervals[currentTree] + 1;
+
+        treesOfEndpoints[0][0] = currentTree;
 
         while (numTreesFinished < numTrees) {
 
@@ -240,8 +252,34 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             index++;  //when the loop stops, index will have value equal to the total number of "w" intervals
         }
 
+
+        setUpTreesOfEndpoints();
+
         calculateSufficientStatistics();
     }
+
+
+
+    private void setUpTreesOfEndpoints(){
+        int ci = 1;
+        int teLength = getCorrectFieldLength();
+        int myIndex = 0;
+        while(coalEvent[myIndex]==-1){
+            myIndex++;
+        }
+        treesOfEndpoints[0][1] = coalEvent[myIndex];
+        while(ci < teLength){
+            treesOfEndpoints[ci][0] = coalEvent[myIndex];
+            myIndex++;
+            while(coalEvent[myIndex]==-1){
+                myIndex++;
+            }
+            treesOfEndpoints[ci][1] = coalEvent[myIndex];
+            ci++;
+        }
+
+    }
+
 
 
     private void calculateSufficientStatistics() {
@@ -267,20 +305,76 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         }
     }
 
+/*
     protected double getFieldScalar() {
         if (!rescaleByRootHeight) {
             return 1.0;
         }                                                                                     
         double rootHeight = 0;
         // Set rootHeight to greatest rootHeight among all trees.  Make sure this is what we want.
-        for(int i = 0; i < numTrees; i++){
-            double prospRootHeight = treeList.get(i).getNodeHeight(treeList.get(i).getRoot());
-            if(prospRootHeight > rootHeight){
-                rootHeight = prospRootHeight;
-            }
-        }
+        // for(int i = 0; i < numTrees; i++){
+         //   double prospRootHeight = treeList.get(i).getNodeHeight(treeList.get(i).getRoot());
+          //  if(prospRootHeight > rootHeight){
+          //      rootHeight = prospRootHeight;
+          //  }
+        // }
+
+          // for(int i = 0; i < numTrees; i++){
+          //     rootHeight = rootHeight + treeList.get(i).getNodeHeight(treeList.get(i).getRoot());
+          // }
+       // rootHeight = rootHeight/numTrees;
+
+
         return rootHeight;
     }    
+
+*/
+
+   protected double getScalingFactor(int intervalNum) {
+        if (!rescaleByRootHeight) {
+            return 1.0;
+        }
+        double scalingFactor;
+        scalingFactor = treeList.get(treesOfEndpoints[intervalNum][0]).getNodeHeight(treeList.get(treesOfEndpoints[intervalNum][0]).getRoot());
+        scalingFactor = scalingFactor + treeList.get(treesOfEndpoints[intervalNum][1]).getNodeHeight(treeList.get(treesOfEndpoints[intervalNum][1]).getRoot());
+        return scalingFactor/2;
+    }
+
+
+
+   protected void setupGMRFWeights() {
+
+        setupSufficientStatistics();
+
+		//Set up the weight Matrix
+		double[] offdiag = new double[fieldLength - 1];
+		double[] diag = new double[fieldLength];
+
+		//First set up the offdiagonal entries;
+
+		if (!timeAwareSmoothing) {
+			for (int i = 0; i < fieldLength - 1; i++) {
+				offdiag[i] = -1.0;
+			}
+
+
+		} else {
+			for (int i = 0; i < fieldLength - 1; i++) {            		
+                offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getScalingFactor(i);
+			}
+		}
+
+		//Then set up the diagonal entries;
+		for (int i = 1; i < fieldLength - 1; i++)
+			diag[i] = -(offdiag[i] + offdiag[i - 1]);
+
+		//Take care of the endpoints
+		diag[0] = -offdiag[0];
+		diag[fieldLength - 1] = -offdiag[fieldLength - 2];
+
+		weightMatrix = new SymmTridiagMatrix(diag, offdiag);
+	}
+
 
 //	protected void storeState() {
 //		super.storeState();

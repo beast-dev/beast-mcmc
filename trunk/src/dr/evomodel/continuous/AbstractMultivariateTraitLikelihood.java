@@ -221,7 +221,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                         updateNodeAndChildren(event.getNode());
                     }
                 } else {
-                    throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occuring in AbstractMultivariateTraitLikelihood");
+                    throw new RuntimeException("Unexpected TreeModel TreeChangedEvent occurring in AbstractMultivariateTraitLikelihood");
                 }
             } else if (object instanceof Parameter) {
                 // Ignoring
@@ -477,7 +477,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             MultivariateDiffusionModel diffusionModel = (MultivariateDiffusionModel) xo.getChild(MultivariateDiffusionModel.class);
             TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
 
-            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, true);
+            boolean cacheBranches = xo.getAttribute(CACHE_BRANCHES, false);
             boolean integrate = xo.getAttribute(INTEGRATE, false);
             boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);

@@ -389,8 +389,8 @@ public class OldDnDsPerSiteAnalysis {
                 }
 
                 OldDnDsPerSiteAnalysis analysis = new OldDnDsPerSiteAnalysis(
-                        Trace.arrayConvert(samples[COND_S]), Trace.arrayConvert(samples[UNCOND_S]),
-                        Trace.arrayConvert(samples[COND_N]), Trace.arrayConvert(samples[UNCOND_N]));
+                        Trace.multiDArrayConvert(samples[COND_S]), Trace.multiDArrayConvert(samples[UNCOND_S]),
+                        Trace.multiDArrayConvert(samples[COND_N]), Trace.multiDArrayConvert(samples[UNCOND_N]));
 
                 System.out.println(analysis.output());
                 //TODO: save to file

@@ -244,7 +244,7 @@ public class RawTracePanel extends JPanel implements Exportable {
                                 if (trace != null) {
                                     if (trace.getTraceType() == Double.class) {
                                         // todo System.arraycopy?
-                                        valueArrays[k] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
+                                        valueArrays[k] = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
                                         k++;
                                     }
                                 }
@@ -302,45 +302,45 @@ public class RawTracePanel extends JPanel implements Exportable {
                 if (trace != null) {
                     Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
                     if (trace.getTraceType() == Double.class) { // todo can be simplified
-                        double[] values = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
+                        double[] values = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
 
                         double[] burninValues = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            burninValues = Trace.arrayConvertToDouble((Double[]) tl.getBurninValues(traceIndex, tl.getStateCount()));
+                            burninValues = Trace.arrayConvertToDouble(tl.getBurninValues(traceIndex, tl.getBurninStateCount()));
                         }
 
                         traceChart.setYAxis(false, new HashMap<Integer, String>());
                         traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
                     } else if (trace.getTraceType() == Integer.class) {
-                        double[] values = Trace.arrayConvertToDouble((Integer[]) tl.getValues(traceIndex, tl.getStateCount()));
+                        double[] values = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
 
                         double[] burninValues = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            burninValues = Trace.arrayConvertToDouble((Integer[]) tl.getBurninValues(traceIndex, tl.getStateCount()));
+                            burninValues = Trace.arrayConvertToDouble(tl.getBurninValues(traceIndex, tl.getBurninStateCount()));
                         }
 
                         traceChart.setYAxis(true, new HashMap<Integer, String>());
                         traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
                     } else if (trace.getTraceType() == String.class) {
-                        String[] values = tl.getValues(traceIndex, tl.getStateCount());
+                        Object[] values = tl.getValues(traceIndex, tl.getStateCount());
 
                         double[] doubleData = new double[values.length];
                         for (int v = 0; v < values.length; v++) {
-                            doubleData[v] = td.credSet.getIndex(values[v]);
-                            categoryDataMap.put((int) doubleData[v], values[v]);
+                            doubleData[v] = td.credSet.getIndex(values[v].toString());
+                            categoryDataMap.put((int) doubleData[v], values[v].toString());
                         }
 
                         double[] doubleBurninData = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            String[] burninValues = tl.getBurninValues(traceIndex, tl.getStateCount());
+                            Object[] burninValues = tl.getBurninValues(traceIndex, tl.getBurninStateCount());
 
                             doubleBurninData = new double[burninValues.length];
                             categoryDataMap.clear();
                             for (int v = 0; v < burninValues.length; v++) {
-                                doubleBurninData[v] = td.credSet.getIndex(burninValues[v]);
-                                categoryDataMap.put((int) doubleBurninData[v], burninValues[v]);
+                                doubleBurninData[v] = td.credSet.getIndex(burninValues[v].toString());
+                                categoryDataMap.put((int) doubleBurninData[v], burninValues[v].toString());
                             }
                         }
 

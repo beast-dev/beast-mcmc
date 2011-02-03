@@ -85,7 +85,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
             traces.getValues(traceIndex, sample);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                    Trace.arrayConvert(sample),
+                    Trace.arrayConvertToDouble(sample),
                     traces.getTraceName(traceIndex), burnin,
                     harmonicOnly, bootstrapLength);
 

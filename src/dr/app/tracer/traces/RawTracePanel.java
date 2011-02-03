@@ -6,7 +6,10 @@ import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
-import javax.sound.sampled.*;
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.LineUnavailableException;
+import javax.sound.sampled.SourceDataLine;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -240,12 +243,8 @@ public class RawTracePanel extends JPanel implements Exportable {
                                 Trace trace = tl.getTrace(traceIndex);
                                 if (trace != null) {
                                     if (trace.getTraceType() == Double.class) {
-                                        Double values[] = new Double[tl.getStateCount()];
-                                        tl.getValues(traceIndex, values);
-                                        boolean[] selected = new boolean[tl.getStateCount()];
-                                        tl.getSelected(traceIndex, selected);
-
-                                        valueArrays[k] = Trace.arrayConvert(values, selected);
+                                        // todo System.arraycopy?
+                                        valueArrays[k] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
                                         k++;
                                     }
                                 }
@@ -301,50 +300,31 @@ public class RawTracePanel extends JPanel implements Exportable {
                 TraceDistribution td = tl.getDistributionStatistics(traceIndex);
 
                 if (trace != null) {
-                    boolean[] selectedBurnin = null;
                     Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                    if (trace.getTraceType() == Double.class) {
-                        Double values[] = new Double[tl.getStateCount()];
-                        tl.getValues(traceIndex, values);
-                        boolean[] selected = new boolean[tl.getStateCount()];
-                        tl.getSelected(traceIndex, selected);
+                    if (trace.getTraceType() == Double.class) { // todo can be simplified
+                        double[] values = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-                        Double[] burninValues = null;
+                        double[] burninValues = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            burninValues = new Double[tl.getBurninStateCount()];
-                            tl.getBurninValues(traceIndex, burninValues);
-                            selectedBurnin = new boolean[tl.getBurninStateCount()];
-                            tl.getBurningSelected(traceIndex, selectedBurnin);
+                            burninValues = Trace.arrayConvertToDouble((Double[]) tl.getBurninValues(traceIndex, tl.getStateCount()));
                         }
 
                         traceChart.setYAxis(false, new HashMap<Integer, String>());
-                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values, selected),
-                                Trace.arrayConvert(burninValues, selectedBurnin), paints[i]);
+                        traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
                     } else if (trace.getTraceType() == Integer.class) {
-                        Integer values[] = new Integer[tl.getStateCount()];
-                        tl.getValues(traceIndex, values);
-                        boolean[] selected = new boolean[tl.getStateCount()];
-                        tl.getSelected(traceIndex, selected);
+                        double[] values = Trace.arrayConvertToDouble((Integer[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-                        Integer[] burninValues = null;
+                        double[] burninValues = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            burninValues = new Integer[tl.getBurninStateCount()];
-                            tl.getBurninValues(traceIndex, burninValues);
-                            selectedBurnin = new boolean[tl.getBurninStateCount()];
-                            tl.getBurningSelected(traceIndex, selectedBurnin);
+                            burninValues = Trace.arrayConvertToDouble((Integer[]) tl.getBurninValues(traceIndex, tl.getStateCount()));
                         }
 
                         traceChart.setYAxis(true, new HashMap<Integer, String>());
-                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayIntToDouble(values, selected),
-                                Trace.arrayIntToDouble(burninValues, selectedBurnin), paints[i]);
+                        traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
 
                     } else if (trace.getTraceType() == String.class) {
-                        String initValues[] = new String[tl.getStateCount()];
-                        tl.getValues(traceIndex, initValues);
-                        boolean[] selected = new boolean[tl.getStateCount()];
-                        tl.getSelected(traceIndex, selected);
-                        String[] values = Trace.arrayConvert(initValues, selected);
+                        String[] values = tl.getValues(traceIndex, tl.getStateCount());
 
                         double[] doubleData = new double[values.length];
                         for (int v = 0; v < values.length; v++) {
@@ -354,11 +334,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 
                         double[] doubleBurninData = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            String[] initBurninValues = new String[tl.getBurninStateCount()];
-                            tl.getBurninValues(traceIndex, initBurninValues);
-                            selectedBurnin = new boolean[tl.getBurninStateCount()];
-                            tl.getBurningSelected(traceIndex, selectedBurnin);
-                            String[] burninValues = Trace.arrayConvert(initBurninValues, selectedBurnin);
+                            String[] burninValues = tl.getBurninValues(traceIndex, tl.getStateCount());
 
                             doubleBurninData = new double[burninValues.length];
                             categoryDataMap.clear();

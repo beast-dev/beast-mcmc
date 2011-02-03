@@ -224,7 +224,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             }
 
             if (col == 0) {
-                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
+                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType() && row == 6) {
                     return CRED_SET_ROW;
 //                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
 //                    return INCRED_SET_ROW;
@@ -240,35 +240,35 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
                 switch (row) {
                     case 0:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
                             return "n/a";
                         } else {
                             value = tc.getMean();
                         }
                         break;
                     case 1:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
                             return "n/a";
                         } else {
                             value = tc.getStdErrorOfMean();
                         }
                         break;
                     case 2:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
                             return "n/a";
                         } else {
                             value = tc.getVariance();
                         }
                         break;
                     case 3:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
                             return "n/a";
                         } else {
                             value = tc.getMedian();
                         }
                         break;
                     case 4:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
                             return "n/a";
                         } else {
                             return tc.credSet.getMode();
@@ -278,7 +278,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         value = tc.getGeometricMean();
                         break;
                     case 6:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
                             return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
                             return tc.credSet.printCredibleSet();
@@ -290,7 +290,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         value = tc.getESS();
                         break;
                     case 9:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
                             return "-";
                         } else {
                             return tc.credSet.printInCredibleSet();

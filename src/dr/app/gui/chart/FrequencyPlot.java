@@ -292,7 +292,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 	}
 
     protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType()) {
             super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.fillRect(g2, x1, y1, x2, y2);
@@ -300,7 +300,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
+        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType()) {
             super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.drawRect(g2, x1, y1, x2, y2);

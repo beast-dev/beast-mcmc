@@ -103,7 +103,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                     level = numberFormatter.formatToFieldWidth("<=0.95", fieldWidth);
                 }
             } else {
-                Object[] values = distribution.getValues();
+                Object[] values = traceList.getTrace(index).getValues(traceList.getStateCount(), traceList.getBurninStateCount(), 0, null);
                 double levelPosValue = 0.0;
                 double levelNegValue = 0.0;
                 int total = 0;

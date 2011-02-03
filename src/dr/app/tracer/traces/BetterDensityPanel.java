@@ -55,7 +55,7 @@ public class BetterDensityPanel extends DensityPanel {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        double values[] = Trace.arrayConvertToDouble((Number[]) tl.getValues(traceIndex, tl.getStateCount()));
+        double values[] = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
 
         Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 

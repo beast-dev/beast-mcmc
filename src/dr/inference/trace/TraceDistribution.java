@@ -55,6 +55,17 @@ public class TraceDistribution<T> {
         return traceType;
     }
 
+    public String getTraceTypeBrief() {
+        if (traceType == Double.class) {
+            return TraceFactory.TraceType.CONTINUOUS.getBrief();
+        } else if (traceType == Integer.class) {
+            return TraceFactory.TraceType.INTEGER.getBrief();
+        } else if (traceType == String.class) {
+            return TraceFactory.TraceType.CATEGORY.getBrief();
+        }
+        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
+    }
+
     public boolean isValid() {
         return isValid;
     }

@@ -345,7 +345,7 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        double values[] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
+        double values[] = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
 
         FrequencyPlot plot = new NumericalDensityPlot(values, minimumBins, td);
 
@@ -353,7 +353,7 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     protected Plot setupKDEPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        double values[] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
+        double values[] = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
 
         Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 
@@ -361,7 +361,7 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceCorrelation td, int barCount, int barId) {
-        int values[] = Trace.arrayConvert((Integer[]) tl.getValues(traceIndex, tl.getStateCount()));
+        int values[] = Trace.arrayConvertToInt(tl.getValues(traceIndex, tl.getStateCount()));
 
         CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, barCount, barId);
 
@@ -369,12 +369,12 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     protected Plot setupCategoryPlot(TraceList tl, int traceIndex, TraceCorrelation td, Map<Integer, String> categoryDataMap, int barCount, int barId) {
-        String[] values = tl.getValues(traceIndex, tl.getStateCount());
+        Object[] values = tl.getValues(traceIndex, tl.getStateCount());
 
         int[] intData = new int[values.length];
         for (int v = 0; v < values.length; v++) {
-            intData[v] = td.credSet.getIndex(values[v]);
-            categoryDataMap.put(intData[v], values[v]);
+            intData[v] = td.credSet.getIndex(values[v].toString());
+            categoryDataMap.put(intData[v], values[v].toString());
         }
 
         CategoryDensityPlot plot = new CategoryDensityPlot(intData, -1, td, barCount, barId);

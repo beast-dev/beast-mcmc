@@ -131,7 +131,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
             if (trace.getTraceType() == Double.class) {
-                double values[] = Trace.arrayConvertToDouble((Double[]) traceList.getValues(traceIndex, traceList.getStateCount()));
+                double values[] = Trace.arrayConvertToDouble(traceList.getValues(traceIndex, traceList.getStateCount()));
                 plot = new FrequencyPlot(values, minimumBins, td);
 
                 if (td != null) {
@@ -145,7 +145,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(false);
 
             } else if (trace.getTraceType() == Integer.class) {
-                int values[] = Trace.arrayConvert((Integer[]) traceList.getValues(traceIndex, traceList.getStateCount()));
+                int values[] = Trace.arrayConvertToInt(traceList.getValues(traceIndex, traceList.getStateCount()));
                 plot = new FrequencyPlot(values, -1, td);
 
                 if (td != null) {
@@ -159,12 +159,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(true);
 
             } else if (trace.getTraceType() == String.class) {
-                String[] values = traceList.getValues(traceIndex, traceList.getStateCount());
+                Object[] values = traceList.getValues(traceIndex, traceList.getStateCount());
 
                 int[] intData = new int[values.length];
                 for (int v = 0; v < values.length; v++) {
-                    intData[v] = td.credSet.getIndex(values[v]);
-                    categoryDataMap.put(intData[v], values[v]);
+                    intData[v] = td.credSet.getIndex(values[v].toString());
+                    categoryDataMap.put(intData[v], values[v].toString());
                 }
 
                 plot = new FrequencyPlot(intData, -1, td);

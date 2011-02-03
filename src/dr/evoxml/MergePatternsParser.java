@@ -50,14 +50,14 @@ public class MergePatternsParser extends AbstractXMLObjectParser {
 	    for (int i = 1; i < xo.getChildCount(); i++) {
 		    patterns.addPatterns((PatternList)xo.getChild(i));
 	    }
-        
+
         return patterns;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() { return rules; }
 
     private final XMLSyntaxRule[] rules = {
-        new ElementRule(SiteList.class, 1, Integer.MAX_VALUE)
+        new ElementRule(PatternList.class, 1, Integer.MAX_VALUE)
     };
 
     public String getParserDescription() {

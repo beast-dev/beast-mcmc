@@ -59,8 +59,8 @@ public class ConstantPatternsParser extends AbstractXMLObjectParser {
 
         Patterns patterns = new Patterns(source.getDataType(), source);
 
-        int[] pattern = new int[patterns.getPatternLength()];
         for (int i = 0; i < source.getDataType().getStateCount(); i++) {
+            int[] pattern = new int[patterns.getPatternLength()];
             for (int j = 0; j < pattern.length; j++) {
                 pattern[j] = i;
             }

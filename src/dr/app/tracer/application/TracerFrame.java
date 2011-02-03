@@ -1463,7 +1463,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-            if (col == 3) return td.getTraceType(); //TODO
+            if (col == 3) return td.getTraceTypeBrief(); 
 
             double value = 0.0;
             boolean warning = false;

@@ -92,8 +92,8 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
 
                             if (computeMSE) {
                                 double MSE = distribution.getMeanSquaredError(Trace.arrayConvertToDouble(
-                                        (Double[]) traces.getTrace(i).getValues(traces.getStateCount(),
-                                                traces.getBurninStateCount(), 0, null)), expectation);
+                                        traces.getTrace(i).getValues(traces.getStateCount(),
+                                        traces.getBurninStateCount(), 0, null)), expectation);
                                 System.out.println(" MSE = " + formatter.format(MSE));
                             } else {
                                 System.out.println("");

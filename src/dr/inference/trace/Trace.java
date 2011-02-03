@@ -145,53 +145,29 @@ public class Trace<T> {
         return name;
     }
 
-//    public static Double[] arrayCopy(double[] src) {
-//        Double[] dest = new Double[src.length];
-//        for (int i=0; i < src.length; i++) {
-//            dest[i] = Double.valueOf(src[i]);
-//        }
-//        return dest;
-//    }
-
-    public static double[] arrayConvertToDouble(Number[] src) {
+    public static <T> double[] arrayConvertToDouble(T[] src) {
         double[] dest = null;
         if (src != null) {
             dest = new double[src.length];
             for (int i = 0; i < dest.length; i++) {
-                dest[i] = src[i].doubleValue();
+                dest[i] = ((Number) src[i]).doubleValue();
             }
         }
         return dest;
     }
 
-    public static double[] arrayConvert(Double[] src, boolean[] selected) {
-        if (src == null) return null;
-
-        assert src.length == selected.length;
-
-
-        if (selected != null) {
-            java.util.List<Double> selectedValuesList = new ArrayList<Double>();
-
-            for (int i = 0; i < src.length; i++) {
-                if (selected[i]) {
-                    selectedValuesList.add(src[i]);
-                }
-            }
-
-            double[] dest = new double[selectedValuesList.size()];
+    public static <T> int[] arrayConvertToInt(T[] src) {
+        int[] dest = null;
+        if (src != null) {
+            dest = new int[src.length];
             for (int i = 0; i < dest.length; i++) {
-                dest[i] = selectedValuesList.get(i).doubleValue();
+                dest[i] = ((Number) src[i]).intValue();
             }
-
-            return dest;
-
-        } else {
-            return arrayConvertToDouble(src);
         }
+        return dest;
     }
 
-    public static double[][] arrayConvert(Double[][] src) {
+    public static double[][] multiDArrayConvert(Double[][] src) {
         double[][] dest = null;
         if (src != null) {
             dest = new double[src.length][src[0].length];
@@ -203,86 +179,6 @@ public class Trace<T> {
         }
         return dest;
     }
-
-    public static int[] arrayConvert(Integer[] src) {
-        int[] dest = null;
-        if (src != null) {
-            dest = new int[src.length];
-            for (int i = 0; i < dest.length; i++) {
-                dest[i] = src[i].intValue();
-            }
-        }
-        return dest;
-    }
-
-    public static int[] arrayConvert(Integer[] src, boolean[] selected) {
-        if (src == null) return null;
-
-        assert src.length == selected.length;
-
-        if (selected != null) {
-            java.util.List<Integer> selectedValuesList = new ArrayList<Integer>();
-
-            for (int i = 0; i < src.length; i++) {
-                if (selected[i]) {
-                    selectedValuesList.add(src[i]);
-                }
-            }
-
-            int[] dest = new int[selectedValuesList.size()];
-            for (int i = 0; i < dest.length; i++) {
-                dest[i] = selectedValuesList.get(i).intValue();
-            }
-
-            return dest;
-
-        } else {
-            return arrayConvert(src);
-        }
-    }
-
-    public static String[] arrayConvert(String[] src) {
-        return src;
-    }
-
-    public static String[] arrayConvert(String[] src, boolean[] selected) {
-        if (src == null) return null;
-
-        assert src.length == selected.length;
-
-        if (selected != null) {
-            java.util.List<String> selectedValuesList = new ArrayList<String>();
-
-            for (int i = 0; i < src.length; i++) {
-                if (selected[i]) {
-                    selectedValuesList.add(src[i]);
-                }
-            }
-
-            String[] dest = new String[selectedValuesList.size()];
-//            for (int i = 0; i < dest.length; i++) {
-//                dest[i] = selectedValuesList.get(i).toString();
-//            }
-            dest = selectedValuesList.toArray(dest);
-            return dest;
-
-        } else {
-            return arrayConvert(src);
-        }
-    }
-
-    public static double[] arrayIntToDouble(Integer[] src, boolean[] selected) {
-        double[] dest = null;
-        if (src != null) {
-            int[] tmp = arrayConvert(src, selected);
-            dest = new double[tmp.length];
-            for (int i = 0; i < tmp.length; i++) {
-                dest[i] = (double) tmp[i];
-            }
-        }
-        return dest;
-    }
-
 
     public Class getTraceType() {
         return values[0].getClass();

@@ -300,7 +300,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         double samples1[] = new double[sampleSize];
         int k = 0;
 
-        Number[] values;
+        Object[] values;
         if (isFirstTraceListNumerical) {
             values = tl1.getValues(traceIndex1, maxCount);
         } else {
@@ -308,7 +308,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         }
 
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = values[k].doubleValue();
+            samples1[i] = ((Number) values[k]).doubleValue();
             k += minCount / sampleSize;
         }
 
@@ -363,40 +363,22 @@ public class JointDensityPanel extends JPanel implements Exportable {
         String samples1[] = new String[sampleSize];
         int k = 0;
 
-        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
-            Integer[] values = tl1.getValues(traceIndex1, maxCount);
+            Object[] values = tl1.getValues(traceIndex1, maxCount);
 
             for (int i = 0; i < sampleSize; i++) {
                 samples1[i] = values[k].toString();
                 k += minCount / sampleSize; // = 1 for non-continous vs non-continous
             }
-        } else {
-            String[] values = tl1.getValues(traceIndex1, maxCount);
-
-            for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k];
-                k += minCount / sampleSize;
-            }
-        }
 
         String samples2[] = new String[sampleSize];
         k = 0;
 
-        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
-            Integer values[] = tl2.getValues(traceIndex2, maxCount);
+            values = tl2.getValues(traceIndex2, maxCount);
 
             for (int i = 0; i < sampleSize; i++) {
                 samples2[i] = values[k].toString();
                 k += minCount / sampleSize;
             }
-        } else {
-            String values[] = tl2.getValues(traceIndex2, maxCount);
-
-            for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = values[k];
-                k += minCount / sampleSize;
-            }
-        }
 
         // calculate count
         for (int i = 0; i < sampleSize; i++) {
@@ -472,9 +454,9 @@ public class JointDensityPanel extends JPanel implements Exportable {
         } else {
             correlationChart.setXAxis(new LinearAxis());
         }
-        Number values[] = tl1.getValues(traceIndex1, maxCount);
+        Object values[] = tl1.getValues(traceIndex1, maxCount);
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = values[k].doubleValue();
+            samples1[i] = ((Number) values[k]).doubleValue();
             k += minCount / sampleSize;
         }
 
@@ -487,7 +469,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
         }
         values = tl2.getValues(traceIndex2, maxCount);
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values[k].doubleValue();
+            samples2[i] = ((Number) values[k]).doubleValue();
             k += minCount / sampleSize;
         }
 

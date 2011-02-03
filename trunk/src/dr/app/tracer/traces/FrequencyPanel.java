@@ -1,7 +1,9 @@
 package dr.app.tracer.traces;
 
 import dr.app.gui.chart.*;
-import dr.inference.trace.*;
+import dr.inference.trace.Trace;
+import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
 import javax.swing.*;
@@ -129,12 +131,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
             if (trace.getTraceType() == Double.class) {
-                Double values[] = new Double[traceList.getStateCount()];
-                traceList.getValues(traceIndex, values);
-                boolean[] selected = new boolean[traceList.getStateCount()];
-                traceList.getSelected(traceIndex, selected);
-
-                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+                double values[] = Trace.arrayConvertToDouble((Double[]) traceList.getValues(traceIndex, traceList.getStateCount()));
+                plot = new FrequencyPlot(values, minimumBins, td);
 
                 if (td != null) {
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
@@ -147,12 +145,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(false);
 
             } else if (trace.getTraceType() == Integer.class) {
-                Integer values[] = new Integer[traceList.getStateCount()];
-                traceList.getValues(traceIndex, values);
-                boolean[] selected = new boolean[traceList.getStateCount()];
-                traceList.getSelected(traceIndex, selected);
-
-                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), -1, td);
+                int values[] = Trace.arrayConvert((Integer[]) traceList.getValues(traceIndex, traceList.getStateCount()));
+                plot = new FrequencyPlot(values, -1, td);
 
                 if (td != null) {
                     plot.setInCredibleSet(td.credSet);
@@ -165,11 +159,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(true);
 
             } else if (trace.getTraceType() == String.class) {
-                String[] initValues = new String[traceList.getStateCount()];
-                traceList.getValues(traceIndex, initValues);
-                boolean[] selected = new boolean[traceList.getStateCount()];
-                traceList.getSelected(traceIndex, selected);
-                String[] values = Trace.arrayConvert(initValues, selected);
+                String[] values = traceList.getValues(traceIndex, traceList.getStateCount());
 
                 int[] intData = new int[values.length];
                 for (int v = 0; v < values.length; v++) {

@@ -109,30 +109,11 @@ public interface TraceList {
      */
     <T> void getBurninValues(int index, T[] destination);
 
-    /**
-     * get the boolean[] of trace with the given index (without burnin)
-     *
-     * @param index       the index of trace
-     * @param destination the array to copy boolean[] selected into
-     */
-    void getSelected(int index, boolean[] destination);
+    <T> T[] getValues(int index, int length);
 
-    /**
-     * get the boolean[] of trace with the given index (without burnin)
-     *
-     * @param index       the index of trace
-     * @param destination the array to copy boolean[] selected into
-     * @param offset      the start position for copying into the destination array
-     */
-    void getSelected(int index, boolean[] destination, int offset);
+    <T> T[] getValues(int index, int length, int offset);
 
-    /**
-     * get the boolean[] of the burnin of the trace
-     *
-     * @param index       the index of trace
-     * @param destination the array to copy boolean[] selected into
-     */
-    void getBurningSelected(int index, boolean[] destination);
+    <T> T[] getBurninValues(int index, int length);
 
     /**
      * @param traceIndex the index of the trace

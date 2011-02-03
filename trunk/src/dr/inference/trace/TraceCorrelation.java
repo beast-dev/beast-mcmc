@@ -149,18 +149,4 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     protected double stdErrOfACT;
 
     private static final int MAX_LAG = 2000;
-
-
-    public void setFilter(Filter filter) {
-        this.filter = filter;
-        credSet = new CredibleSet(getValuesArray(), 0.95);
-
-        if (isValid) {
-            analyseCorrelation(getValuesArray(), stepSize);
-        }
-    }
-
-    public Filter getFilter() {
-        return filter;
-    }
 }

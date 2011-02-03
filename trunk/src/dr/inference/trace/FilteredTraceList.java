@@ -1,78 +1,73 @@
 package dr.inference.trace;
 
 /**
- *
+ * not available for CombinedTraces yet
  */
 public abstract class FilteredTraceList implements TraceList {
 
-    Filter[] filters; // store configured filter
-    protected TraceCorrelation[] traceStatistics = null;
-    int currentFilter = -1;
+    protected boolean[] selected; // length = values[].length = valueCount, all must be true initially
 
-    public void setFilter(Filter filter) {
-        int fId = getTraceIndex(filter.getTraceName());
-        filters[fId] = filter;
-        currentFilter = fId;
-        doFilter(filter);
-
-        createTraceFilter(filter);
-    }
-
-    public Filter getFilter() {
-        if (currentFilter < 0) return null;
-        return filters[currentFilter];
-    }
-
-    public Filter getFilter(String traceName) {
-        int fId = getTraceIndex(traceName);
-        if (traceStatistics != null && fId > 0) {
-            return filters[fId];
+    protected void createSelected() { // will init in updateSelected()
+        if (getTrace(0) != null) {
+            selected = new boolean[getTrace(0).getCount()];
+        } else {
+            throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
         }
-        return null;
     }
 
-    public void removeFilter(String traceName) {
-        int fId = getTraceIndex(traceName);
-        if (filters[fId] != null) {
-            filters[fId] = null;
-            doFilter(null);
+    private void initSelected() {
+        for (int i = 0; i < selected.length; i++) {
+            selected[i] = true;
         }
-        selected = null;
+    }
+
+    public void setFilter(int traceIndex, Filter filter) {
+        if (selected == null) createSelected();
+        getTrace(traceIndex).setFilter(filter);
+        refreshStatistics();
+    }
+
+    public Filter getFilter(int traceIndex) {
+        return getTrace(traceIndex).getFilter();
+    }
+
+    public void removeFilter(int traceIndex) {
+        getTrace(traceIndex).setFilter(null);
+        refreshStatistics();
     }
 
     public void removeAllFilters() {
-        for (Filter f : filters) {
-            f = null;
+        for (int i = 0; i < getTraceCount(); i++) {
+            getTrace(i).setFilter(null);
         }
-        doFilter(null);
         selected = null;
-        currentFilter = -1;
+        refreshStatistics();// must be after "selected = null"
     }
 
-    private void doFilter(Filter filter) {
-        for (TraceCorrelation traceC : traceStatistics) {
-            traceC.setFilter(filter);
+    protected void refreshStatistics() {
+        updateSelected();
+        for (int i = 0; i < getTraceCount(); i++) {
+            analyseTrace(i);
         }
     }
 
-//    protected abstract void updateTraceList();
+    private void updateSelected() {
+        if (selected != null) {
+            initSelected();
+            for (int traceIndex = 0; traceIndex < getTraceCount(); traceIndex++) {
+                if (getFilter(traceIndex) != null) {
+                    Trace trace = getTrace(traceIndex);
+                    if (trace.getCount() != selected.length)
+                        throw new RuntimeException("updateSelected: length of values[] is different with selected[] in Trace "
+                                + getTraceName(traceIndex));
 
-    protected void initFilters() { // used in void analyseTrace(int index)
-        if (filters == null) filters = new Filter[traceStatistics.length]; // traceStatistics.length = getTraceCount()
+                    for (int i = 0; i < trace.getCount(); i++) {
+                        if (!trace.isIn(i)) { // not selected
+                            selected[i] = false;
+                        }
+                    }
+                }
+            }
+        }
     }
-
-
-    //******************** Trace ****************************
-    protected boolean[] selected; // length = valueCount
-
-    public abstract void createTraceFilter(Filter filter);
-
-    public void setTraceFilter(boolean[] selected) {
-        this.selected = selected;
-    }
-
-    public boolean[] getTraceFilter() {
-        return selected;
-    }
-
 }

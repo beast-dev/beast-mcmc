@@ -9,28 +9,29 @@ public abstract class AbstractTraceList extends FilteredTraceList {
     }
 
     public TraceCorrelation getCorrelationStatistics(int index) {
-        if (traceStatistics == null) {
+        Trace trace = getTrace(index);
+        if (trace == null) {
             return null;
         }
-
-        return traceStatistics[index];
+        return trace.getTraceStatistics();
     }
 
     public void analyseTrace(int index) {
-        int offset = (getBurnIn() / getStepSize());
+        int start = (getBurnIn() / getStepSize());
 
-        if (traceStatistics == null) {
-            traceStatistics = new TraceCorrelation[getTraceCount()];
-            initFilters();
-        }
+//        if (traceStatistics == null) {
+//            traceStatistics = new TraceCorrelation[getTraceCount()];
+//            initFilters();
+//        }
 
         Trace trace = getTrace(index);        
-        traceStatistics[index] = new TraceCorrelation(trace.createValues(offset, getStateCount()), getStepSize());
+        TraceCorrelation traceCorrelation = new TraceCorrelation(trace.getValues(getStateCount(), start, 0, selected), getStepSize());
+        trace.setTraceStatistics(traceCorrelation);
     }
 
-    public void setBurnIn(int burnIn) {
-        traceStatistics = null;
-    }
+//    public void setBurnIn(int burnIn) {
+//        traceStatistics = null;
+//    }
 
 //    abstract Trace getTrace(int index);
 

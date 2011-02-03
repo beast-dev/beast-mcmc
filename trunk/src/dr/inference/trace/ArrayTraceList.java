@@ -97,24 +97,19 @@ public class ArrayTraceList extends AbstractTraceList {
         getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
+    public <T> T[] getValues(int index, int length) {
+        throw new UnsupportedOperationException("not available");
+    }
+
+    public <T> T[] getValues(int index, int length, int offset) {
+        throw new UnsupportedOperationException("not available");
+    }
+
+    public <T> T[] getBurninValues(int index, int length) {
+        throw new UnsupportedOperationException("not available");
+    }
+
     public Trace getTrace(int index) {
         return traces.get(index);
-    }
-
-    @Override
-    public void createTraceFilter(Filter filter) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void getSelected(int index, boolean[] destination) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void getSelected(int index, boolean[] destination, int offset) {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    public void getBurningSelected(int index, boolean[] destination) {
-        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

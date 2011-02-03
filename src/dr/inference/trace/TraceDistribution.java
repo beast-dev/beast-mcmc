@@ -39,9 +39,11 @@ import java.util.*;
  */
 public class TraceDistribution<T> {
 
+    Class traceType;
+
     public TraceDistribution(T[] values) {
-        this.values = values;
-        credSet = new CredibleSet(getValuesArray(), 0.95);
+//        this.values = values;
+        credSet = new CredibleSet(values, 0.95);
     }
 
     public TraceDistribution(T[] values, double ESS) {
@@ -49,19 +51,8 @@ public class TraceDistribution<T> {
         this.ESS = ESS;
     }
 
-    public TraceFactory.TraceType getTraceType() {
-        if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
-            return TraceFactory.TraceType.CONTINUOUS;
-
-        } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
-            return TraceFactory.TraceType.INTEGER;
-
-        } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
-            return TraceFactory.TraceType.CATEGORY;
-
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + values[0].getClass());
-        }
+    public Class getTraceType() {
+        return traceType;
     }
 
     public boolean isValid() {
@@ -121,20 +112,14 @@ public class TraceDistribution<T> {
         return maximum;
     }
 
-    public double getMeanSquaredError(double trueValue) {
+    public double getMeanSquaredError(double[] values, double trueValue) {
 
         if (values == null) {
             throw new RuntimeException("Trace values not yet set");
         }
 
-        if (values[0] instanceof Number) {
-            double[] doubleValues = new double[getValuesArray().length];
-            for (int i = 0; i < getValuesArray().length; i++) {
-                doubleValues[i] = ((Number) getValuesArray()[i]).doubleValue();
-            }
-
-            return DiscreteStatistics.meanSquaredError(doubleValues, trueValue);
-
+        if (traceType == Number.class) {
+            return DiscreteStatistics.meanSquaredError(values, trueValue);
         } else {
             throw new RuntimeException("Require Number Trace Type in the Trace Distribution: " + this);
         }
@@ -201,37 +186,37 @@ public class TraceDistribution<T> {
     protected double mean;
     protected double median;
     protected double geometricMean;
-    protected double stdError;
+    protected double stdError, meanSquaredError;
     protected double variance;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
     protected double ESS;
 
-    protected T[] values;
+//    protected T[] values;
     public CredibleSet credSet = null;
 
-    protected T[] getValuesArray() {
-        if (filter != null) {
-            List<T> selectedValuesList = new ArrayList<T>();
+//    protected T[] getValuesArray() {
+//        if (filter != null) {
+//            List<T> selectedValuesList = new ArrayList<T>();
+//
+//            for (int i = 0; i < values.length; i++) {
+//                if (filter.getSelected(i)) {
+//                    selectedValuesList.add(values[i]);
+//                }
+//            }
+//
+//            T[] selectedValues = (T[]) new Object[selectedValuesList.size()];
+//            selectedValues = selectedValuesList.toArray(selectedValues);
+//
+//            return selectedValues;
+//
+//        } else {
+//            return values;
+//        }
+//    }
 
-            for (int i = 0; i < values.length; i++) {
-                if (filter.getSelected(i)) {
-                    selectedValuesList.add(values[i]);
-                }
-            }
-
-            T[] selectedValues = (T[]) new Object[selectedValuesList.size()];
-            selectedValues = selectedValuesList.toArray(selectedValues);
-
-            return selectedValues;
-
-        } else {
-            return values;
-        }
-    }
-
-    public T[] getValues() {
-        return values;
-    }
+//    public T[] getValues() {
+//        return values;
+//    }
 
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
@@ -250,11 +235,15 @@ public class TraceDistribution<T> {
 
             if (!(valuesCS[0] instanceof Double)) {// make sure: if T is Object then default to double
                 if (valuesCS[0] instanceof Integer) {
+                    traceType = Integer.class;
+
                     double[] newValues = new double[valuesCS.length];
                     for (int i = 0; i < valuesCS.length; i++) {
                         newValues[i] = ((Integer) valuesCS[i]).doubleValue();
                     }
                     analyseDistributionContinuous(newValues, proportion);
+                } else {
+                    traceType = String.class;
                 }
 
                 for (T value : valuesCS) {
@@ -278,6 +267,7 @@ public class TraceDistribution<T> {
                 calculateMode();
 
             } else {
+                traceType = Double.class;
                 double[] newValues = new double[valuesCS.length];
                 for (int i = 0; i < valuesCS.length; i++) {
                     newValues[i] = ((Double) valuesCS[i]).doubleValue();
@@ -315,7 +305,7 @@ public class TraceDistribution<T> {
         }
 
         private boolean contains(List<T> list, int valueORIndex) {
-            if (values[0] instanceof Integer) {
+            if (traceType == Integer.class) {
                 return list.contains(valueORIndex);
             } else { // String
                 String valueString = null;
@@ -375,17 +365,4 @@ public class TraceDistribution<T> {
             return printSet(inCredibleSet);
         }
     }
-
-    //******************** Filter ****************************
-    protected Filter filter;
-
-//    public void setFilter(Filter filter) {
-//        this.filter = filter;
-//        credSet = new CredibleSet(getValuesArray(), 0.95);
-//    }
-//
-//    public Filter getFilter() {
-//        return filter;
-//    }
-
 }

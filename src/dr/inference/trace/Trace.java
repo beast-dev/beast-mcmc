@@ -93,47 +93,53 @@ public class Trace<T> {
     }
 
     public T getValue(int index) {
-        return values[index];
-    }
-
-    public T[] createValues(int start, int length) {
-        T[] destination = (T[]) new Object[length];
-        getValues(start, destination, 0);
-        return destination;
+        return values[index]; // filter?
     }
 
     public T[] getValues() {
         return values;
     }
 
+    // used by others (e.g. CombinedTraces) without filter applied
     public void getValues(int start, T[] destination, int offset) {
         System.arraycopy(values, start, destination, offset, valueCount - start);
     }
 
+    // used by others (e.g. CombinedTraces) without filter applied
     public void getValues(int start, int count, T[] destination, int offset) {
         System.arraycopy(values, start, destination, offset, count);
     }
 
-    public void getSelected(int start, boolean[] destination, int offset, boolean[] selected) {
+    public T[] getValues(int length, int start, int offset, boolean[] selected) {
+        return this.getValues(length, start, offset, valueCount - start, selected);
+    }
+
+    public T[] getValues(int length, int start, int offset, int count, boolean[] selected) {
+        T[] destination = (T[]) new Object[length];
+        System.arraycopy(values, start, destination, offset, count);
+
         if (selected != null) {
-            System.arraycopy(selected, start, destination, offset, valueCount - start);
+            boolean[] destinationSelected = new boolean[length];
+            System.arraycopy(selected, start, destinationSelected, offset, count);
+            return getSeletedValues(destination, destinationSelected);
         } else {
-            for (int i = 0; i < destination.length; i++) {
-                destination[i] = true;
-            }
+            return destination;
         }
     }
 
-    public void getSelected(int start, int count, boolean[] destination, int offset, boolean[] selected) {
-        if (selected != null) {
-            System.arraycopy(selected, start, destination, offset, count);
-        } else {
-            for (int i = 0; i < destination.length; i++) {
-                destination[i] = true;
-            }
-        }
-    }
+    private T[] getSeletedValues(T[] values, boolean[] selected) {
+        if (values.length != selected.length)
+            throw new RuntimeException("getSeletedValues: length of values[] is different with selected[] in Trace " + name);
 
+        List<T> valuesList = new ArrayList<T>();
+        for (int i = 0; i < values.length; i++) {
+            if (selected[i])
+                valuesList.add(values[i]);
+        }
+        T[] afterSelected = (T[]) new Object[valuesList.size()];
+        afterSelected = valuesList.toArray(afterSelected);
+        return afterSelected;
+    }
 
     public String getName() {
         return name;
@@ -147,7 +153,7 @@ public class Trace<T> {
 //        return dest;
 //    }
 
-    public static double[] arrayConvert(Double[] src) {
+    public static double[] arrayConvertToDouble(Number[] src) {
         double[] dest = null;
         if (src != null) {
             dest = new double[src.length];
@@ -181,7 +187,7 @@ public class Trace<T> {
             return dest;
 
         } else {
-            return arrayConvert(src);
+            return arrayConvertToDouble(src);
         }
     }
 
@@ -285,4 +291,33 @@ public class Trace<T> {
 //    public void setTraceType(TraceFactory.TraceType traceType) {
 //        this.traceType = traceType;
 //    }
+
+    //******************** TraceCorrelation ****************************
+    protected TraceCorrelation<T> traceStatistics;
+
+    public TraceCorrelation getTraceStatistics() {
+        return traceStatistics;
+    }
+
+    public void setTraceStatistics(TraceCorrelation traceStatistics) {
+        this.traceStatistics = traceStatistics;
+    }
+
+    //******************** Filter ****************************
+    protected Filter<T> filter;
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+//        if (traceStatistics == null)
+//            throw new RuntimeException("Cannot set filter because traceStatistics = null in Trace " + name);
+//        traceStatistics =
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
+
+    public boolean isIn(int i) {        
+        return filter.isIn(values[i]);
+    }
 }

@@ -133,7 +133,9 @@ public class LogFileTraces extends AbstractTraceList {
 
     public void setBurnIn(int burnIn) {
         this.burnIn = burnIn;
-        super.setBurnIn(burnIn);
+        for (Trace trace : traces) {
+            trace.setTraceStatistics(null);
+        }
     }
 
     public double getStateValue(int trace, int index) {
@@ -179,24 +181,28 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    public void getSelected(int index, boolean[] destination) {
-        try {
-            getTrace(index).getSelected(getBurninStateCount(), destination, 0, selected);
-        } catch (Exception e) {
-            System.err.println("getSelected error: trace index = " + index);
-        }
+    public <T> T[] getValues(int index, int length) {
+        return (T[]) this.getValues(index, length, 0);
     }
 
-    public void getSelected(int index, boolean[] destination, int offset) {
-        getTrace(index).getSelected(getBurninStateCount(), destination, offset, selected);
+    public <T> T[] getValues(int index, int length, int offset) {
+        T[] destination = null;
+        try {
+            destination = (T[]) getTrace(index).getValues(length, getBurninStateCount(), offset, selected);
+        } catch (Exception e) {
+            System.err.println("getValues error: trace index = " + index);
+        }
+        return destination;
     }
 
-    public void getBurningSelected(int index, boolean[] destination) {
+    public <T> T[] getBurninValues(int index, int length) {
+        T[] destination = null;
         try {
-            getTrace(index).getSelected(0, getBurninStateCount(), destination, 0, selected);
+            destination = (T[]) getTrace(index).getValues(length, 0, 0, getBurninStateCount(), selected);
         } catch (Exception e) {
-            System.err.println("trace index = " + index);
+            System.err.println("getValues error: trace index = " + index);
         }
+        return destination;
     }
 
     public void loadTraces() throws TraceException, IOException {
@@ -468,24 +474,6 @@ public class LogFileTraces extends AbstractTraceList {
 
         } else {
             throw new RuntimeException("Trace type is not recognized: " + thisTrace.getTraceType());
-        }
-    }
-
-    @Override
-    public void createTraceFilter(Filter filter) {
-        if (filter != null) {
-            String name = filter.getTraceName();
-            int index = getTraceIndex(name);
-
-            selected = new boolean[getTrace(index).getCount()];
-
-            for (int i = 0; i < selected.length; i++) {
-                if (filter.isIn(getTrace(index).getValue(i))) { // selected
-                    selected[i] = true;
-                }
-            }
-        } else {
-            selected = null;
         }
     }
 

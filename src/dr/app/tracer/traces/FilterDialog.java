@@ -1,9 +1,6 @@
 package dr.app.tracer.traces;
 
-import dr.inference.trace.Filter;
-import dr.inference.trace.FilteredTraceList;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.*;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -21,7 +18,7 @@ import java.util.List;
  */
 public class FilterDialog {
     private JFrame frame;
-    List<FilteredTraceList> filteredTraceListGroup;
+//    List<FilteredTraceList> filteredTraceListGroup;
     String traceName;
 
     JList fileList;
@@ -59,8 +56,8 @@ public class FilterDialog {
 
     }
 
-    public String showDialog(String traceName, List<FilteredTraceList> filteredTraceListGroup, String previousMessage) {
-        this.filteredTraceListGroup = filteredTraceListGroup;
+    public String showDialog(String traceName, List<TraceList> filteredTraceListGroup, String previousMessage) {
+//        this.filteredTraceListGroup = filteredTraceListGroup;
         this.traceName = traceName;
 
         String message = "";
@@ -80,13 +77,14 @@ public class FilterDialog {
         fileList.setSelectedIndices(indices);
 
 //        initComponents(filteredTraceListGroup.get(0));
-        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(fileList.getSelectedIndex()); // only pick up the 1st one
-        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
+        FilteredTraceList filteredTraceList = (FilteredTraceList) filteredTraceListGroup.get(fileList.getSelectedIndex()); // only pick up the 1st one
+        int traceIndex = filteredTraceList.getTraceIndex(traceName);
+        TraceDistribution td = filteredTraceList.getDistributionStatistics(traceIndex);
 
         typeField.setText(td.getTraceType().toString());
         nameField.setText(traceName);
 
-        Filter f = filteredTraceList.getFilter(traceName);
+        Filter f = filteredTraceList.getFilter(traceIndex);
 
         String[] sel;
         if (f == null) {
@@ -94,7 +92,7 @@ public class FilterDialog {
         } else {
             sel = f.getIn();
         }
-        if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+        if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
             String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
             filterPanel = new FilterContinuousPanel(minMax, sel);
         } else {// integer and string
@@ -124,7 +122,7 @@ public class FilterDialog {
         Object result = optionPane.getValue();
 
 //        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
-//        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
+//        TraceDistribution td = filteredTraceList.getDistributionStatistics(traceIndex);
 
         if (result.equals(options[0])) {
             if (filterPanel.containsNullValue()) {
@@ -136,16 +134,16 @@ public class FilterDialog {
 
 
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
-                f = filteredTraceListGroup.get(i).getFilter(traceName);
+                FilteredTraceList fTL = (FilteredTraceList) filteredTraceListGroup.get(i);
+                f = fTL.getFilter(traceIndex);
 
                 if (f == null) {
-                    f = new Filter(traceName, td.getTraceType(), filterPanel.getSelectedValues(), td.getValues());
+                    f = new Filter(filterPanel.getSelectedValues());
                 } else {
-                    f.setIn(filterPanel.getSelectedValues(), td.getValues());
+                    f.setIn(filterPanel.getSelectedValues());
                 }
 
-                filteredTraceListGroup.get(i).setFilter(f);
-                filteredTraceListGroup.get(i).createTraceFilter(f);
+                fTL.setFilter(traceIndex, f);
             }
             message += f.getStatusMessage(); // todo
 
@@ -156,7 +154,7 @@ public class FilterDialog {
             }
         } else if (result.equals(options[1])) {
             for (int i = 0; i < filteredTraceListGroup.size(); i++) {
-                filteredTraceListGroup.get(i).removeFilter(traceName);
+                ((FilteredTraceList) filteredTraceListGroup.get(i)).removeFilter(traceIndex);
             }
             message = "";
 

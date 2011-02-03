@@ -36,16 +36,16 @@ import dr.inference.trace.*;
  * @version $Id: CombinedTraces.java,v 1.3 2006/11/29 16:04:12 rambaut Exp $
  */
 
-public class CombinedTraces extends FilteredTraceList {
+public class CombinedTraces implements TraceList {
 
-    public CombinedTraces(String name, FilteredTraceList[] traceLists) throws TraceException {
+    public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
 
         if (traceLists == null || traceLists.length < 1) {
             throw new TraceException("Must have at least 1 Traces object in a CombinedTraces");
         }
 
         this.name = name;
-        this.traceLists = new FilteredTraceList[traceLists.length];
+        this.traceLists = new TraceList[traceLists.length];
         this.traceLists[0] = traceLists[0];
 
         for (int i = 1; i < traceLists.length; i++) {
@@ -156,32 +156,19 @@ public class CombinedTraces extends FilteredTraceList {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
-    public void getSelected(int index, boolean[] destination) {
-        int offset = 0;
-        for (FilteredTraceList traceList : traceLists) {
-            traceList.getSelected(index, destination, offset);
-            offset += traceList.getStateCount();
-        }
+
+    public <T> T[] getValues(int index, int length) {
+        throw new UnsupportedOperationException("not available");
     }
 
-    public void getSelected(int index, boolean[] destination, int offset) {
-        for (FilteredTraceList traceList : traceLists) {
-            traceList.getSelected(index, destination, offset);
-            offset += traceList.getStateCount();
-        }
+    public <T> T[] getValues(int index, int length, int offset) {
+        throw new UnsupportedOperationException("not available");
     }
 
-    public void getBurningSelected(int index, boolean[] destination) {
+    public <T> T[] getBurninValues(int index, int length) {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
-    @Override
-    public void createTraceFilter(Filter filter) {
-        for (FilteredTraceList traceList : traceLists) {
-            traceList.createTraceFilter(filter);
-        }
-    }
-    
     /**
      * @return the trace distribution statistic object for the given index
      */
@@ -206,8 +193,7 @@ public class CombinedTraces extends FilteredTraceList {
         // no offset: burnin is handled inside each TraceList we own and invisible to us.
 
         if (traceStatistics == null) {
-            traceStatistics = new TraceCorrelation[getTraceCount()];
-            initFilters();
+            traceStatistics = new TraceCorrelation[getTraceCount()];            
         }
 
         Trace trace = getTrace(index);
@@ -239,7 +225,7 @@ public class CombinedTraces extends FilteredTraceList {
     }
 
     public Trace getTrace(int index) {
-        for (FilteredTraceList traceList : traceLists) {
+        for (TraceList traceList : traceLists) {
             if (traceList.getTrace(index).getTraceType() != traceLists[0].getTrace(index).getTraceType()) {
                 return null; // trace type not comparable
             }
@@ -266,9 +252,9 @@ public class CombinedTraces extends FilteredTraceList {
     // private methods
     //************************************************************************
 
-    private FilteredTraceList[] traceLists = null;
+    private TraceList[] traceLists = null;
 
-//    private TraceCorrelation[] traceStatistics = null;
+    private TraceCorrelation[] traceStatistics = null;
 
     private String name;
 

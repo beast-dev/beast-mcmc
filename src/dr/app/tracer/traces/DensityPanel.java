@@ -26,7 +26,9 @@
 package dr.app.tracer.traces;
 
 import dr.app.gui.chart.*;
-import dr.inference.trace.*;
+import dr.inference.trace.Trace;
+import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jam.framework.Exportable;
 
@@ -343,45 +345,31 @@ public class DensityPanel extends JPanel implements Exportable {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        Double values[] = new Double[tl.getStateCount()];
-        tl.getValues(traceIndex, values);
-        boolean[] selected = new boolean[tl.getStateCount()];
-        tl.getSelected(traceIndex, selected);
+        double values[] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-        FrequencyPlot plot = new NumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+        FrequencyPlot plot = new NumericalDensityPlot(values, minimumBins, td);
 
         return plot;
     }
 
     protected Plot setupKDEPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        Double values[] = new Double[tl.getStateCount()];
-        tl.getValues(traceIndex, values);
-        boolean[] selected = new boolean[tl.getStateCount()];
-        tl.getSelected(traceIndex, selected);
+        double values[] = Trace.arrayConvertToDouble((Double[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-        Plot plot = new KDENumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+        Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 
         return plot;
     }
 
     protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceCorrelation td, int barCount, int barId) {
-        Integer values[] = new Integer[tl.getStateCount()];
-        tl.getValues(traceIndex, values);
-        boolean[] selected = new boolean[tl.getStateCount()];
-        tl.getSelected(traceIndex, selected);
+        int values[] = Trace.arrayConvert((Integer[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-        CategoryDensityPlot plot = new CategoryDensityPlot(Trace.arrayConvert(values, selected), -1, td, barCount, barId);
+        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, barCount, barId);
 
         return plot;
     }
 
     protected Plot setupCategoryPlot(TraceList tl, int traceIndex, TraceCorrelation td, Map<Integer, String> categoryDataMap, int barCount, int barId) {
-        String initValues[] = new String[tl.getStateCount()];
-        tl.getValues(traceIndex, initValues);
-        boolean[] selected = new boolean[tl.getStateCount()];
-        tl.getSelected(traceIndex, selected);
-
-        String[] values = Trace.arrayConvert(initValues, selected);
+        String[] values = tl.getValues(traceIndex, tl.getStateCount());
 
         int[] intData = new int[values.length];
         for (int v = 0; v < values.length; v++) {

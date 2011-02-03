@@ -1,6 +1,9 @@
 package dr.app.tracer.traces;
 
-import dr.app.gui.chart.*;
+import dr.app.gui.chart.Axis;
+import dr.app.gui.chart.KDENumericalDensityPlot;
+import dr.app.gui.chart.KDESetupDialog;
+import dr.app.gui.chart.Plot;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceList;
@@ -52,12 +55,9 @@ public class BetterDensityPanel extends DensityPanel {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        Double values[] = new Double[tl.getStateCount()];
-        tl.getValues(traceIndex, values);
-        boolean[] selected = new boolean[tl.getStateCount()];
-        tl.getSelected(traceIndex, selected);
+        double values[] = Trace.arrayConvertToDouble((Number[]) tl.getValues(traceIndex, tl.getStateCount()));
 
-        Plot plot = new KDENumericalDensityPlot(Trace.arrayConvert(values, selected), minimumBins, td);
+        Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 
         densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         chartPanel.setYAxisTitle("Density");

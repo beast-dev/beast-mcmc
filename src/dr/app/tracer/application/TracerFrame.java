@@ -55,7 +55,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JProgressBar progressBar;
 
     private final java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private final java.util.List<FilteredTraceList> currentTraceLists = new ArrayList<FilteredTraceList>();
+    private final java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
     private CombinedTraces combinedTraces = null;
 
     private final java.util.List<String> commonTraceNames = new ArrayList<String>();
@@ -351,15 +351,15 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 "Filter Configuration", JOptionPane.YES_NO_OPTION);
 
         if (n == JOptionPane.YES_OPTION) {
-            for (FilteredTraceList filteredTraceList : currentTraceLists) {
-                filteredTraceList.removeAllFilters();
+            for (TraceList filteredTraceList : currentTraceLists) {
+                ((FilteredTraceList) filteredTraceList).removeAllFilters();
             }
         }
 
         filterStatus.setText("");
     }
 
-    private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {
+    private boolean hasDiffValues(List<TraceList> currentTraceLists) {
         return false;  //Todo
     }
 
@@ -528,7 +528,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void updateCombinedTraces() {
         if (traceLists.size() > 1) {
-            FilteredTraceList[] traces = new FilteredTraceList[traceLists.size()];
+            TraceList[] traces = new TraceList[traceLists.size()];
             try {
                 traceLists.toArray(traces);
             } catch (ArrayStoreException ase) {
@@ -601,7 +601,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         boolean isFirst = true;
         for (int row : selRows) {
             if (row < traceLists.size()) {
-                FilteredTraceList tl = traceLists.get(row);
+                TraceList tl = traceLists.get(row);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -625,7 +625,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 currentTraceLists.add(tl);
             } else if (isFirst) {
                 // if the 'Combined' trace is selected but no other trace files, then add all traces
-                FilteredTraceList tl = traceLists.get(0);
+                TraceList tl = traceLists.get(0);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -655,29 +655,30 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         filterStatus.setText(message);
     }
 
-    private String updateStatusMessage(List<FilteredTraceList> currentTraceLists) {
+    private String updateStatusMessage(List<TraceList> currentTraceLists) {
         String message = "";
         List<String> traceNameList = new ArrayList<String>();
         List<String> messageList = new ArrayList<String>();
 
-        for (int i = 0; i < currentTraceLists.size(); i++) {
-            Filter f = currentTraceLists.get(i).getFilter();
-
-            if (f != null) {
-                String tN = f.getTraceName();
-                if (!traceNameList.contains(tN)) {
-                    traceNameList.add(tN);
-                    message = f.getStatusMessage() + " in file(s) " + "\'" + currentTraceLists.get(i).getName() + "\'";
-                    messageList.add(message);
-                } else {
-                    int id = traceNameList.indexOf(tN);
-                    message = messageList.get(id) + " and \'" + currentTraceLists.get(i).getName() + "\'";
-                    messageList.set(id, message);
-                }
-
-                filterCombo.setSelectedItem(tN);  // todo
-            }
-        }
+//        for (int i = 0; i < currentTraceLists.size(); i++) {
+//            FilteredTraceList fTL = (FilteredTraceList) currentTraceLists.get(i);
+//            Filter f = ).getTraceName();
+//
+//            if (f != null) {
+//                String tN = f.getTraceName();
+//                if (!traceNameList.contains(tN)) {
+//                    traceNameList.add(tN);
+//                    message = f.getStatusMessage() + " in file(s) " + "\'" + fTL.getName() + "\'";
+//                    messageList.add(message);
+//                } else {
+//                    int id = traceNameList.indexOf(tN);
+//                    message = messageList.get(id) + " and \'" + fTL.getName() + "\'";
+//                    messageList.set(id, message);
+//                }
+//
+//                filterCombo.setSelectedItem(tN);  // todo
+//            }
+//        }
 
 
         message = "";
@@ -697,7 +698,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
         List<Class> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<Class>());
         List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
-        for (FilteredTraceList tl : currentTraceLists) {
+        for (TraceList tl : currentTraceLists) {
             List<String> currentTrace = new ArrayList<String>();
             for (int i = 0; i < tl.getTraceCount(); i++) {
                 String traceName = tl.getTraceName(i);
@@ -749,7 +750,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int[] selRows = statisticTable.getSelectedRows();
 
         boolean isIncomplete = false;
-        for (FilteredTraceList tl : currentTraceLists) {
+        for (TraceList tl : currentTraceLists) {
             if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
                 isIncomplete = true;
         }
@@ -774,7 +775,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
-    public void analyseTraceList(FilteredTraceList job) {
+    public void analyseTraceList(TraceList job) {
 
         if (analyseTask == null) {
             analyseTask = new AnalyseTraceTask();
@@ -817,12 +818,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         }
 
-        private final AnalysisStack<FilteredTraceList> analysisStack = new AnalysisStack<FilteredTraceList>();
+        private final AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
 
         public AnalyseTraceTask() {
         }
 
-        public void add(FilteredTraceList job) {
+        public void add(TraceList job) {
             analysisStack.add(job);
             current = 0;
         }
@@ -862,7 +863,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             do {
                 if (analysisStack.getCount() > 0) {
                     Object job = analysisStack.get(0);
-                    FilteredTraceList tl = (FilteredTraceList) job;
+                    TraceList tl = (TraceList) job;
 
                     try {
                         for (int i = 0; i < tl.getTraceCount(); i++) {
@@ -1381,7 +1382,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public Object getValueAt(int row, int col) {
-            FilteredTraceList traceList;
+            TraceList traceList;
 
             if (traceLists.size() == 0) {
                 switch (col) {
@@ -1462,7 +1463,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-            if (col == 3) return td.getTraceType().getBrief();
+            if (col == 3) return td.getTraceType(); //TODO
 
             double value = 0.0;
             boolean warning = false;

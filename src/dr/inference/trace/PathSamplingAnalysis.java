@@ -178,8 +178,8 @@ public class PathSamplingAnalysis {
                 traces.getValues(traceIndexTheta, sampleTheta);
 
                 PathSamplingAnalysis analysis = new PathSamplingAnalysis(
-                        Trace.arrayConvert(sampleLogLikelihood), likelihoodName,
-                        Trace.arrayConvert(sampleTheta));
+                        Trace.arrayConvertToDouble(sampleLogLikelihood), likelihoodName,
+                        Trace.arrayConvertToDouble(sampleTheta));
 
                 System.out.println(analysis.toString());
 

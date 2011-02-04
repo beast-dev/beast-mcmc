@@ -110,11 +110,11 @@ public class Trace<T> {
         System.arraycopy(values, start, destination, offset, count);
     }
 
-    public T[] getValues(int length, int start, int offset, boolean[] selected) {
+    public T[] getValues(int length, int start, int offset, boolean[] selected) {//todo not return T
         return this.getValues(length, start, offset, valueCount - start, selected);
     }
 
-    public T[] getValues(int length, int start, int offset, int count, boolean[] selected) {
+    public T[] getValues(int length, int start, int offset, int count, boolean[] selected) {//todo not return T
         T[] destination = (T[]) new Object[length];
         System.arraycopy(values, start, destination, offset, count);
 
@@ -138,6 +138,7 @@ public class Trace<T> {
         }
         T[] afterSelected = (T[]) new Object[valuesList.size()];
         afterSelected = valuesList.toArray(afterSelected);
+        valuesList.clear();
         return afterSelected;
     }
 
@@ -145,7 +146,8 @@ public class Trace<T> {
         return name;
     }
 
-    public static <T> double[] arrayConvertToDouble(T[] src) {
+    // *************** Large Memory Comsumption ******************
+    public static <T> double[] arrayConvertToDouble(T[] src) {//todo
         double[] dest = null;
         if (src != null) {
             dest = new double[src.length];
@@ -156,7 +158,7 @@ public class Trace<T> {
         return dest;
     }
 
-    public static <T> int[] arrayConvertToInt(T[] src) {
+    public static <T> int[] arrayConvertToInt(T[] src) {//todo
         int[] dest = null;
         if (src != null) {
             dest = new int[src.length];
@@ -167,7 +169,7 @@ public class Trace<T> {
         return dest;
     }
 
-    public static double[][] multiDArrayConvert(Double[][] src) {
+    public static double[][] multiDArrayConvert(Double[][] src) {//todo
         double[][] dest = null;
         if (src != null) {
             dest = new double[src.length][src[0].length];
@@ -179,6 +181,7 @@ public class Trace<T> {
         }
         return dest;
     }
+    //************************************************************
 
     public Class getTraceType() {
         return values[0].getClass();

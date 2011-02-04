@@ -52,7 +52,7 @@ public class ModelAveragingSpeciationLikelihood extends AbstractModelLikelihood 
         }
         this.indexVariable = indexVariable;
         for (int i = 0; i < indexVariable.getSize(); i++) {
-            indexVariable.setValue(i, 0);
+            indexVariable.setValue(i, i+1); // if starts all 0, the top value (i+1) of index will be missing
         }
         indexVariable.addBounds(new Bounds.Staircase(indexVariable));
         addVariable(indexVariable);

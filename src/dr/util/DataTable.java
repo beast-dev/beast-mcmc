@@ -44,7 +44,7 @@ public interface DataTable<T> {
 
             this.columnLabels = new String[columnLabels.size()];
             columnLabels.toArray(this.columnLabels);
-           
+
             List<String> rowLabels = new ArrayList<String>();
             List<double[]> rows = new ArrayList<double[]>();
 
@@ -133,6 +133,111 @@ public interface DataTable<T> {
         }
     }
 
+    class Text implements DataTable<String[]> {
+
+        private Text(Reader source) throws IOException {
+            BufferedReader reader = new BufferedReader(source);
+
+            String line = reader.readLine();
+            if (line == null) {
+                throw new IllegalArgumentException("Empty file");
+            }
+
+            List<String> columnLabels = new ArrayList<String>();
+
+            StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+
+            // potentially the first token is the name of the row labels
+            String name = tokenizer.nextToken();
+
+            while (tokenizer.hasMoreTokens()) {
+                String label = tokenizer.nextToken();
+                columnLabels.add(label);
+            }
+
+            this.columnLabels = new String[columnLabels.size()];
+            columnLabels.toArray(this.columnLabels);
+
+            List<String> rowLabels = new ArrayList<String>();
+            List<String[]> rows = new ArrayList<String[]>();
+
+            int rowIndex = 1;
+
+            line = reader.readLine();
+            while (line != null) {
+                tokenizer = new StringTokenizer(line, "\t");
+
+                String label = tokenizer.nextToken();
+                rowLabels.add(label);
+
+                String[] row = new String [this.columnLabels.length];
+
+                int columnIndex = 0;
+                while (tokenizer.hasMoreTokens()) {
+                    row[columnIndex] = tokenizer.nextToken();
+
+                    columnIndex ++;
+                }
+                if (columnIndex != this.columnLabels.length) {
+                    throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
+                            ", expecting " + this.columnLabels.length + " but actually " + columnIndex);
+                }
+
+                rows.add(row);
+
+                line = reader.readLine();
+                rowIndex++;
+            }
+
+            this.rowLabels = new String[rowLabels.size()];
+            rowLabels.toArray(this.rowLabels);
+
+            data = new String[rows.size()][];
+            rows.toArray(data);
+
+        }
+
+        public int getColumnCount() {
+            return columnLabels.length;
+        }
+
+        public int getRowCount() {
+            return rowLabels.length;
+        }
+
+        public String[] getColumnLabels() {
+            return columnLabels;
+        }
+
+        public String[] getRowLabels() {
+            return rowLabels;
+        }
+
+        public String[] getColumn(final int columnIndex) {
+            String[] column = new String[data.length];
+            for (int i = 0; i < data.length; i++) {
+                column[i] = data[i][columnIndex];
+            }
+            return column;
+        }
+
+        public String[] getRow(final int rowIndex) {
+            return data[rowIndex];
+        }
+
+        public String[][] getData() {
+            return data;
+        }
+
+        private String[] columnLabels;
+        private String[] rowLabels;
+
+        private String[][] data;
+
+        public static DataTable<String []> parse(Reader source) throws IOException {
+            return new DataTable.Text(source);
+        }
+    }
 
 
 }

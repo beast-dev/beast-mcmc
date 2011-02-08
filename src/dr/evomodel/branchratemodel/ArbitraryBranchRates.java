@@ -89,7 +89,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         // Should be called by TreeParameterModel
-        fireModelChanged(null, index);
+        fireModelChanged(object, index);
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

@@ -39,7 +39,7 @@ import java.awt.*;
  */
 public class PathogenApp extends MultiDocApplication {
     private final static Version version = new Version() {
-        private static final String VERSION = "1.3";
+        private static final String VERSION = "1.4pre";
 
         public String getVersion() {
             return VERSION;

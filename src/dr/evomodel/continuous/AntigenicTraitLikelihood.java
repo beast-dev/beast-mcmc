@@ -50,39 +50,45 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         int assayCount = dataTable.getColumnCount();
         tipCount = virusLocationCount;
 
-        String[] serumNames = dataTable.getColumnLabels();
-        int[] aliasIndices = aliasIndices = new int[serumNames.length];
+        String[] assayNames = dataTable.getColumnLabels();
+        int[] assayToSerumIndices = new int[assayNames.length];
 
         Set<String> aliasSet = null;
         List<String> aliasNames = null;
+
+        String[] serumNames = null;
 
         if (hasAliases) {
             aliasSet = new HashSet<String>();
             aliasNames = new ArrayList<String>();
 
             String[] aliases = dataTable.getRow(0);
-            for (int i = 0; i < serumNames.length; i++) {
+            for (int i = 0; i < assayNames.length; i++) {
                 if (aliasSet.contains(aliases[i])) {
-                    aliasIndices[i] = aliasNames.indexOf(aliases[i]);
+                    assayToSerumIndices[i] = aliasNames.indexOf(aliases[i]);
                 } else {
                     aliasSet.add(aliases[i]);
                     aliasNames.add(aliases[i]);
-                    aliasIndices[i] = aliasNames.size() - 1;
+                    assayToSerumIndices[i] = aliasNames.size() - 1;
                 }
             }
 
             // the number of serum locations is the number of aliases
             serumLocationCount = aliasNames.size();
+            serumNames = new String[aliasNames.size()];
+            aliasNames.toArray(serumNames);
+
         } else {
             // the number of serum locations is the number of columns
             serumLocationCount = assayCount;
 
             // one alias for one serum
-            for (int i = 0; i < serumNames.length; i++) {
-                aliasIndices[i] = i;
+            for (int i = 0; i < assayToSerumIndices.length; i++) {
+                assayToSerumIndices[i] = i;
             }
-        }
 
+            serumNames = assayNames;
+        }
 
         Map<String, Integer> tipNameMap = null;
         if (tipTraitParameter != null) {
@@ -114,41 +120,20 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         // the virus -> tip map
         virusIndices = new int[virusLocationCount];
 
-        locations = new double[virusLocationCount][mdsDimension];
-//        locations = new double[serumCount][mdsDimension];
+        virusLocations = new double[virusLocationCount][mdsDimension];
 
         // a set of vectors for each virus giving serum indices for which assay data is available
         measuredSerumIndices = new int[virusLocationCount][];
 
-        // a compressed (no missing values) set of measured assay values between virus and sera.
-        this.assayTable = new double[virusLocationCount][];
-
-        double[] maxSerum = null;
-
-        if (log2Transform) {
-            maxSerum = new double[serumLocationCount];
-            for (int j = 0; j < assayCount; j++) {
-                maxSerum[j] = 0;
-                String[] dataColumn = dataTable.getColumn(j);
-                for (int i = 0; i < virusLocationCount; i++) {
-                    double value = convertString(dataColumn[i]);
-                    if (!Double.isNaN(value) && value > 0) {
-                        if (value > maxSerum[j]) {
-                            maxSerum[j] = value;
-                        }
-                    }
-                }
-            }
-        }
-
-        int totalMeasurementCount = 0;
         int start = hasAliases ? 1 : 0;
 
-        // Build a sparse matrix of assay values
-        for (int i = start; i < virusLocationCount; i++) {
+        List<List<List<Double>>> assayTableList = new ArrayList<List<List<Double>>>();
+
+        // Build a sparse matrix of non-missing assay values
+        for (int i = 0; i < virusLocationCount; i++) {
             virusIndices[i] = -1;
 
-            String[] dataRow = dataTable.getRow(i);
+            String[] dataRow = dataTable.getRow(i + start);
 
             if (tipIndices != null) {
                 // if the virus is in the tree then add a entry to map tip to virus
@@ -161,52 +146,108 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 }
             }
 
-            // count the number of measured assay values
-            int measuredCount = 0;
-            for (int j = 0; j < assayCount; j++) {
-                double value = convertString(dataRow[i]);
-                if (!Double.isNaN(value) &&value > 0) {
-                    measuredCount ++;
-                }
-            }
+            List<List<Double>> assayRow = new ArrayList<List<Double>>();
+            List<Integer> assayIndices = new ArrayList<Integer>();
 
-            assayTable[i] = new double[measuredCount];
-            measuredSerumIndices[i] = new int[measuredCount];
+            int count = 0;
+            for (int j = 0; j < serumLocationCount; j++) {
 
-            // now fill in the matrix and keep track of indices
-            int k = 0;
-            for (int j = 0; j < assayCount; j++) {
-                double value = convertString(dataRow[i]);
-                if (!Double.isNaN(value) && value > 0) {
-                    if (log2Transform) {
-                        if (value < titrationThreshold) {
-                            this.assayTable[i][k] = Double.POSITIVE_INFINITY;
-                        } else {
-                            this.assayTable[i][k] = transform(value, maxSerum[j]);
+                List<Double> assayReplicates = new ArrayList<Double>();
+                for (int k = 0; k < assayCount; k++) {
+                    if (assayToSerumIndices[k] == j) {
+                        double value = convertString(dataRow[k]);
+                        if (!Double.isNaN(value) && value > 0) {
+                            assayReplicates.add(value);
                         }
-                    } else {
-                        this.assayTable[i][k] = value;
                     }
-                    measuredSerumIndices[i][k] = aliasIndices[j];
-                    k ++;
                 }
+                assayRow.add(assayReplicates);
+                assayIndices.add(j);
+
+//                if (assayReplicates.size() > 0) {
+//                    System.out.println("Virus " + virusNames[i] + " to serum " + serumNames[j] + " has " + assayReplicates.size() + " measurements");
+//                }
+                count += assayReplicates.size();
             }
-            totalMeasurementCount += measuredCount;
+            assayTableList.add(assayRow);
+
+            measuredSerumIndices[i] = new int[assayIndices.size()];
+            for (int j = 0; j < assayIndices.size(); j++) {
+                measuredSerumIndices[i][j] = assayIndices.get(j);
+            }
+
+//            System.out.println("Virus " + virusNames[i] + " has " + count + " measurements");
+            if (count == 0) {
+                System.err.println("WARNING: Virus " + virusNames[i] + " has " + count + " measurements");
+            }
         }
 
-        this.totalMeasurementCount = totalMeasurementCount;
+        int totalDistancesCount = 0;
+        int totalMeasurementsCount = 0;
+
+        // the largest measured value for any given column of data
+        // Currently this is the largest across any assay column for a given antisera.
+        // Optionally could normalize by individual assay column
+        double[] maxAssayValue = new double[serumLocationCount];
+
+        // Convert into arrays
+        assayTable = new double[assayTableList.size()][][];
+        int[] assayCounts = new int[serumLocationCount];
+        for (int i = 0; i < assayTable.length; i++) {
+            List<List<Double>> assayRow = assayTableList.get(i);
+            assayTable[i] = new double[assayRow.size()][];
+
+            for (int j = 0; j < assayTable[i].length; j++) {
+                List<Double> assayReplicates = assayRow.get(j);
+
+                assayTable[i][j] = new double[assayReplicates.size()];
+
+                for (int k = 0; k < assayTable[i][j].length; k++) {
+                    double value = assayReplicates.get(k);
+                    if (value > maxAssayValue[j]) {
+                        maxAssayValue[j] = value;
+                    }
+                    assayTable[i][j][k] = value;
+                }
+
+                totalMeasurementsCount += assayTable[i][j].length;
+                assayCounts[j] += assayTable[i][j].length;
+            }
+
+            totalDistancesCount += assayTable[i].length;
+        }
+
+        for (int j = 0; j < serumLocationCount; j++) {
+            if (assayCounts[j] == 0) {
+                System.err.println("WARNING: Serum " + serumNames[j] + " has 0 measurements");
+            }
+        }
+
+        // transform and normalize the data if required
+        if (log2Transform) {
+            for (int i = 0; i < assayTable.length; i++) {
+                for (int j = 0; j < assayTable[i].length; j++) {
+                    for (int k = 0; k < assayTable[i][j].length; k++) {
+                        assayTable[i][j][k] = transform(assayTable[i][j][k], maxAssayValue[j]);
+                    }
+                }
+            }
+        }
+
+        this.totalDistancesCount = totalDistancesCount;
+        this.totalMeasurementsCount = totalMeasurementsCount;
 
         // a cache of virus to serum distances (serum indices given by array above).
-        distances = new double[totalMeasurementCount];
-        storedDistances = new double[totalMeasurementCount];
+        distances = new double[totalDistancesCount];
+        storedDistances = new double[totalDistancesCount];
 
         virusLocationUpdates = new boolean[virusLocationCount];
         serumLocationUpdates = new boolean[serumLocationCount];
-        distanceUpdate = new boolean[totalMeasurementCount];
+        distanceUpdate = new boolean[totalDistancesCount];
 
         // a cache of individual truncations
-        truncations = new double[totalMeasurementCount];
-        storedTruncations = new double[totalMeasurementCount];
+        truncations = new double[totalDistancesCount];
+        storedTruncations = new double[totalDistancesCount];
 
         if (tipIndices != null) {
             for (int i = 0; i < tipCount; i++) {
@@ -273,6 +314,11 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private double transform(final double value, final double maxValue) {
         // transform to log_2
+//                        if (value < titrationThreshold) {
+//                            assayTable[i][j][k] = Double.POSITIVE_INFINITY;
+//                        } else {
+//                        }
+
         double t =  Math.log(maxValue / value) / Math.log(2.0);
         return t;
     }
@@ -300,16 +346,16 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             distancesKnown = false;
 
             statsKnown = false;
-
-            makeDirty();
         } else if (variable == serumLocationsParameter) {
             serumLocationUpdates[index / mdsDimension] = true;
 
             distancesKnown = false;
 
         } else if (variable == mdsParameter) {
-            for (int i = 0; i < distanceUpdate.length; i++) {
-                distanceUpdate[i] = true;
+            if (isLeftTruncated) {
+                for (int i = 0; i < distanceUpdate.length; i++) {
+                    distanceUpdate[i] = true;
+                }
             }
         } else if (variable == tipTraitParameter) {
             // do nothing
@@ -351,6 +397,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
 
         statsKnown = false;
+
     }
 
     @Override
@@ -381,7 +428,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        makeDirty();
+//        makeDirty();
+
         if (!likelihoodKnown) {
             if (!distancesKnown) {
                 calculateDistances();
@@ -392,18 +440,18 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
             logLikelihood = computeLogLikelihood();
             likelihoodKnown = true;
-        }
 
-        for (int i = 0; i < virusLocationUpdates.length; i++) {
-            virusLocationUpdates[i] = false;
-        }
+            for (int i = 0; i < virusLocationUpdates.length; i++) {
+                virusLocationUpdates[i] = false;
+            }
 
-        for (int i = 0; i < serumLocationUpdates.length; i++) {
-            serumLocationUpdates[i] = false;
-        }
+            for (int i = 0; i < serumLocationUpdates.length; i++) {
+                serumLocationUpdates[i] = false;
+            }
 
-        for (int i = 0; i < distanceUpdate.length; i++) {
-            distanceUpdate[i] = false;
+            for (int i = 0; i < distanceUpdate.length; i++) {
+                distanceUpdate[i] = false;
+            }
         }
 
         return logLikelihood;
@@ -413,7 +461,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     protected double computeLogLikelihood() {
 
         double precision = mdsParameter.getParameterValue(0);
-        double logLikelihood = (totalMeasurementCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
+
+        double logLikelihood = 0.5 * (totalMeasurementsCount * Math.log(precision) - precision * sumOfSquaredResiduals);
 
         if (isLeftTruncated) {
             if (!truncationKnown) {
@@ -448,12 +497,17 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
     private double calculateSumOfSquaredResiduals() {
         double sum = 0.0;
-        int k = 0;
+        int l = 0;
+        // across virus
         for (int i = 0; i < assayTable.length; i++) {
+            // across serum
             for (int j = 0; j < assayTable[i].length; j++) {
-                double residual = distances[k] - assayTable[i][j];
-                sum += residual * residual;
-                k++;
+                // across assay replicates
+                for (int k = 0; k < assayTable[i][j].length; k++) {
+                    double residual = distances[l] - assayTable[i][j][k];
+                    sum += residual * residual;
+                }
+                l++;
             }
         }
         return sum;
@@ -464,7 +518,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         for (int i = 0; i < assayTable.length; i++) {
             for (int j = 0; j < assayTable[i].length; j++) {
                 if (virusLocationUpdates[i] || serumLocationUpdates[measuredSerumIndices[i][j]]) {
-                    distances[k] = calculateDistance(virusLocationsParameter.getParameter(i),
+                    distances[k] = calculateDistance(
+                            virusLocationsParameter.getParameter(i),
                             serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
                     distanceUpdate[k] = true;
                 }
@@ -482,7 +537,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         return Math.sqrt(sum);
     }
 
-    private final double[][] locations;
+    private final double[][] virusLocations;
     private boolean statsKnown = false;
 
     private void calculateStats() {
@@ -490,8 +545,8 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         for (int i = 0; i < virusLocationCount; i++) {
             for (int j = 0; j < mdsDimension; j++) {
-                locations[i][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
-                locationMean[j] += locations[i][j];
+                virusLocations[i][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
+                locationMean[j] += virusLocations[i][j];
             }
         }
         for (int j = 0; j < mdsDimension; j++) {
@@ -672,7 +727,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         }
     };
 
-    private final double[][] assayTable;
+    private final double[][][] assayTable;
 
     private final int tipCount;
     private final int virusLocationCount;
@@ -680,15 +735,16 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     private final int[] tipIndices;
     private final int[] virusIndices;
 
+    // for each measured assay, which serum locations does it refer to
+    private final int[][] measuredSerumIndices;
+
+    private final int totalDistancesCount;
+    private final int totalMeasurementsCount;
+
     private final CompoundParameter tipTraitParameter;
     private final MatrixParameter virusLocationsParameter;
     private final MatrixParameter serumLocationsParameter;
     private final Parameter mdsParameter;
-
-    private final int totalMeasurementCount;
-
-    // a set of vectors for each virus giving serum indices for which assay data is available
-    private final int[][] measuredSerumIndices;
 
     private final double titrationThreshold;
 

@@ -45,7 +45,6 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
     protected void restoreState() {
         currentTreeIndex = storedTreeIndex;
-        fireModelChanged();
     }
 
     protected void acceptState() {

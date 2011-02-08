@@ -204,7 +204,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         else if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
                 TreeModel.TreeChangedEvent event = (TreeModel.TreeChangedEvent) object;
-                if (event.isHeightChanged()) {
+                if (event.isTreeChanged()) {
+                    recalculateTreeLength();
+                    updateAllNodes();
+                } else  if (event.isHeightChanged()) {
                     recalculateTreeLength();
                     if (useTreeLength || (scaleByTime && treeModel.isRoot(event.getNode())))
                         updateAllNodes();
@@ -226,7 +229,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             } else if (object instanceof Parameter) {
                 // Ignoring
             } else {
-                throw new RuntimeException("Unexpected TreeModel event occurring in AbstractMultivariateTraitLikelihood");
+                throw new RuntimeException("Unexpected object throwing events in AbstractMultivariateTraitLikelihood");
             }
         } else if (model == rateModel) {
             if (index == -1) {
@@ -490,7 +493,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             String traitName = TreeTraitParserUtilities.DEFAULT_TRAIT_NAME;
 
             TreeTraitParserUtilities.TraitsAndMissingIndices returnValue =
-                utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
+                    utilities.parseTraitsFromTaxonAttributes(xo, traitName, treeModel, integrate);
             CompoundParameter traitParameter = returnValue.traitParameter;
             List<Integer> missingIndices = returnValue.missingIndices;
             traitName = returnValue.traitName;
@@ -597,13 +600,13 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 }, true),
                 AttributeRule.newBooleanRule(INTEGRATE, true),
 //                new XORRule(
-                        new ElementRule(MultivariateDistributionLikelihood.class, true),
-                        new ElementRule(CONJUGATE_ROOT_PRIOR, new XMLSyntaxRule[]{
-                                new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
-                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                                new ElementRule(PRIOR_SAMPLE_SIZE,
-                                        new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                        }, true),
+                new ElementRule(MultivariateDistributionLikelihood.class, true),
+                new ElementRule(CONJUGATE_ROOT_PRIOR, new XMLSyntaxRule[]{
+                        new ElementRule(MultivariateDistributionLikelihood.MVN_MEAN,
+                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                        new ElementRule(PRIOR_SAMPLE_SIZE,
+                                new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                }, true),
 //                        true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),

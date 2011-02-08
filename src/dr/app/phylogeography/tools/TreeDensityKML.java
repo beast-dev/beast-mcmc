@@ -34,6 +34,7 @@ import jebl.evolution.io.ImportException;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.io.TreeImporter;
 import jebl.evolution.trees.RootedTree;
+import jebl.math.Random;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.output.Format;
@@ -50,12 +51,14 @@ import java.util.Map;
  */
 
 public class TreeDensityKML {
+    private static final String STATE_ATTRIBUTE_NAME = "states";
 
     private final static Version version = new BeastVersion();
 
     private final Map<String, Location> locationMap;
 
     public TreeDensityKML(int burnin,
+                          int skipEvery,
                           String inputFileName,
                           String outputFileName) throws IOException {
 
@@ -105,13 +108,21 @@ public class TreeDensityKML {
                 }
 
                 if (totalTrees >= burnin) {
-                    trees.add(generateKMLTree("Tree_" + totalTrees, tree));
+                    if (totalTrees % skipEvery == 0) {
+                        trees.add(generateKMLTree("Tree_" + totalTrees, tree));
 
-                    totalTreesUsed += 1;
+                        if (totalTrees % 50 == 0) {
+                            System.out.print(".");
+                        }
+                        totalTreesUsed += 1;
+                    }
                 }
                 totalTrees += 1;
 
             }
+
+            System.out.println();
+
         } catch (ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
@@ -147,13 +158,19 @@ public class TreeDensityKML {
 
         Element element = generateContainer("Folder", name, null, null);
 
+        double longNoise = Random.nextGaussian() * 0.5;
+        double latNoise = Random.nextGaussian() * 0.5;
+
         int nodeNumber = 0;
         for (Node node : tree.getNodes()) {
             nodeNumber++;
 
             if (!tree.isRoot(node)) {
-                int state = getIntegerNodeAttribute(node, "state");
+                String state = (String)node.getAttribute(STATE_ATTRIBUTE_NAME);
                 Location location = locationMap.get(state);
+                if (location == null) {
+                    throw new RuntimeException("No location called " + state + " in location list");
+                }
 
                 // Create each branch of the tree..
 
@@ -161,10 +178,12 @@ public class TreeDensityKML {
 
 
                 Node parentNode = tree.getParent(node);
-                int parentState = getIntegerNodeAttribute(parentNode, "state");
+                String parentState = (String)parentNode.getAttribute(STATE_ATTRIBUTE_NAME);
 
                 Location parentLocation = locationMap.get(parentState);
-
+                if (parentLocation == null) {
+                    throw new RuntimeException("No location called " + parentState + " in location list");
+                }
 
                 Element branch = generateContainer("Placemark", nodeName, null, null);
 
@@ -174,11 +193,11 @@ public class TreeDensityKML {
                 lineString.addContent(generateElement("altitudeMode", "clampToGround"));
 
                 Element coordinates = new Element("coordinates");
-                    coordinates.addContent(""+parentLocation.getLongitude()+","+parentLocation.getLatitude()+"\r");
-                    coordinates.addContent(""+location.getLongitude()+","+location.getLatitude()+"\r");
+                    coordinates.addContent(""+ (parentLocation.getLongitude() + longNoise)+","+ (parentLocation.getLatitude()  + latNoise)+"\r");
+                    coordinates.addContent(""+ (location.getLongitude() + longNoise) +","+ (location.getLatitude() + latNoise) +"\r");
                 lineString.addContent(coordinates);
 
-                element.addContent(lineString);
+                branch.addContent(lineString);
 
                 element.addContent(branch);
             }
@@ -242,7 +261,14 @@ public class TreeDensityKML {
             String line = reader.readLine();
             while (line != null && line.trim().length() > 0) {
                 String[] parts = line.split("\t");
-                Location location = new Location(parts[0], parts[1], Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+                Location location;
+                if (parts.length == 4) {
+                     location = new Location(parts[0], parts[1], Double.parseDouble(parts[2]), Double.parseDouble(parts[3]));
+                } else if (parts.length == 3) {
+                    location = new Location(parts[0], parts[0], Double.parseDouble(parts[1]), Double.parseDouble(parts[2]));
+                } else {
+                    throw new RuntimeException("Wrong number of columns in coordinates file");
+                }
 
                 locationMap.put(location.getState(), location);
                 line = reader.readLine();
@@ -258,10 +284,9 @@ public class TreeDensityKML {
 
     public static void printTitle() {
         System.out.println();
-        centreLine("DensityPlotter " + version.getVersionString() + ", " + version.getDateString(), 60);
-        centreLine("BEAST time vs. parameter density analysis", 60);
+        centreLine("TreeDensityKML " + version.getVersionString() + ", " + version.getDateString(), 60);
         centreLine("by", 60);
-        centreLine("Andrew Rambaut, Marc A. Suchard and Alexei J. Drummond", 60);
+        centreLine("Andrew Rambaut", 60);
         System.out.println();
         System.out.println();
     }
@@ -295,6 +320,7 @@ public class TreeDensityKML {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.IntegerOption("skip", "skip over this many trees per sample [default = 1]"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -316,6 +342,11 @@ public class TreeDensityKML {
             burnin = arguments.getIntegerOption("burnin");
         }
 
+        int skipEvery = 1;
+        if (arguments.hasOption("skip")) {
+            skipEvery = arguments.getIntegerOption("skip");
+        }
+
         String[] args2 = arguments.getLeftoverArguments();
 
         if (args2.length > 2) {
@@ -335,6 +366,7 @@ public class TreeDensityKML {
         }
 
         new TreeDensityKML(burnin,
+                skipEvery,
                 inputFileName,
                 outputFileName
         );

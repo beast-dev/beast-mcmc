@@ -78,6 +78,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     private final Map<String, Integer> idMap = new HashMap<String, Integer>();
 
+    private boolean saveAlignment = false;
+    private Map<Integer,Sequence> alignmentTraitList;
+
     /**
      * Constructor
      *
@@ -142,6 +145,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
             sb.append("'");
             Logger.getLogger("dr.app.beagle.tools").info(sb.toString());
         }
+
+        alignmentTraitList = new HashMap<Integer,Sequence>(tree.getNodeCount());
     }
 
     /**
@@ -166,6 +171,24 @@ public class CompleteHistorySimulator extends SimpleAlignment
         return new Sequence(tree.getNodeTaxon(node), sSeq);
     }
 
+    public void addAlignmentTrait() {
+
+        saveAlignment = true;
+        final String tag = "alignment";
+        treeTraits.addTrait(new TreeTrait.S() {
+            public String getTraitName() {
+                return tag;
+            }
+
+            public Intent getIntent() {
+                return Intent.NODE;
+            }
+
+            public String getTrait(Tree tree, NodeRef node) {     
+                return alignmentTraitList.get(node.getNumber()).getSequenceString();
+            }
+        });
+    }
 
     public void addRegister(Parameter addRegisterParameter, MarkovJumpsType type, boolean scaleByTime) {
 
@@ -276,7 +299,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
         sb.append("tree\n");
         Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
                 format, null,
-                (nJumpProcesses > 0 ? new TreeTraitProvider[]{this} : null),
+                (nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[]{this} : null),
                 idMap,
                 sb);
         sb.append("\n");
@@ -327,6 +350,11 @@ public class CompleteHistorySimulator extends SimpleAlignment
      */
     private void traverse(NodeRef node, int[] parentSequence, int[] category, SimpleAlignment alignment,
                           double[] lambda) {
+
+        if (saveAlignment) {
+            alignmentTraitList.put(node.getNumber(),intArray2Sequence(parentSequence,node));
+        }
+
         for (int iChild = 0; iChild < tree.getChildCount(node); iChild++) {
 
             NodeRef child = tree.getChild(node, iChild);

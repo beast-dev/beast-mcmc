@@ -165,7 +165,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 for (int k = 0; k < assayCount; k++) {
                     if (assayToSerumIndices[k] == j) {
                         double value = convertString(dataRow[k]);
-                        if (!Double.isNaN(value) && value > 0) {
+                        if (!Double.isNaN(value) && value > threshold) {
                             assayReplicates.add(value);
                         }
                     }
@@ -406,7 +406,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
 
         statsKnown = false;
-
     }
 
     @Override
@@ -437,7 +436,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-//        makeDirty();
+        makeDirty();
 
         if (!likelihoodKnown) {
             if (!distancesKnown) {

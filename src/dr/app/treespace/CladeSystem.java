@@ -2,6 +2,7 @@ package dr.app.treespace;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
+
 import java.util.*;
 
 /**
@@ -27,10 +28,6 @@ public class CladeSystem {
         // annotation purposes).
         addClades(tree, tree.getRoot(), includeTips);
     }
-//
-//        public Clade getClade(NodeRef node) {
-//            return null;
-//        }
 
     private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
@@ -42,7 +39,7 @@ public class CladeSystem {
             bits.set(index);
 
             if (includeTips) {
-                addClade(bits);
+                addClade(bits, taxonList.getTaxon(index).getId());
             }
 
         } else {
@@ -61,19 +58,83 @@ public class CladeSystem {
     }
 
     private void addClade(BitSet bits) {
+        addClade(bits, null);
+    }
+
+    private void addClade(BitSet bits, String label) {
         Clade clade = cladeMap.get(bits);
         if (clade == null) {
             clade = new Clade(bits);
             cladeMap.put(bits, clade);
         }
         clade.setCount(clade.getCount() + 1);
+        clade.label = label;
     }
 
-    public Map getCladeMap() {
+    /**
+     * adds all the clades in the tree
+     */
+    public void addCooccurances(Tree tree) {
+        addCladeCooccurances(tree, tree.getRoot(), null);
+    }
+
+    private BitSet addCladeCooccurances(Tree tree, NodeRef node, Clade parent) {
+
+        BitSet bits = getCladeBitset(tree, node);
+        Clade clade = cladeMap.get(bits);
+
+        if (!tree.isExternal(node)) {
+            if (clade == null) {
+                throw new IllegalArgumentException("Clade missing for cooccurance network");
+            }
+
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                bits.or(addCladeCooccurances(tree, tree.getChild(node, i), clade));
+            }
+        }
+
+        if (clade != null && parent != null) {
+            if (clade.parents == null) {
+                clade.parents = new HashMap<Clade, Integer>();
+            }
+
+            Integer frequency = clade.parents.get(parent);
+            if (frequency == null) {
+                frequency = 1;
+            } else {
+                frequency += 1;
+            }
+            clade.parents.put(parent, frequency);
+        }
+
+        return bits;
+    }
+
+    private BitSet getCladeBitset(Tree tree, NodeRef node) {
+
+        BitSet bits = new BitSet();
+
+        if (tree.isExternal(node)) {
+
+            int index = taxonList.getTaxonIndex(tree.getNodeTaxon(node).getId());
+            bits.set(index);
+
+        } else {
+
+            for (int i = 0; i < tree.getChildCount(node); i++) {
+                bits.or(getCladeBitset(tree, tree.getChild(node, i)));
+            }
+        }
+
+        return bits;
+    }
+
+    public Map<BitSet, Clade> getCladeMap() {
         return cladeMap;
     }
 
-    public void calculateCladeCredibilities(int totalTreesUsed) {
+    public void normalizeClades(int totalTreesUsed) {
+        int i = 0;
         for (Clade clade : cladeMap.values()) {
 
             if (clade.getCount() > totalTreesUsed) {
@@ -83,6 +144,8 @@ public class CladeSystem {
             }
 
             clade.setCredibility(((double) clade.getCount()) / (double) totalTreesUsed);
+            clade.index = i;
+            i++;
         }
     }
 
@@ -163,7 +226,6 @@ public class CladeSystem {
         return new ArrayList<Clade>(cladeMap.values());
     }
 
-
     class Clade {
         public Clade(BitSet bits) {
             this.bits = bits;
@@ -208,6 +270,9 @@ public class CladeSystem {
         int count;
         double credibility;
         BitSet bits;
+        String label;
+        int index;
+        Map<Clade, Integer> parents;
     }
 
     //

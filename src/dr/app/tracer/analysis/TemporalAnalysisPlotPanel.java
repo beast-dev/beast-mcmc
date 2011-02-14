@@ -195,12 +195,12 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
         demoChart.addPlot(linePlot);
 
-        Variate y1 = new Variate.Double();
+        Variate y1 = new Variate.D();
         y1.add(demoChart.getYAxis().getMinAxis());
         y1.add(demoChart.getYAxis().getMaxAxis());
 
         if (analysis.timeMean > 0.0 && analysis.timeMedian > 0.0) {
-            Variate x1 = new Variate.Double();
+            Variate x1 = new Variate.D();
             if (meanMedianComboBox.getSelectedItem().equals("Median")) {
                 x1.add(analysis.timeMedian);
                 x1.add(analysis.timeMedian);
@@ -216,7 +216,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         }
 
         if (analysis.timeLower > 0.0) {
-            Variate x2 = new Variate.Double();
+            Variate x2 = new Variate.D();
             x2.add(analysis.timeLower);
             x2.add(analysis.timeLower);
 
@@ -227,7 +227,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         }
 
         if (analysis.timeUpper > 0.0) {
-            Variate x3 = new Variate.Double();
+            Variate x3 = new Variate.D();
             x3.add(analysis.timeUpper);
             x3.add(analysis.timeUpper);
 

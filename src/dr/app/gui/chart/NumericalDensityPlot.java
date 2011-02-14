@@ -47,7 +47,7 @@ public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean solid = true;
 
-    public NumericalDensityPlot(Variate data, int minimumBinCount) {
+    public NumericalDensityPlot(Variate.D data, int minimumBinCount) {
         super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }
@@ -57,12 +57,12 @@ public class NumericalDensityPlot extends FrequencyPlot {
 //        this.minimumBinCount = minimumBinCount;
 //    }
 
-    public NumericalDensityPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+    public NumericalDensityPlot(Double[] data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD);
         this.minimumBinCount = minimumBinCount;
     }
 
-    public NumericalDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+    public NumericalDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD);
         this.minimumBinCount = minimumBinCount;
     }
@@ -80,8 +80,8 @@ public class NumericalDensityPlot extends FrequencyPlot {
         setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
-        Variate.Double xData = new Variate.Double();
-        Variate.Double yData = new Variate.Double();
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
 
         double x = frequency.getLowerBound() - frequency.getBinSize();
         double maxDensity = 0.0;
@@ -122,7 +122,7 @@ public class NumericalDensityPlot extends FrequencyPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.D xData, Variate.D yData) {
 
         int n = xData.getCount();
 

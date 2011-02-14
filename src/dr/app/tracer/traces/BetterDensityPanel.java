@@ -4,7 +4,6 @@ import dr.app.gui.chart.Axis;
 import dr.app.gui.chart.KDENumericalDensityPlot;
 import dr.app.gui.chart.KDESetupDialog;
 import dr.app.gui.chart.Plot;
-import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceList;
 
@@ -55,7 +54,7 @@ public class BetterDensityPanel extends DensityPanel {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        double values[] = Trace.arrayConvertToDouble(tl.getValues(traceIndex, tl.getStateCount()));
+        Double values[] = tl.getValues(traceIndex, tl.getStateCount());
 
         Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 

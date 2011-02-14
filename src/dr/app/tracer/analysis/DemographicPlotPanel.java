@@ -189,12 +189,12 @@ public class DemographicPlotPanel extends JPanel {
         linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
         demoChart.addPlot(linePlot);
 
-        Variate y1 = new Variate.Double();
+        Variate y1 = new Variate.D();
         y1.add(demoChart.getYAxis().getMinAxis());
         y1.add(demoChart.getYAxis().getMaxAxis());
 
         if (timeMean > 0.0 && timeMedian > 0.0) {
-            Variate x1 = new Variate.Double();
+            Variate x1 = new Variate.D();
             if (meanMedianComboBox.getSelectedItem().equals("Median")) {
                 x1.add(timeMedian);
                 x1.add(timeMedian);
@@ -210,7 +210,7 @@ public class DemographicPlotPanel extends JPanel {
         }
 
         if (timeLower > 0.0) {
-            Variate x2 = new Variate.Double();
+            Variate x2 = new Variate.D();
             x2.add(timeLower);
             x2.add(timeLower);
 
@@ -221,7 +221,7 @@ public class DemographicPlotPanel extends JPanel {
         }
 
         if (timeUpper > 0.0) {
-            Variate x3 = new Variate.Double();
+            Variate x3 = new Variate.D();
             x3.add(timeUpper);
             x3.add(timeUpper);
 

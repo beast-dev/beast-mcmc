@@ -51,7 +51,7 @@ public class LinePlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public LinePlot(double[] xData, double[] yData) {
+    public LinePlot(Double[] xData, Double[] yData) {
         super(xData, yData);
     }
 
@@ -60,8 +60,8 @@ public class LinePlot extends Plot.AbstractPlot {
      */
     protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
-        double x = transformX(xData.get(0));
-        double y = transformY(yData.get(0));
+        double x = transformX((Double) xData.get(0));
+        double y = transformY((Double) yData.get(0));
 
         GeneralPath path = new GeneralPath();
         path.moveTo((float) x, (float) y);
@@ -69,8 +69,8 @@ public class LinePlot extends Plot.AbstractPlot {
         int n = xData.getCount();
         boolean failed = false;
         for (int i = 1; i < n; i++) {
-            x = transformX(xData.get(i));
-            y = transformY(yData.get(i));
+            x = transformX((Double) xData.get(i));
+            y = transformY((Double) yData.get(i));
             if (x == Double.NEGATIVE_INFINITY || y == Double.NEGATIVE_INFINITY ||
                     Double.isNaN(x) || Double.isNaN(y)) {
                 failed = true;

@@ -53,7 +53,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public RegressionPlot(double[] xData, double[] yData, boolean forceOrigin) {
+    public RegressionPlot(Double[] xData, Double[] yData, boolean forceOrigin) {
         super(xData, yData);
         setForceOrigin(forceOrigin);
     }
@@ -61,7 +61,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(double[] xData, double[] yData) {
+    public void setData(Double[] xData, Double[] yData) {
         super.setData(xData, yData);
         regression = new Regression(this.xData, this.yData);
     }

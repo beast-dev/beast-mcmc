@@ -36,14 +36,14 @@ public class CategoryDensityPlot extends FrequencyPlot {
     private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
+    public CategoryDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
         super(traceD);
         this.numOfBars = numOfBars;
         this.barId = barId;
 
-        double[] doubleData = new double[data.length];
+        Double[] doubleData = new Double[data.length];
         for (int i = 0; i < data.length; i++) {
-            doubleData[i] = (double) data[i];
+            doubleData[i] = data[i].doubleValue();
         }
         setData(doubleData, minimumBinCount);
     }
@@ -55,8 +55,8 @@ public class CategoryDensityPlot extends FrequencyPlot {
         raw = data;
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
-        Variate.Double xData = new Variate.Double();
-        Variate.Double yData = new Variate.Double();
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
 
         double x = frequency.getLowerBound();
 
@@ -79,8 +79,8 @@ public class CategoryDensityPlot extends FrequencyPlot {
      * Get the FrequencyDistribution object
      */
     protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = data.getMin();
-        double max = data.getMax();
+        double min = (Double) data.getMin();
+        double max = (Double) data.getMax();
 
         if (min == max) {
             if (min == 0) {
@@ -117,7 +117,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue(raw.get(i));
+            frequency.addValue((Double) raw.get(i));
         }
 
         return frequency;
@@ -126,7 +126,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.D xData, Variate.D yData) {
         double x1, y1, x2, y2, x;
 
         int n = xData.getCount();

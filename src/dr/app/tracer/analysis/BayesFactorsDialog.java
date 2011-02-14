@@ -28,7 +28,6 @@ package dr.app.tracer.analysis;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.gui.util.LongTask;
 import dr.inference.trace.MarginalLikelihoodAnalysis;
-import dr.inference.trace.Trace;
 import dr.inference.trace.TraceList;
 import dr.util.TaskListener;
 import jam.framework.DocumentFrame;
@@ -256,10 +255,8 @@ public class BayesFactorsDialog {
                 Double[] likelihoods = new Double[traceList.getStateCount()];
                 traceList.getValues(index, likelihoods);
 
-                final MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                        Trace.arrayConvertToDouble(likelihoods),
-                        traceList.getName(), traceList.getBurnIn(),
-                        harmonicOnly, bootstrapLength);
+                final MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(likelihoods,
+                        traceList.getName(), traceList.getBurnIn(), harmonicOnly, bootstrapLength);
 
                 analysis.setTaskListener(new TaskListener() {
                     public void progress(double progress) {

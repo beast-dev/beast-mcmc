@@ -49,10 +49,10 @@ public class JTraceChart extends DiscreteJChart {
         int sampleCount;
         int sampleStep;
 
-        double[] states;
-        double[] values;
+        Double[] states;
+        Double[] values;
 
-        Trace(int stateStart, int stateStep, double[] values) {
+        Trace(int stateStart, int stateStep, Double[] values) {
 
             this.stateStart = stateStart;
             this.stateStep = stateStep;
@@ -66,7 +66,7 @@ public class JTraceChart extends DiscreteJChart {
                 sampleCount = values.length / sampleStep;
             }
 
-            this.states = new double[values.length];
+            this.states = new Double[values.length];
 
             int k = 0;
             double ix = stateStart;
@@ -93,9 +93,9 @@ public class JTraceChart extends DiscreteJChart {
         this.isLinePlot = isLinePlot;
     }
 
-    public void addTrace(String name, int stateStart, int stateStep, double[] values, double[] burninValues, Paint paint) {
+    public void addTrace(String name, int stateStart, int stateStep, Double[] values, Double[] burninValues, Paint paint) {
 
-        Variate.Double yd = new Variate.Double(values);
+        Variate.D yd = new Variate.D(values);
 
         xAxis.addRange(0, stateStart + (values.length * stateStep) - stateStep);
         yAxis.addRange(yd.getMin(), yd.getMax());
@@ -118,12 +118,12 @@ public class JTraceChart extends DiscreteJChart {
         repaint();
     }
 
-    public double[] getTraceStates(int index) {
+    public Double[] getTraceStates(int index) {
         Trace trace = traces.get(index);
         return trace.states;
     }
 
-    public double[] getTraceValues(int index) {
+    public Double[] getTraceValues(int index) {
         Trace trace = traces.get(index);
         return trace.values;
     }

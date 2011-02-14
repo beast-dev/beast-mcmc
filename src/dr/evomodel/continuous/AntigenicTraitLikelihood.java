@@ -40,7 +40,16 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             // if the first row is labelled aliases then there are aliases so the
             // viruses start on row 2.
             hasAliases = true;
-            virusNames = Arrays.copyOfRange(virusNames, 1, virusNames.length);
+
+            // Java 1.6:
+//            virusNames = Arrays.copyOfRange(virusNames, 1, virusNames.length);
+
+            // Java 1.5:
+            virusNames = new String[virusNames.length - 1];
+            for (int i = 0; i < virusNames.length; i++) {
+                virusNames[i] = dataTable.getRowLabels()[i + 1];
+            }
+
         }
 
 //        mdsDimension = virusLocationsParameter.getColumnDimension();

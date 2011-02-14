@@ -13,17 +13,17 @@ import dr.util.FrequencyDistribution;
  */
 public class DensityEstimate {
 
-    public DensityEstimate(double[] samples, int minimumBinCount) {
-        this.samples = new Variate.Double(samples);
+    public DensityEstimate(Double[] samples, int minimumBinCount) {
+        this.samples = new Variate.D(samples);
 
         calculateDensity(this.samples, minimumBinCount);
     }
 
-    protected void calculateDensity(Variate data, int minimumBinCount) {
+    protected void calculateDensity(Variate.D data, int minimumBinCount) {
         frequencyDistribution = calculateFrequencies(samples, minimumBinCount);
 
-        xCoordinates = new Variate.Double();
-        yCoordinates = new Variate.Double();
+        xCoordinates = new Variate.D();
+        yCoordinates = new Variate.D();
 
         double x = frequencyDistribution.getLowerBound() - frequencyDistribution.getBinSize();
 
@@ -43,8 +43,8 @@ public class DensityEstimate {
     }
 
     protected FrequencyDistribution calculateFrequencies(Variate data, int minimumBinCount) {
-        double min = data.getMin();
-        double max = data.getMax();
+        double min = (Double) data.getMin();
+        double max = (Double) data.getMax();
 
         if (min == max) {
             if (min == 0) {
@@ -81,18 +81,18 @@ public class DensityEstimate {
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
 
         for (int i = 0; i < data.getCount(); i++) {
-            frequency.addValue(data.get(i));
+            frequency.addValue((Double) data.get(i));
         }
 
         return frequency;
     }
 
 
-    public Variate getXCoordinates() {
+    public Variate.D getXCoordinates() {
         return xCoordinates;
     }
 
-    public Variate getYCoordinates() {
+    public Variate.D getYCoordinates() {
         return yCoordinates;
     }
 
@@ -100,8 +100,8 @@ public class DensityEstimate {
         return frequencyDistribution;
     }
 
-    protected final Variate samples;
-    protected Variate xCoordinates;
-    protected Variate yCoordinates;
+    protected final Variate.D samples;
+    protected Variate.D xCoordinates;
+    protected Variate.D yCoordinates;
     protected FrequencyDistribution frequencyDistribution;
 }

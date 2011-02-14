@@ -91,9 +91,13 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
                             System.out.print("E[" + statName + "] = " + formatter.format(expectation));
 
                             if (computeMSE) {
-                                double MSE = distribution.getMeanSquaredError(Trace.arrayConvertToDouble(
-                                        traces.getTrace(i).getValues(traces.getStateCount(),
-                                        traces.getBurninStateCount(), 0, null)), expectation);
+                                double[] dv = Trace.arrayConvertToDouble(traces.getTrace(i).
+                                        getValues(traces.getStateCount(), traces.getBurninStateCount(), 0, null));
+//                                double[] dv = new double[v.length];
+//                                for (int j = 0; j < dv.length; j++) {
+//                                    dv[j] = v[j];
+//                                }
+                                double MSE = distribution.getMeanSquaredError(dv, expectation);
                                 System.out.println(" MSE = " + formatter.format(MSE));
                             } else {
                                 System.out.println("");

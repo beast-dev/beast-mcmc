@@ -157,13 +157,11 @@ public class TraceAnalysis {
             Double sample[] = new Double[traces.getStateCount()];
             traces.getValues(traceIndex, sample);
 
-            double[] doubleSample = new double[sample.length];
+            Double[] doubleSample = new Double[sample.length];
             System.arraycopy(sample, 0, doubleSample, 0, sample.length);
 
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                    doubleSample,
-                    traces.getTraceName(traceIndex), burnin,
-                    harmonicOnly, bootstrapLength);
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(doubleSample,
+                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
 
             System.out.println(analysis.toString());
         }
@@ -260,13 +258,11 @@ public class TraceAnalysis {
             Double sample[] = new Double[traces.getStateCount()];
             traces.getValues(traceIndex, sample);
 
-            double[] doubleSample = new double[sample.length];
+            Double[] doubleSample = new Double[sample.length];
             System.arraycopy(sample, 0, doubleSample, 0, sample.length);
 
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
-                    doubleSample,
-                    traces.getTraceName(traceIndex), burnin,
-                    harmonicOnly, bootstrapLength);
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(doubleSample,
+                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
 
             System.out.print(analysis.getLogMarginalLikelihood() + "\t");
             System.out.print(analysis.getBootstrappedSE() + "\t");

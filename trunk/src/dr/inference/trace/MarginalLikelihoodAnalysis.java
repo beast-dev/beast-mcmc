@@ -37,7 +37,7 @@ import dr.util.TaskListener;
 public class MarginalLikelihoodAnalysis {
 
     private final String traceName;
-    private final double[] sample;
+    private final Double[] sample;
     private final int burnin;
     private final boolean harmonicOnly;
     private final int bootstrapLength;
@@ -69,7 +69,7 @@ public class MarginalLikelihoodAnalysis {
      * @param harmonicOnly
      * @param bootstrapLength a value of zero will turn off bootstrapping
      */
-    public MarginalLikelihoodAnalysis(double[] sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
+    public MarginalLikelihoodAnalysis(Double[] sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
         this.sample = sample;
         this.traceName = traceName;
         this.burnin = burnin;
@@ -78,7 +78,7 @@ public class MarginalLikelihoodAnalysis {
 //        System.err.println("setting burnin to "+burnin);
     }
 
-    public double calculateLogMarginalLikelihood(double[] sample) {
+    public double calculateLogMarginalLikelihood(Double[] sample) {
         if (harmonicOnly)
             return logMarginalLikelihoodHarmonic(sample);
         else
@@ -92,7 +92,7 @@ public class MarginalLikelihoodAnalysis {
      * @return the log marginal likelihood
      */
 
-    public double logMarginalLikelihoodHarmonic(double[] v) {
+    public double logMarginalLikelihoodHarmonic(Double[] v) {
 
         double sum = 0;
         final int size = v.length;
@@ -112,8 +112,8 @@ public class MarginalLikelihoodAnalysis {
         logMarginalLikelihood = calculateLogMarginalLikelihood(sample);
         if (bootstrapLength > 1) {
             final int sampleLength = sample.length;
-            double[] bsSample = new double[sampleLength];
-            double[] bootstrappedLogML = new double[bootstrapLength];
+            Double[] bsSample = new Double[sampleLength];
+            Double[] bootstrappedLogML = new Double[bootstrapLength];
             double sum = 0;
 
             double progress = 0.0;
@@ -155,7 +155,7 @@ public class MarginalLikelihoodAnalysis {
      * @return the log marginal likelihood
      */
     @SuppressWarnings({"SuspiciousNameCombination"})
-    public double logMarginalLikelihoodSmoothed(double[] v, double delta, double Pdata) {
+    public double logMarginalLikelihoodSmoothed(Double[] v, double delta, double Pdata) {
 
         final double logDelta = StrictMath.log(delta);
         final double logInvDelta = StrictMath.log(1.0 - delta);
@@ -215,7 +215,7 @@ public class MarginalLikelihoodAnalysis {
 
     }
 
-    public double logMarginalLikelihoodSmoothed(double[] v) {
+    public double logMarginalLikelihoodSmoothed(Double[] v) {
 
         final double delta = 0.01;  // todo make class adjustable by accessor/setter
 

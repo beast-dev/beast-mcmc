@@ -12,20 +12,20 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
 
     public static final int MINIMUM_GRID_SIZE = 512;
 
-    public NormalKDEDistribution(double[] sample) {
+    public NormalKDEDistribution(Double[] sample) {
         this(sample, null, null, null);
     }
 
-    public NormalKDEDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+    public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
         this(sample, lowerBound, upperBound, bandWidth, 3.0, MINIMUM_GRID_SIZE);
     }
 
-    public NormalKDEDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
+    public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
                                  int n) {
         this(sample, lowerBound, upperBound, bandWidth, 3.0, n);
     }
 
-    public NormalKDEDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
+    public NormalKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth,
                                  double cut, int n) {
         super(sample, lowerBound, upperBound, bandWidth);
         this.gridSize = Math.max(n, MINIMUM_GRID_SIZE);
@@ -34,8 +34,8 @@ public class NormalKDEDistribution extends KernelDensityEstimatorDistribution {
         }
         this.cut = cut;
 
-        from = DiscreteStatistics.min(sample) - this.cut * this.bandWidth;
-        to = DiscreteStatistics.max(sample) + this.cut * this.bandWidth;
+        from = DiscreteStatistics.min(super.sample) - this.cut * this.bandWidth;
+        to = DiscreteStatistics.max(super.sample) + this.cut * this.bandWidth;
 
         lo = from - 4.0 * this.bandWidth;
         up = to + 4.0 * this.bandWidth;

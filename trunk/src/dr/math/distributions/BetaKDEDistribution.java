@@ -1,7 +1,7 @@
 package dr.math.distributions;
 
-import dr.stats.DiscreteStatistics;
 import dr.math.GammaFunction;
+import dr.stats.DiscreteStatistics;
 
 //import java.io.BufferedReader;
 //import java.io.FileReader;
@@ -14,7 +14,7 @@ import dr.math.GammaFunction;
  */
 public class BetaKDEDistribution extends KernelDensityEstimatorDistribution {
 
-     public BetaKDEDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+     public BetaKDEDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
          super(sample, lowerBound, upperBound, bandWidth);
 
      }

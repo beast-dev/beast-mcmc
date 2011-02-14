@@ -1,7 +1,6 @@
 package test.dr.math;
 
 import dr.math.MathUtils;
-import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.math.matrixAlgebra.Vector;
 
@@ -13,9 +12,9 @@ public class KDEDistributionTest extends MathTestCase {
     public void testNormalKDE() {
 
         int length = 100;
-        double[] sample = new double[length];
+        Double[] sample = new Double[length];
         for (int i = 0; i < length; i++) {
-            sample[i] = i + 1;
+            sample[i] = (double) (i + 1);
         }
 
 //        final int gridSize = 256;

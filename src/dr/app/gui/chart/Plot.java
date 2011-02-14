@@ -29,7 +29,9 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Plot.java
@@ -68,7 +70,7 @@ public interface Plot {
     /**
      * Set data
      */
-    void setData(double[] xData, double[] yData);
+    void setData(Double[] xData, Double[] yData);
 
     /**
      * Set data
@@ -226,7 +228,7 @@ public interface Plot {
         /**
          * Constructor
          */
-        public AbstractPlot(double[] xData, double[] yData) {
+        public AbstractPlot(Double[] xData, Double[] yData) {
             setData(xData, yData);
         }
 
@@ -234,9 +236,9 @@ public interface Plot {
         /**
          * Set data
          */
-        public void setData(double[] xData, double[] yData) {
-            Variate.Double xd = new Variate.Double(xData);
-            Variate.Double yd = new Variate.Double(yData);
+        public void setData(Double[] xData, Double[] yData) {
+            Variate.D xd = new Variate.D(xData);
+            Variate.D yd = new Variate.D(yData);
 
             this.xData = xd;
             this.yData = yd;
@@ -275,14 +277,14 @@ public interface Plot {
                     double minValue = java.lang.Double.POSITIVE_INFINITY;
 
                     for (int i = 0; i < xData.getCount(); i++) {
-                        double value = xData.get(i);
+                        double value = (Double) xData.get(i);
                         if (value > 0.0 && value < minValue)
                             minValue = value;
                     }
 
-                    xAxis.addRange(minValue, xData.getMax());
+                    xAxis.addRange(minValue, (Double) xData.getMax());
                 } else {
-                    xAxis.addRange(xData.getMin(), xData.getMax());
+                    xAxis.addRange((Double) xData.getMin(), (Double) xData.getMax());
                 }
             }
             if (yData != null) {
@@ -290,14 +292,14 @@ public interface Plot {
                     double minValue = java.lang.Double.POSITIVE_INFINITY;
 
                     for (int i = 0; i < yData.getCount(); i++) {
-                        double value = yData.get(i);
+                        double value = (Double) yData.get(i);
                         if (value > 0.0 && value < minValue)
                             minValue = value;
                     }
 
-                    yAxis.addRange(minValue, yData.getMax());
+                    yAxis.addRange(minValue, (Double) yData.getMax());
                 } else {
-                    yAxis.addRange(yData.getMin(), yData.getMax());
+                    yAxis.addRange((Double) yData.getMin(), (Double) yData.getMax());
                 }
             }
         }
@@ -552,8 +554,8 @@ public interface Plot {
             double y1 = untransformY(dragRectangle.getY());
 
             for (int i = 0; i < xData.getCount(); i ++) {
-                double x = xData.get(i);
-                double y = yData.get(i);
+                double x = (Double) xData.get(i);
+                double y = (Double) yData.get(i);
 
                 if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
                     selectedPoints.add(i);

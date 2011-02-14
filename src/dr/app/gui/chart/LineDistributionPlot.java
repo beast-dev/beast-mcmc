@@ -70,8 +70,8 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
             y2 = new double[lineCount];
 
             for (int i = 0; i < lineCount; i++) {
-                y1[i] = (gradients.get(i) * x1) + intercepts.get(i);
-                y2[i] = (gradients.get(i) * x2) + intercepts.get(i);
+                y1[i] = ( (Double) gradients.get(i) * x1) + (Double) intercepts.get(i);
+                y2[i] = ( (Double) gradients.get(i) * x2) + (Double) intercepts.get(i);
             }
 
             isCalibrated = true;

@@ -68,15 +68,15 @@ public class DensityEstimatePlot extends Plot.AbstractPlot {
 
         int n = xData.getCount();
 
-        float x = (float) transformX(xData.get(0));
-        float y = (float) transformY(yData.get(0));
+        float x = (float) transformX((Double) xData.get(0));
+        float y = (float) transformY((Double) yData.get(0));
 
         GeneralPath path = new GeneralPath();
         path.moveTo(x, y);
 
         for (int i = 1; i < n; i++) {
-            x = (float) transformX(xData.get(i));
-            y = (float) transformY(yData.get(i));
+            x = (float) transformX((Double) xData.get(i));
+            y = (float) transformY((Double) yData.get(i));
 
             path.lineTo(x, y);
         }

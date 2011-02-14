@@ -32,8 +32,8 @@ package dr.stats;
  * @version $Id: Regression.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Regression {
-    private Variate xData = null;
-    private Variate yData = null;
+    private Variate.D xData = null;
+    private Variate.D yData = null;
 
     private boolean forceOrigin = false;
     private boolean regressionKnown = false;
@@ -85,8 +85,8 @@ public class Regression {
      * Set data
      */
     public void setData(double[] xData, double[] yData) {
-        Variate.Double xd = new Variate.Double();
-        Variate.Double yd = new Variate.Double();
+        Variate.D xd = new Variate.D();
+        Variate.D yd = new Variate.D();
 
         for (int i = 0; i < xData.length; i++) {
             xd.add(xData[i]);
@@ -103,8 +103,8 @@ public class Regression {
      * Set data
      */
     public void setData(Variate xData, Variate yData) {
-        this.xData = xData;
-        this.yData = yData;
+        this.xData = (Variate.D) xData;
+        this.yData = (Variate.D) yData;
 
         regressionKnown = false;
     }
@@ -188,7 +188,7 @@ public class Regression {
     }
 
     public Variate getYResidualData() {
-        Variate.Double rd = new Variate.Double();
+        Variate.D rd = new Variate.D();
 
         for (int i = 0; i < xData.getCount(); i++) {
             rd.add(getResidual(xData.get(i), yData.get(i)));

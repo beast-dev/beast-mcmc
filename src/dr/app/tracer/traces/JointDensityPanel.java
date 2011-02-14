@@ -447,7 +447,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
             }
         }
 
-        double samples1[] = new double[sampleSize];
+        Double samples1[] = new Double[sampleSize];
         int k = 0;
         if (td1.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
             correlationChart.setXAxis(new DiscreteAxis(true, true));
@@ -460,7 +460,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
             k += minCount / sampleSize;
         }
 
-        double samples2[] = new double[sampleSize];
+        Double samples2[] = new Double[sampleSize];
         k = 0;
         if (td2.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
             correlationChart.setYAxis(new DiscreteAxis(true, true));

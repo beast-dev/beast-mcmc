@@ -13,7 +13,7 @@ import dr.util.FrequencyDistribution;
 public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
 
 
-    public KDENumericalDensityPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
+    public KDENumericalDensityPlot(Double[] data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD); // TODO Remove when all linked together
 
 //        kde = new GammaKDEDistribution(data);
@@ -25,7 +25,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 //        setData(xData, yData);
     }
 
-    private KernelDensityEstimatorDistribution getKDE(double[] samples) {
+    private KernelDensityEstimatorDistribution getKDE(Double[] samples) {
 //        System.err.println("samples is null? " + (samples == null ? "yes" : "no"));
 //        System.err.println("type is null? " + (type == null ? "yes" : "no"));
         type = KernelDensityEstimatorDistribution.Type.GAUSSIAN;
@@ -40,10 +40,10 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
     /**
      * Set data
      */
-    public void setData(Variate data, int minimumBinCount) {
+    public void setData(Variate.D data, int minimumBinCount) {
 
         setRawData(data);
-        double[] samples = new double[data.getCount()];
+        Double[] samples = new Double[data.getCount()];
         for (int i = 0; i < data.getCount(); i++) {
             samples[i] = data.get(i);
         }
@@ -51,8 +51,8 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
-        Variate.Double xData = new Variate.Double();
-        Variate.Double yData = new Variate.Double();
+        Variate.D xData = new Variate.D();
+        Variate.D yData = new Variate.D();
 
 //        double x = frequency.getLowerBound() - frequency.getBinSize();
 //        double maxDensity = 0.0;
@@ -125,20 +125,20 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
     }
 
     protected Variate getXCoordinates(int numPoints) {
-        double[] points = new double[numPoints];
+        Double[] points = new Double[numPoints];
         for (int i = 0; i < numPoints; i++) {
-            points[i] = i;
+            points[i] = (double) i;
         }
-        return new Variate.Double(points);
+        return new Variate.D(points);
     }
 
-    protected Variate getYCoordinates(Variate xData) {
+    protected Variate getYCoordinates(Variate.D xData) {
         final int length = xData.getCount();
-        double[] points = new double[length];
+        Double[] points = new Double[length];
         for (int i = 0; i < length; i++) {
             points[i] = kde.pdf(xData.get(i));
         }
-        return new Variate.Double(points);
+        return new Variate.D(points);
     }
 
     private KernelDensityEstimatorDistribution kde;

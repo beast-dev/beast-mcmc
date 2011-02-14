@@ -26,9 +26,13 @@
 package dr.app.tracer.analysis;
 
 import dr.app.gui.components.RealNumberField;
+import dr.app.gui.components.WholeNumberField;
+import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
+import jam.framework.DocumentFrame;
+import jam.panels.OptionsPanel;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
 import jebl.evolution.io.ImportException;
@@ -36,10 +40,6 @@ import jebl.evolution.io.NewickImporter;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.io.TreeImporter;
 import jebl.evolution.trees.RootedTree;
-import dr.app.gui.components.WholeNumberField;
-import jam.framework.DocumentFrame;
-import jam.panels.OptionsPanel;
-import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -617,7 +617,7 @@ public class GMRFSkyrideDialog {
 
 
                 for (int k = 0; k < binCount; k++) {
-                    bins[k] = new Variate.Double();
+                    bins[k] = new Variate.D();
 
                     if (height >= 0.0 && height <= maxHeight) {
                         for (state = 0; state < stateCount; state++) {
@@ -644,11 +644,11 @@ public class GMRFSkyrideDialog {
                     current += 1;
                 }
 
-                Variate xData = new Variate.Double();
-                Variate yDataMean = new Variate.Double();
-                Variate yDataMedian = new Variate.Double();
-                Variate yDataUpper = new Variate.Double();
-                Variate yDataLower = new Variate.Double();
+                Variate xData = new Variate.D();
+                Variate yDataMean = new Variate.D();
+                Variate yDataMedian = new Variate.D();
+                Variate yDataUpper = new Variate.D();
+                Variate yDataLower = new Variate.D();
 
                 double t;
                 if (ageOfYoungest > 0.0) {

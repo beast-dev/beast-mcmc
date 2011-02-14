@@ -25,7 +25,10 @@
 
 package dr.app.tools;
 
-import dr.inference.trace.*;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceDistribution;
+import dr.inference.trace.TraceException;
+import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
@@ -53,11 +56,11 @@ public class SkylineReconstructor {
     private double maxTime;
     private double ageOfYoungest;
 
-    private Variate xData = new Variate.Double();
-    private Variate yDataMean = new Variate.Double();
-    private Variate yDataMedian = new Variate.Double();
-    private Variate yDataUpper = new Variate.Double();
-    private Variate yDataLower = new Variate.Double();
+    private Variate xData = new Variate.D();
+    private Variate yDataMean = new Variate.D();
+    private Variate yDataMedian = new Variate.D();
+    private Variate yDataUpper = new Variate.D();
+    private Variate yDataLower = new Variate.D();
 
     public SkylineReconstructor(File logFile, File treeFile, int burnin,
                                 int binCount, double minTime, double maxTime, double ageOfYoungest)
@@ -205,7 +208,7 @@ public class SkylineReconstructor {
         double height = 0.0;
 
         for (int k = 0; k < binCount; k++) {
-            bins[k] = new Variate.Double();
+            bins[k] = new Variate.D();
 
             if (height >= 0.0 && height <= maxHeight) {
                 for (state = 0; state < stateCount; state++) {

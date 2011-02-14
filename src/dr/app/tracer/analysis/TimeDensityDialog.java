@@ -26,11 +26,11 @@
 package dr.app.tracer.analysis;
 
 import dr.app.gui.components.RealNumberField;
+import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 import jam.panels.OptionsPanel;
-import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -208,8 +208,8 @@ public class TimeDensityDialog {
                 frequency.addValue(getTime(times[i]));
             }
 
-            Variate.Double xData = new Variate.Double();
-            Variate.Double yData = new Variate.Double();
+            Variate.D xData = new Variate.D();
+            Variate.D yData = new Variate.D();
 
             double x = frequency.getLowerBound() - frequency.getBinSize();
             xData.add(x + (frequency.getBinSize() / 2.0));

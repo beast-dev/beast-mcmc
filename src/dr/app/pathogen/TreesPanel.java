@@ -25,16 +25,23 @@
 
 package dr.app.pathogen;
 
-import dr.app.gui.util.LongTask;
-import dr.evolution.tree.*;
 import dr.app.gui.chart.*;
+import dr.app.gui.util.LongTask;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 import dr.stats.Regression;
 import dr.stats.Variate;
 import dr.util.NumberFormatter;
+import figtree.panel.FigTreePanel;
+import figtree.treeviewer.TreePaneSelector;
+import figtree.treeviewer.TreeSelectionListener;
 import jam.framework.Exportable;
 import jam.table.TableRenderer;
+import jebl.evolution.graphs.Node;
+import jebl.evolution.taxa.Taxon;
+import jebl.evolution.trees.RootedTree;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -45,14 +52,10 @@ import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.DecimalFormat;
-import java.util.*;
-
-import figtree.panel.FigTreePanel;
-import figtree.treeviewer.TreePaneSelector;
-import figtree.treeviewer.TreeSelectionListener;
-import jebl.evolution.trees.RootedTree;
-import jebl.evolution.taxa.Taxon;
-import jebl.evolution.graphs.Node;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Andrew Rambaut
@@ -112,7 +115,7 @@ public class TreesPanel extends JPanel implements Exportable {
         Box controlPanel1 = new Box(BoxLayout.PAGE_AXIS);
         controlPanel1.setOpaque(false);
 
-        JPanel panel3 = new JPanel(new BorderLayout(0,0));
+        JPanel panel3 = new JPanel(new BorderLayout(0, 0));
         panel3.setOpaque(false);
         rootingCheck = new JCheckBox("Best-fitting root");
         panel3.add(rootingCheck, BorderLayout.CENTER);
@@ -150,7 +153,7 @@ public class TreesPanel extends JPanel implements Exportable {
         ChartSelector selector1 = new ChartSelector(rootToTipChart);
 
         rootToTipPanel = new JChartPanel(rootToTipChart, "", "time", "divergence");
-        JPanel panel =  new JPanel(new BorderLayout());
+        JPanel panel = new JPanel(new BorderLayout());
         panel.add(rootToTipPanel, BorderLayout.CENTER);
         panel.add(showMRCACheck, BorderLayout.SOUTH);
         panel.setOpaque(false);
@@ -187,13 +190,13 @@ public class TreesPanel extends JPanel implements Exportable {
 
         rootingCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction)rootingFunctionCombo.getSelectedItem());
+                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction) rootingFunctionCombo.getSelectedItem());
             }
         });
 
         rootingFunctionCombo.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction)rootingFunctionCombo.getSelectedItem());
+                setBestFittingRoot(rootingCheck.isSelected(), (TemporalRooting.RootingFunction) rootingFunctionCombo.getSelectedItem());
             }
         });
 
@@ -271,7 +274,7 @@ public class TreesPanel extends JPanel implements Exportable {
     }
 
     public JComponent getExportableComponent() {
-        return (JComponent)tabbedPane.getSelectedComponent();
+        return (JComponent) tabbedPane.getSelectedComponent();
     }
 
     public void setTree(Tree tree) {
@@ -349,23 +352,28 @@ public class TreesPanel extends JPanel implements Exportable {
             RootedTree jtree = Tree.Utils.asJeblTree(currentTree);
 
             if (temporalRooting.isContemporaneous()) {
-                double values[] = temporalRooting.getRootToTipDistances(currentTree);
+                double[] dv = temporalRooting.getRootToTipDistances(currentTree);
+
+                Double[] values = new Double[dv.length];
+                for (int i = 0; i < dv.length; i++) {
+                    values[i] = dv[i];
+                }
 
                 rootToTipChart.removeAllPlots();
                 NumericalDensityPlot dp = new NumericalDensityPlot(values, 20, null);
-                dp.setLineColor(new Color(9,70,15));
+                dp.setLineColor(new Color(9, 70, 15));
 
-                double yOffset = dp.getYData().getMax() / 2;
-                double[] dummyValues = new double[values.length];
+                double yOffset = (Double) dp.getYData().getMax() / 2;
+                Double[] dummyValues = new Double[values.length];
                 for (int i = 0; i < dummyValues.length; i++) {
                     // add a random y offset to give some visual spread
-                    double y = MathUtils.nextGaussian() * (dp.getYData().getMax() * 0.05);
+                    double y = MathUtils.nextGaussian() * ((Double) dp.getYData().getMax() * 0.05);
                     dummyValues[i] = yOffset + y;
                 }
 
                 rootToTipPlot = new ScatterPlot(values, dummyValues);
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
+                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
                 rootToTipPlot.addListener(new Plot.Adaptor() {
                     public void selectionChanged(final Set<Integer> selectedPoints) {
                         plotSelectionChanged(selectedPoints);
@@ -380,10 +388,10 @@ public class TreesPanel extends JPanel implements Exportable {
                 residualChart.removeAllPlots();
 
                 sb.append(", contemporaneous tips");
-                sb.append(", mean root-tip distance: " + nf.format(DiscreteStatistics.mean(values)));
-                sb.append(", coefficient of variation: " + nf.format(DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values)));
-                sb.append(", stdev: " + nf.format(DiscreteStatistics.stdev(values)));
-                sb.append(", variance: " + nf.format(DiscreteStatistics.variance(values)));
+                sb.append(", mean root-tip distance: " + nf.format(DiscreteStatistics.mean(dv)));
+                sb.append(", coefficient of variation: " + nf.format(DiscreteStatistics.stdev(dv) / DiscreteStatistics.mean(dv)));
+                sb.append(", stdev: " + nf.format(DiscreteStatistics.stdev(dv)));
+                sb.append(", variance: " + nf.format(DiscreteStatistics.variance(dv)));
 
                 showMRCACheck.setVisible(false);
             } else {
@@ -402,13 +410,19 @@ public class TreesPanel extends JPanel implements Exportable {
                 rootToTipChart.removeAllPlots();
 
                 if (showMRCACheck.isSelected()) {
-                    double[] parentDistances = temporalRooting.getParentRootToTipDistances(currentTree);
-                    double[] parentTimes = new double[parentDistances.length];
+                    double[] dv = temporalRooting.getParentRootToTipDistances(currentTree);
+
+                    Double[] parentDistances = new Double[dv.length];
+                    for (int i = 0; i < dv.length; i++) {
+                        parentDistances[i] = dv[i];
+                    }
+
+                    Double[] parentTimes = new Double[parentDistances.length];
                     for (int i = 0; i < parentDistances.length; i++) {
                         parentTimes[i] = r.getX(parentDistances[i]);
                     }
                     mrcaPlot = new ParentPlot(r.getXData(), r.getYData(), parentTimes, parentDistances);
-                    mrcaPlot.setLineColor(new Color(105,202,105));
+                    mrcaPlot.setLineColor(new Color(105, 202, 105));
                     mrcaPlot.setLineStroke(new BasicStroke(0.5F));
 
                     rootToTipChart.addPlot(mrcaPlot);
@@ -420,38 +434,38 @@ public class TreesPanel extends JPanel implements Exportable {
                         plotSelectionChanged(selectedPoints);
                     }
                 });
-                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
+                rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
 
                 rootToTipChart.addPlot(rootToTipPlot);
 
                 rootToTipChart.addPlot(new RegressionPlot(r));
 
-                rootToTipChart.getXAxis().addRange(r.getXIntercept(), r.getXData().getMax());
+                rootToTipChart.getXAxis().addRange(r.getXIntercept(), (Double) r.getXData().getMax());
                 rootToTipPanel.setXAxisTitle("time");
                 rootToTipPanel.setYAxisTitle("root-to-tip divergence");
 
                 residualChart.removeAllPlots();
-                Variate values = r.getYResidualData();
+                Variate.D values = (Variate.D) r.getYResidualData();
                 NumericalDensityPlot dp = new NumericalDensityPlot(values, 20);
-                dp.setLineColor(new Color(103,128,144));
+                dp.setLineColor(new Color(103, 128, 144));
 
-                double yOffset = dp.getYData().getMax() / 2;
-                double[] dummyValues = new double[values.getCount()];
+                double yOffset = (Double) dp.getYData().getMax() / 2;
+                Double[] dummyValues = new Double[values.getCount()];
                 for (int i = 0; i < dummyValues.length; i++) {
                     // add a random y offset to give some visual spread
-                    double y = MathUtils.nextGaussian() * (dp.getYData().getMax() * 0.05);
+                    double y = MathUtils.nextGaussian() * ((Double) dp.getYData().getMax() * 0.05);
                     dummyValues[i] = yOffset + y;
                 }
-                Variate yOffsetValues = new Variate.Double(dummyValues);
+                Variate.D yOffsetValues = new Variate.D(dummyValues);
                 residualPlot = new ScatterPlot(values, yOffsetValues);
                 residualPlot.addListener(new Plot.Adaptor() {
                     public void selectionChanged(final Set<Integer> selectedPoints) {
                         plotSelectionChanged(selectedPoints);
                     }
                 });
-                residualPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44,44,44), new Color(249,202,105));
-                residualPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44,44,44), UIManager.getColor("List.selectionBackground"));
+                residualPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                residualPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
 
                 residualChart.addPlot(residualPlot);
                 residualChart.addPlot(dp);
@@ -600,7 +614,7 @@ public class TreesPanel extends JPanel implements Exportable {
 
                 switch (row) {
                     case 0:
-                        value =DiscreteStatistics.mean(values);
+                        value = DiscreteStatistics.mean(values);
                         break;
                     case 1:
                         value = DiscreteStatistics.stdev(values) / DiscreteStatistics.mean(values);

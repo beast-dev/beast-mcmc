@@ -127,7 +127,7 @@ public class Trace<T> {
         }
     }
 
-    private T[] getSeletedValues(T[] values, boolean[] selected) {
+    private <T> T[] getSeletedValues(T[] values, boolean[] selected) {
         if (values.length != selected.length)
             throw new RuntimeException("getSeletedValues: length of values[] is different with selected[] in Trace " + name);
 
@@ -219,4 +219,41 @@ public class Trace<T> {
     public boolean isIn(int i) {        
         return filter.isIn(values[i]);
     }
+
+    //******************** Trace Double ****************************
+    public class D extends Trace<Double> {
+
+        public D(String name, int initialSize, Double initValue) {
+            super(name, initialSize, initValue);
+        }
+
+        public D(String name, Double[] values) {
+            super(name, values);
+        }
+    }
+
+    //******************** Trace Integer ****************************
+    public class I extends Trace<Integer> {
+
+        public I(String name, int initialSize, Integer initValue) {
+            super(name, initialSize, initValue);
+        }
+
+        public I(String name, Integer[] values) {
+            super(name, values);
+        }
+    }
+
+    //******************** Trace String ****************************
+    public class S extends Trace<String> {
+
+        public S(String name, int initialSize, String initValue) {
+            super(name, initialSize, initValue);
+        }
+
+        public S(String name, String[] values) {
+            super(name, values);
+        }
+    }
+
 }

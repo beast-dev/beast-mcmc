@@ -21,6 +21,8 @@ import javax.swing.event.ChangeListener;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -217,11 +219,11 @@ public class TreeSpaceFrame extends DocumentFrame {
                                 JOptionPane.ERROR_MESSAGE);
                         return;
 
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
-                                "Error reading file",
-                                JOptionPane.ERROR_MESSAGE);
-                        return;
+//                    } catch (Exception ex) {
+//                        JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+//                                "Error reading file",
+//                                JOptionPane.ERROR_MESSAGE);
+//                        return;
                     }
                 }
             }
@@ -316,7 +318,7 @@ public class TreeSpaceFrame extends DocumentFrame {
                 Tree tree = importer.importNextTree();
 
                 if (totalTrees >= inputFile.getBurnin()) {
-                    cladeSystem.add(tree, false);
+                    cladeSystem.add(tree, true);
 
                     totalTreesUsed += 1;
                 }
@@ -346,15 +348,103 @@ public class TreeSpaceFrame extends DocumentFrame {
                 return 0;
             }
         }
-        cladeSystem.calculateCladeCredibilities(totalTreesUsed);
+        cladeSystem.normalizeClades(totalTreesUsed);
 
         progressStream.println("Total trees read: " + totalTrees);
         if (inputFile.getBurnin() > 0) {
             progressStream.println("Ignoring first " + inputFile.getBurnin() + " trees.");
         }
 
-        progressStream.println("Total unique clades: " + cladeSystem.getCladeMap().keySet().size());
+        int cladeCount = cladeSystem.getCladeMap().keySet().size();
+
+        progressStream.println("Total unique clades: " + cladeCount);
         progressStream.println();
+
+        progressStream.println("Processing trees for correlated clades:");
+        fileReader = new FileReader(inputFile.getFile());
+        importer = new dr.evolution.io.NexusImporter(fileReader);
+        try {
+            totalTrees = 0;
+            while (importer.hasTree()) {
+                Tree tree = importer.importNextTree();
+
+                if (totalTrees >= inputFile.getBurnin()) {
+                    cladeSystem.addCooccurances(tree);
+                }
+
+                if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                    progressStream.print("*");
+                    progressStream.flush();
+                }
+                totalTrees++;
+            }
+
+        } catch (Importer.ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            return 0;
+        }
+        fileReader.close();
+        progressStream.println();
+        progressStream.println();
+
+        double THRESHOLD = 0.05;
+
+        PrintWriter writer = new PrintWriter("clade_co-occurance.txt");
+
+        writer.println("source\tsize\ttarget\tco-occurence");
+        java.util.List<CladeSystem.Clade> allClades = cladeSystem.getClades();
+
+        for (CladeSystem.Clade clade1 : allClades) {
+            String name1;
+            int card1 = clade1.bits.cardinality();
+            if (card1 == 1) {
+                name1 = clade1.label;
+            } else {
+                name1 = "clade" + (clade1.index + 1);
+            }
+
+            if (clade1.parents != null) {
+                for (CladeSystem.Clade clade2 : clade1.parents.keySet()) {
+                    String name2;
+                    int card2 = clade2.bits.cardinality();
+                    name2 = "clade" + (clade2.index+1);
+
+                    double value = clade1.parents.get(clade2);
+                    value /= totalTreesUsed;
+                    if (value > THRESHOLD)  {
+                        if (card1 > card2) {
+                            writer.println(name1 + "_" + card1 + "\t" + card1 + "\t" + name2 + "_" + card2 + "\t" + value);
+                        } else {
+                            writer.println(name2 + "_" + card2 + "\t" + card2 + "\t" + name1 + "_" + card1 + "\t" + value);
+                        }
+                    }
+                }
+            }
+        }
+        writer.close();
+
+        writer = new PrintWriter("clade_frequency.txt");
+
+        writer.println("source\tsize\tfrequency");
+
+        for (CladeSystem.Clade clade1 : allClades) {
+            String name1;
+            int card1 = clade1.bits.cardinality();
+            if (card1 == 1) {
+                name1 = clade1.label;
+            } else {
+                name1 = "clade" + (clade1.index + 1);
+            }
+
+            double value = clade1.count;
+            value /= totalTreesUsed;
+            if (value > THRESHOLD)  {
+                writer.println(name1 + "_" + card1 + "\t" + card1 + "\t" + value);
+            }
+        }
+        writer.close();
+        progressStream.println();
+
 
         return totalTreesUsed;
     }

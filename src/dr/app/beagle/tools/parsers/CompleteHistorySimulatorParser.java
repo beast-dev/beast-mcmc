@@ -37,6 +37,8 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
     public static final String BRANCH_VARIABLE_PARAMETER = "variableParameter";
     public static final String VARIABLE_VALUE_PARAMETER = "valuesParameter";
 
+    public static final String ANNOTATE_WITH_ALIGNMENT = "annotateWithAlignment";
+
     public String getParserName() {
         return HISTORY_SIMULATOR;
     }
@@ -98,6 +100,10 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             }
         }
 
+        if (xo.getAttribute(ANNOTATE_WITH_ALIGNMENT,false)) {
+            history.addAlignmentTrait();
+        }
+
         history.simulate();
         return history;
     }
@@ -126,6 +132,7 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(SYN_JUMPS, true),
             AttributeRule.newBooleanRule(NON_SYN_JUMPS, true),
             AttributeRule.newBooleanRule(SUM_SITES, true),
+            AttributeRule.newBooleanRule(ANNOTATE_WITH_ALIGNMENT, true),
             new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
                     new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
                     new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),

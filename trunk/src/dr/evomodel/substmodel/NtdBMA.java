@@ -80,4 +80,31 @@ public class NtdBMA extends AbstractNucleotideModel{
 
     }
 
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        boolean changeRateMatrix = false;
+        
+        if(variable == modelChoose){
+            //changing the substitution model
+            changeRateMatrix = true;
+        }else if(variable == logKappa){
+            //changing kappa value (which is in all models)
+            changeRateMatrix = true;
+        }else if(variable == logTN && modelChoose.getValue(0) == 1){
+            //changing the tn value when the current model is TN.
+            changeRateMatrix = true;
+        }else if(variable == logAC ||
+                variable == logAT ||
+                variable == logGC ||
+                variable == logGT &&
+                modelChoose.getValue(1) == 1 && modelChoose.getValue(0) == 1){
+            //Changing any one of A<->C, A<->T, G<->C, G<->T rates while the current model is GTR.
+            changeRateMatrix = true;
+        }
+        // relativeRates changed
+        if(changeRateMatrix){
+            super.handleVariableChangedEvent(variable, index, type);
+        }
+        changeRateMatrix = false;
+    }
+
 }

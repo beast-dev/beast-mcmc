@@ -141,36 +141,37 @@ public class testNtdBMA extends TestCase {
         }
     };
 
+    //GTR example
     Instance test2 = new Instance() {
         public double[] getPi() {
             return new double[]{0.20, 0.30, 0.25, 0.25};
         }
 
         public double getLogKappa() {
-            return Math.log(5);
+            return Math.log(3)-0.5*Math.log(1.5);
         }
 
         public double getLogTN(){
-            return Math.log(1.2);
+            return -0.5*Math.log(1.5);
         }
 
         public double getLogAC(){
-            return Math.log(0.5);
+            return Math.log(1.2);
         }
 
         public double getLogAT(){
-            return Math.log(0.5);
+            return Math.log(0.6);
         }
 
         public double getLogGC(){
             return Math.log(0.5);
         }
         public double getLogGT(){
-            return Math.log(0.5);
+            return Math.log(0.8);
         }
 
         public Variable<Integer> getModelChoose(){
-            return new Variable.I(new int[]{0, 0});
+            return new Variable.I(new int[]{1, 1});
         }
 
         public double getDistance() {
@@ -179,15 +180,61 @@ public class testNtdBMA extends TestCase {
 
         public double[] getExpectedResult() {
             return new double[]{
-                    0.904026219693, 0.016708646875, 0.065341261036, 0.013923872396,
-                    0.011139097917, 0.910170587813, 0.013923872396, 0.064766441875,
-                    0.052273008829, 0.016708646875, 0.917094471901, 0.013923872396,
-                    0.011139097917, 0.077719730250, 0.013923872396, 0.897217299437
+                    0.9078362845301, 0.0325116185198, 0.0449673267333, 0.0146847702168,
+                    0.0216744123465, 0.9006273487178, 0.0122790622489, 0.0654191766868,
+                    0.0359738613867, 0.0147348746987, 0.9308468616493, 0.0184444022654,
+                    0.0117478161734, 0.0785030120241, 0.0184444022654, 0.8913047695370
+            };
+        }
+    };
+    //GTR example
+    Instance test5 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.20, 0.30, 0.25, 0.25};
+        }
+
+        public double getLogKappa() {
+            return Math.log(3)-0.5*Math.log(1.5);
+        }
+
+        public double getLogTN(){
+            return -0.5*Math.log(1.5);
+        }
+
+        public double getLogAC(){
+            return Math.log(1.2);
+        }
+
+        public double getLogAT(){
+            return Math.log(0.6);
+        }
+
+        public double getLogGC(){
+            return Math.log(0.5);
+        }
+        public double getLogGT(){
+            return Math.log(0.8);
+        }
+
+        public Variable<Integer> getModelChoose(){
+            return new Variable.I(new int[]{1, 1});
+        }
+
+        public double getDistance() {
+            return 2.5;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.246055801088, 0.266163561908, 0.273492078437, 0.214288558567,
+                    0.177442374606, 0.341245862774, 0.202456669039, 0.278855093581,
+                    0.218793662750, 0.242948002847, 0.333259562500, 0.204998771904,
+                    0.171430846853, 0.334626112297, 0.204998771904, 0.288944268946
             };
         }
     };
 
-    Instance[] all = {test2, test1, test0};
+    Instance[] all = {test2, test1, test0,test5};
 
     public void testHKY() {
         for (Instance test : all) {
@@ -221,7 +268,7 @@ public class testNtdBMA extends TestCase {
             final double[] result = test.getExpectedResult();
 
             for (int k = 0; k < mat.length; ++k) {
-                assertEquals(mat[k], result[k], 1e-10);
+                assertEquals(mat[k], result[k], 5e-10);
                 // System.out.print(" " + (mat[k] - result[k]));
             }
         }

@@ -27,6 +27,7 @@ package dr.evolution.alignment;
 
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
@@ -408,7 +409,9 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
 
         StringBuffer buffer = new StringBuffer();
 
-        if (!(dataType instanceof Codons)) {
+        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+
+        if (countStatistics) {
             buffer.append("Site count = ").append(getSiteCount()).append("\n");
             buffer.append("Invariant sites = ").append(getInvariantCount()).append("\n");
             buffer.append("Singleton sites = ").append(getSingletonCount()).append("\n");

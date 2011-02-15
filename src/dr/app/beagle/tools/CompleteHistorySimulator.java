@@ -164,7 +164,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
                 String s = dataType.getTriplet(seq[i]);
                 sSeq += s;
             } else {
-                char c = dataType.getChar(seq[i]);
+                String c = dataType.getCode(seq[i]);
                 sSeq += c;
             }
         }

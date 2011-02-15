@@ -45,6 +45,8 @@ public class testNtdBMA extends TestCase {
      * q0 = (xx + diag(-sum(xx,2))) / sum(piQ * sum(xx,2)) ;
      * expm(q0 * d)
      */
+
+    //A HKY model
     Instance test0 = new Instance() {
         public double[] getPi() {
             return new double[]{0.25, 0.25, 0.25, 0.25};
@@ -91,17 +93,18 @@ public class testNtdBMA extends TestCase {
         }
     };
 
+    //A TN93 model
     Instance test1 = new Instance() {
         public double[] getPi() {
-            return new double[]{0.50, 0.20, 0.2, 0.1};
+            return new double[]{0.1, 0.2, 0.3, 0.4};
         }
 
         public double getLogKappa() {
-            return Math.log(2);
+            return Math.log(3)-0.5*Math.log(1.5);
         }
 
         public double getLogTN(){
-            return Math.log(1.2);
+            return -0.5*Math.log(1.5);
         }
 
         public double getLogAC(){
@@ -120,9 +123,8 @@ public class testNtdBMA extends TestCase {
         }
 
         public Variable<Integer> getModelChoose(){
-            return new Variable.I(new int[]{0, 0});
+            return new Variable.I(new int[]{1, 0});
         }
-
 
 
         public double getDistance() {
@@ -131,10 +133,10 @@ public class testNtdBMA extends TestCase {
 
         public double[] getExpectedResult() {
             return new double[]{
-                    0.928287993055, 0.021032136637, 0.040163801989, 0.010516068319,
-                    0.052580341593, 0.906092679369, 0.021032136637, 0.020294842401,
-                    0.100409504972, 0.021032136637, 0.868042290072, 0.010516068319,
-                    0.052580341593, 0.040589684802, 0.021032136637, 0.885797836968
+                    0.895550254199242, 0.017687039418335, 0.051388627545752, 0.035374078836670,
+                    0.008843519709168, 0.865344657365451, 0.026530559127503, 0.099281263797879,
+                    0.017129542515251, 0.017687039418335, 0.929809339229744, 0.035374078836670,
+                    0.008843519709168, 0.049640631898940, 0.026530559127503, 0.914985289264390
             };
         }
     };

@@ -104,8 +104,7 @@ public class SkylineReconstructor {
             traces.getValues(firstGroupSize + i, groupSizes[i]);
         }
 
-        Double[] heights = new Double[stateCount];
-        traces.getValues(traces.getTraceIndex("treeModel.rootHeight"), heights);
+        List heights = traces.getValues(traces.getTraceIndex("treeModel.rootHeight"));
         TraceDistribution distribution = new TraceDistribution(heights, traces.getStepSize());
 
         double timeMean = distribution.getMean();

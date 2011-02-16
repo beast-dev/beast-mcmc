@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -130,9 +131,11 @@ public class FrequencyPanel extends JPanel implements Exportable {
 
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
+            List values = traceList.getValues(traceIndex);
             if (trace.getTraceType() == Double.class) {
-                Double[] values = traceList.getValues(traceIndex, traceList.getStateCount());
-                plot = new FrequencyPlot(values, minimumBins, td);
+                Double[] ar = new Double[values.size()];
+                values.toArray(ar);
+                plot = new FrequencyPlot(ar, minimumBins, td);
 
                 if (td != null) {
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
@@ -145,8 +148,9 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(false);
 
             } else if (trace.getTraceType() == Integer.class) {
-                Integer[] values = traceList.getValues(traceIndex, traceList.getStateCount());
-                plot = new FrequencyPlot(values, -1, td);
+                Integer[] ar = new Integer[values.size()];
+                values.toArray(ar);
+                plot = new FrequencyPlot(ar, -1, td);
 
                 if (td != null) {
                     plot.setInCredibleSet(td.credSet);
@@ -159,12 +163,11 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 showValuesCheckBox.setVisible(true);
 
             } else if (trace.getTraceType() == String.class) {
-                Object[] values = traceList.getValues(traceIndex, traceList.getStateCount());
 
-                Integer[] intData = new Integer[values.length];
-                for (int v = 0; v < values.length; v++) {
-                    intData[v] = td.credSet.getIndex(values[v].toString());
-                    categoryDataMap.put(intData[v], values[v].toString());
+                Integer[] intData = new Integer[values.size()];
+                for (int v = 0; v < values.size(); v++) {
+                    intData[v] = td.credSet.getIndex(values.get(v).toString());
+                    categoryDataMap.put(intData[v], values.get(v).toString());
                 }
 
                 plot = new FrequencyPlot(intData, -1, td);

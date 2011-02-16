@@ -34,24 +34,24 @@ public class TraceFactory {
         private final Class type;
     }
 
-    public static Trace createTrace(TraceType traceType, String name, int initialSize) {
-
-//        Double[] d = new Double[10];
-//        Double[] t = new Double[10];
-//        System.arraycopy(d, 0, t, 0, d.length);
-
-        // System.out.println("create trace (" + name + ") with type " + traceType);
-
-        switch (traceType) {
-            case CONTINUOUS:
-                return new Trace<Double>(name, initialSize, (double) 0);
-            case INTEGER:
-                return new Trace<Integer>(name, initialSize, 0);
-            case CATEGORY:
-                return new Trace<String>(name, initialSize, "initial_value");
-        }
-        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
-    }
+//    public static Trace createTrace(TraceType traceType, String name, int initialSize) {
+//
+////        Double[] d = new Double[10];
+////        Double[] t = new Double[10];
+////        System.arraycopy(d, 0, t, 0, d.length);
+//
+//        // System.out.println("create trace (" + name + ") with type " + traceType);
+//
+//        switch (traceType) {
+//            case CONTINUOUS:
+//                return new Trace<Double>(name, initialSize, (double) 0);
+//            case INTEGER:
+//                return new Trace<Integer>(name, initialSize, 0);
+//            case CATEGORY:
+//                return new Trace<String>(name, initialSize, "initial_value");
+//        }
+//        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
+//    }
 
 }
 

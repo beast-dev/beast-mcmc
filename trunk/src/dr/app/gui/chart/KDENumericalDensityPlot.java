@@ -58,7 +58,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 //        double maxDensity = 0.0;
 //        // TODO Compute KDE once
 ////        for (int i = 0; i < frequency.getBinCount(); i++) {
-////            double density = frequency.getFrequency(i) / frequency.getBinSize() / data.getCount();
+////            double density = frequency.getFrequency(i) / frequency.getBinSize() / data.getValuesSize();
 ////            if (density > maxDensity) maxDensity = density;
 ////        }
 //
@@ -69,7 +69,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 //        for (int i = 0; i < frequency.getBinCount(); i++) {
 //            double xPoint = x + (frequency.getBinSize() / 2.0);
 //            xData.add(xPoint);
-////            double density = frequency.getFrequency(i) / frequency.getBinSize() / data.getCount();
+////            double density = frequency.getFrequency(i) / frequency.getBinSize() / data.getValuesSize();
 //            double density = kde.pdf(xPoint);
 //            if (relativeDensity) {
 //                yData.add(density / maxDensity);
@@ -160,7 +160,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
 //        GeneralPath path = new GeneralPath();
 //        path.moveTo((float) x, (float) y);
 //
-//        int n = xData.getCount();
+//        int n = xData.getValuesSize();
 //        boolean failed = false;
 //        for (int i = 1; i < n; i++) {
 //            x = transformX(xData.get(i));

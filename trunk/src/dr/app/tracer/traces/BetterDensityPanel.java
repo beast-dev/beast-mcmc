@@ -10,6 +10,7 @@ import dr.inference.trace.TraceList;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
@@ -54,9 +55,11 @@ public class BetterDensityPanel extends DensityPanel {
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
-        Double values[] = tl.getValues(traceIndex, tl.getStateCount());
+        List values = tl.getValues(traceIndex);
+        Double[] ar = new Double[values.size()];
+        values.toArray(ar);
 
-        Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
+        Plot plot = new KDENumericalDensityPlot(ar, minimumBins, td);
 
         densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         chartPanel.setYAxisTitle("Density");

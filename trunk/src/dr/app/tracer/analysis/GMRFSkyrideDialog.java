@@ -52,6 +52,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class GMRFSkyrideDialog {
@@ -470,8 +471,7 @@ public class GMRFSkyrideDialog {
 
         public Object doWork() {
 
-            Double[] heights = new Double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
+            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 

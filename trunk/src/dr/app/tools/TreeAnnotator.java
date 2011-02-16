@@ -521,7 +521,7 @@ public class TreeAnnotator {
                 }
                 clade.attributeValues.add(values);
 
-                //progressStream.println(clade + " " + clade.getCount());
+                //progressStream.println(clade + " " + clade.getValuesSize());
                 clade.setCount(clade.getCount() + 1);
             }
         }

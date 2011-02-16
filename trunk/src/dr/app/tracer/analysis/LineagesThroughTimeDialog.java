@@ -51,6 +51,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Arrays;
+import java.util.List;
 
 public class LineagesThroughTimeDialog {
 
@@ -351,8 +352,7 @@ public class LineagesThroughTimeDialog {
 
         public Object doWork() {
 
-            Double[] heights = new Double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
+            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 

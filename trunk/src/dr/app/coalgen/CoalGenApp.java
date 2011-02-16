@@ -25,22 +25,25 @@
 
 package dr.app.coalgen;
 
+import dr.evolution.io.Importer;
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
 import jam.framework.SingleDocApplication;
+import jebl.evolution.coalescent.EmpiricalDemographicFunction;
+import jebl.evolution.graphs.Node;
+import jebl.evolution.io.ImportException;
+import jebl.evolution.io.NewickExporter;
+import jebl.evolution.io.NexusImporter;
+import jebl.evolution.io.TreeImporter;
+import jebl.evolution.taxa.Taxon;
+import jebl.evolution.trees.RootedTree;
+import jebl.evolution.treesimulation.CoalescentIntervalGenerator;
+import jebl.evolution.treesimulation.IntervalGenerator;
+import jebl.evolution.treesimulation.TreeSimulator;
 
 import javax.swing.*;
 import java.io.*;
-import java.util.*;
-
-import dr.evolution.io.Importer;
-import dr.inference.trace.*;
-import dr.util.FileHelpers;
-import jebl.evolution.io.*;
-import jebl.evolution.coalescent.EmpiricalDemographicFunction;
-import jebl.evolution.treesimulation.*;
-import jebl.evolution.trees.Tree;
-import jebl.evolution.trees.RootedTree;
-import jebl.evolution.taxa.Taxon;
-import jebl.evolution.graphs.Node;
+import java.util.Arrays;
 
 /**
  * @author Andrew Rambaut
@@ -83,7 +86,7 @@ public class CoalGenApp {
 
         System.out.println("Loading trace file: " + inputFileName);
         LogFileTraces traces = new LogFileTraces(inputFileName, logFile);
-        traces.loadTraces(reader, FileHelpers.numberOfLines(logFile));
+        traces.loadTraces(reader);
         traces.setBurnIn(0);
         System.out.println(traces.getStateCount() + " states loaded");
 

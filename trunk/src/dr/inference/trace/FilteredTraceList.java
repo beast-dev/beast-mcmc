@@ -9,7 +9,7 @@ public abstract class FilteredTraceList implements TraceList {
 
     protected void createSelected() { // will init in updateSelected()
         if (getTrace(0) != null) {
-            selected = new boolean[getTrace(0).getCount()];
+            selected = new boolean[getTrace(0).getValuesSize()];
         } else {
             throw new RuntimeException("Cannot initial filters ! getTrace(0) failed !");
         }
@@ -57,11 +57,11 @@ public abstract class FilteredTraceList implements TraceList {
             for (int traceIndex = 0; traceIndex < getTraceCount(); traceIndex++) {
                 if (getFilter(traceIndex) != null) {
                     Trace trace = getTrace(traceIndex);
-                    if (trace.getCount() != selected.length)
+                    if (trace.getValuesSize() != selected.length)
                         throw new RuntimeException("updateSelected: length of values[] is different with selected[] in Trace "
                                 + getTraceName(traceIndex));
 
-                    for (int i = 0; i < trace.getCount(); i++) {
+                    for (int i = 0; i < trace.getValuesSize(); i++) {
                         if (!trace.isIn(i)) { // not selected
                             selected[i] = false;
                         }

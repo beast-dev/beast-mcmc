@@ -25,6 +25,8 @@
 
 package dr.inference.trace;
 
+import java.util.List;
+
 /**
  * An interface and default class that stores a set of traces from a single chain
  *
@@ -109,11 +111,11 @@ public interface TraceList {
      */
     <T> void getBurninValues(int index, T[] destination);
 
-    <T> T[] getValues(int index, int length);
+    List getValues(int index, int fromIndex, int toIndex);
 
-    <T> T[] getValues(int index, int length, int offset);
+    List getValues(int index);
 
-    <T> T[] getBurninValues(int index, int length);
+    List getBurninValues(int index);
 
     /**
      * @param traceIndex the index of the trace
@@ -132,4 +134,9 @@ public interface TraceList {
 
     Trace getTrace(int index);
 
+//    public interface D extends TraceList {
+//        Double[] getValues(int index, int length);
+//        Double[] getValues(int index, int length, int offset);
+//        Double[] getBurninValues(int index, int length);
+//    }
 }

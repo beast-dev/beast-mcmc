@@ -41,12 +41,11 @@ public class TraceDistribution<T> {
 
     Class traceType;
 
-    public TraceDistribution(T[] values) {
-//        this.values = values;
+    public TraceDistribution(List<T> values) {
         credSet = new CredibleSet(values, 0.95);
     }
 
-    public TraceDistribution(T[] values, double ESS) {
+    public TraceDistribution(List<T> values, double ESS) {
         this(values);
         this.ESS = ESS;
     }
@@ -205,30 +204,6 @@ public class TraceDistribution<T> {
 //    protected T[] values;
     public CredibleSet credSet = null;
 
-//    protected T[] getValuesArray() {
-//        if (filter != null) {
-//            List<T> selectedValuesList = new ArrayList<T>();
-//
-//            for (int i = 0; i < values.length; i++) {
-//                if (filter.getSelected(i)) {
-//                    selectedValuesList.add(values[i]);
-//                }
-//            }
-//
-//            T[] selectedValues = (T[]) new Object[selectedValuesList.size()];
-//            selectedValues = selectedValuesList.toArray(selectedValues);
-//
-//            return selectedValues;
-//
-//        } else {
-//            return values;
-//        }
-//    }
-
-//    public T[] getValues() {
-//        return values;
-//    }
-
     public class CredibleSet<T> {
         // <T, frequency> for T = Integer and String
         public Map<T, Integer> valuesMap = new HashMap<T, Integer>();
@@ -239,25 +214,25 @@ public class TraceDistribution<T> {
         public T mode;
         public int freqOfMode = 0;
 
-        public CredibleSet(T[] valuesCS, double proportion) {
+        public CredibleSet(List<T> values, double proportion) {
             valuesMap.clear();
             credibleSet.clear();
             inCredibleSet.clear();
 
-            if (!(valuesCS[0] instanceof Double)) {// make sure: if T is Object then default to double
-                if (valuesCS[0] instanceof Integer) {
+            if (!(values.get(0) instanceof Double)) {// make sure: if T is Object then default to double
+                if (values.get(0) instanceof Integer) {
                     traceType = Integer.class;
 
-                    double[] newValues = new double[valuesCS.length];
-                    for (int i = 0; i < valuesCS.length; i++) {
-                        newValues[i] = ((Integer) valuesCS[i]).doubleValue();
+                    double[] newValues = new double[values.size()];
+                    for (int i = 0; i < values.size(); i++) {
+                        newValues[i] = ((Integer) values.get(i)).doubleValue();
                     }
                     analyseDistributionContinuous(newValues, proportion);
                 } else {
                     traceType = String.class;
                 }
 
-                for (T value : valuesCS) {
+                for (T value : values) {
                     if (valuesMap.containsKey(value)) {
                         int i = valuesMap.get(value) + 1;
                         valuesMap.put(value, i);
@@ -267,7 +242,7 @@ public class TraceDistribution<T> {
                 }
 
                 for (T value : new TreeSet<T>(valuesMap.keySet())) {
-                    double prob = (double) valuesMap.get(value) / (double) valuesCS.length;
+                    double prob = valuesMap.get(value).doubleValue() / (double) values.size();
                     if (prob < (1 - proportion)) {
                         inCredibleSet.add(value);
                     } else {
@@ -279,9 +254,9 @@ public class TraceDistribution<T> {
 
             } else {
                 traceType = Double.class;
-                double[] newValues = new double[valuesCS.length];
-                for (int i = 0; i < valuesCS.length; i++) {
-                    newValues[i] = ((Double) valuesCS[i]).doubleValue();
+                double[] newValues = new double[values.size()];
+                for (int i = 0; i < values.size(); i++) {
+                    newValues[i] = ((Double) values.get(i)).doubleValue();
                 }
                 analyseDistributionContinuous(newValues, proportion);
             }

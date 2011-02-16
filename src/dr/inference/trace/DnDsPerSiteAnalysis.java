@@ -103,12 +103,12 @@ public class DnDsPerSiteAnalysis implements Citable {
                     level = numberFormatter.formatToFieldWidth("<=0.95", fieldWidth);
                 }
             } else {
-                Object[] values = traceList.getTrace(index).getValues(traceList.getStateCount(), traceList.getBurninStateCount(), 0, null);
+                List values = traceList.getValues(index);
                 double levelPosValue = 0.0;
                 double levelNegValue = 0.0;
                 int total = 0;
                 for (Object obj : values) {
-                    double d = (Double) obj;
+                    double d = ((Number) obj).doubleValue();
 //                    if ((format.test == SignificanceTest.LESS_THAN && d < format.cutoff) ||
 //                            (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff)) {
                     if (format.test == SignificanceTest.LESS_THAN && d < format.cutoff) {

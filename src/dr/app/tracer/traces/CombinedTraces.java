@@ -27,6 +27,9 @@ package dr.app.tracer.traces;
 
 import dr.inference.trace.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 /**
  * A class for analysing multiple tracesets
@@ -157,15 +160,20 @@ public class CombinedTraces implements TraceList {
     }
 
 
-    public <T> T[] getValues(int index, int length) {
+    public List getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public <T> T[] getValues(int index, int length, int offset) {
-        throw new UnsupportedOperationException("not available");
+    public List getValues(int index) {
+        List valuesList = new ArrayList();
+        for (TraceList traceList : traceLists) {
+            if (traceList instanceof LogFileTraces)
+                valuesList.addAll(traceList.getValues(index)); 
+        }
+        return valuesList;
     }
 
-    public <T> T[] getBurninValues(int index, int length) {
+    public List getBurninValues(int index) {
         throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
     }
 
@@ -198,30 +206,8 @@ public class CombinedTraces implements TraceList {
 
         Trace trace = getTrace(index);
 
-        if (trace != null) {
-            if (trace.getTraceType() == Double.class) {
-                Double values[] = new Double[getStateCount()];
-
-                getValues(index, values);
-                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
-
-            } else if (trace.getTraceType() == Integer.class) {
-                Integer values[] = new Integer[getStateCount()];
-
-                getValues(index, values);
-                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
-
-            } else if (trace.getTraceType() == String.class) {
-                String values[] = new String[getStateCount()];
-
-                getValues(index, values);
-                traceStatistics[index] = new TraceCorrelation(values, getStepSize());
-
-            } else {
-                throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
-            }
-        }
-
+        if (trace != null)
+            traceStatistics[index] = new TraceCorrelation(getValues(index), getStepSize());
     }
 
     public Trace getTrace(int index) {

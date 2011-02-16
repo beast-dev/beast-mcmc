@@ -401,17 +401,18 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         int id = traceLists.get(selRow).getTraceIndex(commonTraceNames.get(rowIndex));
 //        Trace trace = traceLists.get(selRow).getTrace(id);
 
-        try {
-            traceLists.get(selRow).loadTraces(id, newType);
+//        try {
+//            traceLists.get(selRow).loadTraces(id, newType);
+        //todo change type = create a new trace in LogFileTraces
             traceLists.get(selRow).analyseTrace(id);
-        } catch (TraceException e) {
-            JOptionPane.showMessageDialog(this, e,
-                    "Trace Type Exception",
-                    JOptionPane.ERROR_MESSAGE);
-        } catch (IOException e) {
-            System.err.println("selRow = " + selRow + "; new type = " + newType);
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-        }
+//        } catch (TraceException e) {
+//            JOptionPane.showMessageDialog(this, e,
+//                    "Trace Type Exception",
+//                    JOptionPane.ERROR_MESSAGE);
+//        } catch (IOException e) {
+//            System.err.println("selRow = " + selRow + "; new type = " + newType);
+//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//        }
         statisticTableModel.fireTableDataChanged();
         statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
     }
@@ -1032,7 +1033,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 Thread readThread = new Thread() {
                     public void run() {
                         try {
-                            traces.loadTraces(reader, -1, -1, null);
+                            traces.loadTraces(reader);
 
                             EventQueue.invokeLater(
                                     new Runnable() {
@@ -1097,7 +1098,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     try {
                         for (final LogFileTraces traces : tracesArray) {
                             final Reader reader = new FileReader(traces.getFile());
-                            traces.loadTraces(reader, -1, -1, null);
+                            traces.loadTraces(reader);
 
                             EventQueue.invokeLater(
                                     new Runnable() {

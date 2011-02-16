@@ -812,9 +812,9 @@ public class TimeSlicer {
             if (outputFormat == OutputFormat.XML || outputFormat == OutputFormat.TAB) {
                 // Compute marginal means and standard deviations
                 for (int j = 0; j < dim; j++) {
-                    Double[] x = new Double[y[dim].length];
+                    List<Double> x = new ArrayList();
                     for (int k = 0; k < y[dim].length; k++) {
-                        x[k] = y[dim][k];
+                        x.add(y[dim][k]);
                     }
                     TraceDistribution trace = new TraceDistribution(x);
                     Element statsElement = new Element("stats");

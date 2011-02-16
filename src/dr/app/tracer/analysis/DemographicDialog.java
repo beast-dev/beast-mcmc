@@ -43,6 +43,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.List;
 
 public class DemographicDialog {
 
@@ -413,9 +414,7 @@ public class DemographicDialog {
                 bins[k] = new Variate.D();
             }
 
-            int index = traceList.getTraceIndex(rootHeightTrace);
-            Double[] heights = new Double[n];
-            traceList.getValues(index, heights);
+            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
@@ -486,7 +485,7 @@ public class DemographicDialog {
             String title = "";
 
             for (int j = 0; j < argIndices.length; j++) {
-                index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
+                int index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
                 traceList.getValues(index, values[j]);
             }
 

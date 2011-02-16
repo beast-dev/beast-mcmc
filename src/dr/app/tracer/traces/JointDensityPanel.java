@@ -300,15 +300,15 @@ public class JointDensityPanel extends JPanel implements Exportable {
         double samples1[] = new double[sampleSize];
         int k = 0;
 
-        Object[] values;
+        List values;
         if (isFirstTraceListNumerical) {
-            values = tl1.getValues(traceIndex1, maxCount);
+            values = tl1.getValues(traceIndex1);
         } else {
-            values = tl2.getValues(traceIndex2, maxCount);
+            values = tl2.getValues(traceIndex2);
         }
 
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = ((Number) values[k]).doubleValue();
+            samples1[i] = ((Number) values.get(k)).doubleValue();
             k += minCount / sampleSize;
         }
 
@@ -316,14 +316,14 @@ public class JointDensityPanel extends JPanel implements Exportable {
         String samples2[] = new String[sampleSize];
         k = 0;
 
-        String[] values2;
+        List values2;
         if (isFirstTraceListNumerical) {
-            values2 = tl2.getValues(traceIndex2, maxCount);
+            values2 = tl2.getValues(traceIndex2);
         } else {
-            values2 = tl1.getValues(traceIndex1, maxCount);
+            values2 = tl1.getValues(traceIndex1);
         }
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values2[k];
+            samples2[i] = values2.get(k).toString();
             k += minCount / sampleSize;
         }
 
@@ -337,7 +337,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 }
             }
 
-            TraceDistribution categoryTd = new TraceDistribution(sepValues[i].toArray());
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i]);
             categoryTdMap.put(categoryValues.get(i), categoryTd);
         }
 
@@ -363,22 +363,22 @@ public class JointDensityPanel extends JPanel implements Exportable {
         String samples1[] = new String[sampleSize];
         int k = 0;
 
-            Object[] values = tl1.getValues(traceIndex1, maxCount);
+        List values = tl1.getValues(traceIndex1);
 
-            for (int i = 0; i < sampleSize; i++) {
-                samples1[i] = values[k].toString();
-                k += minCount / sampleSize; // = 1 for non-continous vs non-continous
-            }
+        for (int i = 0; i < sampleSize; i++) {
+            samples1[i] = values.get(k).toString();
+            k += minCount / sampleSize; // = 1 for non-continous vs non-continous
+        }
 
         String samples2[] = new String[sampleSize];
         k = 0;
 
-            values = tl2.getValues(traceIndex2, maxCount);
+        values = tl2.getValues(traceIndex2);
 
-            for (int i = 0; i < sampleSize; i++) {
-                samples2[i] = values[k].toString();
-                k += minCount / sampleSize;
-            }
+        for (int i = 0; i < sampleSize; i++) {
+            samples2[i] = values.get(k).toString();
+            k += minCount / sampleSize;
+        }
 
         // calculate count
         for (int i = 0; i < sampleSize; i++) {
@@ -454,9 +454,9 @@ public class JointDensityPanel extends JPanel implements Exportable {
         } else {
             correlationChart.setXAxis(new LinearAxis());
         }
-        Object values[] = tl1.getValues(traceIndex1, maxCount);
+        List values = tl1.getValues(traceIndex1);
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = ((Number) values[k]).doubleValue();
+            samples1[i] = ((Number) values.get(k)).doubleValue();
             k += minCount / sampleSize;
         }
 
@@ -467,9 +467,9 @@ public class JointDensityPanel extends JPanel implements Exportable {
         } else {
             correlationChart.setYAxis(new LinearAxis());
         }
-        values = tl2.getValues(traceIndex2, maxCount);
+        values = tl2.getValues(traceIndex2);
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = ((Number) values[k]).doubleValue();
+            samples2[i] = ((Number) values.get(k)).doubleValue();
             k += minCount / sampleSize;
         }
 

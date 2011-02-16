@@ -24,8 +24,6 @@
  */
 package dr.inference.trace;
 
-import dr.util.FileHelpers;
-
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -181,67 +179,39 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-    public <T> T[] getValues(int index, int length) {
-        return (T[]) this.getValues(index, length, 0);
-    }
 
-    public <T> T[] getValues(int index, int length, int offset) {
-        T[] destination = null;
+    public List getValues(int index, int fromIndex, int toIndex) {
+        List newList = null;
         try {
-            destination = (T[]) getTrace(index).getValues(length, getBurninStateCount(), offset, selected);
+            newList = getTrace(index).getValues(fromIndex, toIndex, selected);
         } catch (Exception e) {
             System.err.println("getValues error: trace index = " + index);
         }
-        return destination;
+        return newList;
     }
 
-    public <T> T[] getBurninValues(int index, int length) {
-        T[] destination = null;
-        try {
-            destination = (T[]) getTrace(index).getValues(length, 0, 0, getBurninStateCount(), selected);
-        } catch (Exception e) {
-            System.err.println("getValues error: trace index = " + index);
-        }
-        return destination;
+    public List getValues(int index) {
+        return this.getValues(index, getBurninStateCount(), getTrace(index).getValuesSize());
+    }
+
+    public List getBurninValues(int index) {
+        return this.getValues(index, 0, getBurninStateCount());
     }
 
     public void loadTraces() throws TraceException, IOException {
-        loadTraces(-1, null);
-    }
-
-    public void loadTraces(int reloadColumn, TraceFactory.TraceType reloadType) throws TraceException, IOException {
         FileReader reader = new FileReader(file);
-        loadTraces(reader, FileHelpers.numberOfLines(file) - 1, reloadColumn, reloadType);
+        loadTraces(reader);
         reader.close();
-    }
-
-    /**
-     * Loads all the traces in a file
-     *
-     * @param r             the reader to read traces from
-     * @param numberOfLines a hint about the number of lines - must be > 0
-     * @throws TraceException      when trace contents is not valid
-     * @throws java.io.IOException low level problems with file
-     */
-    public void loadTraces(Reader r, int numberOfLines)
-            throws TraceException, java.io.IOException {
-
-        // is -1 a valid default?
-        loadTraces(r, numberOfLines, -1, TraceFactory.TraceType.CONTINUOUS);
     }
 
     /**
      * Walter: Please comment what the extra arguments mean
      *
      * @param r
-     * @param numberOfLines
-     * @param reloadColumn
-     * @param reloadType
      * @throws TraceException
      * @throws java.io.IOException
      */
-    public void loadTraces(Reader r, int numberOfLines, int reloadColumn, TraceFactory.TraceType reloadType)
-            throws TraceException, java.io.IOException {
+    public void loadTraces(Reader r) throws TraceException, java.io.IOException {
 
         TrimLineReader reader = new LogFileTraces.TrimLineReader(r);
 
@@ -263,9 +233,7 @@ public class LogFileTraces extends AbstractTraceList {
         // lines starting with [ are ignored, assuming comments in MrBayes file
         // lines starting with # are ignored, assuming comments in Migrate or BEAST file
         while (token.startsWith("[") || token.startsWith("#")) {
-
-            if (reloadColumn < 0) initializeTraceType(token, tokens); // using # to define type
-
+            readTraceType(token, tokens); // using # to define type
             tokens = reader.tokenizeLine();
 
             // read over empty lines
@@ -282,11 +250,7 @@ public class LogFileTraces extends AbstractTraceList {
 
         for (int i = 0; i < labels.length; i++) {
             labels[i] = tokens.nextToken();
-            if (reloadColumn < 0) {
-                addTrace(labels[i], numberOfLines);
-            } else if (reloadColumn == i) {
-                replaceTrace(labels[i], reloadType, numberOfLines);
-            }
+            addTraceAndType(labels[i]);
         }
 
 
@@ -300,47 +264,44 @@ public class LogFileTraces extends AbstractTraceList {
             String stateString = tokens.nextToken();
             int state = 0;
 
-            if (reloadColumn < 0) {
+            try {
                 try {
-                    try {
-                        // Changed this to parseDouble because LAMARC uses scientific notation for the state number
-                        state = (int) Double.parseDouble(stateString);
-                    } catch (NumberFormatException nfe) {
-                        throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
-                    }
-
-                    if (firstState) {
-                        // MrBayes puts 1 as the first state, BEAST puts 0
-                        // In order to get the same gap between subsequent samples,
-                        // we force this to 0.
-                        if (state == 1) state = 0;
-                        firstState = false;
-                    }
-
-                    if (!addState(state)) {
-                        throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
-                    }
-
+                    // Changed this to parseDouble because LAMARC uses scientific notation for the state number
+                    state = (int) Double.parseDouble(stateString);
                 } catch (NumberFormatException nfe) {
-                    throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
+                    throw new TraceException("Unable to parse state number in column 1 (Line " + reader.getLineNumber() + ")");
                 }
+
+                if (firstState) {
+                    // MrBayes puts 1 as the first state, BEAST puts 0
+                    // In order to get the same gap between subsequent samples,
+                    // we force this to 0.
+                    if (state == 1) state = 0;
+                    firstState = false;
+                }
+
+                if (!addState(state)) {
+                    throw new TraceException("State " + state + " is not consistent with previous spacing (Line " + reader.getLineNumber() + ")");
+                }
+
+            } catch (NumberFormatException nfe) {
+                throw new TraceException("State " + state + ":Expected real value in column " + reader.getLineNumber());
             }
-//            Object[] values = new Object[traceCount];
+
             for (int i = 0; i < traceCount; i++) {
                 if (tokens.hasMoreTokens()) {
                     String value = tokens.nextToken();
 
-                    if (reloadColumn < 0 || reloadColumn == i) {
-                        if (state == 0) assignTraceTypeAccordingValue(value);
+                    if (state == 0) assignTraceTypeAccordingValue(value);
 
-                        try {
+                    try {
 //                        values[i] = Double.parseDouble(tokens.nextToken());
-                            addParsedValue(i, value);
-                        } catch (NumberFormatException nfe) {
-                            throw new TraceException("State " + state + ": Expected correct number type (Double, Integer or String) in column "
-                                    + (i + 1) + " (Line " + reader.getLineNumber() + ")");
-                        }
+                        addParsedValue(i, value);
+                    } catch (NumberFormatException nfe) {
+                        throw new TraceException("State " + state + ": Expected correct number type (Double, Integer or String) in column "
+                                + (i + 1) + " (Line " + reader.getLineNumber() + ")");
                     }
+
                 } else {
                     throw new TraceException("State " + state + ": missing values at line " + reader.getLineNumber());
                 }
@@ -352,11 +313,37 @@ public class LogFileTraces extends AbstractTraceList {
         burnIn = (int) (0.1 * lastState);
     }
 
+    /**
+     * add a value for the n'th trace
+     *
+     * @param nTrace trace index
+     * @param value  next value
+     */
+    private void addParsedValue(int nTrace, String value) {
+        String name = getTraceName(nTrace);
+//        System.out.println(thisTrace.getTraceType() + "   " + value);
+        if (tracesType.get(name) == TraceFactory.TraceType.CONTINUOUS) {
+            Double v = Double.parseDouble(value);
+            getTrace(nTrace).add(v);
+
+        } else if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
+//             Integer v = Integer.parseInt(value);
+            int v = (int) Double.parseDouble(value);
+            getTrace(nTrace).add(v);
+
+        } else if (tracesType.get(name) == TraceFactory.TraceType.CATEGORY) {
+            getTrace(nTrace).add(value);
+
+        } else {
+            throw new RuntimeException("Trace type is not recognized: " + tracesType.get(name));
+        }
+    }
+
     private void assignTraceTypeAccordingValue(String value) {
         //todo
     }
 
-    private void initializeTraceType(String firstToken, StringTokenizer tokens) {
+    private void readTraceType(String firstToken, StringTokenizer tokens) {
         if (tokens.hasMoreTokens()) {
             String token; //= tokens.nextToken();
             if (firstToken.contains(TraceFactory.TraceType.INTEGER.toString())
@@ -401,31 +388,44 @@ public class LogFileTraces extends AbstractTraceList {
     /**
      * Add a trace for a statistic of the given name
      *
-     * @param name          trace name
-     * @param numberOfLines a hint about the number of lines, must be > 0
+     * @param name trace name
      */
-    private void addTrace(String name, int numberOfLines) {
-        if (tracesType == null || tracesType.get(name) == null) {
-            traces.add(TraceFactory.createTrace(TraceFactory.TraceType.CONTINUOUS, name, numberOfLines));
+    private void addTraceAndType(String name) {
+        if (tracesType == null || tracesType.get(name) == null || tracesType.get(name) == TraceFactory.TraceType.CONTINUOUS) {
+            traces.add(createTrace(TraceFactory.TraceType.CONTINUOUS, name));
+            tracesType.put(name, TraceFactory.TraceType.CONTINUOUS);
         } else {
-            traces.add(TraceFactory.createTrace(tracesType.get(name), name, numberOfLines));
+            traces.add(createTrace(tracesType.get(name), name));
         }
     }
 
-    private void replaceTrace(String name, TraceFactory.TraceType reloadType, int numberOfLines) throws TraceException {
-        if (reloadType == null) throw new TraceException("trace (" + name + ") type is null");
-        if (numberOfLines < 0) throw new TraceException("numberOfLines cannot be 0");
+//    private void replaceTrace(String name, TraceFactory.TraceType reloadType, int numberOfLines) throws TraceException {
+//        if (reloadType == null) throw new TraceException("trace (" + name + ") type is null");
+//        if (numberOfLines < 0) throw new TraceException("numberOfLines cannot be 0");
+//
+//        for (int i = 0; i < traces.size(); i++) {
+//            Trace trace = traces.get(i);
+//            // change trace type
+//            if (trace.getName().equalsIgnoreCase(name)) {
+//                if (trace.getTraceType() != reloadType.getType())
+//                    traces.set(i, createTrace(reloadType, name));
+//                return;
+//            }
+//        }
+//        throw new TraceException("Cannot find trace : " + name);
+//    }
 
-        for (int i = 0; i < traces.size(); i++) {
-            Trace trace = traces.get(i);
-            // change trace type
-            if (trace.getName().equalsIgnoreCase(name)) {
-                if (trace.getTraceType() != reloadType.getType())
-                    traces.set(i, TraceFactory.createTrace(reloadType, name, numberOfLines));
-                return;
-            }
+    private Trace createTrace(TraceFactory.TraceType traceType, String name) {
+        // System.out.println("create trace (" + name + ") with type " + traceType);
+        switch (traceType) {
+            case CONTINUOUS:
+                return new Trace<Double>(name);
+            case INTEGER:
+                return new Trace<Integer>(name);
+            case CATEGORY:
+                return new Trace<String>(name);
         }
-        throw new TraceException("Cannot find trace : " + name);
+        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
     }
 
     /**
@@ -451,38 +451,12 @@ public class LogFileTraces extends AbstractTraceList {
         return true;
     }
 
-    /**
-     * add a value for the n'th trace
-     *
-     * @param nTrace trace index
-     * @param value  next value
-     */
-    private void addParsedValue(int nTrace, String value) {
-        Trace thisTrace = getTrace(nTrace);
-//        System.out.println(thisTrace.getTraceType() + "   " + value);
-        if (thisTrace.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
-            Double v = Double.parseDouble(value);
-            thisTrace.add(v);
-
-        } else if (thisTrace.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
-//             Integer v = Integer.parseInt(value);
-            int v = (int) Double.parseDouble(value);
-            thisTrace.add(v);
-
-        } else if (thisTrace.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
-            thisTrace.add(value);
-
-        } else {
-            throw new RuntimeException("Trace type is not recognized: " + thisTrace.getTraceType());
-        }
-    }
-
     protected final File file;
     protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
     // List traces is added before having types
-    // tracesType only save INTEGER and CATEGORY
+    // tracesType only save INTEGER and CATEGORY, and only use during loading files
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
 
     private int burnIn = -1;
@@ -515,5 +489,36 @@ public class LogFileTraces extends AbstractTraceList {
 
         private int lineNumber = 0;
     }
+
+//    public class D extends LogFileTraces implements TraceList.D {
+//
+//        public D(String name, File file) {
+//            super(name, file);
+//        }
+//
+//        public Double[] getValues(int index, int length) {
+//            return this.getValues(index, length, 0);
+//        }
+//
+//        public Double[] getValues(int index, int length, int offset) {
+//            Double[] destination = null;
+//            try {
+//                destination = ((Trace.D) getTrace(index)).getValues(length, getBurninStateCount(), offset, selected);
+//            } catch (Exception e) {
+//                System.err.println("getValues error: trace index = " + index);
+//            }
+//            return destination;
+//        }
+//
+//        public Double[] getBurninValues(int index, int length) {
+//            Double[] destination = null;
+//            try {
+//                destination = (Double[]) getTrace(index).getValues(length, 0, 0, getBurninStateCount(), selected);
+//            } catch (Exception e) {
+//                System.err.println("getValues error: trace index = " + index);
+//            }
+//            return destination;
+//        }
+//    }
 }
 

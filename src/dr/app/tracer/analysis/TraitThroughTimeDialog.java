@@ -50,6 +50,7 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.List;
 
 public class TraitThroughTimeDialog {
 
@@ -368,8 +369,7 @@ public class TraitThroughTimeDialog {
 
         public Object doWork() {
 
-            Double[] heights = new Double[stateCount];
-            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
+            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
             TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 

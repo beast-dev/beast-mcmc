@@ -57,7 +57,7 @@ public class ArrayTraceList extends AbstractTraceList {
      * @return the number of states in the traces (after burnin removed)
      */
     public int getStateCount() {
-        return traces.get(0).getCount();
+        return traces.get(0).getValuesSize();
     }
 
     /**
@@ -97,15 +97,15 @@ public class ArrayTraceList extends AbstractTraceList {
         getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
-    public <T> T[] getValues(int index, int length) {
+    public List getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public <T> T[] getValues(int index, int length, int offset) {
+    public List getValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 
-    public <T> T[] getBurninValues(int index, int length) {
+    public List getBurninValues(int index) {
         throw new UnsupportedOperationException("not available");
     }
 

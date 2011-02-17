@@ -28,6 +28,7 @@ package dr.inference.trace;
 import dr.util.NumberFormatter;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -154,13 +155,9 @@ public class TraceAnalysis {
             boolean harmonicOnly = false;
             int bootstrapLength = 1000;
 
-            Double sample[] = new Double[traces.getStateCount()];
-            traces.getValues(traceIndex, sample);
+            List<Double> sample = traces.getValues(traceIndex);
 
-            Double[] doubleSample = new Double[sample.length];
-            System.arraycopy(sample, 0, doubleSample, 0, sample.length);
-
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(doubleSample,
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
 
             System.out.println(analysis.toString());
@@ -255,13 +252,9 @@ public class TraceAnalysis {
             boolean harmonicOnly = false;
             int bootstrapLength = 1000;
 
-            Double sample[] = new Double[traces.getStateCount()];
-            traces.getValues(traceIndex, sample);
+            List<Double> sample = traces.getValues(traceIndex);
 
-            Double[] doubleSample = new Double[sample.length];
-            System.arraycopy(sample, 0, doubleSample, 0, sample.length);
-
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(doubleSample,
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
 
             System.out.print(analysis.getLogMarginalLikelihood() + "\t");

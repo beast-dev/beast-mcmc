@@ -51,6 +51,7 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -425,7 +426,7 @@ public class GMRFSkyrideDialog {
 
         int stateCount;
 
-        Double[][] popSizes;
+        List<Double>[] popSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -447,9 +448,9 @@ public class GMRFSkyrideDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new Double[popSizeCount][stateCount];
+            popSizes = new ArrayList[popSizeCount];
             for (int i = 0; i < popSizeCount; i++) {
-                traceList.getValues(firstPopSize + i, popSizes[i]);
+                popSizes[i] = traceList.getValues(firstPopSize + i);
             }
         }
 
@@ -698,7 +699,7 @@ public class GMRFSkyrideDialog {
         }
 
         private double getPopSize(int index, int state) {
-            return Math.exp(popSizes[index][state]);
+            return Math.exp(popSizes[index].get(state));
         }
     }
 }

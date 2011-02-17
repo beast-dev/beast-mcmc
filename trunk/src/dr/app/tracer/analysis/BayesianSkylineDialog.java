@@ -53,6 +53,7 @@ import java.awt.event.ItemListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -478,8 +479,8 @@ public class BayesianSkylineDialog {
 
         int stateCount;
 
-        Double[][] popSizes;
-        Double[][] groupSizes;
+        List<Double>[] popSizes;
+        List<Double>[] groupSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -509,13 +510,13 @@ public class BayesianSkylineDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new Double[popSizeCount][stateCount];
+            popSizes = new ArrayList[popSizeCount];
             for (int i = 0; i < popSizeCount; i++) {
-                traceList.getValues(firstPopSize + i, popSizes[i]);
+                popSizes[i] = traceList.getValues(firstPopSize + i);
             }
-            groupSizes = new Double[groupSizeCount][stateCount];
+            groupSizes = new ArrayList[groupSizeCount];
             for (int i = 0; i < groupSizeCount; i++) {
-                traceList.getValues(firstGroupSize + i, groupSizes[i]);
+                groupSizes[i] = traceList.getValues(firstGroupSize + i);
             }
 
         }
@@ -669,7 +670,7 @@ public class BayesianSkylineDialog {
                         int groupIndex = 0;
                         int subIndex = 0;
                         if (firstGroupSize > 0) {
-                            double g = groupSizes[groupIndex][state];
+                            double g = groupSizes[groupIndex].get(state);
                             if (g != Math.round(g)) {
                                 throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                             } else groupSize = (int) Math.round(g);
@@ -686,7 +687,7 @@ public class BayesianSkylineDialog {
                                     subIndex = 0;
                                     groupIndex += 1;
                                     if (groupIndex < groupSizeCount) {
-                                        double g = groupSizes[groupIndex][state];
+                                        double g = groupSizes[groupIndex].get(state);
                                         if (g != Math.round(g)) {
                                             throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                                         } else groupSize = (int) Math.round(g);
@@ -847,7 +848,7 @@ public class BayesianSkylineDialog {
         }
 
         private double getPopSize(int index, int state) {
-            return popSizes[index][state];
+            return popSizes[index].get(state);
         }
     }
 }

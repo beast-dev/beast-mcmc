@@ -36,6 +36,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 public class TimeDensityDialog {
 
@@ -194,8 +195,7 @@ public class TimeDensityDialog {
 
         public Object doWork() {
 
-            Double[] times = new Double[stateCount];
-            traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), times);
+            List<Double> times = traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()));
 
             minTime = frame.getMinTime();
             maxTime = frame.getMaxTime();
@@ -204,8 +204,8 @@ public class TimeDensityDialog {
 
             FrequencyDistribution frequency = new FrequencyDistribution(minTime, binCount, delta);
 
-            for (int i = 0; i < times.length; i++) {
-                frequency.addValue(getTime(times[i]));
+            for (int i = 0; i < times.size(); i++) {
+                frequency.addValue(getTime(times.get(i)));
             }
 
             Variate.D xData = new Variate.D();
@@ -218,7 +218,7 @@ public class TimeDensityDialog {
 
             for (int i = 0; i < frequency.getBinCount(); i++) {
                 xData.add(x + (frequency.getBinSize() / 2.0));
-                double density = frequency.getFrequency(i) / frequency.getBinSize() / times.length;
+                double density = frequency.getFrequency(i) / frequency.getBinSize() / times.size();
                 yData.add(density);
                 x += frequency.getBinSize();
             }

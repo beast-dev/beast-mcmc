@@ -79,24 +79,6 @@ public class ArrayTraceList extends AbstractTraceList {
         return false;
     }
 
-    /**
-     * get the values of trace with the given index (without burnin)
-     *
-     * @param index       the index of trace
-     * @param destination the array to copy values into
-     */
-    public <T> void getValues(int index, T[] destination) {
-        getTrace(index).getValues(0, destination, burnin);
-    }
-
-    public <T> void getValues(int index, T[] destination, int offset) {
-        getTrace(index).getValues(0, destination, offset);
-    }
-
-    public <T> void getBurninValues(int index, T[] destination) {
-        getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
-    }
-
     public List getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }

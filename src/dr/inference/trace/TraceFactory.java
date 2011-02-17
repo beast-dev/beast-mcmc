@@ -7,9 +7,9 @@ package dr.inference.trace;
 public class TraceFactory {
 
     public enum TraceType {
-        CONTINUOUS("real", "R", Double.class),
+        DOUBLE("real", "R", Double.class),
         INTEGER("integer", "I", Integer.class),
-        CATEGORY("categorical", "C", String.class);
+        STRING("categorical", "C", String.class);
 
         TraceType(String name, String brief, Class type) {
             this.name = name;
@@ -43,11 +43,11 @@ public class TraceFactory {
 //        // System.out.println("create trace (" + name + ") with type " + traceType);
 //
 //        switch (traceType) {
-//            case CONTINUOUS:
+//            case DOUBLE:
 //                return new Trace<Double>(name, initialSize, (double) 0);
 //            case INTEGER:
 //                return new Trace<Integer>(name, initialSize, 0);
-//            case CATEGORY:
+//            case STRING:
 //                return new Trace<String>(name, initialSize, "initial_value");
 //        }
 //        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");

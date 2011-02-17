@@ -29,6 +29,7 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.util.List;
 
 /**
  * Description:	A line plot.
@@ -51,7 +52,7 @@ public class LinePlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public LinePlot(Double[] xData, Double[] yData) {
+    public LinePlot(List<Double> xData, List<Double> yData) {
         super(xData, yData);
     }
 

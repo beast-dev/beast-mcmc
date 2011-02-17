@@ -47,7 +47,7 @@ public class Filter<T> {
 
     public String getStatusMessage() {
         String message = /*traceName +*/ " is filtered";
-//        if (traceType == TraceFactory.TraceType.CONTINUOUS) {
+//        if (traceType == TraceFactory.TraceType.DOUBLE) {
 //            message += " into range [" + in[0] + ", " + in[1] + "]";
 //        } else {
 //            message += " by selecting {";

@@ -228,7 +228,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
 
         messageLabel.setText("");
 
-        if (td1.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType() && td2.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType()) {
+        if (td1.getTraceType() != TraceFactory.TraceType.DOUBLE && td2.getTraceType() != TraceFactory.TraceType.DOUBLE) {
             chartPanel.remove(correlationChart);
             chartPanel.add(tableScrollPane, "Table");
 
@@ -238,8 +238,8 @@ public class JointDensityPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(true);
             defaultNumberFormatCheckBox.setVisible(true);
 
-            Object[] rowNames = td1.credSet.getRange().toArray();
-            Object[] colNames = td2.credSet.getRange().toArray();
+            Object[] rowNames = td1.getRange().toArray();
+            Object[] colNames = td2.getRange().toArray();
             double[][] data = categoricalPlot(td1, td2);
 
             tableScrollPane.setTable(rowNames, colNames, data, defaultNumberFormatCheckBox.isSelected());
@@ -251,7 +251,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(false);
             defaultNumberFormatCheckBox.setVisible(false);
 
-            if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+            if (td1.getTraceType() == TraceFactory.TraceType.STRING) {
                 mixedCategoricalPlot(td1, false); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -259,7 +259,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 translucencyCheckBox.setVisible(false);
 
 
-            } else if (td2.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+            } else if (td2.getTraceType() == TraceFactory.TraceType.STRING) {
                 mixedCategoricalPlot(td2, true); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -287,7 +287,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
 
     private void mixedCategoricalPlot(TraceDistribution td, boolean isFirstTraceListNumerical) {
         correlationChart.setXAxis(new DiscreteAxis(true, true));
-        List<String> categoryValues = td.credSet.getRange();
+        List<String> categoryValues = td.getRange();
         Map<String, TraceDistribution> categoryTdMap = new HashMap<String, TraceDistribution>();
 
         if (categoryValues == null || categoryValues.size() < 1) return;
@@ -337,7 +337,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 }
             }
 
-            TraceDistribution categoryTd = new TraceDistribution(sepValues[i]);
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceFactory.TraceType.DOUBLE);
             categoryTdMap.put(categoryValues.get(i), categoryTd);
         }
 
@@ -348,8 +348,8 @@ public class JointDensityPanel extends JPanel implements Exportable {
     }
 
     private double[][] categoricalPlot(TraceDistribution td1, TraceDistribution td2) {
-        List<String> rowNames = td1.credSet.getRange();
-        List<String> colNames = td2.credSet.getRange();
+        List<String> rowNames = td1.getRange();
+        List<String> colNames = td2.getRange();
 
         double[][] data = new double[rowNames.size()][colNames.size()];
 
@@ -447,29 +447,31 @@ public class JointDensityPanel extends JPanel implements Exportable {
             }
         }
 
-        Double samples1[] = new Double[sampleSize];
         int k = 0;
-        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
+        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
             correlationChart.setXAxis(new DiscreteAxis(true, true));
         } else {
             correlationChart.setXAxis(new LinearAxis());
         }
         List values = tl1.getValues(traceIndex1);
+
+        List<Double> samples1 = new ArrayList<Double>();
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = ((Number) values.get(k)).doubleValue();
+            samples1.add(i, ((Number) values.get(k)).doubleValue());
             k += minCount / sampleSize;
         }
 
-        Double samples2[] = new Double[sampleSize];
         k = 0;
-        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER.getType()) {
+        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
             correlationChart.setYAxis(new DiscreteAxis(true, true));
         } else {
             correlationChart.setYAxis(new LinearAxis());
         }
         values = tl2.getValues(traceIndex2);
+
+        List<Double> samples2 = new ArrayList<Double>();
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = ((Number) values.get(k)).doubleValue();
+            samples2.add(i, ((Number) values.get(k)).doubleValue());
             k += minCount / sampleSize;
         }
 

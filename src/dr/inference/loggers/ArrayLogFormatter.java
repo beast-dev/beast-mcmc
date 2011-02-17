@@ -1,6 +1,7 @@
 package dr.inference.loggers;
 
 import dr.inference.trace.Trace;
+import dr.inference.trace.TraceFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +38,7 @@ public class ArrayLogFormatter implements LogFormatter {
         if (this.labels == null) {
             this.labels = labels;
             for (String label : labels) {
-                traces.add(new Trace<Double>(label));
+                traces.add(new Trace<Double>(label, TraceFactory.TraceType.DOUBLE));
             }
             echo(labels);
         } else throw new RuntimeException("logLabels() method should only be called once!");

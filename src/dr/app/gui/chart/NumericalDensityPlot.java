@@ -57,15 +57,15 @@ public class NumericalDensityPlot extends FrequencyPlot {
 //        this.minimumBinCount = minimumBinCount;
 //    }
 
-    public NumericalDensityPlot(Double[] data, int minimumBinCount, TraceDistribution traceD) {
+    public NumericalDensityPlot(java.util.List<Double> data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD);
         this.minimumBinCount = minimumBinCount;
     }
 
-    public NumericalDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
-        super(data, minimumBinCount, traceD);
-        this.minimumBinCount = minimumBinCount;
-    }
+//    public NumericalDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
+//        super(data, minimumBinCount, traceD);
+//        this.minimumBinCount = minimumBinCount;
+//    }
 
     public void setRelativeDensity(boolean relative) {
         relativeDensity = relative;

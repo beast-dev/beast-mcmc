@@ -31,6 +31,7 @@ import java.awt.*;
 import java.awt.geom.*;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -70,7 +71,7 @@ public interface Plot {
     /**
      * Set data
      */
-    void setData(Double[] xData, Double[] yData);
+    void setData(List<Double> xData, List<Double> yData);
 
     /**
      * Set data
@@ -228,7 +229,7 @@ public interface Plot {
         /**
          * Constructor
          */
-        public AbstractPlot(Double[] xData, Double[] yData) {
+        public AbstractPlot(List<Double> xData, List<Double> yData) {
             setData(xData, yData);
         }
 
@@ -236,7 +237,7 @@ public interface Plot {
         /**
          * Set data
          */
-        public void setData(Double[] xData, Double[] yData) {
+        public void setData(List<Double> xData, List<Double> yData) {
             Variate.D xd = new Variate.D(xData);
             Variate.D yd = new Variate.D(yData);
 

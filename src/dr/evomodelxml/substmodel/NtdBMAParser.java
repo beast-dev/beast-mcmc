@@ -10,7 +10,7 @@ import dr.inference.model.Variable;
  * Parser for nucleotide subsitution
  */
 public class NtdBMAParser extends AbstractXMLObjectParser {
-    public static final String NTD_BMA_MODEL = "ntdBMAModel";
+    public static final String NTD_BMA = "ntdBMA";
     public static final String KAPPA = "kappa";
     public static final String TN = "tn";
     public static final String AT = "at";
@@ -22,7 +22,7 @@ public class NtdBMAParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
 
     public String getParserName() {
-        return NTD_BMA_MODEL;
+        return NTD_BMA;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

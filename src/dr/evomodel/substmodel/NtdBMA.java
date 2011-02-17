@@ -20,6 +20,12 @@ public class NtdBMA extends AbstractNucleotideModel{
     private Variable<Double> logGT = null;
     private Variable<Integer> modelChoose = null;
 
+    public static final int TN_INDEX = 0;
+    public static final int GTR_INDEX = 1;
+
+    public static final int ABSENT = 0;
+    public static final int PRESENT = 1;
+
     public NtdBMA(
             Variable<Double> logKappa,
             Variable<Double> logTN,
@@ -66,17 +72,17 @@ public class NtdBMA extends AbstractNucleotideModel{
     protected void setupRelativeRates() {
 
         //rate AG value
-        relativeRates[1] = Math.exp(logKappa.getValue(0)+modelChoose.getValue(0)*logTN.getValue(0));
+        relativeRates[1] = Math.exp(logKappa.getValue(0)+modelChoose.getValue(TN_INDEX)*logTN.getValue(0));
         //rate CT value
-        relativeRates[4] = Math.exp(logKappa.getValue(0)-modelChoose.getValue(0)*logTN.getValue(0));
+        relativeRates[4] = Math.exp(logKappa.getValue(0)-modelChoose.getValue(TN_INDEX)*logTN.getValue(0));
         //rate AC value
-        relativeRates[0] = Math.exp(modelChoose.getValue(1)*logAC.getValue(0));
+        relativeRates[0] = Math.exp(modelChoose.getValue(GTR_INDEX)*logAC.getValue(0));
         //rate AT value
-        relativeRates[2] = Math.exp(modelChoose.getValue(1)*logAT.getValue(0));
+        relativeRates[2] = Math.exp(modelChoose.getValue(GTR_INDEX)*logAT.getValue(0));
         //rate GC value
-        relativeRates[3] = Math.exp(modelChoose.getValue(1)*logGC.getValue(0));
+        relativeRates[3] = Math.exp(modelChoose.getValue(GTR_INDEX)*logGC.getValue(0));
         //rate GT value
-        relativeRates[5] = Math.exp(modelChoose.getValue(1)*logGT.getValue(0));
+        relativeRates[5] = Math.exp(modelChoose.getValue(GTR_INDEX)*logGT.getValue(0));
 
     }
 
@@ -89,14 +95,14 @@ public class NtdBMA extends AbstractNucleotideModel{
         }else if(variable == logKappa){
             //changing kappa value (which is in all models)
             changeRateMatrix = true;
-        }else if(variable == logTN && modelChoose.getValue(0) == 1){
+        }else if(variable == logTN && modelChoose.getValue(TN_INDEX) == PRESENT){
             //changing the tn value when the current model is TN.
             changeRateMatrix = true;
         }else if(variable == logAC ||
                 variable == logAT ||
                 variable == logGC ||
                 variable == logGT &&
-                modelChoose.getValue(1) == 1 && modelChoose.getValue(0) == 1){
+                modelChoose.getValue(GTR_INDEX) == PRESENT && modelChoose.getValue(TN_INDEX) == PRESENT){
             //Changing any one of A<->C, A<->T, G<->C, G<->T rates while the current model is GTR.
             changeRateMatrix = true;
         }

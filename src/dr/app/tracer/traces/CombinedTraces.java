@@ -140,26 +140,6 @@ public class CombinedTraces implements TraceList {
         return getStateCount() * getStepSize();
     }
 
-    public <T> void getValues(int index, T[] destination) {
-        int offset = 0;
-        for (TraceList traceList : traceLists) {
-            traceList.getValues(index, destination, offset);
-            offset += traceList.getStateCount();
-        }
-    }
-
-    public <T> void getValues(int index, T[] destination, int offset) {
-        for (TraceList traceList : traceLists) {
-            traceList.getValues(index, destination, offset);
-            offset += traceList.getStateCount();
-        }
-    }
-
-    public <T> void getBurninValues(int index, T[] destination) {
-        throw new UnsupportedOperationException("getBurninValues is not a valid operation on CombinedTracers");
-    }
-
-
     public List getValues(int index, int fromIndex, int toIndex) {
         throw new UnsupportedOperationException("not available");
     }

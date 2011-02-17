@@ -211,17 +211,17 @@ public class DensityRectangle {
         traces.loadTraces();
         traces.setBurnIn(burnin);
 
-        Double[][] values = new Double[2][traces.getStateCount()];
+        List<Double>[] values = new ArrayList[2];
         for (int j = 0; j < 2; j++) {
-            traces.getValues(indices[j], values[j]);
+            values[j] = traces.getValues(indices[j]);
         }
-        int totalSize = values[0].length;
+        int totalSize = values[0].size();
         System.out.println("total samples = " + totalSize);
 
         final DensityRectangle densityRectangle = new DensityRectangle(0, 0, width, height);
 
-        for (int i = 0; i < values[0].length; i++) {
-            densityRectangle.addPoint(new Point2D.Double(values[0][i], values[1][i]));
+        for (int i = 0; i < values[0].size(); i++) {
+            densityRectangle.addPoint(new Point2D.Double(values[0].get(i), values[1].get(i)));
         }
 
         System.out.println("posterior prob visualized = " + ((double) densityRectangle.getPointCount()) / totalSize);

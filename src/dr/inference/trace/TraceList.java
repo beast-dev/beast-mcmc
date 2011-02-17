@@ -86,35 +86,52 @@ public interface TraceList {
 
     boolean isIncomplete();
 
-    /**
-     * get the values of trace with the given index (without burnin)
-     *
-     * @param index       the index of trace
-     * @param destination the array to copy values into
-     */
-    <T> void getValues(int index, T[] destination);
+//    /**
+//     * get the values of trace with the given index (without burnin)
+//     *
+//     * @param index       the index of trace
+//     * @param destination the array to copy values into
+//     */
+//    <T> void getValues(int index, T[] destination);
+//
+//    /**
+//     * get the values of trace with the given index (without burnin)
+//     *
+//     * @param index       the index of trace
+//     * @param destination the array to copy values into
+//     * @param offset      the start position for copying into the destination array
+//     */
+//    <T> void getValues(int index, T[] destination, int offset);
+//
+//    /**
+//     * get the values of the burnin of the trace
+//     *
+//     * @param index       the index of trace
+//     * @param destination the array to copy values into
+//     */
+//    <T> void getBurninValues(int index, T[] destination);
 
     /**
      * get the values of trace with the given index (without burnin)
-     *
      * @param index       the index of trace
-     * @param destination the array to copy values into
-     * @param offset      the start position for copying into the destination array
+     * @param fromIndex   low endpoint (inclusive) of the subList.
+     * @param toIndex     high endpoint (exclusive) of the subList.
+     * @return The list of values (which are selected values if filter applied)
      */
-    <T> void getValues(int index, T[] destination, int offset);
+    List getValues(int index, int fromIndex, int toIndex);
+
+    /**
+     * get the values of trace with the given index (without burnin)
+     * @param index       the index of trace
+     * @return The list of values (which are selected values if filter applied)
+     */
+    List getValues(int index);
 
     /**
      * get the values of the burnin of the trace
-     *
      * @param index       the index of trace
-     * @param destination the array to copy values into
+     * @return The list of values (which are selected values if filter applied)
      */
-    <T> void getBurninValues(int index, T[] destination);
-
-    List getValues(int index, int fromIndex, int toIndex);
-
-    List getValues(int index);
-
     List getBurninValues(int index);
 
     /**

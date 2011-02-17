@@ -187,6 +187,100 @@ public class testNtdBMA extends TestCase {
             };
         }
     };
+
+    Instance test3 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.25, 0.25, 0.25, 0.25};
+        }
+
+        public double getLogKappa() {
+            return Math.log(2);
+        }
+
+        public double getLogTN(){
+            return Math.log(1.2);
+        }
+
+        public double getLogAC(){
+            return Math.log(0.5);
+        }
+
+        public double getLogAT(){
+            return Math.log(0.5);
+        }
+
+        public double getLogGC(){
+            return Math.log(0.5);
+        }
+        public double getLogGT(){
+            return Math.log(0.5);
+        }
+
+        public Variable<Integer> getModelChoose(){
+            return new Variable.I(new int[]{0, 0});
+        }
+
+        public double getDistance() {
+            return 1.8;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.324927478425, 0.208675277945, 0.257721965686, 0.208675277945,
+                    0.208675277945, 0.324927478425, 0.208675277945, 0.257721965686,
+                    0.257721965686, 0.208675277945, 0.324927478425, 0.208675277945,
+                    0.208675277945, 0.257721965686, 0.208675277945, 0.324927478425
+            };
+        }
+    };
+
+    Instance test4 = new Instance() {
+        public double[] getPi() {
+            return new double[]{0.1, 0.2, 0.3, 0.4};
+        }
+
+        public double getLogKappa() {
+            return Math.log(3)-0.5*Math.log(1.5);
+        }
+
+        public double getLogTN(){
+            return -0.5*Math.log(1.5);
+        }
+
+        public double getLogAC(){
+            return Math.log(0.5);
+        }
+
+        public double getLogAT(){
+            return Math.log(0.5);
+        }
+
+        public double getLogGC(){
+            return Math.log(0.5);
+        }
+        public double getLogGT(){
+            return Math.log(0.5);
+        }
+
+        public Variable<Integer> getModelChoose(){
+            return new Variable.I(new int[]{1, 0});
+        }
+
+
+        public double getDistance() {
+            return 2.5;
+        }
+
+        public double[] getExpectedResult() {
+            return new double[]{
+                    0.144168843021, 0.180243104854, 0.315101842417, 0.360486209708,
+                    0.090121552427, 0.217265980316, 0.270364657281, 0.422247809976,
+                    0.105033947472, 0.180243104854, 0.354236737965, 0.360486209708,
+                    0.090121552427, 0.211123904988, 0.270364657281, 0.428389885304
+            };
+        }
+    };
+
     //GTR example
     Instance test5 = new Instance() {
         public double[] getPi() {
@@ -234,9 +328,9 @@ public class testNtdBMA extends TestCase {
         }
     };
 
-    Instance[] all = {test2, test1, test0,test5};
+    Instance[] all = {test0,test1,test2,test3,test4,test5};
 
-    public void testHKY() {
+    public void testNtdBMA() {
         for (Instance test : all) {
             Parameter logKappa = new Parameter.Default(1, test.getLogKappa());
             Parameter logTN = new Parameter.Default(1, test.getLogTN());

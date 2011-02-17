@@ -28,6 +28,9 @@ import dr.math.LogTricks;
 import dr.math.MathUtils;
 import dr.util.TaskListener;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Marc Suchard
  * @author Alexei Drummond
@@ -37,7 +40,7 @@ import dr.util.TaskListener;
 public class MarginalLikelihoodAnalysis {
 
     private final String traceName;
-    private final Double[] sample;
+    private final List<Double> sample;
     private final int burnin;
     private final boolean harmonicOnly;
     private final int bootstrapLength;
@@ -69,7 +72,7 @@ public class MarginalLikelihoodAnalysis {
      * @param harmonicOnly
      * @param bootstrapLength a value of zero will turn off bootstrapping
      */
-    public MarginalLikelihoodAnalysis(Double[] sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
+    public MarginalLikelihoodAnalysis(List<Double> sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
         this.sample = sample;
         this.traceName = traceName;
         this.burnin = burnin;
@@ -78,7 +81,7 @@ public class MarginalLikelihoodAnalysis {
 //        System.err.println("setting burnin to "+burnin);
     }
 
-    public double calculateLogMarginalLikelihood(Double[] sample) {
+    public double calculateLogMarginalLikelihood(List<Double> sample) {
         if (harmonicOnly)
             return logMarginalLikelihoodHarmonic(sample);
         else
@@ -92,17 +95,17 @@ public class MarginalLikelihoodAnalysis {
      * @return the log marginal likelihood
      */
 
-    public double logMarginalLikelihoodHarmonic(Double[] v) {
+    public double logMarginalLikelihoodHarmonic(List<Double> v) {
 
         double sum = 0;
-        final int size = v.length;
+        final int size = v.size();
         for (int i = 0; i < size; i++)
-            sum += v[i];
+            sum += v.get(i);
 
         double denominator = LogTricks.logZero;
 
         for (int i = 0; i < size; i++)
-            denominator = LogTricks.logSum(denominator, sum - v[i]);
+            denominator = LogTricks.logSum(denominator, sum - v.get(i));
 
         return sum - denominator + StrictMath.log(size);
     }
@@ -111,8 +114,8 @@ public class MarginalLikelihoodAnalysis {
 
         logMarginalLikelihood = calculateLogMarginalLikelihood(sample);
         if (bootstrapLength > 1) {
-            final int sampleLength = sample.length;
-            Double[] bsSample = new Double[sampleLength];
+            final int sampleLength = sample.size();
+            List<Double> bsSample = new ArrayList<Double>();
             Double[] bootstrappedLogML = new Double[bootstrapLength];
             double sum = 0;
 
@@ -125,7 +128,7 @@ public class MarginalLikelihoodAnalysis {
 
                 int[] indices = MathUtils.sampleIndicesWithReplacement(sampleLength);
                 for (int k = 0; k < sampleLength; k++)
-                    bsSample[k] = sample[indices[k]];
+                    bsSample.add(k, sample.get(indices[k]));
                 bootstrappedLogML[i] = calculateLogMarginalLikelihood(bsSample);
                 sum += bootstrappedLogML[i];
             }
@@ -155,11 +158,11 @@ public class MarginalLikelihoodAnalysis {
      * @return the log marginal likelihood
      */
     @SuppressWarnings({"SuspiciousNameCombination"})
-    public double logMarginalLikelihoodSmoothed(Double[] v, double delta, double Pdata) {
+    public double logMarginalLikelihoodSmoothed(List<Double> v, double delta, double Pdata) {
 
         final double logDelta = StrictMath.log(delta);
         final double logInvDelta = StrictMath.log(1.0 - delta);
-        final int n = v.length;
+        final int n = v.size();
         final double logN = StrictMath.log(n);
 
         final double offset = logInvDelta - Pdata;
@@ -168,8 +171,8 @@ public class MarginalLikelihoodAnalysis {
         double top = bottom + Pdata;
 
         for (int i = 0; i < n; i++) {
-            double weight = -LogTricks.logSum(logDelta, offset + v[i]);
-            top = LogTricks.logSum(top, weight + v[i]);
+            double weight = -LogTricks.logSum(logDelta, offset + v.get(i));
+            top = LogTricks.logSum(top, weight + v.get(i));
             bottom = LogTricks.logSum(bottom, weight);
         }
 
@@ -215,7 +218,7 @@ public class MarginalLikelihoodAnalysis {
 
     }
 
-    public double logMarginalLikelihoodSmoothed(Double[] v) {
+    public double logMarginalLikelihoodSmoothed(List<Double> v) {
 
         final double delta = 0.01;  // todo make class adjustable by accessor/setter
 

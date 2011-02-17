@@ -154,32 +154,6 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-//    public Object[] createValues(int index, int length) {
-//        Trace trace = getTrace(index);
-//        return getTrace(index).createValues((burnIn / stepSize), length);
-//    }
-
-    public <T> void getValues(int index, T[] destination) {
-        try {
-            getTrace(index).getValues(getBurninStateCount(), destination, 0);
-        } catch (Exception e) {
-            System.err.println("getValues error: trace index = " + index);
-        }
-    }
-
-    public <T> void getValues(int index, T[] destination, int offset) {
-        ((Trace<T>) getTrace(index)).getValues(getBurninStateCount(), destination, offset);
-    }
-
-    public <T> void getBurninValues(int index, T[] destination) {
-        try {
-            ((Trace<T>) getTrace(index)).getValues(0, getBurninStateCount(), destination, 0);
-        } catch (Exception e) {
-            System.err.println("getValues error: trace index = " + index);
-        }
-    }
-
-
     public List getValues(int index, int fromIndex, int toIndex) {
         List newList = null;
         try {

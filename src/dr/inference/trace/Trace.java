@@ -84,27 +84,12 @@ public class Trace<T> {
         return values.get(index); // filter?
     }
 
-//    public T[] getValues() {
-//        return values;
-//    }
-
-    // used by others (e.g. CombinedTraces) without filter applied
-
-    public void getValues(int start, T[] destination, int offset) {
-        System.arraycopy(values, start, destination, offset, getValuesSize() - start);
-    }
-
-    // used by others (e.g. CombinedTraces) without filter applied
-    public void getValues(int start, int count, T[] destination, int offset) {
-        System.arraycopy(values, start, destination, offset, count);
-    }
-
     /**
      *
-     * @param fromIndex low endpoint (inclusive) of the subList.
-     * @param toIndex high endpoint (exclusive) of the subList.
-     * @param selected  getValuesSize() should = selected.length
-     * @return subList
+     * @param fromIndex    low endpoint (inclusive) of the subList.
+     * @param toIndex      high endpoint (exclusive) of the subList.
+     * @param selected     if null then no filter, otherwise selected.length should = getValuesSize()
+     * @return The list of values (which are selected values if filter applied)
      */
     public List<T> getValues(int fromIndex, int toIndex, boolean[] selected) {
         if (toIndex > getValuesSize() || fromIndex > toIndex)
@@ -112,7 +97,7 @@ public class Trace<T> {
                     + "; List size = " + getValuesSize() + "; in Trace " + name);
 
         if (selected != null) {
-            if (getValuesSize() != selected.length)
+            if (selected.length != getValuesSize())
                 throw new RuntimeException("size of values is different with selected[] in Trace " + name);
 
             List<T> valuesList = new ArrayList<T>();

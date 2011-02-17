@@ -8,6 +8,7 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.List;
 
 /**
  *
@@ -80,8 +81,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
 
-            Double sample[] = new Double[traces.getStateCount()];
-            traces.getValues(traceIndex, sample);
+            List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
                     traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);

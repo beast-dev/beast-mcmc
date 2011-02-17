@@ -20,7 +20,7 @@ public class PathSamplingAnalysis {
     public static final String THETA_COLUMN = "thetaColumn";
     public static final String FORMAT = "%5.5g";
 
-    PathSamplingAnalysis(double[] logLikelihoodSample, String logLikelihoodName, double[] thetaSample) {
+    PathSamplingAnalysis(String logLikelihoodName, List<Double> logLikelihoodSample, List<Double> thetaSample) {
         this.logLikelihoodSample = logLikelihoodSample;
         this.logLikelihoodName = logLikelihoodName;
         this.thetaSample = thetaSample;
@@ -49,12 +49,12 @@ public class PathSamplingAnalysis {
         Map<Double, List<Double>> map = new HashMap<Double, List<Double>>();
         orderedTheta = new ArrayList<Double>();
 
-        for (int i = 0; i < logLikelihoodSample.length; i++) {
-            if (!map.containsKey(thetaSample[i])) {
-                map.put(thetaSample[i], new ArrayList<Double>());
-                orderedTheta.add(thetaSample[i]);
+        for (int i = 0; i < logLikelihoodSample.size(); i++) {
+            if (!map.containsKey(thetaSample.get(i))) {
+                map.put(thetaSample.get(i), new ArrayList<Double>());
+                orderedTheta.add(thetaSample.get(i));
             }
-            map.get(thetaSample[i]).add(logLikelihoodSample[i]);
+            map.get(thetaSample.get(i)).add(logLikelihoodSample.get(i));
         }
 
         Collections.sort(orderedTheta);
@@ -172,14 +172,10 @@ public class PathSamplingAnalysis {
                     throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
                 }
 
-                Double sampleLogLikelihood[] = new Double[traces.getStateCount()];
-                Double sampleTheta[] = new Double[traces.getStateCount()];
-                traces.getValues(traceIndexLikelihood, sampleLogLikelihood);
-                traces.getValues(traceIndexTheta, sampleTheta);
+                List sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
+                List sampleTheta = traces.getValues(traceIndexTheta);
 
-                PathSamplingAnalysis analysis = new PathSamplingAnalysis(
-                        Trace.arrayConvertToDouble(sampleLogLikelihood), likelihoodName,
-                        Trace.arrayConvertToDouble(sampleTheta));
+                PathSamplingAnalysis analysis = new PathSamplingAnalysis(likelihoodName, sampleLogLikelihood, sampleTheta);
 
                 System.out.println(analysis.toString());
 
@@ -223,8 +219,8 @@ public class PathSamplingAnalysis {
     private boolean logBayesFactorCalculated = false;
     private double logBayesFactor;
     private double innerArea;
-    private final double[] logLikelihoodSample;
-    private final double[] thetaSample;
+    private final List<Double> logLikelihoodSample;
+    private final List<Double> thetaSample;
     private List<Double> meanLogLikelihood;
     private final String logLikelihoodName;
     List<Double> orderedTheta;

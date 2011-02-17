@@ -52,10 +52,8 @@ import java.awt.event.ActionListener;
 import java.io.PrintWriter;
 import java.io.Writer;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -354,9 +352,9 @@ public class TreesPanel extends JPanel implements Exportable {
             if (temporalRooting.isContemporaneous()) {
                 double[] dv = temporalRooting.getRootToTipDistances(currentTree);
 
-                Double[] values = new Double[dv.length];
-                for (int i = 0; i < dv.length; i++) {
-                    values[i] = dv[i];
+                List<Double> values = new ArrayList<Double>();
+                for (double d : dv) {
+                    values.add(d);
                 }
 
                 rootToTipChart.removeAllPlots();
@@ -364,11 +362,11 @@ public class TreesPanel extends JPanel implements Exportable {
                 dp.setLineColor(new Color(9, 70, 15));
 
                 double yOffset = (Double) dp.getYData().getMax() / 2;
-                Double[] dummyValues = new Double[values.length];
-                for (int i = 0; i < dummyValues.length; i++) {
+                List<Double> dummyValues = new ArrayList<Double>();
+                for (int i = 0; i < values.size(); i++) {
                     // add a random y offset to give some visual spread
                     double y = MathUtils.nextGaussian() * ((Double) dp.getYData().getMax() * 0.05);
-                    dummyValues[i] = yOffset + y;
+                    dummyValues.add(yOffset + y);
                 }
 
                 rootToTipPlot = new ScatterPlot(values, dummyValues);
@@ -412,14 +410,14 @@ public class TreesPanel extends JPanel implements Exportable {
                 if (showMRCACheck.isSelected()) {
                     double[] dv = temporalRooting.getParentRootToTipDistances(currentTree);
 
-                    Double[] parentDistances = new Double[dv.length];
+                    List<Double> parentDistances = new ArrayList<Double>();
                     for (int i = 0; i < dv.length; i++) {
-                        parentDistances[i] = dv[i];
+                        parentDistances.add(i, dv[i]);
                     }
 
-                    Double[] parentTimes = new Double[parentDistances.length];
-                    for (int i = 0; i < parentDistances.length; i++) {
-                        parentTimes[i] = r.getX(parentDistances[i]);
+                    List<Double> parentTimes = new ArrayList<Double>();
+                    for (int i = 0; i < parentDistances.size(); i++) {
+                        parentTimes.add(i, r.getX(parentDistances.get(i)));
                     }
                     mrcaPlot = new ParentPlot(r.getXData(), r.getYData(), parentTimes, parentDistances);
                     mrcaPlot.setLineColor(new Color(105, 202, 105));

@@ -30,6 +30,7 @@ import dr.stats.Variate;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
+import java.util.List;
 import java.util.Set;
 import java.util.Vector;
 
@@ -63,7 +64,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public ScatterPlot(Double[] xData, Double[] yData) {
+    public ScatterPlot(List<Double> xData, List<Double> yData) {
         super(xData, yData);
         setMarkStyle(CIRCLE_MARK, 5, new BasicStroke(1),
                 Color.black, Color.yellow);

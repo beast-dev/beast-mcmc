@@ -207,7 +207,7 @@ public class CombinedTraces implements TraceList {
         Trace trace = getTrace(index);
 
         if (trace != null)
-            traceStatistics[index] = new TraceCorrelation(getValues(index), getStepSize());
+            traceStatistics[index] = new TraceCorrelation(getValues(index), TraceFactory.TraceType.DOUBLE, getStepSize()); //todo
     }
 
     public Trace getTrace(int index) {

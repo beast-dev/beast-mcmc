@@ -92,11 +92,11 @@ public class FilterDialog {
         } else {
             sel = f.getIn();
         }
-        if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+        if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
             String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
             filterPanel = new FilterContinuousPanel(minMax, sel);
         } else {// integer and string
-            List<String> allNames = td.credSet.getRange();
+            List<String> allNames = td.getRange();
             String[] all = allNames.toArray(new String[allNames.size()]);
             filterPanel = new FilterDiscretePanel(all, sel);
         }
@@ -174,7 +174,7 @@ public class FilterDialog {
 //
 //        Filter f = filteredTraceList.getFilter(traceName);
 //
-//        if (td.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+//        if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
 //
 //        } else {// integer and string
 //            String[] all = td.getRangeAll();

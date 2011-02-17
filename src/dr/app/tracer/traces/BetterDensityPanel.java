@@ -56,10 +56,8 @@ public class BetterDensityPanel extends DensityPanel {
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
         List values = tl.getValues(traceIndex);
-        Double[] ar = new Double[values.size()];
-        values.toArray(ar);
 
-        Plot plot = new KDENumericalDensityPlot(ar, minimumBins, td);
+        Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
 
         densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         chartPanel.setYAxisTitle("Density");

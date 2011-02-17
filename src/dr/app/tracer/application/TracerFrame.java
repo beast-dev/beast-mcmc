@@ -235,9 +235,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 if (((JButton) e.getSource()).getText().equals("I")) {
                     changeTraceType(TraceFactory.TraceType.INTEGER);
                 } else if (((JButton) e.getSource()).getText().equals("C")) {
-                    changeTraceType(TraceFactory.TraceType.CATEGORY);
+                    changeTraceType(TraceFactory.TraceType.STRING);
                 } else {
-                    changeTraceType(TraceFactory.TraceType.CONTINUOUS);
+                    changeTraceType(TraceFactory.TraceType.DOUBLE);
                 }
             }
         };
@@ -366,10 +366,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JPopupMenu createContextMenu() {
         JPopupMenu contextMenu = new JPopupMenu();
         JMenuItem menu = new JMenuItem();
-        menu.setText(TraceFactory.TraceType.CONTINUOUS + " (" + TraceFactory.TraceType.CONTINUOUS.getBrief() + ")");
+        menu.setText(TraceFactory.TraceType.DOUBLE + " (" + TraceFactory.TraceType.DOUBLE.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.CONTINUOUS);
+                changeTraceType(TraceFactory.TraceType.DOUBLE);
             }
         });
         contextMenu.add(menu);
@@ -384,10 +384,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         contextMenu.add(menu);
 
         menu = new JMenuItem();
-        menu.setText(TraceFactory.TraceType.CATEGORY + " (" + TraceFactory.TraceType.CATEGORY.getBrief() + ")");
+        menu.setText(TraceFactory.TraceType.STRING + " (" + TraceFactory.TraceType.STRING.getBrief() + ")");
         menu.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.CATEGORY);
+                changeTraceType(TraceFactory.TraceType.STRING);
             }
         });
         contextMenu.add(menu);
@@ -697,7 +697,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 //        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
         List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
-        List<Class> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<Class>());
+        List<TraceFactory.TraceType> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<TraceFactory.TraceType>());
         List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
         for (TraceList tl : currentTraceLists) {
             List<String> currentTrace = new ArrayList<String>();
@@ -705,7 +705,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 String traceName = tl.getTraceName(i);
                 currentTrace.add(traceName);
                 if (!incompatibleTrace.contains(traceName)) {
-                    Class traceType = tl.getTrace(i).getTraceType();
+                    TraceFactory.TraceType traceType = tl.getTrace(i).getTraceType();
                     if (traceType == null) {
                         incompatibleTrace.add(traceName);
                         break;
@@ -1464,7 +1464,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-            if (col == 3) return td.getTraceTypeBrief(); 
+            if (col == 3) return td.getTraceType().getBrief(); 
 
             double value = 0.0;
             boolean warning = false;

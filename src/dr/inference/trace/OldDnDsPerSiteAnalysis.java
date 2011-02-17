@@ -11,6 +11,7 @@ import dr.xml.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * @author Philippe Lemey
@@ -355,7 +356,7 @@ public class OldDnDsPerSiteAnalysis {
 
                 traces.setBurnIn(burnin);
 
-                Double samples[][][] = new Double[NUM_VARIABLES][][];
+                double samples[][][] = new double[NUM_VARIABLES][][];
 
                 for (int variable = 0; variable < NUM_VARIABLES; ++variable) {
                     XMLObject cxo = xo.getChild(names[variable]);
@@ -379,18 +380,21 @@ public class OldDnDsPerSiteAnalysis {
                     }
                     int numberOfSites = 1 + (traceEndIndex - traceStartIndex);
 
-                    Double[][] countPerSite = new Double[numberOfSites][traces.getStateCount()];
+                    double[][] countPerSite = new double[numberOfSites][];
                     for (int a = 0; a < numberOfSites; a++) {
-                        traces.getValues((a + traceStartIndex), countPerSite[a]);
+                        List<Double> values = traces.getValues((a + traceStartIndex));
+                        countPerSite[a] = new double[values.size()];
+                        for (int i = 0; i < values.size(); i++) {
+                            countPerSite[a][i] = values.get(i);
+                        }
                     }
 
                     samples[variable] = countPerSite;
 
                 }
 
-                OldDnDsPerSiteAnalysis analysis = new OldDnDsPerSiteAnalysis(
-                        Trace.multiDArrayConvert(samples[COND_S]), Trace.multiDArrayConvert(samples[UNCOND_S]),
-                        Trace.multiDArrayConvert(samples[COND_N]), Trace.multiDArrayConvert(samples[UNCOND_N]));
+                OldDnDsPerSiteAnalysis analysis = new OldDnDsPerSiteAnalysis(samples[COND_S], samples[UNCOND_S],
+                        samples[COND_N], samples[UNCOND_N]);
 
                 System.out.println(analysis.output());
                 //TODO: save to file

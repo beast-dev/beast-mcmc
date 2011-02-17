@@ -130,41 +130,6 @@ public class Trace<T> {
         return name;
     }
 
-    // *************** Large Memory Comsumption ******************
-    public static <T> double[] arrayConvertToDouble(T[] src) {//todo
-        double[] dest = null;
-        if (src != null) {
-            dest = new double[src.length];
-            for (int i = 0; i < dest.length; i++) {
-                dest[i] = ((Number) src[i]).doubleValue();
-            }
-        }
-        return dest;
-    }
-
-    public static <T> int[] arrayConvertToInt(T[] src) {//todo
-        int[] dest = null;
-        if (src != null) {
-            dest = new int[src.length];
-            for (int i = 0; i < dest.length; i++) {
-                dest[i] = ((Number) src[i]).intValue();
-            }
-        }
-        return dest;
-    }
-
-    public static double[][] multiDArrayConvert(Double[][] src) {//todo
-        double[][] dest = null;
-        if (src != null) {
-            dest = new double[src.length][src[0].length];
-            for (int i = 0; i < dest.length; i++) {
-                for (int j = 0; j < dest[i].length; j++) {
-                    dest[i][j] = src[i][j].doubleValue();
-                }
-            }
-        }
-        return dest;
-    }
     //************************************************************
 
 //    public Class getTraceType() {

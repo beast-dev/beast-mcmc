@@ -54,7 +54,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
     protected FrequencyPlot(TraceDistribution traceD) {
         super();
-        this.traceD = traceD;;
+        this.traceD = traceD;
     }
 
     public FrequencyPlot(Variate.D data, int minimumBinCount) {

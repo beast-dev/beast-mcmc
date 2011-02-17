@@ -3,12 +3,14 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -132,10 +134,8 @@ public class FrequencyPanel extends JPanel implements Exportable {
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
             List values = traceList.getValues(traceIndex);
-            if (trace.getTraceType() == Double.class) {
-                Double[] ar = new Double[values.size()];
-                values.toArray(ar);
-                plot = new FrequencyPlot(ar, minimumBins, td);
+            if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                plot = new FrequencyPlot(values, minimumBins, td);
 
                 if (td != null) {
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
@@ -147,13 +147,11 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(true);
                 showValuesCheckBox.setVisible(false);
 
-            } else if (trace.getTraceType() == Integer.class) {
-                Integer[] ar = new Integer[values.size()];
-                values.toArray(ar);
-                plot = new FrequencyPlot(ar, -1, td);
+            } else if (trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
+                plot = new FrequencyPlot(values, -1, td);
 
                 if (td != null) {
-                    plot.setInCredibleSet(td.credSet);
+                    plot.setInCredibleSet(td);
                 }
 
                 traceChart.setXAxis(true, categoryDataMap);
@@ -162,18 +160,18 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(false);
                 showValuesCheckBox.setVisible(true);
 
-            } else if (trace.getTraceType() == String.class) {
-
-                Integer[] intData = new Integer[values.size()];
+            } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
+                List<Double> intData = new ArrayList<Double>();
                 for (int v = 0; v < values.size(); v++) {
-                    intData[v] = td.credSet.getIndex(values.get(v).toString());
-                    categoryDataMap.put(intData[v], values.get(v).toString());
+                    int index = td.getIndex(values.get(v).toString());
+                    intData.add(v, (double) index);
+                    categoryDataMap.put(index, values.get(v).toString());
                 }
 
                 plot = new FrequencyPlot(intData, -1, td);
 
                 if (td != null) {
-                    plot.setInCredibleSet(td.credSet);
+                    plot.setInCredibleSet(td);
                 }
                 traceChart.setXAxis(false, categoryDataMap);
                 chartPanel.setYAxisTitle("Count");

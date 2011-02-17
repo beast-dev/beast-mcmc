@@ -400,10 +400,7 @@ public class DemographicDialog {
         }
 
         public Object doWork() {
-
-
             int n = traceList.getStateCount();
-
             current = 0;
 
             int[] argIndices = argumentIndices[demographicCombo.getSelectedIndex()];
@@ -416,7 +413,8 @@ public class DemographicDialog {
 
             List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
-            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights,
+                    traceList.getTrace(traceList.getTraceIndex(rootHeightTrace)).getTraceType(), traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

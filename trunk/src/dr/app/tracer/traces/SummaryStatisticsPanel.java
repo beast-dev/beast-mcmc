@@ -224,9 +224,9 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             }
 
             if (col == 0) {
-                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS.getType() && row == 6) {
+                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
                     return CRED_SET_ROW;
-//                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
+//                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
 //                    return INCRED_SET_ROW;
                 } else {
                     return rowNames[row];
@@ -240,48 +240,48 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
                 switch (row) {
                     case 0:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
                             value = tc.getMean();
                         }
                         break;
                     case 1:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
                             value = tc.getStdErrorOfMean();
                         }
                         break;
                     case 2:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
                             value = tc.getVariance();
                         }
                         break;
                     case 3:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
                             value = tc.getMedian();
                         }
                         break;
                     case 4:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "n/a";
                         } else {
-                            return tc.credSet.getMode();
+                            return tc.getMode();
                         }
                     case 5:
                         if (!tc.hasGeometricMean()) return "n/a";
                         value = tc.getGeometricMean();
                         break;
                     case 6:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
-                            return tc.credSet.printCredibleSet();
+                            return tc.printCredibleSet();
                         }
                     case 7:
                         value = tc.getACT();
@@ -290,10 +290,10 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         value = tc.getESS();
                         break;
                     case 9:
-                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "-";
                         } else {
-                            return tc.credSet.printInCredibleSet();
+                            return tc.printInCredibleSet();
                         }
 
                 }

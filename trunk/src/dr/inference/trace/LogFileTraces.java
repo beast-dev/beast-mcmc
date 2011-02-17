@@ -322,16 +322,12 @@ public class LogFileTraces extends AbstractTraceList {
     private void addParsedValue(int nTrace, String value) {
         String name = getTraceName(nTrace);
 //        System.out.println(thisTrace.getTraceType() + "   " + value);
-        if (tracesType.get(name) == TraceFactory.TraceType.CONTINUOUS) {
+        if (tracesType.get(name) == TraceFactory.TraceType.DOUBLE
+                || tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
             Double v = Double.parseDouble(value);
             getTrace(nTrace).add(v);
 
-        } else if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
-//             Integer v = Integer.parseInt(value);
-            int v = (int) Double.parseDouble(value);
-            getTrace(nTrace).add(v);
-
-        } else if (tracesType.get(name) == TraceFactory.TraceType.CATEGORY) {
+        } else if (tracesType.get(name) == TraceFactory.TraceType.STRING) {
             getTrace(nTrace).add(value);
 
         } else {
@@ -352,11 +348,11 @@ public class LogFileTraces extends AbstractTraceList {
                     token = tokens.nextToken();
                     tracesType.put(token, TraceFactory.TraceType.INTEGER);
                 }
-            } else if (firstToken.contains(TraceFactory.TraceType.CATEGORY.toString())
-                    || firstToken.contains(TraceFactory.TraceType.CATEGORY.toString().toUpperCase())) {
+            } else if (firstToken.contains(TraceFactory.TraceType.STRING.toString())
+                    || firstToken.contains(TraceFactory.TraceType.STRING.toString().toUpperCase())) {
                 while (tokens.hasMoreTokens()) {
                     token = tokens.nextToken();
-                    tracesType.put(token, TraceFactory.TraceType.CATEGORY);
+                    tracesType.put(token, TraceFactory.TraceType.STRING);
                 }
             }
         }
@@ -368,12 +364,12 @@ public class LogFileTraces extends AbstractTraceList {
 //            if (tracesType.get(name) == TraceFactory.TraceType.INTEGER) {
 //                trace = new DiscreteTrace(name, numberOfLines);
 ////                trace.setTraceType(TraceType.INTEGER);
-//            } else if (tracesType.get(name) == TraceFactory.TraceType.CATEGORY) {
+//            } else if (tracesType.get(name) == TraceFactory.TraceType.STRING) {
 //                trace = new CategoryTrace(name, numberOfLines);
-////                trace.setTraceType(TraceType.CATEGORY);
+////                trace.setTraceType(TraceType.STRING);
 //            }
 //        } else {
-//            trace = new ContinuousTrace(name, numberOfLines); // default CONTINUOUS
+//            trace = new ContinuousTrace(name, numberOfLines); // default DOUBLE
 //        }
 //        return trace;
 //    }
@@ -391,11 +387,11 @@ public class LogFileTraces extends AbstractTraceList {
      * @param name trace name
      */
     private void addTraceAndType(String name) {
-        if (tracesType == null || tracesType.get(name) == null || tracesType.get(name) == TraceFactory.TraceType.CONTINUOUS) {
-            traces.add(createTrace(TraceFactory.TraceType.CONTINUOUS, name));
-            tracesType.put(name, TraceFactory.TraceType.CONTINUOUS);
+        if (tracesType == null || tracesType.get(name) == null || tracesType.get(name) == TraceFactory.TraceType.DOUBLE) {
+            traces.add(createTrace(name, TraceFactory.TraceType.DOUBLE));
+            tracesType.put(name, TraceFactory.TraceType.DOUBLE);
         } else {
-            traces.add(createTrace(tracesType.get(name), name));
+            traces.add(createTrace(name, tracesType.get(name)));
         }
     }
 
@@ -415,17 +411,18 @@ public class LogFileTraces extends AbstractTraceList {
 //        throw new TraceException("Cannot find trace : " + name);
 //    }
 
-    private Trace createTrace(TraceFactory.TraceType traceType, String name) {
+    private Trace createTrace(String name, TraceFactory.TraceType traceType) {
         // System.out.println("create trace (" + name + ") with type " + traceType);
         switch (traceType) {
-            case CONTINUOUS:
-                return new Trace<Double>(name);
+            case DOUBLE:
+                return new Trace<Double>(name, TraceFactory.TraceType.DOUBLE);
             case INTEGER:
-                return new Trace<Integer>(name);
-            case CATEGORY:
-                return new Trace<String>(name);
+                return new Trace<Double>(name, TraceFactory.TraceType.INTEGER);
+            case STRING:
+                return new Trace<String>(name, TraceFactory.TraceType.STRING);
+            default:
+                throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
         }
-        throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
     }
 
     /**
@@ -456,7 +453,7 @@ public class LogFileTraces extends AbstractTraceList {
 
     private final List<Trace> traces = new ArrayList<Trace>();
     // List traces is added before having types
-    // tracesType only save INTEGER and CATEGORY, and only use during loading files
+    // tracesType only save INTEGER and STRING, and only use during loading files
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
 
     private int burnIn = -1;

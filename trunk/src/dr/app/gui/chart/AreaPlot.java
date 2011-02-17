@@ -29,6 +29,7 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.util.List;
 
 /**
  * Description:	An area plot.
@@ -53,7 +54,7 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public AreaPlot(Double[] xData, Double[] yData) {
+    public AreaPlot(List<Double> xData, List<Double> yData) {
         super(xData, yData);
     }
 
@@ -69,7 +70,7 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public AreaPlot(Double[] xData1, Double[] yData1, Double[] xData2, Double[] yData2) {
+    public AreaPlot(List<Double> xData1, List<Double> yData1, List<Double> xData2, List<Double> yData2) {
         super(xData1, yData1);
         this.xData2 = new Variate.D(xData2);
         this.yData2 = new Variate.D(yData2);
@@ -78,7 +79,7 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Double[] xData1, Double[] yData1, Double[] xData2, Double[] yData2) {
+    public void setData(List<Double> xData1, List<Double> yData1, List<Double> xData2, List<Double> yData2) {
         setData(xData1, yData1);
         this.xData2 = new Variate.D(xData2);
         this.yData2 = new Variate.D(yData2);

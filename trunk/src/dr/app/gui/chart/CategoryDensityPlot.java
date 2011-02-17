@@ -30,22 +30,23 @@ import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
+import java.util.List;
 
 public class CategoryDensityPlot extends FrequencyPlot {
     private int numOfBars = 0;
     private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
+    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
         super(traceD);
         this.numOfBars = numOfBars;
         this.barId = barId;
 
-        Double[] doubleData = new Double[data.length];
-        for (int i = 0; i < data.length; i++) {
-            doubleData[i] = data[i].doubleValue();
-        }
-        setData(doubleData, minimumBinCount);
+//        Double[] doubleData = new Double[data.length];
+//        for (int i = 0; i < data.length; i++) {
+//            doubleData[i] = data[i].doubleValue();
+//        }
+        setData(data, minimumBinCount);
     }
 
     /**
@@ -168,7 +169,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
     }
 
 //    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS && numOfBars > 0) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
 //            super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
 //        } else {
 //            super.fillRect(g2, x1, y1, x2, y2);
@@ -176,7 +177,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
 //    }
 //
 //    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS && numOfBars > 0) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
 ////            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
 //           super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
 //        } else {

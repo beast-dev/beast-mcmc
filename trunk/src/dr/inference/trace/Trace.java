@@ -41,28 +41,26 @@ public class Trace<T> {
 //    public static final int INITIAL_SIZE = 1000;
 //    public static final int INCREMENT_SIZE = 1000;
 
-    //    private TraceType traceType = TraceType.CONTINUOUS;
+    // use <Double> for integer, but traceType must = INTEGER
+    private TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
     protected List<T> values = new ArrayList<T>();
     //    protected int valueCount = 0;
     protected String name;
 
-    public Trace(String name) {
-        this.name = name;
-    }
-
-//    public Trace(String name, int initialSize, T initValue) {
+//    public Trace(String name) {
 //        this.name = name;
-//        if (initialSize > 0) {
-//            this.values = (T[]) new Object[initialSize];
-//        }
-//        values[0] = initValue; // make getTraceType() working
 //    }
 
-    public Trace(String name, T[] valuesArray) {
-        this(name);
-//        List<T> newVL = Arrays.asList(valuesArray);
-        Collections.addAll(this.values, valuesArray);
+    public Trace(String name, TraceFactory.TraceType traceType) {
+        this.name = name;
+        this.traceType = traceType;
     }
+
+//    public Trace(String name, T[] valuesArray) {
+//        this(name);
+////        List<T> newVL = Arrays.asList(valuesArray);
+//        Collections.addAll(this.values, valuesArray);
+//    }
 
     /**
      * @param value the valued to be added
@@ -169,16 +167,20 @@ public class Trace<T> {
     }
     //************************************************************
 
-    public Class getTraceType() {
-        if (values.get(0) == null) {
-            return null;
-        }
-        return values.get(0).getClass();
-    }
-//
-//    public void setTraceType(TraceFactory.TraceType traceType) {
-//        this.traceType = traceType;
+//    public Class getTraceType() {
+//        if (values.get(0) == null) {
+//            return null;
+//        }
+//        return values.get(0).getClass();
 //    }
+
+    public TraceFactory.TraceType getTraceType() {
+        return traceType;
+    }
+
+    public void setTraceType(TraceFactory.TraceType traceType) {
+        this.traceType = traceType;
+    }
 
     //******************** TraceCorrelation ****************************
     protected TraceCorrelation<T> traceStatistics;

@@ -473,7 +473,8 @@ public class GMRFSkyrideDialog {
 
             List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
 
-            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights,
+                    traceList.getTrace(traceList.getTraceIndex(rootHeightTrace)).getTraceType(), traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();

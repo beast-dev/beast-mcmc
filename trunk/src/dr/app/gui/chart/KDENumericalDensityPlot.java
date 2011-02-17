@@ -7,13 +7,15 @@ import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
+import java.util.List;
+
 /**
  * @author Marc A. Suchard
  */
 public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
 
 
-    public KDENumericalDensityPlot(Double[] data, int minimumBinCount, TraceDistribution traceD) {
+    public KDENumericalDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD); // TODO Remove when all linked together
 
 //        kde = new GammaKDEDistribution(data);

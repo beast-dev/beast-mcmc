@@ -107,6 +107,11 @@ public interface Variate<T> {
     public abstract class N<Number> implements Variate<Number> {
         protected List<Number> values = new ArrayList<Number>();
 
+//        public N() {}
+//        public N(List<Number> values) {
+//            add(values);
+//        }
+
         public int getCount() {
             return values.size();
         }
@@ -151,6 +156,7 @@ public interface Variate<T> {
         public D() {}
 
         public D(List<Double> values) {
+//            super(values);
             add(values);
         }
 
@@ -230,6 +236,7 @@ public interface Variate<T> {
         public I() {}
 
         public I(List<Integer> values) {
+//            super(values);
             add(values);
         }
 

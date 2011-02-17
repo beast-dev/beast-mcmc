@@ -30,6 +30,8 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -45,7 +47,7 @@ public class ParentPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public ParentPlot(Variate xData, Variate yData, Double[] xParentData, Double[] yParentData) {
+    public ParentPlot(Variate xData, Variate yData, List<Double> xParentData, List<Double> yParentData) {
         super(xParentData, yParentData);
 
         this.xTipData = xData;
@@ -110,7 +112,11 @@ public class ParentPlot extends Plot.AbstractPlot {
     private final Variate yParentData;
 
     public void setSelectedPoints(Set<Integer> selectedPoints, double mrcaTime, double mrcaDistance) {
-        setData(new Double[] { mrcaTime }, new Double[] { mrcaDistance });
+        List<Double> x = new ArrayList<Double>();
+        x.add(mrcaTime);
+        List<Double> y = new ArrayList<Double>();
+        y.add(mrcaDistance);
+        setData(x, y);
         setSelectedPoints(selectedPoints);
     }
 

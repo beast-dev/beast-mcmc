@@ -37,8 +37,8 @@ import java.util.List;
 public class TraceCorrelation<T> extends TraceDistribution<T> {
     final int stepSize;
 
-    public TraceCorrelation(List<T> values, int stepSize) {
-        super(values, stepSize);
+    public TraceCorrelation(List<T> values, TraceFactory.TraceType traceType, int stepSize) {
+        super(values, traceType, stepSize);
         this.stepSize = stepSize;
 
         if (isValid) {
@@ -57,15 +57,15 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     private void analyseCorrelation(List<T> values, int stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
-         if (values.get(0).getClass() == TraceFactory.TraceType.CONTINUOUS.getType()
-                 || values.get(0).getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+         if (getTraceType() == TraceFactory.TraceType.DOUBLE
+                 || getTraceType() == TraceFactory.TraceType.INTEGER) {
               double[] doubleValues = new double[values.size()];
              for (int i = 0; i < values.size(); i++) {
                 doubleValues[i] = ((Number) values.get(i)).doubleValue();
             }
              analyseCorrelationContinuous(doubleValues, stepSize);
 
-         } else if (values.get(0).getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
+         } else if (getTraceType() == TraceFactory.TraceType.STRING) {
 
 
          } else {

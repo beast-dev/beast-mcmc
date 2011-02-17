@@ -28,6 +28,7 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceCorrelation;
+import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import jam.framework.Exportable;
@@ -35,6 +36,7 @@ import jam.framework.Exportable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +99,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
     private int colourBy = COLOUR_BY_TRACE;
 
-    private Class traceType = null;
+    private TraceFactory.TraceType traceType = null;
 
     private final JFrame frame;
 
@@ -336,52 +338,41 @@ public class DensityPanel extends JPanel implements Exportable {
         }
 
         // only enable controls relevent to continuous densities...
-        relativeDensityCheckBox.setEnabled(traceType == Double.class);
-        labelBins.setEnabled(traceType == Double.class);
-        binsCombo.setEnabled(traceType == Double.class);
-        kdeCheckBox.setEnabled(traceType == Double.class);
-        kdeSetupButton.setEnabled(traceType == Double.class);
+        relativeDensityCheckBox.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
+        labelBins.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
+        binsCombo.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
+        kdeCheckBox.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
+        kdeSetupButton.setEnabled(traceType == TraceFactory.TraceType.DOUBLE);
 
         setupTraces();
     }
 
     protected Plot setupDensityPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
         List values = tl.getValues(traceIndex);
-        Double[] ar = new Double[values.size()];
-        values.toArray(ar);
-
-        FrequencyPlot plot = new NumericalDensityPlot(ar, minimumBins, td);
-
+        FrequencyPlot plot = new NumericalDensityPlot(values, minimumBins, td);
         return plot;
     }
 
     protected Plot setupKDEPlot(TraceList tl, int traceIndex, TraceCorrelation td) {
         List values = tl.getValues(traceIndex);
-        Double[] ar = new Double[values.size()];
-        values.toArray(ar);
-
-        Plot plot = new KDENumericalDensityPlot(ar, minimumBins, td);
-
+        Plot plot = new KDENumericalDensityPlot(values, minimumBins, td);
         return plot;
     }
 
     protected Plot setupIntegerPlot(TraceList tl, int traceIndex, TraceCorrelation td, int barCount, int barId) {
         List values = tl.getValues(traceIndex);
-        Integer[] ar = new Integer[values.size()];
-        values.toArray(ar);
-
-        CategoryDensityPlot plot = new CategoryDensityPlot(ar, -1, td, barCount, barId);
-
+        CategoryDensityPlot plot = new CategoryDensityPlot(values, -1, td, barCount, barId);
         return plot;
     }
 
     protected Plot setupCategoryPlot(TraceList tl, int traceIndex, TraceCorrelation td, Map<Integer, String> categoryDataMap, int barCount, int barId) {
         List values = tl.getValues(traceIndex);
 
-        Integer[] intData = new Integer[values.size()];
+        List<Double> intData = new ArrayList<Double>();
         for (int v = 0; v < values.size(); v++) {
-            intData[v] = td.credSet.getIndex(values.get(v).toString());
-            categoryDataMap.put(intData[v], values.get(v).toString());
+            int index = td.getIndex(values.get(v).toString());
+            intData.add(v, (double) index);
+            categoryDataMap.put(index, values.get(v).toString());
         }
 
         CategoryDensityPlot plot = new CategoryDensityPlot(intData, -1, td, barCount, barId);
@@ -421,7 +412,7 @@ public class DensityPanel extends JPanel implements Exportable {
                     }
 
                     Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                    if (trace.getTraceType() == Double.class) {
+                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                         plot = setupDensityPlot(tl, traceIndex, td);
 
                         if (showKDE) {
@@ -439,12 +430,12 @@ public class DensityPanel extends JPanel implements Exportable {
                             }
                             densityChart.addPlot(plot2);
                         }
-                    } else if (trace.getTraceType() == Integer.class) {
+                    } else if (trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
 
                         plot = setupIntegerPlot(tl, traceIndex, td, barCount, barId);
                         barId++;
 
-                    } else if (trace.getTraceType() == String.class) {
+                    } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
 
                         plot = setupCategoryPlot(tl, traceIndex, td, categoryDataMap, barCount, barId);
                         barId++;
@@ -485,7 +476,7 @@ public class DensityPanel extends JPanel implements Exportable {
             chartPanel.setXAxisTitle("Multiple Traces");
         }
 
-        if (traceType == Double.class) {
+        if (traceType == TraceFactory.TraceType.DOUBLE) {
             chartPanel.setYAxisTitle("Density");
             densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         } else {

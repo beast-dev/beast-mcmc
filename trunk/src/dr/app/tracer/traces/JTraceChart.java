@@ -33,6 +33,7 @@ import dr.stats.Variate;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JTraceChart extends DiscreteJChart {
 
@@ -49,29 +50,26 @@ public class JTraceChart extends DiscreteJChart {
         int sampleCount;
         int sampleStep;
 
-        Double[] states;
-        Double[] values;
+        List<Double> states = new ArrayList<Double>();
+        List<Double> values;
 
-        Trace(int stateStart, int stateStep, Double[] values) {
+        Trace(int stateStart, int stateStep, List<Double> values) {
 
             this.stateStart = stateStart;
             this.stateStep = stateStep;
 
             this.values = values;
 
-            sampleCount = values.length;
+            sampleCount = values.size();
             sampleStep = 1;
             while (sampleCount > SAMPLE_POINTS) {
                 sampleStep *= 2;
-                sampleCount = values.length / sampleStep;
+                sampleCount = values.size() / sampleStep;
             }
 
-            this.states = new Double[values.length];
-
-            int k = 0;
             double ix = stateStart;
-            for (int j = 0; j < values.length; j++) {
-                this.states[j] = ix;
+            for (int j = 0; j < values.size(); j++) {
+                this.states.add(j, ix);
                 ix += stateStep;
 
             }
@@ -93,11 +91,11 @@ public class JTraceChart extends DiscreteJChart {
         this.isLinePlot = isLinePlot;
     }
 
-    public void addTrace(String name, int stateStart, int stateStep, Double[] values, Double[] burninValues, Paint paint) {
+    public void addTrace(String name, int stateStart, int stateStep, List<Double> values, List<Double> burninValues, Paint paint) {
 
         Variate.D yd = new Variate.D(values);
 
-        xAxis.addRange(0, stateStart + (values.length * stateStep) - stateStep);
+        xAxis.addRange(0, stateStart + (values.size() * stateStep) - stateStep);
         yAxis.addRange(yd.getMin(), yd.getMax());
 
         traces.add(new Trace(stateStart, stateStep, values));
@@ -118,12 +116,12 @@ public class JTraceChart extends DiscreteJChart {
         repaint();
     }
 
-    public Double[] getTraceStates(int index) {
+    public List<Double> getTraceStates(int index) {
         Trace trace = traces.get(index);
         return trace.states;
     }
 
-    public Double[] getTraceValues(int index) {
+    public List<Double> getTraceValues(int index) {
         Trace trace = traces.get(index);
         return trace.values;
     }
@@ -160,7 +158,7 @@ public class JTraceChart extends DiscreteJChart {
             int sampleFrequency = 1;
 
             if (useSample) {
-                sampleFrequency = trace.states.length / trace.sampleCount;
+                sampleFrequency = trace.states.size() / trace.sampleCount;
             }
 
             paintTrace(g2, trace, getPlot(i).getLineColor(), sampleFrequency);
@@ -176,8 +174,8 @@ public class JTraceChart extends DiscreteJChart {
     }
 
     private void paintTrace(Graphics2D g2, Trace trace, Paint paint, int sampleFrequency) {
-        float x = (float) transformX(trace.states[0]);
-        float y = (float) transformY(trace.values[0]);
+        float x = (float) transformX(trace.states.get(0));
+        float y = (float) transformY(trace.values.get(0));
 
         GeneralPath path = new GeneralPath();
         path.moveTo(x, y);
@@ -187,10 +185,10 @@ public class JTraceChart extends DiscreteJChart {
 
         int k = sampleFrequency;
 
-        for (int j = 1; j < trace.states.length; j++) {
+        for (int j = 1; j < trace.states.size(); j++) {
 
-            x = (float) transformX(trace.states[k]);
-            y = (float) transformY(trace.values[k]);
+            x = (float) transformX(trace.states.get(k));
+            y = (float) transformY(trace.values.get(k));
 
             if (!isLinePlot) {
                 path.moveTo(x, y);
@@ -198,7 +196,7 @@ public class JTraceChart extends DiscreteJChart {
             path.lineTo(x, y);
 
             k += sampleFrequency;
-            if (k >= trace.states.length) {
+            if (k >= trace.states.size()) {
                 break;
             }
         }

@@ -28,6 +28,7 @@ public abstract class FilteredTraceList implements TraceList {
     }
 
     public Filter getFilter(int traceIndex) {
+        if (selected == null) return null;
         return getTrace(traceIndex).getFilter();
     }
 

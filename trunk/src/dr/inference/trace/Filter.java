@@ -1,19 +1,18 @@
 package dr.inference.trace;
 
 /**
- *
+ * @author Walter Xie
  */
-public class Filter<T> {
+public class Filter {
 
-    Object[] in;
+    Object[] in; // keep Object[] for java swing
 
     public Filter(Object[] in) {
         setIn(in);
     }
 
-    public boolean isIn(T value) {
-
-        if (value instanceof Double) {
+    public boolean isIn(Object value, TraceFactory.TraceType traceType) {
+        if (traceType == TraceFactory.TraceType.DOUBLE) {
             // double filter passing String type for in[]
             return ( (Double)value >= Double.valueOf(in[0].toString()) && (Double)value <= Double.valueOf(in[1].toString()));
         }
@@ -24,14 +23,6 @@ public class Filter<T> {
         }
         return false;
     }
-//
-//    public String getTraceName() {
-//        return traceName;
-//    }
-//
-//    public TraceFactory.TraceType getTraceType() {
-//        return traceType;
-//    }
 
     public String[] getIn() {
         String[] inString = new String[in.length];

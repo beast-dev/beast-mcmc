@@ -115,8 +115,6 @@ public class Trace<T> {
         return name;
     }
 
-    //************************************************************
-
 //    public Class getTraceType() {
 //        if (values.get(0) == null) {
 //            return null;
@@ -144,21 +142,18 @@ public class Trace<T> {
     }
 
     //******************** Filter ****************************
-    protected Filter<T> filter;
+    protected Filter filter;
 
     public void setFilter(Filter filter) {
         this.filter = filter;
-//        if (traceStatistics == null)
-//            throw new RuntimeException("Cannot set filter because traceStatistics = null in Trace " + name);
-//        traceStatistics =
-    }
+   }
 
     public Filter getFilter() {
         return filter;
     }
 
     public boolean isIn(int i) {
-        return filter.isIn(values.get(i));
+        return filter.isIn(values.get(i), traceType);
     }
 
     //******************** Trace Double ****************************

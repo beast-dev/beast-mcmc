@@ -7,9 +7,9 @@ package dr.inference.trace;
 public class TraceFactory {
 
     public enum TraceType {
-        DOUBLE("real", "R", Double.class),
+        DOUBLE("double", "D", Double.class),
         INTEGER("integer", "I", Integer.class),
-        STRING("categorical", "C", String.class);
+        STRING("string", "S", String.class);
 
         TraceType(String name, String brief, Class type) {
             this.name = name;

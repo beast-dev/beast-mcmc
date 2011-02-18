@@ -25,6 +25,8 @@ public class AnalysisMenuFactory implements MenuFactory {
 
     public static final String CALCULATE_BAYES_FACTORS = "Calculate Bayes Factors...";
 
+    public static final String CONDITIONAL_POST_DIST = "Find Conditional Posterior Distributions...";
+
     public String getMenuName() {
         return "Analysis";
     }
@@ -65,6 +67,11 @@ public class AnalysisMenuFactory implements MenuFactory {
             menu.addSeparator();
 
             item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesFactorsAction());
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem(((AnalysisMenuHandler) frame).getConditionalPosteriorDistAction());
             menu.add(item);
 
         } else {
@@ -109,6 +116,12 @@ public class AnalysisMenuFactory implements MenuFactory {
             menu.addSeparator();
 
             item = new JMenuItem(CALCULATE_BAYES_FACTORS);
+            item.setEnabled(false);
+            menu.add(item);
+
+            menu.addSeparator();
+
+            item = new JMenuItem(CONDITIONAL_POST_DIST);
             item.setEnabled(false);
             menu.add(item);
         }

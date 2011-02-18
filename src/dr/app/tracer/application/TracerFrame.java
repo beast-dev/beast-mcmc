@@ -64,9 +64,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private final JLabel filterStatus = new JLabel();
     String message;
-
-    private FilterDialog filterDialog;
-
     private int dividerLocation = -1;
 
     private DemographicDialog demographicDialog = null;
@@ -78,6 +75,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
     private BayesFactorsDialog bayesFactorsDialog = null;
+
+    private FilterDialog filterDialog;
 
     public TracerFrame(String title) {
         super();
@@ -224,17 +223,17 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         changeTraceTypePanel.add(new JLabel("Change type to:"));
-        JButton realButton = new JButton("R");
-        realButton.setToolTipText("real");
-        JButton integerButton = new JButton("I");
-        integerButton.setToolTipText("integer");
-        JButton categoryButton = new JButton("C");
-        categoryButton.setToolTipText("category");
+        JButton realButton = new JButton(TraceFactory.TraceType.DOUBLE.getBrief());
+        realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
+        JButton integerButton = new JButton(TraceFactory.TraceType.INTEGER.getBrief());
+        integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
+        JButton categoryButton = new JButton(TraceFactory.TraceType.STRING.getBrief());
+        categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
         ActionListener traceTypeButton = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (((JButton) e.getSource()).getText().equals("I")) {
+                if (((JButton) e.getSource()).getText().equals(TraceFactory.TraceType.INTEGER.getBrief())) {
                     changeTraceType(TraceFactory.TraceType.INTEGER);
-                } else if (((JButton) e.getSource()).getText().equals("C")) {
+                } else if (((JButton) e.getSource()).getText().equals(TraceFactory.TraceType.STRING.getBrief())) {
                     changeTraceType(TraceFactory.TraceType.STRING);
                 } else {
                     changeTraceType(TraceFactory.TraceType.DOUBLE);
@@ -244,15 +243,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         realButton.addActionListener(traceTypeButton);
         integerButton.addActionListener(traceTypeButton);
         categoryButton.addActionListener(traceTypeButton);
+        changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.add(integerButton);
         changeTraceTypePanel.add(categoryButton);
-        changeTraceTypePanel.add(realButton);
-        changeTraceTypePanel.setToolTipText("<html>Traces Type: real(R) is double, integer(I) is integer, category(C) is string.</html>");
-        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
-
-//        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
-//                "category(C) is string. Right click to change trace type in a selected cell.</html>"),
-//                BorderLayout.SOUTH);
+        changeTraceTypePanel.setToolTipText("<html> Alternatively use key word double, integer, string " +
+                "followed by tab delimited column names <br> in the beginning of the log file, " +
+                "to define the trace type. For example: <br> # integer columnName1 columnName2 ... </html>");
+        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
         leftPanel.setPreferredSize(new Dimension(400, 300));
@@ -288,25 +285,25 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
-        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 8, 12, 12)));
-        JButton filterButton = new JButton("Filtered by :");
-        filterButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                int rowIndex = statisticTable.getSelectedRow();
-
-                if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
-                    removeAllFilters();
-                } else {
-                    invokeFilter();
-                }
-
-                statisticTableModel.fireTableDataChanged();
-                statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
-            }
-        });
-        filterPanel.add(filterButton);
-        filterCombo.setPreferredSize(new Dimension(230, 20));
+//        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+//        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 8, 12, 12)));
+//        JButton filterButton = new JButton("Filtered by :");
+//        filterButton.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                int rowIndex = statisticTable.getSelectedRow();
+//
+//                if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
+//                    removeAllFilters();
+//                } else {
+//                    invokeFilter();
+//                }
+//
+//                statisticTableModel.fireTableDataChanged();
+//                statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
+//            }
+//        });
+//        filterPanel.add(filterButton);
+//        filterCombo.setPreferredSize(new Dimension(230, 20));
 //        filterCombo.addItemListener(new ItemListener () { //todo bug
 //            public void itemStateChanged(ItemEvent e) {
 //                if (filterCombo.getItemCount() > 0) {
@@ -315,35 +312,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //                }
 //            }
 //        });
-        filterPanel.add(filterCombo);
-        filterPanel.add(filterStatus);
-
-        getContentPane().add(filterPanel, BorderLayout.SOUTH);
-    }
-
-    private void invokeFilter() {
-        if (filterDialog == null) {
-            filterDialog = new FilterDialog(this);
-        }
-
-        if (currentTraceLists == null) {
-            JOptionPane.showMessageDialog(this, "There is no file being selected !",
-                    "Invalid Action",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-
-        if (hasDiffValues(currentTraceLists)) {
-            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
-                    "Invalid Action",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-
-        String traceName = filterCombo.getSelectedItem().toString();
-
-        message = "  " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
-
-        filterStatus.setText(message);
-
+//        filterPanel.add(filterCombo);
+//        filterPanel.add(filterStatus);
+//
+//        getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
     private void removeAllFilters() {
@@ -363,37 +335,37 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return false;  //Todo
     }
 
-    private JPopupMenu createContextMenu() {
-        JPopupMenu contextMenu = new JPopupMenu();
-        JMenuItem menu = new JMenuItem();
-        menu.setText(TraceFactory.TraceType.DOUBLE + " (" + TraceFactory.TraceType.DOUBLE.getBrief() + ")");
-        menu.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.DOUBLE);
-            }
-        });
-        contextMenu.add(menu);
-
-        menu = new JMenuItem();
-        menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
-        menu.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.INTEGER);
-            }
-        });
-        contextMenu.add(menu);
-
-        menu = new JMenuItem();
-        menu.setText(TraceFactory.TraceType.STRING + " (" + TraceFactory.TraceType.STRING.getBrief() + ")");
-        menu.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.STRING);
-            }
-        });
-        contextMenu.add(menu);
-
-        return contextMenu;
-    }
+//    private JPopupMenu createContextMenu() {
+//        JPopupMenu contextMenu = new JPopupMenu();
+//        JMenuItem menu = new JMenuItem();
+//        menu.setText(TraceFactory.TraceType.DOUBLE + " (" + TraceFactory.TraceType.DOUBLE.getBrief() + ")");
+//        menu.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                changeTraceType(TraceFactory.TraceType.DOUBLE);
+//            }
+//        });
+//        contextMenu.add(menu);
+//
+//        menu = new JMenuItem();
+//        menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
+//        menu.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                changeTraceType(TraceFactory.TraceType.INTEGER);
+//            }
+//        });
+//        contextMenu.add(menu);
+//
+//        menu = new JMenuItem();
+//        menu.setText(TraceFactory.TraceType.STRING + " (" + TraceFactory.TraceType.STRING.getBrief() + ")");
+//        menu.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                changeTraceType(TraceFactory.TraceType.STRING);
+//            }
+//        });
+//        contextMenu.add(menu);
+//
+//        return contextMenu;
+//    }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
         int rowIndex = statisticTable.getSelectedRow();
@@ -448,6 +420,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
+        getConditionalPosteriorDistAction().setEnabled(enabled);
 
         getExportAction().setEnabled(enabled);
         getExportDataAction().setEnabled(enabled);
@@ -1360,8 +1333,34 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     }
 
-    public JComponent getExportableComponent() {
 
+    private void doFindConditionalPosteriorDistributions() {
+        if (filterDialog == null) {
+            filterDialog = new FilterDialog(this);
+        }
+
+        if (currentTraceLists == null) {
+            JOptionPane.showMessageDialog(this, "There is no file being selected !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        } else if (currentTraceLists.size() > 1) {
+            JOptionPane.showMessageDialog(this, "Only one file can be selected each time !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        } else {
+
+//        if (hasDiffValues(currentTraceLists)) {
+//            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
+//                    "Invalid Action",
+//                    JOptionPane.ERROR_MESSAGE);
+//        }
+
+        message = "  " + filterDialog.showDialog(currentTraceLists.get(0), filterStatus.getText());
+        filterStatus.setText(message);
+        }
+    }
+
+    public JComponent getExportableComponent() {
         return tracePanel.getExportableComponent();
     }
 
@@ -1564,6 +1563,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesFactorsAction;
     }
 
+    public Action getConditionalPosteriorDistAction() {
+        return getConditionalPostDistAction;
+    }
+
     private final AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doDemographic(false);
@@ -1621,6 +1624,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
         public void actionPerformed(ActionEvent ae) {
             doCalculateBayesFactors();
+        }
+    };
+
+    private final AbstractAction getConditionalPostDistAction = new AbstractAction(AnalysisMenuFactory.CONDITIONAL_POST_DIST) {
+        public void actionPerformed(ActionEvent ae) {
+            doFindConditionalPosteriorDistributions();
         }
     };
 

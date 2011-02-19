@@ -15,12 +15,13 @@ import dr.math.EmpiricalBayesPoissonSmoother;
  */
 public class DnDsLogger implements Loggable {
 
-    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing) {
+    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs) {
         this.tree = tree;
         this.traits = traits;
         numberSites = getNumberSites();
         this.name = name;
         this.useSmoothing = useSmoothing;
+        this.useDnMinusDs = useDnMinusDs;
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
@@ -57,8 +58,14 @@ public class DnDsLogger implements Loggable {
     }
 
     private double doCalculation(int index) {
-        return (cachedValues[CN][index] / cachedValues[UN][index]) /
-                (cachedValues[CS][index] / cachedValues[US][index]);
+        if (!useDnMinusDs) {
+            return (cachedValues[CN][index] / cachedValues[UN][index]) /
+                    (cachedValues[CS][index] / cachedValues[US][index]);
+
+        } else {
+            return (cachedValues[CN][index] / cachedValues[UN][index]) -
+                    (cachedValues[CS][index] / cachedValues[US][index]);
+        }
     }
 
     private int getNumberSites() {
@@ -85,6 +92,7 @@ public class DnDsLogger implements Loggable {
     private final int numberSites;
     private final String name;
     private final boolean useSmoothing;
+    private final boolean useDnMinusDs;
 
     private final static int NUM_TRAITS = 4;
     private final static int CS = 0;

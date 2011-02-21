@@ -148,7 +148,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         topPanel.add(controlPanel1, BorderLayout.SOUTH);
 
         statisticTableModel = new StatisticTableModel();
-        statisticTable = new JTable(statisticTableModel){
+        statisticTable = new JTable(statisticTableModel) {
             //Implement table header tool tips.
             protected JTableHeader createDefaultTableHeader() {
                 return new JTableHeader(columnModel) {
@@ -376,7 +376,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //        try {
 //            traceLists.get(selRow).loadTraces(id, newType);
         //todo change type = create a new trace in LogFileTraces
-            traceLists.get(selRow).analyseTrace(id);
+        traceLists.get(selRow).analyseTrace(id);
 //        } catch (TraceException e) {
 //            JOptionPane.showMessageDialog(this, e,
 //                    "Trace Type Exception",
@@ -1348,6 +1348,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     "Invalid Action",
                     JOptionPane.ERROR_MESSAGE);
         } else {
+//             FilterListPanel filterListPanel = new FilterListPanel(currentTraceLists.get(0));
+//
+//             JFrame frame = new JFrame(AnalysisMenuFactory.CONDITIONAL_POST_DIST);
+//             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//             frame.getContentPane().add(filterListPanel, BorderLayout.CENTER);
+//
+//             frame.setSize(400, 300);
+//             frame.setVisible(true);
 
 //        if (hasDiffValues(currentTraceLists)) {
 //            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
@@ -1355,8 +1363,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //                    JOptionPane.ERROR_MESSAGE);
 //        }
 
-        message = "  " + filterDialog.showDialog(currentTraceLists.get(0), filterStatus.getText());
-        filterStatus.setText(message);
+            message = "  " + filterDialog.showDialog(currentTraceLists.get(0), filterStatus.getText());
+            filterStatus.setText(message);
         }
     }
 
@@ -1463,7 +1471,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
             if (td == null) return "-";
-            if (col == 3) return td.getTraceType().getBrief(); 
+            if (col == 3) return td.getTraceType().getBrief();
 
             double value = 0.0;
             boolean warning = false;
@@ -1475,9 +1483,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 case 2:
                     if (!td.isValid()) return "-";
                     value = td.getESS();
-                    if( Double.isNaN(value) || value < 1 ) {
+                    if (Double.isNaN(value) || value < 1) {
                         // assume not applicable; should be tested in the computation
-                       return "-";
+                        return "-";
                     }
                     if (value < 200.0) warning = true;
                     if (value < 100.0) extremeWarning = true;

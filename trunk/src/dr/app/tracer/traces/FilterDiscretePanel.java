@@ -8,13 +8,14 @@ import java.awt.event.ActionListener;
 /**
  * @author Walter Xie
  */
-public class FilterDiscretePanel extends FilterPanel {
+public class FilterDiscretePanel extends FilterAbstractPanel {
     JList allValues;
     JList selectedValues;
 //        JButton selectButton;
 
     FilterDiscretePanel(String[] allValuesArray, String[] selectedValuesArray) {
         setLayout(new FlowLayout());
+        setSize(new java.awt.Dimension(400, 300));
 
         allValues = new JList(allValuesArray);
         allValues.setVisibleRowCount(6);

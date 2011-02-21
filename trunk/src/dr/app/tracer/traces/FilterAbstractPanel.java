@@ -5,7 +5,7 @@ import javax.swing.*;
 /**
  * @author Walter Xie
  */
-public abstract class FilterPanel extends JPanel {
+public abstract class FilterAbstractPanel extends JPanel {
 
     abstract Object[] getSelectedValues();
 
@@ -17,7 +17,7 @@ public abstract class FilterPanel extends JPanel {
         return false;
     }
 //
-//    FilterPanel getInstance(String[] a, String[] b, TraceFactory.TraceType traceType) {
+//    FilterAbstractPanel getInstance(String[] a, String[] b, TraceFactory.TraceType traceType) {
 //        if (traceType == TraceFactory.TraceType.DOUBLE) {
 //            return new FilterContinuousPanel(a, b);
 //        } else {

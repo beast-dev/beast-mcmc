@@ -1,63 +1,29 @@
 package dr.app.tracer.traces;
 
-import dr.inference.trace.*;
+import dr.inference.trace.TraceList;
 import jam.framework.DocumentFrame;
-import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.AbstractTableModel;
-import java.awt.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class FilterDialog {
+public class FilterDialog extends JDialog {
+
     private DocumentFrame frame;
-    private static final int MINIMUM_TABLE_WIDTH = 160;
-
-    TraceList selectedTraceList;
-    String currentTraceName = null;
-    Map<String, FilterPanel> filterPanels = new HashMap<String, FilterPanel>();
-    JPanel panelParent;
-    TitledBorder panelBorder;
-
-    JTable traceFilterTable = null;
-    TraceFilterTableModel traceFilterTableModel = null;
-
+    Object[] options = {"Apply Filter", "Update Filter Changes", "Remove All Filters", "Cancel"};
+            
     public FilterDialog(DocumentFrame frame) {
         this.frame = frame;
 
-        traceFilterTableModel = new TraceFilterTableModel();
-        traceFilterTable = new JTable(traceFilterTableModel);
 
-        TableRenderer renderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
-        traceFilterTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
-
-        traceFilterTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-
-        traceFilterTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-//        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traceFilterTable);
-
-        traceFilterTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                selectionChanged();
-            }
-        });
-
-        setCurrentFilter(null);
     }
 
     public String showDialog(TraceList selectedTraceList, String previousMessage) {
-        this.selectedTraceList = selectedTraceList;
+
 //        this.traceName = traceName;
         String message = "";
 //        initComponents(filteredTraceListGroup.get(0));
@@ -85,34 +51,9 @@ public class FilterDialog {
 //            filterPanel = filterPanel.new FilterDiscretePanel(all, sel);
 //        }
 
-        JScrollPane scrollPane = new JScrollPane(traceFilterTable,
-                JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setOpaque(false);
+        FilterListPanel filterListPanel = new FilterListPanel(selectedTraceList, this);
 
-        JTextField fileFiled = new JTextField(selectedTraceList.getName());
-        fileFiled.setColumns(30);
-        fileFiled.setEditable(false);
-        JPanel tittlePanel = new JPanel(new BorderLayout(12, 12));
-        tittlePanel.add(new JLabel("Selected Log File : "), BorderLayout.WEST);
-        tittlePanel.add(fileFiled, BorderLayout.CENTER);
-
-        panelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        panelParent.setOpaque(false);
-        panelBorder = new TitledBorder("");
-        panelParent.setBorder(panelBorder);
-
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, panelParent);
-        splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
-        splitPane.setContinuousLayout(true);
-        splitPane.setBorder(BorderFactory.createEmptyBorder());
-        splitPane.setOpaque(false);
-
-        JPanel basePanel = new JPanel(new BorderLayout(20, 20));
-        basePanel.add(tittlePanel, BorderLayout.NORTH);
-        basePanel.add(splitPane, BorderLayout.CENTER);
-
-        Object[] options = {"Apply Filter", "Update Filter Changes", "Remove All Filters", "Cancel"};
-        JOptionPane optionPane = new JOptionPane(basePanel,
+        JOptionPane optionPane = new JOptionPane(filterListPanel,
                 JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 null,
@@ -121,8 +62,8 @@ public class FilterDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         final JDialog dialog = optionPane.createDialog(frame, "Filter Summary");
-        dialog.setModal(true);
-        dialog.setResizable(true);
+//        dialog.setModal(true);
+//        dialog.setResizable(true);
         dialog.pack();
         dialog.setVisible(true);
 
@@ -179,56 +120,6 @@ public class FilterDialog {
         return message;
     }
 
-    private void selectionChanged() {
-        int selRow = traceFilterTable.getSelectedRow();
-        if (selRow >= 0) {
-            setCurrentFilter(traceFilterTable.getValueAt(selRow, 0).toString());
-            traceFilterTableModel.fireTableDataChanged();
-        }
-    }
-
-    private void setCurrentFilter(String traceName) {
-        if (traceName != null) {
-            if (currentTraceName != null) panelParent.removeAll();
-
-            FilterPanel panel = filterPanels.get(traceName);
-            if (panel == null) {
-
-                int traceIndex = selectedTraceList.getTraceIndex(traceName);
-                TraceDistribution td = selectedTraceList.getDistributionStatistics(traceIndex);
-                Filter f = ((FilteredTraceList) selectedTraceList).getFilter(traceIndex);
-
-                String[] sel;
-                if (f == null) {
-                    sel = null;
-                } else {
-                    sel = f.getIn();
-                }
-
-                if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                    String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
-                    panel = new FilterContinuousPanel(minMax, sel);
-                } else {// integer and string
-                    List<String> allNames = td.getRange();
-                    String[] all = allNames.toArray(new String[allNames.size()]);
-                    panel = new FilterDiscretePanel(all, sel);
-                }
-
-                filterPanels.put(traceName, panel);
-            }
-
-            currentTraceName = traceName;
-            panelParent.add(panel);
-
-            updateBorder();
-        }
-    }
-
-    private void updateBorder() {
-        String title;
-        panelBorder.setTitle("");
-        panelParent.repaint();
-    }
 
 //    private void initComponents(FilteredTraceList filteredTraceList) {
 //
@@ -261,73 +152,5 @@ public class FilterDialog {
 //        return nameField.getText();
 //    }
 
-    class TraceFilterTableModel extends AbstractTableModel {
 
-        String[] columnNames = {"Trace Name", "Filter"};
-
-        public TraceFilterTableModel() {
-        }
-
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        public int getRowCount() {
-            if (selectedTraceList == null) return 0;
-            return selectedTraceList.getTraceCount();
-        }
-
-        public Object getValueAt(int row, int col) {
-            switch (col) {
-                case 0:
-                    return selectedTraceList.getTraceName(row);
-                case 1:
-                    return !(selectedTraceList.getTrace(row).getFilter() == null);
-                default:
-                    throw new IllegalArgumentException("unknown column, " + col);
-            }
-        }
-
-        public boolean isCellEditable(int row, int col) {
-            if (col == 1) return true;
-            return false;
-        }
-
-        public void setValueAt(Object value, int row, int col) {
-            // fire add filter function
-        }
-
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        public Class getColumnClass(int c) {
-            if (getRowCount() == 0) {
-                return Object.class;
-            }
-            return getValueAt(0, c).getClass();
-        }
-
-        public String toString() {
-            StringBuffer buffer = new StringBuffer();
-
-            buffer.append(getColumnName(0));
-            for (int j = 1; j < getColumnCount(); j++) {
-                buffer.append("\t");
-                buffer.append(getColumnName(j));
-            }
-            buffer.append("\n");
-
-            for (int i = 0; i < getRowCount(); i++) {
-                buffer.append(getValueAt(i, 0));
-                for (int j = 1; j < getColumnCount(); j++) {
-                    buffer.append("\t");
-                    buffer.append(getValueAt(i, j));
-                }
-                buffer.append("\n");
-            }
-
-            return buffer.toString();
-        }
-    }
 }

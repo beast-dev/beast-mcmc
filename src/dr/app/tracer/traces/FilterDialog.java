@@ -1,6 +1,6 @@
 package dr.app.tracer.traces;
 
-import dr.inference.trace.TraceList;
+import dr.inference.trace.FilteredTraceList;
 import jam.framework.DocumentFrame;
 
 import javax.swing.*;
@@ -14,7 +14,7 @@ import javax.swing.border.EmptyBorder;
 public class FilterDialog extends JDialog {
 
     private DocumentFrame frame;
-    Object[] options = {"Apply Filter", "Update Filter Changes", "Remove All Filters", "Cancel"};
+    Object[] options = {"Apply Filter Changes", "Remove All Filters", "Cancel"};
             
     public FilterDialog(DocumentFrame frame) {
         this.frame = frame;
@@ -22,34 +22,8 @@ public class FilterDialog extends JDialog {
 
     }
 
-    public String showDialog(TraceList selectedTraceList, String previousMessage) {
-
-//        this.traceName = traceName;
+    public String showDialog(FilteredTraceList selectedTraceList, String previousMessage) {
         String message = "";
-//        initComponents(filteredTraceListGroup.get(0));
-//        FilteredTraceList filteredTraceList = (FilteredTraceList) filteredTraceListGroup.get(fileList.getSelectedIndex()); // only pick up the 1st one
-//        int traceIndex = filteredTraceList.getTraceIndex(traceName);
-//        TraceDistribution td = filteredTraceList.getDistributionStatistics(traceIndex);
-//
-//        typeField.setText(td.getTraceType().toString());
-//        nameField.setText(traceName);
-
-//        Filter f = filteredTraceList.getFilter(traceIndex);
-//
-//        String[] sel;
-//        if (f == null) {
-//            sel = null;
-//        } else {
-//            sel = f.getIn();
-//        }
-//        if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-//            String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
-//            filterPanel = filterPanel.new FilterContinuousPanel(minMax, sel);
-//        } else {// integer and string
-//            List<String> allNames = td.getRange();
-//            String[] all = allNames.toArray(new String[allNames.size()]);
-//            filterPanel = filterPanel.new FilterDiscretePanel(all, sel);
-//        }
 
         FilterListPanel filterListPanel = new FilterListPanel(selectedTraceList, this);
 
@@ -61,24 +35,19 @@ public class FilterDialog extends JDialog {
                 options[0]);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Filter Summary");
+        final JDialog dialog = optionPane.createDialog(frame, "Filter Editor");
 //        dialog.setModal(true);
 //        dialog.setResizable(true);
         dialog.pack();
         dialog.setVisible(true);
 
-
-
         Object result = optionPane.getValue();
         if (result == null) return previousMessage;
-        
-//        FilteredTraceList filteredTraceList = filteredTraceListGroup.get(treeFileCombo.getSelectedIndex());
-//        TraceDistribution td = filteredTraceList.getDistributionStatistics(traceIndex);
 
         if (result.equals(options[0])) {
              message = "";
 
-        } else if (result.equals(options[1])) {
+             filterListPanel.applyFilterChanges();
 
 //            if (filterPanel.containsNullValue()) {
 //                JOptionPane.showMessageDialog(frame, "The selected value for filter is invalid \ror no value is selected !",
@@ -107,50 +76,15 @@ public class FilterDialog extends JDialog {
 //                if (i > 0) message += " and ";
 //                message += "\'" + filteredTraceListGroup.get(i).getName() + "\'";
 //            }
-        } else if (result.equals(options[2])) {
-//            for (int i = 0; i < filteredTraceListGroup.size(); i++) {
-//                ((FilteredTraceList) filteredTraceListGroup.get(i)).removeFilter(traceIndex);
-//            }
+        } else if (result.equals(options[1])) {
+            filterListPanel.removeAllFilters();
             message = "";
 
-        } else if (result.equals(options[3])) {
+        } else if (result.equals(options[2])) {
             return previousMessage;
         }
 
         return message;
     }
-
-
-//    private void initComponents(FilteredTraceList filteredTraceList) {
-//
-//        TraceDistribution td = filteredTraceList.getDistributionStatistics(filteredTraceList.getTraceIndex(traceName));
-//
-//        typeField.setText(td.getTraceType().toString());
-//        nameField.setText(traceName);
-//
-//        Filter f = filteredTraceList.getFilter(traceName);
-//
-//        if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-//
-//        } else {// integer and string
-//            String[] all = td.getRangeAll();
-//            String[] sel;
-//
-//            if (f == null) {
-//                sel = null;
-//            } else {
-//                sel = f.getIn();
-//            }
-//
-//            filterPanel = new FilterDiscretePanel(all, sel);
-//        }
-//
-//
-//    }
-//
-//    public String getName() {
-//        return nameField.getText();
-//    }
-
 
 }

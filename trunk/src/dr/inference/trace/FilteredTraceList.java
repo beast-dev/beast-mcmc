@@ -21,6 +21,11 @@ public abstract class FilteredTraceList implements TraceList {
         }
     }
 
+    public boolean hasFilter(int traceIndex) {
+        if (selected == null) return false;
+        return getTrace(traceIndex).getFilter() != null;
+    }
+
     public void setFilter(int traceIndex, Filter filter) {
         if (selected == null) createSelected();
         getTrace(traceIndex).setFilter(filter);

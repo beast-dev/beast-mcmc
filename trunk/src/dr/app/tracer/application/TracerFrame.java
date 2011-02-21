@@ -1347,6 +1347,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             JOptionPane.showMessageDialog(this, "Only one file can be selected each time !",
                     "Invalid Action",
                     JOptionPane.ERROR_MESSAGE);
+        } else if (!(currentTraceLists.get(0) instanceof FilteredTraceList)) {
+            JOptionPane.showMessageDialog(this, "Filter cannot be applied to Combined Trace List yet !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+
         } else {
 //             FilterListPanel filterListPanel = new FilterListPanel(currentTraceLists.get(0));
 //
@@ -1363,7 +1368,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //                    JOptionPane.ERROR_MESSAGE);
 //        }
 
-            message = "  " + filterDialog.showDialog(currentTraceLists.get(0), filterStatus.getText());
+            message = "  " + filterDialog.showDialog((FilteredTraceList) currentTraceLists.get(0), filterStatus.getText());
             filterStatus.setText(message);
         }
     }

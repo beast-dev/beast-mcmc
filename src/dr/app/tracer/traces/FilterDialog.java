@@ -1,7 +1,7 @@
 package dr.app.tracer.traces;
 
+import dr.app.tracer.application.TracerFrame;
 import dr.inference.trace.FilteredTraceList;
-import jam.framework.DocumentFrame;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -13,10 +13,10 @@ import javax.swing.border.EmptyBorder;
  */
 public class FilterDialog extends JDialog {
 
-    private DocumentFrame frame;
+    private TracerFrame frame;
     Object[] options = {"Apply Filter Changes", "Remove All Filters", "Cancel"};
-            
-    public FilterDialog(DocumentFrame frame) {
+
+    public FilterDialog(TracerFrame frame) {
         this.frame = frame;
 
 
@@ -25,7 +25,7 @@ public class FilterDialog extends JDialog {
     public String showDialog(FilteredTraceList selectedTraceList, String previousMessage) {
         String message = "";
 
-        FilterListPanel filterListPanel = new FilterListPanel(selectedTraceList, this);
+        FilterListPanel filterListPanel = new FilterListPanel(selectedTraceList);
 
         JOptionPane optionPane = new JOptionPane(filterListPanel,
                 JOptionPane.PLAIN_MESSAGE,
@@ -45,9 +45,10 @@ public class FilterDialog extends JDialog {
         if (result == null) return previousMessage;
 
         if (result.equals(options[0])) {
-             message = "";
+            message = "";
 
-             filterListPanel.applyFilterChanges();
+            filterListPanel.applyFilterChanges();
+            frame.statisticTableSelectionChanged();
 
 //            if (filterPanel.containsNullValue()) {
 //                JOptionPane.showMessageDialog(frame, "The selected value for filter is invalid \ror no value is selected !",
@@ -78,6 +79,7 @@ public class FilterDialog extends JDialog {
 //            }
         } else if (result.equals(options[1])) {
             filterListPanel.removeAllFilters();
+            frame.statisticTableSelectionChanged();
             message = "";
 
         } else if (result.equals(options[2])) {

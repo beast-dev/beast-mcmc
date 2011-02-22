@@ -1,7 +1,9 @@
 package dr.app.tracer.traces;
 
-import dr.app.gui.table.TableEditorStopper;
-import dr.inference.trace.*;
+import dr.inference.trace.Filter;
+import dr.inference.trace.FilteredTraceList;
+import dr.inference.trace.Trace;
+import dr.inference.trace.TraceFactory;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -11,8 +13,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.TreeSet;
 
 /**
  * @author Walter Xie
@@ -29,22 +31,22 @@ public class FilterListPanel extends JPanel {
     JTable traceFilterTable = null;
     TraceFilterTableModel traceFilterTableModel = null;
 
-    final JDialog dialog; // use for repanit
-
-    public FilterListPanel(FilteredTraceList selectedTraceList, JDialog dialog) {
+    public FilterListPanel(FilteredTraceList selectedTraceList) {
         this.selectedTraceList = selectedTraceList;
-        this.dialog = dialog;
 
         traceFilterTableModel = new TraceFilterTableModel();
         traceFilterTable = new JTable(traceFilterTableModel);
+
+        traceFilterTable.getTableHeader().setReorderingAllowed(false);
+        traceFilterTable.setColumnSelectionAllowed(false);
 
         TableRenderer renderer = new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4));
         traceFilterTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
 
         traceFilterTable.getColumnModel().getColumn(1).setPreferredWidth(20);
 
-        traceFilterTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traceFilterTable);
+        traceFilterTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+//        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traceFilterTable);
 
         traceFilterTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
@@ -103,7 +105,7 @@ public class FilterListPanel extends JPanel {
             } else {// integer and string
                 panel = new FilterDiscretePanel(trace.getRange(), sel);
             }
-
+            System.out.println("traceName = " + traceName + ";  i = " + i);
             filterPanels.put(traceName, panel);
         }
 //        panelParent = filterPanels.get(selectedTraceList.getTraceName(0));
@@ -122,7 +124,6 @@ public class FilterListPanel extends JPanel {
 
     private void setCurrentFilter(String traceName) {
         if (traceName != null) {
-
             FilterAbstractPanel panel = filterPanels.get(traceName);
             if (panel == null) {
                 throw new RuntimeException("null filter panel, " + traceName);
@@ -133,28 +134,35 @@ public class FilterListPanel extends JPanel {
             panelParent.add(panel);
 
             updateBorder(traceName);
-//            panelParent.repaint();
+            panelParent.repaint();
             repaint(); //todo why not working?
-            dialog.repaint();
+
         }
     }
 
     private void updateBorder(String traceName) {
-        String title;
         if (traceName != null) panelBorder.setTitle(traceName);
-//        panelParent.repaint();
-//        traceFilterTable.repaint();
     }
 
     public void applyFilterChanges() {
-        for (String traceName : new TreeSet<String>(filterPanels.keySet())) {
+        Iterator iterator = filterPanels.keySet().iterator();
+
+        while (iterator.hasNext()) {
+            String traceName = iterator.next().toString();
             FilterAbstractPanel fp = filterPanels.get(traceName);
+            
             int traceIndex = selectedTraceList.getTraceIndex(traceName);
+            System.out.println("traceName = " + traceName + ";  traceIndex = " + traceIndex);
             if (fp.containsNullValue()) {
                 if (selectedTraceList.hasFilter(traceIndex))
                     selectedTraceList.removeFilter(traceIndex);
             } else {
-                System.out.println("traceIndex = " + traceIndex);
+                System.out.println("traceIndex = " + traceIndex + "; fp.getSelectedValues() " + fp.getSelectedValues().length);
+                for (Object o : fp.getSelectedValues()) {
+                    System.out.print("; " + o);
+                }
+                System.out.println();
+
                 Filter f = new Filter(fp.getSelectedValues());
                 selectedTraceList.setFilter(traceIndex, f);
             }
@@ -162,7 +170,7 @@ public class FilterListPanel extends JPanel {
     }
 
     public void removeAllFilters() {
-        selectedTraceList.removeAllFilters();        
+        selectedTraceList.removeAllFilters();
     }
 
     class TraceFilterTableModel extends AbstractTableModel {
@@ -186,7 +194,7 @@ public class FilterListPanel extends JPanel {
                 case 0:
                     return selectedTraceList.getTraceName(row);
                 case 1:
-                    return !(selectedTraceList.getTrace(row).getFilter() == null); // todo use boolean list???
+                    return selectedTraceList.hasFilter(row); // todo use boolean list???
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }

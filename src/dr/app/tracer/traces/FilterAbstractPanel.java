@@ -10,7 +10,7 @@ public abstract class FilterAbstractPanel extends JPanel {
     abstract Object[] getSelectedValues();
 
     boolean containsNullValue() {
-        if (getSelectedValues() == null) return true;
+        if (getSelectedValues() == null || getSelectedValues().length < 1) return true;
         for (Object ob : getSelectedValues()) {
             if (ob == null || ob.toString().equals("")) return true;
         }

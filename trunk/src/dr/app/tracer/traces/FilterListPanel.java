@@ -1,10 +1,7 @@
 package dr.app.tracer.traces;
 
 import dr.app.gui.table.TableEditorStopper;
-import dr.inference.trace.Filter;
-import dr.inference.trace.FilteredTraceList;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
+import dr.inference.trace.*;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -89,8 +86,8 @@ public class FilterListPanel extends JPanel {
     private void initFilterPanels() {
         for (int i = 0; i < selectedTraceList.getTraceCount(); i++) {
             String traceName = selectedTraceList.getTraceName(i);
-
-            TraceDistribution td = selectedTraceList.getDistributionStatistics(i);
+            Trace trace = selectedTraceList.getTrace(i);
+//            TraceDistribution td = selectedTraceList.getDistributionStatistics(i);
             Filter f = selectedTraceList.getFilter(i);
 
             String[] sel;
@@ -101,13 +98,10 @@ public class FilterListPanel extends JPanel {
             }
 
             FilterAbstractPanel panel;
-            if (td.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                String[] minMax = new String[]{Double.toString(td.getMinimum()), Double.toString(td.getMaximum())};
-                panel = new FilterContinuousPanel(minMax, sel);
+            if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                panel = new FilterContinuousPanel(trace.getRange(), sel);
             } else {// integer and string
-                java.util.List<String> allNames = td.getRange();
-                String[] all = allNames.toArray(new String[allNames.size()]);
-                panel = new FilterDiscretePanel(all, sel);
+                panel = new FilterDiscretePanel(trace.getRange(), sel);
             }
 
             filterPanels.put(traceName, panel);

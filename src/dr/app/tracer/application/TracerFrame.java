@@ -15,7 +15,6 @@ import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
 import dr.app.tracer.traces.TracePanel;
-import dr.app.tracer.traces.FilterListPanel;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
 import jam.panels.ActionPanel;
@@ -290,55 +289,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
-//        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-//        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 8, 12, 12)));
-//        JButton filterButton = new JButton("Filtered by :");
-//        filterButton.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                int rowIndex = statisticTable.getSelectedRow();
-//
-//                if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
-//                    removeAllFilters();
-//                } else {
-//                    invokeFilter();
-//                }
-//
-//                statisticTableModel.fireTableDataChanged();
-//                statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
-//            }
-//        });
-//        filterPanel.add(filterButton);
-//        filterCombo.setPreferredSize(new Dimension(230, 20));
-//        filterCombo.addItemListener(new ItemListener () { //todo bug
-//            public void itemStateChanged(ItemEvent e) {
-//                if (filterCombo.getItemCount() > 0) {
-//                String traceName = filterCombo.getSelectedItem().toString();
-//                removeAllFilters(traceName);
-//                }
-//            }
-//        });
-//        filterPanel.add(filterCombo);
-//        filterPanel.add(filterStatus);
-//
-//        getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
-//    private void removeAllFilters() {
-//        int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
-//                "Filter Configuration", JOptionPane.YES_NO_OPTION);
-//
-//        if (n == JOptionPane.YES_OPTION) {
-//            for (TraceList filteredTraceList : currentTraceLists) {
-//                ((FilteredTraceList) filteredTraceList).removeAllFilters();
-//            }
-//        }
-//
-//        filterStatus.setText("");
-//    }
-//
-//    private boolean hasDiffValues(List<TraceList> currentTraceLists) {
-//        return false;  //Todo
-//    }
 
 //    private JPopupMenu createContextMenu() {
 //        JPopupMenu contextMenu = new JPopupMenu();

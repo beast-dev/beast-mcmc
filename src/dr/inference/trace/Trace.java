@@ -28,7 +28,6 @@ package dr.inference.trace;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Arrays;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -103,6 +102,7 @@ public class Trace<T> {
             for (Object t : values) {
                 if (!r.contains(t.toString())) r.add(t.toString());
             }
+            Collections.sort(r);
             range = new String[r.size()];
             range = r.toArray(range);
 
@@ -169,7 +169,7 @@ public class Trace<T> {
     }
 
     //******************** Filter ****************************
-    protected Filter filter;
+    protected Filter filter = null;
 
     public void setFilter(Filter filter) {
         this.filter = filter;

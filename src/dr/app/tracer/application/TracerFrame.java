@@ -15,6 +15,7 @@ import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
 import dr.app.tracer.traces.TracePanel;
+import dr.app.tracer.traces.FilterListPanel;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
 import jam.panels.ActionPanel;
@@ -56,14 +57,16 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JLabel progressLabel;
     private JProgressBar progressBar;
 
-    private final java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private final java.util.List<TraceList> currentTraceLists = new ArrayList<TraceList>();
+    private final List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
+    private final List<TraceList> currentTraceLists = new ArrayList<TraceList>();
     private CombinedTraces combinedTraces = null;
 
-    private final java.util.List<String> commonTraceNames = new ArrayList<String>();
+    private final List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
 
-    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
+//    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
+
+//    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private final JLabel filterStatus = new JLabel();
     String message;
     private int dividerLocation = -1;
@@ -78,7 +81,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private BayesFactorsDialog bayesFactorsDialog = null;
 
-    private FilterDialog filterDialog;
+//    private FilterDialog filterDialog;
 
     public TracerFrame(String title) {
         super();
@@ -320,22 +323,22 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //        getContentPane().add(filterPanel, BorderLayout.SOUTH);
     }
 
-    private void removeAllFilters() {
-        int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
-                "Filter Configuration", JOptionPane.YES_NO_OPTION);
-
-        if (n == JOptionPane.YES_OPTION) {
-            for (TraceList filteredTraceList : currentTraceLists) {
-                ((FilteredTraceList) filteredTraceList).removeAllFilters();
-            }
-        }
-
-        filterStatus.setText("");
-    }
-
-    private boolean hasDiffValues(List<TraceList> currentTraceLists) {
-        return false;  //Todo
-    }
+//    private void removeAllFilters() {
+//        int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
+//                "Filter Configuration", JOptionPane.YES_NO_OPTION);
+//
+//        if (n == JOptionPane.YES_OPTION) {
+//            for (TraceList filteredTraceList : currentTraceLists) {
+//                ((FilteredTraceList) filteredTraceList).removeAllFilters();
+//            }
+//        }
+//
+//        filterStatus.setText("");
+//    }
+//
+//    private boolean hasDiffValues(List<TraceList> currentTraceLists) {
+//        return false;  //Todo
+//    }
 
 //    private JPopupMenu createContextMenu() {
 //        JPopupMenu contextMenu = new JPopupMenu();
@@ -1359,9 +1362,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 
     private void doFindConditionalPosteriorDistributions() {
-        if (filterDialog == null) {
-            filterDialog = new FilterDialog(this);
-        }
+//        if (filterDialog == null) {
+        FilterDialog filterDialog = new FilterDialog(this);
+//        }
 
         if (currentTraceLists == null) {
             JOptionPane.showMessageDialog(this, "There is no file being selected !",
@@ -1392,7 +1395,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //                    JOptionPane.ERROR_MESSAGE);
 //        }
 
-            message = "  " + filterDialog.showDialog((FilteredTraceList) currentTraceLists.get(0), filterStatus.getText());
+            message = "  " + filterDialog.showDialog((FilteredTraceList) currentTraceLists.get(0),
+                    filterStatus.getText());
             filterStatus.setText(message);
         }
     }

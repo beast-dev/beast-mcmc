@@ -28,6 +28,7 @@ package dr.inference.trace;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Arrays;
 
 /**
  * A simple class that stores a trace for a single statistic
@@ -46,6 +47,8 @@ public class Trace<T> {
     protected List<T> values = new ArrayList<T>();
     //    protected int valueCount = 0;
     protected String name;
+
+//    private Object[] range;
 
 //    public Trace(String name) {
 //        this.name = name;
@@ -82,6 +85,30 @@ public class Trace<T> {
 
     public T getValue(int index) {
         return values.get(index); // filter?
+    }
+
+    public String[] getRange() { // Double => bounds; Integer and String => unique values
+        String[] range;
+        if (getTraceType() == TraceFactory.TraceType.DOUBLE) {
+            range = new String[2];
+            range[0] = Double.toString(Double.MAX_VALUE);
+            range[1] = Double.toString(Double.MIN_VALUE);
+            for (Object t : values) {
+                if (Double.parseDouble(range[0]) < (Double) t) range[0] = t.toString();
+                if (Double.parseDouble(range[1]) > (Double) t) range[1] = t.toString();
+            }
+
+        } else {
+            List<String> r = new ArrayList<String>();
+            for (Object t : values) {
+                if (!r.contains(t.toString())) r.add(t.toString());
+            }
+            range = new String[r.size()];
+            range = r.toArray(range);
+
+        }
+
+        return range;
     }
 
     /**

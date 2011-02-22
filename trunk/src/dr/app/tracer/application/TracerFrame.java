@@ -32,8 +32,10 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
     private final String[] columnToolTips = {null, null, null,
@@ -368,25 +370,47 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 //    }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
-        int rowIndex = statisticTable.getSelectedRow();
         int selRow = traceTable.getSelectedRow();
-        int id = traceLists.get(selRow).getTraceIndex(commonTraceNames.get(rowIndex));
-//        Trace trace = traceLists.get(selRow).getTrace(id);
 
-//        try {
-//            traceLists.get(selRow).loadTraces(id, newType);
-        //todo change type = create a new trace in LogFileTraces
-        traceLists.get(selRow).analyseTrace(id);
-//        } catch (TraceException e) {
-//            JOptionPane.showMessageDialog(this, e,
-//                    "Trace Type Exception",
+//        if (currentTraceLists.size() > 1) {
+//            JOptionPane.showMessageDialog(this, "To change type, only one file can be selected each time !",
+//                    "Invalid Action",
 //                    JOptionPane.ERROR_MESSAGE);
+//        } else
+        if (selRow >= traceLists.size()) {
+            JOptionPane.showMessageDialog(this, "Changing trace type has not been implemented to Combined Trace List yet !",
+                    "Invalid Action", JOptionPane.ERROR_MESSAGE);
+        } else {
+            LogFileTraces seleTraceList = traceLists.get(selRow);
+            int[] rows = statisticTable.getSelectedRows();
+            String m = "";
+            for (int row : rows) {
+                int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
+                m += commonTraceNames.get(row) + "(" + seleTraceList.getTrace(id).getTraceType().toString() + "), ";
+            }
+
+            int n = JOptionPane.showConfirmDialog(this, "Are you going to change trace type into " + newType.toString()
+                    + " for\n" + m + "\nin file " + seleTraceList.getName() + " ?",
+                    "Change Trace Type", JOptionPane.YES_NO_OPTION);
+
+            if (n == JOptionPane.YES_OPTION) {
+                for (int row : rows) {
+                    int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
+
+                    try {
+                        seleTraceList.changeTraceType(id, newType);
+                    } catch (TraceException e) {
+                        JOptionPane.showMessageDialog(this, e, "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
 //        } catch (IOException e) {
 //            System.err.println("selRow = " + selRow + "; new type = " + newType);
 //            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-//        }
-        statisticTableModel.fireTableDataChanged();
-        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
+                    }
+                    seleTraceList.analyseTrace(id);
+                }
+
+                statisticTableModel.fireTableDataChanged();
+            }
+        }
     }
 
     public void setVisible(boolean b) {
@@ -622,7 +646,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             statisticTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
-        getIntersectionOfSelectedTraceLists();
+//        getIntersectionOfSelectedTraceLists();
 
         message = "  " + updateStatusMessage(currentTraceLists);
 
@@ -664,60 +688,60 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return message;
     }
 
-    private void getIntersectionOfSelectedTraceLists() {
-        filterCombo.removeAllItems();
-        filterCombo.addItem("None");
-
-//        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
-        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
-        List<TraceFactory.TraceType> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<TraceFactory.TraceType>());
-        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
-        for (TraceList tl : currentTraceLists) {
-            List<String> currentTrace = new ArrayList<String>();
-            for (int i = 0; i < tl.getTraceCount(); i++) {
-                String traceName = tl.getTraceName(i);
-                currentTrace.add(traceName);
-                if (!incompatibleTrace.contains(traceName)) {
-                    TraceFactory.TraceType traceType = tl.getTrace(i).getTraceType();
-                    if (traceType == null) {
-                        incompatibleTrace.add(traceName);
-                        break;
-                    }
-
-                    if (tracesIntersection.contains(traceName)) {
-                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
-                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-                            tracesIntersection.remove(traceName);
-                            incompatibleTrace.add(traceName);
-                            break;
-                        }
-
-                    } else if (currentTraceLists.indexOf(tl) == 0) {
-
-                        tracesIntersection.add(traceName);
-                        tracesIntersectionClass.add(traceType);
-                    }
-                }
-            } // end i loop
-
-            for (String traceName : tracesIntersection) {
-                if (!currentTrace.contains(traceName)) {
-                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-                    tracesIntersection.remove(traceName);
-                    incompatibleTrace.add(traceName);
-                }
-            }
-
-        }
-
-        assert (tracesIntersection.size() == tracesIntersectionClass.size());
-
-        if (!tracesIntersection.isEmpty()) {
-            for (String traceName : tracesIntersection) {
-                filterCombo.addItem(traceName);
-            }
-        }
-    }
+//    private void getIntersectionOfSelectedTraceLists() {
+//        filterCombo.removeAllItems();
+//        filterCombo.addItem("None");
+//
+////        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
+//        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
+//        List<TraceFactory.TraceType> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<TraceFactory.TraceType>());
+//        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
+//        for (TraceList tl : currentTraceLists) {
+//            List<String> currentTrace = new ArrayList<String>();
+//            for (int i = 0; i < tl.getTraceCount(); i++) {
+//                String traceName = tl.getTraceName(i);
+//                currentTrace.add(traceName);
+//                if (!incompatibleTrace.contains(traceName)) {
+//                    TraceFactory.TraceType traceType = tl.getTrace(i).getTraceType();
+//                    if (traceType == null) {
+//                        incompatibleTrace.add(traceName);
+//                        break;
+//                    }
+//
+//                    if (tracesIntersection.contains(traceName)) {
+//                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
+//                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+//                            tracesIntersection.remove(traceName);
+//                            incompatibleTrace.add(traceName);
+//                            break;
+//                        }
+//
+//                    } else if (currentTraceLists.indexOf(tl) == 0) {
+//
+//                        tracesIntersection.add(traceName);
+//                        tracesIntersectionClass.add(traceType);
+//                    }
+//                }
+//            } // end i loop
+//
+//            for (String traceName : tracesIntersection) {
+//                if (!currentTrace.contains(traceName)) {
+//                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+//                    tracesIntersection.remove(traceName);
+//                    incompatibleTrace.add(traceName);
+//                }
+//            }
+//
+//        }
+//
+//        assert (tracesIntersection.size() == tracesIntersectionClass.size());
+//
+//        if (!tracesIntersection.isEmpty()) {
+//            for (String traceName : tracesIntersection) {
+//                filterCombo.addItem(traceName);
+//            }
+//        }
+//    }
 
     public void statisticTableSelectionChanged() {
 

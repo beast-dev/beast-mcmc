@@ -53,7 +53,7 @@ public class Trace<T> {
 
     public Trace(String name, TraceFactory.TraceType traceType) {
         this.name = name;
-        this.traceType = traceType;
+        setTraceType(traceType);
     }
 
 //    public Trace(String name, T[] valuesArray) {

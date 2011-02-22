@@ -369,33 +369,56 @@ public class LogFileTraces extends AbstractTraceList {
         }
     }
 
-//    private void replaceTrace(String name, TraceFactory.TraceType reloadType, int numberOfLines) throws TraceException {
-//        if (reloadType == null) throw new TraceException("trace (" + name + ") type is null");
-//        if (numberOfLines < 0) throw new TraceException("numberOfLines cannot be 0");
-//
-//        for (int i = 0; i < traces.size(); i++) {
-//            Trace trace = traces.get(i);
-//            // change trace type
-//            if (trace.getName().equalsIgnoreCase(name)) {
-//                if (trace.getTraceType() != reloadType.getType())
-//                    traces.set(i, createTrace(reloadType, name));
-//                return;
-//            }
-//        }
-//        throw new TraceException("Cannot find trace : " + name);
-//    }
-
     private Trace createTrace(String name, TraceFactory.TraceType traceType) {
         // System.out.println("create trace (" + name + ") with type " + traceType);
         switch (traceType) {
             case DOUBLE:
                 return new Trace<Double>(name, TraceFactory.TraceType.DOUBLE);
             case INTEGER:
-                return new Trace<Double>(name, TraceFactory.TraceType.INTEGER);
+                return new Trace<Double>(name, TraceFactory.TraceType.INTEGER); // use Double for legacy issue
             case STRING:
                 return new Trace<String>(name, TraceFactory.TraceType.STRING);
             default:
                 throw new IllegalArgumentException("The trace type " + traceType + " is not recognized.");
+        }
+    }
+
+    public void changeTraceType(int id, TraceFactory.TraceType newType) throws TraceException {
+        if (id >= getTraceCount() || id < 0) throw new TraceException("trace id is invaild " + id);
+        Trace trace = traces.get(id);
+        if (trace.getTraceType() != newType) {
+            Trace newTrace = null;
+            try {
+                if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
+                    if (newType == TraceFactory.TraceType.DOUBLE) {
+                        newTrace = createTrace(trace.getName(), TraceFactory.TraceType.DOUBLE);
+                    } else {
+                        newTrace = createTrace(trace.getName(), TraceFactory.TraceType.INTEGER);
+                    }
+                    for (int i = 0; i < trace.getValuesSize(); i++) { // String => Double
+                        newTrace.add(Double.parseDouble(trace.getValue(i).toString()));
+                    }
+                } else if (newType == TraceFactory.TraceType.STRING) {
+                    newTrace = createTrace(trace.getName(), TraceFactory.TraceType.STRING);
+                    for (int i = 0; i < trace.getValuesSize(); i++) { // Double => String
+                        newTrace.add(trace.getValue(i).toString());
+                    }
+                } else {
+                    newTrace = createTrace(trace.getName(), newType); // not need to copy values, becaue they are both Double
+                }
+            } catch (Exception e) {
+                throw new TraceException("Type change is failed, when parsing " + trace.getTraceType()
+                        + " to " + newType + " in trace " + trace.getName());
+            }
+
+            if (trace.getTraceType() == TraceFactory.TraceType.STRING || newType == TraceFactory.TraceType.STRING) {
+                if (newTrace.getValuesSize() != trace.getValuesSize())
+                    throw new TraceException("Type change is failed, because values size is different after copy !");
+                
+                traces.set(id, newTrace);
+            } else {
+                trace.setTraceType(newType);
+            }
         }
     }
 
@@ -426,7 +449,7 @@ public class LogFileTraces extends AbstractTraceList {
     protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
-    // List traces is added before having types
+
     // tracesType only save INTEGER and STRING, and only use during loading files
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();
 

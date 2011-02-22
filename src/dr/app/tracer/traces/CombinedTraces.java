@@ -63,6 +63,8 @@ public class CombinedTraces implements TraceList {
             for (int j = 0; j < traceLists[0].getTraceCount(); j++) {
                 if (!traceLists[i].getTraceName(j).equals(traceLists[0].getTraceName(j))) {
                     throw new TraceException("Cannot add to a CombinedTraces: new traces do not match existing traces");
+                } else if (traceLists[i].getTrace(j).getTraceType() != traceLists[0].getTrace(j).getTraceType()) {
+                    throw new TraceException("Cannot add to a CombinedTraces: new traces type do not match existing type");
                 }
             }
             this.traceLists[i] = traceLists[i];
@@ -187,7 +189,7 @@ public class CombinedTraces implements TraceList {
         Trace trace = getTrace(index);
 
         if (trace != null)
-            traceStatistics[index] = new TraceCorrelation(getValues(index), TraceFactory.TraceType.DOUBLE, getStepSize()); //todo
+            traceStatistics[index] = new TraceCorrelation(getValues(index), trace.getTraceType(), getStepSize()); 
     }
 
     public Trace getTrace(int index) {

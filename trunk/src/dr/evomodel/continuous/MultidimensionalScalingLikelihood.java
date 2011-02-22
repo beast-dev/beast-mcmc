@@ -289,7 +289,13 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     protected double computeLogLikelihood() {
 
         double precision = mdsPrecisionParameter.getParameterValue(0);
+
+        // totalNonMissingCount should be totalObservedCount (not > or < threshold)
         double logLikelihood = (totalNonMissingCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
+
+        if (hasThresholdedValues) {
+            logLikelihood += calculateThresholdedObservations(precision);
+        }
 
         if (isLeftTruncated) {
             if (!truncationKnown) {
@@ -300,6 +306,32 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         return logLikelihood;
+    }
+
+    private double calculateThresholdedObservations(double precision) {
+        double logProbability = 0.0;
+        double sd = 1.0 / Math.sqrt(precision);
+        int k = 0;
+        for (int i = 0; i < dataTable.length; i++) {
+            for (int j = 0; j < dataTable[i].length; j++) {
+                if (distanceUpdate[k]) {
+                    if (isThresholded[k]) {
+                        // TODO Check: switch minThresholdValue and distances[k] order?
+                        thresholds[k] = Math.log(NormalDistribution.cdf(minThresholdValue, distances[k], sd));
+                    } else {
+                        thresholds[k] = 0.0;
+                    }
+                }
+                k++;
+            }
+        }
+
+        // TODO Check: + or - thresholds[k]?        
+        for (k = 0; k < thresholds.length; k++) {
+            logProbability += thresholds[k];
+        }
+
+        return logProbability;
     }
 
     private double calculateTruncation(double precision) {
@@ -327,6 +359,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         int k = 0;
         for (int i = 0; i < dataTable.length; i++) {
             for (int j = 0; j < dataTable[i].length; j++) {
+                // Only increment sum if dataTable[i][j] is observed (not > or < threshold)
                 double residual = distances[k] - dataTable[i][j];
                 sum += residual * residual;
                 k++;
@@ -506,6 +539,15 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double[] truncations;
     private double[] storedTruncations;
 
+    private boolean[] isThresholded;
+    private double thresholdSum;
+    private double storedThresholdSum;
+    private double[] thresholds;
+    private double[] storedThresholds;
+
     private final boolean isLeftTruncated;
     private final int mdsDimension;
+
+    private boolean hasThresholdedValues = false;
+    private double minThresholdValue = 20.0; // TODO Transform
 }

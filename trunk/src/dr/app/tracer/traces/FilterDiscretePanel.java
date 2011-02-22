@@ -59,7 +59,13 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
     }
 
     public Object[] getSelectedValues() {
-        return allValues.getSelectedValues();
+        int size = selectedValues.getModel().getSize();
+        if (size < 0) return null;
+        Object[] sel = new Object[size];
+        for (int i=0; i < size; i++) {
+           sel[i] = selectedValues.getModel().getElementAt(i); 
+        }
+        return sel;
     }
 
 }

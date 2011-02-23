@@ -120,7 +120,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                     if (assayToSerumIndices[k] == j) {
                         double value;
 
-                        if (dataRow[k].startsWith(">")) {
+                        if (dataRow[k].startsWith("<")) {
                             // is a threshold
                             value = convertString(dataRow[k].substring(1));
                             if (Double.isNaN(value)) {

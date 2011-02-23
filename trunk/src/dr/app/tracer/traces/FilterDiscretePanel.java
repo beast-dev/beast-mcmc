@@ -14,8 +14,7 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
 //        JButton selectButton;
 
     FilterDiscretePanel(String[] allValuesArray, String[] selectedValuesArray) {
-        setLayout(new FlowLayout());
-        setSize(new java.awt.Dimension(400, 300));
+        setLayout(new FlowLayout(FlowLayout.CENTER, 20, 50));
 
         allValues = new JList(allValuesArray);
         allValues.setVisibleRowCount(6);

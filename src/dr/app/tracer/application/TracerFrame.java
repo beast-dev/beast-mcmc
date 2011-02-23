@@ -14,6 +14,7 @@ import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
+import dr.app.tracer.traces.FilterListPanel;
 import dr.app.tracer.traces.TracePanel;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
@@ -65,7 +66,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 //    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
 
-//    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
+    //    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private final JLabel filterStatus = new JLabel();
     String message = "";
     private int dividerLocation = -1;
@@ -418,7 +419,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void updateCombinedTraces() {
         if (traceLists.size() > 1) {
-            TraceList[] traces = new TraceList[traceLists.size()];
+            LogFileTraces[] traces = new LogFileTraces[traceLists.size()];
             try {
                 traceLists.toArray(traces);
             } catch (ArrayStoreException ase) {
@@ -432,7 +433,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
                 analyseTraceList(combinedTraces);
             } catch (TraceException te) {
-                // do nothing
+                combinedTraces = null; // validations in CombinedTraces()
             }
         } else {
             combinedTraces = null;
@@ -1251,7 +1252,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private void doFindConditionalPosteriorDistributions() {
 //        if (filterDialog == null) {
-        FilterDialog filterDialog = new FilterDialog(this);
+//        FilterDialog filterDialog = new FilterDialog(this);
 //        }
 
         if (currentTraceLists == null) {
@@ -1268,9 +1269,26 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     JOptionPane.ERROR_MESSAGE);
 
         } else {
-            message = "  " + filterDialog.showDialog((FilteredTraceList) currentTraceLists.get(0),
-                    filterStatus.getText());
-            filterStatus.setText(message);
+            FilterListPanel filterListPanel = null;
+            if (combinedTraces == null) {
+                filterListPanel = new FilterListPanel((FilteredTraceList) currentTraceLists.get(0));
+            } else {
+                int n = JOptionPane.showConfirmDialog(this,
+                        "Because Combined Traces exits, you have to apply filter\n" +
+                                "to all files including Combined Traces.\n" +
+                                "Would you like to continue or not ?",
+                        "Combined Traces Detected", JOptionPane.YES_NO_OPTION);
+
+                if (n == JOptionPane.YES_OPTION) {
+                    filterListPanel = new FilterListPanel(combinedTraces);
+                }
+            }
+
+            if (filterListPanel != null) {
+                FilterDialog filterDialog = new FilterDialog(this);
+                message = "  " + filterDialog.showDialog(filterListPanel, filterStatus.getText());
+                filterStatus.setText(message);
+            }
         }
     }
 

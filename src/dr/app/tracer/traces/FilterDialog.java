@@ -1,5 +1,6 @@
 package dr.app.tracer.traces;
 
+import dr.app.gui.util.LongTask;
 import dr.app.tracer.application.TracerFrame;
 import dr.inference.trace.FilteredTraceList;
 
@@ -18,8 +19,6 @@ public class FilterDialog extends JDialog {
 
     public FilterDialog(TracerFrame frame) {
         this.frame = frame;
-
-
     }
 
     public String showDialog(FilteredTraceList selectedTraceList, String previousMessage) {
@@ -89,4 +88,22 @@ public class FilterDialog extends JDialog {
         return message;
     }
 
+    class AnalyseFilterTask extends LongTask {
+
+        public Object doWork() throws Exception {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public int getLengthOfTask() {
+            return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public int getCurrent() {
+            return 0;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        public String getMessage() {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+    }
 }

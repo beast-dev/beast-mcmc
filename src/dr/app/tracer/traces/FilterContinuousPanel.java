@@ -11,8 +11,8 @@ public class FilterContinuousPanel extends FilterAbstractPanel {
     JTextField maxField;
 
     FilterContinuousPanel(String[] minMax, String[] bound) {
-        setLayout(new GridLayout(7, 1, 1, 10)); // 2 by 3, gap 5 by 1
-        setSize(new java.awt.Dimension(400, 300));
+        setLayout(new GridBagLayout());
+        GridBagConstraints c = new GridBagConstraints();
 
         if (bound == null) {
             bound = new String[2];
@@ -20,17 +20,34 @@ public class FilterContinuousPanel extends FilterAbstractPanel {
 
         minField = new JTextField(bound[0]);
         minField.setColumns(20);
-        add(new JLabel("Set Minimum for Selecting Values : "));
-        add(minField);
-        add(new JLabel("which should > " + minMax[0]));
 
-        add(new JLabel(""));
+//        c.weightx = 5;
+//        c.weighty = 10;
+//        c.gridx = 0;
+        c.gridy = 0;
+        c.insets = new Insets(20,10,0,10);
+        c.anchor = GridBagConstraints.FIRST_LINE_START;
+        add(new JLabel("Set Minimum for Selecting Values : "), c);
+
+        c.gridy = 1;
+        add(minField, c);
+
+        c.gridy = 2;
+        add(new JLabel("which should > " + minMax[0]), c);
 
         maxField = new JTextField(bound[1]);
         maxField.setColumns(20);
-        add(new JLabel("Set Maximum for Selecting Values : "));
-        add(maxField);
-        add(new JLabel("which should < " + minMax[1]));
+
+        c.gridy = 3;
+        c.insets = new Insets(50,10,0,10);
+        add(new JLabel("Set Maximum for Selecting Values : "), c);
+
+        c.gridy = 4;
+        c.insets = new Insets(20,10,0,10);
+        add(maxField, c);
+
+        c.gridy = 5;   
+        add(new JLabel("which should < " + minMax[1]), c);
     }
 
     public Object[] getSelectedValues() {

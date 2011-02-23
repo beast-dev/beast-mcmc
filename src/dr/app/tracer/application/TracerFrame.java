@@ -67,7 +67,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 //    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private final JLabel filterStatus = new JLabel();
-    String message;
+    String message = "";
     private int dividerLocation = -1;
 
     private DemographicDialog demographicDialog = null;
@@ -183,46 +183,13 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         });
 
-//        statisticTable.addMouseListener(new MouseAdapter() { // todo bug
-//            private void maybeShowPopup(MouseEvent e) {
-//                if (traceTable.getSelectedRowCount() < 2) { // TODO generic to CombinedTraces ?
-//                    if (e.isPopupTrigger() && statisticTable.isEnabled()) {
-//                        Point p = new Point(e.getX(), e.getY());
-//                        int col = statisticTable.columnAtPoint(p);
-//                        int row = statisticTable.rowAtPoint(p);
-//
-//                        if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
-//
-//                            // create popup menu...
-//                            JPopupMenu contextMenu = createContextMenu();
-//
-//                            // ... and show it
-//                            if (contextMenu != null && contextMenu.getComponentCount() > 0) {
-//                                contextMenu.show(statisticTable, p.x, p.y);
-//                            }
-//                        }
-//                        statisticTable.setRowSelectionInterval(row, row);
-//                        statisticTableSelectionChanged();
-//                    }
-//                }
-//            }
-//
-//            public void mousePressed(MouseEvent e) {
-//                maybeShowPopup(e);
-//            }
-//
-//            public void mouseReleased(MouseEvent e) {
-//                maybeShowPopup(e);
-//            }
-//        });
-
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
 
         JScrollPane scrollPane2 = new JScrollPane(statisticTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout(0, 0));
-        bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
+//        bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -233,6 +200,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
         JButton categoryButton = new JButton(TraceFactory.TraceType.STRING.getBrief());
         categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
+//        realButton.setPreferredSize(new Dimension(40, 25));
+//        integerButton.setPreferredSize(new Dimension(40, 25));
+//        categoryButton.setPreferredSize(new Dimension(40, 25));
         ActionListener traceTypeButton = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (((JButton) e.getSource()).getText().equals(TraceFactory.TraceType.INTEGER.getBrief())) {
@@ -290,39 +260,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         splitPane1.setDividerLocation(2000);
 
     }
-
-
-//    private JPopupMenu createContextMenu() {
-//        JPopupMenu contextMenu = new JPopupMenu();
-//        JMenuItem menu = new JMenuItem();
-//        menu.setText(TraceFactory.TraceType.DOUBLE + " (" + TraceFactory.TraceType.DOUBLE.getBrief() + ")");
-//        menu.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                changeTraceType(TraceFactory.TraceType.DOUBLE);
-//            }
-//        });
-//        contextMenu.add(menu);
-//
-//        menu = new JMenuItem();
-//        menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
-//        menu.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                changeTraceType(TraceFactory.TraceType.INTEGER);
-//            }
-//        });
-//        contextMenu.add(menu);
-//
-//        menu = new JMenuItem();
-//        menu.setText(TraceFactory.TraceType.STRING + " (" + TraceFactory.TraceType.STRING.getBrief() + ")");
-//        menu.addActionListener(new ActionListener() {
-//            public void actionPerformed(ActionEvent e) {
-//                changeTraceType(TraceFactory.TraceType.STRING);
-//            }
-//        });
-//        contextMenu.add(menu);
-//
-//        return contextMenu;
-//    }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
         int selRow = traceTable.getSelectedRow();
@@ -603,45 +540,45 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
 //        getIntersectionOfSelectedTraceLists();
 
-        message = "  " + updateStatusMessage(currentTraceLists);
+//        message = "  " + updateStatusMessage(currentTraceLists);
 
         filterStatus.setText(message);
     }
 
-    private String updateStatusMessage(List<TraceList> currentTraceLists) {
-        String message = "";
-        List<String> traceNameList = new ArrayList<String>();
-        List<String> messageList = new ArrayList<String>();
-
-//        for (int i = 0; i < currentTraceLists.size(); i++) {
-//            FilteredTraceList fTL = (FilteredTraceList) currentTraceLists.get(i);
-//            Filter f = ).getTraceName();
+//    private String updateStatusMessage(List<TraceList> currentTraceLists) {
+//        String message = "";
+//        List<String> traceNameList = new ArrayList<String>();
+//        List<String> messageList = new ArrayList<String>();
 //
-//            if (f != null) {
-//                String tN = f.getTraceName();
-//                if (!traceNameList.contains(tN)) {
-//                    traceNameList.add(tN);
-//                    message = f.getStatusMessage() + " in file(s) " + "\'" + fTL.getName() + "\'";
-//                    messageList.add(message);
-//                } else {
-//                    int id = traceNameList.indexOf(tN);
-//                    message = messageList.get(id) + " and \'" + fTL.getName() + "\'";
-//                    messageList.set(id, message);
-//                }
+////        for (int i = 0; i < currentTraceLists.size(); i++) {
+////            FilteredTraceList fTL = (FilteredTraceList) currentTraceLists.get(i);
+////            Filter f = ).getTraceName();
+////
+////            if (f != null) {
+////                String tN = f.getTraceName();
+////                if (!traceNameList.contains(tN)) {
+////                    traceNameList.add(tN);
+////                    message = f.getStatusMessage() + " in file(s) " + "\'" + fTL.getName() + "\'";
+////                    messageList.add(message);
+////                } else {
+////                    int id = traceNameList.indexOf(tN);
+////                    message = messageList.get(id) + " and \'" + fTL.getName() + "\'";
+////                    messageList.set(id, message);
+////                }
+////
+////                filterCombo.setSelectedItem(tN);  // todo
+////            }
+////        }
 //
-//                filterCombo.setSelectedItem(tN);  // todo
-//            }
+//
+//        message = "";
+//
+//        for (String s : messageList) {
+//            message += s + "; ";
 //        }
-
-
-        message = "";
-
-        for (String s : messageList) {
-            message += s + "; ";
-        }
-
-        return message;
-    }
+//
+//        return message;
+//    }
 
 //    private void getIntersectionOfSelectedTraceLists() {
 //        filterCombo.removeAllItems();
@@ -970,7 +907,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         if (tracesArray.length == 1) {
             try {
                 final LogFileTraces traces = tracesArray[0];
-
 
                 final String fileName = traces.getName();
                 final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
@@ -1332,21 +1268,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     JOptionPane.ERROR_MESSAGE);
 
         } else {
-//             FilterListPanel filterListPanel = new FilterListPanel(currentTraceLists.get(0));
-//
-//             JFrame frame = new JFrame(AnalysisMenuFactory.CONDITIONAL_POST_DIST);
-//             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//             frame.getContentPane().add(filterListPanel, BorderLayout.CENTER);
-//
-//             frame.setSize(400, 300);
-//             frame.setVisible(true);
-
-//        if (hasDiffValues(currentTraceLists)) {
-//            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
-//                    "Invalid Action",
-//                    JOptionPane.ERROR_MESSAGE);
-//        }
-
             message = "  " + filterDialog.showDialog((FilteredTraceList) currentTraceLists.get(0),
                     filterStatus.getText());
             filterStatus.setText(message);

@@ -14,7 +14,7 @@ import java.util.*;
  * @author Marc Suchard
  * @version $Id$
  */
-public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
+public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood  {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
@@ -29,10 +29,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             final double threshold) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
-
-        this.mdsDimension = mdsDimension;
-
-        this.titrationThreshold = threshold;
 
         String[] virusNames = dataTable.getRowLabels();
         boolean hasAliases = false;
@@ -52,12 +48,10 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 
         }
 
-//        mdsDimension = virusLocationsParameter.getColumnDimension();
-
         // the total number of viruses is the number of rows in the table
-        virusLocationCount = dataTable.getRowCount() - (hasAliases ? 1 : 0);
+        int virusCount = dataTable.getRowCount() - (hasAliases ? 1 : 0);
         int assayCount = dataTable.getColumnCount();
-        tipCount = virusLocationCount;
+        int serumCount;
 
         String[] assayNames = dataTable.getColumnLabels();
         int[] assayToSerumIndices = new int[assayNames.length];
@@ -83,13 +77,13 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
 
             // the number of serum locations is the number of aliases
-            serumLocationCount = aliasNames.size();
+            serumCount = aliasNames.size();
             serumNames = new String[aliasNames.size()];
             aliasNames.toArray(serumNames);
 
         } else {
             // the number of serum locations is the number of columns
-            serumLocationCount = assayCount;
+            serumCount = assayCount;
 
             // one alias for one serum
             for (int i = 0; i < assayToSerumIndices.length; i++) {
@@ -99,78 +93,52 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             serumNames = assayNames;
         }
 
-        Map<String, Integer> tipNameMap = null;
-        if (tipTraitParameter != null) {
-            if (tipCount != tipTraitParameter.getNumberOfParameters()) {
-                System.err.println("Tree has different number of tips than the number of viruses");
-            }
-
-            //  the tip -> virus map
-            tipIndices = new int[tipCount];
-
-            tipNameMap = new HashMap<String, Integer>();
-            for (int i = 0; i < tipCount; i++) {
-                String label = tipTraitParameter.getParameter(i).getParameterName();
-                for (String virus : virusNames) {
-                    if (label.startsWith(virus)) {
-                        label = virus;
-                        break;
-                    }
-                }
-
-                tipNameMap.put(label, i);
-
-                tipIndices[i] = -1;
-            }
-        } else {
-            tipIndices = null;
-        }
-
-        // the virus -> tip map
-        virusIndices = new int[virusLocationCount];
-
-        virusLocations = new double[virusLocationCount][mdsDimension];
-
-        // a set of vectors for each virus giving serum indices for which assay data is available
-        measuredSerumIndices = new int[virusLocationCount][];
 
         int start = hasAliases ? 1 : 0;
 
         List<List<List<Double>>> assayTableList = new ArrayList<List<List<Double>>>();
+        List<List<List<Boolean>>> isThresholdList = new ArrayList<List<List<Boolean>>>();
+
+        // a set of vectors for each virus giving serum indices for which assay data is available
+        int[][] measuredSerumIndices = new int[virusCount][];
 
         // Build a sparse matrix of non-missing assay values
-        for (int i = 0; i < virusLocationCount; i++) {
-            virusIndices[i] = -1;
-
+        for (int i = 0; i < virusCount; i++) {
             String[] dataRow = dataTable.getRow(i + start);
 
-            if (tipIndices != null) {
-                // if the virus is in the tree then add a entry to map tip to virus
-                Integer tipIndex = tipNameMap.get(virusNames[i]);
-                if (tipIndex != null) {
-                    tipIndices[tipIndex] = i;
-                    virusIndices[i] = tipIndex;
-                } else {
-                    System.err.println("Virus, " + virusNames[i] + ", not found in tree");
-                }
-            }
-
             List<List<Double>> assayRow = new ArrayList<List<Double>>();
+            List<List<Boolean>> isThresholdRow = new ArrayList<List<Boolean>>();
             List<Integer> assayIndices = new ArrayList<Integer>();
 
             int count = 0;
-            for (int j = 0; j < serumLocationCount; j++) {
+            for (int j = 0; j < serumCount; j++) {
 
                 List<Double> assayReplicates = new ArrayList<Double>();
+                List<Boolean> isThresholdReplicates = new ArrayList<Boolean>();
+
                 for (int k = 0; k < assayCount; k++) {
                     if (assayToSerumIndices[k] == j) {
-                        double value = convertString(dataRow[k]);
-                        if (!Double.isNaN(value) && value > threshold) {
+                        double value;
+
+                        if (dataRow[k].startsWith(">")) {
+                            // is a threshold
+                            value = convertString(dataRow[k].substring(1));
+                            if (Double.isNaN(value)) {
+                                throw new RuntimeException("Illegal value in table as a threshold");
+                            }
                             assayReplicates.add(value);
+                            isThresholdReplicates.add(true);
+                        } else {
+                            value = convertString(dataRow[k]);
+                            if (!Double.isNaN(value) ) {
+                                assayReplicates.add(value);
+                                isThresholdReplicates.add(false);
+                            }
                         }
                     }
                 }
                 assayRow.add(assayReplicates);
+                isThresholdRow.add(isThresholdReplicates);
                 assayIndices.add(j);
 
 //                if (assayReplicates.size() > 0) {
@@ -179,6 +147,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
                 count += assayReplicates.size();
             }
             assayTableList.add(assayRow);
+            isThresholdList.add(isThresholdRow);
 
             measuredSerumIndices[i] = new int[assayIndices.size()];
             for (int j = 0; j < assayIndices.size(); j++) {
@@ -191,42 +160,44 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        int totalDistancesCount = 0;
-        int totalMeasurementsCount = 0;
-
         // the largest measured value for any given column of data
         // Currently this is the largest across any assay column for a given antisera.
         // Optionally could normalize by individual assay column
-        double[] maxAssayValue = new double[serumLocationCount];
+        double[] maxAssayValue = new double[serumCount];
 
         // Convert into arrays
-        assayTable = new double[assayTableList.size()][][];
-        int[] assayCounts = new int[serumLocationCount];
+        double[][][] assayTable = new double[assayTableList.size()][][];
+        boolean[][][] isThreshold = new boolean[isThresholdList.size()][][];
+
+        int[] assayCounts = new int[serumCount];
         for (int i = 0; i < assayTable.length; i++) {
             List<List<Double>> assayRow = assayTableList.get(i);
             assayTable[i] = new double[assayRow.size()][];
 
+            List<List<Boolean>> isThresholdRow = isThresholdList.get(i);
+            isThreshold[i] = new boolean[isThresholdRow.size()][];
+
             for (int j = 0; j < assayTable[i].length; j++) {
                 List<Double> assayReplicates = assayRow.get(j);
-
                 assayTable[i][j] = new double[assayReplicates.size()];
 
+                List<Boolean> isThresholdReplicates = isThresholdRow.get(j);
+                isThreshold[i][j] = new boolean[isThresholdReplicates.size()];
+
                 for (int k = 0; k < assayTable[i][j].length; k++) {
-                    double value = assayReplicates.get(k);
-                    if (value > maxAssayValue[j]) {
-                        maxAssayValue[j] = value;
+                    assayTable[i][j][k] = assayReplicates.get(k);
+                    if (assayTable[i][j][k] > maxAssayValue[j]) {
+                        maxAssayValue[j] = assayTable[i][j][k];
                     }
-                    assayTable[i][j][k] = value;
+
+                    isThreshold[i][j][k] = isThresholdReplicates.get(k);
                 }
 
-                totalMeasurementsCount += assayTable[i][j].length;
                 assayCounts[j] += assayTable[i][j].length;
             }
-
-            totalDistancesCount += assayTable[i].length;
         }
 
-        for (int j = 0; j < serumLocationCount; j++) {
+        for (int j = 0; j < serumCount; j++) {
             if (assayCounts[j] == 0) {
                 System.err.println("WARNING: Serum " + serumNames[j] + " has 0 measurements");
             }
@@ -243,40 +214,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        this.totalDistancesCount = totalDistancesCount;
-        this.totalMeasurementsCount = totalMeasurementsCount;
-
-        // a cache of virus to serum distances (serum indices given by array above).
-        distances = new double[totalDistancesCount];
-        storedDistances = new double[totalDistancesCount];
-
-        virusLocationUpdates = new boolean[virusLocationCount];
-        serumLocationUpdates = new boolean[serumLocationCount];
-        distanceUpdate = new boolean[totalDistancesCount];
-
-        // a cache of individual truncations
-        truncations = new double[totalDistancesCount];
-        storedTruncations = new double[totalDistancesCount];
-
-        if (tipIndices != null) {
-            for (int i = 0; i < tipCount; i++) {
-                if (tipIndices[i] == -1) {
-                    String label = tipTraitParameter.getParameter(i).getParameterName();
-                    System.err.println("Tree tip, " + label + ", not found in virus assay table");
-                }
-            }
-        }
-
-        // add tipTraitParameter to enable store / restore
-        this.tipTraitParameter = tipTraitParameter;
-        if (tipTraitParameter != null) {
-            addVariable(tipTraitParameter);
-        }
-
-        this.virusLocationsParameter = virusLocationsParameter;
-        virusLocationsParameter.setColumnDimension(mdsDimension);
-        virusLocationsParameter.setRowDimension(virusLocationCount);
-        addVariable(virusLocationsParameter);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, assayTable, measuredSerumIndices, isThreshold);
 
         // some random initial locations
 //        for (int i = 0; i < virusCount; i++) {
@@ -287,13 +225,7 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 //            }
 //        }
 
-        if (serumLocationsParameter != null) {
-            this.serumLocationsParameter = serumLocationsParameter;
-            serumLocationsParameter.setColumnDimension(mdsDimension);
-            serumLocationsParameter.setRowDimension(serumLocationCount);
-            addVariable(serumLocationsParameter);
-
-            // some random initial locations
+        // some random initial locations
 //            for (int i = 0; i < serumCount; i++) {
 //                serumLocationsParameter.getParameter(i).setId(serumNames[i]);
 //                for (int j = 0; j < mdsDimension; j++) {
@@ -301,16 +233,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
 //                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
 //                }
 //            }
-        } else {
-            this.serumLocationsParameter = virusLocationsParameter;
-        }
-
-        this.mdsParameter = mdsPrecision;
-        addVariable(mdsPrecision);
-
-        this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
-
-        addStatistic(meanStatistic);
     }
 
     private double convertString(String value) {
@@ -331,313 +253,6 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         double t =  Math.log(maxValue / value) / Math.log(2.0);
         return t;
     }
-
-    @Override
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-    }
-
-    @Override
-    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        // TODO Flag which cachedDistances or mdsPrecision need to be updated
-
-        if (variable == virusLocationsParameter) {
-            int virusIndex = index / mdsDimension;
-            int dim = index % mdsDimension;
-
-            if (tipTraitParameter != null) {
-                if (tipIndices[virusIndex] != -1) {
-                    double value = virusLocationsParameter.getParameterValue(index);
-                    tipTraitParameter.setParameterValue((virusIndex * mdsDimension) + dim, value);
-                }
-            }
-
-            virusLocationUpdates[index / mdsDimension] = true;
-            distancesKnown = false;
-
-            statsKnown = false;
-        } else if (variable == serumLocationsParameter) {
-            serumLocationUpdates[index / mdsDimension] = true;
-
-            distancesKnown = false;
-
-        } else if (variable == mdsParameter) {
-            if (isLeftTruncated) {
-                for (int i = 0; i < distanceUpdate.length; i++) {
-                    distanceUpdate[i] = true;
-                }
-            }
-        } else if (variable == tipTraitParameter) {
-            // do nothing
-        } else {
-            throw new IllegalArgumentException("Unknown parameter");
-        }
-
-        truncationKnown = false;
-        likelihoodKnown = false;
-    }
-
-    @Override
-    protected void storeState() {
-        System.arraycopy(distances, 0, storedDistances, 0, distances.length);
-        System.arraycopy(truncations, 0, storedTruncations, 0, truncations.length);
-
-        storedLogLikelihood = logLikelihood;
-        storedTruncationSum = truncationSum;
-        storedSumOfSquaredResiduals = sumOfSquaredResiduals;
-    }
-
-    @Override
-    protected void restoreState() {
-        double[] tmp = storedDistances;
-        storedDistances = distances;
-        distances = tmp;
-        distancesKnown = true;
-
-        tmp = storedTruncations;
-        storedTruncations = truncations;
-        truncations = tmp;
-
-        logLikelihood = storedLogLikelihood;
-        likelihoodKnown = true;
-
-        truncationSum = storedTruncationSum;
-        truncationKnown = true;
-
-        sumOfSquaredResiduals = storedSumOfSquaredResiduals;
-
-        statsKnown = false;
-    }
-
-    @Override
-    protected void acceptState() {
-        // do nothing
-    }
-
-    public void makeDirty() {
-        distancesKnown = false;
-        likelihoodKnown = false;
-        truncationKnown = false;
-
-        for (int i = 0; i < virusLocationUpdates.length; i++) {
-            virusLocationUpdates[i] = true;
-        }
-
-        for (int i = 0; i < serumLocationUpdates.length; i++) {
-            serumLocationUpdates[i] = true;
-        }
-
-        for (int i = 0; i < distanceUpdate.length; i++) {
-            distanceUpdate[i] = true;
-        }
-    }
-
-    public Model getModel() {
-        return this;
-    }
-
-    public double getLogLikelihood() {
-        makeDirty();
-
-        if (!likelihoodKnown) {
-            if (!distancesKnown) {
-                calculateDistances();
-                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-                distancesKnown = true;
-
-            }
-
-            logLikelihood = computeLogLikelihood();
-            likelihoodKnown = true;
-
-            for (int i = 0; i < virusLocationUpdates.length; i++) {
-                virusLocationUpdates[i] = false;
-            }
-
-            for (int i = 0; i < serumLocationUpdates.length; i++) {
-                serumLocationUpdates[i] = false;
-            }
-
-            for (int i = 0; i < distanceUpdate.length; i++) {
-                distanceUpdate[i] = false;
-            }
-        }
-
-        return logLikelihood;
-    }
-
-    // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
-    protected double computeLogLikelihood() {
-
-        double precision = mdsParameter.getParameterValue(0);
-
-        double logLikelihood = 0.5 * (totalMeasurementsCount * Math.log(precision) - precision * sumOfSquaredResiduals);
-
-        if (isLeftTruncated) {
-            if (!truncationKnown) {
-                truncationSum = calculateTruncation(precision);
-                truncationKnown = true;
-            }
-            logLikelihood -= truncationSum;
-        }
-
-        return logLikelihood;
-    }
-
-    private double calculateTruncation(double precision) {
-        double sum = 0.0;
-        double sd = 1.0 / Math.sqrt(precision);
-        int k = 0;
-        for (int i = 0; i < assayTable.length; i++) {
-            for (int j = 0; j < assayTable[i].length; j++) {
-                if (distanceUpdate[k]) {
-                    truncations[k] = Math.log(NormalDistribution.cdf(distances[k], 0.0, sd));
-                }
-                k++;
-            }
-        }
-
-        for ( k = 0; k < truncations.length; k++) {
-            sum += truncations[k];
-        }
-
-        return sum;
-    }
-
-    private double calculateSumOfSquaredResiduals() {
-        double sum = 0.0;
-        int l = 0;
-        // across virus
-        for (int i = 0; i < assayTable.length; i++) {
-            // across serum
-            for (int j = 0; j < assayTable[i].length; j++) {
-                // across assay replicates
-                for (int k = 0; k < assayTable[i][j].length; k++) {
-                    double residual = distances[l] - assayTable[i][j][k];
-                    sum += residual * residual;
-                }
-                l++;
-            }
-        }
-        return sum;
-    }
-
-    private void calculateDistances() {
-        int k = 0;
-        for (int i = 0; i < assayTable.length; i++) {
-            for (int j = 0; j < assayTable[i].length; j++) {
-                if (virusLocationUpdates[i] || serumLocationUpdates[measuredSerumIndices[i][j]]) {
-                    distances[k] = calculateDistance(
-                            virusLocationsParameter.getParameter(i),
-                            serumLocationsParameter.getParameter(measuredSerumIndices[i][j]));
-                    distanceUpdate[k] = true;
-                }
-                k++;
-            }
-        }
-    }
-
-    private double calculateDistance(Parameter X, Parameter Y) {
-        double sum = 0.0;
-        for (int i = 0; i < mdsDimension; i++) {
-            double difference = X.getParameterValue(i) - Y.getParameterValue(i);
-            sum += difference * difference;
-        }
-        return Math.sqrt(sum);
-    }
-
-    private final double[][] virusLocations;
-    private boolean statsKnown = false;
-
-    private void calculateStats() {
-        locationMean = new double[mdsDimension];
-
-        for (int i = 0; i < virusLocationCount; i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                virusLocations[i][j] = virusLocationsParameter.getParameter(i).getParameterValue(j);
-                locationMean[j] += virusLocations[i][j];
-            }
-        }
-        for (int j = 0; j < mdsDimension; j++) {
-            locationMean[j] /= virusLocationCount;
-        }
-
-//        for (int i = 0; i < virusCount; i++) {
-//            for (int j = 0; j < mdsDimension; j++) {
-//                locations[i][j] -= locationMean[j];
-//            }
-//        }
-//
-////        for (int i = 0; i < serumCount; i++) {
-////            for (int j = 0; j < mdsDimension; j++) {
-////                locations[i][j] = serumLocationsParameter.getParameter(i).getParameterValue(j);
-////                locationMean[j] += locations[i][j];
-////            }
-////        }
-////        for (int j = 0; j < mdsDimension; j++) {
-////            locationMean[j] /= serumCount;
-////        }
-////
-////        for (int i = 0; i < serumCount; i++) {
-////            for (int j = 0; j < mdsDimension; j++) {
-////                locations[i][j] -= locationMean[j];
-////            }
-////        }
-//
-//        RealMatrix data = MatrixUtils.createRealMatrix(locations);
-//        // compute the covariance matrix
-//        RealMatrix covMatrix = null;
-//
-//        if ( data.getColumnDimension() > 1) {
-//
-//            // compute covariance matrix if we have more than 1 attribute
-//            Covariance c = new Covariance(data);
-//            covMatrix = c.getCovarianceMatrix();
-//
-//        } else {
-//
-//            // if we only have one attribute calculate the variance instead
-//            covMatrix = MatrixUtils.createRealMatrix(1,1);
-//            covMatrix.setEntry(0, 0, StatUtils.variance(data.getColumn(0)));
-//
-//        }
-//
-//        // get the eigenvalues and eigenvectors of the covariance matrixE
-//        EigenDecomposition eDecomp = new EigenDecompositionImpl(covMatrix,0.0);
-//
-//        // set the eigenVectors matrix
-//        // the columns of the eigenVectors matrix are the eigenVectors of
-//        // the covariance matrix
-//        RealMatrix eigenVectors = eDecomp.getV();
-//
-//        // set the eigenValues vector
-////        RealVector eigenValues = new ArrayRealVector(eDecomp.getRealEigenvalues());
-//
-//        //transform the data
-//        RealMatrix pcs = data.multiply(eigenVectors);
-//
-//        locationPrincipalAxis = pcs.getRow(0);
-
-        statsKnown = true;
-    }
-
-    private final Statistic meanStatistic = new Statistic.Abstract() {
-
-        public String getStatisticName() {
-            return "mean";
-        }
-
-        public int getDimension() {
-            return mdsDimension;
-        }
-
-        public double getStatisticValue(int dim) {
-            if (!statsKnown) {
-                calculateStats();
-            }
-            return locationMean[dim];
-        }
-
-    };
 
     // **************************************************************
     // XMLObjectParser
@@ -735,50 +350,4 @@ public class AntigenicTraitLikelihood extends AbstractModelLikelihood {
         }
     };
 
-    private final double[][][] assayTable;
-
-    private final int tipCount;
-    private final int virusLocationCount;
-    private final int serumLocationCount;
-    private final int[] tipIndices;
-    private final int[] virusIndices;
-
-    // for each measured assay, which serum locations does it refer to
-    private final int[][] measuredSerumIndices;
-
-    private final int totalDistancesCount;
-    private final int totalMeasurementsCount;
-
-    private final CompoundParameter tipTraitParameter;
-    private final MatrixParameter virusLocationsParameter;
-    private final MatrixParameter serumLocationsParameter;
-    private final Parameter mdsParameter;
-
-    private final double titrationThreshold;
-
-    private boolean likelihoodKnown = false;
-    private double logLikelihood;
-    private double storedLogLikelihood;
-
-    private double[] locationMean;
-    private double[] locationPrincipalAxis;
-
-    private boolean distancesKnown = false;
-    private double sumOfSquaredResiduals;
-    private double storedSumOfSquaredResiduals;
-    private double[] distances;
-    private double[] storedDistances;
-
-    private boolean[] virusLocationUpdates;
-    private boolean[] serumLocationUpdates;
-    private boolean[] distanceUpdate;
-
-    private boolean truncationKnown = false;
-    private double truncationSum;
-    private double storedTruncationSum;
-    private double[] truncations;
-    private double[] storedTruncations;
-
-    private final boolean isLeftTruncated;
-    private final int mdsDimension;
 }

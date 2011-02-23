@@ -269,8 +269,17 @@ public class TreeKMLGenerator {
         int nodeNumber = 0;
         for (Node node : tree.getNodes()) {
             nodeNumber++;
-            double latitude = getDoubleNodeAttribute(node, settings.getLatitudeName());
-            double longitude = getDoubleNodeAttribute(node, settings.getLongitudeName());
+
+            double latitude;
+            double longitude;
+            Object[] location = getArrayNodeAttribute(node, settings.getTraitName());
+            if (location != null) {
+                latitude =  (Double)location[0];
+                longitude =  (Double)location[0];
+            } else {
+             latitude = getDoubleNodeAttribute(node, settings.getLatitudeName());
+             longitude = getDoubleNodeAttribute(node, settings.getLongitudeName());
+            }
             double altitude = (tree.getHeight(node)*scaleFactor);
             double date = settings.getMostRecentDate() - tree.getHeight(node);
 
@@ -887,7 +896,8 @@ public class TreeKMLGenerator {
 
     private Object[] getArrayNodeAttribute(Node node, String attributeName) {
         if (node.getAttribute(attributeName) == null) {
-            throw new RuntimeException("Attribute, " + attributeName + ", missing from node");
+            return null;
+//            throw new RuntimeException("Attribute, " + attributeName + ", missing from node");
         }
         return (Object[])node.getAttribute(attributeName);
     }
@@ -967,7 +977,7 @@ public class TreeKMLGenerator {
         //settings.setAgeCutOff(1995);
         settings.setTimeDivisionCount(0);
 
-//        settings.setTraitName("longLat");
+        settings.setTraitName("antigenic");
 //        settings.setLatitudeName("longLat1");
 //        settings.setLongitudeName("longLat2");
 

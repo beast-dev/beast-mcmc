@@ -7,7 +7,7 @@ public abstract class FilteredTraceList implements TraceList {
 
     protected boolean[] selected; // length = values[].length = valueCount, all must be true initially
 
-    protected void createSelected() { // will init in updateSelected()
+    private void createSelected() { // will init in updateSelected()
         if (getTrace(0) != null) {
             selected = new boolean[getTrace(0).getValuesSize()];
         } else {

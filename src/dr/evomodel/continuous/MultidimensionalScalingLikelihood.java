@@ -63,7 +63,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                     k ++;
                 }
             }
-            totalNonMissingCount += nonMissingCount;
+            totalObservedCount += nonMissingCount;
         }
 
         initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, null, rowLabels, columnLabels, compactDataMatrix, nonMissingIndices, null);
@@ -138,17 +138,21 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         this.totalDistancesCount = 0;
-        this.totalNonMissingCount = 0;
+        this.totalObservedCount = 0;
+        this.totalMeasurementCount = 0;
 
         for (int i = 0; i < compactDataMatrix.length; i++) {
 
             totalDistancesCount += compactDataMatrix[i].length;
 
             for (int j = 0; j < compactDataMatrix[i].length; j++) {
+
+                totalMeasurementCount += compactDataMatrix[i][j].length;
+
                 for (int k = 0; k < isThreshold[i][j].length; k++) {
                     if (!isThreshold[i][j][k]) {
                         // only count as measured data if not a threshold
-                        totalNonMissingCount ++;
+                        totalObservedCount++;
                     }
                 }
             }
@@ -187,21 +191,25 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         // a cache of row to column distances (column indices given by array above).
-        distances = new double[totalNonMissingCount];
-        storedDistances = new double[totalNonMissingCount];
+        distances = new double[totalDistancesCount];
+        storedDistances = new double[totalDistancesCount];
 
-        distanceUpdate = new boolean[totalNonMissingCount];
+        distanceUpdate = new boolean[totalDistancesCount];
 
         // a cache of individual truncations
-        truncations = new double[totalNonMissingCount];
-        storedTruncations = new double[totalNonMissingCount];
+        truncations = new double[totalDistancesCount];
+        storedTruncations = new double[totalDistancesCount];
+
+        // a cache of threshold calcs
+        thresholds = new double[totalMeasurementCount];
+        storedThresholds = new double[totalMeasurementCount];
 
         this.mdsDimension = mdsDimension;
 
         this.mdsPrecisionParameter = mdsPrecision;
         addVariable(mdsPrecision);
 
-        this.isLeftTruncated = false; // Re-normalize likelihood for strictly positive distances
+        this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
 
     }
 
@@ -334,10 +342,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double precision = mdsPrecisionParameter.getParameterValue(0);
 
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
-        double logLikelihood = (totalNonMissingCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
+        double logLikelihood = (totalObservedCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
 
         if (hasThresholds) {
-            logLikelihood += calculateThresholdedObservations(precision);
+            logLikelihood += calculateThresholdObservations(precision);
         }
 
         if (isLeftTruncated) {
@@ -353,7 +361,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private final static double minThresholdValue = 0.0;
 
-    private double calculateThresholdedObservations(double precision) {
+    private double calculateThresholdObservations(double precision) {
         double logProbability = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
         int u = 0;
@@ -365,7 +373,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                         if (isThreshold[i][j][k]) {
                             // TODO Check: switch minThresholdValue and distances[k] order?
 
-                            thresholds[v] = Math.log(NormalDistribution.cdf(minThresholdValue, distances[k], sd));
+                            thresholds[v] = Math.log(NormalDistribution.cdf(compactDataMatrix[i][j][k], distances[u], sd));
                         } else {
                             thresholds[v] = 0.0;
                         }
@@ -376,7 +384,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        // TODO Check: + or - thresholds[k]?        
+        // TODO Check: + or - thresholds[k]?
         for (int k = 0; k < thresholds.length; k++) {
             logProbability += thresholds[k];
         }
@@ -388,14 +396,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
         int u = 0;
-        int v = 0;
         for (int i = 0; i < compactDataMatrix.length; i++) {
             for (int j = 0; j < compactDataMatrix[i].length; j++) {
                 if (distanceUpdate[u]) {
-                    for (int k = 0; k < compactDataMatrix[i][j].length; k++) {
-                        truncations[v] = Math.log(NormalDistribution.cdf(distances[k], 0.0, sd));
-                        v++;
-                    }
+                    truncations[u] = Math.log(NormalDistribution.cdf(distances[u], 0.0, sd));
                 }
                 u++;
             }
@@ -536,7 +540,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int rowCount;
     private int columnCount;
     private int totalDistancesCount;
-    private int totalNonMissingCount;
+    private int totalObservedCount;
+    private int totalMeasurementCount;
     private int[] tipIndices;
     private int[] rowIndices;
     private int[][] nonMissingIndices;

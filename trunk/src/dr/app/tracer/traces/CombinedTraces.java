@@ -39,16 +39,16 @@ import java.util.List;
  * @version $Id: CombinedTraces.java,v 1.3 2006/11/29 16:04:12 rambaut Exp $
  */
 
-public class CombinedTraces implements TraceList {
+public class CombinedTraces extends FilteredTraceList { //implements TraceList {
 
-    public CombinedTraces(String name, TraceList[] traceLists) throws TraceException {
+    public CombinedTraces(String name, LogFileTraces[] traceLists) throws TraceException {
 
         if (traceLists == null || traceLists.length < 1) {
             throw new TraceException("Must have at least 1 Traces object in a CombinedTraces");
         }
 
         this.name = name;
-        this.traceLists = new TraceList[traceLists.length];
+        this.traceLists = new LogFileTraces[traceLists.length];
         this.traceLists[0] = traceLists[0];
 
         for (int i = 1; i < traceLists.length; i++) {
@@ -106,7 +106,7 @@ public class CombinedTraces implements TraceList {
      */
     public int getStateCount() {
         int sum = 0;
-        for (TraceList traceList : traceLists) {
+        for (LogFileTraces traceList : traceLists) {
             sum += traceList.getStateCount();
         }
         return sum;
@@ -148,9 +148,8 @@ public class CombinedTraces implements TraceList {
 
     public List getValues(int index) {
         List valuesList = new ArrayList();
-        for (TraceList traceList : traceLists) {
-            if (traceList instanceof LogFileTraces)
-                valuesList.addAll(traceList.getValues(index)); 
+        for (LogFileTraces traceList : traceLists) {
+            valuesList.addAll(traceList.getValues(index));
         }
         return valuesList;
     }
@@ -175,13 +174,11 @@ public class CombinedTraces implements TraceList {
             // this can happen if the ESS has not been calculated yet.
 //	    throw new RuntimeException("No ESS for combined traces? This is not supposed to happen.");
         }
-
         return traceStatistics[index];
     }
 
     public void analyseTrace(int index) {
         // no offset: burnin is handled inside each TraceList we own and invisible to us.
-
         if (traceStatistics == null) {
             traceStatistics = new TraceCorrelation[getTraceCount()];            
         }
@@ -193,7 +190,7 @@ public class CombinedTraces implements TraceList {
     }
 
     public Trace getTrace(int index) {
-        for (TraceList traceList : traceLists) {
+        for (LogFileTraces traceList : traceLists) {
             if (traceList.getTrace(index).getTraceType() != traceLists[0].getTrace(index).getTraceType()) {
                 return null; // trace type not comparable
             }
@@ -220,10 +217,52 @@ public class CombinedTraces implements TraceList {
     // private methods
     //************************************************************************
 
-    private TraceList[] traceLists = null;
+    private LogFileTraces[] traceLists = null;
 
     private TraceCorrelation[] traceStatistics = null;
 
     private String name;
 
+    //************* Filter ******************
+
+    @Override
+    public boolean hasFilter(int traceIndex) {
+        return traceLists[0].hasFilter(traceIndex);
+    }
+
+    @Override
+    public void setFilter(int traceIndex, Filter filter) {
+        for (LogFileTraces traceList : traceLists) {
+            traceList.setFilter(traceIndex, filter);
+        }
+        this.refreshStatistics();
+    }
+
+    @Override
+    public Filter getFilter(int traceIndex) {
+        return traceLists[0].getFilter(traceIndex);
+    }
+
+    @Override
+    public void removeFilter(int traceIndex) {
+        for (LogFileTraces traceList : traceLists) {
+            traceList.removeFilter(traceIndex);
+        }
+        this.refreshStatistics();
+    }
+
+    @Override
+    public void removeAllFilters() {
+        for (LogFileTraces traceList : traceLists) {
+            traceList.removeAllFilters();
+        }
+        this.refreshStatistics();
+    }
+
+    @Override
+    protected void refreshStatistics() {
+        for (int i = 0; i < getTraceCount(); i++) {
+            analyseTrace(i);
+        }
+    }
 }

@@ -2,7 +2,6 @@ package dr.app.tracer.traces;
 
 import dr.app.gui.util.LongTask;
 import dr.app.tracer.application.TracerFrame;
-import dr.inference.trace.FilteredTraceList;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -21,10 +20,8 @@ public class FilterDialog extends JDialog {
         this.frame = frame;
     }
 
-    public String showDialog(FilteredTraceList selectedTraceList, String previousMessage) {
+    public String showDialog(FilterListPanel filterListPanel, String previousMessage) {
         String message = "";
-
-        FilterListPanel filterListPanel = new FilterListPanel(selectedTraceList);
 
         JOptionPane optionPane = new JOptionPane(filterListPanel,
                 JOptionPane.PLAIN_MESSAGE,

@@ -57,7 +57,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
       
-        treeTraits.addTrait(new TreeTrait.IA() {
+        treeTraits.addTrait(STATES_KEY, new TreeTrait.IA() { 
             public String getTraitName() {
                 return tag;
             }

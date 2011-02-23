@@ -1,6 +1,8 @@
 package dr.app.tools;
 
+import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
+import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
@@ -26,6 +28,7 @@ import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.inference.model.Parameter;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
+import dr.util.Version;
 
 import java.io.*;
 import java.util.*;
@@ -33,9 +36,12 @@ import java.util.logging.Logger;
 
 /*
  * @author Marc A. Suchard
+ * @author Wai Lok Sibon Li
  */
 
 public class AncestralSequenceAnnotator {
+
+    private final static Version version = new BeastVersion();
 
     public final static int MAX_CLADE_CREDIBILITY = 0;
     public final static int MAX_SUM_CLADE_CREDIBILITY = 1;
@@ -91,7 +97,7 @@ public class AncestralSequenceAnnotator {
                     tree = processTree(tree);
                     setupTreeAttributes(tree);
                     setupAttributes(tree);
-                    tree = unprocessedTree;
+                    tree = unprocessedTree;     //This actually does nothing since unprocessedTree was a reference to processedTree in the first place
                     firstTree = false;
                 }
 
@@ -245,17 +251,21 @@ public class AncestralSequenceAnnotator {
                             sum += value;
                         }
                     }
-                    double[] freqOrdered = new double[20];
+                    double[] freqOrdered = new double[20];              
                     for (int i = 0; i < 20; i++) {
                         int index = charList.indexOf(AA_ORDER.charAt(i));
                         freqOrdered[i] = freq[index] / sum;
                     }
                     freqModel = new FrequencyModel(AminoAcids.INSTANCE, new Parameter.Default(freqOrdered));
                     substModel = new EmpiricalAminoAcidModel(WAG.INSTANCE, freqModel);
-                    alignment.setDataType(AminoAcids.INSTANCE);
+                    alignment.setDataType(substModel.getDataType());
+                    //System.out.println("baka survivor " + alignment.getDataType() + substModel.getDataType());
 //					doPrint = true;
                 }
-            }
+            },
+
+            
+
     };
 
 
@@ -274,24 +284,32 @@ public class AncestralSequenceAnnotator {
 
         // Remake tree to fix node ordering
 
-        String modelType = (String) tree.getAttribute(SUBST_MODEL);
-        SubstitutionModelLoader loader = null;
+        //String modelType = (String) tree.getAttribute(SUBST_MODEL);
+        //SubstitutionModelLoader loader = null;
 
-        for (int i = 0; i < modelLoaders.length && loader == null; i++) {
-            if (modelType.equals(modelLoaders[i].getName())) {
-                loader = modelLoaders[i];
-            }
-        }
+        //for (int i = 0; i < modelLoaders.length && loader == null; i++) {
+        //    if (modelType.equals(modelLoaders[i].getName())) {
+        //        loader = modelLoaders[i];
+        //    }
+        //}
 
-        if (loader == null) {
-            System.err.println("Substitution model type '" + modelType + "' not implemented");
+        //if (loader == null) {
+        //    System.err.println("Substitution model type '" + modelType + "' not implemented");
+        //    System.exit(-1);
+        //}
+
+        //loader.load(tree);
+
+        SubstitutionModel substModel = loadSubstitutionModel(tree);
+        if (substModel == null) {
+            System.err.println("Substitution model type '" + tree.getAttribute(SUBST_MODEL) + "' not implemented");
             System.exit(-1);
         }
+        //SubstitutionModel substModel = loader.getSubstitutionModel();
+        //SimpleAlignment alignment = loader.getAlignment();
 
-        loader.load(tree);
-
-        SubstitutionModel substModel = loader.getSubstitutionModel();
-        SimpleAlignment alignment = loader.getAlignment();
+        SimpleAlignment alignment = new SimpleAlignment();
+        alignment.setDataType(substModel.getDataType());
 
         // Get sequences
         String[] sequence = new String[tree.getNodeCount()];
@@ -312,6 +330,63 @@ public class AncestralSequenceAnnotator {
         introduceGaps(flexTree, tree);
 
         return flexTree;
+    }
+
+    /*
+     * This method is equivalent to the SubstitutionModelLoader without having to
+     * be object orientated and can be much more flexible. 
+     */
+    private SubstitutionModel loadSubstitutionModel(Tree tree) {
+
+
+        String modelType = (String) tree.getAttribute(SUBST_MODEL);
+        System.out.println("Substitution Model: "  + modelType  + " " + AA_ORDER);
+        // Determine which substitution model is being used
+
+        
+        /* Insert code here */
+
+
+        // Obtain the equilibrium base frequencies for the model
+        double[] freq = new double[20];
+        int cnt = 0;
+        double sum = 0;
+        String charList = "";
+        for (Iterator<String> i = tree.getAttributeNames(); i.hasNext();) {
+            String name = i.next();
+            if (name.startsWith("pi")) { /* the pi in the output files contains the frequencies */
+                String character = name.substring(2, 3);
+                charList = charList.concat(character);
+                Double value = (Double) tree.getAttribute(name);
+                freq[cnt++] = value;
+                sum += value;
+            }
+        }
+        double[] freqOrdered = new double[20];
+        for (int i = 0; i < 20; i++) {
+            int index = charList.indexOf(AA_ORDER.charAt(i));
+            freqOrdered[i] = freq[index] / sum;
+        }
+        FrequencyModel freqModel = new FrequencyModel(AminoAcids.INSTANCE, new Parameter.Default(freqOrdered));
+        SubstitutionModel substModel=null;
+
+        if(modelType.indexOf("wag.dat")>0) { //Not the best way to do this. Maybe use proper substrings
+            substModel = new EmpiricalAminoAcidModel(WAG.INSTANCE, freqModel);
+        }
+
+        
+        /* Just to copy Marc's code, not sure what this is used for */
+        boolean doPrint = false;
+        if (doPrint) {
+            Double logLikelihood = (Double) tree.getAttribute(LIKELIHOOD);
+            if (logLikelihood != null)
+                System.err.printf("%5.1f", logLikelihood);
+        }
+
+
+        return substModel;
+        
+        
     }
 
     private void introduceGaps(FlexibleTree flexTree, Tree gapTree) {
@@ -1206,9 +1281,21 @@ public class AncestralSequenceAnnotator {
             inputFileName = args2[0];
             outputFileName = args2[1];
         } else {
+
+            if (inputFileName == null) {
+               // No input file name was given so throw up a dialog box...
+                inputFileName = Utils.getLoadFileName("AncestralSequenceAnnotator " + version.getVersionString() + " - Select inputfile file to analyse");
+            }
+            if (outputFileName == null) {
+                outputFileName = Utils.getSaveFileName("AncestralSequenceAnnotator " + version.getVersionString() + " - Select output file");
+
+            }
+        }
+        if(inputFileName == null || outputFileName == null) {
             System.err.println("Missing input or output file name");
             printUsage(arguments);
             System.exit(1);
+
         }
 
         new AncestralSequenceAnnotator(burnin,

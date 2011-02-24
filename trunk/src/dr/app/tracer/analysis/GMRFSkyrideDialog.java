@@ -426,7 +426,7 @@ public class GMRFSkyrideDialog {
 
         int stateCount;
 
-        List<Double>[] popSizes;
+        ArrayList<ArrayList> popSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -448,9 +448,9 @@ public class GMRFSkyrideDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new ArrayList[popSizeCount];
+            popSizes = new ArrayList<ArrayList>();
             for (int i = 0; i < popSizeCount; i++) {
-                popSizes[i] = traceList.getValues(firstPopSize + i);
+                popSizes.add(new ArrayList(traceList.getValues(firstPopSize + i)));
             }
         }
 
@@ -699,7 +699,7 @@ public class GMRFSkyrideDialog {
         }
 
         private double getPopSize(int index, int state) {
-            return Math.exp(popSizes[index].get(state));
+            return Math.exp((Double) popSizes.get(index).get(state));
         }
     }
 }

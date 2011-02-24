@@ -48,23 +48,19 @@ public class PLCoalescentSimulator {
         String[] tokens = line.trim().split("[\t ]+");
         if (tokens.length < 2) throw new RuntimeException();
 
-        List<Double>[] popSizes = new List[tokens.length - 1];
-        for (int i = 0; i < tokens.length - 1; i++) {
-            popSizes[i] = new ArrayList<Double>();
-        }
-
+        ArrayList<ArrayList> popSizes = new ArrayList<ArrayList>();
         while (line != null) {
-
             double time = Double.parseDouble(tokens[0]) / generationTime;
-
             times.add(time);
+            
             for (int i = 1; i < tokens.length; i++) {
-                popSizes[i - 1].add(Double.parseDouble(tokens[i]));
+                popSizes.add(new ArrayList<Double>());
+                popSizes.get(i - 1).add(Double.parseDouble(tokens[i]));
             }
             line = reader.readLine();
             if (line != null) {
                 tokens = line.trim().split("[\t ]+");
-                if (tokens.length != popSizes.length + 1) throw new RuntimeException();
+                if (tokens.length != popSizes.size() + 1) throw new RuntimeException();
             }
         }
 

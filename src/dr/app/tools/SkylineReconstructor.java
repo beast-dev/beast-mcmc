@@ -92,14 +92,14 @@ public class SkylineReconstructor {
             }
         }
 
-        List<Double>[] popSizes = new ArrayList[popSizeCount];
-        List<Double>[] groupSizes = new ArrayList[groupSizeCount];
+        ArrayList<ArrayList> popSizes = new ArrayList<ArrayList>();
+        ArrayList<ArrayList> groupSizes = new ArrayList<ArrayList>();
 
         for (int i = 0; i < popSizeCount; i++) {
-            popSizes[i] = traces.getValues(firstPopSize + i);
+            popSizes.add(new ArrayList(traces.getValues(firstPopSize + i)));
         }
         for (int i = 0; i < groupSizeCount; i++) {
-            groupSizes[i] = traces.getValues(firstGroupSize + i);
+            groupSizes.add(new ArrayList(traces.getValues(firstGroupSize + i)));
         }
 
         List heights = traces.getValues(traces.getTraceIndex("treeModel.rootHeight"));
@@ -167,7 +167,7 @@ public class SkylineReconstructor {
             int groupIndex = 0;
             int subIndex = 0;
             if (firstGroupSize > 0) {
-                double g = groupSizes[groupIndex].get(state);
+                double g = (Double) groupSizes.get(groupIndex).get(state);
                 if (g != Math.round(g)) {
                     throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                 } else groupSize = (int) Math.round(g);
@@ -184,7 +184,7 @@ public class SkylineReconstructor {
                         subIndex = 0;
                         groupIndex += 1;
                         if (groupIndex < groupSizeCount) {
-                            double g = groupSizes[groupIndex].get(state);
+                            double g = (Double) groupSizes.get(groupIndex).get(state);
                             if (g != Math.round(g)) {
                                 throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                             } else groupSize = (int) Math.round(g);
@@ -222,8 +222,8 @@ public class SkylineReconstructor {
 
                         if (index < groupTimes[state].length - 1) {
                             double t = (height - lastGroupTime) / (groupTimes[state][index] - lastGroupTime);
-                            double p1 = popSizes[index].get(state);
-                            double p2 = popSizes[index + 1].get(state);
+                            double p1 = (Double) groupSizes.get(index).get(state);
+                            double p2 = (Double) groupSizes.get(index + 1).get(state);
                             double popsize = p1 + ((p2 - p1) * t);
                             bins[k].add(popsize);
                         }
@@ -234,7 +234,7 @@ public class SkylineReconstructor {
                         }
 
                         if (index < groupTimes[state].length) {
-                            double popSize = popSizes[index].get(state);
+                            double popSize = (Double) groupSizes.get(index).get(state);
                             if (popSize == 0.0) {
                                 throw new RuntimeException("Zero pop size");
                             }

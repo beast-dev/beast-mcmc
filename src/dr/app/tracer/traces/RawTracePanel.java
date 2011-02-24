@@ -449,8 +449,8 @@ public class RawTracePanel extends JPanel implements Exportable {
 
         //Plot plot = densityChart.getPlot(0);
 
-        List[] traceStates = new List[traceChart.getPlotCount()];
-        List[] traceValues = new List[traceChart.getPlotCount()];
+        ArrayList<ArrayList> traceStates = new ArrayList<ArrayList>();
+        ArrayList<ArrayList> traceValues = new ArrayList<ArrayList>();
         int maxLength = 0;
 
         for (int i = 0; i < traceChart.getPlotCount(); i++) {
@@ -462,28 +462,28 @@ public class RawTracePanel extends JPanel implements Exportable {
             buffer.append("\t");
             buffer.append(plot.getName());
 
-            traceStates[i] = traceChart.getTraceStates(i);
-            traceValues[i] = traceChart.getTraceValues(i);
-            if (traceStates[i].size() > maxLength) {
-                maxLength = traceStates[i].size();
+            traceStates.add(i, new ArrayList(traceChart.getTraceStates(i)));
+            traceValues.add(i, new ArrayList(traceChart.getTraceValues(i)));
+            if (traceStates.get(i).size() > maxLength) {
+                maxLength = traceStates.get(i).size();
             }
         }
         buffer.append("\n");
 
         for (int i = 0; i < maxLength; i++) {
-            if (traceStates[0].size() > i) {
-                buffer.append(traceStates[0].get(i));
+            if (traceStates.get(0).size() > i) {
+                buffer.append(traceStates.get(0).get(i));
                 buffer.append("\t");
-                buffer.append(String.valueOf(traceValues[0].get(i)));
+                buffer.append(String.valueOf(traceValues.get(0).get(i)));
             } else {
                 buffer.append("\t");
             }
-            for (int j = 1; j < traceStates.length; j++) {
-                if (traceStates[j].size() > i) {
+            for (int j = 1; j < traceStates.size(); j++) {
+                if (traceStates.get(j).size() > i) {
                     buffer.append("\t");
-                    buffer.append(traceStates[j].get(i));
+                    buffer.append(traceStates.get(j).get(i));
                     buffer.append("\t");
-                    buffer.append(String.valueOf(traceValues[j].get(i)));
+                    buffer.append(String.valueOf(traceValues.get(j).get(i)));
                 } else {
                     buffer.append("\t\t");
                 }

@@ -405,7 +405,7 @@ public class DemographicDialog {
             current = 0;
 
             int[] argIndices = argumentIndices[demographicCombo.getSelectedIndex()];
-            List<Double>[] values = new ArrayList[argIndices.length];
+            ArrayList<ArrayList> values = new ArrayList<ArrayList>();
 
             Variate[] bins = new Variate[binCount];
             for (int k = 0; k < binCount; k++) {
@@ -484,14 +484,14 @@ public class DemographicDialog {
 
             for (int j = 0; j < argIndices.length; j++) {
                 int index = traceList.getTraceIndex(argumentTraces[argIndices[j]]);
-                values[j] = traceList.getValues(index);
+                values.add(new ArrayList(traceList.getValues(index)));
             }
 
             if (demographicCombo.getSelectedIndex() == 0) { // Constant Size
                 title = "Constant Population Size";
                 ConstantPopulation demo = new ConstantPopulation();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -500,9 +500,9 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 1) { // Exponential Growth (Growth Rate)
                 title = "Exponential Growth";
                 ExponentialGrowth demo = new ExponentialGrowth();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setGrowthRate(values[1].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setGrowthRate((Double) values.get(1).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
 
@@ -513,9 +513,9 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 2) { // Exponential Growth (Doubling Time)
                 title = "Exponential Growth";
                 ExponentialGrowth demo = new ExponentialGrowth();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setDoublingTime(values[1].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setDoublingTime((Double) values.get(1).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -524,10 +524,10 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 3) { // Logistic Growth (Growth Rate)
                 title = "Logistic Growth";
                 LogisticGrowth demo = new LogisticGrowth();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setGrowthRate(values[1].get(i));
-                    demo.setTime50(values[2].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setGrowthRate((Double) values.get(1).get(i));
+                    demo.setTime50((Double) values.get(2).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -536,10 +536,10 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 4) { // Logistic Growth (Doubling Time)
                 title = "Logistic Growth";
                 LogisticGrowth demo = new LogisticGrowth();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setDoublingTime(values[1].get(i));
-                    demo.setTime50(values[2].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setDoublingTime((Double) values.get(1).get(i));
+                    demo.setTime50((Double) values.get(2).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -548,10 +548,10 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 5) { // Expansion (Growth Rate)
                 title = "Expansion";
                 Expansion demo = new Expansion();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setProportion(values[1].get(i));
-                    demo.setGrowthRate(values[2].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setProportion((Double) values.get(1).get(i));
+                    demo.setGrowthRate((Double) values.get(2).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -560,10 +560,10 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 6) { // Expansion (Doubling Time)
                 title = "Expansion";
                 Expansion demo = new Expansion();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setProportion(values[1].get(i));
-                    demo.setDoublingTime(values[2].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setProportion((Double) values.get(1).get(i));
+                    demo.setDoublingTime((Double) values.get(2).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -573,11 +573,11 @@ public class DemographicDialog {
                 title = "Constant-Exponential Growth";
                 ConstExponential demo = new ConstExponential();
 
-                for (int i = 0; i < values[0].size(); i++) {
+                for (int i = 0; i < values.get(0).size(); i++) {
 
-                    double N0 = values[0].get(i);
-                    double time = values[1].get(i);
-                    double r = values[2].get(i);
+                    double N0 = (Double) values.get(0).get(i);
+                    double time = (Double) values.get(1).get(i);
+                    double r = (Double) values.get(2).get(i);
 
                     double N1 = N0 * Math.exp(-r * time);
 
@@ -592,11 +592,11 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 8) { // ConstLogistic Growth
                 title = "Constant-Logistic Growth";
                 ConstLogistic demo = new ConstLogistic();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setN1(values[1].get(i));
-                    demo.setGrowthRate(values[2].get(i));
-                    demo.setTime50(values[3].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setN1((Double) values.get(1).get(i));
+                    demo.setGrowthRate((Double) values.get(2).get(i));
+                    demo.setTime50((Double) values.get(3).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -618,12 +618,12 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 10) { // ExpLogistic Growth
                 title = "Exponential-Logistic Growth";
                 ExponentialLogistic demo = new ExponentialLogistic();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setR2(values[1].get(i));
-                    demo.setTime50(values[2].get(i));
-                    demo.setTime(values[3].get(i));
-                    demo.setGrowthRate(values[4].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setR2((Double) values.get(1).get(i));
+                    demo.setTime50((Double) values.get(2).get(i));
+                    demo.setTime((Double) values.get(3).get(i));
+                    demo.setGrowthRate((Double) values.get(4).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;
@@ -632,11 +632,11 @@ public class DemographicDialog {
             } else if (demographicCombo.getSelectedIndex() == 11) { // Cataclysm
                 title = "Boom-Bust";
                 CataclysmicDemographic demo = new CataclysmicDemographic();
-                for (int i = 0; i < values[0].size(); i++) {
-                    demo.setN0(values[0].get(i));
-                    demo.setGrowthRate(values[1].get(i));
-                    demo.setCataclysmTime(values[3].get(i));
-                    demo.setSpikeFactor(values[2].get(i));
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo.setN0((Double) values.get(0).get(i));
+                    demo.setGrowthRate((Double) values.get(1).get(i));
+                    demo.setCataclysmTime((Double) values.get(3).get(i));
+                    demo.setSpikeFactor((Double) values.get(2).get(i));
 
                     addDemographic(bins, binCount, maxHeight, delta, demo);
                     current++;

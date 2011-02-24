@@ -55,6 +55,8 @@ public class FilterDiscretePanel extends FilterAbstractPanel {
         selectedValues.setFixedCellHeight(15);
         selectedValues.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
         add(new JScrollPane(selectedValues));
+
+        add(new JLabel("Hold Shift or Ctrl key for multi-selection"));
     }
 
     public Object[] getSelectedValues() {

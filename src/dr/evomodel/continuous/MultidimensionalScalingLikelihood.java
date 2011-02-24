@@ -96,8 +96,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             tipNameMap = new HashMap<String, Integer>();
             for (int i = 0; i < tipCount; i++) {
                 String label = tipTraitParameter.getParameter(i).getParameterName();
+                if (label.endsWith(".antigenic")) {
+                    label = label.substring(0, label.indexOf(".antigenic"));
+                }
                 for (String rowName : rowLabels) {
-                    if (label.toUpperCase().equals(rowName.toUpperCase())) {
+                    if (label.toUpperCase().startsWith(rowName.toUpperCase())) {
                         break;
                     }
                 }
@@ -246,7 +249,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 distanceUpdate[i] = true;
             }
         } else if (variable == tipTraitParameter) {
-            throw new IllegalArgumentException("Only MultidimensionalScalingLikelihood should be changing the tipTraitParameter");
+//            throw new IllegalArgumentException("Only MultidimensionalScalingLikelihood should be changing the tipTraitParameter");
         } else {
             throw new IllegalArgumentException("Unknown parameter");
         }
@@ -373,7 +376,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                         if (isThreshold[i][j][k]) {
                             // TODO Check: switch minThresholdValue and distances[k] order?
 
-                            thresholds[v] = Math.log(NormalDistribution.cdf(compactDataMatrix[i][j][k], distances[u], sd));
+                            thresholds[v] = Math.log(1.0 - NormalDistribution.cdf(compactDataMatrix[i][j][k], distances[u], sd));
                         } else {
                             thresholds[v] = 0.0;
                         }

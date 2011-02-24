@@ -100,8 +100,15 @@ public class Trace<T> {
         } else {
             List<String> r = new ArrayList<String>();
             for (Object t : values) {
-                if (!r.contains(t.toString())) r.add(t.toString());
+                if (!r.contains(t.toString())) {
+                    if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                        r.add(Integer.toString(((Number) t).intValue()));
+                    } else {
+                        r.add(t.toString());
+                    }
+                }
             }
+
             Collections.sort(r);
             range = new String[r.size()];
             range = r.toArray(range);
@@ -112,10 +119,9 @@ public class Trace<T> {
     }
 
     /**
-     *
-     * @param fromIndex    low endpoint (inclusive) of the subList.
-     * @param toIndex      high endpoint (exclusive) of the subList.
-     * @param selected     if null then no filter, otherwise selected.length should = getValuesSize()
+     * @param fromIndex low endpoint (inclusive) of the subList.
+     * @param toIndex   high endpoint (exclusive) of the subList.
+     * @param selected  if null then no filter, otherwise selected.length should = getValuesSize()
      * @return The list of values (which are selected values if filter applied)
      */
     public List<T> getValues(int fromIndex, int toIndex, boolean[] selected) {
@@ -173,7 +179,7 @@ public class Trace<T> {
 
     public void setFilter(Filter filter) {
         this.filter = filter;
-   }
+    }
 
     public Filter getFilter() {
         return filter;

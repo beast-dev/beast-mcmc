@@ -263,27 +263,50 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
-        int selRow = traceTable.getSelectedRow();
+        int[] selRow = traceTable.getSelectedRows();
+        int[] rows = statisticTable.getSelectedRows();
+        String m = "Are you going to change trace type into " + newType.toString() + " for\n";
 
-//        if (currentTraceLists.size() > 1) {
-//            JOptionPane.showMessageDialog(this, "To change type, only one file can be selected each time !",
-//                    "Invalid Action",
-//                    JOptionPane.ERROR_MESSAGE);
-//        } else
-        if (selRow >= traceLists.size()) {
-            JOptionPane.showMessageDialog(this, "Changing trace type has not been implemented to Combined Trace List yet !",
-                    "Invalid Action", JOptionPane.ERROR_MESSAGE);
+        if (combinedTraces != null) {
+            if (selRow[0] > traceLists.size()) selRow[0] = 0; // user may only select combinedTraces
+            for (int row : rows) {
+                int id = traceLists.get(selRow[0]).getTraceIndex(commonTraceNames.get(row));
+                m += commonTraceNames.get(row) + "(" + traceLists.get(selRow[0]).getTrace(id).getTraceType().toString() + "), ";
+            }
+
+            int n = JOptionPane.showConfirmDialog(this, "Because Combined Traces exits, change type function\n" +
+                "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
+                "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
+
+            if (n == JOptionPane.YES_OPTION) {
+                for (LogFileTraces tl : traceLists) { 
+                    for (int row : rows) {
+                        int id = tl.getTraceIndex(commonTraceNames.get(row));
+
+                        try {
+                            tl.changeTraceType(id, newType);
+                        } catch (TraceException e) {
+                            JOptionPane.showMessageDialog(this, e,
+                                    "Trace Type Exception in " + tl.getName(), JOptionPane.ERROR_MESSAGE);
+                        }
+                        tl.analyseTrace(id);
+                    }
+                }
+                updateCombinedTraces();
+                statisticTableModel.fireTableDataChanged();
+            }
+
+        } else if (selRow[selRow.length - 1] >= traceLists.size()) {
+            JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces !",
+                    "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
         } else {
-            LogFileTraces seleTraceList = traceLists.get(selRow);
-            int[] rows = statisticTable.getSelectedRows();
-            String m = "";
+            LogFileTraces seleTraceList = traceLists.get(selRow[0]);
             for (int row : rows) {
                 int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
                 m += commonTraceNames.get(row) + "(" + seleTraceList.getTrace(id).getTraceType().toString() + "), ";
             }
 
-            int n = JOptionPane.showConfirmDialog(this, "Are you going to change trace type into " + newType.toString()
-                    + " for\n" + m + "\nin file " + seleTraceList.getName() + " ?",
+            int n = JOptionPane.showConfirmDialog(this, m + "\nin file " + seleTraceList.getName() + " ?",
                     "Change Trace Type", JOptionPane.YES_NO_OPTION);
 
             if (n == JOptionPane.YES_OPTION) {
@@ -293,7 +316,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     try {
                         seleTraceList.changeTraceType(id, newType);
                     } catch (TraceException e) {
-                        JOptionPane.showMessageDialog(this, e, "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(this, e,
+                                "Trace Type Exception in " + seleTraceList.getName(), JOptionPane.ERROR_MESSAGE);
 //        } catch (IOException e) {
 //            System.err.println("selRow = " + selRow + "; new type = " + newType);
 //            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.

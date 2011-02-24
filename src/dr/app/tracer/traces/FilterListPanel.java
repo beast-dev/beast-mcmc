@@ -71,7 +71,7 @@ public class FilterListPanel extends JPanel {
         JPanel panelTmp = new JPanel();
         panelBorder = new TitledBorder("Select a trace");
         panelTmp.setBorder(panelBorder);
-        
+
         scrollPane.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, PREFERRED_HIGHT));
         splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, scrollPane, panelTmp);
         splitPane.setDividerLocation(MINIMUM_TABLE_WIDTH);
@@ -138,7 +138,7 @@ public class FilterListPanel extends JPanel {
         while (iterator.hasNext()) {
             String traceName = iterator.next().toString();
             FilterAbstractPanel fp = filterPanels.get(traceName);
-            
+
             int traceIndex = selectedTraceList.getTraceIndex(traceName);
 //            System.out.println("traceName = " + traceName + ";  traceIndex = " + traceIndex);
             if (fp.containsNullValue()) {
@@ -151,7 +151,18 @@ public class FilterListPanel extends JPanel {
 //                }
 //                System.out.println();
 
-                Filter f = new Filter(fp.getSelectedValues());
+                Filter f;
+                Object[] in = fp.getSelectedValues();
+                if (selectedTraceList.getTrace(traceIndex).getTraceType() == TraceFactory.TraceType.INTEGER) {
+                    // as Integer is stored as Double in Trace
+                    Object[] inInt = new Object[in.length];
+                    for (int i = 0; i < in.length; i++) {
+                        inInt[i] = Double.valueOf(in[i].toString());
+                    }
+                    f = new Filter(inInt);
+                } else {
+                    f = new Filter(in);
+                }
                 selectedTraceList.setFilter(traceIndex, f);
             }
         }

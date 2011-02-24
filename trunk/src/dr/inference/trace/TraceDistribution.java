@@ -301,7 +301,7 @@ public class TraceDistribution<T> {
         List<String> valuesList = new ArrayList<String>();
         for (T value : new TreeSet<T>(valuesMap.keySet())) {
             if (!valuesList.contains(value.toString()))
-                if (traceType == TraceFactory.TraceType.INTEGER) {
+                if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
                     valuesList.add(Integer.toString( ((Number) value).intValue() ));
                 } else {
                     valuesList.add(value.toString());

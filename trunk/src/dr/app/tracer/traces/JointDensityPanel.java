@@ -364,9 +364,13 @@ public class JointDensityPanel extends JPanel implements Exportable {
         int k = 0;
 
         List values = tl1.getValues(traceIndex1);
-
+        TraceFactory.TraceType type = tl1.getTrace(traceIndex1).getTraceType();
         for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = values.get(k).toString();
+            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                samples1[i] = Integer.toString( ((Number) values.get(k)).intValue() );
+            } else {
+                samples1[i] = values.get(k).toString();
+            }
             k += minCount / sampleSize; // = 1 for non-continous vs non-continous
         }
 
@@ -374,9 +378,13 @@ public class JointDensityPanel extends JPanel implements Exportable {
         k = 0;
 
         values = tl2.getValues(traceIndex2);
-
+        type = tl2.getTrace(traceIndex2).getTraceType();
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values.get(k).toString();
+            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                samples2[i] = Integer.toString( ((Number) values.get(k)).intValue() );
+            } else {
+                samples2[i] = values.get(k).toString();
+            }
             k += minCount / sampleSize;
         }
 

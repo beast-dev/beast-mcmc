@@ -337,7 +337,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 }
             }
 
-            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceFactory.TraceType.DOUBLE);
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceFactory.TraceType.DOUBLE); // todo ?
             categoryTdMap.put(categoryValues.get(i), categoryTd);
         }
 

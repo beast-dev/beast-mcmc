@@ -100,12 +100,12 @@ public class Trace<T> {
         } else {
             List<String> r = new ArrayList<String>();
             for (Object t : values) {
-                if (!r.contains(t.toString())) {
-                    if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                    if (!r.contains(Integer.toString(((Number) t).intValue())))
                         r.add(Integer.toString(((Number) t).intValue()));
-                    } else {
+                } else {
+                    if (!r.contains(t.toString()))
                         r.add(t.toString());
-                    }
                 }
             }
 
@@ -138,6 +138,7 @@ public class Trace<T> {
                 if (selected[i])
                     valuesList.add(values.get(i));
             }
+            if (valuesList.size() < 1) throw new RuntimeException("There is no value sent by getValue() !");
             return valuesList;
         } else {
             return values.subList(fromIndex, toIndex);

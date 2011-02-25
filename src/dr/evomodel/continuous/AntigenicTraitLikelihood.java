@@ -96,125 +96,125 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         int start = hasAliases ? 1 : 0;
 
-        List<List<List<Double>>> assayTableList = new ArrayList<List<List<Double>>>();
-        List<List<List<Boolean>>> isThresholdList = new ArrayList<List<List<Boolean>>>();
+        List<Double> observationList = new ArrayList<Double>();
+        List<Integer> distanceIndexList = new ArrayList<Integer>();
+        List<Integer> rowIndexList = new ArrayList<Integer>();
+        List<Integer> columnIndexList = new ArrayList<Integer>();
+        List<ObservationType> observationTypeList = new ArrayList<ObservationType>();
 
-        // a set of vectors for each virus giving serum indices for which assay data is available
-        int[][] measuredSerumIndices = new int[virusCount][];
-
-        // Build a sparse matrix of non-missing assay values
-        for (int i = 0; i < virusCount; i++) {
-            String[] dataRow = dataTable.getRow(i + start);
-
-            List<List<Double>> assayRow = new ArrayList<List<Double>>();
-            List<List<Boolean>> isThresholdRow = new ArrayList<List<Boolean>>();
-            List<Integer> assayIndices = new ArrayList<Integer>();
-
-            int count = 0;
-            for (int j = 0; j < serumCount; j++) {
-
-                List<Double> assayReplicates = new ArrayList<Double>();
-                List<Boolean> isThresholdReplicates = new ArrayList<Boolean>();
-
-                for (int k = 0; k < assayCount; k++) {
-                    if (assayToSerumIndices[k] == j) {
-                        double value;
-
-                        if (dataRow[k].startsWith("<")) {
-                            // is a threshold
-                            value = convertString(dataRow[k].substring(1));
-                            if (Double.isNaN(value)) {
-                                throw new RuntimeException("Illegal value in table as a threshold");
-                            }
-                            assayReplicates.add(value);
-                            isThresholdReplicates.add(true);
-                        } else {
-                            value = convertString(dataRow[k]);
-                            if (!Double.isNaN(value) ) {
-                                assayReplicates.add(value);
-                                isThresholdReplicates.add(false);
-                            }
-                        }
-                    }
-                }
-                assayRow.add(assayReplicates);
-                isThresholdRow.add(isThresholdReplicates);
-                assayIndices.add(j);
-
-//                if (assayReplicates.size() > 0) {
-//                    System.out.println("Virus " + virusNames[i] + " to serum " + serumNames[j] + " has " + assayReplicates.size() + " measurements");
-//                }
-                count += assayReplicates.size();
-            }
-            assayTableList.add(assayRow);
-            isThresholdList.add(isThresholdRow);
-
-            measuredSerumIndices[i] = new int[assayIndices.size()];
-            for (int j = 0; j < assayIndices.size(); j++) {
-                measuredSerumIndices[i][j] = assayIndices.get(j);
-            }
-
-//            System.out.println("Virus " + virusNames[i] + " has " + count + " measurements");
-            if (count == 0) {
-                System.err.println("WARNING: Virus " + virusNames[i] + " has " + count + " measurements");
-            }
-        }
+        int[] virusObservationCounts = new int[virusCount];
+        int[] serumObservationCounts = new int[serumCount];
 
         // the largest measured value for any given column of data
         // Currently this is the largest across any assay column for a given antisera.
         // Optionally could normalize by individual assay column
         double[] maxAssayValue = new double[serumCount];
 
-        // Convert into arrays
-        double[][][] assayTable = new double[assayTableList.size()][][];
-        boolean[][][] isThreshold = new boolean[isThresholdList.size()][][];
+        // Build a sparse matrix of non-missing assay values
+        int u = 0;
+        for (int i = 0; i < virusCount; i++) {
+            String[] dataRow = dataTable.getRow(i + start);
 
-        int[] assayCounts = new int[serumCount];
-        for (int i = 0; i < assayTable.length; i++) {
-            List<List<Double>> assayRow = assayTableList.get(i);
-            assayTable[i] = new double[assayRow.size()][];
+            for (int j = 0; j < serumCount; j++) {
 
-            List<List<Boolean>> isThresholdRow = isThresholdList.get(i);
-            isThreshold[i] = new boolean[isThresholdRow.size()][];
+                boolean first = true;
 
-            for (int j = 0; j < assayTable[i].length; j++) {
-                List<Double> assayReplicates = assayRow.get(j);
-                assayTable[i][j] = new double[assayReplicates.size()];
+                for (int k = 0; k < assayCount; k++) {
+                    if (assayToSerumIndices[k] == j) {
+                        Double value = null;
+                        ObservationType type = null;
 
-                List<Boolean> isThresholdReplicates = isThresholdRow.get(j);
-                isThreshold[i][j] = new boolean[isThresholdReplicates.size()];
+                        if (dataRow[k].startsWith("<")) {
+                            // is a lower bound
+                            value = convertString(dataRow[k].substring(1));
+                            if (Double.isNaN(value)) {
+                                throw new RuntimeException("Illegal value in table as a threshold");
+                            }
+                            type = ObservationType.LOWER_BOUND;
+                        } else if (dataRow[k].startsWith(">")) {
+                            // is a lower bound
+                            value = convertString(dataRow[k].substring(1));
+                            if (Double.isNaN(value)) {
+                                throw new RuntimeException("Illegal value in table as a threshold");
+                            }
+                            type = ObservationType.UPPER_BOUND;
+                        } else {
+                            value = convertString(dataRow[k]);
+                            type = ObservationType.POINT;
+                        }
+                        if (!Double.isNaN(value)) {
+                            observationList.add(value);
+                            observationTypeList.add(type);
+                            distanceIndexList.add(u);
+                            virusObservationCounts[i]++;
+                            serumObservationCounts[j]++;
 
-                for (int k = 0; k < assayTable[i][j].length; k++) {
-                    assayTable[i][j][k] = assayReplicates.get(k);
-                    if (assayTable[i][j][k] > maxAssayValue[j]) {
-                        maxAssayValue[j] = assayTable[i][j][k];
+                            if (value > maxAssayValue[j]) {
+                                maxAssayValue[j] = value;
+                            }
+                        }
+
+                        if (first) {
+                            // if this is the first time an observation for this virus/serum pair is found:
+                            rowIndexList.add(i);
+                            columnIndexList.add(j);
+                            first = false;
+                            u++;
+                        }
+
                     }
-
-                    isThreshold[i][j][k] = isThresholdReplicates.get(k);
                 }
 
-                assayCounts[j] += assayTable[i][j].length;
             }
         }
 
-        for (int j = 0; j < serumCount; j++) {
-            if (assayCounts[j] == 0) {
-                System.err.println("WARNING: Serum " + serumNames[j] + " has 0 measurements");
+        // check that all the viruses and sera have observations
+        for (int i = 0; i < virusCount; i++) {
+            if (virusObservationCounts[i] == 0) {
+                System.err.println("WARNING: Virus " + virusNames[i] + " has 0 observations");
             }
         }
+        for (int j = 0; j < serumCount; j++) {
+            if (serumObservationCounts[j] == 0) {
+                System.err.println("WARNING: Antisera " + serumNames[j] + " has 0 observations");
+            }
+        }
+
+
+        // Convert into arrays
+        double[] observations = new double[observationList.size()];
+        for (int i = 0; i < observationList.size(); i++) {
+            observations[i] = observationList.get(i);
+        }
+
+        int[] distanceIndices = new int[distanceIndexList.size()];
+        for (int i = 0; i < distanceIndexList.size(); i++) {
+            distanceIndices[i] = distanceIndexList.get(i);
+        }
+
+        int[] rowIndices = new int[rowIndexList.size()];
+        for (int i = 0; i < rowIndexList.size(); i++) {
+            rowIndices[i] = rowIndexList.get(i);
+        }
+
+        int[] columnIndices = new int[columnIndexList.size()];
+        for (int i = 0; i < columnIndexList.size(); i++) {
+            columnIndices[i] = columnIndexList.get(i);
+        }
+
+        ObservationType[] observationTypes = new ObservationType[observationTypeList.size()];
+        observationTypeList.toArray(observationTypes);
 
         // transform and normalize the data if required
         if (log2Transform) {
-            for (int i = 0; i < assayTable.length; i++) {
-                for (int j = 0; j < assayTable[i].length; j++) {
-                    for (int k = 0; k < assayTable[i][j].length; k++) {
-                        assayTable[i][j][k] = transform(assayTable[i][j][k], maxAssayValue[j]);
-                    }
-                }
+            for (int i = 0; i < observations.length; i++) {
+                observations[i] = transform(observations[i], maxAssayValue[columnIndices[i]]);
+                // the transformation reverses the bounds
+                observationTypes[i] = (observationTypes[i] == ObservationType.UPPER_BOUND ? ObservationType.LOWER_BOUND : (observationTypes[i] == ObservationType.LOWER_BOUND ? ObservationType.UPPER_BOUND : observationTypes[i]));
             }
         }
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, assayTable, measuredSerumIndices, isThreshold);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
 
         // some random initial locations
 //        for (int i = 0; i < virusCount; i++) {
@@ -244,14 +244,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
     }
 
     private double transform(final double value, final double maxValue) {
-        // transform to log_2
-//                        if (value < titrationThreshold) {
-//                            assayTable[i][j][k] = Double.POSITIVE_INFINITY;
-//                        } else {
-//                        }
-
-        double t =  Math.log(maxValue / value) / Math.log(2.0);
-        return t;
+        return Math.log(maxValue / value) / Math.log(2.0);
     }
 
     // **************************************************************

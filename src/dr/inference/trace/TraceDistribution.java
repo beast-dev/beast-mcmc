@@ -218,6 +218,8 @@ public class TraceDistribution<T> {
         credibleSet.clear();
         inCredibleSet.clear();
 
+        if (values.size() < 1) throw new RuntimeException("There is no value sent to statistics calculation !");
+
         if (traceType == TraceFactory.TraceType.DOUBLE || traceType == TraceFactory.TraceType.INTEGER) {
             double[] newValues = new double[values.size()];
             for (int i = 0; i < values.size(); i++) {
@@ -300,12 +302,13 @@ public class TraceDistribution<T> {
     public List<String> getRange() {
         List<String> valuesList = new ArrayList<String>();
         for (T value : new TreeSet<T>(valuesMap.keySet())) {
-            if (!valuesList.contains(value.toString()))
-                if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
-                    valuesList.add(Integer.toString( ((Number) value).intValue() ));
-                } else {
+            if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
+                if (!valuesList.contains(Integer.toString(((Number) value).intValue())))
+                    valuesList.add(Integer.toString(((Number) value).intValue()));
+            } else {
+                if (!valuesList.contains(value.toString()))
                     valuesList.add(value.toString());
-                }
+            }
         }
         return valuesList;
     }

@@ -168,6 +168,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
                     categoryDataMap.put(index, values.get(v).toString());
                 }
 
+//                System.out.println(trace.getName() + "     " + trace.getTraceType());
+//                System.out.println(td.printCredibleSet() + "      " + td.printInCredibleSet() + "   " + td.getTraceType());
+//                for (Integer i : new TreeSet<Integer>(categoryDataMap.keySet())) {
+//                    System.out.println("i = " + i + "; v = " + categoryDataMap.get(i));
+//                }
+
                 plot = new FrequencyPlot(intData, -1, td);
 
                 if (td != null) {

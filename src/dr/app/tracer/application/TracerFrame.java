@@ -275,11 +275,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
 
             int n = JOptionPane.showConfirmDialog(this, "Because Combined Traces exits, change type function\n" +
-                "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
-                "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
+                    "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
+                    "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
 
             if (n == JOptionPane.YES_OPTION) {
-                for (LogFileTraces tl : traceLists) { 
+                for (LogFileTraces tl : traceLists) {
                     for (int row : rows) {
                         int id = tl.getTraceIndex(commonTraceNames.get(row));
 
@@ -1309,9 +1309,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
 
             if (filterListPanel != null) {
-                FilterDialog filterDialog = new FilterDialog(this);
-                message = "  " + filterDialog.showDialog(filterListPanel, filterStatus.getText());
-                filterStatus.setText(message);
+                try {
+                    FilterDialog filterDialog = new FilterDialog(this);
+                    message = "  " + filterDialog.showDialog(filterListPanel, filterStatus.getText());
+                    filterStatus.setText(message);
+                } catch (RuntimeException e) {
+                    JOptionPane.showMessageDialog(this, "Error : " + e + "\nbecause " + e.getMessage(),
+                            "Filter Error", JOptionPane.ERROR_MESSAGE);
+                }
             }
         }
     }

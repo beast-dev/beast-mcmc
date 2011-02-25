@@ -29,6 +29,8 @@ public abstract class AbstractTraceList extends FilteredTraceList {
                 trace.getValues(start, getStateCount(), selected),
                 trace.getTraceType(), getStepSize());
         trace.setTraceStatistics(traceCorrelation);
+
+//        System.out.println("index = " + index + " :  " + trace.getName() + "     " + trace.getTraceType());
     }
 
 //    public void setBurnIn(int burnIn) {

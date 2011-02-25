@@ -57,20 +57,20 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     private void analyseCorrelation(List<T> values, int stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
-         if (getTraceType() == TraceFactory.TraceType.DOUBLE
-                 || getTraceType() == TraceFactory.TraceType.INTEGER) {
-              double[] doubleValues = new double[values.size()];
-             for (int i = 0; i < values.size(); i++) {
+        if (getTraceType() == TraceFactory.TraceType.DOUBLE
+                || getTraceType() == TraceFactory.TraceType.INTEGER) {
+            double[] doubleValues = new double[values.size()];
+            for (int i = 0; i < values.size(); i++) {
                 doubleValues[i] = ((Number) values.get(i)).doubleValue();
             }
-             analyseCorrelationContinuous(doubleValues, stepSize);
+            analyseCorrelationContinuous(doubleValues, stepSize);
 
-         } else if (getTraceType() == TraceFactory.TraceType.STRING) {
+        } else if (getTraceType() == TraceFactory.TraceType.STRING) {
 
 
-         } else {
-             throw new RuntimeException("Trace type is not recognized");
-         }
+        } else {
+            throw new RuntimeException("Trace type is not recognized");
+        }
     }
 
     /**

@@ -34,11 +34,11 @@ import java.util.List;
  * @author Walter Xie
  * convert testGeneralSubstitutionModel.xml in the folder /example
  */
-public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
+public class GeneralSubstitutionModelTest extends TraceCorrelationAssert {
 
     private GeneralDataType dataType;
 
-    public GeneralSubsitutionModelTest(String name) {
+    public GeneralSubstitutionModelTest(String name) {
         super(name);
     }
 
@@ -69,7 +69,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
     }
 
 
-    public void testGeneralSubsitutionModel() {
+    public void testGeneralSubstitutionModel() {
 
         // Sub model
         FrequencyModel freqModel = new FrequencyModel(dataType, alignment.getStateFrequencies());
@@ -152,7 +152,7 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
 
         // Tracer
         List<Trace> traces = formatter.getTraces();
-        ArrayTraceList traceList = new ArrayTraceList("GeneralSubsitutionModelTest", traces, 0);
+        ArrayTraceList traceList = new ArrayTraceList("GeneralSubstitutionModelTest", traces, 0);
 
         for (int i = 1; i < traces.size(); i++) {
             traceList.analyseTrace(i);
@@ -173,6 +173,6 @@ public class GeneralSubsitutionModelTest extends TraceCorrelationAssert {
     }
 
     public static Test suite() {
-        return new TestSuite(GeneralSubsitutionModelTest.class);
+        return new TestSuite(GeneralSubstitutionModelTest.class);
     }
 }

@@ -8,7 +8,7 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
+import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
@@ -27,7 +27,6 @@ import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
 import dr.app.beauti.taxonsetspanel.TaxaPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
-import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
@@ -74,7 +73,7 @@ public class BeautiFrame extends DocumentFrame {
     private TraitsPanel traitsPanel;
     private TaxaPanel taxaPanel;
     private SiteModelsPanel siteModelsPanel;
-    private ClockModelsPanel clockModelsPanel;
+    private OldClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -127,7 +126,7 @@ public class BeautiFrame extends DocumentFrame {
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
         taxaPanel = new TaxaPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
-        clockModelsPanel = new ClockModelsPanel(this);
+        clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);

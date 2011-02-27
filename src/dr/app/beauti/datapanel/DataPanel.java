@@ -38,7 +38,6 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
-import jam.table.HeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -76,7 +75,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
     CreateAction createAction = new CreateAction();
-    JButton createImportTraitButton = new JButton(createAction);
+    JButton createImportTraitButton;
 //    ShowAction showAction = new ShowAction();
 
     public JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
@@ -196,6 +195,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
+
+        createImportTraitButton = new JButton(createAction);
 
         controlPanel1.add(new JLabel("   "));
         PanelUtils.setupComponent(createImportTraitButton);
@@ -353,9 +354,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
+        boolean traitAvailable = options.traits != null && options.traits.size() > 0;
 
         useStarBEASTCheck.setEnabled(taxaAvailable);
-        createImportTraitButton.setEnabled(taxaAvailable);
+        createImportTraitButton.setEnabled(traitAvailable);
 
         dataTableModel.fireTableDataChanged();
     }

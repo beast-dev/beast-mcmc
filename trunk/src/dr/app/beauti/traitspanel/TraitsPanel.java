@@ -32,13 +32,12 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -56,9 +55,6 @@ import java.awt.event.ActionEvent;
  */
 public class TraitsPanel extends BeautiPanel implements Exportable {
 
-    /**
-     *
-     */
     private static final long serialVersionUID = 5283922195494563924L;
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
@@ -561,7 +557,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-
             return options.traits.size();
         }
 
@@ -627,9 +622,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     class DataTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -6707994233020715574L;
         String[] columnNames = {"Taxon", "Value"};
 

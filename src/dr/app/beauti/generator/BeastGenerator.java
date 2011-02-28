@@ -573,7 +573,7 @@ public class BeastGenerator extends Generator {
     private void writeTaxa(XMLWriter writer, TaxonList taxonList) throws Arguments.ArgumentException {
         // -1 (single taxa), 0 (1st gene of multi-taxa)
 
-        writer.writeComment("The list of taxa analyse (can also include dates/ages).",
+        writer.writeComment("The list of taxa to be analysed (can also include dates/ages).",
                 "ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 

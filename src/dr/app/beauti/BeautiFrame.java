@@ -412,10 +412,6 @@ public class BeautiFrame extends DocumentFrame {
         getExportAction().setEnabled(true);
     }
 
-    public boolean createImportTraits(String traitName) {
-        return traitsPanel.addTrait(traitName);
-    }
-
     public final boolean doImportTraits() {
         if (options.taxonList != null) { // validation of check empty taxonList
             FileDialog dialog = new FileDialog(this,
@@ -506,7 +502,7 @@ public class BeautiFrame extends DocumentFrame {
             options.fileNameStem = "StarBEASTLog";
 
             if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                if (!createImportTraits(TraitData.TRAIT_SPECIES)) {
+                if (!traitsPanel.addTrait(TraitData.TRAIT_SPECIES)) {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }

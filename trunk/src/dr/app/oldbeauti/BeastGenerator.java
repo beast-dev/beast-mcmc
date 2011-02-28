@@ -69,7 +69,6 @@ import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.loggers.LoggerParser;
-import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.inferencexml.model.*;
 import dr.inferencexml.operators.*;
 import dr.util.Attribute;
@@ -223,7 +222,7 @@ public class BeastGenerator extends BeautiOptions {
      */
     public void writeTaxa(XMLWriter writer) {
 
-        writer.writeComment("The list of taxa analyse (can also include dates/ages).");
+        writer.writeComment("The list of taxa to be analysed (can also include dates/ages).");
         writer.writeComment("ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 

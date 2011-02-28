@@ -82,6 +82,7 @@ public class BeautiOptions extends ModelOptions {
 //        traitTypes.clear();
 
         dataPartitions.clear();
+        traits.clear();
 //        partitionModels.clear();
 //        partitionTreeModels.clear();
 //        partitionTreePriors.clear();

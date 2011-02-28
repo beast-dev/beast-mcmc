@@ -481,9 +481,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ClearTraitAction extends AbstractAction {
-        /**
-         *
-         */
         private static final long serialVersionUID = -7281309694753868635L;
 
         public ClearTraitAction() {
@@ -497,9 +494,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public class GuessTraitsAction extends AbstractAction {
-        /**
-         *
-         */
         private static final long serialVersionUID = 8514706149822252033L;
 
         public GuessTraitsAction() {

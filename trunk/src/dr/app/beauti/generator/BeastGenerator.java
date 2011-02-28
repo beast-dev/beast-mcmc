@@ -27,11 +27,11 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
@@ -150,6 +150,20 @@ public class BeastGenerator extends Generator {
                         "\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
             }
             ids.add(taxa.getId());
+        }
+
+        //++++++++++++++++ Traits ++++++++++++++++++
+        if (options.useStarBEAST != options.traitExists(TraitData.TRAIT_SPECIES)) {
+            throw new IllegalArgumentException("Keyword \"species\" is reserved for *BEAST only !" +
+                    "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
+        }
+
+        for (TraitData trait : options.traits) {
+            for (int i=0; i < trait.getTaxaCount(); i++) {
+                if (!trait.hasValue(i))
+                    throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
+                    " has no value for Trait " + trait.getName());
+            }
         }
 
         //++++++++++++++++ Tree Prior ++++++++++++++++++

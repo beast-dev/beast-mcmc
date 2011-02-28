@@ -500,7 +500,6 @@ public class BeautiFrame extends DocumentFrame {
     public void setupStarBEAST(boolean useStarBEAST) {
         if (useStarBEAST) {
             dataPanel.selectAll();
-
             dataPanel.unlinkAll();
 
             options.starBEASTOptions = new STARBEASTOptions(options);

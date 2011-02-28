@@ -354,7 +354,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         boolean taxaAvailable = options.taxonList != null && options.taxonList.getTaxonCount() > 0;
-        boolean traitAvailable = options.traits != null && options.traits.size() > 0;
+        boolean traitAvailable = options.traits != null && options.traits.size() > 0 && (!options.useStarBEAST);
 
         useStarBEASTCheck.setEnabled(taxaAvailable);
         createImportTraitButton.setEnabled(traitAvailable);

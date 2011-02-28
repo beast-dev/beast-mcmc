@@ -1,14 +1,15 @@
 package dr.app.beauti.options;
 
-import dr.evolution.alignment.Alignment;
-import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
-import java.util.*;
+import java.util.Set;
+import java.util.TreeSet;
 
 /**
- *
+ * @author Andrew Rambaut
+ * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class TraitData {
     public static final String TRAIT_SPECIES = "species";
@@ -57,6 +58,15 @@ public class TraitData {
 
     public int getTaxaCount() {
         return options.taxonList.getTaxonCount();
+    }
+
+    public Taxon getTaxon(int i) {
+        return options.taxonList.getTaxon(i);
+    }
+
+    public boolean hasValue(int i) {
+        if (options.taxonList == null || options.taxonList.getTaxon(i) == null) return false;
+        return options.taxonList.getTaxon(i).containsAttribute(getName());
     }
 
     public String getDataType() {

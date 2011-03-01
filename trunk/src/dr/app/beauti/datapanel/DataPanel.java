@@ -456,27 +456,26 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void linkModels() {
         int[] selRows = dataTable.getSelectedRows();
         List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
-        DataType dateType = null;
+        String dateType = null;
         for (int row : selRows) {
             PartitionData partition = options.dataPartitions.get(row);
             if (dateType == null) {
-                dateType = partition.getPartitionSubstitutionModel().getDataType();
+                dateType = partition.getDataType();
             } else {
-                if (partition.getPartitionSubstitutionModel().getDataType() != dateType) {
+                if (partition.getDataType() != dateType) {
                     JOptionPane.showMessageDialog(this, "Can only link the models for data partitions \n" +
                             "of the same data type (e.g., nucleotides)",
                             "Unable to link models",
                             JOptionPane.ERROR_MESSAGE);
-
+                    return;
                 }
-                return;
             }
 
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
         }
 
-        Object[] modelArray = options.getPartitionSubstitutionModels(dateType, selectedPartitionData).toArray();
+        Object[] modelArray = options.getPartitionSubstitutionModels(selectedPartitionData).toArray();
 
         if (selectModelDialog == null) {
             selectModelDialog = new SelectModelDialog(frame);

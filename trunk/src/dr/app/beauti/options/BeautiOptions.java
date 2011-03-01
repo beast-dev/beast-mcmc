@@ -336,15 +336,15 @@ public class BeautiOptions extends ModelOptions {
 //        return partitionModels;
 //    }
 
-    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
-        List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
-        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(givenDataPartitions)) {
-            if (model.getDataType() == dataType) {
-                models.add(model);
-            }
-        }
-        return models;
-    }
+//    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
+//        List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(givenDataPartitions)) {
+//            if (model.getDataType() == dataType) {
+//                models.add(model);
+//            }
+//        }
+//        return models;
+//    }
 
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<? extends PartitionData> givenDataPartitions) {
 

@@ -67,7 +67,7 @@ public class TraitData {
     public boolean hasValue(int i) {
         if (options.taxonList == null || options.taxonList.getTaxon(i) == null
                 || options.taxonList.getTaxon(i).getAttribute(getName()) == null) return false;
-        return options.taxonList.getTaxon(i).getAttribute(getName()).toString().trim().length() < 1;
+        return options.taxonList.getTaxon(i).getAttribute(getName()).toString().trim().length() > 0;
     }
 
     public String getDataType() {

@@ -73,7 +73,7 @@ public class BEAUTiImporter {
 
     // xml
 
-    private void importBEASTFile(File file) throws IOException, JDOMException, ImportException {
+    private void importBEASTFile(File file) throws Exception {
         try {
             FileReader reader = new FileReader(file);
 
@@ -121,7 +121,6 @@ public class BEAUTiImporter {
 
         try {
             FileReader reader = new FileReader(file);
-
 
             NexusApplicationImporter importer = new NexusApplicationImporter(reader);
 
@@ -345,7 +344,7 @@ public class BEAUTiImporter {
 
     private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, List<TraitData> traits,
                          PartitionSubstitutionModel model,
-                         List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException {
+                         List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException, IllegalArgumentException {
         String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
 
@@ -472,6 +471,11 @@ public class BEAUTiImporter {
                 partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
             }
             for (PartitionData partition : partitions) {
+                if (options.hasPartitionData(partition.getName())) {
+                            throw new IllegalArgumentException("Partitions cannot have the same name :\n"
+                                    + partition.getName() + "\nFile loading is failed."); 
+                }
+
                 options.dataPartitions.add(partition);
 
                 if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet

@@ -71,7 +71,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSetsMono.clear();
         taxonSetsIncludeStem.clear();
         taxonSetsTreeModel.clear();
-        
+
 //        meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
         datesDirection = DateUnitsType.FORWARDS;
@@ -269,6 +269,15 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+
+    public boolean hasPartitionData(String name) {
+        for (PartitionData pd : dataPartitions) {
+            if (name.equalsIgnoreCase(pd.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public PartitionData getPartitionData(Alignment alignment) {
@@ -817,7 +826,7 @@ public class BeautiOptions extends ModelOptions {
         return message;
     }
 
-//+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
@@ -874,7 +883,7 @@ public class BeautiOptions extends ModelOptions {
     public String logFileName = null;
     public boolean allowOverwriteLog = false;
 //    public boolean mapTreeLog = false;
-//    public String mapTreeFileName = null;
+    //    public String mapTreeFileName = null;
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
@@ -886,7 +895,7 @@ public class BeautiOptions extends ModelOptions {
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
     public PriorOptions priorOptions = new PriorOptions(this);
 
-//    public TraitsOptions traitsOptions = new TraitsOptions(this);
+    //    public TraitsOptions traitsOptions = new TraitsOptions(this);
     public boolean useStarBEAST = false;
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 

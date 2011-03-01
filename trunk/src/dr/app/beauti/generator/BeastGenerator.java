@@ -160,7 +160,7 @@ public class BeastGenerator extends Generator {
 
         for (TraitData trait : options.traits) {
             for (int i=0; i < trait.getTaxaCount(); i++) {
-                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
+//                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
                 if (!trait.hasValue(i))
                     throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
                     " has no value for Trait " + trait.getName());

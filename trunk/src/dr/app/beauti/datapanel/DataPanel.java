@@ -359,6 +359,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         useStarBEASTCheck.setEnabled(taxaAvailable);
         createImportTraitButton.setEnabled(traitAvailable);
 
+
         dataTableModel.fireTableDataChanged();
     }
 
@@ -685,6 +686,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
+                    if (options.hasPartitionData(name)) {
+                        JOptionPane.showMessageDialog(frame, "Partitions cannot have the same name :\n"
+                                + name + "\nRenaming is failed.",
+                                "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                     if (name.length() > 0) {
                         partition.setName(name);
                     }

@@ -111,8 +111,10 @@ public class BeautiFrame extends DocumentFrame {
         options = new BeautiOptions(components);
         generator = new BeastGenerator(options, components);
 
-        this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener(){
-            public void ancestorMoved(HierarchyEvent e) {}
+        this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener() {
+            public void ancestorMoved(HierarchyEvent e) {
+            }
+
             public void ancestorResized(HierarchyEvent e) {
                 setStatusMessage();
             }
@@ -222,7 +224,6 @@ public class BeautiFrame extends DocumentFrame {
         }); // end FileDrop.Listener
 
 
-
     }
 
     /**
@@ -244,8 +245,7 @@ public class BeautiFrame extends DocumentFrame {
             setStatusMessage();
         } catch (IllegalArgumentException illegEx) {
             JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-                    "Illegal Argument Exception",
-                    JOptionPane.ERROR_MESSAGE);
+                    "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -253,16 +253,21 @@ public class BeautiFrame extends DocumentFrame {
      * get all the options for all panels
      */
     private void getAllOptions() {
-        dataPanel.getOptions(options);
-        tipDatesPanel.getOptions(options);
-        traitsPanel.getOptions(options);
-        taxaPanel.getOptions(options);
-        siteModelsPanel.getOptions(options);
-        clockModelsPanel.getOptions(options);
-        treesPanel.getOptions(options);
-        priorsPanel.getOptions(options);
-        operatorsPanel.getOptions(options);
-        mcmcPanel.getOptions(options);
+        try {
+            dataPanel.getOptions(options);
+            tipDatesPanel.getOptions(options);
+            traitsPanel.getOptions(options);
+            taxaPanel.getOptions(options);
+            siteModelsPanel.getOptions(options);
+            clockModelsPanel.getOptions(options);
+            treesPanel.getOptions(options);
+            priorsPanel.getOptions(options);
+            operatorsPanel.getOptions(options);
+            mcmcPanel.getOptions(options);
+        } catch (IllegalArgumentException illegEx) {
+            JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+                    "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public void doSelectAll() {
@@ -388,6 +393,10 @@ public class BeautiFrame extends DocumentFrame {
                     ime.printStackTrace();
                     // there may be other files in the list so don't return
 //                    return;
+                } catch (IllegalArgumentException illegEx) {
+                    JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+                            "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                             "Error reading file",

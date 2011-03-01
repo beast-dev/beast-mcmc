@@ -7,6 +7,7 @@ import dr.xml.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -16,11 +17,14 @@ import java.util.List;
 public class DnDsPerSiteAnalysis implements Citable {
     public static final String DNDS_PER_SITE_ANALYSIS = "dNdSPerSiteAnalysis";
     public static final String CUTOFF = "cutoff";
+    public static final String PROPORTION = "proportion";
     public static final String INCLUDE_SIGNIFICANT_SYMBOL = "includeSymbol";
     public static final String INCLUDE_SIGNIFICANCE_LEVEL = "includeLevel";
     public static final String INCLUDE_SITE_CLASSIFICATION = "includeClassification";
     public static final String SIGNIFICANCE_TEST = "test";
     public static final String SEPARATOR_STRING = "separator";
+    public static final String INCLUDE_SIMULATION_OUTCOME = "simulationOutcome";
+    public static final String INCLUDE_HPD = "includeHPD";
 
     public DnDsPerSiteAnalysis(TraceList traceList) {
         this.traceList = traceList;
@@ -49,6 +53,14 @@ public class DnDsPerSiteAnalysis implements Citable {
 
     public void setIncludeSignificantSymbol(boolean b) {
         format.includeSignificantSymbol = b;
+    }
+
+    public void setIncludeSimulationOutcome(boolean b) {
+        format.includeSimulationOutcome = b;
+    }
+
+    public void setProportion(double d) {
+        format.proportion = d;
     }
 
     public void setIncludeSiteClassification(boolean b) {
@@ -82,20 +94,23 @@ public class DnDsPerSiteAnalysis implements Citable {
             sb.append(format.separator);
             sb.append(numberFormatter.format(distribution.getUpperHPD()));
         }
-        if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification) {
+        if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification || format.includeSimulationOutcome) {
             boolean isSignificant = false;
-            String classification = "N";
+            String classification = "0";
             String level;
             if (format.test == SignificanceTest.NOT_EQUAL) {
-                double lower = distribution.getLowerHPD();
-                double upper = distribution.getUpperHPD();
+                double[] hpd = getHPDInterval(format.proportion,traceList.getValues(index));
+//                distribution does not allow to specify proportion
+//                double lower = distribution.getLowerHPD();
+//                double upper = distribution.getUpperHPD();
+
 //                if ((lower < format.cutoff && upper < format.cutoff) ||
 //                        (lower > format.cutoff && upper > format.cutoff)) {
-                if (lower < format.cutoff && upper < format.cutoff) {
+                if (hpd[0] < format.cutoff && hpd[1] < format.cutoff) {
                     level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
                     isSignificant = true;
                     classification = "-";
-                } else if (lower > format.cutoff && upper > format.cutoff) {
+                } else if (hpd[0] > format.cutoff && hpd[1] > format.cutoff) {
                     level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
                     isSignificant = true;
                     classification = "+";
@@ -111,19 +126,23 @@ public class DnDsPerSiteAnalysis implements Citable {
                     double d = ((Number) obj).doubleValue();
 //                    if ((format.test == SignificanceTest.LESS_THAN && d < format.cutoff) ||
 //                            (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff)) {
-                    if (format.test == SignificanceTest.LESS_THAN && d < format.cutoff) {
-                        levelNegValue++;
-                    } else if (format.test == SignificanceTest.GREATER_THAN && d > format.cutoff){
-                        levelPosValue++;
+                    if (d < format.cutoff) {
+                        if(format.test == SignificanceTest.LESS_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN) {
+                            levelNegValue++;
+                        }
+                    } else if (d > format.cutoff){
+                        if (format.test == SignificanceTest.GREATER_THAN || format.test == SignificanceTest.LESS_OR_GREATER_THAN){
+                            levelPosValue++;
+                        }
                     }
                     total++;
                 }
                 levelPosValue /= total;
                 levelNegValue /= total;
-                if (levelPosValue > 0.95) {
+                if (levelPosValue > format.proportion) {
                     isSignificant = true;
                     classification = "+";
-                } else if (levelNegValue > 0.95) {
+                } else if (levelNegValue > format.proportion) {
                     isSignificant = true;
                     classification = "-";
                 }
@@ -154,6 +173,24 @@ public class DnDsPerSiteAnalysis implements Citable {
                 }
             }
 
+            if (format.includeSimulationOutcome) {
+                sb.append(format.separator);
+                sb.append(simulated[index]);
+                sb.append(format.separator);
+                if (simulated[index].equals("+") || simulated[index].equals("-")) {
+                    if (classification.equals(simulated[index])){
+                        sb.append("TP");   // True Positive
+                    } else {
+                        sb.append("FN");   // True Negative
+                    }
+                }  else {
+                    if (classification.equals(simulated[index])){
+                        sb.append("TN");   // True Negative
+                    } else {
+                        sb.append("FP");   // False Positive
+                    }
+                }
+            }
         }
         sb.append("\n");
         return sb.toString();
@@ -193,6 +230,12 @@ public class DnDsPerSiteAnalysis implements Citable {
             sb.append(format.separator);
             sb.append(numberFormatter.formatToFieldWidth("Significant", fieldWidth));
         }
+        if (format.includeSimulationOutcome) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("Simulated", fieldWidth));
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("Evaluation", fieldWidth));
+        }
         sb.append("\n");
         return sb.toString();
     }
@@ -229,12 +272,14 @@ public class DnDsPerSiteAnalysis implements Citable {
         boolean includeSignificanceLevel;
         boolean includeSignificantSymbol;
         boolean includeSiteClassification;
+        boolean includeSimulationOutcome;
         double cutoff;
+        double proportion;
         SignificanceTest test;
         String separator;
 
         OutputFormat() {
-            this(true, true, true, true, true, 1.0, SignificanceTest.NOT_EQUAL, "\t");
+            this(true, true, true, true, true, false, 1.0, 0.95, SignificanceTest.NOT_EQUAL, "\t");
         }
 
         OutputFormat(boolean includeMean,
@@ -242,23 +287,29 @@ public class DnDsPerSiteAnalysis implements Citable {
                      boolean includeSignificanceLevel,
                      boolean includeSignificantSymbol,
                      boolean includeSiteClassification,
+                     boolean includeSimulationOutcome,
                      double cutoff,
+                     double proportion,
                      SignificanceTest test,
                      String separator) {
             this.includeMean = includeMean;
             this.includeHPD = includeHPD;
             this.includeSignificanceLevel = includeSignificanceLevel;
             this.includeSignificantSymbol = includeSignificantSymbol;
+            this.includeSiteClassification = includeSiteClassification;
+            this.includeSimulationOutcome = includeSimulationOutcome;
             this.cutoff = cutoff;
+            this.proportion = proportion;
             this.test = test;
             this.separator = separator;
         }
     }
 
     public enum SignificanceTest {
-        GREATER_THAN(">"),
-        LESS_THAN("<"),
-        NOT_EQUAL("!=");
+        GREATER_THAN("gt"),    //>
+        LESS_THAN("lt"),       //<
+        NOT_EQUAL("ne"),       //!=
+        LESS_OR_GREATER_THAN("logt"); //<>
 
         private SignificanceTest(String text) {
             this.text = text;
@@ -277,6 +328,41 @@ public class DnDsPerSiteAnalysis implements Citable {
         }
 
         private final String text;
+    }
+
+    private static double[] getHPDInterval(double proportion, List list) {
+
+        double returnArray[] = new double[2];
+        int length = list.size();
+        int[] indices = new int[length];
+        Double[] resultObjArray = (Double[]) list.toArray( new Double[0] );
+        double[] result = toPrimitiveDoubleArray(resultObjArray);
+        HeapSort.sort(result, indices);
+        double minRange = Double.MAX_VALUE;
+        int hpdIndex = 0;
+
+        int diff = (int)Math.round(proportion * (double)length);
+
+        for (int i = 0; i <= (length - diff); i++) {
+            double minValue = result[indices[i]];
+            double maxValue = result[indices[i+diff-1]];
+            double range = Math.abs(maxValue - minValue);
+            if (range < minRange) {
+                minRange = range;
+                hpdIndex = i;
+            }
+        }
+        returnArray[0] = result[indices[hpdIndex]];
+        returnArray[1] = result[indices[hpdIndex+diff-1]];
+        return returnArray;
+    }
+
+    private static double[] toPrimitiveDoubleArray(Double[] array){
+        double[] returnArray = new double[array.length];
+        for(int i = 0; i < array.length; i++ ){
+            returnArray[i] = array[i].doubleValue();
+        }
+        return returnArray;
     }
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
@@ -327,10 +413,13 @@ public class DnDsPerSiteAnalysis implements Citable {
                         )
                 );
                 analysis.setCutoff(xo.getAttribute(CUTOFF, 1.0));
+                analysis.setProportion(xo.getAttribute(PROPORTION, 0.95));
                 analysis.setSeparator(xo.getAttribute(SEPARATOR_STRING, "\t"));
+                analysis.setIncludeHPD(xo.getAttribute(INCLUDE_HPD, true));
                 analysis.setIncludeSignificanceLevel(xo.getAttribute(INCLUDE_SIGNIFICANCE_LEVEL, false));
                 analysis.setIncludeSignificantSymbol(xo.getAttribute(INCLUDE_SIGNIFICANT_SYMBOL, true));
                 analysis.setIncludeSiteClassification(xo.getAttribute(INCLUDE_SITE_CLASSIFICATION, true));
+                analysis.setIncludeSimulationOutcome(xo.getAttribute(INCLUDE_SIMULATION_OUTCOME, false));
 
                 return analysis;
 
@@ -361,9 +450,12 @@ public class DnDsPerSiteAnalysis implements Citable {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleArrayRule(CUTOFF, true),
+                AttributeRule.newDoubleArrayRule(PROPORTION, true),
+                AttributeRule.newBooleanRule(INCLUDE_HPD, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANT_SYMBOL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANCE_LEVEL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SITE_CLASSIFICATION, true),
+                AttributeRule.newBooleanRule(INCLUDE_SIMULATION_OUTCOME, true),
                 AttributeRule.newStringRule(SIGNIFICANCE_TEST, true),
                 AttributeRule.newStringRule(SEPARATOR_STRING, true),
                 new StringAttributeRule(FileHelpers.FILE_NAME,
@@ -378,6 +470,8 @@ public class DnDsPerSiteAnalysis implements Citable {
     final private TraceList traceList;
     final private int numSites;
     private OutputFormat format;
+    private String simulated[] = {"-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "-", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "0", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+", "+"};
+
 
     private int fieldWidth;
     private int firstField;

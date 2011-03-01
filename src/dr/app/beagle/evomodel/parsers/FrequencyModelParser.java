@@ -39,7 +39,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        StringBuilder sb = new StringBuilder("Creating state frequencies model: ");
+        StringBuilder sb = new StringBuilder("Creating state frequencies model '" + freqsParam.getParameterName() + "': ");
         if (frequencies != null) {
             if (freqsParam.getDimension() != frequencies.length) {
                 throw new XMLParseException("dimension of frequency parameter and number of sequence states don't match!");

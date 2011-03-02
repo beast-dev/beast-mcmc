@@ -7,10 +7,7 @@ import dr.inference.model.ParameterParser;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -216,7 +213,7 @@ public class TreeTraitParserUtilities {
 
         if (xo.hasAttribute(TRAIT_NAME)) {
 
-            List<Integer> randomSample = null;
+            Map<Integer, Integer> randomSample = null;
             traitName = xo.getStringAttribute(TRAIT_NAME);
 
             // Fill in attributeValues
@@ -269,7 +266,7 @@ public class TreeTraitParserUtilities {
                     int index = 0;
                     for (int j = 0; j < count; j++) {
                         String oneValue = st.nextToken();
-                        if (randomSampleSizeFlag == -1 || randomSample.contains(j)) {
+                        if (randomSampleSizeFlag == -1 || randomSample.containsKey(j)) {
                             double value = Double.NaN;
                             if (oneValue.equals("NA") || oneValue.equals("?") ) {
                                 Logger.getLogger("dr.evomodel.continuous").info(
@@ -283,8 +280,16 @@ public class TreeTraitParserUtilities {
                                     throw new RuntimeException(e.getMessage());
                                 }
                             }
-                            traitParam.setParameterValue(index, value);
-                            index++;
+
+                            int replicates = 1;
+                            if (randomSampleSizeFlag != -1) {
+                                // Count how many times to add this datum
+                                replicates = randomSample.get(j);
+                            }
+                            for (int k = 0; k < replicates; k++) {
+                                traitParam.setParameterValue(index, value);
+                                index++;
+                            }
                         }
                     }
                 }
@@ -342,11 +347,16 @@ public class TreeTraitParserUtilities {
         return null;
     }
 
-    private List<Integer> drawRandomSample(int total, int length) {
-        List<Integer> thisList = new ArrayList<Integer>(total);
+    private Map<Integer, Integer> drawRandomSample(int total, int length) {
+        Map<Integer, Integer> thisMap = new HashMap<Integer, Integer>(total);
         for (int i = 0; i < total; i++) {
-            thisList.add(MathUtils.nextInt(length));
+            int item = MathUtils.nextInt(length);
+            if (thisMap.containsKey(item)) {
+                thisMap.put(item, thisMap.get(item) + 1);
+            } else {
+                thisMap.put(item, 1);
+            }
         }
-        return thisList;
+        return thisMap;
     }
 }

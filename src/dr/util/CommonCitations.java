@@ -16,8 +16,11 @@ public class CommonCitations {
                     new Author("MA", "Suchard")
             },
             "Phylogeography takes a relaxed random walk in continous space and time",
+            2010,
             "Molecular Biology and Evolution",
-            Citation.Status.ACCEPTED
+            27,
+            1877, 1885,
+            Citation.Status.PUBLISHED
     );
 
     public static Citation OBRIEN_2009 = new Citation(

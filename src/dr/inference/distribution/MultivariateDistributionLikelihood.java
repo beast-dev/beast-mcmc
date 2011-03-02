@@ -209,7 +209,6 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof MatrixParameter) {
                     likelihood.addData((MatrixParameter) cxo.getChild(j));
-                    System.err.println("added ");
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
                 }

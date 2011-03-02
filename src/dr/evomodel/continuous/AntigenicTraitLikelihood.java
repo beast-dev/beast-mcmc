@@ -109,7 +109,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         // the largest measured value for any given column of data
         // Currently this is the largest across any assay column for a given antisera.
         // Optionally could normalize by individual assay column
-        double[] maxAssayValue = new double[serumCount];
+        double[] maxColumnValue = new double[serumCount];
+        double maxAssayValue = 0.0;
 
         // Build a sparse matrix of non-missing assay values
         int u = 0;
@@ -150,8 +151,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                             virusObservationCounts[i]++;
                             serumObservationCounts[j]++;
 
-                            if (value > maxAssayValue[j]) {
-                                maxAssayValue[j] = value;
+                            if (value > maxColumnValue[j]) {
+                                maxColumnValue[j] = value;
+                            }
+                            if (value > maxAssayValue) {
+                                maxAssayValue = value;
                             }
                         }
 
@@ -209,7 +213,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         // transform and normalize the data if required
         if (log2Transform) {
             for (int i = 0; i < observations.length; i++) {
-                observations[i] = transform(observations[i], maxAssayValue[columnIndices[i]]);
+                observations[i] = transform(observations[i], maxColumnValue[columnIndices[i]], 2);
+//                observations[i] = transform(observations[i], maxAssayValue, 10);
                 // the transformation reverses the bounds
                 if (observationTypes[i] != ObservationType.POINT) {
                     observationTypes[i] = (observationTypes[i] == ObservationType.UPPER_BOUND ? ObservationType.LOWER_BOUND : ObservationType.UPPER_BOUND);
@@ -249,6 +254,18 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                     serumLocationsParameter.getParameter(i).setParameterValue(j, r);
                 }
             }
+
+//            serumLocationsParameter.getParameter(0).setParameterValue(0, -20);
+//            serumLocationsParameter.getParameter(0).setParameterValue(1, -20);
+//
+//            serumLocationsParameter.getParameter(1).setParameterValue(0, 20);
+//            serumLocationsParameter.getParameter(1).setParameterValue(1, -20);
+//
+//            serumLocationsParameter.getParameter(2).setParameterValue(0, 20);
+//            serumLocationsParameter.getParameter(2).setParameterValue(1, 20);
+//
+//            serumLocationsParameter.getParameter(3).setParameterValue(0, -20);
+//            serumLocationsParameter.getParameter(3).setParameterValue(1, 20);
         }
     }
 
@@ -260,9 +277,9 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         }
     }
 
-    private double transform(final double value, final double maxValue) {
+    private double transform(final double value, final double maxValue, final double base) {
         // log2(maxValue / value)
-        return (Math.log(maxValue) - Math.log(value)) / Math.log(2.0);
+        return (Math.log(maxValue) - Math.log(value)) / Math.log(base);
     }
 
     // **************************************************************

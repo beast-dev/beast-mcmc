@@ -112,11 +112,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 }
                 for (String rowName : rowLabels) {
                     if (label.toUpperCase().startsWith(rowName.toUpperCase())) {
+                        tipNameMap.put(rowName, i);
                         break;
                     }
                 }
-
-                tipNameMap.put(label, i);
 
                 tipIndices[i] = -1;
             }

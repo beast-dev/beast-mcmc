@@ -147,14 +147,40 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         this.distancesCount = rowIndices.length;
         this.observationCount = observations.length;
-        this.thresholdCount = 0;
+        this.upperThresholdCount = 0;
+        this.lowerThresholdCount = 0;
 
         for (ObservationType type : observationTypes) {
-            thresholdCount += (type == ObservationType.POINT ? 0 : 1);
+            upperThresholdCount += (type == ObservationType.UPPER_BOUND ? 1 : 0);
+            lowerThresholdCount += (type == ObservationType.LOWER_BOUND ? 1 : 0);
         }
 
-        hasThresholds = thresholdCount > 0;
+        thresholdCount = upperThresholdCount + lowerThresholdCount;
+        pointObservationCount = observationCount - thresholdCount;
 
+        upperThresholdIndices = new int[upperThresholdCount];
+        lowerThresholdIndices = new int[lowerThresholdCount];
+        pointObservationIndices = new int[pointObservationCount];
+
+        int ut = 0;
+        int lt = 0;
+        int po = 0;
+        for (int i = 0; i < observationCount; i++) {
+            switch (observationTypes[i]) {
+                case POINT:
+                    pointObservationIndices[po] = i;
+                    po++;
+                    break;
+                case UPPER_BOUND:
+                    upperThresholdIndices[ut] = i;
+                    ut++;
+                    break;
+                case LOWER_BOUND:
+                    lowerThresholdIndices[lt] = i;
+                    lt++;
+                    break;
+            }
+        }
 
         if (tipIndices != null) {
             for (int i = 0; i < tipCount; i++) {
@@ -198,8 +224,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         storedTruncations = new double[distancesCount];
 
         // a cache of threshold calcs
-        thresholds = new double[observationCount];
-        storedThresholds = new double[observationCount];
+        thresholds = new double[thresholdCount];
+        storedThresholds = new double[thresholdCount];
 
         this.mdsDimension = mdsDimension;
 
@@ -349,9 +375,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double precision = mdsPrecisionParameter.getParameterValue(0);
 
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
-        double logLikelihood = ((observationCount - thresholdCount) / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
+        double logLikelihood = (pointObservationCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
 
-        if (hasThresholds) {
+        if (thresholdCount > 0) {
             if (!thresholdsKnown) {
                 thresholdSum = calculateThresholdObservations(precision);
                 thresholdsKnown = true;
@@ -373,18 +399,24 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double calculateThresholdObservations(double precision) {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
-        for (int i = 0; i < observationCount; i++) {
-            int dist = distanceIndices[i];
+        int j = 0;
+        for (int i = 0; i < upperThresholdCount; i++) {
+            int observationIndex = upperThresholdIndices[i];
+            int dist = distanceIndices[observationIndex];
             if (distanceUpdate[dist]) {
-                if (observationTypes[i] == ObservationType.LOWER_BOUND) {
-                    thresholds[i] = Math.log(NormalDistribution.cdf(observations[i], distances[dist], sd));
-                } else if (observationTypes[i] == ObservationType.UPPER_BOUND) {
-                    thresholds[i] = Math.log(1.0 - NormalDistribution.cdf(observations[i], distances[dist], sd));
-                } else {
-                    thresholds[i] = 0.0;
-                }
+                thresholds[j] = Math.log(1.0 - NormalDistribution.cdf(observations[observationIndex], distances[dist], sd));
             }
-            sum += thresholds[i];
+            sum += thresholds[j];
+            j++;
+        }
+        for (int i = 0; i < lowerThresholdCount; i++) {
+            int observationIndex = upperThresholdIndices[i];
+            int dist = distanceIndices[observationIndex];
+            if (distanceUpdate[dist]) {
+                thresholds[j] = Math.log(NormalDistribution.cdf(observations[observationIndex], distances[dist], sd));
+            }
+            sum += thresholds[j];
+            j++;
         }
 
         return sum;
@@ -515,7 +547,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private int distancesCount;
     private int observationCount;
+    private int upperThresholdCount;
+    private int lowerThresholdCount;
+    private int pointObservationCount;
     private int thresholdCount;
+
     private int tipCount;
     private int rowCount;
     private int columnCount;
@@ -526,6 +562,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int[] rowIndices;
     private int[] columnIndices;
     private int[] tipIndices;
+    private int[] upperThresholdIndices;
+    private int[] lowerThresholdIndices;
+    private int[] pointObservationIndices;
 
     private CompoundParameter tipTraitParameter;
     private MatrixParameter rowLocationsParameter;
@@ -560,6 +599,4 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private boolean isLeftTruncated;
     private int mdsDimension;
-
-    private boolean hasThresholds = false;
 }

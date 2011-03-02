@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.inference.model.*;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.DataTable;
 import dr.xml.*;
@@ -210,29 +211,45 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             for (int i = 0; i < observations.length; i++) {
                 observations[i] = transform(observations[i], maxAssayValue[columnIndices[i]]);
                 // the transformation reverses the bounds
-                observationTypes[i] = (observationTypes[i] == ObservationType.UPPER_BOUND ? ObservationType.LOWER_BOUND : (observationTypes[i] == ObservationType.LOWER_BOUND ? ObservationType.UPPER_BOUND : observationTypes[i]));
+                if (observationTypes[i] != ObservationType.POINT) {
+                    observationTypes[i] = (observationTypes[i] == ObservationType.UPPER_BOUND ? ObservationType.LOWER_BOUND : ObservationType.UPPER_BOUND);
+                }
             }
         }
+
+        int thresholdCount = 0;
+        for (int i = 0; i < observations.length; i++) {
+            thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
+        }
+
+        System.out.println("AntigenicTraitLikelihood:");
+        System.out.println("  " + virusNames.length + " viruses");
+        System.out.println("  " + serumNames.length + " antisera");
+        System.out.println("  " + observations.length + " observations");
+        System.out.println("  " + thresholdCount + " threshold observations");
+        System.out.println();
 
         initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
 
         // some random initial locations
-//        for (int i = 0; i < virusCount; i++) {
-//            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
-//            for (int j = 0; j < mdsDimension; j++) {
-//                double r = MathUtils.nextGaussian();
-//                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
-//            }
-//        }
+        for (int i = 0; i < virusCount; i++) {
+            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
+            for (int j = 0; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
+                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+            }
+        }
 
         // some random initial locations
-//            for (int i = 0; i < serumCount; i++) {
-//                serumLocationsParameter.getParameter(i).setId(serumNames[i]);
-//                for (int j = 0; j < mdsDimension; j++) {
-//                    double r = MathUtils.nextGaussian();
-//                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
-//                }
-//            }
+        if (serumLocationsParameter != null) {
+            for (int i = 0; i < serumCount; i++) {
+                serumLocationsParameter.getParameter(i).setId(serumNames[i]);
+                for (int j = 0; j < mdsDimension; j++) {
+                    double r = MathUtils.nextGaussian();
+                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+                }
+            }
+        }
     }
 
     private double convertString(String value) {
@@ -244,7 +261,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
     }
 
     private double transform(final double value, final double maxValue) {
-        return Math.log(maxValue / value) / Math.log(2.0);
+        // log2(maxValue / value)
+        return (Math.log(maxValue) - Math.log(value)) / Math.log(2.0);
     }
 
     // **************************************************************

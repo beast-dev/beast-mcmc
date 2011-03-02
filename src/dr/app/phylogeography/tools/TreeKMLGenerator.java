@@ -283,6 +283,10 @@ public class TreeKMLGenerator {
             double altitude = (tree.getHeight(node)*scaleFactor);
             double date = settings.getMostRecentDate() - tree.getHeight(node);
 
+            if (tree.isExternal(node)) {
+                System.out.println(tree.getTaxon(node).getName() + "\t" + latitude + "\t" + longitude);
+            }
+
             if (!tree.isRoot(node)) {
 
                 // Create each branch of the tree..
@@ -978,8 +982,8 @@ public class TreeKMLGenerator {
         settings.setTimeDivisionCount(0);
 
         settings.setTraitName("antigenic");
-//        settings.setLatitudeName("longLat1");
-//        settings.setLongitudeName("longLat2");
+        settings.setLatitudeName("antigenic1");
+        settings.setLongitudeName("antigenic2");
 
         try {
 

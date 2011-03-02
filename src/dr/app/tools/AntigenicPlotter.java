@@ -90,13 +90,17 @@ public class AntigenicPlotter {
             int traceCount = traces.getTraceCount() / 2;
             int stateCount = traces.getStateCount();
             double[][][] data = new double[stateCount][traceCount][2];
+            String[] names = new String[traceCount];
 
             for (int i = 0; i < traceCount; i++) {
+                String name = traces.getTraceName(i * 2);
+                names[i] = name.substring(0, name.length() - 1);
                 for (int j = 0; j < stateCount; j++) {
                     data[j][i][0] = traces.getStateValue(i * 2, j);
                     data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
                 }
             }
+
 
 //            rotateData(data);
 

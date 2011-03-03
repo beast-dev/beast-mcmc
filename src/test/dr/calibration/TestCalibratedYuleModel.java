@@ -49,7 +49,7 @@ public class TestCalibratedYuleModel {
     //    private final int treeSize;
     private final BufferedWriter out;
 
-    public TestCalibratedYuleModel(int treeSize, BufferedWriter out) throws IOException {
+    public TestCalibratedYuleModel(int treeSize, double S, BufferedWriter out) throws IOException {
 //        this.treeSize = treeSize;
         this.out = out;
         out.write(Integer.toString(treeSize) + "\t");
@@ -66,7 +66,7 @@ public class TestCalibratedYuleModel {
         operator.setWeight(1.0);
         schedule.addOperator(operator);
 
-        yuleTester(treeModel, schedule, brParameter);
+        yuleTester(treeModel, schedule, brParameter, S);
 
     }
 
@@ -89,11 +89,11 @@ public class TestCalibratedYuleModel {
         return new TreeModel(tree);//treeModel
     }
 
-    private void yuleTester(TreeModel treeModel, OperatorSchedule schedule, Parameter brParameter) throws IOException {
+    private void yuleTester(TreeModel treeModel, OperatorSchedule schedule, Parameter brParameter, double S) throws IOException {
 
         MCMC mcmc = new MCMC("mcmc1");
         MCMCOptions options = new MCMCOptions();
-        options.setChainLength(2000000);
+        options.setChainLength(20000000);
         options.setUseCoercion(true);
         options.setCoercionDelay(options.getChainLength() / 100);
         options.setTemperature(1.0);
@@ -107,7 +107,7 @@ public class TestCalibratedYuleModel {
         Likelihood speciationLikelihood = new SpeciationLikelihood(treeModel, speciationModel, "yule.like");
 
         DistributionLikelihood logNormalLikelihood = new DistributionLikelihood(
-                new LogNormalDistribution(1.0, 0.2), 0); // meanInRealSpace="false"
+                new LogNormalDistribution(1.0, S), 0); // meanInRealSpace="false"
         logNormalLikelihood.addData(treeModel.getRootHeightParameter());
 
         //CompoundLikelihood
@@ -145,7 +145,7 @@ public class TestCalibratedYuleModel {
 
         NumberFormatter formatter = new NumberFormatter(8);
 
-//        TraceCorrelation tlStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TL));
+       TraceCorrelation tlStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TL));
         TraceCorrelation treeHeightStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(TREE_HEIGHT));
         out.write(formatter.format(treeHeightStats.getMean()));
         out.write("\t");
@@ -155,12 +155,18 @@ public class TestCalibratedYuleModel {
         out.write("\t");
 
         double error = Math.abs( (treeHeightStats.getMean() - expectedRootHeight) / expectedRootHeight );
-        NumberFormat percentFormatter = NumberFormat.getPercentInstance();
+        NumberFormat percentFormatter = NumberFormat.getNumberInstance();
+        percentFormatter.setMinimumFractionDigits(5);
+        percentFormatter.setMinimumFractionDigits(5);
         out.write(percentFormatter.format(error));
+        out.write("\t");
+        out.write(Double.toString(tlStats.getESS()));
 
         System.out.println("rootHeight = " + formatter.format(treeHeightStats.getMean())
                 + ";  expectation = " + formatter.format(expectedRootHeight)
-                + ";  error = " + percentFormatter.format(error));
+                + ";  error = " + percentFormatter.format(error)
+                + ";  tl.ess = " + tlStats.getESS());
+
     }
 
 
@@ -169,10 +175,17 @@ public class TestCalibratedYuleModel {
             BufferedWriter out = new BufferedWriter(new FileWriter("TestCalibratedYuleModel.txt"));
             out.write("treeSize\trootHeight\texpectation\terror");
             out.newLine();
-            for (int i = 4; i <= 100; i++) {
-                System.out.println("\ntree size = " + i + " : ");
-                TestCalibratedYuleModel testCalibratedYuleModel = new TestCalibratedYuleModel(i, out);
+
+            int[] taxaSchedule = new int[] {4,6,8,12,16,24,32,48,64,96,128};
+            double[] S_Schedule = new double[] {0.05, 0.1, 0.2, 0.4};
+
+            for (double S : S_Schedule) {
+            for (int i : taxaSchedule) {
+                System.out.print("tree size = " + i + "\t" + "S=" + S + "\t");
+                out.write("tree size = " + i + "\t" + "S=" + S + "\t");
+                TestCalibratedYuleModel testCalibratedYuleModel = new TestCalibratedYuleModel(i, S, out);
                 out.newLine();
+            }
             }
             out.close();
         } catch (IOException e) {

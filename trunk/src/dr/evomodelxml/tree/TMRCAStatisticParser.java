@@ -8,11 +8,8 @@ import dr.inference.model.Statistic;
 import dr.xml.*;
 
 /**
- * Created by IntelliJ IDEA.
- * User: dxie004
- * Date: 22/02/2010
- * Time: 1:32:41 PM
- * To change this template use File | Settings | File Templates.
+ * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class TMRCAStatisticParser extends AbstractXMLObjectParser {
 

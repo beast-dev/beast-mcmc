@@ -293,6 +293,10 @@ public class TreeKMLGenerator {
                 Element branch;
 
                 String nodeName = treeSettings.getName() + "_node" + nodeNumber;
+                if (tree.isExternal(node)) {
+                    Element tip = generateTaxonLabel(tree, node, latitude, longitude);
+                    element.addContent(tip);
+                }
 
                 Node parentNode = tree.getParent(node);
                 double parentLatitude = getDoubleNodeAttribute(parentNode, settings.getLatitudeName());
@@ -597,40 +601,16 @@ public class TreeKMLGenerator {
         placeMark.addContent(data);
     }
 
-//    private Element generateTip(TreeType treeType, RootedTree tree, Node node,
-//                                String tipName,
-//                                double date,
-//                                LineStyle style,
-//                                int divisionCount,
-//                                List<Element> styles) {
-//
-//        Element element;
-//
-//        String styleName = tipName + "_style";
-//
-//        styles.add(generatePolyStyle(styleName, style.getColor()));
-//
-//        element = generateContainer("Placemark", tipName, null, (styleName != null ? "#" + styleName : null));
-//
-//        Element lineString = new Element("LineString");
-//        lineString.addContent(generateElement("altitudeMode", altitudeMode));
-//
-//        Element coordinates = new Element("coordinates");
-//        if (treeType == TreeType.RECTANGLE_TREE) {
-//            coordinates.addContent(""+finishLongitude+","+finishLatitude+","+finishAltitude+"\r");
-//            coordinates.addContent(""+finishLongitude+","+finishLatitude+","+startAltitude+"\r");
-//            coordinates.addContent(""+startLongitude+","+startLatitude+","+startAltitude+"\r");
-//        } else { // TRIANGLE_TREE
-//            coordinates.addContent(""+finishLongitude+","+finishLatitude+","+finishAltitude+"\r");
-//            coordinates.addContent(""+startLongitude+","+startLatitude+","+startAltitude+"\r");
-//
-//        }
-//        lineString.addContent(coordinates);
-//
-//        element.addContent(lineString);
-//
-//        return element;
-//    }
+    private void annotateTip(final Element placeMark, final String label,  final double height, final double date) {
+        Element data = new Element("ExtendedData");
+        Element schemaData = new Element("SchemaData");
+        schemaData.setAttribute("schemaUrl", "#Tip_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "StartTime").addContent(Double.toString(date)));
+        data.addContent(schemaData);
+        placeMark.addContent(data);
+    }
 
     private Element generateContour(SurfaceDecoration surfaces, RootedTree tree,
                                     Node node, int nodeNumber, double plotHeight, double date,
@@ -977,7 +957,7 @@ public class TreeKMLGenerator {
         settings.getGroundTreeSettings().setTreeType(TreeType.SURFACE_TREE);
         settings.getGroundTreeSettings().getBranchStyle().setColorProperty("height");
         settings.setPlotAltitude(0);
-        settings.setMostRecentDate(2008.427);
+        settings.setMostRecentDate(1997);
         //settings.setAgeCutOff(1995);
         settings.setTimeDivisionCount(0);
 

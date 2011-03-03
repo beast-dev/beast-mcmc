@@ -46,7 +46,7 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath" 
+		<javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath"
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="1024m">
@@ -210,6 +210,16 @@
 	<!-- run beauti.jar -->
 	<target name="run_BEAUTI">
 		<java jar="${dist}/beauti.jar" fork="true" />
+	</target>
+
+    	<!-- run beast.jar -->
+	<target name="dist_test_jar" depends="dist-all">
+		<jar jarfile="${dist}/beastTest.jar">
+            <fileset dir="${build}">
+				<include name="test/dr/**/*.class" />
+            </fileset>
+            <zipgroupfileset dir="${dist}" includes="beast.jar" />
+        </jar>
 	</target>
 
 	<!-- JUnit test -->

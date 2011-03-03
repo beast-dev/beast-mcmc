@@ -616,6 +616,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(USE_TREE_LENGTH, true),
                 AttributeRule.newBooleanRule(SCALE_BY_TIME, true),
                 AttributeRule.newBooleanRule(RECIPROCAL_RATES, true),
+                AttributeRule.newBooleanRule(CACHE_BRANCHES, true),
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 new ElementRule(Parameter.class, true),
                 TreeTraitParserUtilities.randomizeRules(true),

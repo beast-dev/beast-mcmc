@@ -95,29 +95,29 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         rowCount = rowLabels.length;
         columnCount = columnLabels.length;
 
-        Map<String, Integer> tipNameMap = null;
         if (tipTraitParameter != null) {
             tipCount = tipTraitParameter.getNumberOfParameters();
 
             assert(rowCount == tipCount);
 
             //  the row -> tip map
-            tipIndices = new int[tipCount];
+            tipIndices = new int[rowCount];
+            for (int i = 0; i < rowCount; i++) {
+                tipIndices[i] = -1;
+            }
 
-            tipNameMap = new HashMap<String, Integer>();
             for (int i = 0; i < tipCount; i++) {
                 String label = tipTraitParameter.getParameter(i).getParameterName();
                 if (label.endsWith(".antigenic")) {
                     label = label.substring(0, label.indexOf(".antigenic"));
                 }
-                for (String rowName : rowLabels) {
-                    if (label.toUpperCase().startsWith(rowName.toUpperCase())) {
-                        tipNameMap.put(rowName, i);
+                for (int j = 0; j < rowCount; j++) {
+                    if (label.toUpperCase().startsWith(rowLabels[j].toUpperCase())) {
+                        tipIndices[j] = i;
                         break;
                     }
                 }
 
-                tipIndices[i] = -1;
             }
         } else {
             tipIndices = null;
@@ -129,20 +129,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.distanceIndices = distanceIndices;
         this.rowIndices = rowIndices;
         this.columnIndices = columnIndices;
-
-        for (int i = 0; i < rowCount; i++) {
-
-            if (tipIndices != null) {
-                // if the row is in the tree then add a entry to map tip to row
-                Integer tipIndex = tipNameMap.get(rowLabels[i]);
-                if (tipIndex != null) {
-                    tipIndices[tipIndex] = i;
-                    rowIndices[i] = tipIndex;
-                } else {
-                    System.err.println("Tip, " + rowLabels[i] + ", not found in tree");
-                }
-            }
-        }
 
         this.distancesCount = rowIndices.length;
         this.observationCount = observations.length;
@@ -182,10 +168,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         if (tipIndices != null) {
-            for (int i = 0; i < tipCount; i++) {
+            for (int i = 0; i < rowCount; i++) {
                 if (tipIndices[i] == -1) {
-                    String label = tipTraitParameter.getParameter(i).getParameterName();
-                    System.err.println("Tree tip, " + label + ", not found in data table");
+                    System.err.println("Tip, " + rowLabels[i] + ", not found in tree");
                 }
             }
         }
@@ -250,7 +235,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             if (tipTraitParameter != null) {
                 if (tipIndices[rowIndex] != -1) {
                     double value = rowLocationsParameter.getParameterValue(index);
-                    tipTraitParameter.setParameterValue((rowIndex * mdsDimension) + dim, value);
+                    tipTraitParameter.setParameterValue((tipIndices[rowIndex] * mdsDimension) + dim, value);
                 }
             }
 

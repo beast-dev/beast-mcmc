@@ -361,13 +361,13 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
         double logLikelihood = (pointObservationCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
 
-        if (thresholdCount > 0) {
-            if (!thresholdsKnown) {
-                thresholdSum = calculateThresholdObservations(precision);
-                thresholdsKnown = true;
-            }
-            logLikelihood += thresholdSum;
-        }
+//        if (thresholdCount > 0) {
+//            if (!thresholdsKnown) {
+//                thresholdSum = calculateThresholdObservations(precision);
+//                thresholdsKnown = true;
+//            }
+//            logLikelihood += thresholdSum;
+//        }
 
         if (isLeftTruncated) {
             if (!truncationKnown) {

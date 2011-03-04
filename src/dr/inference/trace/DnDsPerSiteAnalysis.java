@@ -113,10 +113,10 @@ public class DnDsPerSiteAnalysis implements Citable {
                 if (format.proportion == 0.95){
                     hpd[0] = distribution.getLowerHPD();
                     hpd[1] = distribution.getUpperHPD();
-                } else if (format.proportion == 1.0){
-                    hpd[0] = distribution.getMinimum();
-                    hpd[1] = distribution.getMaximum();
-                }  else {
+                }  else if (format.proportion >= 1.0) {
+                    hpd[0] = distribution.getMinimum()*format.proportion;
+                    hpd[1] = distribution.getMaximum()*format.proportion;
+                } else {
 //                distribution does not allow to specify proportion
                     hpd = getHPDInterval(format.proportion,traceList.getValues(index));
                 }

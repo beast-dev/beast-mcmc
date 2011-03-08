@@ -151,9 +151,9 @@ public class BranchRatesModelGenerator extends Generator {
 
                     writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                     if (options.allowDifferentTaxa) { // http://code.google.com/p/beast-mcmc/issues/detail?id=235
-                        for (PartitionData dataPartition : options.dataPartitions) {
+                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
                             if (dataPartition.getPartitionClockModel().equals(model)) {
-                                categoryCount = (dataPartition.getTaxaCount() - 1) * 2;
+                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;
                             }
                         }
                     } else {
@@ -531,7 +531,7 @@ public class BranchRatesModelGenerator extends Generator {
     }
 
     public void writeClockLikelihoodReferences(XMLWriter writer) {
-        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
             PartitionClockModel clockModel = partition.getPartitionClockModel();
 
             if (clockModel.getClockType() == ClockType.AUTOCORRELATED) {

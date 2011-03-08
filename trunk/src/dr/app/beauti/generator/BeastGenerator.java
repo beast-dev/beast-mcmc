@@ -159,11 +159,11 @@ public class BeastGenerator extends Generator {
         }
 
         for (TraitData trait : options.traits) {
-            for (int i=0; i < trait.getTaxaCount(); i++) {
+            for (int i = 0; i < trait.getTaxaCount(); i++) {
 //                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
                 if (!trait.hasValue(i))
                     throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
-                    " has no value for Trait " + trait.getName());
+                            " has no value for Trait " + trait.getName());
             }
         }
 
@@ -192,7 +192,7 @@ public class BeastGenerator extends Generator {
             // 1 random local clock CANNOT have different tree models
             if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) { // || AUTOCORRELATED_LOGNORMAL
                 PartitionTreeModel treeModel = null;
-                for (PartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
+                for (AbstractPartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
                     if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
                         throw new IllegalArgumentException("One random local clock CANNOT have different tree models !");
                     }
@@ -205,14 +205,14 @@ public class BeastGenerator extends Generator {
         if (options.allowDifferentTaxa) {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 int numOfTaxa = -1;
-                for (PartitionData pd : options.getAllPartitionData(model)) {
-                    if (pd.getAlignment() != null) {
+                for (AbstractPartitionData pd : options.getAllPartitionData(model)) {
+                    if (pd.getTaxonCount() > 0) {
                         if (numOfTaxa > 0) {
-                            if (numOfTaxa != pd.getTaxaCount()) {
+                            if (numOfTaxa != pd.getTaxonCount()) {
                                 throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree");
                             }
                         } else {
-                            numOfTaxa = pd.getTaxaCount();
+                            numOfTaxa = pd.getTaxonCount();
                         }
                     }
                 }
@@ -269,10 +269,12 @@ public class BeastGenerator extends Generator {
                 writer.writeText("");
                 writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
                 // write all taxa in each gene tree regarding each data partition,
-                for (PartitionData partition : options.dataPartitions) {
+                for (AbstractPartitionData partition : options.dataPartitions) {
                     // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
-                    if (partition.getAlignment() != null) {
-                        writeDifferentTaxaForMultiGene(partition, writer);
+                    if (partition instanceof PartitionData) {
+                    if (((PartitionData) partition).getAlignment() != null) {
+                        writeDifferentTaxaForMultiGene((PartitionData) partition, writer);
+                    }
                     }
                 }
             }
@@ -305,10 +307,16 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         try {
             if (!options.samplePriorOnly) {
-                for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-                    if (partition.getAlignment() != null) {
-                        writePatternList(partition, writer);
-                        writer.writeText("");
+                for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+                    if (partition instanceof PartitionData) {
+                        if (((PartitionData) partition).getAlignment() != null) {
+                            writePatternList((PartitionData) partition, writer);
+                            writer.writeText("");
+                        }
+                    } else if (partition instanceof PartitionPattern) { // microsat
+
+                    } else {
+                        throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                     }
                 }
             }
@@ -321,14 +329,14 @@ public class BeastGenerator extends Generator {
         try {
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
                 // first write the general data type for this model
-                PartitionData partition1 = options.getAllPartitionData(model).get(0);
+                AbstractPartitionData partition1 = options.getAllPartitionData(model).get(0);
                 if (partition1.getTrait() != null) {
                     discreteTraitGenerator.writeGeneralDataType(model, writer);
                     writer.writeText("");
                 }
 
                 // now create an attribute pattern for each trait that uses it
-                for (PartitionData partition : options.getAllPartitionData(model)) {
+                for (AbstractPartitionData partition : options.getAllPartitionData(model)) {
                     if (partition.getTrait() != null) {
                         discreteTraitGenerator.writeAttributePatterns(partition, writer);
                         writer.writeText("");
@@ -442,14 +450,17 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Tree Likelihood ++++++++++++++++++
         try {
-            // generate tree likelihoods for alignment data partitions
-            if (options.hasAlignmentPartition()) {
-                writer.writeComment("Likelihood for tree given sequence data");
-            }
-            for (PartitionData partition : options.dataPartitions) {
-                if (partition.getAlignment() != null) {
-                    treeLikelihoodGenerator.writeTreeLikelihood(partition, writer);
-                    writer.writeText("");
+            for (AbstractPartitionData partition : options.dataPartitions) {
+                // generate tree likelihoods for alignment data partitions
+                if (partition instanceof PartitionData) {
+                    if (((PartitionData) partition).getAlignment() != null) {
+                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
+                        writer.writeText("");
+                    }
+                } else if (partition instanceof PartitionPattern) { // microsat
+
+                } else {
+                    throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                 }
             }
 
@@ -465,7 +476,7 @@ public class BeastGenerator extends Generator {
             if (options.hasDiscreteTraitPartition()) {
                 writer.writeComment("Likelihood for tree given discrete trait data");
             }
-            for (PartitionData partition : options.dataPartitions) {
+            for (AbstractPartitionData partition : options.dataPartitions) {
                 TraitData trait = partition.getTrait();
                 if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
                     discreteTraitGenerator.writeAncestralTreeLikelihood(partition, writer);
@@ -482,7 +493,7 @@ public class BeastGenerator extends Generator {
             if (options.hasContinuousTraitPartition()) {
                 writer.writeComment("Likelihood for tree given continuous multivariate trait data");
             }
-            for (PartitionData partition : options.dataPartitions) {
+            for (AbstractPartitionData partition : options.dataPartitions) {
                 TraitData trait = partition.getTrait();
                 if (trait != null && trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
                     throw new UnsupportedOperationException("Not implemented yet: writeMultivariateTreeLikelihood");
@@ -893,7 +904,7 @@ public class BeastGenerator extends Generator {
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            PartitionData partition = options.getAllPartitionData(model).get(0);
+            AbstractPartitionData partition = options.getAllPartitionData(model).get(0);
             if (partition.getTrait() != null && partition.getTrait().getTraitType() == TraitData.TraitType.DISCRETE) {
                 logGenerator.writeDiscreteTraitLogToFile(writer, model, substitutionModelGenerator);
             }

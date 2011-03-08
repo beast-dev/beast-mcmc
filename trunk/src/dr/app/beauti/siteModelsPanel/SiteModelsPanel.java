@@ -28,16 +28,15 @@ package dr.app.beauti.siteModelsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
-import jam.table.HeaderRenderer;
-import dr.app.gui.table.TableEditorStopper;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -332,7 +331,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (PartitionData partition : options.dataPartitions) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }

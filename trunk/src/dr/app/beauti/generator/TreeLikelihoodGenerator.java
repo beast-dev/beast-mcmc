@@ -26,7 +26,6 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.types.ClockType;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
@@ -87,6 +86,8 @@ public class TreeLikelihoodGenerator extends Generator {
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
+        writer.writeComment("Likelihood for tree given sequence data");
+        
         if (num > 0) {
             writer.writeOpenTag(
                     TreeLikelihoodParser.TREE_LIKELIHOOD,
@@ -160,16 +161,18 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
-        for (PartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            if (partition.getAlignment() != null) {
-                // is an alignment data partition
-                PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
-                if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
-                    for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                        writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
+            if (partition instanceof PartitionData) {
+                if (((PartitionData) partition).getAlignment() != null) {
+                    // is an alignment data partition
+                    PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+                    if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
+                        for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
+                            writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                        }
+                    } else {
+                        writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                     }
-                } else {
-                    writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
             }
         }

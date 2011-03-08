@@ -31,10 +31,9 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
-import dr.evomodel.tree.TreeModel;
+import dr.evolution.util.TaxonList;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
@@ -560,7 +559,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
             // get taxa associated to each tree
             PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(currentTaxonSet);
-            Alignment alignment = options.getAllPartitionData(treeModel).get(0).getAlignment();
+            TaxonList alignment = options.getAllPartitionData(treeModel).get(0).getTaxonList();
             Taxa taxa = new Taxa(alignment);
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 excludedTaxa.add(taxa.getTaxon(i));

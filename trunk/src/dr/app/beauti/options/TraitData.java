@@ -1,5 +1,7 @@
 package dr.app.beauti.options;
 
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
@@ -70,8 +72,8 @@ public class TraitData {
         return options.taxonList.getTaxon(i).getAttribute(getName()).toString().trim().length() > 0;
     }
 
-    public String getDataType() {
-        return getTraitType().toString();
+    public DataType getDataType() {
+        return GeneralDataType.INSTANCE;
     }
 
     public String getFileName() {

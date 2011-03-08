@@ -9,6 +9,7 @@ import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.MicroSatImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.io.NexusImporter.MissingBlockException;
 import dr.evolution.io.NexusImporter.NexusBlock;
@@ -63,12 +64,34 @@ public class BEAUTiImporter {
 //            } else {
 //                // assume it is a tab-delimited traits file and see if that works...
 //                importTraits(file);
+            } else if ((line != null && line.toUpperCase().contains("#MICROSAT"))) {
+                // MicroSatellite
+                importMicroSatFile(file);
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
             }
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
+    }
+
+    private void importMicroSatFile(File file) throws Exception {
+        try {
+            FileReader reader = new FileReader(file);
+
+            MicroSatImporter importer = new MicroSatImporter(reader);
+
+
+
+
+//        } catch (ImportException e) {
+//            throw new ImportException(e.getMessage());
+        } catch (IOException e) {
+            throw new IOException(e.getMessage());
+        }
+
+
+        
     }
 
     // xml

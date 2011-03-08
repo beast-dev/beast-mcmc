@@ -119,7 +119,7 @@ public class ClockModelOptions extends ModelOptions {
         this.meanRelativeRate = meanRelativeRate;
     }
 
-    public double[] calculateInitialRootHeightAndRate(List<PartitionData> partitions) {
+    public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
         double avgInitialRootHeight = 1;
         double avgInitialRate = 1;
         double avgMeanDistance = 1;
@@ -164,7 +164,7 @@ public class ClockModelOptions extends ModelOptions {
         return new double[]{avgInitialRootHeight, avgInitialRate};
     }
 
-    public double getSelectedRate(List<PartitionData> partitions) {
+    public double getSelectedRate(List<AbstractPartitionData> partitions) {
         double selectedRate = 1;
         double avgInitialRootHeight;
         double avgMeanDistance = 1;
@@ -211,12 +211,12 @@ public class ClockModelOptions extends ModelOptions {
         return selectedRate;
     }
 
-//    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
+//    private List<AbstractPartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
 //
-//        List<PartitionData> allData = new ArrayList<PartitionData>();
+//        List<AbstractPartitionData> allData = new ArrayList<AbstractPartitionData>();
 //
 //        for (PartitionClockModel model : models) {
-//            for (PartitionData partition : model.getAllPartitionData()) {
+//            for (AbstractPartitionData partition : model.getAllPartitionData()) {
 //                if (partition != null && (!allData.contains(partition))) {
 //                    allData.add(partition);
 //                }
@@ -226,7 +226,7 @@ public class ClockModelOptions extends ModelOptions {
 //        return allData;
 //    }
 
-    private double getCalibrationEstimateOfRootTime(List<PartitionData> partitions) {
+    private double getCalibrationEstimateOfRootTime(List<AbstractPartitionData> partitions) {
 
         // TODO - shouldn't this method be in the PartitionTreeModel??
 
@@ -253,15 +253,15 @@ public class ClockModelOptions extends ModelOptions {
 
                 int siteCount = 0;
 
-                for (PartitionData partition : partitions) {
-                    Tree tree = new UPGMATree(partition.distances);
+                for (AbstractPartitionData partition : partitions) {
+                    Tree tree = new UPGMATree(partition.getDistances());
 
                     NodeRef node = Tree.Utils.getCommonAncestorNode(tree, Taxa.Utils.getTaxonListIdSet(taxa));
 
                     calibrationDistance += tree.getNodeHeight(node);
                     rootDistance += tree.getNodeHeight(tree.getRoot());
 
-                    siteCount += partition.getAlignment().getSiteCount();
+                    siteCount += partition.getSiteCount();
                 }
 
                 rootDistance /= partitions.size();
@@ -362,7 +362,7 @@ public class ClockModelOptions extends ModelOptions {
 
         int k = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            for (PartitionData partition : options.getAllPartitionData(model)) {
+            for (AbstractPartitionData partition : options.getAllPartitionData(model)) {
                 int n = partition.getSiteCount();
                 weights[k] += n;
             }

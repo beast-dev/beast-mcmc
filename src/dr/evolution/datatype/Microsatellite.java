@@ -13,6 +13,9 @@ public class Microsatellite extends DataType {
     private int min;
     private int max;
     private int unitLength;
+    public static final Microsatellite INSTANCE = new Microsatellite();
+
+    public Microsatellite() {}
 
     /**
      * Constructor
@@ -222,7 +225,7 @@ public class Microsatellite extends DataType {
 	}
 
     public int getType(){
-        return -1;
+        return MICRO_SAT;
     }
 
 }

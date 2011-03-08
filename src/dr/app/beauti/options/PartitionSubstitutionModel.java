@@ -25,7 +25,6 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.operators.RateBitExchangeOperator;
@@ -68,11 +67,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private boolean dolloModel = false;
 
-    public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
-
-        this(options, partition.getName(),(partition.getTrait() == null)
-                ? partition.getAlignment().getDataType() : new GeneralDataType());
-
+    public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
+//        this(options, partition.getName(),(partition.getTrait() == null)
+//                ? partition.getDataType() : GeneralDataType.INSTANCE);
+           this(options, partition.getName(), partition.getDataType());
     }
 
     /**
@@ -764,7 +762,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
 
-    public void addWeightsForPartition(PartitionData partition, int[] weights, int offset) {
+    public void addWeightsForPartition(AbstractPartitionData partition, int[] weights, int offset) {
         int n = partition.getSiteCount();
         int codonCount = n / 3;
         int remainder = n % 3;
@@ -796,7 +794,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = new int[getCodonPartitionCount()];
 
         int k = 0;
-        for (PartitionData partition : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
             if (partition.getPartitionSubstitutionModel() == this) {
                 addWeightsForPartition(partition, weights, k);
             }
@@ -982,7 +980,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      */
     public Set<String> getDiscreteStateSet() {
         Set<String> states = new HashSet<String>();
-        for (PartitionData partition : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
              if (partition.getTrait() != null) {
                  states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
              }

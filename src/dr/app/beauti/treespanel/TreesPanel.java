@@ -27,15 +27,14 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -418,7 +417,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionTreeModel model = options.getPartitionTreeModels().get(row);
-        for (PartitionData partition : options.dataPartitions) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getPartitionTreeModel() == model) {
                 return true;
             }

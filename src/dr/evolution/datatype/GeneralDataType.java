@@ -42,6 +42,9 @@ public class GeneralDataType extends DataType implements Identifiable {
     public static final String DESCRIPTION = GENERAL_DATA_TYPE;
     public static final int TYPE = GENERAL;
     public static final GeneralDataType INSTANCE = new GeneralDataType();
+
+    // for BEAUti trait PartitionSubstitutionModel
+    public GeneralDataType() {}
     /**
      * Unlike the other standard data types, this general one has a public
      * constructor so multiple instances can be created.
@@ -78,9 +81,6 @@ public class GeneralDataType extends DataType implements Identifiable {
 
         this.ambiguousStateCount = 0;
     }
-
-    // for BEAUti trait PartitionSubstitutionModel
-    public GeneralDataType() {}
 
     /**
      * Add an alias (a state code that represents a particular state).

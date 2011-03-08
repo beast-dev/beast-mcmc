@@ -1,13 +1,14 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.types.DiscreteSubstModelType;
-import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.DiscreteSubstModelType;
+import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.alignment.Patterns;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.sitemodel.GammaSiteModel;
@@ -305,12 +306,12 @@ public class SubstitutionModelGenerator extends Generator {
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
-                for (PartitionData partition : options.getAllPartitionData(model)) { //?
+                for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
                     writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);
                 }
             } else {
-                for (PartitionData partition : options.getAllPartitionData(model)) { //?
-                    writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getAlignment().getId());
+                for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
+                    writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getTaxonList().getId());
                 }
             }
         }
@@ -369,13 +370,13 @@ public class SubstitutionModelGenerator extends Generator {
         // merge patterns then get frequencies.
 
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-            List<PartitionData> partitions = options.getAllPartitionData(model);
-
-            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
-            for (int i = 1; i < partitions.size(); i++) {
-                patterns.addPatterns(partitions.get(i).getAlignment());
-            }
-            double[] frequencies = patterns.getStateFrequencies();
+            List<AbstractPartitionData> partitions = options.getAllPartitionData(model);
+            Alignment alignment = ((PartitionData) partitions.get(0)).getAlignment();
+//            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
+//            for (int i = 1; i < partitions.size(); i++) {
+//                patterns.addPatterns(partitions.get(i).getAlignment());
+//            }
+            double[] frequencies = alignment.getStateFrequencies();
             writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
@@ -692,6 +693,10 @@ public class SubstitutionModelGenerator extends Generator {
                 break;//BINARY
 
             case DataType.GENERAL:
+                //TODO
+                break;
+
+            case DataType.MICRO_SAT:
                 //TODO
                 break;
 

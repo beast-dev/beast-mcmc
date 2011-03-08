@@ -25,8 +25,12 @@
 
 package dr.app.beauti.clockModelsPanel;
 
-import dr.app.beauti.*;
-import dr.app.beauti.options.*;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.util.PanelUtils;
@@ -35,7 +39,6 @@ import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -43,10 +46,14 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -344,7 +351,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionClockModel model = options.getPartitionClockModels().get(row);
-        for (PartitionData partition : options.dataPartitions) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getPartitionClockModel() == model) {
                 return true;
             }

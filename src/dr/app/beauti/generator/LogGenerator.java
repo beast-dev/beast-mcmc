@@ -426,7 +426,7 @@ public class LogGenerator extends Generator {
                 writer.writeIDref("posterior", "posterior");
             }
 
-            for (PartitionData partition : options.dataPartitions) {
+            for (AbstractPartitionData partition : options.dataPartitions) {
                 if (partition.getPartitionTreeModel() == tree) {
                     TraitData trait = partition.getTrait();
 

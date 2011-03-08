@@ -98,7 +98,7 @@ public class DiscreteTraitGenerator extends Generator {
      * @param partition PartitionData
      * @param writer    XMLWriter
      */
-    public void writeAttributePatterns(PartitionData partition, XMLWriter writer) {
+    public void writeAttributePatterns(AbstractPartitionData partition, XMLWriter writer) {
         writer.writeComment("Data pattern for discrete trait, '" + partition.getTrait().getName() + "'");
 
         // <attributePatterns>
@@ -116,7 +116,7 @@ public class DiscreteTraitGenerator extends Generator {
      * @param partition PartitionData
      * @param writer    XMLWriter
      */
-    public void writeAncestralTreeLikelihood(PartitionData partition, XMLWriter writer) {
+    public void writeAncestralTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
@@ -157,7 +157,7 @@ public class DiscreteTraitGenerator extends Generator {
     }
 
     public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
-        for (PartitionData partition : options.dataPartitions) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
             TraitData trait = partition.getTrait();
 
             if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {

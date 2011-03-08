@@ -43,7 +43,7 @@ public class PartitionClockModel extends PartitionOptions {
     private boolean isEstimatedRate = true;
     private double rate = 1.0;
 
-    public PartitionClockModel(BeautiOptions options, PartitionData partition) {
+    public PartitionClockModel(BeautiOptions options, AbstractPartitionData partition) {
         this.options = options;
         this.partitionName = partition.getName();
 
@@ -73,7 +73,7 @@ public class PartitionClockModel extends PartitionOptions {
     private void initClockModelParaAndOpers() {
 
         int dataLength = 0;
-        for (PartitionData partitionData : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partitionData : options.getAllPartitionData(this)) {
             dataLength += partitionData.getSiteCount();
         }
         if (dataLength <= 1) { // TODO Discuss threshold

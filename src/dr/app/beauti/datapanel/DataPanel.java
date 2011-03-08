@@ -235,19 +235,21 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            JFrame frame = new JFrame();
-            frame.setSize(800, 600);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
+            Alignment alignment = null;
 
-            PartitionData partition = options.dataPartitions.get(row);
-            Alignment alignment = partition.getAlignment();
+            if (partition instanceof PartitionData) ((PartitionData) partition).getAlignment();
 
-            // alignment == null if partition is trait http://code.google.com/p/beast-mcmc/issues/detail?id=343
+            // alignment == null if partition is trait or microsat http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {
-                JOptionPane.showMessageDialog(this, "Cannot display traits currently. Use the traits panel to view and edit these.",
+                JOptionPane.showMessageDialog(this, "Cannot display traits or microsatellite data currently.\nUse the traits panel to view and edit traits.",
                         "Illegal Argument Exception",
                         JOptionPane.ERROR_MESSAGE);
                 return;
             }
+
+            JFrame frame = new JFrame();
+            frame.setSize(800, 600);
 
             AlignmentViewer viewer = new AlignmentViewer();
             if (alignment.getDataType().getType() == DataType.NUCLEOTIDES) {
@@ -372,7 +374,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void removeSelection() {
         int[] selRows = dataTable.getSelectedRows();
-        Set<PartitionData> partitionsToRemove = new HashSet<PartitionData>();
+        Set<AbstractPartitionData> partitionsToRemove = new HashSet<AbstractPartitionData>();
         for (int row : selRows) {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
@@ -439,7 +441,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkModels() {
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
@@ -456,10 +458,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     public void linkModels() {
         int[] selRows = dataTable.getSelectedRows();
-        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
-        String dateType = null;
+        List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
+        DataType dateType = null;
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
             if (dateType == null) {
                 dateType = partition.getDataType();
             } else {
@@ -489,7 +491,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 model.setName(selectModelDialog.getName());
             }
 
-            for (PartitionData partition : selectedPartitionData) {
+            for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionSubstitutionModel(model);
             }
         }
@@ -503,7 +505,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkClocks() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
 
             PartitionClockModel model = partition.getPartitionClockModel();
             if (!model.getName().equals(partition.getName())) {
@@ -521,9 +523,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void linkClocks() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
 
-        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
+        List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
 
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
@@ -541,7 +543,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 model.setName(selectClockDialog.getName());
             }
 
-            for (PartitionData partition : selectedPartitionData) {
+            for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionClockModel(model);
             }
         }
@@ -555,7 +557,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void unlinkTrees() { // reuse previous PartitionTreePrior
         int[] selRows = dataTable.getSelectedRows();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName()) && partition.getTrait() == null) {// not a trait
@@ -582,9 +584,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
     public void linkTrees() { // keep previous PartitionTreePrior for reuse
         int[] selRows = dataTable.getSelectedRows();
 
-        List<PartitionData> selectedPartitionData = new ArrayList<PartitionData>();
+        List<AbstractPartitionData> selectedPartitionData = new ArrayList<AbstractPartitionData>();
         for (int row : selRows) {
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
 
             if (!selectedPartitionData.contains(partition))
                 selectedPartitionData.add(partition);
@@ -616,7 +618,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             PartitionTreePrior prior = model.getPartitionTreePrior();
             options.linkTreePriors(prior);
 
-            for (PartitionData partition : selectedPartitionData) {
+            for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionTreeModel(model);
             }
         }
@@ -655,18 +657,18 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public Object getValueAt(int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     return partition.getName();
                 case 1:
                     return partition.getFileName();
                 case 2:
-                    return "" + partition.getTaxaCount();
+                    return "" + partition.getTaxonCount();
                 case 3:
                     return "" + partition.getSiteCount(); // sequence length
                 case 4:
-                    return partition.getDataType();
+                    return partition.getDataDescription();
                 case 5:
 //                    return partition.getPloidyType();
 //                case 6:
@@ -682,7 +684,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
 //            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
-            PartitionData partition = options.dataPartitions.get(row);
+            AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();

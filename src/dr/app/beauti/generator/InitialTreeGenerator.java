@@ -1,13 +1,13 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -80,7 +80,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
                         + "which may be 1 of many aligments using this tree.");
-                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getAlignment().getId());
+                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getTaxonList().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);

@@ -61,7 +61,7 @@ public class PartitionTreeModel extends PartitionOptions {
             "((((((((A,F),(T,P)),((C,D),S)), ... ..., (P,C))),(A,D));<br> end;<br>" +
             "Note: BEAST only allows <font color=red>bifurcating</font> tree.</html>";
 
-    public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
+    public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
         this.options = options;
         this.partitionName = partition.getName();
 

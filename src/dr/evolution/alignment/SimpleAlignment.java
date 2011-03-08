@@ -33,8 +33,8 @@ import dr.evolution.sequence.Sequences;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
-import java.util.Arrays;
-import java.util.Map;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple alignment class that implements gaps by characters in the sequences.
@@ -70,6 +70,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             Sequence sequence = a.getSequence(a.getTaxonIndex(taxon));
             addSequence(sequence);
         }
+    }
+
+    public List<Sequence> getSequences() {
+        return Collections.unmodifiableList(sequences);
     }
 
     /**
@@ -274,7 +278,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
      */
     public int getInvariantCount() {
         int invariantSites = 0;
-        for(int i=0; i<getSiteCount(); i++) {
+        for (int i = 0; i < getSiteCount(); i++) {
             int[] pattern = getSitePattern(i);
             if (Patterns.isInvariant(pattern)) {
                 invariantSites++;
@@ -292,7 +296,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         Patterns patterns = new Patterns(this);
         int informativeCount = 0;
 
-        for(int i = 0; i < patterns.getPatternCount(); i++) {
+        for (int i = 0; i < patterns.getPatternCount(); i++) {
             int[] pattern = patterns.getPattern(i);
 
             if (isInformative(pattern)) {
@@ -307,7 +311,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         Patterns patterns = new Patterns(this);
         int singletonCount = 0;
 
-        for(int i = 0; i < patterns.getPatternCount(); i++) {
+        for (int i = 0; i < patterns.getPatternCount(); i++) {
             int[] pattern = patterns.getPattern(i);
 
             if (!Patterns.isInvariant(pattern) && !isInformative(pattern)) {
@@ -321,7 +325,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private boolean isInformative(int[] pattern) {
         int[] stateCounts = new int[getStateCount()];
         for (int j = 0; j < pattern.length; j++) {
-            stateCounts[pattern[j]] ++;
+            stateCounts[pattern[j]]++;
         }
 
         boolean oneStateGreaterThanOne = false;
@@ -337,7 +341,7 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             }
         }
 
-        return  secondStateGreaterThanOne;
+        return secondStateGreaterThanOne;
     }
 
     /**

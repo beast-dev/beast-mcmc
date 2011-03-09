@@ -77,9 +77,10 @@ public class BEAUTiImporter {
 
     private void importMicroSatFile(File file) throws Exception {
         try {
-            FileReader reader = new FileReader(file);
+            Reader reader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(reader);
 
-            MicroSatImporter importer = new MicroSatImporter(reader);
+            MicroSatImporter importer = new MicroSatImporter(bufferedReader);
 
 
 

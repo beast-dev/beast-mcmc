@@ -39,17 +39,15 @@ public class PartitionTreeModel extends PartitionOptions {
 
     // Instance variables
 
-    private final BeautiOptions options;
-    private PartitionTreePrior treePrior;
+    protected final BeautiOptions options;
+    protected PartitionTreePrior treePrior;
 
-    private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    protected StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-
-    private double initialRootHeight = 1.0;
-
 	private boolean fixedTree = false;
+    protected double initialRootHeight = 1.0;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()

@@ -5,6 +5,7 @@ import dr.app.beauti.options.*;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
@@ -70,11 +71,14 @@ public class BEAUTiImporter {
             } else {
                 throw new ImportException("Unrecognized format for imported file.");
             }
+
+            bufferedReader.close();
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
     }
 
+    // micro-sat
     private void importMicroSatFile(File file) throws Exception {
         try {
             Reader reader = new FileReader(file);
@@ -82,21 +86,22 @@ public class BEAUTiImporter {
 
             MicroSatImporter importer = new MicroSatImporter(bufferedReader);
 
+            List<Patterns> microsatPatList = importer.importPatterns();
+            Taxa taxa = importer.getTaxa();
 
+            bufferedReader.close();
 
-
-//        } catch (ImportException e) {
-//            throw new ImportException(e.getMessage());
+            for (Patterns patterns : microsatPatList) {
+                setData(file.getName(), taxa, patterns, null, null);
+            }
+        } catch (ImportException e) {
+            throw new ImportException(e.getMessage());
         } catch (IOException e) {
             throw new IOException(e.getMessage());
         }
-
-
-        
     }
 
     // xml
-
     private void importBEASTFile(File file) throws Exception {
         try {
             FileReader reader = new FileReader(file);
@@ -111,7 +116,7 @@ public class BEAUTiImporter {
             TaxonList taxa = taxonLists.get(0);
 
             for (Alignment alignment : alignments) {
-                setData(taxa, alignment, null, null, null, null, file.getName());
+                setData(file.getName(), taxa, alignment, null, null, null, null);
             }
 
             // assume that any additional taxon lists are taxon sets...
@@ -124,6 +129,7 @@ public class BEAUTiImporter {
                 options.taxonSetsTreeModel.put(taxonSet, options.getPartitionTreeModels().get(0));
             }
 
+            reader.close();
         } catch (JDOMException e) {
             throw new JDOMException(e.getMessage());
         } catch (ImportException e) {
@@ -135,7 +141,6 @@ public class BEAUTiImporter {
     }
 
     // nexus
-
     private void importNexusFile(File file) throws Exception {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
@@ -231,6 +236,8 @@ public class BEAUTiImporter {
                 }
             }
 
+            reader.close();
+            
             // Allow the user to load taxa only (perhaps from a tree file) so that they can sample from a prior...
             if (alignment == null && taxa == null) {
                 throw new MissingBlockException("TAXON, DATA or CHARACTERS block is missing");
@@ -244,7 +251,7 @@ public class BEAUTiImporter {
             throw new Exception(e.getMessage());
         }
 
-        setData(taxa, alignment, trees, null, model, charSets, file.getName());
+        setData(file.getName(), taxa, alignment, charSets, model, null, trees);
     }
 
     // FASTA
@@ -257,7 +264,9 @@ public class BEAUTiImporter {
 
             Alignment alignment = importer.importAlignment();
 
-            setData(alignment, alignment, null, null, null, null, file.getName());
+            reader.close();
+            
+            setData(file.getName(), alignment, alignment, null, null, null, null);
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
         } catch (IOException e) {
@@ -324,7 +333,7 @@ public class BEAUTiImporter {
 //            traitsPanel.removeTrait();
         }
 
-        setData(taxa, null, null, importedTraits, null, null, file.getName());
+        setData(file.getName(), taxa, null, null, null, importedTraits, null);
     }
 
     public boolean validateTraitName(String traitName) {
@@ -363,104 +372,116 @@ public class BEAUTiImporter {
         return true;
     }
 
+    // for Alignment
+    private void setData(String fileName, TaxonList taxa, Alignment alignment,
+                         List<NexusApplicationImporter.CharSet> charSets, PartitionSubstitutionModel model,
+                         List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
+        String fileNameStem = addTaxonListAndTraits(taxa, traits, fileName);
 
-    //TODO need refactory to simplify
+        addAlignment(alignment, charSets, model, fileName, fileNameStem);
 
-    private void setData(TaxonList taxa, Alignment alignment, List<Tree> trees, List<TraitData> traits,
-                         PartitionSubstitutionModel model,
-                         List<NexusApplicationImporter.CharSet> charSets, String fileName) throws ImportException, IllegalArgumentException {
-        String fileNameStem = dr.app.util.Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML"});
+        addTraits(traits, fileName, fileNameStem);
+
+        addTrees(trees);
+    }
+
+    // for Patterns
+    private void setData(String fileName, Taxa taxa, Patterns patterns,
+                         PartitionSubstitutionModel model, List<TraitData> traits //, List<Tree> trees
+                         ) throws ImportException, IllegalArgumentException {
+        String fileNameStem = addTaxonListAndTraits(taxa, traits, fileName);
+
+        addPatterns(patterns, model, fileName);
+
+        addTraits(traits, fileName, fileNameStem);
+
+//        addTrees(trees);
+    }
+
+    private String addTaxonListAndTraits(TaxonList taxa, List<TraitData> traits, String fileName) throws ImportException {
+        String fileNameStem = Utils.trimExtensions(fileName,
+                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
 
         if (options.taxonList == null) {
-            // This is the first partition to be loaded...
-
-            options.taxonList = new Taxa(taxa);
-
-            // check the taxon names for invalid characters
-            boolean foundAmp = false;
-            for (Taxon taxon : taxa) {
-                String name = taxon.getId();
-                if (name.indexOf('&') >= 0) {
-                    foundAmp = true;
-                }
-            }
-            if (foundAmp) {
-                throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
-                        "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
-                        "Please edit the taxon name(s) before reloading the data file.");
-            }
-
-            // make sure they all have dates...
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                if (taxa.getTaxonAttribute(i, "date") == null) {
-                    Date origin = new Date(0);
-
-                    dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                    taxa.getTaxon(i).setAttribute("date", date);
-                }
-            }
-
-            if (traits == null) {
-                Set<String> traitNames = new HashSet<String>();
-                for (Taxon taxon : taxa) {
-                    Iterator iter = taxon.getAttributeNames();
-                    while (iter.hasNext()) {
-                        String name = (String)iter.next();
-                        traitNames.add(name);
-                    }
-                }
-
-                traits = new ArrayList<TraitData>();
-
-                for (String name : traitNames) {
-                    if (!name.equalsIgnoreCase("date")) {
-                        // todo  - need to work out what type it is...
-                        TraitData.TraitType type = options.guessTraitType(taxa, name);
-                        TraitData trait = new TraitData(options, name, "", type);
-                        traits.add(trait);
-                    }
-                }
-            }
-
+            loadFirstPartition(taxa, traits, fileNameStem);
             options.fileNameStem = fileNameStem;
-
         } else {
-            // AR - removed this distinction. I think we should always allow different taxa
-            // for different partitions but give a warning if they are different
+            loadRestPartitions(taxa);
+        }
+        return fileNameStem;
+    }
 
-            // This is an additional partition so check it uses the same taxa
-            if (!options.allowDifferentTaxa) { // not allow Different Taxa
-                List<String> oldTaxa = new ArrayList<String>();
-                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                    oldTaxa.add(options.taxonList.getTaxon(i).getId());
+    private void loadFirstPartition(TaxonList taxa, List<TraitData> traits, String fileNameStem) throws ImportException {
+        // This is the first partition to be loaded...
+        options.taxonList = new Taxa(taxa);
+
+        // check the taxon names for invalid characters
+        boolean foundAmp = false;
+        for (Taxon taxon : taxa) {
+            String name = taxon.getId();
+            if (name.indexOf('&') >= 0) {
+                foundAmp = true;
+            }
+        }
+        if (foundAmp) {
+            throw new ImportException("One or more taxon names include an illegal character ('&').\n" +
+                    "These characters will prevent BEAST from reading the resulting XML file.\n\n" +
+                    "Please edit the taxon name(s) before reloading the data file.");
+        }
+
+        // make sure they all have dates...
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+            if (taxa.getTaxonAttribute(i, "date") == null) {
+                Date origin = new Date(0);
+
+                dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
+                taxa.getTaxon(i).setAttribute("date", date);
+            }
+        }
+
+        if (traits == null) {
+            Set<String> traitNames = new HashSet<String>();
+            for (Taxon taxon : taxa) {
+                Iterator iter = taxon.getAttributeNames();
+                while (iter.hasNext()) {
+                    String name = (String)iter.next();
+                    traitNames.add(name);
                 }
-                List<String> newTaxa = new ArrayList<String>();
-                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    newTaxa.add(taxa.getTaxon(i).getId());
+            }
+
+            traits = new ArrayList<TraitData>();
+
+            for (String name : traitNames) {
+                if (!name.equalsIgnoreCase("date")) {
+                    // todo  - need to work out what type it is...
+                    TraitData.TraitType type = options.guessTraitType(taxa, name);
+                    TraitData trait = new TraitData(options, name, "", type);
+                    traits.add(trait);
                 }
+            }
+        }
+    }
 
-                if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                    // set to Allow Different Taxa
-                    options.allowDifferentTaxa = true;
-                    //changeTabs();// can be added, if required in future
+    private void loadRestPartitions(TaxonList taxa) {
+        // AR - removed this distinction. I think we should always allow different taxa
+        // for different partitions but give a warning if they are different
 
-                    List<String> prevTaxa = new ArrayList<String>();
-                    for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                        prevTaxa.add(options.taxonList.getTaxon(i).getId());
-                    }
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                            options.taxonList.addTaxon(taxa.getTaxon(i));
-                        }
-                    }
-                }
-            } else { // allow Different Taxa
-                // AR - it will be much simpler just to consider options.taxonList
-                // to be the union set of all taxa. Each data partition has an alignment
-                // which is a taxon list containing the taxa specific to that partition
+        // This is an additional partition so check it uses the same taxa
+        if (!options.allowDifferentTaxa) { // not allow Different Taxa
+            List<String> oldTaxa = new ArrayList<String>();
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                oldTaxa.add(options.taxonList.getTaxon(i).getId());
+            }
+            List<String> newTaxa = new ArrayList<String>();
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                newTaxa.add(taxa.getTaxon(i).getId());
+            }
 
-                // add the new diff taxa
+            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
+                // set to Allow Different Taxa
+                options.allowDifferentTaxa = true;
+                //changeTabs();// can be added, if required in future
+
                 List<String> prevTaxa = new ArrayList<String>();
                 for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
                     prevTaxa.add(options.taxonList.getTaxon(i).getId());
@@ -470,22 +491,31 @@ public class BEAUTiImporter {
                         options.taxonList.addTaxon(taxa.getTaxon(i));
                     }
                 }
-
             }
+        } else { // allow Different Taxa
+            // AR - it will be much simpler just to consider options.taxonList
+            // to be the union set of all taxa. Each data partition has an alignment
+            // which is a taxon list containing the taxa specific to that partition
+
+            // add the new diff taxa
+            List<String> prevTaxa = new ArrayList<String>();
+            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
+                prevTaxa.add(options.taxonList.getTaxon(i).getId());
+            }
+            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
+                    options.taxonList.addTaxon(taxa.getTaxon(i));
+                }
+            }
+
         }
-
-        addAlignment(alignment, charSets, model, fileName, fileNameStem);
-
-        addTraits(traits, fileName, fileNameStem);
-
-        addTrees(trees);
     }
 
     private void addAlignment(Alignment alignment, List<NexusApplicationImporter.CharSet> charSets,
                               PartitionSubstitutionModel model,
                               String fileName, String fileNameStem) {
         if (alignment != null) {
-            List<PartitionData> partitions = new ArrayList<PartitionData>();
+            List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
                     partitions.add(new PartitionData(options, charSet.getName(), fileName,
@@ -494,105 +524,123 @@ public class BEAUTiImporter {
             } else {
                 partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
             }
-            for (PartitionData partition : partitions) {
-                if (options.hasPartitionData(partition.getName())) {
-                            throw new IllegalArgumentException("Partitions cannot have the same name :\n"
-                                    + partition.getName() + "\nFile loading is failed."); 
-                }
+            createPartitionFramework(model, partitions);
+        }
+    }
 
-                options.dataPartitions.add(partition);
+    private void addPatterns(Patterns patterns, PartitionSubstitutionModel model, String fileName) {
+        if (patterns != null) {
+            List<AbstractPartitionData> partitions = new ArrayList<AbstractPartitionData>();
+            partitions.add(new PartitionPattern(options, patterns.getId(), fileName, patterns));
 
-                if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
-                    partition.setPartitionSubstitutionModel(model);
-//                    model.addPartitionData(partition);
+            createPartitionFramework(model, partitions);
+        }
+    }
 
-                    // use same tree model and same tree prior in beginning
-                    if (options.getPartitionTreeModels() != null
-                            && options.getPartitionTreeModels().size() == 1) {
-                        PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
-                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
-                    }
-                    if (partition.getPartitionTreeModel() == null) {
-                        // PartitionTreeModel based on PartitionData
-                        PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-                        partition.setPartitionTreeModel(ptm);
-
-                        // PartitionTreePrior always based on PartitionTreeModel
-                        PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-                        ptm.setPartitionTreePrior(ptp);
-
-//                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;
-                    }
-
-                    // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                    if (options.getPartitionClockModels() != null
-                            && options.getPartitionClockModels().size() == 1) {
-                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);
-                        partition.setPartitionClockModel(pcm);
-                    }
-                    if (partition.getPartitionClockModel() == null) {
-                        // PartitionClockModel based on PartitionData
-                        PartitionClockModel pcm = new PartitionClockModel(options, partition);
-                        partition.setPartitionClockModel(pcm);
-//                        options.addPartitionClockModel(pcm);
-                    }
-//                    options.clockModelOptions.fixRateOfFirstClockPartition();
-
-                } else {// only this works
-                    if (options.getPartitionSubstitutionModels() != null
-                            && options.getPartitionSubstitutionModels().size() == 1) { // use same substitution model in beginning
-                        PartitionSubstitutionModel psm = options.getPartitionSubstitutionModels().get(0);
-                        if (psm.getDataType() == alignment.getDataType()) {
-                            partition.setPartitionSubstitutionModel(psm);
-                        } else {
-                            //TODO exception?
-                        }
-                    }
-                    if (partition.getPartitionSubstitutionModel() == null) {
-                        // PartitionSubstitutionModel based on PartitionData
-                        PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, partition);
-                        partition.setPartitionSubstitutionModel(psm);
-//                        options.addPartitionSubstitutionModel(psm);
-                    }
-
-                    // use same tree model and same tree prior in beginning
-                    if (options.getPartitionTreeModels() != null
-                            && options.getPartitionTreeModels().size() == 1) {
-                        PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
-                        partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
-                    }
-                    if (partition.getPartitionTreeModel() == null) {
-                        // PartitionTreeModel based on PartitionData
-                        PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-                        partition.setPartitionTreeModel(ptm);
-
-                        // PartitionTreePrior always based on PartitionTreeModel
-                        PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-                        ptm.setPartitionTreePrior(ptp);
-
-//                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;
-                    }
-
-                    // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                    if (options.getPartitionClockModels() != null
-                            && options.getPartitionClockModels().size() == 1) {
-                        PartitionClockModel pcm = options.getPartitionClockModels().get(0);
-                        partition.setPartitionClockModel(pcm);
-                    }
-                    if (partition.getPartitionClockModel() == null) {
-                        // PartitionClockModel based on PartitionData
-                        PartitionClockModel pcm = new PartitionClockModel(options, partition);
-                        partition.setPartitionClockModel(pcm);
-//                        options.addPartitionClockModel(pcm);
-                    }
-                }
+    private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
+        for (AbstractPartitionData partition : partitions) {
+            if (options.hasPartitionData(partition.getName())) {
+                        throw new IllegalArgumentException("Partitions cannot have the same name :\n"
+                                + partition.getName() + "\nFile loading is failed.");
             }
 
+            options.dataPartitions.add(partition);
+
+            if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
+                setSubstModel(partition, model);
+
+                // use same tree model and same tree prior in beginning
+                if (options.getPartitionTreeModels() != null
+                        && options.getPartitionTreeModels().size() == 1) {
+                    PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
+                    partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
+                }
+                if (partition.getPartitionTreeModel() == null) {
+                    // PartitionTreeModel based on PartitionData
+                    PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
+                    partition.setPartitionTreeModel(ptm);
+
+                    // PartitionTreePrior always based on PartitionTreeModel
+                    PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
+                    ptm.setPartitionTreePrior(ptp);
+
+//                        options.addPartitionTreeModel(ptm);
+//                        options.shareSameTreePrior = true;
+                }
+
+                // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+                if (options.getPartitionClockModels() != null
+                        && options.getPartitionClockModels().size() == 1) {
+                    PartitionClockModel pcm = options.getPartitionClockModels().get(0);
+                    partition.setPartitionClockModel(pcm);
+                }
+                if (partition.getPartitionClockModel() == null) {
+                    // PartitionClockModel based on PartitionData
+                    PartitionClockModel pcm = new PartitionClockModel(options, partition);
+                    partition.setPartitionClockModel(pcm);
+//                        options.addPartitionClockModel(pcm);
+                }
+//                    options.clockModelOptions.fixRateOfFirstClockPartition();
+
+            } else {// only this works
+                if (options.getPartitionSubstitutionModels() != null
+                        && options.getPartitionSubstitutionModels().size() == 1) { // use same substitution model in beginning
+                    PartitionSubstitutionModel psm = options.getPartitionSubstitutionModels().get(0);
+                    setSubstModel(partition, psm);
+                }
+                if (partition.getPartitionSubstitutionModel() == null) {
+                    // PartitionSubstitutionModel based on PartitionData
+                    PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, partition);
+                    partition.setPartitionSubstitutionModel(psm);
+//                        options.addPartitionSubstitutionModel(psm);
+                }
+
+                // use same tree model and same tree prior in beginning
+                if (options.getPartitionTreeModels() != null
+                        && options.getPartitionTreeModels().size() == 1) {
+                    PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
+                    partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
+                }
+                if (partition.getPartitionTreeModel() == null) {
+                    // PartitionTreeModel based on PartitionData
+                    PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
+                    partition.setPartitionTreeModel(ptm);
+
+                    // PartitionTreePrior always based on PartitionTreeModel
+                    PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
+                    ptm.setPartitionTreePrior(ptp);
+
+//                        options.addPartitionTreeModel(ptm);
+//                        options.shareSameTreePrior = true;
+                }
+
+                // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+                if (options.getPartitionClockModels() != null
+                        && options.getPartitionClockModels().size() == 1) {
+                    PartitionClockModel pcm = options.getPartitionClockModels().get(0);
+                    partition.setPartitionClockModel(pcm);
+                }
+                if (partition.getPartitionClockModel() == null) {
+                    // PartitionClockModel based on PartitionData
+                    PartitionClockModel pcm = new PartitionClockModel(options, partition);
+                    partition.setPartitionClockModel(pcm);
+//                        options.addPartitionClockModel(pcm);
+                }
+            }
+        }
+
 //            options.updateLinksBetweenPDPCMPSMPTMPTPP();
-            options.updatePartitionAllLinks();
-            options.clockModelOptions.fixRateOfFirstClockPartition();
+        options.updatePartitionAllLinks();
+        options.clockModelOptions.fixRateOfFirstClockPartition();
+    }
+
+    private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
+        if (psm.getDataType() == partition.getDataType()) {
+            partition.setPartitionSubstitutionModel(psm);
+        } else {
+            throw new IllegalArgumentException("Partition " + partition.getName()
+                    + "\ncannot assign to Substitution Model\n" + psm.getName()
+                    + "\nwith different data type.");
         }
     }
 

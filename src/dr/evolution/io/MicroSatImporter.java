@@ -17,6 +17,7 @@ import java.util.List;
 public class MicroSatImporter implements PatternImporter {
     protected final BufferedReader reader;
     protected String delimiter;
+    protected Taxa taxa;
 
     public MicroSatImporter(BufferedReader reader) {
         this(reader, "\t");
@@ -27,8 +28,12 @@ public class MicroSatImporter implements PatternImporter {
         this.delimiter = delimiter;
     }
 
+    public Taxa getTaxa() throws IOException, Importer.ImportException {
+        return taxa;
+    }
+
     public List<Patterns> importPatterns() throws IOException, Importer.ImportException {
-        List<Patterns> pList = new ArrayList<Patterns>();
+        List<Patterns> microsatPatList = new ArrayList<Patterns>();
         List<List<String>> data = new ArrayList<List<String>>(); // 1st List<String> is taxon names
 
         String line = reader.readLine();
@@ -49,6 +54,7 @@ public class MicroSatImporter implements PatternImporter {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
 
+        line = reader.readLine();
         while (line != null) { // read data
             String[] dataLine = line.trim().split("[" + delimiter + " ]+");
 
@@ -57,12 +63,16 @@ public class MicroSatImporter implements PatternImporter {
 
             for (int i = 0; i < dataLine.length; i++) {
                 data.get(i).add(dataLine[i]);
-                int v = parseInt(dataLine[i]);
-                if (i > 0 && v != Microsatellite.UNKNOWN_STATE_LENGTH) {
-                    if (min > v) min = v;
-                    if (max < v) max = v;
+                if (i > 0) {
+                    int v = parseInt(dataLine[i]);
+                    if (v != Microsatellite.UNKNOWN_STATE_LENGTH) {
+                        if (min > v) min = v;
+                        if (max < v) max = v;
+                    }
                 }
             }
+
+            line = reader.readLine();
         }
 
         if (max < min) throw new Importer.ImportException("The max < min !");
@@ -70,10 +80,15 @@ public class MicroSatImporter implements PatternImporter {
         // The min should be the shortest repeat length - 2 and max should be the longest repeat length - 2.
         Microsatellite microsatellite = new Microsatellite(min - 2, max - 2, 1);
 
+        taxa = new Taxa();
+        for (String name : data.get(0)) {
+            Taxon t = new Taxon(name);
+            taxa.addTaxon(t);
+        }
+
         for (int i = 1; i < data.size(); i++) { // create pattern
 //            List<Integer> pattern = new ArrayList<Integer>();
             int[] pattern;
-            Taxa taxa = new Taxa();
 
             if ((i + 1 < data.size()) && names[i].equalsIgnoreCase(names[i + 1])) { // e.g. Locus2	Locus2
                 pattern = new int[data.get(i).size() + data.get(i + 1).size()]; // todo Jessie ?
@@ -81,8 +96,6 @@ public class MicroSatImporter implements PatternImporter {
                 for (int v = 0; v < data.get(i).size(); v++) {
                     String value = data.get(i).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    Taxon t = new Taxon(data.get(0).get(v));
-                    taxa.addTaxon(t);
                     pattern[v] = microsatellite.getState(value);
 //            }
                 }
@@ -101,8 +114,6 @@ public class MicroSatImporter implements PatternImporter {
                 for (int v = 0; v < data.get(i).size(); v++) {
                     String value = data.get(i).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    Taxon t = new Taxon(data.get(0).get(v));
-                    taxa.addTaxon(t);
                     pattern[v] = microsatellite.getState(value);
 //            }
                 }
@@ -112,10 +123,10 @@ public class MicroSatImporter implements PatternImporter {
             Patterns microsatPat = new Patterns(microsatellite, taxa);
             microsatPat.addPattern(pattern);
             microsatPat.setId(names[i]);
-            pList.add(microsatPat);
+            microsatPatList.add(microsatPat);
         }
 
-        return pList;
+        return microsatPatList;
     }
 
     private int parseInt(String s) {

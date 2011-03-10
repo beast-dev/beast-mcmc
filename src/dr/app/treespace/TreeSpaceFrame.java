@@ -2,7 +2,6 @@ package dr.app.treespace;
 
 import dr.app.gui.DeleteActionResponder;
 import dr.app.gui.SelectAllActionResponder;
-import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.treespace.inputpanel.InputPanel;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer;
@@ -18,11 +17,10 @@ import jebl.evolution.trees.RootedTree;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut

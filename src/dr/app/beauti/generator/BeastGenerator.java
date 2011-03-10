@@ -272,9 +272,9 @@ public class BeastGenerator extends Generator {
                 for (AbstractPartitionData partition : options.dataPartitions) {
                     // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
                     if (partition instanceof PartitionData) {
-                    if (((PartitionData) partition).getAlignment() != null) {
-                        writeDifferentTaxaForMultiGene((PartitionData) partition, writer);
-                    }
+                        if (((PartitionData) partition).getAlignment() != null) {
+                            writeDifferentTaxaForMultiGene((PartitionData) partition, writer);
+                        }
                     }
                 }
             }

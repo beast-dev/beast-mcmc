@@ -1,6 +1,7 @@
 package dr.evolution.io;
 
 import dr.evolution.alignment.Patterns;
+import dr.evolution.util.Taxa;
 
 import java.io.IOException;
 import java.util.List;
@@ -11,8 +12,8 @@ import java.util.List;
  */
 public interface PatternImporter {
 
-    // importPatternList
-//	PatternList importPatternList() throws IOException, Importer.ImportException;
+    // getTaxa
+	Taxa getTaxa() throws IOException, Importer.ImportException;
 
     // importPatterns
 	List<Patterns> importPatterns() throws IOException, Importer.ImportException;

@@ -31,7 +31,6 @@ import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.FileDrop;
-import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
@@ -44,6 +43,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -210,6 +210,8 @@ public class BeautiFrame extends DocumentFrame {
         importChooser = new JFileChooser(Utils.getCWD());
 
         importChooser.setMultiSelectionEnabled(true);
+        importChooser.setFileFilter(new FileNameExtensionFilter(
+                        "Microsatellite (tab-delimited *.txt) Files", "txt"));
         importChooser.setFileFilter(new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
         importChooser.setDialogTitle("Import Aligment...");

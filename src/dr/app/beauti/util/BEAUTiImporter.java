@@ -540,8 +540,8 @@ public class BEAUTiImporter {
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {
             if (options.hasPartitionData(partition.getName())) {
-                        throw new IllegalArgumentException("Partitions cannot have the same name :\n"
-                                + partition.getName() + "\nFile loading is failed.");
+                throw new IllegalArgumentException("Partitions cannot have duplicate name :\n"
+                          + partition.getName() + "\nFile loading is failed.");                
             }
 
             options.dataPartitions.add(partition);

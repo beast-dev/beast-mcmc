@@ -26,10 +26,11 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
-import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
@@ -60,6 +61,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck
             = new JCheckBox("Use ambiguities in the tree likelihood associated with this model");
+    private JComboBox microsatSubstCombo = new JComboBox(MicroSatModelType.values());
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 
@@ -122,6 +124,14 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         binarySubstCombo.setToolTipText("<html>Select the type of binary substitution model.</html>");
+
+        PanelUtils.setupComponent(microsatSubstCombo);
+        microsatSubstCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setMicrosatSubstModel((MicroSatModelType) microsatSubstCombo.getSelectedItem());
+            }
+        });
+        microsatSubstCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
 
         PanelUtils.setupComponent(useAmbiguitiesTreeLikelihoodCheck);
         useAmbiguitiesTreeLikelihoodCheck.addItemListener(new ItemListener() {
@@ -256,6 +266,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 activateBSSVS.setSelected(model.isActivateBSSVS());
                 break;
 
+            case DataType.MICRO_SAT:
+                microsatSubstCombo.setSelectedItem(model.getMicrosatSubstModel());
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -360,6 +374,10 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponent(activateBSSVS);
                 break;
 
+            case DataType.MICRO_SAT:
+                addComponentWithLabel("Substitution Model:", microsatSubstCombo);
+                break;
+            
             default:
                 throw new IllegalArgumentException("Unknown data type");
 

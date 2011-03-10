@@ -25,26 +25,31 @@
 
 package dr.app.beauti.clockModelsPanel;
 
-import dr.app.beauti.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
-import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
 import javax.swing.border.TitledBorder;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.*;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.MouseEvent;
 import java.util.EnumSet;
 
 /**
@@ -106,16 +111,6 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
         fixedMeanRateCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                // todo Rather than validating, wouldn't it be nicer to simply disable the checkbox
-                // todo if molecular clocks are linked or there is just one partition?
-                if (!options.clockModelOptions.validateFixMeanRate(fixedMeanRateCheck.isSelected())) {
-                    JOptionPane.showMessageDialog(frame, "It is only necessary to fix mean substitution rate if multiple molecular clock models are being employed.",
-                            "Validation Of Fix Mean Rate",
-                            JOptionPane.WARNING_MESSAGE);
-                    fixedMeanRateCheck.setSelected(false);
-                    return;
-                }
-
                 meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
                 if (fixedMeanRateCheck.isSelected()) {
                     options.clockModelOptions.fixMeanRate();
@@ -123,8 +118,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     options.clockModelOptions.fixRateOfFirstClockPartition();
                 }
 
-                frame.setDirty();
-                frame.repaint();
+                dataTableModel.fireTableDataChanged();
+                fireModelsChanged();
             }
         });
         fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
@@ -148,7 +143,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         JPanel modelPanelParent = new JPanel(new BorderLayout(12,12));
 //        modelPanelParent.setLayout(new BoxLayout(modelPanelParent, BoxLayout.Y_AXIS));
         modelPanelParent.setOpaque(false);
-        TitledBorder modelBorder = new TitledBorder("Molecular Clock Model : ");
+        TitledBorder modelBorder = new TitledBorder("Clock Model : ");
         modelPanelParent.setBorder(modelBorder);
 
         OptionsPanel panel = new OptionsPanel(12, 12);

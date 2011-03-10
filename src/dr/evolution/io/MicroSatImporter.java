@@ -17,7 +17,7 @@ import java.util.List;
 public class MicroSatImporter implements PatternImporter {
     protected final BufferedReader reader;
     protected String delimiter;
-    protected Taxa taxa;
+    protected Taxa unionSetTaxonList = new Taxa();
 
     public MicroSatImporter(BufferedReader reader) {
         this(reader, "\t");
@@ -28,8 +28,8 @@ public class MicroSatImporter implements PatternImporter {
         this.delimiter = delimiter;
     }
 
-    public Taxa getTaxa() throws IOException, Importer.ImportException {
-        return taxa;
+    public Taxa getUnionSetTaxonList() throws IOException, Importer.ImportException {
+        return unionSetTaxonList;
     }
 
     public List<Patterns> importPatterns() throws IOException, Importer.ImportException {
@@ -75,40 +75,58 @@ public class MicroSatImporter implements PatternImporter {
             line = reader.readLine();
         }
 
-        if (max < min) throw new Importer.ImportException("The max < min !");
-        if (min - 2 < 0) throw new Importer.ImportException("min-2 < 0 where min = " + min);
+        if (max < min) throw new Importer.ImportException("Importing invaild data: max < min !");
+        if (min - 2 < 0) throw new Importer.ImportException("Importing invaild data: min-2 < 0 where min = " + min);
         // The min should be the shortest repeat length - 2 and max should be the longest repeat length - 2.
         Microsatellite microsatellite = new Microsatellite(min - 2, max - 2, 1);
 
-        taxa = new Taxa();
+        Taxa taxaHaploid = new Taxa();
         for (String name : data.get(0)) {
             Taxon t = new Taxon(name);
-            taxa.addTaxon(t);
+            taxaHaploid.addTaxon(t);
         }
+        unionSetTaxonList.addTaxa(taxaHaploid);
 
+        Patterns microsatPat;
         for (int i = 1; i < data.size(); i++) { // create pattern
 //            List<Integer> pattern = new ArrayList<Integer>();
             int[] pattern;
 
-            if ((i + 1 < data.size()) && names[i].equalsIgnoreCase(names[i + 1])) { // e.g. Locus2	Locus2
-                pattern = new int[data.get(i).size() + data.get(i + 1).size()]; // todo Jessie ?
+            if ((i + 1 < data.size()) && names[i].equalsIgnoreCase(names[i + 1])) { // diploid: Locus2	Locus2
+                Taxa taxaDiploid = new Taxa();
+                for (String name : data.get(0)) {
+                    Taxon t = new Taxon(names[i] + "_1_" + name);
+                    taxaDiploid.addTaxon(t);
+                }
+                for (String name : data.get(0)) {
+                    Taxon t = new Taxon(names[i] + "_2_" + name);
+                    taxaDiploid.addTaxon(t);
+                }
 
-                for (int v = 0; v < data.get(i).size(); v++) {
-                    String value = data.get(i).get(v);
+                if (unionSetTaxonList.containsAny(taxaDiploid))
+                    throw new Importer.ImportException("Importing invaild data: duplicate taxon name in this locus : " + names[i]);
+
+                unionSetTaxonList.addTaxa(taxaDiploid);
+                
+                pattern = new int[data.get(i).size() + data.get(i + 1).size()];
+                String value;
+                int size = data.get(i).size();
+                for (int v = 0; v < size; v++) {
+                    value = data.get(i).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
                     pattern[v] = microsatellite.getState(value);
 //            }
                 }
                 for (int v = 0; v < data.get(i + 1).size(); v++) {
-                    String value = data.get(i + 1).get(v);
+                    value = data.get(i + 1).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v] = microsatellite.getState(value);
+                    pattern[v + size] = microsatellite.getState(value);
 //            }
                 }
-
+                microsatPat = new Patterns(microsatellite, taxaDiploid);  
                 i++;
 
-            } else {
+            } else { // haploid Locus1
                 pattern = new int[data.get(i).size()];
 
                 for (int v = 0; v < data.get(i).size(); v++) {
@@ -117,10 +135,9 @@ public class MicroSatImporter implements PatternImporter {
                     pattern[v] = microsatellite.getState(value);
 //            }
                 }
-
+                microsatPat = new Patterns(microsatellite, taxaHaploid);
             }
 
-            Patterns microsatPat = new Patterns(microsatellite, taxa);
             microsatPat.addPattern(pattern);
             microsatPat.setId(names[i]);
             microsatPatList.add(microsatPat);
@@ -139,11 +156,11 @@ public class MicroSatImporter implements PatternImporter {
 
     /*
 id	Locus1	Locus2	Locus2	Locus3	Locus4	Locus4	Locus5	Locus6
-T1	5	6	?	20	?	?	?	1
-T2	5	6	?	2	?	?	?	2
-T3	8	6	4	16	9	9	?	3
-T4	12	?	6	1	1	1	?	4
+T1	5	6	?	20	?	?	?	11
+T2	5	6	?	12	?	?	?	12
+T3	8	6	4	16	9	9	?	13
+T4	12	?	6	1	9	12	?	4
 T5	17	?	9	18	7	7	?	5
-T6	19	?	5	14	2	2	?	6
+T6	19	?	5	14	12	12	?	6
      */
 }

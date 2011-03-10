@@ -52,6 +52,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
+    private MicroSatModelType microsatSubstModel = MicroSatModelType.ASYM_QUAD_MODEL;
     private boolean activateBSSVS = false;
 
     public boolean useAmbiguitiesTreeLikelihood = false;
@@ -474,9 +475,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                          nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     }
 
-
                     params.add(nonZeroRates);
                 }
+                break;
+
+            case DataType.MICRO_SAT:
+                
                 break;
 
             default:
@@ -670,6 +674,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
                 break;
 
+            case DataType.MICRO_SAT:
+
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -838,6 +846,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
         this.discreteSubstType = discreteSubstType;
+    }
+
+    public MicroSatModelType getMicrosatSubstModel() {
+        return microsatSubstModel;
+    }
+
+    public void setMicrosatSubstModel(MicroSatModelType microsatSubstModel) {
+        this.microsatSubstModel = microsatSubstModel;
     }
 
     public boolean isActivateBSSVS() {

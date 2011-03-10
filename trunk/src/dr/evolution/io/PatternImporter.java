@@ -13,7 +13,7 @@ import java.util.List;
 public interface PatternImporter {
 
     // getTaxa
-	Taxa getTaxa() throws IOException, Importer.ImportException;
+	Taxa getUnionSetTaxonList() throws IOException, Importer.ImportException;
 
     // importPatterns
 	List<Patterns> importPatterns() throws IOException, Importer.ImportException;

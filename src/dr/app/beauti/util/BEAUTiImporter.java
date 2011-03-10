@@ -7,6 +7,7 @@ import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
@@ -87,12 +88,12 @@ public class BEAUTiImporter {
             MicroSatImporter importer = new MicroSatImporter(bufferedReader);
 
             List<Patterns> microsatPatList = importer.importPatterns();
-            Taxa taxa = importer.getTaxa();
+            Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
 
             bufferedReader.close();
 
             for (Patterns patterns : microsatPatList) {
-                setData(file.getName(), taxa, patterns, null, null);
+                setData(file.getName(), unionSetTaxonList, patterns, null, null);
             }
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
@@ -386,10 +387,10 @@ public class BEAUTiImporter {
     }
 
     // for Patterns
-    private void setData(String fileName, Taxa taxa, Patterns patterns,
+    private void setData(String fileName, Taxa unionSetTaxonList, Patterns patterns,
                          PartitionSubstitutionModel model, List<TraitData> traits //, List<Tree> trees
                          ) throws ImportException, IllegalArgumentException {
-        String fileNameStem = addTaxonListAndTraits(taxa, traits, fileName);
+        String fileNameStem = addTaxonListAndTraits(unionSetTaxonList, traits, fileName);
 
         addPatterns(patterns, model, fileName);
 
@@ -398,26 +399,26 @@ public class BEAUTiImporter {
 //        addTrees(trees);
     }
 
-    private String addTaxonListAndTraits(TaxonList taxa, List<TraitData> traits, String fileName) throws ImportException {
+    private String addTaxonListAndTraits(TaxonList unionSetTaxonList, List<TraitData> traits, String fileName) throws ImportException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
 
         if (options.taxonList == null) {
-            loadFirstPartition(taxa, traits, fileNameStem);
+            loadFirstPartition(unionSetTaxonList, traits, fileNameStem);
             options.fileNameStem = fileNameStem;
         } else {
-            loadRestPartitions(taxa);
+            loadRestPartitions(unionSetTaxonList);
         }
         return fileNameStem;
     }
 
-    private void loadFirstPartition(TaxonList taxa, List<TraitData> traits, String fileNameStem) throws ImportException {
+    private void loadFirstPartition(TaxonList unionSetTaxonList, List<TraitData> traits, String fileNameStem) throws ImportException {
         // This is the first partition to be loaded...
-        options.taxonList = new Taxa(taxa);
+        options.taxonList = new Taxa(unionSetTaxonList);
 
         // check the taxon names for invalid characters
         boolean foundAmp = false;
-        for (Taxon taxon : taxa) {
+        for (Taxon taxon : unionSetTaxonList) {
             String name = taxon.getId();
             if (name.indexOf('&') >= 0) {
                 foundAmp = true;
@@ -430,18 +431,18 @@ public class BEAUTiImporter {
         }
 
         // make sure they all have dates...
-        for (int i = 0; i < taxa.getTaxonCount(); i++) {
-            if (taxa.getTaxonAttribute(i, "date") == null) {
+        for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
+            if (unionSetTaxonList.getTaxonAttribute(i, "date") == null) {
                 Date origin = new Date(0);
 
                 dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                taxa.getTaxon(i).setAttribute("date", date);
+                unionSetTaxonList.getTaxon(i).setAttribute("date", date);
             }
         }
 
         if (traits == null) {
             Set<String> traitNames = new HashSet<String>();
-            for (Taxon taxon : taxa) {
+            for (Taxon taxon : unionSetTaxonList) {
                 Iterator iter = taxon.getAttributeNames();
                 while (iter.hasNext()) {
                     String name = (String)iter.next();
@@ -454,7 +455,7 @@ public class BEAUTiImporter {
             for (String name : traitNames) {
                 if (!name.equalsIgnoreCase("date")) {
                     // todo  - need to work out what type it is...
-                    TraitData.TraitType type = options.guessTraitType(taxa, name);
+                    TraitData.TraitType type = options.guessTraitType(unionSetTaxonList, name);
                     TraitData trait = new TraitData(options, name, "", type);
                     traits.add(trait);
                 }
@@ -462,7 +463,7 @@ public class BEAUTiImporter {
         }
     }
 
-    private void loadRestPartitions(TaxonList taxa) {
+    private void loadRestPartitions(TaxonList unionSetTaxonList) {
         // AR - removed this distinction. I think we should always allow different taxa
         // for different partitions but give a warning if they are different
 
@@ -473,8 +474,8 @@ public class BEAUTiImporter {
                 oldTaxa.add(options.taxonList.getTaxon(i).getId());
             }
             List<String> newTaxa = new ArrayList<String>();
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                newTaxa.add(taxa.getTaxon(i).getId());
+            for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
+                newTaxa.add(unionSetTaxonList.getTaxon(i).getId());
             }
 
             if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
@@ -486,9 +487,9 @@ public class BEAUTiImporter {
                 for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
                     prevTaxa.add(options.taxonList.getTaxon(i).getId());
                 }
-                for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                    if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                        options.taxonList.addTaxon(taxa.getTaxon(i));
+                for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
+                    if (!prevTaxa.contains(unionSetTaxonList.getTaxon(i).getId())) {
+                        options.taxonList.addTaxon(unionSetTaxonList.getTaxon(i));
                     }
                 }
             }
@@ -502,9 +503,9 @@ public class BEAUTiImporter {
             for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
                 prevTaxa.add(options.taxonList.getTaxon(i).getId());
             }
-            for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                if (!prevTaxa.contains(taxa.getTaxon(i).getId())) {
-                    options.taxonList.addTaxon(taxa.getTaxon(i));
+            for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
+                if (!prevTaxa.contains(unionSetTaxonList.getTaxon(i).getId())) {
+                    options.taxonList.addTaxon(unionSetTaxonList.getTaxon(i));
                 }
             }
 
@@ -563,9 +564,6 @@ public class BEAUTiImporter {
                     // PartitionTreePrior always based on PartitionTreeModel
                     PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
                     ptm.setPartitionTreePrior(ptp);
-
-//                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;
                 }
 
                 // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -578,9 +576,7 @@ public class BEAUTiImporter {
                     // PartitionClockModel based on PartitionData
                     PartitionClockModel pcm = new PartitionClockModel(options, partition);
                     partition.setPartitionClockModel(pcm);
-//                        options.addPartitionClockModel(pcm);
                 }
-//                    options.clockModelOptions.fixRateOfFirstClockPartition();
 
             } else {// only this works
                 if (options.getPartitionSubstitutionModels() != null
@@ -592,14 +588,20 @@ public class BEAUTiImporter {
                     // PartitionSubstitutionModel based on PartitionData
                     PartitionSubstitutionModel psm = new PartitionSubstitutionModel(options, partition);
                     partition.setPartitionSubstitutionModel(psm);
-//                        options.addPartitionSubstitutionModel(psm);
                 }
 
                 // use same tree model and same tree prior in beginning
                 if (options.getPartitionTreeModels() != null
                         && options.getPartitionTreeModels().size() == 1) {
-                    PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
-                    partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
+                    PartitionTreeModel ptm;
+                    if (partition.getDataType().getType() == DataType.MICRO_SAT) {
+                        ptm = new PartitionTreeModel(options, partition); // different tree model,
+                        PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
+                        ptm.setPartitionTreePrior(ptp);
+                    } else {
+                        ptm = options.getPartitionTreeModels().get(0); // same tree model,
+                    }
+                    partition.setPartitionTreeModel(ptm); // if same tree model, therefore same prior
                 }
                 if (partition.getPartitionTreeModel() == null) {
                     // PartitionTreeModel based on PartitionData
@@ -609,9 +611,6 @@ public class BEAUTiImporter {
                     // PartitionTreePrior always based on PartitionTreeModel
                     PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
                     ptm.setPartitionTreePrior(ptp);
-
-//                        options.addPartitionTreeModel(ptm);
-//                        options.shareSameTreePrior = true;
                 }
 
                 // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
@@ -624,12 +623,10 @@ public class BEAUTiImporter {
                     // PartitionClockModel based on PartitionData
                     PartitionClockModel pcm = new PartitionClockModel(options, partition);
                     partition.setPartitionClockModel(pcm);
-//                        options.addPartitionClockModel(pcm);
                 }
             }
         }
 
-//            options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionAllLinks();
         options.clockModelOptions.fixRateOfFirstClockPartition();
     }

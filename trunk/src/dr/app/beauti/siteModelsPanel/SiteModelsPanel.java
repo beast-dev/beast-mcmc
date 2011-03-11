@@ -321,6 +321,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             case DataType.GENERAL:
                 title = "Discrete Traits";
                 break;
+            case DataType.MICRO_SAT:
+                title = "Microsatellite";
+                break;
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 

@@ -37,9 +37,6 @@ import java.util.List;
  */
 public class PartitionTreeModel extends PartitionOptions {
 
-    // Instance variables
-
-    protected final BeautiOptions options;
     protected PartitionTreePrior treePrior;
 
     protected StartingTreeType startingTreeType = StartingTreeType.RANDOM;
@@ -60,10 +57,7 @@ public class PartitionTreeModel extends PartitionOptions {
             "Note: BEAST only allows <font color=red>bifurcating</font> tree.</html>";
 
     public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
-        this.options = options;
-        this.partitionName = partition.getName();
-
-        initTreeModelParaAndOpers();
+        super(options, partition.getName());
     }
 
     /**
@@ -74,16 +68,13 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
-        this.options = options;
-        this.partitionName = name;
+        super(options, name);
 
         this.startingTreeType = source.startingTreeType;
         this.userStartingTree = source.userStartingTree;
-
-        initTreeModelParaAndOpers();
     }
 
-    private void initTreeModelParaAndOpers() {
+    protected void initModelParaAndOpers() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");

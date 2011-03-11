@@ -300,6 +300,18 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
+    public List<AbstractPartitionData> getAllPartitionData(PartitionOptions model) {
+        if (model instanceof PartitionSubstitutionModel) {
+            return getAllPartitionData((PartitionSubstitutionModel) model);
+        } else if (model instanceof PartitionClockModel) {
+            return getAllPartitionData((PartitionClockModel) model);
+        } else if (model instanceof PartitionTreeModel) {
+            return getAllPartitionData((PartitionTreeModel) model);
+        } else {
+            return null;
+        }
+    }
+
     public List<AbstractPartitionData> getAllPartitionData(PartitionSubstitutionModel model) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {

@@ -36,10 +36,6 @@ import java.util.List;
  */
 public class PartitionTreePrior extends PartitionOptions {
 
-    // Instance variables
-
-    private final BeautiOptions options;
-
     private PartitionTreeModel treeModel; // only used when not sharing same prior
 
     private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
@@ -56,11 +52,8 @@ public class PartitionTreePrior extends PartitionOptions {
     private boolean fixedTree = false;
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
-        this.options = options;
-        this.partitionName = treeModel.getName();
+        super(options, treeModel.getName());
         this.treeModel = treeModel;
-
-        initTreePriorParaAndOpers();
     }
 
     /**
@@ -71,8 +64,7 @@ public class PartitionTreePrior extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
-        this.options = options;
-        this.partitionName = name;
+        super(options, name);
         this.treeModel = source.treeModel;
 
         this.nodeHeightPrior = source.nodeHeightPrior;
@@ -82,11 +74,9 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skyrideSmoothing = source.skyrideSmoothing;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.fixedTree = source.fixedTree;
-
-        initTreePriorParaAndOpers();
     }
 
-    private void initTreePriorParaAndOpers() {
+    protected void initModelParaAndOpers() {
 
         createParameterJeffreysPrior("constant.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

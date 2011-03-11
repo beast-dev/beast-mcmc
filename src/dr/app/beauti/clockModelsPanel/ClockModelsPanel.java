@@ -325,26 +325,6 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void updateBorder() {
-
-        String title;
-
-//        switch (currentModel.getClockType()) {
-//            case DataType.NUCLEOTIDES:
-//                title = "Nucleotide";
-//                break;
-//            case DataType.AMINO_ACIDS:
-//                title = "Amino Acid";
-//                break;
-//            case DataType.TWO_STATES:
-//                title = "Binary";
-//                break;
-//            case DataType.GENERAL:
-//                title = "Discrete Traits";
-//                break;
-//            default:
-//                throw new IllegalArgumentException("Unsupported data type");
-//
-//        }
         modelBorder.setTitle("Clock Model - " + currentModel.getName());
         repaint();
     }

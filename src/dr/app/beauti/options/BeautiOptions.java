@@ -358,15 +358,15 @@ public class BeautiOptions extends ModelOptions {
 //        return partitionModels;
 //    }
 
-//    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType, List<PartitionData> givenDataPartitions) {
-//        List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
-//        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(givenDataPartitions)) {
-//            if (model.getDataType() == dataType) {
-//                models.add(model);
-//            }
-//        }
-//        return models;
-//    }
+    public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
+        List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(dataPartitions)) {
+            if (model.getDataType() == dataType) {
+                models.add(model);
+            }
+        }
+        return models;
+    }
 
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(List<? extends AbstractPartitionData> givenDataPartitions) {
 
@@ -414,7 +414,15 @@ public class BeautiOptions extends ModelOptions {
 
         return activeModels;
     }
-
+    public List<PartitionClockModel> getPartitionClockModels(DataType dataType) {
+        List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
+        for (PartitionClockModel model : getPartitionClockModels(dataPartitions)) {
+            if (model.getDataType() == dataType) {
+                models.add(model);
+            }
+        }
+        return models;
+    }
 //    public List<PartitionClockModel> getPartitionNonTraitsClockModels() {
 //        return getPartitionClockModels(getNonTraitsDataList());
 //    }

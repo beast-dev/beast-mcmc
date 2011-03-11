@@ -37,19 +37,19 @@ import java.util.List;
  */
 public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
-    private final BeautiOptions options;
     private final PartitionClockModel model;
 	private final PartitionTreeModel tree;
 
     public PartitionClockModelTreeModelLink(BeautiOptions options, PartitionClockModel model, PartitionTreeModel tree) {
-        this.options = options;
+//        super(options, model.getName() + "." + tree.getName());
+        // clockModel and substModel have to be assigned before initModelParaAndOpers()
+        super(options);
         this.model = model;
         this.tree = tree;
-
-        initClockModelTreeModelLinkParaAndOpers();
+        initModelParaAndOpers();
     }
 
-    private void initClockModelTreeModelLinkParaAndOpers() {
+    protected void initModelParaAndOpers() {
 //        {
 //            final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", PriorScaleType.LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 //            p.priorType = PriorType.GAMMA_PRIOR;

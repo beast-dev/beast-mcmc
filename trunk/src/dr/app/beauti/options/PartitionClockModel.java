@@ -35,19 +35,13 @@ import java.util.List;
  */
 public class PartitionClockModel extends PartitionOptions {
 
-    // Instance variables
-    private final BeautiOptions options;
-
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean isEstimatedRate = true;
     private double rate = 1.0;
 
     public PartitionClockModel(BeautiOptions options, AbstractPartitionData partition) {
-        this.options = options;
-        this.partitionName = partition.getName();
-
-        initClockModelParaAndOpers();
+        super(options, partition.getName());
     }
 
     /**
@@ -58,11 +52,8 @@ public class PartitionClockModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
-        this.options = options;
-        this.partitionName = name;
+        super(options, name);
         this.clockType = source.clockType;
-
-        initClockModelParaAndOpers();
     }
 
 //    public PartitionClockModel(BeautiOptions options, String name) {
@@ -70,7 +61,7 @@ public class PartitionClockModel extends PartitionOptions {
 //        this.name = name;
 //    }
 
-    private void initClockModelParaAndOpers() {
+    protected void initModelParaAndOpers() {
 
         int dataLength = 0;
         for (AbstractPartitionData partitionData : options.getAllPartitionData(this)) {

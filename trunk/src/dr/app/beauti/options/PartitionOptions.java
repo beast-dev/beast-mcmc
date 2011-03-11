@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
+import dr.evolution.datatype.DataType;
 
 import java.util.List;
 
@@ -37,8 +38,22 @@ import java.util.List;
 public abstract class PartitionOptions extends ModelOptions {
 
     protected String partitionName;
+    protected final BeautiOptions options;
 
-	protected abstract void selectParameters(List<Parameter> params);
+    public PartitionOptions(BeautiOptions options) {
+        this.options = options;
+    }
+
+    public PartitionOptions(BeautiOptions options, String name) {
+        this.options = options;
+        this.partitionName = name;
+
+        initModelParaAndOpers();
+    }
+
+    protected abstract void initModelParaAndOpers();
+
+    protected abstract void selectParameters(List<Parameter> params);
     protected abstract void selectOperators(List<Operator> ops);
 
     public abstract String getPrefix();
@@ -112,5 +127,9 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public String toString() {
         return getName();
+    }
+
+    public DataType getDataType() {
+        return options.getAllPartitionData(this).get(0).getDataType();
     }
 }

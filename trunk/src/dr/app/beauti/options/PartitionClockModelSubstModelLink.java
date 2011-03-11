@@ -8,19 +8,19 @@ import java.util.List;
  *
  */
 public class PartitionClockModelSubstModelLink extends PartitionOptions {
-    private final BeautiOptions options;
     private final PartitionClockModel clockModel;
     private final PartitionSubstitutionModel substModel;
 
     public PartitionClockModelSubstModelLink(BeautiOptions options, PartitionClockModel clockModel, PartitionSubstitutionModel substModel) {
-        this.options = options;
+//        super(options, clockModel.getName() + "." + substModel.getName());
+        // clockModel and substModel have to be assigned before initModelParaAndOpers()
+        super(options);
         this.clockModel = clockModel;
         this.substModel = substModel;
-
-        initClockModelSubstModelLinkParaAndOpers();
+        initModelParaAndOpers();
     }
 
-    private void initClockModelSubstModelLinkParaAndOpers() {
+    protected void initModelParaAndOpers() {
         // <svsGeneralSubstitutionModel idref="originModel"/>
 //        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
 //                "bit Flip In Substitution Model Operator",

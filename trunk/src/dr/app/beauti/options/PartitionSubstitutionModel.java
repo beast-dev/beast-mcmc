@@ -45,9 +45,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
-    private final BeautiOptions options;
-    private DataType dataType;
-
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
@@ -71,7 +68,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
 //        this(options, partition.getName(),(partition.getTrait() == null)
 //                ? partition.getDataType() : GeneralDataType.INSTANCE);
-           this(options, partition.getName(), partition.getDataType());
+           super(options, partition.getName());
     }
 
     /**
@@ -82,7 +79,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
-        this(options, name, source.dataType);
+        super(options, name);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
@@ -98,19 +95,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
     }
 
-    public PartitionSubstitutionModel(BeautiOptions options, String name, DataType dataType) {
-
-        this.options = options;
-        this.partitionName = name;
-        this.dataType = dataType;
-
-        initSubstModelParaAndOpers();
+    public PartitionSubstitutionModel(BeautiOptions options, String name) {
+        super(options, name);
     }
 
-
     // only init in PartitionSubstitutionModel
-
-    protected void initSubstModelParaAndOpers() {
+    protected void initModelParaAndOpers() {
         double substWeights = 0.1;
 
         //Substitution model parameters
@@ -323,7 +313,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public void selectParameters(List<Parameter> params) {
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
-        switch (dataType.getType()) {
+        switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
@@ -548,7 +538,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
-        switch (dataType.getType()) {
+        switch (getDataType().getType()) {
             case DataType.NUCLEOTIDES:
 
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
@@ -929,14 +919,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setUnlinkedFrequencyModel(boolean unlinkedFrequencyModel) {
         this.unlinkedFrequencyModel = unlinkedFrequencyModel;
-    }
-
-    public DataType getDataType() {
-        return dataType;
-    }
-
-    public void setDataType(DataType dataType) {
-        this.dataType = dataType;
     }
 
     public boolean isDolloModel() {

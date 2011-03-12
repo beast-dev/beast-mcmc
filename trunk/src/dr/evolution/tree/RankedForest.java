@@ -38,9 +38,11 @@ public interface RankedForest {
 
     public int rank();
 
-    public boolean compatible(List<BitSet> constraints);
+    public boolean compatibleRank(List<BitSet> constraints);
 
     public Set<BitSet> clades();
+
+    public int constraintsSatisfied();
 
     public boolean isClear();
 
@@ -66,13 +68,17 @@ public interface RankedForest {
             return nodes.get(0).rank;
         }
 
-        public boolean compatible(List<BitSet> constraints) {
+        public boolean compatibleRank(List<BitSet> constraints) {
             return true;
         }
 
         public Set<BitSet> clades() {
             return Collections.emptySet();
 
+        }
+
+        public int constraintsSatisfied() {
+            return 0;
         }
 
         public boolean isClear() {
@@ -90,9 +96,10 @@ public interface RankedForest {
         RankedNode parent;
         List<RankedNode> nodes;
         HashSet<BitSet> clades;
-        boolean clear = false;
+        int constraintsSatisfied = 0;
+        boolean clear;
 
-        public Parent(RankedForest child, RankedNode parent) {
+        public Parent(RankedForest child, RankedNode parent, List<BitSet> constraints) {
             this.child = child;
             this.parent = parent;
             nodes = new ArrayList<RankedNode>();
@@ -105,7 +112,17 @@ public interface RankedForest {
             clades.addAll(child.clades());
             clades.add(parent.cladeBits);
 
-            if (child.isClear()) clear = true;
+            if (!clear) {
+                constraintsSatisfied = child.constraintsSatisfied();
+                //System.out.println(parent.cladeBits);
+                if (constraints.contains(parent.cladeBits)) {
+                    //System.out.println("Found " + parent.cladeBits + " in constraints!");
+                    constraintsSatisfied += 1;
+                }
+                clear = (constraintsSatisfied == constraints.size());
+            }
+
+            //System.out.println("making parent wih rank " + parent.rank);
         }
 
         public List<RankedNode> getNodes() {
@@ -120,7 +137,7 @@ public interface RankedForest {
             return nodes.get(0).rank;
         }
 
-        public boolean compatible(List<BitSet> constraints) {
+        public boolean compatibleRank(List<BitSet> constraints) {
 
             if (constraints.size() == 1) return true;
 
@@ -130,7 +147,7 @@ public interface RankedForest {
                 if (newRank < rank) return false;
                 rank = newRank;
             }
-            if (rank != Integer.MAX_VALUE) setClear(true);
+            if (rank != Integer.MAX_VALUE) clear = true;
             return true;
         }
 
@@ -138,8 +155,8 @@ public interface RankedForest {
             return clades;
         }
 
-        public void setClear(boolean clear) {
-            this.clear = clear;
+        public int constraintsSatisfied() {
+            return constraintsSatisfied;
         }
 
         public boolean isClear() {
@@ -147,7 +164,7 @@ public interface RankedForest {
         }
 
         private int getRank(BitSet constraint) {
-            //if (constraint.size() > parent.rank) return Integer.MAX_VALUE;
+            //if (constraint.cardinality() > parent.rank) return Integer.MAX_VALUE;
 
             if (parent.cladeBits.equals(constraint)) {
                 return parent.rank;
@@ -158,5 +175,7 @@ public interface RankedForest {
                 return Integer.MAX_VALUE;
             }
         }
+
+        //public String toString() {}
     }
 }

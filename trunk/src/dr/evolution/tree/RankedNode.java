@@ -84,8 +84,10 @@ public class RankedNode {
             inter.clear();
             inter.or(cladeBits);
             inter.and(constraint);
-            return (inter.cardinality() == constraint.cardinality());
 
+            //System.out.println(cladeBits + " and " + constraint + " : compatible=" + Math.min(cladeBits.cardinality(), constraint.cardinality()));
+
+            return (inter.cardinality() == Math.min(cladeBits.cardinality(), constraint.cardinality()));
         }
         return true;
     }
@@ -271,14 +273,14 @@ public class RankedNode {
 
     public static void main(String[] args) throws IOException, ImportException {
 
-//        String[] constraintStrings = {
-//                "111110000000000",
-//                "111111110000000",
-//                "111111111000000",
-//                "000000000110000",
-//                "000000000001100",
-//                "000000000111100"};
-        String[] constraintStrings = {"00000000011", "00000001100"};
+        String[] constraintStrings = {
+                "111110000000000",
+                "111111110000000",
+                "111111111000000",
+                "000000000110000",
+                "000000000001100",
+                "000000000111100"};
+        //String[] constraintStrings = {"00000000011", "00000001100"};
         int n = constraintStrings[0].length();
 
         Rn = new long[12];
@@ -341,10 +343,11 @@ public class RankedNode {
 
         List<RankedNode> nodes = history.getNodes();
         int k = nodes.size();
+        //System.out.println("k = " + k);
 
         if (k == 1) {
             count[1] += 1;
-            //if (count[0] % 1000000 == 0) System.out.println(count[1]);
+            if (count[0] % 10000000 == 0) System.out.println(count[1]);
             //completeHistories.add(nodes.get(0));
         } else {
 
@@ -371,13 +374,17 @@ public class RankedNode {
                             }
                         }
                         if (compatible) {
-                            RankedForest newHis = new RankedForest.Parent(history, parent);
+
+                            //System.out.println(parent.toNewick() + " is compatible!");
+
+                            RankedForest newHis = new RankedForest.Parent(history, parent, constraints);
 
                             // check if order of constraints okay
-                            if (newHis.compatible(constraints)) {
+                            if (newHis.compatibleRank(constraints)) {
                                 processHistory(newHis, completeHistories, constraints, count);
                             }
                         }
+                        //System.out.println(i + " " + j);
                     }
                 }
             }

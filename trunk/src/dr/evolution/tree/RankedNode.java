@@ -273,14 +273,23 @@ public class RankedNode {
 
     public static void main(String[] args) throws IOException, ImportException {
 
+//        String[] constraintStrings = {
+//                  "111110000000000",
+//                  "111111110000000",
+//                  "111111111000000",
+//                  "000000000110000",
+//                  "000000000001100",
+//                  "000000000111100",
+//                  "111111111111111"};
+
         String[] constraintStrings = {
-                "111110000000000",
-                "111111110000000",
-                "111111111000000",
-                "000000000110000",
-                "000000000001100",
-                "000000000111100"};
-        //String[] constraintStrings = {"00000000011", "00000001100"};
+                  "111110000",
+                  "111111110"};
+
+//        //String[] constraintStrings = {"00000000011", "00000001100"};
+
+//        String[] constraintStrings = { "0000011", "1110000", "1111111"};
+
         int n = constraintStrings[0].length();
 
         Rn = new long[12];

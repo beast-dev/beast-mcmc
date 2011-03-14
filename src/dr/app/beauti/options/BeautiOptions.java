@@ -63,7 +63,7 @@ public class BeautiOptions extends ModelOptions {
     public void reset() {
         // Data options
         allowDifferentTaxa = false;
-        dataType = null;
+//        dataType = null;
 //        dataReset = true;
 
         taxonList = null;
@@ -269,6 +269,15 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+
+    public boolean contains(DataType dataType) {
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getDataType().getType() == dataType.getType()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean hasPartitionData(String name) {
@@ -852,7 +861,7 @@ public class BeautiOptions extends ModelOptions {
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
     public boolean allowDifferentTaxa = false;
-    public DataType dataType = null;
+//    public DataType dataType = null;
 
     public Taxa taxonList = null;
 

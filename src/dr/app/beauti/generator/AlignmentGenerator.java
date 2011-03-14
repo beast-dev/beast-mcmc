@@ -1,9 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
@@ -16,7 +14,6 @@ import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -35,17 +32,7 @@ public class AlignmentGenerator extends Generator {
      * Write all Alignments
      * @param writer  XMLWriter
      */
-    public void writeAlignments(XMLWriter writer) {
-        List<Alignment> alignments = new ArrayList<Alignment>();
-
-        for (AbstractPartitionData partition : options.dataPartitions) {
-            Alignment alignment = null;
-            if (partition instanceof PartitionData) ((PartitionData) partition).getAlignment();
-            if (alignment != null && !alignments.contains(alignment)) {
-                alignments.add(alignment);
-            }
-        }
-
+    public void writeAlignments(List<Alignment> alignments, XMLWriter writer) {
         int index = 1;
         for (Alignment alignment : alignments) {
             if (alignments.size() > 1) {

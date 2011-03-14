@@ -547,11 +547,6 @@ public class BeautiFrame extends DocumentFrame {
         return treesPanel.currentTreeModel.getPartitionTreePrior();
     }
 
-    public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
-        //TODO: wait for new implementation in BEAST
-        treesPanel.setCheckedTipDate(isChecked);
-    }
-
     public void setStatusMessage() {
         int width = this.getWidth() - 260; // minus generate button size
         if (width < 100) width = 100; // prevent too narrow

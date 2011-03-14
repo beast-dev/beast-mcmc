@@ -44,6 +44,7 @@ import javax.swing.event.ChangeListener;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
 import java.util.EnumSet;
 import java.util.logging.Logger;
 
@@ -61,7 +62,11 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck
             = new JCheckBox("Use ambiguities in the tree likelihood associated with this model");
+
     private JComboBox microsatSubstCombo = new JComboBox(MicroSatModelType.values());
+    private JTextField microsatName = new JTextField();
+    private JTextField microsatMax = new JTextField();
+    private JTextField microsatMin = new JTextField();
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 
@@ -132,6 +137,19 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         microsatSubstCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
+        microsatName.setColumns(30);
+        microsatName.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {}
+            public void keyPressed(KeyEvent e) {}
+
+            public void keyReleased(KeyEvent e) {
+                model.getMicrosatellite().setName(microsatName.getText());
+            }
+        });
+        microsatMax.setColumns(10);
+        microsatMax.setEditable(false);
+        microsatMin.setColumns(10);
+        microsatMin.setEditable(false);
 
         PanelUtils.setupComponent(useAmbiguitiesTreeLikelihoodCheck);
         useAmbiguitiesTreeLikelihoodCheck.addItemListener(new ItemListener() {
@@ -267,6 +285,9 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.MICRO_SAT:
+                microsatName.setText(model.getMicrosatellite().getName());
+                microsatMax.setText(Integer.toString(model.getMicrosatellite().getMax()));
+                microsatMin.setText(Integer.toString(model.getMicrosatellite().getMin()));
                 microsatSubstCombo.setSelectedItem(model.getMicrosatSubstModel());
                 break;
 
@@ -375,6 +396,12 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.MICRO_SAT:
+                addComponentWithLabel("Microsatellite:", microsatName);
+                addComponentWithLabel("Microsatellite Max:", microsatMax);
+                addComponentWithLabel("Microsatellite Min:", microsatMin);
+
+                addSeparator();
+
                 addComponentWithLabel("Substitution Model:", microsatSubstCombo);
                 break;
             

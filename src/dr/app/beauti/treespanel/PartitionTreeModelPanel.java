@@ -26,20 +26,21 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.gui.components.RealNumberField;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.util.TextUtil;
-import dr.app.util.OSType;
-import dr.evolution.datatype.PloidyType;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.app.gui.components.RealNumberField;
 import dr.app.gui.tree.JTreeDisplay;
 import dr.app.gui.tree.JTreePanel;
 import dr.app.gui.tree.SquareTreePainter;
+import dr.app.util.OSType;
+import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.PloidyType;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -202,7 +203,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
         }
 
-        addComponentWithLabel("Starting Tree:", startingTreeCombo);
+        if (partitionTreeModel.getDataType().getType() != Microsatellite.INSTANCE.getType())
+            addComponentWithLabel("Starting Tree:", startingTreeCombo);
 
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             addComponentWithLabel("Select User-specified Tree:", userTreeCombo);

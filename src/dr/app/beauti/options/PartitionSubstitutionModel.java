@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.operators.RateBitExchangeOperator;
@@ -49,7 +50,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
-    private MicroSatModelType microsatSubstModel = MicroSatModelType.ASYM_QUAD_MODEL;
+    private MicroSatModelType microsatSubstModel = MicroSatModelType.LINEAR_BIAS_MODEL;
+
     private boolean activateBSSVS = false;
 
     public boolean useAmbiguitiesTreeLikelihood = false;
@@ -228,6 +230,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
 
+        createParameter("biasConst", "", 0.5);
+        createOperator("deltaBiasConst", "", "", "biasConst", OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
+        
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
@@ -665,7 +670,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.MICRO_SAT:
-
+                ops.add(getOperator("deltaBiasConst"));
                 break;
 
             default:
@@ -844,6 +849,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setMicrosatSubstModel(MicroSatModelType microsatSubstModel) {
         this.microsatSubstModel = microsatSubstModel;
+    }
+
+    public Microsatellite getMicrosatellite() {
+        return (Microsatellite) getDataType();
     }
 
     public boolean isActivateBSSVS() {

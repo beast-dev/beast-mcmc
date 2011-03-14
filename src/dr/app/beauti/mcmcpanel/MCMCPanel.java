@@ -31,8 +31,9 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.STARBEASTOptions;
-import dr.app.util.OSType;
 import dr.app.gui.components.WholeNumberField;
+import dr.app.util.OSType;
+import dr.evolution.datatype.Microsatellite;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -95,8 +96,11 @@ public class MCMCPanel extends BeautiPanel {
         chainLengthField.setColumns(10);
         optionsPanel.addComponentWithLabel("Length of chain:", chainLengthField);
         chainLengthField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
 
             public void keyReleased(KeyEvent e) {
                 options.chainLength = chainLengthField.getValue();
@@ -110,8 +114,11 @@ public class MCMCPanel extends BeautiPanel {
         echoEveryField.setColumns(10);
         optionsPanel.addComponentWithLabel("Echo state to screen every:", echoEveryField);
         echoEveryField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
 
             public void keyReleased(KeyEvent e) {
                 options.echoEvery = echoEveryField.getValue();
@@ -123,8 +130,11 @@ public class MCMCPanel extends BeautiPanel {
         logEveryField.setColumns(10);
         optionsPanel.addComponentWithLabel("Log parameters every:", logEveryField);
         logEveryField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
 
             public void keyReleased(KeyEvent e) {
                 options.logEvery = logEveryField.getValue();
@@ -138,8 +148,11 @@ public class MCMCPanel extends BeautiPanel {
         optionsPanel.addComponentWithLabel("File name stem:", fileNameStemField);
         fileNameStemField.setEditable(true);
         fileNameStemField.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
 
             public void keyReleased(KeyEvent e) {
                 options.fileNameStem = fileNameStemField.getText();
@@ -150,13 +163,13 @@ public class MCMCPanel extends BeautiPanel {
 
         optionsPanel.addComponent(addTxt);
         if (OSType.isWindows()) {
-        	addTxt.setSelected(true);
+            addTxt.setSelected(true);
         } else {
-        	addTxt.setSelected(false);
+            addTxt.setSelected(false);
         }
         addTxt.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent changeEvent) {
-            	setOptions(options);
+                setOptions(options);
                 frame.setDirty();
             }
         });
@@ -195,11 +208,11 @@ public class MCMCPanel extends BeautiPanel {
         substTreeLogCheck.setOpaque(false);
         substTreeLogCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-            	options.substTreeLog = substTreeLogCheck.isSelected();
-            	updateTreeFileNameList();
-            	substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
+                options.substTreeLog = substTreeLogCheck.isSelected();
+                updateTreeFileNameList();
+                substTreeFileNameField.setEnabled(substTreeLogCheck.isSelected());
                 if (substTreeLogCheck.isSelected()) {
-                	substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
+                    substTreeFileNameField.setText(displayTreeList(options.substTreeFileName));
                 } else {
                     substTreeFileNameField.setText("");
                 }
@@ -258,13 +271,13 @@ public class MCMCPanel extends BeautiPanel {
         add(scrollPane, BorderLayout.CENTER);
     }
 
-    private void updateTreeFileNameList(){
-    	options.treeFileName.clear();
-    	options.substTreeFileName.clear();
-    	String treeFN;
+    private void updateTreeFileNameList() {
+        options.treeFileName.clear();
+        options.substTreeFileName.clear();
+        String treeFN;
 
-    	for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
-    		if (options.substTreeLog) {
+        for (PartitionTreeModel tree : options.getPartitionTreeModels()) {
+            if (options.substTreeLog) {
                 treeFN = options.fileNameStem + "." + tree.getPrefix() + "(time)." + STARBEASTOptions.TREE_FILE_NAME;
             } else {
                 treeFN = options.fileNameStem + "." + tree.getPrefix() + STARBEASTOptions.TREE_FILE_NAME; // stem.partitionName.tree
@@ -273,31 +286,31 @@ public class MCMCPanel extends BeautiPanel {
             options.treeFileName.add(treeFN);
 
             if (options.substTreeLog) {
-            	treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
-            	if (addTxt.isSelected()) treeFN = treeFN + ".txt";
-            	options.substTreeFileName.add(treeFN);
+                treeFN = options.fileNameStem + "." + tree.getPrefix() + "(subst)." + STARBEASTOptions.TREE_FILE_NAME;
+                if (addTxt.isSelected()) treeFN = treeFN + ".txt";
+                options.substTreeFileName.add(treeFN);
             }
         }
 
-    	if (options.useStarBEAST) {
-    		treeFN = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
-    		if (addTxt.isSelected()) treeFN = treeFN + ".txt";
-    		options.treeFileName.add(treeFN);
-    		//TODO: species sub tree
-    	}
+        if (options.useStarBEAST) {
+            treeFN = options.fileNameStem + "." + options.starBEASTOptions.SPECIES_TREE_FILE_NAME;
+            if (addTxt.isSelected()) treeFN = treeFN + ".txt";
+            options.treeFileName.add(treeFN);
+            //TODO: species sub tree
+        }
     }
 
     private String displayTreeList(List<String> treeList) {
-    	String text = "";
+        String text = "";
 
-    	for (String t : treeList) {
-    		text = text + t;
-    		if (treeList.indexOf(t) < treeList.size() - 1) {
-    			text = text + "; ";
-    		}
-    	}
+        for (String t : treeList) {
+            text = text + t;
+            if (treeList.indexOf(t) < treeList.size() - 1) {
+                text = text + "; ";
+            }
+        }
 
-    	return text;
+        return text;
     }
 
     public void setOptions(BeautiOptions options) {
@@ -318,7 +331,13 @@ public class MCMCPanel extends BeautiPanel {
 
         updateOtherFileNames(options);
 
-        samplePriorCheckBox.setSelected(options.samplePriorOnly);
+        if (options.contains(Microsatellite.INSTANCE)) {
+            samplePriorCheckBox.setSelected(false);
+            samplePriorCheckBox.setVisible(false);
+        } else {
+            samplePriorCheckBox.setVisible(true);
+            samplePriorCheckBox.setSelected(options.samplePriorOnly);
+        }
 
         optionsPanel.validate();
         optionsPanel.repaint();

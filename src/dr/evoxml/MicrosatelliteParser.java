@@ -1,7 +1,7 @@
 package dr.evoxml;
 
-import dr.xml.*;
 import dr.evolution.datatype.Microsatellite;
+import dr.xml.*;
 
 
 /**
@@ -13,6 +13,8 @@ import dr.evolution.datatype.Microsatellite;
 public class MicrosatelliteParser extends AbstractXMLObjectParser {
 
     public static final String MICROSAT = "microsatellite";
+    public static final String MIN = "min";
+    public static final String MAX = "max";
 
     public String getParserName() {
         return MICROSAT;
@@ -20,11 +22,12 @@ public class MicrosatelliteParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        int min = xo.getIntegerAttribute("min");
-        int max = xo.getIntegerAttribute("max");
+        int min = xo.getIntegerAttribute(MIN);
+        int max = xo.getIntegerAttribute(MAX);
         int unitLength = xo.getIntegerAttribute("unitLength");
+        String name = xo.getId();
 
-        return new Microsatellite(min, max, unitLength);
+        return new Microsatellite(name, min, max, unitLength);
     }
 
     public String getParserDescription() {
@@ -38,8 +41,9 @@ public class MicrosatelliteParser extends AbstractXMLObjectParser {
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[]{
                 new AndRule(new XMLSyntaxRule[]{
-                    AttributeRule.newIntegerRule("min"),
-                    AttributeRule.newIntegerRule("max"),
+                    AttributeRule.newStringRule(XMLObject.ID),
+                    AttributeRule.newIntegerRule(MIN),
+                    AttributeRule.newIntegerRule(MAX),
                     AttributeRule.newIntegerRule("unitLength")})
         };
     }

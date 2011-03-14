@@ -1,3 +1,28 @@
+/*
+ * CountConstrainedRankedHistories.java
+ *
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evolution.tree;
 
 import dr.math.Binomial;
@@ -39,7 +64,9 @@ public class CountConstrainedRankedHistories {
 
             for (int j = i + 1; j < f.length; j++) {
 
-                if (constraints[j].intersects(constraints[i])) {
+                int parent = parent(constraints, j);
+
+                if (parent == i) {
                     subCladeCount += 1;
                     set.andNot(constraints[j]);
                 }
@@ -65,6 +92,12 @@ public class CountConstrainedRankedHistories {
         for (int i = 0; i < k; i++) {
             Rnk *= Binomial.choose2(n - i);
         }
+
+        if (Rnk == 0) {
+            //System.out.println("R(" + n + ", " + k + ") = " + 0);
+
+        }
+
         return Rnk;
     }
 
@@ -78,6 +111,11 @@ public class CountConstrainedRankedHistories {
         for (int i = 0; i < C; i++) {
             // for all forests in level i
             for (int j = 0; j < i + 1; j++) {
+
+//                if (n[i][j] == 1 && k[i][j] == 1) {
+//                    System.out.println("n(" + i + ", " + j + ") == 1 && k(" + i + ", " + j + ") == 1");
+//                }
+
                 X *= R(n[i][j], k[i][j]);
             }
         }
@@ -155,18 +193,113 @@ public class CountConstrainedRankedHistories {
         for (int level = C - 1; level > 0; level--) {
             int parent = parent(clades, level);
 
-            System.out.println("parent = " + parent);
+            //System.out.println("parent = " + parent);
 
-            n[parent][parent] += 1;
+            for (int c = level - 1; c >= parent; c--) {
+                n[c][parent] += 1;
+            }
         }
     }
 
+    private static boolean kton_next(int[][] v, int[] n, int level) {
+
+        int k = v[level].length - 1;
+
+        if (k < 0) {
+            if (level < v.length-1) {
+
+                reset(v, level);
+
+                return kton_next(v, n, level + 1);
+                //return true;
+            } else return false;
+        }
+
+        //System.out.println("level = " + level + ", k = " + k);
+
+        while (v[level][k] == n[level] - 1) {
+            k -= 1;
+            if (k < 0) {
+                // reset and advance 1 at the next level up, or if at top level then end
+
+                if (level < v.length-1) {
+
+                    reset(v, level);
+                    return kton_next(v, n, level + 1);
+                    //return true;
+                } else return false;
+            }
+        }
+        int vk = v[level][k] + 1;
+
+        while (k < v[level].length) {
+            v[level][k] = vk;
+            k += 1;
+        }
+        return true;
+    }
+
+    private static void reset(int[][] v, int level) {
+        for (int l = 0; l < level; l++) {
+            for (int i = 0; i < v[l].length; i++) {
+                v[l][i] = 0;
+            }
+        }
+    }
+
+    public static void print(int[][] k, int[][] n) {
+
+        System.out.println("k:");
+        for (int level = 0; level < k.length; level++) {
+            for (int sublevel = 0; sublevel < k[level].length; sublevel++) {
+
+                int subforest = sublevel + level;
+
+                System.out.print(k[level][sublevel] + "\t");
+
+            }
+            System.out.println();
+        }
+
+        System.out.println("n:");
+        for (int level = 0; level < k.length; level++) {
+            for (int sublevel = 0; sublevel < k[level].length; sublevel++) {
+                System.out.print(n[level][sublevel] + "\t");
+
+            }
+            System.out.println();
+        }
+
+    }
+
+
     public static void main(String[] args) {
 
-        String[] constraintStrings = {"1111111", "1110000", "0000011"};
+        //String[] constraintStrings = {"1111111", "1110000", "0000011"};
+
+        String[] constraintStrings = {
+                "111111111111111",
+                "000000000111100",
+                "000000000001100",
+                "000000000110000",
+                "111111111000000",
+                "111111110000000",
+                "111110000000000"};
+//
+//        String[] constraintStrings = {
+//                "111111111",
+//                "111111110",
+//                "111110000"};
+
 
         // number of constraints, including the "1,1,...,1,1" constraint
         int C = constraintStrings.length;
+
+        System.out.println("n = " + constraintStrings[0].length());
+        System.out.println("Constraints:");
+        for (int i = 0; i < C; i++) {
+            System.out.println("  " + constraintStrings[i]);
+        }
 
         BitSet[] constraints = new BitSet[C];
 
@@ -178,53 +311,100 @@ public class CountConstrainedRankedHistories {
 
         computeF(constraints, f);
 
-        for (int i = 0; i < f.length; i++) {
-            System.out.println((i + 1) + " : " + f[i]);
-        }
+//        for (int i = 0; i < f.length; i++) {
+//            System.out.println((i + 1) + " : " + f[i]);
+//        }
 
-        System.out.println("Nc = " + Nc(f));
+        //System.out.println("Nc = " + Nc(f));
 
         int[] nC = nC(constraints);
-        for (int i = 0; i < nC.length; i++) {
-            System.out.println("n_{" + (C - 1) + "," + i + "} = " + nC[i]);
-        }
+//        for (int i = 0; i < nC.length; i++) {
+//            System.out.println("n_{" + (C - 1) + "," + i + "} = " + nC[i]);
+//        }
 
 
-        System.out.println("T(1,2,1) = " + totalOrder(new int[]{1, 2, 1}));
+        //System.out.println("T(1,2,1) = " + totalOrder(new int[]{1, 2, 1}));
 
-        int[][] k = new int[][]{
-                {1}, // 1 node in first level forest
-                {0, 0}, // 0 nodes in second level forest of first calibration, 1 nodes in second level forest of second calibration
-                {1, 1, 0}
-        };
-
-        int[][] n = new int[k.length][];
-        for (int i = 0; i < n.length; i++) {
-            n[i] = new int[k[i].length];
+        int[][] k = new int[C][];
+        int[][] n = new int[C][];
+        for (int i = 0; i < k.length; i++) {
+            k[i] = new int[i + 1];
+            n[i] = new int[i + 1];
         }
 
         computeN(k, n, nC, constraints);
 
-        for (int i = 0; i < n.length; i++) {
-            for (int j = 0; j < n[i].length; j++) {
-                System.out.println("n(" + i + "," + j + ") = " + n[i][j]);
-            }
+//        for (int i = 0; i < n.length; i++) {
+//            for (int j = 0; j < n[i].length; j++) {
+//                System.out.println("n(" + i + "," + j + ") = " + n[i][j]);
+//            }
+//
+//        }
 
-        }
-
-        List<int[][]> korders = new ArrayList<int[][]>();
 
         long X = 0;
         // sum X over all k orders
-        for (int i = 0; i < korders.size(); i++) {
 
-            k = korders.get(i);
+        int[][] korders = new int[C][];
+        int[] size = new int[C];
+
+        for (int i = 0; i < C; i++) {
+            korders[i] = new int[f[i]];
+            size[i] = C - i;
+        }
+
+        int calls = 0;
+        do {
+//            for (int j = 0; j < C; j++) {
+//                for (int kj : korders[j]) {
+//
+//                    System.out.print(kj);
+//                }
+//                System.out.print("|");
+//            }
+
+//            System.out.println();
+
+            for (int i = 0; i < k.length; i++) {
+                for (int j = 0; j < k[i].length; j++) {
+                    k[i][j] = 0;
+                }
+            }
+
+            for (int j = 0; j < C; j++) {
+                for (int i = 0; i < korders[j].length; i++) {
+
+                    //System.out.println("korders[" + j + ", " + i + "] = " + korders[j][i]);
+                    //System.out.println("k(" + korders[j][i] + "," + j + ") += 1");
+                    //System.out.println("k.length = " + k.length);
+
+                    k[korders[j][i] + j][j] += 1;
+                }
+            }
 
             computeN(k, n, nC, constraints);
-            X += X(n, k, f);
 
+            //print(k, n);
+
+            //System.out.println("X = " + X(n, k, f));
+
+            X += X(n, k, f);
+            calls += 1;
         }
-        System.out.println(X + " combinations");
+        while (kton_next(korders, size, 0));
+
+        System.out.println("Total # constrained ranked histories = " + X + " in " + calls + " calls.");
+
+
+        //for (int i = 0; i < korders.size(); i++) {
+        //
+        //    k = korders.get(i);
+        //
+        //    computeN(k, n, nC, constraints);
+        //    X += X(n, k, f);
+        //
+        //}
+        //System.out.println(X + " combinations");
 
 
     }

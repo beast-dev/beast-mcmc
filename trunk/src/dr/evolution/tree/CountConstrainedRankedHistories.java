@@ -278,13 +278,14 @@ public class CountConstrainedRankedHistories {
         //String[] constraintStrings = {"1111111", "1110000", "0000011"};
 
         String[] constraintStrings = {
-                "111111111111111",
-                "000000000111100",
-                "000000000001100",
-                "000000000110000",
-                "111111111000000",
-                "111111110000000",
-                "111110000000000"};
+                "11111111111111111111",
+                "00000000011110000000",
+                "00000000000110000000",
+                "00000000011000000000",
+                "00000000000000011111",
+                "11111111100000000000",
+                "11111111000000000000",
+                "11111000000000000000"};
 //
 //        String[] constraintStrings = {
 //                "111111111",
@@ -296,6 +297,8 @@ public class CountConstrainedRankedHistories {
         int C = constraintStrings.length;
 
         System.out.println("n = " + constraintStrings[0].length());
+        System.out.println("#calibrations = " + (constraintStrings.length - 1));
+
         System.out.println("Constraints:");
         for (int i = 0; i < C; i++) {
             System.out.println("  " + constraintStrings[i]);
@@ -353,6 +356,8 @@ public class CountConstrainedRankedHistories {
             size[i] = C - i;
         }
 
+        long startTime = System.currentTimeMillis();
+
         int calls = 0;
         do {
 //            for (int j = 0; j < C; j++) {
@@ -393,7 +398,11 @@ public class CountConstrainedRankedHistories {
         }
         while (kton_next(korders, size, 0));
 
+        long stopTime = System.currentTimeMillis();
+
+
         System.out.println("Total # constrained ranked histories = " + X + " in " + calls + " calls.");
+        System.out.println("Elapsed time " + Math.round((stopTime - startTime) / 10.0) / 100.0 + " seconds");
 
 
         //for (int i = 0; i < korders.size(); i++) {

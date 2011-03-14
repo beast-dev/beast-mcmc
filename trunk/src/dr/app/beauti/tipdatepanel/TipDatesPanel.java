@@ -28,16 +28,16 @@ package dr.app.beauti.tipdatepanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.TipDateSamplingComponentOptions;
-import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.table.DateCellEditor;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.table.TableSorter;
 import dr.evolution.util.*;
 import dr.evoxml.util.DateUnitsType;
-import dr.app.gui.table.*;
 import jam.framework.Exportable;
-import jam.table.HeaderRenderer;
-import dr.app.gui.table.TableEditorStopper;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -215,8 +215,6 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 dataTable.setEnabled(enabled);
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
-
-                frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
 
                 if (options.taxonList != null) timeScaleChanged();
             }

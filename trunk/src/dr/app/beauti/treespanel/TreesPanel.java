@@ -33,6 +33,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
+import dr.evolution.datatype.Microsatellite;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
@@ -239,7 +240,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
 
             } else {
-                linkTreePriorCheck.setEnabled(true);
+                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {
+                    linkTreePriorCheck.setEnabled(false);
+                } else {
+                    linkTreePriorCheck.setEnabled(true);
+                }
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
 
@@ -304,11 +309,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
-
-    public void setCheckedTipDate(boolean isCheckedTipDate) {
-        this.isCheckedTipDate = isCheckedTipDate;
-    }
-
     private void resetPanel() {
         if (!options.hasData()) {
             currentTreeModel = null;
@@ -332,7 +332,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1);
+        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1 && (!options.contains(Microsatellite.INSTANCE)) );
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : treeModelPanels.keySet()) {
@@ -352,11 +352,14 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 if (ptpp != null) {
                     ptpp.setOptions();
 
-                    if (isCheckedTipDate) {
+                    if (options.contains(Microsatellite.INSTANCE)) {
+                        ptpp.setMicrosatelliteTreePrior();
+                    } else if (options.clockModelOptions.isTipCalibrated()) {
                         ptpp.removeCertainPriorFromTreePriorCombo();
                     } else {
                         ptpp.recoveryTreePriorCombo();
                     }
+                    ptpp.repaint();
                 }
             }
         }

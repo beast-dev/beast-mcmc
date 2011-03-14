@@ -6,7 +6,8 @@ package dr.app.beauti.types;
  */
 public enum MicroSatModelType {
 
-    ASYM_QUAD_MODEL("Asymmetric Quadratic Model");
+//    ASYM_QUAD_MODEL("Asymmetric Quadratic Model");
+    LINEAR_BIAS_MODEL("Linear Bias Model");
 
     MicroSatModelType (String displayName) {
         this.displayName = displayName;

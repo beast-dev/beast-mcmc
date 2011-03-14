@@ -35,8 +35,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.SitePatterns;
-import dr.evolution.datatype.Nucleotides;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -45,7 +44,10 @@ import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
-import dr.evoxml.*;
+import dr.evoxml.AlignmentParser;
+import dr.evoxml.DateParser;
+import dr.evoxml.TaxaParser;
+import dr.evoxml.TaxonParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.model.CompoundLikelihoodParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -76,6 +78,7 @@ public class BeastGenerator extends Generator {
     private final static Version version = new BeastVersion();
 
     private final AlignmentGenerator alignmentGenerator;
+    private final PatternListGenerator patternListGenerator;
     private final TreePriorGenerator treePriorGenerator;
     private final TreeLikelihoodGenerator treeLikelihoodGenerator;
     private final SubstitutionModelGenerator substitutionModelGenerator;
@@ -93,6 +96,7 @@ public class BeastGenerator extends Generator {
         super(options, components);
 
         alignmentGenerator = new AlignmentGenerator(options, components);
+        patternListGenerator = new PatternListGenerator(options, components);
         tmrcaStatisticsGenerator = new TMRCAStatisticsGenerator(options, components);
         substitutionModelGenerator = new SubstitutionModelGenerator(options, components);
         treePriorGenerator = new TreePriorGenerator(options, components);
@@ -263,7 +267,7 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Taxon List ++++++++++++++++++
         try {
-            writeTaxa(writer, options.taxonList);
+            writeTaxa(options.taxonList, writer);
 
             if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
                 writer.writeText("");
@@ -271,10 +275,8 @@ public class BeastGenerator extends Generator {
                 // write all taxa in each gene tree regarding each data partition,
                 for (AbstractPartitionData partition : options.dataPartitions) {
                     // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
-                    if (partition instanceof PartitionData) {
-                        if (((PartitionData) partition).getAlignment() != null) {
-                            writeDifferentTaxaForMultiGene((PartitionData) partition, writer);
-                        }
+                    if (partition.getTaxonList() != null) {
+                        writeDifferentTaxa(partition, writer);
                     }
                 }
             }
@@ -288,17 +290,29 @@ public class BeastGenerator extends Generator {
         try {
             if (taxonSets != null && taxonSets.size() > 0) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
+                generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
             }
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Taxon sets generation has failed:\n" + e.getMessage());
         }
 
         //++++++++++++++++ Alignments ++++++++++++++++++
+        List<Alignment> alignments = new ArrayList<Alignment>();
         try {
-            alignmentGenerator.writeAlignments(writer);
-            generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
+            for (AbstractPartitionData partition : options.dataPartitions) {
+                Alignment alignment = null;
+                if (partition instanceof PartitionData) { // microsat has no alignment
+                    ((PartitionData) partition).getAlignment();
+                }
+                if (alignment != null && !alignments.contains(alignment)) {
+                    alignments.add(alignment);
+                }
+            }
+            if (alignments.size() > 0) {
+                alignmentGenerator.writeAlignments(alignments, writer);
+                generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_SEQUENCES, writer);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Alignments generation has failed:\n" + e.getMessage());
@@ -307,16 +321,17 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Pattern Lists ++++++++++++++++++
         try {
             if (!options.samplePriorOnly) {
+                List<Microsatellite> microsatList = new ArrayList<Microsatellite>();
                 for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-                    if (partition instanceof PartitionData) {
-                        if (((PartitionData) partition).getAlignment() != null) {
-                            writePatternList((PartitionData) partition, writer);
-                            writer.writeText("");
+                    if (partition.getTaxonList() != null) {
+                        if (partition instanceof PartitionData) {
+                            patternListGenerator.writePatternList((PartitionData) partition, writer);
+                        } else if (partition instanceof PartitionPattern) { // microsat
+                           patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
+                        } else {
+                            throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                         }
-                    } else if (partition instanceof PartitionPattern) { // microsat
-
-                    } else {
-                        throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
+                        writer.writeText("");
                     }
                 }
             }
@@ -581,7 +596,7 @@ public class BeastGenerator extends Generator {
      * @throws dr.app.util.Arguments.ArgumentException
      *          ArgumentException
      */
-    private void writeTaxa(XMLWriter writer, TaxonList taxonList) throws Arguments.ArgumentException {
+    private void writeTaxa(TaxonList taxonList, XMLWriter writer) throws Arguments.ArgumentException {
         // -1 (single taxa), 0 (1st gene of multi-taxa)
 
         writer.writeComment("The list of taxa to be analysed (can also include dates/ages).",
@@ -639,16 +654,16 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(TaxaParser.TAXA);
     }
 
-    public void writeDifferentTaxaForMultiGene(PartitionData dataPartition, XMLWriter writer) {
-        Alignment alignment = dataPartition.getAlignment();
+    public void writeDifferentTaxa(AbstractPartitionData dataPartition, XMLWriter writer) {
+        TaxonList taxonList = dataPartition.getTaxonList();
 
-        String data = dataPartition.getName();
+        String name = dataPartition.getName();
 
-        writer.writeComment("gene name = " + data + ", ntax= " + alignment.getTaxonCount());
-        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, data + "." + TaxaParser.TAXA)});
+        writer.writeComment("gene name = " + name + ", ntax= " + taxonList.getTaxonCount());
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, name + "." + TaxaParser.TAXA)});
 
-        for (int i = 0; i < alignment.getTaxonCount(); i++) {
-            final Taxon taxon = alignment.getTaxon(i);
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            final Taxon taxon = taxonList.getTaxon(i);
             writer.writeIDref(TaxonParser.TAXON, taxon.getId());
         }
 
@@ -672,114 +687,6 @@ public class BeastGenerator extends Generator {
         writer.writeCloseTag(traitName);
 
         starEASTGeneratorGenerator.writeSTARBEAST(writer);
-    }
-
-    /**
-     * Writes the pattern lists
-     *
-     * @param partition the partition data to write the pattern lists for
-     * @param writer    the writer
-     */
-    public void writePatternList(PartitionData partition, XMLWriter writer) {
-        writer.writeText("");
-
-        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-
-        String codonHeteroPattern = model.getCodonHeteroPattern();
-        int partitionCount = model.getCodonPartitionCount();
-
-        if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
-
-            if (codonHeteroPattern.equals("112")) {
-                writer.writeComment("The unique patterns for codon positions 1 & 2");
-                writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
-                        }
-                );
-                writePatternList(partition, 0, 3, writer);
-                writePatternList(partition, 1, 3, writer);
-
-                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-
-                writer.writeComment("The unique patterns for codon positions 3");
-                writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getPrefix() + SitePatternsParser.PATTERNS),
-                        }
-                );
-
-                writePatternList(partition, 2, 3, writer);
-
-                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-
-            } else {
-                // pattern is 123
-                // write pattern lists for all three codon positions
-                for (int i = 1; i <= 3; i++) {
-                    writer.writeComment("The unique patterns for codon positions " + i);
-                    writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getPrefix() + SitePatternsParser.PATTERNS),
-                            }
-                    );
-
-                    writePatternList(partition, i - 1, 3, writer);
-
-                    writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-                }
-
-            }
-        } else {
-            writePatternList(partition, 0, 1, writer);
-        }
-    }
-
-    /**
-     * Write a single pattern list
-     *
-     * @param partition the partition to write a pattern list for
-     * @param offset    offset by
-     * @param every     skip every
-     * @param writer    the writer
-     */
-    private void writePatternList(PartitionData partition, int offset, int every, XMLWriter writer) {
-
-        Alignment alignment = partition.getAlignment();
-        int from = partition.getFromSite();
-        int to = partition.getToSite();
-        int partEvery = partition.getEvery();
-        if (partEvery > 1 && every > 1) throw new IllegalArgumentException();
-
-        if (from < 1) from = 1;
-        every = Math.max(partEvery, every);
-
-        from += offset;
-
-
-        // this object is created solely to calculate the number of patterns in the alignment
-        SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
-
-        writer.writeComment("The unique patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),
-                "npatterns=" + patterns.getPatternCount());
-
-        List<Attribute> attributes = new ArrayList<Attribute>();
-
-        // no codon, unique patterns site patterns
-        if (offset == 0 && every == 1)
-            attributes.add(new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + SitePatternsParser.PATTERNS));
-
-        attributes.add(new Attribute.Default<String>("from", "" + from));
-        if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));
-
-        if (every > 1) {
-            attributes.add(new Attribute.Default<String>("every", "" + every));
-        }
-
-        // generate <patterns>
-        writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
-        writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
-        writer.writeCloseTag(SitePatternsParser.PATTERNS);
     }
 
     /**

@@ -35,9 +35,15 @@ public class MicroSatImporter implements PatternImporter {
     public List<Patterns> importPatterns() throws IOException, Importer.ImportException {
         List<Patterns> microsatPatList = new ArrayList<Patterns>();
         List<List<String>> data = new ArrayList<List<String>>(); // 1st List<String> is taxon names
-
+        String[] microsatName = new String[2]; // microsatName[0] is keyword, microsatName[1] is name
+        microsatName[1] = "microsat";
         String line = reader.readLine();
-        while (line.startsWith("#") || line.startsWith("[")) { // comments
+        while (line.startsWith("#")) { // comments
+            if (line.toUpperCase().contains("NAME")) {
+                microsatName = line.trim().split("[" + delimiter + " ]+");
+                if (microsatName[1] == null || microsatName[1].length() < 1)
+                    throw new Importer.ImportException("Improper microsatellite name : " + microsatName[1]);
+            }
             line = reader.readLine();
         }
         // read locus (microsat pattern) names in the 1st row after comments, where 1st element is id
@@ -78,7 +84,7 @@ public class MicroSatImporter implements PatternImporter {
         if (max < min) throw new Importer.ImportException("Importing invaild data: max < min !");
         if (min - 2 < 0) throw new Importer.ImportException("Importing invaild data: min-2 < 0 where min = " + min);
         // The min should be the shortest repeat length - 2 and max should be the longest repeat length - 2.
-        Microsatellite microsatellite = new Microsatellite(min - 2, max - 2, 1);
+        Microsatellite microsatellite = new Microsatellite(microsatName[1], min - 2, max - 2, 1);
 
         Taxa taxaHaploid = new Taxa();
         for (String name : data.get(0)) {

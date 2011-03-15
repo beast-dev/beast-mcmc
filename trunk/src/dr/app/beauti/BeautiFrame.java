@@ -24,7 +24,7 @@ import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
-import dr.app.beauti.taxonsetspanel.TaxaPanel;
+import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
 import dr.app.beauti.treespanel.TreesPanel;
@@ -71,7 +71,7 @@ public class BeautiFrame extends DocumentFrame {
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
     private TraitsPanel traitsPanel;
-    private TaxaPanel taxaPanel;
+    private TaxonSetPanel taxonSetPanel;
     private SiteModelsPanel siteModelsPanel;
     private OldClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
@@ -126,7 +126,7 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
-        taxaPanel = new TaxaPanel(this);
+        taxonSetPanel = new TaxonSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
@@ -137,7 +137,7 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel = new MCMCPanel(this);
 
         tabbedPane.addTab("Data Partitions", dataPanel);
-        tabbedPane.addTab("Taxon Sets", taxaPanel);
+        tabbedPane.addTab("Taxon Sets", taxonSetPanel);
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
@@ -236,7 +236,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.setOptions(options);
             tipDatesPanel.setOptions(options);
             traitsPanel.setOptions(options);
-            taxaPanel.setOptions(options);
+            taxonSetPanel.setOptions(options);
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
@@ -259,7 +259,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.getOptions(options);
             tipDatesPanel.getOptions(options);
             traitsPanel.getOptions(options);
-            taxaPanel.getOptions(options);
+            taxonSetPanel.getOptions(options);
             siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);

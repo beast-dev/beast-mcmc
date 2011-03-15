@@ -1,5 +1,5 @@
 /*
- * TaxaPanel.java
+ * TaxonSetPanel.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -58,7 +58,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @version $Id: TaxaPanel.java,v 1.1 2006/09/05 13:29:34 rambaut Exp $
  */
-public class TaxaPanel extends BeautiPanel implements Exportable {
+public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = -3138832889782090814L;
 
@@ -96,7 +96,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
 
     private static int taxonSetCount = 0;
 
-    public TaxaPanel(BeautiFrame parent) {
+    public TaxonSetPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
@@ -707,6 +707,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                     break;
                 case 3:
                     options.taxonSetsTreeModel.put(taxonSet, (PartitionTreeModel) aValue);
+                    this.fireTableDataChanged();
+                    taxonSetsTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
                     break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);

@@ -34,8 +34,8 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
+import java.util.ArrayList;
 import java.util.List;
-
 
 
 /**
@@ -52,10 +52,17 @@ public class ClockModelOptions extends ModelOptions {
     private FixRateType rateOptionClockModel = FixRateType.RELATIVE_TO;
     private double meanRelativeRate = 1.0;
 
+    public List<String> clockModelGroupNameList = new ArrayList<String>();
+    public List<List<PartitionClockModel>> clockModelGroupList = new ArrayList<List<PartitionClockModel>>();
+    public List<Boolean> fixMeanList = new ArrayList<Boolean>();
+    public List<Double> fixMeanRateList = new ArrayList<Double>();
+
     public ClockModelOptions(BeautiOptions options) {
         this.options = options;
 
         initGlobalClockModelParaAndOpers();
+
+        initClockModelGroup();
 
         fixRateOfFirstClockPartition();
     }
@@ -104,6 +111,40 @@ public class ClockModelOptions extends ModelOptions {
         }
 
     }
+
+    //+++++++++++++++++++++++ Clock Model Group ++++++++++++++++++++++++++++++++
+    private void initClockModelGroup() {
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+             String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
+             if (!clockModelGroupNameList.contains(groupName)) {
+                 clockModelGroupNameList.add(groupName);
+                 clockModelGroupList.add(new ArrayList<PartitionClockModel>());
+                 fixMeanList.add(false);
+                 fixMeanRateList.add(1.0);
+             }
+             int i = clockModelGroupNameList.indexOf(groupName);
+             clockModelGroupList.get(i).add(model);
+         }
+    }
+
+    public void updateClockModelGroup() {
+        clockModelGroupNameList.clear();
+        clockModelGroupList.clear();
+        fixMeanList.clear();
+        fixMeanRateList.clear();
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+             String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
+             if (!clockModelGroupNameList.contains(groupName)) {
+                 clockModelGroupNameList.add(groupName);
+                 clockModelGroupList.add(new ArrayList<PartitionClockModel>());
+                 fixMeanList.add(false);
+                 fixMeanRateList.add(1.0);
+             }
+             int i = clockModelGroupNameList.indexOf(groupName);
+             clockModelGroupList.get(i).add(model);
+         }
+    }
+
 
 
     /////////////////////////////////////////////////////////////

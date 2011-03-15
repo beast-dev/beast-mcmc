@@ -863,7 +863,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean allowDifferentTaxa = false;
 //    public DataType dataType = null;
 
-    public Taxa taxonList = null;
+    public Taxa taxonList = null; // union set of all taxa in all partitions. todo change to List<Taxa> regarding data type?
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();

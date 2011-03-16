@@ -15,6 +15,10 @@ public class ContourWithSynder extends KernelDensityEstimator2D  {
         super(x, y, h, n, lims);
     }
 
+    public ContourWithSynder(final double[] x, final double[] y, boolean bandwidthLimit) {
+        super(x, y, bandwidthLimit);
+    }
+
     public ContourWithSynder(final double[] x, final double[] y) {
         super(x, y);
     }

@@ -999,7 +999,9 @@ public class TreeAnnotator {
 
 //                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
                 //ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
-                ContourMaker kde = new ContourWithSynder(values[0], values[1]);
+                boolean bandwidthLimit = false;
+
+                ContourMaker kde = new ContourWithSynder(values[0], values[1], bandwidthLimit);
 
                 ContourPath[] paths = kde.getContourPaths(hpd);
 

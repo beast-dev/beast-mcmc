@@ -279,13 +279,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //        options.updateLinksBetweenPDPCMPSMPTMPTPP();
         options.updatePartitionAllLinks();
 
-        if (!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED)) {
-            //TODO correct?
-            options.clockModelOptions.fixRateOfFirstClockPartition();
+        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
+            if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
+                //TODO correct?
+                options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+            }
         }
-
         frame.setDirty();
     }
 
@@ -511,6 +512,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             if (!model.getName().equals(partition.getName())) {
                 PartitionClockModel newModel = new PartitionClockModel(options, partition);
                 partition.setPartitionClockModel(newModel);
+                newModel.setClockModelGroup(model.getClockModelGroup()); // set clock model group
             }
         }
 

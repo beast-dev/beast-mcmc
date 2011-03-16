@@ -600,7 +600,8 @@ public class BEAUTiImporter {
                     if (partition.getDataType().getType() == DataType.MICRO_SAT) {
                         pcm = new PartitionClockModel(options, partition);
                     } else {
-                        pcm = options.getPartitionClockModels().get(0);
+                        // make sure in the same data type
+                        pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
                     }
                     partition.setPartitionClockModel(pcm);
                 }
@@ -630,8 +631,8 @@ public class BEAUTiImporter {
             }
         }
 
-        options.updatePartitionAllLinks();
-        options.clockModelOptions.fixRateOfFirstClockPartition();
+        options.clockModelOptions.initClockModelGroup();                
+        options.updateAll();
     }
 
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
@@ -651,9 +652,7 @@ public class BEAUTiImporter {
                 options.addTrait(trait);
             }
 
-//            options.updateLinksBetweenPDPCMPSMPTMPTPP();
-            options.updatePartitionAllLinks();
-            options.clockModelOptions.fixRateOfFirstClockPartition();
+            options.updateAll();
         }
     }
 

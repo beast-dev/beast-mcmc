@@ -257,7 +257,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         calculateHeights();
 
         if (options.clockModelOptions.isTipCalibrated()) {
-            options.clockModelOptions.tipTimeCalibration();
+//            options.clockModelOptions.tipTimeCalibration();
         }
 
         dataTableModel.fireTableDataChanged();

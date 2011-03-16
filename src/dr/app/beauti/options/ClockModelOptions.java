@@ -36,6 +36,7 @@ import dr.stats.DiscreteStatistics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 
 /**
@@ -52,19 +53,14 @@ public class ClockModelOptions extends ModelOptions {
     private FixRateType rateOptionClockModel = FixRateType.RELATIVE_TO;
     private double meanRelativeRate = 1.0;
 
-    public List<String> clockModelGroupNameList = new ArrayList<String>();
-    public List<List<PartitionClockModel>> clockModelGroupList = new ArrayList<List<PartitionClockModel>>();
-    public List<Boolean> fixMeanList = new ArrayList<Boolean>();
-    public List<Double> fixMeanRateList = new ArrayList<Double>();
+//    public List<ClockModelGroup> clockModelGroupList = new ArrayList<ClockModelGroup>();
 
     public ClockModelOptions(BeautiOptions options) {
         this.options = options;
 
         initGlobalClockModelParaAndOpers();
 
-        initClockModelGroup();
-
-        fixRateOfFirstClockPartition();
+//        fixRateOfFirstClockPartition();
     }
 
     private void initGlobalClockModelParaAndOpers() {
@@ -113,37 +109,156 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     //+++++++++++++++++++++++ Clock Model Group ++++++++++++++++++++++++++++++++
-    private void initClockModelGroup() {
+    public void initClockModelGroup() {
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-             String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
-             if (!clockModelGroupNameList.contains(groupName)) {
-                 clockModelGroupNameList.add(groupName);
-                 clockModelGroupList.add(new ArrayList<PartitionClockModel>());
-                 fixMeanList.add(false);
-                 fixMeanRateList.add(1.0);
-             }
-             int i = clockModelGroupNameList.indexOf(groupName);
-             clockModelGroupList.get(i).add(model);
+             addClockModelGroup(model);
          }
     }
 
-    public void updateClockModelGroup() {
-        clockModelGroupNameList.clear();
-        clockModelGroupList.clear();
-        fixMeanList.clear();
-        fixMeanRateList.clear();
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
+    public void addClockModelGroup(PartitionClockModel model) {
+        if (model.getClockModelGroup() == null) {
              String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
-             if (!clockModelGroupNameList.contains(groupName)) {
-                 clockModelGroupNameList.add(groupName);
-                 clockModelGroupList.add(new ArrayList<PartitionClockModel>());
-                 fixMeanList.add(false);
-                 fixMeanRateList.add(1.0);
+            ClockModelGroup clockModelGroup;
+            if (containsGroup(groupName)) {
+                 clockModelGroup = getGroup(groupName);
+             } else {
+                 clockModelGroup = new ClockModelGroup(groupName);
              }
-             int i = clockModelGroupNameList.indexOf(groupName);
-             clockModelGroupList.get(i).add(model);
-         }
+             model.setClockModelGroup(clockModelGroup);
+        }
     }
+
+    public List<ClockModelGroup> getClockModelGroups() {
+        List<ClockModelGroup> activeClockModelGroups = new ArrayList<ClockModelGroup>();
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            ClockModelGroup group = model.getClockModelGroup();
+            if ( group != null && (!activeClockModelGroups.contains(group)) ) {
+                activeClockModelGroups.add(group);
+            }
+        }
+        return activeClockModelGroups;
+    }
+
+    public Vector<String> getClockModelGroupNames() {
+        Vector<String> activeClockModelGroups = new Vector<String>();
+        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+            String name = clockModelGroup.getName();
+            if ( name != null && (!activeClockModelGroups.contains(name)) ) {
+                activeClockModelGroups.add(name);
+            }
+        }
+        return activeClockModelGroups;
+    }
+
+    private boolean containsGroup(String groupName) {
+        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+            if (clockModelGroup.getName().equalsIgnoreCase(groupName)) return true;
+        }
+        return false;
+    }
+
+    public ClockModelGroup getGroup(String groupName) {
+        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+            if (clockModelGroup.getName().equalsIgnoreCase(groupName))
+                return clockModelGroup;
+        }
+        return null;
+    }
+
+    public void fixRateOfFirstClockPartition(ClockModelGroup group) {
+        group.setRateTypeOption(FixRateType.RELATIVE_TO);
+        // fix rate of 1st partition
+        int i = 0;
+        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+            if (i < 1) {
+                model.setEstimatedRate(false);
+            } else {
+                model.setEstimatedRate(true);
+            }
+            i = i + 1;
+        }
+    }
+
+    public void fixMeanRate(ClockModelGroup group) {
+        group.setRateTypeOption(FixRateType.FIX_MEAN);
+
+        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
+        }
+    }
+
+    public void tipTimeCalibration(ClockModelGroup group) {
+        group.setRateTypeOption(FixRateType.TIP_CALIBRATED);
+
+        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+            model.setEstimatedRate(true);
+        }
+    }
+
+
+    public void nodeCalibration(ClockModelGroup group) {
+        group.setRateTypeOption(FixRateType.NODE_CALIBRATED);
+
+        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+            model.setEstimatedRate(true);
+        }
+    }
+
+
+    public void rateCalibration(ClockModelGroup group) {
+        group.setRateTypeOption(FixRateType.RATE_CALIBRATED);
+
+        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+            model.setEstimatedRate(true);
+        }
+    }
+
+    public String statusMessageClockModel(ClockModelGroup group) {
+        String t;
+        if (group.getRateTypeOption() == FixRateType.RELATIVE_TO) {
+            if (options.getPartitionClockModels(group).size() == 1) { // single partition clock
+                if (options.getPartitionClockModels(group).get(0).isEstimatedRate()) {
+                    t = "Estimate clock rate";
+                } else {
+                    t = "Fix clock rate to " + options.getPartitionClockModels(group).get(0).getRate();
+                }
+
+            } else {
+                // todo is the following code excuted?
+                t = group.getRateTypeOption().toString() + " ";
+                int c = 0;
+                for (PartitionClockModel model : options.getPartitionClockModels(group)) {
+                    if (!model.isEstimatedRate()) {
+                        if (c > 0) t = t + ", ";
+                        c = c + 1;
+                        t = t + model.getName();
+                    }
+                }
+
+                if (c == 0) t = "Estimate all clock rates";
+                if (c == options.getPartitionClockModels(group).size()) t = "Fix all clock rates";
+            }
+
+        } else {
+            t = group.getRateTypeOption().toString();
+        }
+
+        return t + " in " + group.getName();
+    }
+    
+    public String statusMessageClockModel() {
+        String t = "";
+        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+            t += statusMessageClockModel(clockModelGroup) + "; ";
+        }
+        return t;
+    }
+
+
+
+
+
+
 
 
 
@@ -415,90 +530,90 @@ public class ClockModelOptions extends ModelOptions {
         return weights;
     }
 
-    public void fixRateOfFirstClockPartition() {
-        this.rateOptionClockModel = FixRateType.RELATIVE_TO;
-        // fix rate of 1st partition
-        int i = 0;
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            if (i < 1) {
-                model.setEstimatedRate(false);
-            } else {
-                model.setEstimatedRate(true);
-            }
-            i = i + 1;
-        }
-    }
+//    public void fixRateOfFirstClockPartition() {
+//        this.rateOptionClockModel = FixRateType.RELATIVE_TO;
+//        // fix rate of 1st partition
+//        int i = 0;
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            if (i < 1) {
+//                model.setEstimatedRate(false);
+//            } else {
+//                model.setEstimatedRate(true);
+//            }
+//            i = i + 1;
+//        }
+//    }
+//
+//    public void fixMeanRate() {
+//        this.rateOptionClockModel = FixRateType.FIX_MEAN;
+//
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
+//        }
+//    }
+//
+//    public void tipTimeCalibration() {
+//        this.rateOptionClockModel = FixRateType.TIP_CALIBRATED;
+//
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            model.setEstimatedRate(true);
+//        }
+//    }
+//
+//
+//    public void nodeCalibration() {
+//        this.rateOptionClockModel = FixRateType.NODE_CALIBRATED;
+//
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            model.setEstimatedRate(true);
+//        }
+//    }
+//
+//
+//    public void rateCalibration() {
+//        this.rateOptionClockModel = FixRateType.RATE_CALIBRATED;
+//
+//        for (PartitionClockModel model : options.getPartitionClockModels()) {
+//            model.setEstimatedRate(true);
+//        }
+//    }
 
-    public void fixMeanRate() {
-        this.rateOptionClockModel = FixRateType.FIX_MEAN;
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
-        }
-    }
-
-    public void tipTimeCalibration() {
-        this.rateOptionClockModel = FixRateType.TIP_CALIBRATED;
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-
-    public void nodeCalibration() {
-        this.rateOptionClockModel = FixRateType.NODE_CALIBRATED;
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-
-    public void rateCalibration() {
-        this.rateOptionClockModel = FixRateType.RATE_CALIBRATED;
-
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-    public String statusMessageClockModel() {
-        if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
-            if (options.getPartitionClockModels().size() == 1) { // single partition clock
-                if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
-                    return "Estimate clock rate";
-                } else {
-                    return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
-                }
-
-            } else {
-                String t = rateOptionClockModel.toString() + " ";
-                int c = 0;
-                for (PartitionClockModel model : options.getPartitionClockModels()) {
-                    if (!model.isEstimatedRate()) {
-                        if (c > 0) t = t + ", ";
-                        c = c + 1;
-                        t = t + model.getName();
-                    }
-                }
-
-                if (c == 0) t = "Estimate all clock rates";
-                if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
-
-                return t;
-            }
-
-        } else {
-            return rateOptionClockModel.toString();
-        }
-    }
+//    public String statusMessageClockModel() {
+//        if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
+//            if (options.getPartitionClockModels().size() == 1) { // single partition clock
+//                if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
+//                    return "Estimate clock rate";
+//                } else {
+//                    return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
+//                }
+//
+//            } else {
+//                String t = rateOptionClockModel.toString() + " ";
+//                int c = 0;
+//                for (PartitionClockModel model : options.getPartitionClockModels()) {
+//                    if (!model.isEstimatedRate()) {
+//                        if (c > 0) t = t + ", ";
+//                        c = c + 1;
+//                        t = t + model.getName();
+//                    }
+//                }
+//
+//                if (c == 0) t = "Estimate all clock rates";
+//                if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
+//
+//                return t;
+//            }
+//
+//        } else {
+//            return rateOptionClockModel.toString();
+//        }
+//    }
 
     //+++++++++++++++++++++++ Validation ++++++++++++++++++++++++++++++++
     // true => valid, false => warning message
-    public boolean validateFixMeanRate(boolean fixedMeanRateCheck) {
-        return !(fixedMeanRateCheck && options.getPartitionClockModels().size() < 2);
-    }
+//    public boolean validateFixMeanRate(boolean fixedMeanRateCheck) {
+//        return !(fixedMeanRateCheck && options.getPartitionClockModels().size() < 2);
+//    }
 
 //    public boolean validateRelativeTo() {
 //        for (PartitionClockModel model : options.getPartitionClockModels()) {

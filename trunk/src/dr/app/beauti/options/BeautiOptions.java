@@ -423,15 +423,27 @@ public class BeautiOptions extends ModelOptions {
 
         return activeModels;
     }
+
     public List<PartitionClockModel> getPartitionClockModels(DataType dataType) {
         List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
-        for (PartitionClockModel model : getPartitionClockModels(dataPartitions)) {
+        for (PartitionClockModel model : getPartitionClockModels()) {
             if (model.getDataType() == dataType) {
                 models.add(model);
             }
         }
         return models;
     }
+
+    public List<PartitionClockModel> getPartitionClockModels(ClockModelGroup group) {
+        List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
+        for (PartitionClockModel model : getPartitionClockModels()) {
+            if (model.getClockModelGroup() == group) {
+                models.add(model);
+            }
+        }
+        return models;
+    }
+
 //    public List<PartitionClockModel> getPartitionNonTraitsClockModels() {
 //        return getPartitionClockModels(getNonTraitsDataList());
 //    }
@@ -552,6 +564,13 @@ public class BeautiOptions extends ModelOptions {
             }
         }
 
+    }
+
+    public void updateAll() {
+        updatePartitionAllLinks();
+        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
+            clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+        }
     }
 
     // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
@@ -706,6 +725,8 @@ public class BeautiOptions extends ModelOptions {
             // PartitionClockModel based on PartitionData
             PartitionClockModel pcm = new PartitionClockModel(this, partition);
             partition.setPartitionClockModel(pcm);
+
+            clockModelOptions.addClockModelGroup(pcm);
         }
 
         if (partition.getPartitionTreeModel() == null) {

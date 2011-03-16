@@ -158,25 +158,15 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
         fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
         fixedMeanRateCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                // todo Rather than validating, wouldn't it be nicer to simply disable the checkbox
-                // todo if molecular clocks are linked or there is just one partition?
-                if (!options.clockModelOptions.validateFixMeanRate(fixedMeanRateCheck.isSelected())) {
-                    JOptionPane.showMessageDialog(frame, "It is only necessary to fix mean substitution rate if multiple molecular clock models are being employed.",
-                            "Validation Of Fix Mean Rate",
-                            JOptionPane.WARNING_MESSAGE);
-                    fixedMeanRateCheck.setSelected(false);
-                    return;
-                }
-
                 meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
-                if (fixedMeanRateCheck.isSelected()) {
-                    options.clockModelOptions.fixMeanRate();
-                } else {
-                    options.clockModelOptions.fixRateOfFirstClockPartition();
-                }
+//                if (fixedMeanRateCheck.isSelected()) {
+//                    options.clockModelOptions.fixMeanRate();
+//                } else {
+//                    options.clockModelOptions.fixRateOfFirstClockPartition();
+//                }
 
-                frame.setDirty();
-                frame.repaint();
+                clockTableModel.fireTableDataChanged();
+                fireModelsChanged();
             }
         });
         fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"

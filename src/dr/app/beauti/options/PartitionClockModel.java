@@ -40,6 +40,8 @@ public class PartitionClockModel extends PartitionOptions {
     private boolean isEstimatedRate = true;
     private double rate = 1.0;
 
+    private ClockModelGroup clockModelGroup = null;
+
     public PartitionClockModel(BeautiOptions options, AbstractPartitionData partition) {
         super(options, partition.getName());
     }
@@ -357,6 +359,14 @@ public class PartitionClockModel extends PartitionOptions {
 
     public void setRate(double rate) {
         this.rate = rate;
+    }
+    
+    public ClockModelGroup getClockModelGroup() {
+        return clockModelGroup;
+    }
+
+    public void setClockModelGroup(ClockModelGroup clockModelGroup) {
+        this.clockModelGroup = clockModelGroup;
     }
 
     public String getPrefix() {

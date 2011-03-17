@@ -27,13 +27,11 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.Nucleotides;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
@@ -50,6 +48,7 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 
@@ -231,20 +230,24 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (options.getPartitionTreePriors().size() > 0) {
             OptionsPanel p;
             if (options.useStarBEAST) {
-                linkTreePriorCheck.setEnabled(false);
+//                linkTreePriorCheck.setEnabled(false);
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
-//                options.clockModelOptions.fixRateOfFirstClockPartition(); // fix 1st partition
+                List<PartitionClockModel> pcmList = options.getPartitionClockModels(Nucleotides.INSTANCE);
+                if (pcmList.size() < 1) throw new IllegalArgumentException("*BEAST needs data in " + Nucleotides.INSTANCE.getDescription());
+                ClockModelGroup group = pcmList.get(0).getClockModelGroup();
+
+                options.clockModelOptions.fixRateOfFirstClockPartition(group); // fix 1st partition
 
                 p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
 
             } else {
-                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {
-                    linkTreePriorCheck.setEnabled(false);
-                } else {
-                    linkTreePriorCheck.setEnabled(true);
-                }
+//                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {
+//                    linkTreePriorCheck.setEnabled(false);
+//                } else {
+//                    linkTreePriorCheck.setEnabled(true);
+//                }
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
 
@@ -332,7 +335,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1 && (!options.contains(Microsatellite.INSTANCE)) );
+        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1
+                && (!options.contains(Microsatellite.INSTANCE)) && (!options.useStarBEAST));
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : treeModelPanels.keySet()) {

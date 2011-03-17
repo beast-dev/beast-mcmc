@@ -28,6 +28,7 @@ package dr.app.beauti.priorsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
@@ -221,7 +222,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
             if (options.clockModelOptions.isNodeCalibrated(param)) {
-//                options.clockModelOptions.nodeCalibration();
+                ClockModelGroup group = options.getAllPartitionData(param.getOptions()).get(0).getPartitionClockModel().getClockModelGroup();
+                options.clockModelOptions.nodeCalibration(group);
                 frame.setAllOptions();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();

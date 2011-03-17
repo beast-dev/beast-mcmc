@@ -118,9 +118,10 @@ public class ClockModelOptions extends ModelOptions {
     public void addClockModelGroup(PartitionClockModel model) {
         if (model.getClockModelGroup() == null) {
              String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
+            List<ClockModelGroup> groupsList = getClockModelGroups();
             ClockModelGroup clockModelGroup;
-            if (containsGroup(groupName)) {
-                 clockModelGroup = getGroup(groupName);
+            if (containsGroup(groupName, groupsList)) {
+                 clockModelGroup = getGroup(groupName, groupsList);
              } else {
                  clockModelGroup = new ClockModelGroup(groupName);
              }
@@ -139,9 +140,9 @@ public class ClockModelOptions extends ModelOptions {
         return activeClockModelGroups;
     }
 
-    public Vector<String> getClockModelGroupNames() {
+    public Vector<String> getClockModelGroupNames(List<ClockModelGroup> group) {
         Vector<String> activeClockModelGroups = new Vector<String>();
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+        for (ClockModelGroup clockModelGroup : group) {
             String name = clockModelGroup.getName();
             if ( name != null && (!activeClockModelGroups.contains(name)) ) {
                 activeClockModelGroups.add(name);
@@ -150,15 +151,15 @@ public class ClockModelOptions extends ModelOptions {
         return activeClockModelGroups;
     }
 
-    private boolean containsGroup(String groupName) {
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+    public boolean containsGroup(String groupName, List<ClockModelGroup> groupsList) {
+        for (ClockModelGroup clockModelGroup : groupsList) {
             if (clockModelGroup.getName().equalsIgnoreCase(groupName)) return true;
         }
         return false;
     }
 
-    public ClockModelGroup getGroup(String groupName) {
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+    public ClockModelGroup getGroup(String groupName, List<ClockModelGroup> groupsList) {
+        for (ClockModelGroup clockModelGroup : groupsList) {
             if (clockModelGroup.getName().equalsIgnoreCase(groupName))
                 return clockModelGroup;
         }

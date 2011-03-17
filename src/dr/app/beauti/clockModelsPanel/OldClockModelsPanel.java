@@ -33,12 +33,11 @@ import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
+import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -48,10 +47,11 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -89,6 +89,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
     BeautiOptions options = null;
     boolean settingOptions = false;
 
+    public List<ClockModelGroup> clockModelGroupList = new ArrayList<ClockModelGroup>();
+
     public OldClockModelsPanel(BeautiFrame parent) {
 
         this.frame = parent;
@@ -119,37 +121,37 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         // clockModelCombo.setToolTipText("<html>Select either a strict molecular clock or<br>or a relaxed clock model.</html>");
         // clockModelCombo.addItemListener(comboListener);
 
-        PanelUtils.setupComponent(fixedMeanRateCheck);
-        fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
-        fixedMeanRateCheck.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
+//        PanelUtils.setupComponent(fixedMeanRateCheck);
+//        fixedMeanRateCheck.setSelected(false); // default to FixRateType.ESTIMATE
+//        fixedMeanRateCheck.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent ev) {
+//                meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
 //                if (fixedMeanRateCheck.isSelected()) {
 //                    options.clockModelOptions.fixMeanRate();
 //                } else {
 //                    options.clockModelOptions.fixRateOfFirstClockPartition();
 //                }
-
-                clockModelTableModel.fireTableDataChanged();
-                fireModelsChanged();
-            }
-        });
-        fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
-                + "rather than try to infer it. If this option is turned off, then<br>"
-                + "either the sequences should have dates or the tree should have<br>"
-                + "sufficient calibration informations specified as priors.<br>"
-                + "In addition, it is only available for multi-clock partitions." + "</html>");// TODO Alexei
-
-        PanelUtils.setupComponent(meanRateField);
-        meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
-        meanRateField.setValue(1.0);
-        meanRateField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                frame.setDirty();
-            }
-        });
-        meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
-        meanRateField.setColumns(10);
+//
+//                clockModelTableModel.fireTableDataChanged();
+//                fireModelsChanged();
+//            }
+//        });
+//        fixedMeanRateCheck.setToolTipText("<html>Select this option to fix the mean substitution rate,<br>"
+//                + "rather than try to infer it. If this option is turned off, then<br>"
+//                + "either the sequences should have dates or the tree should have<br>"
+//                + "sufficient calibration informations specified as priors.<br>"
+//                + "In addition, it is only available for multi-clock partitions." + "</html>");// TODO Alexei
+//
+//        PanelUtils.setupComponent(meanRateField);
+//        meanRateField.setEnabled(fixedMeanRateCheck.isSelected());
+//        meanRateField.setValue(1.0);
+//        meanRateField.addKeyListener(new java.awt.event.KeyAdapter() {
+//            public void keyTyped(java.awt.event.KeyEvent ev) {
+//                frame.setDirty();
+//            }
+//        });
+//        meanRateField.setToolTipText("<html>Enter the fixed mean rate here.</html>");
+//        meanRateField.setColumns(10);
 //		meanRateField.setEnabled(true);
 
         JPanel modelPanelParent = new JPanel(new BorderLayout(12, 12));
@@ -158,8 +160,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         TitledBorder modelBorder = new TitledBorder("Clock Model : ");
         modelPanelParent.setBorder(modelBorder);
 
-        OptionsPanel panel = new OptionsPanel(12, 12);
-        panel.addComponents(fixedMeanRateCheck, meanRateField);
+//        OptionsPanel panel = new OptionsPanel(12, 12);
+//        panel.addComponents(fixedMeanRateCheck, meanRateField);
 
 
         // The bottom panel is now small enough that this is not necessary
@@ -168,7 +170,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 //        scrollPane2.setPreferredSize(new Dimension(400, 150));
 
         modelPanelParent.add(scrollPane, BorderLayout.CENTER);
-        modelPanelParent.add(panel, BorderLayout.SOUTH);
+//        modelPanelParent.add(panel, BorderLayout.SOUTH);
 
         //=======  Clock Model Group for Fix Mean function ==========
         clockGroupTableModel = new ClockGroupTableModel();
@@ -185,6 +187,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 };
             }
         };
+        clockGroupTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         clockGroupTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         clockGroupTable.getTableHeader().setReorderingAllowed(false);
 
@@ -201,10 +204,20 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
                 JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         d_scrollPane.setOpaque(false);
-        TitledBorder traitClockBorder = new TitledBorder("Clock Model Group: ");
-        d_scrollPane.setBorder(traitClockBorder);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, modelPanelParent, d_scrollPane);
+        ActionPanel actionPanel1 = new ActionPanel(false);
+        actionPanel1.setAddAction(addClockGroupAction);
+        actionPanel1.setRemoveAction(removeClockGroupAction);
+        addClockGroupAction.setEnabled(false);
+        removeClockGroupAction.setEnabled(false);
+
+        JPanel groupPanel = new JPanel(new BorderLayout(12, 12));
+        groupPanel.add(d_scrollPane, BorderLayout.CENTER);
+        groupPanel.add(actionPanel1, BorderLayout.SOUTH);
+        TitledBorder traitClockBorder = new TitledBorder("Clock Model Group: ");
+        groupPanel.setBorder(traitClockBorder);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, modelPanelParent, groupPanel);
         splitPane.setDividerLocation(MINIMUM_TABLE_HEIGHT);
 
         setOpaque(false);
@@ -213,7 +226,53 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         add(splitPane, BorderLayout.CENTER);
     }
 
+    Action addClockGroupAction = new AbstractAction("+") {
+        public void actionPerformed(ActionEvent ae) {
+            String s = JOptionPane.showInputDialog(frame,
+                    "Please input the new group name below:",
+                    "Add A New Clock Model Group Dialog",
+                    JOptionPane.PLAIN_MESSAGE, null, null,
+                    clockModelGroupList.size() + "_group").toString().trim();
+
+            if ((s != null) && (s.length() > 0)) {
+                if (options.clockModelOptions.containsGroup(s, clockModelGroupList)) {
+                    errorMessageDialog("This name has been used already,\nplease input a new name.");
+                } else {
+                    clockModelGroupList.add(new ClockModelGroup(s));
+                    modelsChanged();
+                }
+
+            } else {
+                errorMessageDialog("Please input a name properly.");
+            }
+        }
+    };
+
+    Action removeClockGroupAction = new AbstractAction("-") {
+        public void actionPerformed(ActionEvent ae) {
+            int row = clockGroupTable.getSelectedRow();
+            if (row >= 0) {
+                ClockModelGroup group = clockModelGroupList.get(row);
+                if (options.getPartitionClockModels(group).size() > 0) {
+                    errorMessageDialog("Cannot remove the group " + group.getName() +
+                            ",\nwhich contains clock model(s)." +
+                            "\nPlease assign model(s) to a different group first.");
+                } else {
+                    clockModelGroupList.remove(row);
+                    modelsChanged();
+                }
+            } else {
+                errorMessageDialog("Please select a group properly.");
+            }
+        }
+    };
+
+    private void errorMessageDialog(String e) {
+         JOptionPane.showMessageDialog(this, e, "Clock Model Panel Error", JOptionPane.ERROR_MESSAGE);
+    }
+
     private void initTable(JTable dataTable) {
+        dataTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         dataTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         dataTable.getTableHeader().setReorderingAllowed(false);
 //        clockModelTable.getTableHeader().setDefaultRenderer(
@@ -248,7 +307,10 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         TableColumn col = clockModelTable.getColumnModel().getColumn(1);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.RANDOM_LOCAL_CLOCK).toArray())));
         col = clockModelTable.getColumnModel().getColumn(4);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(options.clockModelOptions.getClockModelGroupNames())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(options.clockModelOptions.getClockModelGroupNames(clockModelGroupList))));
+
+        addClockGroupAction.setEnabled(clockModelGroupList.size() > 0);
+        removeClockGroupAction.setEnabled(clockModelGroupList.size() > 1);
 
         clockGroupTableModel.fireTableDataChanged();
     }
@@ -274,6 +336,10 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         this.options = options;
 
         settingOptions = true;
+
+        clockModelGroupList = options.clockModelOptions.getClockModelGroups();
+        addClockGroupAction.setEnabled(clockModelGroupList.size() > 0);
+        removeClockGroupAction.setEnabled(clockModelGroupList.size() > 1);
 
         fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
         fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
@@ -388,7 +454,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     options.selectParameters();
                     break;
                 case 4:
-                    model.setClockModelGroup(options.clockModelOptions.getGroup(aValue.toString()));
+                    model.setClockModelGroup(options.clockModelOptions.getGroup(aValue.toString(), clockModelGroupList));
                     break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
@@ -493,17 +559,18 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.clockModelOptions.getClockModelGroups().size();
+//            return options.clockModelOptions.getClockModelGroups().size();
+            return clockModelGroupList.size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.clockModelOptions.getClockModelGroups().get(row).getName();
+                    return clockModelGroupList.get(row).getName();
                 case 1:
-                    return options.clockModelOptions.getClockModelGroups().get(row).isFixMean();
+                    return clockModelGroupList.get(row).isFixMean();
                 case 2:
-                    return options.clockModelOptions.getClockModelGroups().get(row).getFixMeanRate();
+                    return clockModelGroupList.get(row).getFixMeanRate();
             }
             return null;
         }
@@ -514,11 +581,11 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 case 0:
                     String name = ((String) aValue).trim();
                     if (name.length() > 0) {
-                        options.clockModelOptions.getClockModelGroups().get(row).setName(name);
+                        clockModelGroupList.get(row).setName(name);
                     }
                     break;
                 case 1:
-                    ClockModelGroup group = options.clockModelOptions.getClockModelGroups().get(row);
+                    ClockModelGroup group = clockModelGroupList.get(row);
                     group.setFixMean((Boolean) aValue);
                     if ((Boolean) aValue) {
                         options.clockModelOptions.fixMeanRate(group);
@@ -530,7 +597,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     fireModelsChanged();
                     break;
                 case 2:
-                    options.clockModelOptions.getClockModelGroups().get(row).setFixMeanRate((Double) aValue);
+                    clockModelGroupList.get(row).setFixMeanRate((Double) aValue);
                     break;
 
                 default:
@@ -542,7 +609,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
             switch (col) {
                 case 1:// Check box
-                    return options.getPartitionClockModels(options.clockModelOptions.getGroup(getValueAt(row, 0).toString())).size() > 1;
+                    return options.getPartitionClockModels(options.clockModelOptions.
+                            getGroup(getValueAt(row, 0).toString(), clockModelGroupList)).size() > 1;
                 case 2:
                     return /*!fixedMeanRateCheck.isSelected() &&*/ ((Boolean) getValueAt(row, 1));
                 default:

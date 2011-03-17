@@ -427,7 +427,7 @@ public class BeautiOptions extends ModelOptions {
     public List<PartitionClockModel> getPartitionClockModels(DataType dataType) {
         List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
         for (PartitionClockModel model : getPartitionClockModels()) {
-            if (model.getDataType() == dataType) {
+            if (model.getDataType().getType() == dataType.getType()) {
                 models.add(model);
             }
         }

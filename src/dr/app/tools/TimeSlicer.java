@@ -957,13 +957,13 @@ public class TimeSlicer {
 
         ContourMaker contourMaker;
         if (contourMode == ContourMode.JAVA)
-//            contourMaker = new KernelDensityEstimator2D(y[0], y[1], GRIDSIZE);
-            contourMaker = new KernelDensityEstimator2D(y[0], y[1], BANDWIDTHLIMIT);
+            contourMaker = new KernelDensityEstimator2D(y[0], y[1], GRIDSIZE);
+//            contourMaker = new KernelDensityEstimator2D(y[0], y[1], BANDWIDTHLIMIT);
         else if (contourMode == ContourMode.R)
             contourMaker = new ContourWithR(y[0], y[1], GRIDSIZE);
         else if (contourMode == ContourMode.SNYDER)
-//            contourMaker = new ContourWithSynder(y[0], y[1], GRIDSIZE);
-            contourMaker = new ContourWithSynder(y[0], y[1], BANDWIDTHLIMIT);
+            contourMaker = new ContourWithSynder(y[0], y[1], GRIDSIZE);
+//            contourMaker = new ContourWithSynder(y[0], y[1], BANDWIDTHLIMIT);
         else
             throw new RuntimeException("Unimplemented ContourModel!");
 

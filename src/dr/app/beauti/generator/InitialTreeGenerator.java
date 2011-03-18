@@ -1,10 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.options.PartitionTreePrior;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
@@ -91,8 +88,11 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
 
-                if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-                        || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+                ClockModelGroup group = options.getAllPartitionData(model).get(0).
+                        getPartitionClockModel().getClockModelGroup();
+
+                if (group.getRateTypeOption() == FixRateType.FIX_MEAN
+                        || group.getRateTypeOption() == FixRateType.RELATIVE_TO) {
 
 //            		writer.writeComment("No calibration");
                     writer.writeOpenTag(

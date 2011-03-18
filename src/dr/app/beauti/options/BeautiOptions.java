@@ -351,6 +351,16 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
+    public List<AbstractPartitionData> getAllPartitionData(ClockModelGroup clockModelGroup) {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
     public boolean isEBSPSharingSamePrior() {
         return getPartitionTreePriors().size() >= 1 &&
                 (isShareSameTreePrior() && getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.EXTENDED_SKYLINE);

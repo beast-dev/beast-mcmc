@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
+
 import java.util.Map;
 
 /**
@@ -51,6 +52,8 @@ public class Operator {
     public boolean inUse;
     public String idref;
 
+    private ClockModelGroup clockModelGroup = null;
+
     public static class Builder {
         // Required para
         private final String baseName;
@@ -69,7 +72,6 @@ public class Operator {
 
         private boolean inUse = true;
         private boolean tuningEdited = false;
-
 
         public Builder(String name, String description, Parameter parameter, OperatorType type, double tuning, double weight) {
             this.baseName = name;
@@ -176,6 +178,14 @@ public class Operator {
 
     public String getBaseName() {
         return baseName;
+    }
+
+    public ClockModelGroup getClockModelGroup() {
+        return clockModelGroup;
+    }
+
+    public void setClockModelGroup(ClockModelGroup clockModelGroup) {
+        this.clockModelGroup = clockModelGroup;
     }
 
 }

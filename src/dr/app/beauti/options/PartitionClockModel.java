@@ -166,7 +166,7 @@ public class PartitionClockModel extends PartitionOptions {
 //            }
 
             rateParam.isFixed = fixed;
-            if (fixed && options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO
+            if (fixed && clockModelGroup.getRateTypeOption() == FixRateType.RELATIVE_TO
                     && rateParam.initial != rate) {
                 rateParam.initial = rate;
                 rateParam.setPriorEdited(true);
@@ -193,7 +193,7 @@ public class PartitionClockModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if ((!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN))
+            if ((!(clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN))
                     && isEstimatedRate) {
                 switch (clockType) {
                     case STRICT_CLOCK:
@@ -319,7 +319,7 @@ public class PartitionClockModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        double selectedRate = options.clockModelOptions.getSelectedRate(options.dataPartitions);
+        double selectedRate = options.clockModelOptions.getSelectedRate(clockModelGroup);
 
         rateParam.priorType = PriorType.GAMMA_PRIOR;
         rateParam.initial = selectedRate;

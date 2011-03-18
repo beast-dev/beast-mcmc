@@ -32,7 +32,6 @@ import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.RealNumberCellEditor;
@@ -246,11 +245,11 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
-        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
-        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
+//        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
+//        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
+//        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
 
         int selRow = clockTable.getSelectedRow();
         clockTableModel.fireTableDataChanged();
@@ -273,7 +272,7 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
         if (settingOptions) return;
 
-        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
+//        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
     }
 
 

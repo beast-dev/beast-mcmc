@@ -23,8 +23,6 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.FixRateType;
-
 import java.util.List;
 
 
@@ -57,17 +55,21 @@ public class PriorOptions extends ModelOptions {
 //        double substitutionRateMaximum = 100;
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
-
-        double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.dataPartitions);
-        double avgInitialRootHeight = rootAndRate[0];
-        double avgInitialRate = rootAndRate[1];
-
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-
-            growthRateMaximum = 1E6 * avgInitialRate;
-//            birthRateMaximum = 1E6 * avgInitialRate;
+        //todo the following code need to be corrected
+        double avgInitialRootHeight = 0;
+        double avgInitialRate = 0;
+        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
+            double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(clockModelGroup);
+            avgInitialRootHeight = rootAndRate[0];
+            avgInitialRate = rootAndRate[1];
         }
+
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+//
+//            growthRateMaximum = 1E6 * avgInitialRate;
+//            birthRateMaximum = 1E6 * avgInitialRate;
+//        }
 
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
 //            double rate = options.clockModelOptions.getMeanRelativeRate();

@@ -32,7 +32,6 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
@@ -341,11 +340,11 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         addClockGroupAction.setEnabled(clockModelGroupList.size() > 0);
         removeClockGroupAction.setEnabled(clockModelGroupList.size() > 1);
 
-        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
-        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
-        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
+//        fixedMeanRateCheck.setSelected(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN);
+//        fixedMeanRateCheck.setEnabled(!(options.clockModelOptions.getRateOptionClockModel() == FixRateType.TIP_CALIBRATED
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.NODE_CALIBRATED
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RATE_CALIBRATED));
+//        meanRateField.setValue(options.clockModelOptions.getMeanRelativeRate());
 
         settingOptions = false;
 
@@ -373,7 +372,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 //        } else {
 //        	options.clockModelOptions.fixRateOfFirstClockPartition();
 //        }
-        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
+//        options.clockModelOptions.setMeanRelativeRate(meanRateField.getValue());
 
 //        fireModelsChanged();
     }

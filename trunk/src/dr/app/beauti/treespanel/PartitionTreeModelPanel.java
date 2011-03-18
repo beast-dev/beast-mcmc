@@ -27,6 +27,7 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
@@ -190,8 +191,12 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         removeAll();
 
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+        ClockModelGroup group = null;
+        if (options.getAllPartitionData(partitionTreeModel).size() > 0)
+            group = options.getAllPartitionData(partitionTreeModel).get(0).getPartitionClockModel().getClockModelGroup();
+        
+        if (group != null && (group.getRateTypeOption() == FixRateType.FIX_MEAN
+                || group.getRateTypeOption() == FixRateType.RELATIVE_TO) ) {
             initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
             initRootHeightField.setColumns(10);
             initRootHeightField.setEnabled(false);

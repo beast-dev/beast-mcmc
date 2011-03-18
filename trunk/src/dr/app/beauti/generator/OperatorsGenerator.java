@@ -281,7 +281,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeOpenTag(UpDownOperatorParser.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed && !(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN)) {
+        if (!operator.parameter1.isFixed && !(operator.getClockModelGroup().getRateTypeOption() == FixRateType.FIX_MEAN)) {
         	writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperatorParser.UP);
@@ -312,7 +312,7 @@ public class OperatorsGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-        if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
+        if (operator.getBaseName().startsWith(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
             int[] parameterWeights = ((PartitionSubstitutionModel) operator.parameter1.getOptions()).getPartitionCodonWeights();
 
@@ -330,9 +330,9 @@ public class OperatorsGenerator extends Generator {
                 );
             }
 
-        } else if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
+        } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
 
-        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights();
+        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];

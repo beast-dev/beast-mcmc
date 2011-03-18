@@ -327,7 +327,7 @@ public class BeastGenerator extends Generator {
                         if (partition instanceof PartitionData) {
                             patternListGenerator.writePatternList((PartitionData) partition, writer);
                         } else if (partition instanceof PartitionPattern) { // microsat
-                           patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
+                            patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
                         } else {
                             throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                         }
@@ -427,13 +427,16 @@ public class BeastGenerator extends Generator {
             }
 
             // write allClockRate for fix mean option in clock model panel
-            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-                writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, "allClockRates")});
-                for (PartitionClockModel model : options.getPartitionClockModels()) {
-                    branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+            for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
+                if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
+                    writer.writeOpenTag(CompoundParameterParser.COMPOUND_PARAMETER,
+                            new Attribute[]{new Attribute.Default<String>(XMLParser.ID, clockModelGroup.getName())});
+                    for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
+                        branchRatesModelGenerator.writeAllClockRateRefs(model, writer);
+                    }
+                    writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
+                    writer.writeText("");
                 }
-                writer.writeCloseTag(CompoundParameterParser.COMPOUND_PARAMETER);
-                writer.writeText("");
             }
         } catch (Exception e) {
             e.printStackTrace();

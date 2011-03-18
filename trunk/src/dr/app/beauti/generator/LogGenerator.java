@@ -273,29 +273,31 @@ public class LogGenerator extends Generator {
             }
         }
 
-        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
-            writer.writeIDref(ParameterParser.PARAMETER, "allClockRates");
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                if (model.getClockType() == ClockType.UNCORRELATED) {
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
+            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
+                writer.writeIDref(ParameterParser.PARAMETER, clockModelGroup.getName());
+                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
+                    if (model.getClockType() == ClockType.UNCORRELATED) {
+                        switch (model.getClockDistributionType()) {
+                            case LOGNORMAL:
+                                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                                break;
+                            case GAMMA:
+                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
-                        case EXPONENTIAL:
-                            // nothing required
-                            break;
+                            case EXPONENTIAL:
+                                // nothing required
+                                break;
+                        }
                     }
                 }
-            }
-        } else {
-            for (PartitionClockModel model : options.getPartitionClockModels()) {
-                branchRatesModelGenerator.writeLog(model, writer);
+            } else {
+                for (PartitionClockModel model : options.getPartitionClockModels(clockModelGroup)) {
+                    branchRatesModelGenerator.writeLog(model, writer);
+                }
             }
         }
 
@@ -504,7 +506,7 @@ public class LogGenerator extends Generator {
 
         String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getPrefix();
         fileName = (fileName.endsWith(".") ? "" : ".") + "rates.log";
-        
+
         writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "RateMatrixLog"),
                 new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),

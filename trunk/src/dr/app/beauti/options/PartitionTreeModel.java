@@ -196,7 +196,8 @@ public class PartitionTreeModel extends PartitionOptions {
 	}
 
 	private void calculateInitialRootHeightPerTree() {
-		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
+        ClockModelGroup group = options.getAllPartitionData(this).get(0).getPartitionClockModel().getClockModelGroup();
+		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(group) [0];
 	}
 
     public String getPrefix() {

@@ -93,7 +93,7 @@ public class TimeSlicer {
     public static final String ICON = "http://maps.google.com/mapfiles/kml/pal4/icon49.png";
     public static final int GRIDSIZE = 200;
     public static final double[] BANDWIDTHS = new double[]{1.0,1.0};
-
+    public static final boolean BANDWIDTHLIMIT = true;
 
     public static final String[] falseTrue = {"false", "true"};
 
@@ -375,6 +375,7 @@ public class TimeSlicer {
             double[][] sliceTreeMaxDistances = new double[sliceTreeMaxDistanceArrays.size()][sliceCount];
             double[][] sliceTreeTimesFromRoot = new double[sliceCount][sliceTreeTimeFromRootArrays.size()];
             double[][] sliceTreeDiffusionCoefficients = new double[sliceTreeDiffusionCoefficientArrays.size()][sliceCount];
+            double[][] sliceTreeDiffusionCoefficientVariances = new double[sliceTreeDiffusionCoefficientVarianceArrays.size()][sliceCount];
             //double[][] sliceTreeWeightedAverageDiffusionCoefficients = new double[sliceTreeDistanceArrays.size()][sliceCount];
             for (int q = 0; q < sliceTreeDistanceArrays.size(); q++) {
                 double[] distanceArray = (double[]) sliceTreeDistanceArrays.get(q);
@@ -382,18 +383,21 @@ public class TimeSlicer {
                 double[] maxDistanceArray = (double[]) sliceTreeMaxDistanceArrays.get(q);
                 double[] timeFromRootArray = (double[]) sliceTreeTimeFromRootArrays.get(q);
                 double[] diffusionCoefficientArray = (double[]) sliceTreeDiffusionCoefficientArrays.get(q);
+                double[] diffusionCoefficientVarianceArray = (double[]) sliceTreeDiffusionCoefficientVarianceArrays.get(q);
                 for (int r = 0; r < distanceArray.length; r++) {
                     sliceTreeDistances[r][q] = distanceArray[r];
                     sliceTreeTimes[r][q] = timeArray[r];
                     sliceTreeMaxDistances[q][r] = maxDistanceArray[r];
                     sliceTreeTimesFromRoot[r][q] = timeFromRootArray[r];
                     sliceTreeDiffusionCoefficients[q][r] = diffusionCoefficientArray[r];
+                    sliceTreeDiffusionCoefficientVariances[q][r] = diffusionCoefficientVarianceArray[r];
                 }
             }
 
             //print2DArray(sliceTreeDistances,"sliceTreeDistances.txt");
             //print2DArray(sliceTreeTimes,"sliceTreeTimes.txt");
             //print2DTransposedArray(sliceTreeDiffusionCoefficients,"sliceTreeDiffusionCoefficients.txt");
+            //print2DTransposedArray(sliceTreeDiffusionCoefficientVariances,"sliceTreeDiffusionCoefficientVariances.txt");
             //print2DArray(sliceTreeTimesFromRoot,"sliceTreeTimesFromRoot.txt");
 
             if (sliceCount > 1) {
@@ -801,6 +805,7 @@ public class TimeSlicer {
             }
 
             int count = thisTrait.size();
+            System.out.println(count);
             double[][] y = new double[dim][count];
             for (int i = 0; i < count; i++) {
                 Trait trait = thisTrait.get(i);
@@ -952,11 +957,13 @@ public class TimeSlicer {
 
         ContourMaker contourMaker;
         if (contourMode == ContourMode.JAVA)
-            contourMaker = new KernelDensityEstimator2D(y[0], y[1], GRIDSIZE);
+//            contourMaker = new KernelDensityEstimator2D(y[0], y[1], GRIDSIZE);
+            contourMaker = new KernelDensityEstimator2D(y[0], y[1], BANDWIDTHLIMIT);
         else if (contourMode == ContourMode.R)
             contourMaker = new ContourWithR(y[0], y[1], GRIDSIZE);
         else if (contourMode == ContourMode.SNYDER)
-            contourMaker = new ContourWithSynder(y[0], y[1], GRIDSIZE);
+//            contourMaker = new ContourWithSynder(y[0], y[1], GRIDSIZE);
+            contourMaker = new ContourWithSynder(y[0], y[1], BANDWIDTHLIMIT);
         else
             throw new RuntimeException("Unimplemented ContourModel!");
 
@@ -1519,7 +1526,9 @@ public class TimeSlicer {
                     }
                 }
             }
+            System.out.println(treeNormalization+"\t"+precision[0][0]+"\t"+precision[0][1]+"\t"+precision[1][0]+"\t"+precision[1][1]);
         }
+
 
         if (tipValues != null && tipValues.size() == 0) {
             // this is the first tree so initialize the tip value lists
@@ -1549,6 +1558,9 @@ public class TimeSlicer {
         //double[] treeSliceDiffusionCoefficientWA = new double[sliceCount];
         //this one is used for simple average
         double[] treeSliceDiffusionCoefficientA = new double[sliceCount];
+        // this is for the variance
+        double[] treeSliceDiffusionCoefficientV = new double[sliceCount];
+        double[][] treeSliceDiffusionCoefficients = new double[sliceCount][treeTime.getNodeCount() - 1];
         double[] treeSliceBranchCount = new double[sliceCount];
 
         treeLengths.add(Tree.Utils.getTreeLength(treeTime, treeTime.getRoot()));
@@ -1602,7 +1614,9 @@ public class TimeSlicer {
                                 Trait parentNodeLocationTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[0]));
                                 treeSliceDistance[i] += getGeographicalDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue());
                                 //treeSliceDiffusionCoefficientWA[i] += (Math.pow((getGeographicalDistance(nodeLocationTrait.getValue(),parentNodeLocationTrait.getValue())),2.0)/(4.0*(parentHeight-nodeHeight)))*(parentHeight-nodeHeight);
-                                treeSliceDiffusionCoefficientA[i] += (Math.pow((getGeographicalDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue())), 2.0) / (4.0 * (parentHeight - nodeHeight)));
+                                double diffusionCoefficient =  (Math.pow((getGeographicalDistance(nodeLocationTrait.getValue(), parentNodeLocationTrait.getValue())), 2.0) / (4.0 * (parentHeight - nodeHeight)));
+                                treeSliceDiffusionCoefficientA[i] += diffusionCoefficient;
+                                treeSliceDiffusionCoefficients[i][x] = diffusionCoefficient;
                                 treeSliceBranchCount[i]++;
                             }
                         }
@@ -1651,7 +1665,9 @@ public class TimeSlicer {
 //                                    if (slices[i] > nodeHeight) {
                                     trait = imputeValue(trait, new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j])),
                                             slices[i], nodeHeight, parentHeight, precision, rate, trueNoise);
-//                                    }
+//                                    System.out.println(slices[i]+"\t"+nodeHeight+"\t"+parentHeight+"\t"+precision[0][0]+"\t"+precision[0][1]+"\t"+precision[1][0]+"\t"+precision[1][1]+"\t"+rate+"\t"+trait);
+////
+//  }
                                     // QUESTION to PL: MAS does not see how slices[i] is ever less than nodeHeight
 //                                } else if (impute && (sliceMode == SliceMode.NODES)) {
 //                                    progressStream.println("no imputation for slice mode = nodes");
@@ -1664,7 +1680,9 @@ public class TimeSlicer {
                                     treeSliceTime[i] += (parentHeight - slices[i]);
                                     Trait parentTrait = new Trait(treeTime.getNodeAttribute(treeTime.getParent(node), traits[j]));
                                     treeSliceDistance[i] += getGeographicalDistance(trait.getValue(), parentTrait.getValue());
-                                    treeSliceDiffusionCoefficientA[i] += (Math.pow((getGeographicalDistance(trait.getValue(), parentTrait.getValue())), 2.0) / (4.0 * (parentHeight - slices[i])));
+                                    double diffusionCoefficient =  (Math.pow((getGeographicalDistance(trait.getValue(), parentTrait.getValue())), 2.0) / (4.0 * (parentHeight - slices[i])));
+                                    treeSliceDiffusionCoefficientA[i] += diffusionCoefficient;
+                                    treeSliceDiffusionCoefficients[i][x] = diffusionCoefficient;
                                     treeSliceBranchCount[i]++;
                                     double tempDistanceFromRoot = getDistanceFromRoot(treeTime, traits[j], trait.getValue());
                                     if (maxDistanceFromRoot[i] < tempDistanceFromRoot) {
@@ -1746,9 +1764,14 @@ public class TimeSlicer {
             for (int i = 0; i < treeSliceDiffusionCoefficientA.length; i++) {
                 //treeSliceDiffusionCoefficientWA[i] = treeSliceDiffusionCoefficientWA[i]/treeSliceTime[i];
                 treeSliceDiffusionCoefficientA[i] = treeSliceDiffusionCoefficientA[i] / treeSliceBranchCount[i];
+                for (int j = 0; j < treeSliceDiffusionCoefficients[0].length; j++) {
+                    treeSliceDiffusionCoefficientV[i] += Math.pow((treeSliceDiffusionCoefficients[i][j] - treeSliceDiffusionCoefficientA[i]),2);
+                }
+                treeSliceDiffusionCoefficientV[i] = treeSliceDiffusionCoefficientV[i] / treeSliceBranchCount[i];
                 //System.out.println(treeSliceTime[i]+"\t"+treeLengths.get(i));
             }
             sliceTreeDiffusionCoefficientArrays.add(treeSliceDiffusionCoefficientA);
+            sliceTreeDiffusionCoefficientVarianceArrays.add(treeSliceDiffusionCoefficientV);
         }
 
 
@@ -1842,6 +1865,7 @@ public class TimeSlicer {
     private ArrayList sliceTreeMaxDistanceArrays = new ArrayList();
     private ArrayList sliceTreeTimeFromRootArrays = new ArrayList();
     private ArrayList sliceTreeDiffusionCoefficientArrays = new ArrayList();
+    private ArrayList sliceTreeDiffusionCoefficientVarianceArrays = new ArrayList();
     private boolean sdr;
     private ArrayList treeLengths = new ArrayList();
 
@@ -1880,9 +1904,13 @@ public class TimeSlicer {
             }
         }
 
+//        System.out.print(time+"\t"+nodeHeight+"\t"+parentHeight+"\t"+scaledTimeChild+"\t"+scaledTimeParent+"\t"+scaledWeightTotal+"\t"+mean[0]+"\t"+mean[1]+"\t"+scaledPrecision[0][0]+"\t"+scaledPrecision[0][1]+"\t"+scaledPrecision[1][0]+"\t"+scaledPrecision[1][1]);
+
         if (trueNoise) {
             mean = MultivariateNormalDistribution.nextMultivariateNormalPrecision(mean, scaledPrecision);
         }
+//        System.out.println("\t"+mean[0]+"\t"+mean[1]+"\r");
+
         Object[] result = new Object[dim];
         for (int i = 0; i < dim; i++)
             result[i] = mean[i];

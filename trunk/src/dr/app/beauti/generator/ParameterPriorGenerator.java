@@ -26,9 +26,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
@@ -78,7 +78,7 @@ public class ParameterPriorGenerator extends Generator {
             if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                 if (parameter.isCached) {
                     writeCachedParameterPrior(parameter, writer);
-                } else if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                     writeParameterPrior(parameter, writer);
                 }
             }
@@ -105,8 +105,8 @@ public class ParameterPriorGenerator extends Generator {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);

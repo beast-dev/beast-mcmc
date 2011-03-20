@@ -167,8 +167,8 @@ public class InitialTreeGenerator extends Generator {
                     if (statistic.isNodeHeight) {
                         if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                             writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.lower, true);
-                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.upper, true);
+                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
                             writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                         }
                     }

@@ -24,10 +24,10 @@
 package dr.app.beauti.options;
 
 
+import dr.app.beauti.generator.Generator;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.generator.Generator;
 import dr.evomodelxml.operators.TreeNodeSlideParser;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
@@ -91,7 +91,7 @@ public class STARBEASTOptions extends ModelOptions {
         createParameterJeffreysPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
                 "Species tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Species tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
+                "Species tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
 
         createParameterJeffreysPrior(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
         		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

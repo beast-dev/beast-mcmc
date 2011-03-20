@@ -65,6 +65,8 @@ public class Parameter {
 
     public double lower;
     public double upper;
+    public double uniformUpper;
+    public double uniformLower;
     public double mean;
     public double stdev;
     public double shape;
@@ -90,6 +92,8 @@ public class Parameter {
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
         private double upper = Double.NaN;
         private double lower = Double.NaN;
+        public double uniformUpper = 0.0;
+        public double uniformLower = 0.0;
         public double mean = 0.0;
         public double stdev = 1.0;
         public double shape = 1.0;
@@ -177,6 +181,16 @@ public class Parameter {
             return this;
         }
 
+        public Builder uniformUpper(double uniformUpper) {
+            this.uniformUpper = uniformUpper;
+            return this;
+        }
+
+        public Builder uniformLower(double uniformLower) {
+            this.uniformLower = uniformLower;
+            return this;
+        }
+
         public Builder mean(double mean) {
             this.mean = mean;
             return this;
@@ -229,6 +243,8 @@ public class Parameter {
         priorFixed = builder.priorFixed;
         upper = builder.upper;
         lower = builder.lower;
+        uniformUpper = builder.uniformUpper;
+        uniformLower = builder.uniformLower;
         mean = builder.mean;
         stdev = builder.stdev;
         shape = builder.shape;
@@ -311,10 +327,10 @@ public class Parameter {
 
     public boolean isPriorImproper() {
         if (
-                // 1/x is an improper prior but we probably don't want to flag it as
-                // such (or we want to make a more explicit distinction about when it
-                // might be appropriate:
-                /* priorType == PriorType.ONE_OVER_X_PRIOR || */
+            // 1/x is an improper prior but we probably don't want to flag it as
+            // such (or we want to make a more explicit distinction about when it
+            // might be appropriate:
+            /* priorType == PriorType.ONE_OVER_X_PRIOR || */
                 (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
             return true;
         }

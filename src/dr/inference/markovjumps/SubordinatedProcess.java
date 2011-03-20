@@ -199,9 +199,12 @@ public class SubordinatedProcess {
             if (DEBUG) {
                 check[drawnNumber] = cdf;
                 if (drawnNumber == maxTries) {
-                    System.err.println("cdf = " + cdf);
-                    System.err.println("cutoff = " + cutoff);
-                    System.err.println("ctmcProb = " + ctmcProbability);
+                    System.err.println("Start state = " + startingState);
+                    System.err.println("End state   = " + endingState);
+                    System.err.println("Time        = " + time);
+                    System.err.println("CDF         = " + cdf);
+                    System.err.println("Cutoff      = " + cutoff);
+                    System.err.println("CTMC prob   = " + ctmcProbability);
                     System.err.println("PoissonRate = " + getPoissonRate());
 
                     double[] distr = computePDFDirectly(startingState, endingState, time, ctmcProbability, drawnNumber);
@@ -211,11 +214,11 @@ public class SubordinatedProcess {
                         total += distr[i];
                         checkCDF[i] = total;
                     }
-                    System.err.println("distr = " + new Vector(distr));
-                    System.err.println("cdf   = " + new Vector(checkCDF));
-                    System.err.println("check = " + new Vector(check));
+                    System.err.println("Direct compute = " + new Vector(distr));
+                    System.err.println("Via CDF        = " + new Vector(checkCDF));
+                    System.err.println("Check distr    = " + new Vector(check));
 
-                    throw new RuntimeException("Oh yeah");
+                    throw new RuntimeException("Likely numerical instability in computing end-conditioned CTMC simulant.");
                 }
             }
         }
@@ -251,5 +254,5 @@ public class SubordinatedProcess {
     private double cachedXForExp = Double.NaN;
     private double cachedExpValue;
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 }

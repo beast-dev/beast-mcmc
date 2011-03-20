@@ -1,9 +1,12 @@
 package dr.app.beauti.components;
 
+import dr.app.beauti.options.ComponentOptions;
+import dr.app.beauti.options.ModelOptions;
+import dr.app.beauti.options.Operator;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.SequenceErrorType;
-import dr.app.beauti.options.*;
 
 import java.util.List;
 
@@ -28,12 +31,12 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
 
     public void createParameters(final ModelOptions modelOptions) {
         modelOptions.createParameterUniformPrior(AGE_RATE_PARAMETER,"age dependent sequence error rate",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         modelOptions.createParameterUniformPrior(BASE_RATE_PARAMETER,"base sequence error rate",
-                PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
+                PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0, 0.0, 1.0);
 
         modelOptions.createParameterUniformPrior(HYPERMUTION_RATE_PARAMETER,"APOBEC editing rate per context",
-                PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0);
+                PriorScaleType.UNITY_SCALE, 1.0E-8, 0.0, 1.0, 0.0, 1.0);
         modelOptions.createParameter(HYPERMUTANT_INDICATOR_PARAMETER, "indicator parameter reflecting which sequences are hypermutated", 0.0);
 
         modelOptions.createDiscreteStatistic(HYPERMUTANT_COUNT_STATISTIC, "count of the number of hypermutated sequences");

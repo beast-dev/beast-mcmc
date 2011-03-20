@@ -25,7 +25,6 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -145,10 +144,9 @@ public class BeautiOptions extends ModelOptions {
                 Parameter statistic = statistics.get(taxa);
                 if (statistic == null) {
                     PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
-
+                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
                     statistic = new Parameter.Builder(taxa.getId(), "")
-                            .taxaId(treeModel.getPrefix() + taxa.getId())
-                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.NONE)
+                            .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true)
                             .initial(Double.NaN).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
                     statistics.put(taxa, statistic);
                 }

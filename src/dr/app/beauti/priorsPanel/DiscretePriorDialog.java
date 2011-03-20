@@ -25,8 +25,8 @@
 
 package dr.app.beauti.priorsPanel;
 
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.PriorType;
 import dr.app.gui.components.RealNumberField;
 import jam.panels.OptionsPanel;
 
@@ -150,8 +150,8 @@ public class DiscretePriorDialog {
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.lower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.upper = argumentFields[1].getValue();
+                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
+                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
                 break;
             case POISSON_PRIOR:
                 if (argumentFields[0].getValue() != null) parameter.mean = argumentFields[0].getValue();

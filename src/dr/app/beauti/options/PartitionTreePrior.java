@@ -104,20 +104,20 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
         createParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion",
-                PriorScaleType.NONE, 0.1, 0.0, 1.0);
+                PriorScaleType.NONE, 0.1, 0.0, 1.0, 0.0, 1.0);
 
         createParameterUniformPrior("skyline.popSize", "Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
         // skyride.logPopSize is log unit unlike other popSize
         createParameterUniformPrior("skyride.logPopSize", "GMRF Bayesian skyride population sizes (log unit)",
-                PriorScaleType.TIME_SCALE, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
 
         createParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
         createParameterJeffreysPrior("demographic.populationMean", "Extended Bayesian Skyline population prior mean",
                 PriorScaleType.TIME_SCALE, 1, 0, Double.POSITIVE_INFINITY);
@@ -125,12 +125,12 @@ public class PartitionTreePrior extends PartitionOptions {
         createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
         createParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
 
         createParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
 
         createScaleOperator("constant.popSize", demoTuning, demoWeights);
         createScaleOperator("exponential.popSize", demoTuning, demoWeights);

@@ -62,9 +62,9 @@ public class ModelOptions {
     }
 
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double lower, double upper) {
+                                            double uniformLower, double uniformUpper, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).lower(lower).upper(upper).build(parameters);
+                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).build(parameters);
     }
 
     public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,

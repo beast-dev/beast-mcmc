@@ -23,6 +23,8 @@
 
 package dr.app.beauti.options;
 
+import dr.evolution.datatype.Nucleotides;
+
 import java.util.List;
 
 
@@ -48,18 +50,22 @@ public class PriorOptions extends ModelOptions {
      *
      * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> params) {
+    public void selectParameters(List<Parameter> params) { // todo this part needs to be reconsidered carefully !
 
         double growthRateMaximum = 1E6;
 //        double birthRateMaximum = 1E6;
 //        double substitutionRateMaximum = 100;
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
-        //todo the following code need to be corrected
-        double avgInitialRootHeight = 0;
-        double avgInitialRate = 0;
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(clockModelGroup);
+
+        double avgInitialRootHeight = 1;
+        double avgInitialRate = 1;
+
+
+        List<ClockModelGroup> clockModelGroupList = options.clockModelOptions.getClockModelGroups(Nucleotides.INSTANCE);
+        if (clockModelGroupList.size() > 0) {
+            //todo assume all Nucleotides data is in one group, it needs to extend to multi-group case
+            double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(clockModelGroupList.get(0));
             avgInitialRootHeight = rootAndRate[0];
             avgInitialRate = rootAndRate[1];
         }

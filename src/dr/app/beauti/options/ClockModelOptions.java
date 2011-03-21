@@ -27,6 +27,7 @@ import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.RelativeRatesType;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
@@ -144,6 +145,17 @@ public class ClockModelOptions extends ModelOptions {
             }
             model.setClockModelGroup(clockModelGroup);
         }
+    }
+
+    public List<ClockModelGroup> getClockModelGroups(DataType dataType) {
+        List<ClockModelGroup> activeClockModelGroups = new ArrayList<ClockModelGroup>();
+        for (PartitionClockModel model : options.getPartitionClockModels(dataType)) {
+            ClockModelGroup group = model.getClockModelGroup();
+            if (group != null && (!activeClockModelGroups.contains(group))) {
+                activeClockModelGroups.add(group);
+            }
+        }
+        return activeClockModelGroups;
     }
 
     public List<ClockModelGroup> getClockModelGroups() {

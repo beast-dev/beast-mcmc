@@ -127,7 +127,7 @@ public class PriorDialog {
 
         panel = new JPanel(new GridBagLayout());
 
-        setArguments(priorType);
+//        setArguments(priorType); // move to inside setupComponents()
         setupComponents();
 
         JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -142,7 +142,7 @@ public class PriorDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
+        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter " + parameter.getName());
 
         priorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
@@ -417,6 +417,7 @@ public class PriorDialog {
             panel.add(quantilePanel, gbc);
 
         }
+        setArguments(priorType);
         panel.repaint();
     }
 

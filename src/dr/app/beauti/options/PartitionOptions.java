@@ -59,15 +59,15 @@ public abstract class PartitionOptions extends ModelOptions {
     public abstract String getPrefix();
 
     protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double lower, double upper) {
+            double initial, double uniformLower, double uniformUpper, double lower, double upper) { // it will change to Uniform
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
-                .lower(lower).upper(upper).partitionOptions(options).build(parameters);
+                .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createParameterClockRateUniform(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double lower, double upper) {
+            double initial, double uniformLower, double uniformUpper, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).initial(initial)
-                .lower(lower).upper(upper).partitionOptions(options).build(parameters);
+                .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createParameterClockRateGamma(PartitionOptions options, String name, String description, PriorScaleType scaleType,

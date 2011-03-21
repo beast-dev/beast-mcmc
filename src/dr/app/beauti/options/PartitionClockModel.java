@@ -72,19 +72,19 @@ public class PartitionClockModel extends PartitionOptions {
         if (dataLength <= 1) { // TODO Discuss threshold
 
             createParameterClockRateUndefinedPrior(this, "clock.rate", "substitution rate",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUndefinedPrior(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUndefinedPrior(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
         } else {
 
             createParameterClockRateUniform(this, "clock.rate", "substitution rate. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
         }
         createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
                 PriorScaleType.LOG_STDEV_SCALE, 1.0 / 3.0, 1.0 / 3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);

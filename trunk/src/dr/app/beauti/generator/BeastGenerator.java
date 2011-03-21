@@ -303,7 +303,7 @@ public class BeastGenerator extends Generator {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 Alignment alignment = null;
                 if (partition instanceof PartitionData) { // microsat has no alignment
-                    ((PartitionData) partition).getAlignment();
+                    alignment = ((PartitionData) partition).getAlignment();
                 }
                 if (alignment != null && !alignments.contains(alignment)) {
                     alignments.add(alignment);

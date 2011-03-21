@@ -93,7 +93,7 @@ public class PatternListGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.getDataType() == Microsatellite.INSTANCE) {
+        if (model.getDataType().getType() == Microsatellite.INSTANCE.getType()) {
             writer.writeComment("The patterns for microsatellite");
             writer.writeOpenTag(MicrosatellitePatternParser.MICROSATPATTERN,
                     new Attribute[]{

@@ -195,16 +195,16 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createParameterGammaPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
 
-        createParameterUniformPrior("alpha", "gamma shape parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
-        createParameterUniformPrior("CP1.alpha", "gamma shape parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
-        createParameterUniformPrior("CP2.alpha", "gamma shape parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
-        createParameterUniformPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
-        createParameterUniformPrior("CP3.alpha", "gamma shape parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
+        createParameterExponentialPrior("alpha", "gamma shape parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+        createParameterExponentialPrior("CP1.alpha", "gamma shape parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+        createParameterExponentialPrior("CP2.alpha", "gamma shape parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+        createParameterExponentialPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+        createParameterExponentialPrior("CP3.alpha", "gamma shape parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
 
         createParameterUniformPrior("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
         createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1",

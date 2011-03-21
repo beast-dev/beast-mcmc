@@ -28,10 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
@@ -223,13 +220,22 @@ public class BeastGenerator extends Generator {
             }
         }
 
-        //++++++++++++++++ User Modified Prior ++++++++++++++++++
+        //++++++++++++++++ Prior Bounds ++++++++++++++++++
         for (Parameter param : options.selectParameters()) {
-            if (param.isPriorEdited() && param.initial != Double.NaN) {
+            if (param.initial != Double.NaN && param.lower != Double.NaN && param.upper != Double.NaN) {
                 if (param.initial < param.lower || param.initial > param.upper) {
                     throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
                             "\ninitial value " + param.initial + " is NOT in the range [" + param.lower + ", " + param.upper + "]," +
                             "\nor this range is wrong. Please check the Prior panel.");
+                }
+
+                if (param.priorType == PriorType.UNIFORM_PRIOR || param.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                    if (param.uniformLower < param.lower || param.uniformUpper > param.upper) {
+                        throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
+                                "\nuniform prior bound [" + param.uniformLower + ", " + param.uniformUpper + "]," +
+                                "\nis NOT in the hand bound [" + param.lower + ", " + param.upper + "]," +
+                                "\nor this bound is wrong. Please check the Prior panel.");
+                    }
                 }
             }
         }
@@ -327,6 +333,7 @@ public class BeastGenerator extends Generator {
                         if (partition instanceof PartitionData) {
                             patternListGenerator.writePatternList((PartitionData) partition, writer);
                         } else if (partition instanceof PartitionPattern) { // microsat
+                            // microsat does not have alignment
                             patternListGenerator.writePatternList((PartitionPattern) partition, microsatList, writer);
                         } else {
                             throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());

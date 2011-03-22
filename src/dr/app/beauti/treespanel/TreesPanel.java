@@ -264,6 +264,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
+
+        if (selRow >= options.getPartitionTreeModels().size()) {
+            selRow = 0;
+            treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
+
         if (selRow >= 0) {
             PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
             setCurrentModelAndPrior(ptm);

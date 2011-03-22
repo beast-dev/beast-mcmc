@@ -62,13 +62,14 @@ public class PriorOptions extends ModelOptions {
         double avgInitialRate = 1;
 
 
-        List<ClockModelGroup> clockModelGroupList = options.clockModelOptions.getClockModelGroups(Nucleotides.INSTANCE);
-        if (clockModelGroupList.size() > 0) {
-            //todo assume all Nucleotides data is in one group, it needs to extend to multi-group case
-            double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(clockModelGroupList.get(0));
-            avgInitialRootHeight = rootAndRate[0];
-            avgInitialRate = rootAndRate[1];
-        }
+//        List<ClockModelGroup> clockModelGroupList = options.clockModelOptions.getClockModelGroups(Nucleotides.INSTANCE);
+//        if (clockModelGroupList.size() > 0) {
+        //todo assume all Nucleotides data is in one group, it needs to extend to multi-group case
+        double[] rootAndRate = options.clockModelOptions
+                .calculateInitialRootHeightAndRate(options.getAllPartitionData(Nucleotides.INSTANCE));
+        avgInitialRootHeight = rootAndRate[0];
+        avgInitialRate = rootAndRate[1];
+//        }
 
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
 //                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {

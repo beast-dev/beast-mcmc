@@ -56,6 +56,11 @@ public class PartitionClockModel extends PartitionOptions {
     public PartitionClockModel(BeautiOptions options, String name, PartitionClockModel source) {
         super(options, name);
         this.clockType = source.clockType;
+        clockDistributionType = source.clockDistributionType;
+        isEstimatedRate = source.isEstimatedRate;
+        rate = source.rate;
+
+        clockModelGroup = source.clockModelGroup;
     }
 
 //    public PartitionClockModel(BeautiOptions options, String name) {
@@ -319,7 +324,7 @@ public class PartitionClockModel extends PartitionOptions {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        double selectedRate = options.clockModelOptions.getSelectedRate(clockModelGroup);
+        double selectedRate = options.clockModelOptions.getSelectedRate(options.getAllPartitionData(clockModelGroup));
 
         rateParam.priorType = PriorType.GAMMA_PRIOR;
         rateParam.initial = selectedRate;
@@ -360,7 +365,7 @@ public class PartitionClockModel extends PartitionOptions {
     public void setRate(double rate) {
         this.rate = rate;
     }
-    
+
     public ClockModelGroup getClockModelGroup() {
         return clockModelGroup;
     }

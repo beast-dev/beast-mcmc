@@ -446,7 +446,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
             if (!model.getName().equals(partition.getName())) {
-                PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition);
+                PartitionSubstitutionModel newModel = new PartitionSubstitutionModel(options, partition.getName(), model);
                 partition.setPartitionSubstitutionModel(newModel);
             }
         }
@@ -510,7 +510,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionClockModel model = partition.getPartitionClockModel();
             if (!model.getName().equals(partition.getName())) {
-                PartitionClockModel newModel = new PartitionClockModel(options, partition);
+                PartitionClockModel newModel = new PartitionClockModel(options, partition.getName(), model);
                 partition.setPartitionClockModel(newModel);
                 newModel.setClockModelGroup(model.getClockModelGroup()); // set clock model group
             }
@@ -563,7 +563,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
             if (!model.getName().equals(partition.getName()) && partition.getTrait() == null) {// not a trait
-                PartitionTreeModel newTree = new PartitionTreeModel(options, partition);
+                PartitionTreeModel newTree = new PartitionTreeModel(options, partition.getName(), model);
 
                 // this prevents partition not broken, and used for unsharing tree prior only,
                 // because sharing uses shareSameTreePrior, unsharing uses getPartitionTreePrior

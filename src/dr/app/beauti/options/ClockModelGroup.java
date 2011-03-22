@@ -44,12 +44,14 @@ public class ClockModelGroup {
     }
 
     public double getFixMeanRate() {
-
         return fixMeanRate;
     }
 
-    public void setFixMeanRate(double fixMeanRate) {
+    public void setFixMeanRate(double fixMeanRate, BeautiOptions options) {
         this.fixMeanRate = fixMeanRate;
+        for (PartitionClockModel model : options.getPartitionClockModels(this)) {
+            model.setRate(fixMeanRate);
+        }
     }
 
 

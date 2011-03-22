@@ -298,62 +298,65 @@ public class ClockModelOptions extends ModelOptions {
 //        this.meanRelativeRate = meanRelativeRate;
 //    }
 
-    public double[] calculateInitialRootHeightAndRate(ClockModelGroup clockModelGroup) {
+    public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
         double avgInitialRootHeight = 1;
         double avgInitialRate = 1;
         double avgMeanDistance = 1;
 
-        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
+//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
 
         if (partitions.size() > 0) {
             avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
         }
 
-        if (options.getPartitionClockModels(clockModelGroup).size() > 0) {
-            avgInitialRate = options.clockModelOptions.getSelectedRate(clockModelGroup); // all clock models in group
+        if (options.getPartitionClockModels(partitions).size() > 0) {
+            avgInitialRate = options.clockModelOptions.getSelectedRate(partitions); // all clock models
+            //todo multi-group?
+            ClockModelGroup clockModelGroup = options.getPartitionClockModels(partitions).get(0).getClockModelGroup();
+
+            switch (clockModelGroup.getRateTypeOption()) {
+                case FIX_MEAN:
+                case RELATIVE_TO:
+                    if (partitions.size() > 0) {
+                        avgInitialRootHeight = avgMeanDistance / avgInitialRate;
+                    }
+                    break;
+
+                case TIP_CALIBRATED:
+                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                    break;
+
+                case NODE_CALIBRATED:
+                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                    break;
+
+                case RATE_CALIBRATED:
+
+                    break;
+
+                default:
+                    throw new IllegalArgumentException("Unknown fix rate type");
+            }
         }
-
-        switch (clockModelGroup.getRateTypeOption()) {
-            case FIX_MEAN:
-            case RELATIVE_TO:
-                if (options.hasData()) {
-                    avgInitialRootHeight = avgMeanDistance / avgInitialRate;
-                }
-                break;
-
-            case TIP_CALIBRATED:
-                avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
-                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                break;
-
-            case NODE_CALIBRATED:
-                avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
-                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                break;
-
-            case RATE_CALIBRATED:
-
-                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown fix rate type");
-        }
-
         avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
         avgInitialRate = MathUtils.round(avgInitialRate, 2);
 
         return new double[]{avgInitialRootHeight, avgInitialRate};
     }
 
-    public double getSelectedRate(ClockModelGroup clockModelGroup) {
+    public double getSelectedRate(List<AbstractPartitionData> partitions) {
         double selectedRate = 1;
         double avgInitialRootHeight;
         double avgMeanDistance = 1;
         // calibration: all isEstimatedRate = true
 
-        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
+//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
 
-        if (partitions.size() > 0) {
+        if (partitions.size() > 0 && options.getPartitionClockModels(partitions).size() > 0) {
+            //todo multi-group?
+            ClockModelGroup clockModelGroup = options.getPartitionClockModels(partitions).get(0).getClockModelGroup();
             switch (clockModelGroup.getRateTypeOption()) {
                 case FIX_MEAN:
                     selectedRate = clockModelGroup.getFixMeanRate();

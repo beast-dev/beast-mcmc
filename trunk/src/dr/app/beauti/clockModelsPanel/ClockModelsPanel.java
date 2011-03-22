@@ -282,11 +282,16 @@ public class ClockModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void selectionChanged() {
-
         int selRow = clockTable.getSelectedRow();
+
+        if (selRow >= options.getPartitionClockModels().size()) {
+            selRow = 0;
+            clockTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
+
         if (selRow >= 0) {
             setCurrentModel(options.getPartitionClockModels().get(selRow));
-            frame.modelSelectionChanged(!isUsed(selRow));
+//            frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
 

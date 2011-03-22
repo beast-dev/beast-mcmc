@@ -307,6 +307,16 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
+    public List<AbstractPartitionData> getAllPartitionData(DataType dataType) {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getDataType().getType() == dataType.getType()) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
     public List<AbstractPartitionData> getAllPartitionData(PartitionOptions model) {
         if (model instanceof PartitionSubstitutionModel) {
             return getAllPartitionData((PartitionSubstitutionModel) model);
@@ -378,7 +388,7 @@ public class BeautiOptions extends ModelOptions {
     public List<PartitionSubstitutionModel> getPartitionSubstitutionModels(DataType dataType) {
         List<PartitionSubstitutionModel> models = new ArrayList<PartitionSubstitutionModel>();
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(dataPartitions)) {
-            if (model.getDataType() == dataType) {
+            if (model.getDataType().getType() == dataType.getType()) {
                 models.add(model);
             }
         }

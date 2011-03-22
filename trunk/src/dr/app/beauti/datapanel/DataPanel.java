@@ -238,7 +238,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             AbstractPartitionData partition = options.dataPartitions.get(row);
             Alignment alignment = null;
 
-            if (partition instanceof PartitionData) ((PartitionData) partition).getAlignment();
+            if (partition instanceof PartitionData) alignment = ((PartitionData) partition).getAlignment();
 
             // alignment == null if partition is trait or microsat http://code.google.com/p/beast-mcmc/issues/detail?id=343
             if (alignment == null) {

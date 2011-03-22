@@ -26,6 +26,7 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.PriorType;
 import dr.app.gui.chart.Axis;
 import dr.app.gui.chart.JChart;
@@ -384,6 +385,11 @@ public class PriorDialog {
         if (!parameter.isStatistic) {
             optionsPanel.addSeparator();
             optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
+        }
+
+        if (parameter.getOptions() instanceof PartitionClockModel) {
+            PartitionClockModel pcm = (PartitionClockModel) parameter.getOptions();
+            initialField.setEnabled(!pcm.getClockModelGroup().isFixMean());
         }
 
         if (priorType != PriorType.ONE_OVER_X_PRIOR) {

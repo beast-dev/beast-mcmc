@@ -38,7 +38,7 @@ public class PartitionClockModel extends PartitionOptions {
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean isEstimatedRate = true;
-    private double rate = 1.0;
+    private double rate; // move to initModelParaAndOpers() to initial
 
     private ClockModelGroup clockModelGroup = null;
 
@@ -69,27 +69,27 @@ public class PartitionClockModel extends PartitionOptions {
 //    }
 
     protected void initModelParaAndOpers() {
-
+        rate = 1.0;
         int dataLength = 0;
         for (AbstractPartitionData partitionData : options.getAllPartitionData(this)) {
             dataLength += partitionData.getSiteCount();
         }
+        // all clock rate not use auto scale
         if (dataLength <= 1) { // TODO Discuss threshold
-
             createParameterClockRateUndefinedPrior(this, "clock.rate", "substitution rate",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, this.getRate(), 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUndefinedPrior(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUndefinedPrior(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
         } else {
 
             createParameterClockRateUniform(this, "clock.rate", "substitution rate. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
             createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. ",
-                    PriorScaleType.SUBSTITUTION_RATE_SCALE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
         }
         createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
                 PriorScaleType.LOG_STDEV_SCALE, 1.0 / 3.0, 1.0 / 3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
@@ -115,22 +115,18 @@ public class PartitionClockModel extends PartitionOptions {
      */
     public void selectParameters(List<Parameter> params) {
         if (options.hasData()) {
-            // if not fixed then do mutation rate move and up/down move
-            boolean fixed = !isEstimatedRate;
 //
 //            List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
 //            models.add(this);
 //            double selectedRate = options.clockModelOptions.getSelectedRate(models);
 
-            Parameter rateParam = null;
-
             switch (clockType) {
                 case STRICT_CLOCK:
-                    rateParam = getParameter("clock.rate");
+//                    rateParam = getParameter("clock.rate");
                     break;
 
                 case RANDOM_LOCAL_CLOCK:
-                    rateParam = getParameter("clock.rate");
+//                    rateParam = getParameter("clock.rate");
                     getParameter(ClockType.LOCAL_CLOCK + ".changes");
                     params.add(getParameter("rateChanges"));
                     params.add(getParameter(ClockType.LOCAL_CLOCK + ".relativeRates"));
@@ -139,7 +135,7 @@ public class PartitionClockModel extends PartitionOptions {
                 case UNCORRELATED:
                     switch (clockDistributionType) {
                         case LOGNORMAL:
-                            rateParam = getParameter(ClockType.UCLD_MEAN);
+//                            rateParam = getParameter(ClockType.UCLD_MEAN);
                             params.add(getParameter(ClockType.UCLD_STDEV));
                             break;
                         case GAMMA:
@@ -151,7 +147,7 @@ public class PartitionClockModel extends PartitionOptions {
                             throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                            break;
                         case EXPONENTIAL:
-                            rateParam = getParameter(ClockType.UCED_MEAN);
+//                            rateParam = getParameter(ClockType.UCED_MEAN);
                             break;
                     }
                     break;
@@ -166,15 +162,17 @@ public class PartitionClockModel extends PartitionOptions {
                     throw new IllegalArgumentException("Unknown clock model");
             }
 
+            Parameter rateParam = getClockRateParam();
+            
 //            if (this.getAllPartitionData().get(0) instanceof TraitData) {
 //                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
 //            }
+            // if not fixed then do mutation rate move and up/down move
 
-            rateParam.isFixed = fixed;
-            if (fixed && clockModelGroup.getRateTypeOption() == FixRateType.RELATIVE_TO
-                    && rateParam.initial != rate) {
-                rateParam.initial = rate;
-                rateParam.setPriorEdited(true);
+//            rateParam.isFixed = !isEstimatedRate;
+            if (rate != rateParam.initial) {
+                rate = rateParam.initial;
+//                rateParam.setPriorEdited(true);
             }
 //            if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
 //                     || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
@@ -186,8 +184,46 @@ public class PartitionClockModel extends PartitionOptions {
 //                rateParam.initial = selectedRate;
 //            }
 
-            if (!fixed) params.add(rateParam);
+            if (isEstimatedRate) params.add(rateParam);
         }
+    }
+
+    public Parameter getClockRateParam() {
+        Parameter rateParam = null;
+        switch (clockType) {
+            case STRICT_CLOCK:
+            case RANDOM_LOCAL_CLOCK:
+                rateParam = getParameter("clock.rate");
+                break;
+
+            case UNCORRELATED:
+                switch (clockDistributionType) {
+                    case LOGNORMAL:
+                        rateParam = getParameter(ClockType.UCLD_MEAN);
+                        break;
+                    case GAMMA:
+                        throw new UnsupportedOperationException("Uncorrelated gamma clock not implemented yet");
+//                            rateParam = getParameter(ClockType.UCGD_SCALE);
+//                            break;
+                    case CAUCHY:
+                        throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
+//                            break;
+                    case EXPONENTIAL:
+                        rateParam = getParameter(ClockType.UCED_MEAN);
+                        break;
+                }
+                break;
+
+            case AUTOCORRELATED:
+                throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
+//                    rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
+//                    break;
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        return rateParam;
     }
 
     /**
@@ -284,14 +320,13 @@ public class PartitionClockModel extends PartitionOptions {
     // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
 
     public void iniClockRateStarBEAST() {
-        Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:
-                rateParam = getParameter("clock.rate");
+//                rateParam = getParameter("clock.rate");
                 break;
 
             case RANDOM_LOCAL_CLOCK:
-                rateParam = getParameter("clock.rate");
+//                rateParam = getParameter("clock.rate");
                 getParameter(ClockType.LOCAL_CLOCK + ".relativeRates");
                 getParameter(ClockType.LOCAL_CLOCK + ".changes");
                 break;
@@ -299,7 +334,7 @@ public class PartitionClockModel extends PartitionOptions {
             case UNCORRELATED:
                 switch (clockDistributionType) {
                     case LOGNORMAL:
-                        rateParam = getParameter(ClockType.UCLD_MEAN);
+//                        rateParam = getParameter(ClockType.UCLD_MEAN);
                         break;
                     case GAMMA:
                         throw new UnsupportedOperationException("Uncorrelated Gamma clock not implemented yet");
@@ -309,14 +344,13 @@ public class PartitionClockModel extends PartitionOptions {
                         throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
 //                        break;
                     case EXPONENTIAL:
-                        rateParam = getParameter(ClockType.UCED_MEAN);
+//                        rateParam = getParameter(ClockType.UCED_MEAN);
                         break;
                 }
                 break;
 
             case AUTOCORRELATED:
                 throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
-
 //                rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
 //                break;
 
@@ -325,6 +359,8 @@ public class PartitionClockModel extends PartitionOptions {
         }
 
         double selectedRate = options.clockModelOptions.getSelectedRate(options.getAllPartitionData(clockModelGroup));
+
+        Parameter rateParam = getClockRateParam();
 
         rateParam.priorType = PriorType.GAMMA_PRIOR;
         rateParam.initial = selectedRate;
@@ -352,6 +388,8 @@ public class PartitionClockModel extends PartitionOptions {
 
     public void setEstimatedRate(boolean isEstimatedRate) {
         this.isEstimatedRate = isEstimatedRate;
+        Parameter rateParam = getClockRateParam();
+        rateParam.isFixed = !isEstimatedRate;
     }
 
     public boolean isEstimatedRate() {
@@ -364,6 +402,9 @@ public class PartitionClockModel extends PartitionOptions {
 
     public void setRate(double rate) {
         this.rate = rate;
+        Parameter rateParam = getClockRateParam();
+        rateParam.initial = rate;
+        rateParam.setPriorEdited(true);
     }
 
     public ClockModelGroup getClockModelGroup() {

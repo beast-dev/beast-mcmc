@@ -273,11 +273,16 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    }
 
     private void selectionChanged() {
-
         int selRow = modelTable.getSelectedRow();
+
+        if (selRow >= options.getPartitionSubstitutionModels().size()) {
+            selRow = 0;
+            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+        }
+
         if (selRow >= 0) {
             setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
-            frame.modelSelectionChanged(!isUsed(selRow));
+//            frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
 
@@ -287,7 +292,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
      * @param model the new model to display
      */
     private void setCurrentModel(PartitionSubstitutionModel model) {
-
         if (model != null) {
             if (currentModel != null) modelPanelParent.removeAll();
 

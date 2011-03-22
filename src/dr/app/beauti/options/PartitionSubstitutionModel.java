@@ -53,7 +53,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private MicroSatModelType microsatSubstModel = MicroSatModelType.LINEAR_BIAS_MODEL;
 
     private boolean activateBSSVS = false;
-
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
@@ -86,6 +85,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
+        discreteSubstType = source.discreteSubstType;
+        microsatSubstModel = source.microsatSubstModel;
+
+        activateBSSVS = source.activateBSSVS;
+        useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
@@ -95,6 +99,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
+
+        dolloModel = source.dolloModel;
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {

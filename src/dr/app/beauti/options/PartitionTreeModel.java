@@ -37,14 +37,14 @@ import java.util.List;
  */
 public class PartitionTreeModel extends PartitionOptions {
 
-    protected PartitionTreePrior treePrior;
+    private PartitionTreePrior treePrior;
 
-    protected StartingTreeType startingTreeType = StartingTreeType.RANDOM;
+    private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-	private boolean fixedTree = false;
-    protected double initialRootHeight = 1.0;
+    private boolean fixedTree = false;
+    private double initialRootHeight = 1.0;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
@@ -70,8 +70,14 @@ public class PartitionTreeModel extends PartitionOptions {
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
         super(options, name);
 
-        this.startingTreeType = source.startingTreeType;
-        this.userStartingTree = source.userStartingTree;
+        treePrior = source.treePrior;
+        startingTreeType = source.startingTreeType;
+        userStartingTree = source.userStartingTree;
+
+        isNewick = source.isNewick;
+        fixedTree = source.fixedTree;
+        initialRootHeight = source.initialRootHeight;
+        ploidyType = source.ploidyType;
     }
 
     protected void initModelParaAndOpers() {
@@ -105,18 +111,18 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-    	calculateInitialRootHeightPerTree();
+        calculateInitialRootHeightPerTree();
 
-    	getParameter("tree");
-    	getParameter("treeModel.internalNodeHeights");
-    	getParameter("treeModel.allInternalNodeHeights");
+        getParameter("tree");
+        getParameter("treeModel.internalNodeHeights");
+        getParameter("treeModel.allInternalNodeHeights");
 
-    	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
+        Parameter rootHeightPara = getParameter("treeModel.rootHeight");
 //    	rootHeightPara.initial = initialRootHeight;
 //    	rootHeightPara.priorEdited = true;
-    	if (!options.useStarBEAST) {
-    		params.add(rootHeightPara);
-    	}
+        if (!options.useStarBEAST) {
+            params.add(rootHeightPara);
+        }
 
     }
 
@@ -126,16 +132,16 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-    	calculateInitialRootHeightPerTree();
+        calculateInitialRootHeightPerTree();
 
         // if not a fixed tree then sample tree space
         if (!fixedTree) {
-        	Operator subtreeSlideOp = getOperator("subtreeSlide");
+            Operator subtreeSlideOp = getOperator("subtreeSlide");
             if (!subtreeSlideOp.tuningEdited) {
-            	subtreeSlideOp.tuning = initialRootHeight / 10.0;
+                subtreeSlideOp.tuning = initialRootHeight / 10.0;
             }
 
-        	ops.add(subtreeSlideOp);
+            ops.add(subtreeSlideOp);
             ops.add(getOperator("narrowExchange"));
             ops.add(getOperator("wideExchange"));
             ops.add(getOperator("wilsonBalding"));
@@ -188,17 +194,17 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public double getInitialRootHeight() {
-		return initialRootHeight;
-	}
+        return initialRootHeight;
+    }
 
-	public void setInitialRootHeight(double initialRootHeight) {
-		this.initialRootHeight = initialRootHeight;
-	}
+    public void setInitialRootHeight(double initialRootHeight) {
+        this.initialRootHeight = initialRootHeight;
+    }
 
-	private void calculateInitialRootHeightPerTree() {
-        ClockModelGroup group = options.getAllPartitionData(this).get(0).getPartitionClockModel().getClockModelGroup();
-		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(group) [0];
-	}
+    private void calculateInitialRootHeightPerTree() {
+		initialRootHeight = options.clockModelOptions
+                .calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
+    }
 
     public String getPrefix() {
         String prefix = "";

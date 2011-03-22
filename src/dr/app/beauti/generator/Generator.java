@@ -3,6 +3,8 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evoxml.MergePatternsParser;
+import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -16,18 +18,18 @@ import java.util.List;
  */
 public abstract class Generator {
 
-	protected static final String COALESCENT = "coalescent";
-	public static final String SP_TREE = "sptree";
-	protected static final String SPECIATION_LIKE = "speciation.likelihood";
-	public static final String SPLIT_POPS = "splitPopSize";
-	protected static final String PDIST = "pdist";
-//	protected static final String STP = "stp";
-	protected static final String SPOPS = TraitData.TRAIT_SPECIES + "." + "popSizesLikelihood";
+    protected static final String COALESCENT = "coalescent";
+    public static final String SP_TREE = "sptree";
+    protected static final String SPECIATION_LIKE = "speciation.likelihood";
+    public static final String SPLIT_POPS = "splitPopSize";
+    protected static final String PDIST = "pdist";
+    //	protected static final String STP = "stp";
+    protected static final String SPOPS = TraitData.TRAIT_SPECIES + "." + "popSizesLikelihood";
 
     protected final BeautiOptions options;
 
-//    protected PartitionSubstitutionModel model;
-	protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
+    //    protected PartitionSubstitutionModel model;
+    protected String modelPrefix = ""; // model prefix, could be PSM, PCM, PTM, PTP
 
     protected Generator(BeautiOptions options) {
         this.options = options;
@@ -43,12 +45,12 @@ public abstract class Generator {
     }
 
     public String getModelPrefix() {
-		return modelPrefix;
-	}
+        return modelPrefix;
+    }
 
-	public void setModelPrefix(String modelPrefix) {
-		this.modelPrefix = modelPrefix;
-	}
+    public void setModelPrefix(String modelPrefix) {
+        this.modelPrefix = modelPrefix;
+    }
 
     /**
      * fix a parameter
@@ -69,9 +71,9 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param wrapperName  wrapperName
-     * @param id     the id
-     * @param writer the writer
+     * @param wrapperName wrapperName
+     * @param id          the id
+     * @param writer      the writer
      */
     public void writeParameterRef(String wrapperName, String id, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
@@ -82,9 +84,9 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param id     the id
-     * @param options      PartitionOptions
-     * @param writer the writer
+     * @param id      the id
+     * @param options PartitionOptions
+     * @param writer  the writer
      */
     public void writeParameter(String id, PartitionOptions options, XMLWriter writer) {
         Parameter parameter = options.getParameter(id);
@@ -99,7 +101,7 @@ public abstract class Generator {
 //            if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
 //                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
 //            } else {
-                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
+            writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
 //            }
         }
     }
@@ -117,7 +119,7 @@ public abstract class Generator {
 //            if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
 //                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
 //            } else {
-                writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
+            writeParameter(prefix + id, 1, parameter.initial, parameter.lower, parameter.upper, writer);
 //            }
         }
     }
@@ -125,13 +127,13 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param wrapperName     wrapperName
-     * @param id              the id
-     * @param dimension      dimension
-     * @param writer         the writer
+     * @param wrapperName wrapperName
+     * @param id          the id
+     * @param dimension   dimension
+     * @param writer      the writer
      */
     public void writeParameter(String wrapperName, String id, int dimension, XMLWriter writer) {
-    	Parameter parameter = options.getParameter(id);
+        Parameter parameter = options.getParameter(id);
         writer.writeOpenTag(wrapperName);
         writeParameter(parameter, dimension, writer);
         writer.writeCloseTag(wrapperName);
@@ -140,11 +142,11 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param num     num
-     * @param wrapperName     wrapperName
-     * @param id     the id
-     * @param model   PartitionSubstitutionModel
-     * @param writer the writer
+     * @param num         num
+     * @param wrapperName wrapperName
+     * @param id          the id
+     * @param model       PartitionSubstitutionModel
+     * @param writer      the writer
      */
     public void writeParameter(int num, String wrapperName, String id, PartitionSubstitutionModel model, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
@@ -161,9 +163,9 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param parameter     the parameter
-     * @param dimension     the dimension
-     * @param writer        the writer
+     * @param parameter the parameter
+     * @param dimension the dimension
+     * @param writer    the writer
      */
     public void writeParameter(Parameter parameter, int dimension, XMLWriter writer) {
 //        Parameter parameter = options.getParameter(id);
@@ -217,18 +219,26 @@ public abstract class Generator {
     /**
      * write a parameter
      *
-     * @param wrapperName     wrapperName
-     * @param id        the id
-     * @param dimension the dimension
-     * @param value     the value
-     * @param lower     the lower bound
-     * @param upper     the upper bound
-     * @param writer    the writer
+     * @param wrapperName wrapperName
+     * @param id          the id
+     * @param dimension   the dimension
+     * @param value       the value
+     * @param lower       the lower bound
+     * @param upper       the upper bound
+     * @param writer      the writer
      */
     public void writeParameter(String wrapperName, String id, int dimension, double value, double lower, double upper, XMLWriter writer) {
         writer.writeOpenTag(wrapperName);
         writeParameter(id, dimension, value, lower, upper, writer);
         writer.writeCloseTag(wrapperName);
+    }
+
+    protected void writeCodonPatternsRef(String prefix, int num, int CodonPartitionCount, XMLWriter writer) {
+        if (CodonPartitionCount == 2 && num == 1) { // "11" of "112", num start from 1
+            writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + SitePatternsParser.PATTERNS);
+        } else { // "2" of "112" and "123"
+            writer.writeIDref(SitePatternsParser.PATTERNS, prefix + SitePatternsParser.PATTERNS);
+        }
     }
 
     private String multiDimensionValue(int dimension, double value) {

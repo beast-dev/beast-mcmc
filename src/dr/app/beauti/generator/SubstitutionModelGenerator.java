@@ -19,8 +19,6 @@ import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.GeneralDataTypeParser;
-import dr.evoxml.MergePatternsParser;
-import dr.evoxml.SitePatternsParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -264,7 +262,7 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
 
-        writeAlignmentRefInFrequencies(writer, model, prefix);
+        writeAlignmentRefInFrequencies(writer, model, prefix, num);
 
         writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
         switch (model.getFrequencyPolicy()) {
@@ -303,11 +301,11 @@ public class SubstitutionModelGenerator extends Generator {
 
     // adding mergePatterns or alignment ref for EMPIRICAL
 
-    private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix) {
+    private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix, int num) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
                 for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
-                    writer.writeIDref(MergePatternsParser.MERGE_PATTERNS, prefix + partition.getPrefix() + SitePatternsParser.PATTERNS);
+                    if (num >= 0) writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);
                 }
             } else {
                 for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
@@ -341,7 +339,7 @@ public class SubstitutionModelGenerator extends Generator {
                 }
         );
 
-        writeAlignmentRefInFrequencies(writer, model, prefix);
+        writeAlignmentRefInFrequencies(writer, model, prefix, -1);
 
         writeFrequencyModelBinary(writer, model, prefix);
 

@@ -27,11 +27,13 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.WholeNumberField;
+import dr.app.gui.table.TableEditorStopper;
 import dr.app.pathogen.TemporalRooting;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
@@ -39,10 +41,7 @@ import dr.evolution.distance.F84DistanceMatrix;
 import dr.evolution.tree.NeighborJoiningTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
-import dr.app.gui.table.TableEditorStopper;
-import dr.app.gui.components.WholeNumberField;
 import jam.panels.OptionsPanel;
-import jam.table.HeaderRenderer;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -58,6 +57,7 @@ import java.util.EnumSet;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: PriorsPanel.java,v 1.9 2006/09/05 13:29:34 rambaut Exp $
+ * @deprecated
  */
 public class OldTreesPanel extends BeautiPanel {
 

@@ -25,18 +25,21 @@
 
 package dr.app.beauti.clockModelsPanel;
 
-import dr.app.beauti.types.*;
 import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.types.ClockDistributionType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
+ * @deprecated
  */
 public class PartitionClockModelPanel extends OptionsPanel {
 

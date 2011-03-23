@@ -32,7 +32,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @version $Id$
+ * @deprecated
  */
 public class PriorOptions extends ModelOptions {
 
@@ -112,9 +112,9 @@ public class PriorOptions extends ModelOptions {
                             param.lower = options.maximumTipHeight;
 //                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
-//                            if (param.getOptions() instanceof PartitionTreeModel) {
-//                                param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
-//                            }
+                            if (param.getOptions() instanceof PartitionTreeModel) {
+                                param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
+                            }
                         } else {
                             param.initial = avgInitialRootHeight;
                         }

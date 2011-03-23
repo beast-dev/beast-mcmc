@@ -118,7 +118,7 @@ public class ClockModelOptions extends ModelOptions {
                         "Up down all rates and heights in " + clockModelGroup.getName(),
                         "Scales all rates inversely to node heights of the tree",
                         demoTuning, branchWeights);
-                Operator op = getOperator("upDownAllRatesHeights");
+                Operator op = getOperator("upDownAllRatesHeights_" + clockModelGroup.getName());
                 op.setClockModelGroup(clockModelGroup);
 
                 ops.add(op);
@@ -158,15 +158,19 @@ public class ClockModelOptions extends ModelOptions {
         return activeClockModelGroups;
     }
 
-    public List<ClockModelGroup> getClockModelGroups() {
+    public List<ClockModelGroup> getClockModelGroups(List<? extends AbstractPartitionData> givenDataPartitions) {
         List<ClockModelGroup> activeClockModelGroups = new ArrayList<ClockModelGroup>();
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
+        for (PartitionClockModel model : options.getPartitionClockModels(givenDataPartitions)) {
             ClockModelGroup group = model.getClockModelGroup();
             if (group != null && (!activeClockModelGroups.contains(group))) {
                 activeClockModelGroups.add(group);
             }
         }
         return activeClockModelGroups;
+    }
+
+    public List<ClockModelGroup> getClockModelGroups() {
+        return getClockModelGroups(options.dataPartitions);
     }
 
     public Vector<String> getClockModelGroupNames(List<ClockModelGroup> group) {

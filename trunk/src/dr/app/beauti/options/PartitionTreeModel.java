@@ -44,7 +44,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
     private boolean isNewick = true;
     private boolean fixedTree = false;
-    private double initialRootHeight = 1.0;
+//    private double initialRootHeight = 1.0;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
@@ -76,7 +76,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
         isNewick = source.isNewick;
         fixedTree = source.fixedTree;
-        initialRootHeight = source.initialRootHeight;
+//        initialRootHeight = source.initialRootHeight;
         ploidyType = source.ploidyType;
     }
 
@@ -111,15 +111,17 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        calculateInitialRootHeightPerTree();
+        setAvgRootAndRate();
 
         getParameter("tree");
         getParameter("treeModel.internalNodeHeights");
         getParameter("treeModel.allInternalNodeHeights");
 
         Parameter rootHeightPara = getParameter("treeModel.rootHeight");
-//    	rootHeightPara.initial = initialRootHeight;
-//    	rootHeightPara.priorEdited = true;
+    	rootHeightPara.initial = getInitialRootHeight();
+        rootHeightPara.lower = options.maximumTipHeight;
+//        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
+
         if (!options.useStarBEAST) {
             params.add(rootHeightPara);
         }
@@ -132,13 +134,13 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-        calculateInitialRootHeightPerTree();
+        setAvgRootAndRate();
 
         // if not a fixed tree then sample tree space
         if (!fixedTree) {
             Operator subtreeSlideOp = getOperator("subtreeSlide");
             if (!subtreeSlideOp.tuningEdited) {
-                subtreeSlideOp.tuning = initialRootHeight / 10.0;
+                subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
             }
 
             ops.add(subtreeSlideOp);
@@ -194,17 +196,17 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public double getInitialRootHeight() {
-        return initialRootHeight;
+        return getAvgRootAndRate()[0];
     }
 
-    public void setInitialRootHeight(double initialRootHeight) {
-        this.initialRootHeight = initialRootHeight;
-    }
+//    public void setInitialRootHeight(double initialRootHeight) {
+//        this.initialRootHeight = initialRootHeight;
+//    }
 
-    private void calculateInitialRootHeightPerTree() {
-		initialRootHeight = options.clockModelOptions
-                .calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
-    }
+//    private void calculateInitialRootHeightPerTree() {
+//		initialRootHeight = options.clockModelOptions
+//                .calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
+//    }
 
     public String getPrefix() {
         String prefix = "";

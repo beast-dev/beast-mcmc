@@ -40,6 +40,8 @@ public abstract class PartitionOptions extends ModelOptions {
     protected String partitionName;
     protected final BeautiOptions options;
 
+    protected double[] avgRootAndRate = new double[]{1.0, 1.0};
+
     public PartitionOptions(BeautiOptions options) {
         this.options = options;
     }
@@ -54,37 +56,38 @@ public abstract class PartitionOptions extends ModelOptions {
     protected abstract void initModelParaAndOpers();
 
     protected abstract void selectParameters(List<Parameter> params);
+
     protected abstract void selectOperators(List<Operator> ops);
 
     public abstract String getPrefix();
 
     protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double uniformLower, double uniformUpper, double lower, double upper) { // it will change to Uniform
+                                                          double initial, double uniformLower, double uniformUpper, double lower, double upper) { // it will change to Uniform
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
                 .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createParameterClockRateUniform(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double uniformLower, double uniformUpper, double lower, double upper) {
+                                                   double initial, double uniformLower, double uniformUpper, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).initial(initial)
                 .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     protected void createParameterClockRateGamma(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double shape, double scale, double lower, double upper) {
+                                                 double initial, double shape, double scale, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial).
                 shape(shape).scale(scale).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
     public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-            double initial, double mean, double offset, double lower, double upper) {
+                                                    double initial, double mean, double offset, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
-                  .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).partitionOptions(options).build(parameters);
+                .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
 
 
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
-            double lower, double upper) {
+                                       double lower, double upper) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
                 .initial(value).lower(lower).upper(upper).partitionOptions(options).build(parameters);
     }
@@ -103,6 +106,8 @@ public abstract class PartitionOptions extends ModelOptions {
 
         parameter.setPrefix(getPrefix());
 
+        autoScale(parameter);
+
         return parameter;
     }
 
@@ -119,6 +124,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public String getName() {
         return partitionName;
+
     }
 
     public void setName(String name) {
@@ -132,4 +138,134 @@ public abstract class PartitionOptions extends ModelOptions {
     public DataType getDataType() {
         return options.getAllPartitionData(this).get(0).getDataType();
     }
+
+    public double[] getAvgRootAndRate() {
+        return avgRootAndRate;
+    }
+
+    public void setAvgRootAndRate() {
+        this.avgRootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this));
+    }
+
+    protected void autoScale(Parameter param) {
+        double avgInitialRootHeight = avgRootAndRate[0];
+        double avgInitialRate = avgRootAndRate[1];
+
+//        double growthRateMaximum = 1E6;
+//        double birthRateMaximum = 1E6;
+//        double substitutionRateMaximum = 100;
+//        double logStdevMaximum = 10;
+//        double substitutionParameterMaximum = 100;
+
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+//
+//            growthRateMaximum = 1E6 * avgInitialRate;
+//            birthRateMaximum = 1E6 * avgInitialRate;
+//        }
+
+//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
+//            double rate = options.clockModelOptions.getMeanRelativeRate();
+//
+//            growthRateMaximum = 1E6 * rate;
+//            birthRateMaximum = 1E6 * rate;
+//
+//            if (options.hasData()) {
+//                initialRootHeight = meanDistance / rate;
+//
+//                initialRootHeight = round(initialRootHeight, 2);
+//            }
+//
+//        } else {
+//            if (options.maximumTipHeight > 0) {
+//                initialRootHeight = options.maximumTipHeight * 10.0;
+//            }
+//
+//            initialRate = round((meanDistance * 0.2) / initialRootHeight, 2);
+//        }
+
+//        double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
+
+
+        if (!options.hasData()) param.setPriorEdited(false);
+
+        if (!param.isPriorEdited()) {
+            switch (param.scaleType) {
+                case TIME_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+//                        param.upper = Math.min(timeScaleMaximum, param.upper);
+//                    if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
+//                        param.lower = options.maximumTipHeight;
+////                    param.upper = timeScaleMaximum;
+////                    param.initial = avgInitialRootHeight;
+//                            if (param.getOptions() instanceof PartitionTreeModel) { // move to PartitionTreeModel
+//                                param.initial = ((PartitionTreeModel) param.getOptions()).getInitialRootHeight();
+//                            }
+//                    } else {
+                        param.initial = avgInitialRootHeight;
+//                    }
+
+                    break;
+
+                case T50_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+                    //param.upper = Math.min(timeScaleMaximum, param.upper);
+                    param.initial = avgInitialRootHeight / 5.0;
+                    break;
+
+                case GROWTH_RATE_SCALE:
+                    param.initial = avgInitialRootHeight / 1000;
+                    // use Laplace
+                    if (param.getBaseName().startsWith("logistic")) {
+                        param.scale = Math.log(1000) / avgInitialRootHeight;
+//                            System.out.println("logistic");
+                    } else {
+                        param.scale = Math.log(10000) / avgInitialRootHeight;
+//                            System.out.println("not logistic");
+                    }
+                    break;
+
+                case BIRTH_RATE_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+                    //param.upper = Math.min(birthRateMaximum, param.upper);
+                    break;
+
+                case SUBSTITUTION_RATE_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+                    //param.upper = Math.min(substitutionRateMaximum, param.upper);
+                    param.initial = avgInitialRate;
+                    break;
+
+                case LOG_STDEV_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+                    //param.upper = Math.min(logStdevMaximum, param.upper);
+                    break;
+
+                case SUBSTITUTION_PARAMETER_SCALE:
+//                        param.lower = Math.max(0.0, param.lower);
+                    //param.upper = Math.min(substitutionParameterMaximum, param.upper);
+                    break;
+
+                case UNITY_SCALE:
+                    param.lower = 0.0;
+                    param.upper = 1.0;
+                    break;
+
+                case ROOT_RATE_SCALE:
+                    param.initial = avgInitialRate;
+                    param.shape = 0.5;
+                    param.scale = param.initial / 0.5;
+                    break;
+
+                case LOG_VAR_SCALE:
+                    param.initial = avgInitialRate;
+                    param.shape = 2.0;
+                    param.scale = param.initial / 2.0;
+                    break;
+
+            }
+
+        }
+    }
+
 }

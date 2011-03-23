@@ -119,6 +119,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
+        setAvgRootAndRate();
         getParameter("branchRates.categories");
         getParameter("treeModel.rootRate");
         getParameter("treeModel.nodeRates");

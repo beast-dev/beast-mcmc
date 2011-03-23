@@ -114,12 +114,9 @@ public class PartitionClockModel extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-        if (options.hasData()) {
-//
-//            List<PartitionClockModel> models = new ArrayList<PartitionClockModel>();
-//            models.add(this);
-//            double selectedRate = options.clockModelOptions.getSelectedRate(models);
+        setAvgRootAndRate();
 
+        if (options.hasData()) {
             switch (clockType) {
                 case STRICT_CLOCK:
 //                    rateParam = getParameter("clock.rate");

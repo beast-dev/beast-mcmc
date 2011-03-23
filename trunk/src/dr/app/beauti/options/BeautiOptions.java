@@ -124,7 +124,7 @@ public class BeautiOptions extends ModelOptions {
         siteModelOptions = new SiteModelOptions(this);
         clockModelOptions = new ClockModelOptions(this);
         treeModelOptions = new TreeModelOptions(this);
-        priorOptions = new PriorOptions(this);
+//        priorOptions = new PriorOptions(this);
 
 //        traitsOptions = new TraitsOptions(this);
         useStarBEAST = false;
@@ -210,7 +210,7 @@ public class BeautiOptions extends ModelOptions {
 
         selectComponentStatistics(this, parameters);
 
-        priorOptions.selectParameters(parameters);
+//        priorOptions.selectParameters(parameters);
 
         return parameters;
     }
@@ -324,6 +324,12 @@ public class BeautiOptions extends ModelOptions {
             return getAllPartitionData((PartitionClockModel) model);
         } else if (model instanceof PartitionTreeModel) {
             return getAllPartitionData((PartitionTreeModel) model);
+        } else if (model instanceof PartitionTreePrior) {
+            return getAllPartitionData((PartitionTreePrior) model);
+        } else if (model instanceof PartitionClockModelTreeModelLink) {
+            return getAllPartitionData((PartitionClockModelTreeModelLink) model);
+        } else if (model instanceof PartitionClockModelSubstModelLink) {
+            return getAllPartitionData((PartitionClockModelSubstModelLink) model);
         } else {
             return null;
         }
@@ -353,6 +359,36 @@ public class BeautiOptions extends ModelOptions {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionTreeModel() == model) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<AbstractPartitionData> getAllPartitionData(PartitionTreePrior prior) {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getPartitionTreeModel().getPartitionTreePrior() == prior) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<AbstractPartitionData> getAllPartitionData(PartitionClockModelTreeModelLink link) {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getPartitionClockModel() == link.getPartitionClockModel() && pd.getPartitionTreeModel() == link.getPartitionTreeTree()) {
+                pdList.add(pd);
+            }
+        }
+        return pdList;
+    }
+
+    public List<AbstractPartitionData> getAllPartitionData(PartitionClockModelSubstModelLink link) {
+        List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
+        for (AbstractPartitionData pd : dataPartitions) {
+            if (pd.getPartitionClockModel() == link.getClockModel() && pd.getPartitionSubstitutionModel() == link.getSubstModel()) {
                 pdList.add(pd);
             }
         }
@@ -964,7 +1000,7 @@ public class BeautiOptions extends ModelOptions {
     public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
-    public PriorOptions priorOptions = new PriorOptions(this);
+//    public PriorOptions priorOptions = new PriorOptions(this);
 
     //    public TraitsOptions traitsOptions = new TraitsOptions(this);
     public boolean useStarBEAST = false;

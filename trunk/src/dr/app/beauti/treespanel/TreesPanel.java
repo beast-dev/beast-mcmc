@@ -31,7 +31,6 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.Microsatellite;
-import dr.evolution.datatype.Nucleotides;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
@@ -234,11 +233,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
-                List<PartitionClockModel> pcmList = options.getPartitionClockModels(Nucleotides.INSTANCE);
-                if (pcmList.size() < 1) throw new IllegalArgumentException("*BEAST needs data in " + Nucleotides.INSTANCE.getDescription());
-                ClockModelGroup group = pcmList.get(0).getClockModelGroup();
-
-                options.clockModelOptions.fixRateOfFirstClockPartition(group); // fix 1st partition
+                List<ClockModelGroup> groupList = options.clockModelOptions.getClockModelGroups();// all data partitions
+                for (ClockModelGroup clockModelGroup : groupList) { // todo correct?
+                    options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
+                }
 
                 p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
 
@@ -256,6 +254,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             }
 
             treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
+
+            for (PartitionTreeModel model : treeModelPanels.keySet()) {
+                if (model != null) treeModelPanels.get(model).setupPanel();
+
+            }
             updateTreePriorBorder();
             treePriorPanelParent.add(p);
         }
@@ -346,9 +349,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : treeModelPanels.keySet()) {
-            if (model != null) {
-                treeModelPanels.get(model).setOptions();
-            }
+            if (model != null) treeModelPanels.get(model).setOptions();
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

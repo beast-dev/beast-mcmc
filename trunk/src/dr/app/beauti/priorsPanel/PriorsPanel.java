@@ -44,6 +44,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -222,8 +223,11 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
             if (options.clockModelOptions.isNodeCalibrated(param)) {
-                ClockModelGroup group = options.getAllPartitionData(param.getOptions()).get(0).getPartitionClockModel().getClockModelGroup();
-                options.clockModelOptions.nodeCalibration(group);
+                List<ClockModelGroup> groupList = options.clockModelOptions.
+                        getClockModelGroups(options.getAllPartitionData(param.getOptions()));
+                for (ClockModelGroup clockModelGroup : groupList) {
+                    options.clockModelOptions.nodeCalibration(clockModelGroup);
+                }
                 frame.setAllOptions();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();

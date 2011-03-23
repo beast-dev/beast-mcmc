@@ -172,7 +172,8 @@ public class PartitionTreePrior extends PartitionOptions {
      * @param params the parameter list
      */
     public void selectParameters(List<Parameter> params) {
-
+        setAvgRootAndRate();
+        
         if (nodeHeightPrior == TreePriorType.CONSTANT) {
             params.add(getParameter("constant.popSize"));
         } else if (nodeHeightPrior == TreePriorType.EXPONENTIAL) {

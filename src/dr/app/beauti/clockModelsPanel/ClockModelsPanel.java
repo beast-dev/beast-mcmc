@@ -57,7 +57,9 @@ import java.util.Map;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Walter Xie
  * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
+ * @deprecated
  */
 public class ClockModelsPanel extends BeautiPanel implements Exportable {
 

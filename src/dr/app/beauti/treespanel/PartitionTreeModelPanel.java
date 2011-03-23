@@ -203,7 +203,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         setupPanel();
     }
 
-    private void setupPanel() {
+    public void setupPanel() {
 
         removeAll();
 

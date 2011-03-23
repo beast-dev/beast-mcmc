@@ -146,7 +146,7 @@ public class BeautiOptions extends ModelOptions {
                     PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
                     // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
                     statistic = new Parameter.Builder(taxa.getId(), "")
-                            .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true)
+                            .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true).partitionOptions(treeModel)
                             .initial(Double.NaN).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
                     statistics.put(taxa, statistic);
                 }

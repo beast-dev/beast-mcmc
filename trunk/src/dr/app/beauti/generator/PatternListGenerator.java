@@ -84,7 +84,7 @@ public class PatternListGenerator extends Generator {
 
             }
         } else {
-            writePatternList(partition, 0, 1, null, writer);
+            writePatternList(partition, 0, 1, "", writer);
         }
     }
 
@@ -118,8 +118,8 @@ public class PatternListGenerator extends Generator {
 
         List<Attribute> attributes = new ArrayList<Attribute>();
 
-        // no codon, unique patterns site patterns
-        if ((offset == 0 && every == 1) || (codonPrefix != null) )
+        // no 11 of 112 codon, which uses mergePatterns
+        if (codonPrefix != null)
             attributes.add(new Attribute.Default<String>(XMLParser.ID, codonPrefix + partition.getPrefix() + SitePatternsParser.PATTERNS));
 
         attributes.add(new Attribute.Default<String>("from", "" + from));

@@ -146,6 +146,51 @@ public class RPNexpressionCalculator {
                 }
             }
         }
+
         return stack.pop();
+    }
+
+    /**
+     * @return null if all ok, error message otherwise 
+     **/
+    public String validate() {
+        int stackSize = 0;
+
+        for(Eelement elem : expression) {
+            switch( elem.op ) {
+                case OP_ADD:
+                case OP_SUB:
+                case OP_MULT:
+                case OP_DIV: {
+                    if( stackSize < 2 ) {
+                        return "Binary operator underflow";
+                    }
+                    stackSize -= 1;
+                    break;
+                }
+                case OP_CHS:
+                case OP_LOG:
+                case OP_EXP: {
+                    if( stackSize == 0 ) {
+                        return "Unary operator underflow";
+                    }
+                    break;
+                }
+                case OP_CONST: {
+                    stackSize += 1;
+                    break;
+                }
+                case OP_REF: {
+                    stackSize += 1;
+                    break;
+                }
+            }
+        }
+
+        if( stackSize != 1 ) {
+            return "Stack size " + stackSize + " ( != 1 ) at end of expression evaluation";
+        }
+
+        return null;
     }
 }

@@ -42,7 +42,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
     public static final String BIRTH_DEATH_MODEL = "birthDeathModel";
     public static final String BIRTHDIFF_RATE = "birthMinusDeathRate";
     public static final String RELATIVE_DEATH_RATE = "relativeDeathRate";
-    public static final String SAMPLE_RATE = "sampleRate";
+    public static final String SAMPLE_PROB = "sampleProbability";
     public static final String TREE_TYPE = "type";
     public static final String CONDITIONAL_ON_ROOT = "conditionalOnRoot";
 
@@ -64,21 +64,28 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
 
         final Parameter birthParameter = (Parameter) xo.getElementFirstChild(BIRTHDIFF_RATE);
         final Parameter deathParameter = (Parameter) xo.getElementFirstChild(RELATIVE_DEATH_RATE);
-        final Parameter sampleParameter = xo.hasChildNamed(SAMPLE_RATE) ?
-                (Parameter) xo.getElementFirstChild(SAMPLE_RATE) : null;
+        final Parameter sampleProbability = xo.hasChildNamed(SAMPLE_PROB) ?
+                (Parameter) xo.getElementFirstChild(SAMPLE_PROB) : null;
 
-        Logger.getLogger("dr.evomodel").info("Using birth-death model on tree: Gernhard T (2008) J Theor Biol," +
-                " Volume 253, Issue 4, Pages 769-778 In press");
+        Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_PROB) ? getCitationRHO() : getCitation());
 
         final String modelName = xo.getId();
 
-        return new BirthDeathGernhard08Model(modelName, birthParameter, deathParameter, sampleParameter, 
+        return new BirthDeathGernhard08Model(modelName, birthParameter, deathParameter, sampleProbability,
                 treeType, units, conditonalOnRoot);
     }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
+    public static String getCitationRHO() {
+        return "Stadler, T; On incomplete sampling under birth-death models and connections to the sampling-based coalescent;\n" +
+               "JOURNAL OF THEORETICAL BIOLOGY (2009) 261:58-66";
+    }
+
+    public static String getCitation() {
+        return "Using birth-death model on tree: Gernhard T (2008) J Theor Biol, Volume 253, Issue 4, Pages 769-778 In press";
+    }
 
     public String getParserDescription() {
         return "Gernhard (2008) model of speciation (equation at bottom of page 19 of draft).";
@@ -97,7 +104,7 @@ public class BirthDeathModelParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(CONDITIONAL_ON_ROOT, true),
             new ElementRule(BIRTHDIFF_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RELATIVE_DEATH_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SAMPLE_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SAMPLE_PROB, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             XMLUnits.SYNTAX_RULES[0]
     };
 }

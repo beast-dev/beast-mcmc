@@ -106,7 +106,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
         parameter.setPrefix(getPrefix());
 
-        autoScale(parameter);
+        autoScale(parameter); // not include clock rate, and treeModel.rootHeight
 
         return parameter;
     }

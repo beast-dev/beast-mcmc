@@ -49,6 +49,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
+    public static final String BDSS = "bdss";
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -56,8 +57,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        final String modelName = xo.getId();
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        final Parameter finalTimeInterval = (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
 
@@ -69,10 +70,6 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             mu = (Parameter) xo.getElementFirstChild(MU);
         }
 
-        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
-        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
-        final Parameter r = (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS);
-
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
 
@@ -81,9 +78,14 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             origin = (Parameter) xo.getElementFirstChild(ORIGIN);
         }
 
-        Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
+        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+        final Parameter r = xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ?
+                (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS) : new Parameter.Default(1.0);
+        final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
+                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
-        final String modelName = xo.getId();
+        Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
                 r, finalTimeInterval, origin, units);
@@ -92,6 +94,13 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
+    public static String getCitationPsiOrg() {
+        return "Stadler, T; Sampling-through-time in birth-death trees; JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404";
+    }
+    
+    public static String getCitationRT() {
+        return "Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.";
+    }
 
     public String getParserDescription() {
         return "Stadler et al (2010; in press) model of speciation.";

@@ -81,6 +81,10 @@ public abstract class Generator {
         writer.writeCloseTag(wrapperName);
     }
 
+    public void writeParameterRef(String id, XMLWriter writer) {
+        writer.writeIDref(ParameterParser.PARAMETER, id);
+    }
+
     /**
      * write a parameter
      *

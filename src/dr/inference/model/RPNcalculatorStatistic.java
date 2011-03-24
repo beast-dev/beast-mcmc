@@ -49,11 +49,16 @@ public class RPNcalculatorStatistic extends Statistic.Abstract {
 
     public RPNcalculatorStatistic(String name, String[] expressions, String[] names,
                                   Map<String, Statistic> variables) {
-		super(name);
+        super(name);
 
         this.expressions = new RPNexpressionCalculator[expressions.length];
         for(int i = 0; i < expressions.length; ++ i) {
-           this.expressions[i] = new RPNexpressionCalculator(expressions[i]);
+            this.expressions[i] = new RPNexpressionCalculator(expressions[i]);
+
+            String err = this.expressions[i].validate();
+            if( err != null ) {
+                throw new RuntimeException("Error in expression " + i + ": " + err);
+            }
         }
 
         this.names = names;

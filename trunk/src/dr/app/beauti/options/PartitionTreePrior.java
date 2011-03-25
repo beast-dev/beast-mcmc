@@ -129,34 +129,40 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
 
         createParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior(BirthDeathModelParser.SAMPLE_PROB, "Death/Birth ",
-                PriorScaleType.NONE, 0.5, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo beta prior and default values
-        createParameterUniformPrior(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB,
-                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth-Death speciation process relative death rate",
+                PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterBetaDistributionPrior(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB,
+                "Birth-Death the proportion of taxa sampled from birth-death tree",
+                PriorScaleType.NONE, 0.01, 1.0, 1.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA,
-                "Death/Birth ", PriorScaleType.BIRTH_RATE_SCALE, 0.1, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                "Birth-Death speciation process rate", PriorScaleType.BIRTH_RATE_SCALE,
+                1.0, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
-                "Death/Birth ", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
-        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                "Birth-Death relative death rate", PriorScaleType.BIRTH_RATE_SCALE,
+                0.5, 0.0, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterBetaDistributionPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
-                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                "Birth-Death the proportion of taxa sampled from birth death tree", PriorScaleType.NONE,
+                0.01, 1.0, 1.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.PSI,
-                "Death/Birth ", PriorScaleType.NONE, 0.05, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                "Birth-Death rate of sampling taxa through time", PriorScaleType.NONE,
+                0.05, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN,
-                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                "Birth-Death the time of the lineage originated (must > root height)", PriorScaleType.ORIGIN_SCALE,
+                1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS,
-                "Death/Birth ", PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);//0 <= r <= 1
+                "Birth-Death the probabilty that a sampled individual continues being infectious after sample event", PriorScaleType.NONE,
+                0.0, 0.0, 1.0, 0.0, 1.0); // 0 <= r <= 1
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
-                "Death/Birth ", PriorScaleType.NONE, 80.0, 1.0, 1000.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+                "Birth-Death the time in the past when the process starts with the first individual", PriorScaleType.NONE,
+                80.0, 1.0, 1000.0, 0.0, Double.POSITIVE_INFINITY);
        
         createScaleOperator("constant.popSize", demoTuning, demoWeights);
         createScaleOperator("exponential.popSize", demoTuning, demoWeights);
@@ -197,7 +203,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);
+                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random worl op ?
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."

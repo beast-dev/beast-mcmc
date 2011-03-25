@@ -152,7 +152,7 @@ public abstract class PartitionOptions extends ModelOptions {
         double avgInitialRate = avgRootAndRate[1];
 
 //        double growthRateMaximum = 1E6;
-//        double birthRateMaximum = 1E6;
+        double birthRateMaximum = 1E6;
 //        double substitutionRateMaximum = 100;
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
@@ -161,7 +161,7 @@ public abstract class PartitionOptions extends ModelOptions {
 //                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 //
 //            growthRateMaximum = 1E6 * avgInitialRate;
-//            birthRateMaximum = 1E6 * avgInitialRate;
+            birthRateMaximum = 1E6 * avgInitialRate;
 //        }
 
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
@@ -226,8 +226,8 @@ public abstract class PartitionOptions extends ModelOptions {
                     break;
 
                 case BIRTH_RATE_SCALE:
-//                        param.lower = Math.max(0.0, param.lower);
-                    //param.upper = Math.min(birthRateMaximum, param.upper);
+                    param.uniformLower = Math.max(0.0, param.lower);
+                    param.uniformUpper = Math.min(birthRateMaximum, param.upper);
                     break;
 
                 case SUBSTITUTION_RATE_SCALE:

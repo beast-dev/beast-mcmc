@@ -226,8 +226,11 @@ public abstract class PartitionOptions extends ModelOptions {
                     break;
 
                 case BIRTH_RATE_SCALE:
-                    param.uniformLower = Math.max(0.0, param.lower);
-                    param.uniformUpper = Math.min(birthRateMaximum, param.upper);
+//                    param.uniformLower = Math.max(0.0, param.lower);
+//                    param.uniformUpper = Math.min(birthRateMaximum, param.upper);
+                    break;
+                case ORIGIN_SCALE:
+                    param.initial = avgInitialRootHeight * 1.1;
                     break;
 
                 case SUBSTITUTION_RATE_SCALE:

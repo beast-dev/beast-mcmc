@@ -70,6 +70,7 @@ public class Parameter {
     public double mean;
     public double stdev;
     public double shape;
+    public double shapeB;
     public double scale;
     public double offset;
 
@@ -97,6 +98,7 @@ public class Parameter {
         public double mean = 0.0;
         public double stdev = 1.0;
         public double shape = 1.0;
+        public double shapeB = 3.0;
         public double scale = 1.0;
         public double offset = 0.0;
 
@@ -206,6 +208,11 @@ public class Parameter {
             return this;
         }
 
+        public Builder shapeB(double shapeB) {
+            this.shapeB = shapeB;
+            return this;
+        }
+
         public Builder scale(double scale) {
             this.scale = scale;
             return this;
@@ -248,6 +255,7 @@ public class Parameter {
         mean = builder.mean;
         stdev = builder.stdev;
         shape = builder.shape;
+        shapeB = builder.shapeB;
         scale = builder.scale;
         offset = builder.offset;
 
@@ -289,8 +297,8 @@ public class Parameter {
     public String getDescription() {
         if (taxaId != null) {
             return "tmrca statistic for taxon set " + taxaId;
-        } else if (prefix != null) {
-            return description + " of partition " + prefix;
+//        } else if (prefix != null) {
+//            return description + " of partition " + prefix;
         }
         return description;
     }

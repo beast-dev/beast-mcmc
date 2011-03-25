@@ -18,6 +18,7 @@ public enum PriorScaleType {
     UNITY_SCALE,
     ROOT_RATE_SCALE,
     LOG_VAR_SCALE,
+    ORIGIN_SCALE,
     GAMMA_STAR_BEAST;
 
 

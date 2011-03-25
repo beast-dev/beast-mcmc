@@ -39,7 +39,7 @@ public enum TreePriorType {
     BIRTH_DEATH("Speciation: Birth-Death Process"),
     BIRTH_DEATH_INCOM_SAMP("Speciation: Birth-Death Incomplete Sampling"),
     BIRTH_DEATH_SERI_SAMP("Speciation: Birth-Death Serially Sampled"),
-//    BIRTH_DEATH_SERI_SAMP_ESTIM("Speciation: Birth-Death Serially Sampled Estimating Reproductive"), 
+    BIRTH_DEATH_SERI_SAMP_ESTIM("Speciation: Birth-Death Serially Sampled Estimating Reproductive"),
     SPECIES_YULE("Species Tree: Yule Process"),
     SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
 

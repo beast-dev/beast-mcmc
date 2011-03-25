@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
+import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
 
 import java.util.List;
 
@@ -131,7 +132,32 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Death/Birth speciation process relative death rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-
+        createParameterUniformPrior(BirthDeathModelParser.SAMPLE_PROB, "Death/Birth ",
+                PriorScaleType.NONE, 0.5, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo beta prior and default values
+        createParameterUniformPrior(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB,
+                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.LAMBDA,
+                "Death/Birth ", PriorScaleType.BIRTH_RATE_SCALE, 0.1, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
+                "Death/Birth ", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
+                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.PSI,
+                "Death/Birth ", PriorScaleType.NONE, 0.05, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.ORIGIN,
+                "Death/Birth ", PriorScaleType.NONE, 0.1, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS,
+                "Death/Birth ", PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);//0 <= r <= 1
+        createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
+                "Death/Birth ", PriorScaleType.NONE, 80.0, 1.0, 1000.0, 0.0, Double.POSITIVE_INFINITY);//todo prior and default values
+       
         createScaleOperator("constant.popSize", demoTuning, demoWeights);
         createScaleOperator("exponential.popSize", demoTuning, demoWeights);
         createOperator("exponential.growthRate", OperatorType.RANDOM_WALK, 1.0, demoWeights);
@@ -163,7 +189,22 @@ public class PartitionTreePrior extends PartitionOptions {
 
         createScaleOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, demoTuning, demoWeights);
         createScaleOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, demoTuning, demoWeights);
-
+        createScaleOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, demoTuning, demoWeights);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.RELATIVE_MU, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.ORIGIN, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS, demoTuning, 1);
+        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, demoTuning, 1);
+        
     }
 
     /**
@@ -209,9 +250,28 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("skyride.precision"));
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
             params.add(getParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP)
+                params.add(getParameter(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP || nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.LAMBDA));
+            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.RELATIVE_MU));
+            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
+            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.PSI));
+            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.ORIGIN));
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+                params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS));
+                params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL));
+            }
         }
 
     }
@@ -260,9 +320,28 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("demographic.scaleActive"));
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
             ops.add(getOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP)
+                ops.add(getOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP || nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.LAMBDA));
+            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.RELATIVE_MU));
+            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
+            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.PSI));
+            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.ORIGIN));
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS));
+                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL));
+            }
         }
     }
 

@@ -199,6 +199,16 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
+            case BETA_PRIOR:
+                writer.writeOpenTag(PriorParsers.BETA_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.shape),
+                                new Attribute.Default<String>(PriorParsers.SHAPEB, "" + parameter.shapeB),
+                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.BETA_PRIOR);
+                break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }

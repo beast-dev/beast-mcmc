@@ -103,6 +103,11 @@ public class ModelOptions {
                   .initial(initial).mean(mean).scale(scale).lower(lower).upper(upper).build(parameters);
     }
 
+    public void createParameterBetaDistributionPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                          double shape, double shapeB, double offset, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.BETA_PRIOR).initial(initial)
+                  .shape(shape).shapeB(shapeB).offset(offset).lower(lower).upper(upper).build(parameters);
+    }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public void createDiscreteStatistic(String name, String description) { // Poisson Prior

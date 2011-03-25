@@ -117,14 +117,14 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
 //            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
-            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                     new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SAMPLED_REMAIN_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+            new ElementRule(SAMPLED_REMAIN_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };

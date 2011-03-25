@@ -58,8 +58,8 @@ public class PriorDialog {
 
     private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-    private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
-    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+    private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.BETA_PRIOR).toArray());
+    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.BETA_PRIOR).toArray());
     private JCheckBox meanInRealSpaceCheck = new JCheckBox();
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
@@ -86,6 +86,7 @@ public class PriorDialog {
         optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
         optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
+         optionsPanels.put(PriorType.BETA_PRIOR, new BetaOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
@@ -322,6 +323,15 @@ public class PriorDialog {
                 panel.getField(1).setValue(parameter.stdev);
                 panel.getField(2).setValue(parameter.uniformLower);
                 panel.getField(3).setValue(parameter.uniformUpper);
+                break;
+
+            case BETA_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.shape);
+//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setValue(parameter.shapeB);
+//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(2).setValue(parameter.offset);
                 break;
         }
 
@@ -631,6 +641,26 @@ public class PriorDialog {
             parameter.stdev = getValue(1);
             parameter.uniformLower = getValue(2);
             parameter.uniformUpper = getValue(3);
+        }
+    }
+
+     class BetaOptionsPanel extends PriorOptionsPanel {
+
+        public BetaOptionsPanel() {
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("ShapeB", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new BetaDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.shape = getValue(0);
+            parameter.shapeB = getValue(1);
+            parameter.offset = getValue(2);
         }
     }
 

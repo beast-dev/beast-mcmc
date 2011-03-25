@@ -21,7 +21,8 @@ public enum PriorType {
     INVERSE_GAMMA_PRIOR,
     ONE_OVER_X_PRIOR,
     TRUNC_NORMAL_PRIOR,
-    POISSON_PRIOR;
+    POISSON_PRIOR,
+    BETA_PRIOR;
 
 
     public String toString() {
@@ -53,6 +54,8 @@ public enum PriorType {
                 return "Poisson";
             case TRUNC_NORMAL_PRIOR:
                 return "Truncated Normal";
+            case BETA_PRIOR:
+                return "Beta";
             default:
                 return "";
         }
@@ -90,6 +93,9 @@ public enum PriorType {
                 break;
             case TRUNC_NORMAL_PRIOR:
                 dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.uniformLower, param.uniformUpper);
+                break;
+            case BETA_PRIOR:
+                dist = new OffsetPositiveDistribution(new BetaDistribution(param.shape, param.shapeB), param.offset);
                 break;
 //            default: // wrong Exception for other priors without distribution implementation
 //                throw new IllegalArgumentException("Distribution class not available for this prior");
@@ -195,6 +201,13 @@ public enum PriorType {
                 buffer.append("]");
 
                 break;
+            case BETA_PRIOR:
+                buffer.append("Beta [");
+                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
+                buffer.append(", ");
+                buffer.append(NumberUtil.formatDecimal(param.shapeB, 10, 6));
+                buffer.append("]");
+                break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
@@ -229,6 +242,7 @@ public enum PriorType {
             case INVERSE_GAMMA_PRIOR:
             case ONE_OVER_X_PRIOR:
             case POISSON_PRIOR:
+            case BETA_PRIOR:
             case TRUNC_NORMAL_PRIOR:
                 buffer.append("[");
                 buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));

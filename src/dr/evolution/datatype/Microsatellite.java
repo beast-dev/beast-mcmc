@@ -193,6 +193,14 @@ public class Microsatellite extends DataType {
         return min;
     }
 
+    public void setMax(int max){
+        this.max = max;
+    }
+
+    public void setMin(int min){
+        this.min = min;
+    }
+
     /**
      * @return true if the provided stateCode = unknownStateCode
      */

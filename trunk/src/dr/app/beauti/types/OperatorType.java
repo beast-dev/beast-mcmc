@@ -37,6 +37,7 @@ public enum OperatorType {
     RANDOM_WALK("randomWalk"),
     RANDOM_WALK_ABSORBING("randomWalkAbsorbing"),
     RANDOM_WALK_REFLECTING("randomWalkReflecting"),
+    RANDOM_WALK_INT("randomWalkIntegerOperator"),
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
     UP_DOWN_ALL_RATES_HEIGHTS("upDownAllRatesHeights"),

@@ -50,7 +50,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
-    private MicroSatModelType microsatSubstModel = MicroSatModelType.LINEAR_BIAS_MODEL;
 
     private boolean activateBSSVS = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
@@ -66,10 +65,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private boolean dolloModel = false;
 
+    private MicroSatModelType.RateProportionality ratePorportion = MicroSatModelType.RateProportionality.EQUAL_RATE;
+    private MicroSatModelType.MutationalBias mutationBias = MicroSatModelType.MutationalBias.UNBIASED;
+    private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
+    private Microsatellite microsatellite = null;
+
     public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
 //        this(options, partition.getName(),(partition.getTrait() == null)
 //                ? partition.getDataType() : GeneralDataType.INSTANCE);
-           super(options, partition.getName());
+        super(options, partition.getName());
     }
 
     /**
@@ -86,7 +90,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
         discreteSubstType = source.discreteSubstType;
-        microsatSubstModel = source.microsatSubstModel;
 
         activateBSSVS = source.activateBSSVS;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
@@ -101,6 +104,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
 
         dolloModel = source.dolloModel;
+
+        ratePorportion = source.ratePorportion;
+        mutationBias = source.mutationBias;
+        phase = source.phase;
+
+        microsatellite = source.microsatellite;
     }
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
@@ -148,7 +157,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createParameterLognormalPrior("kappa2", "TN93 2nd transition-transversion parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1",
-               PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2",
@@ -236,9 +245,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
 
-        createParameter("biasConst", "", 0.5);
-        createOperator("deltaBiasConst", "", "", "biasConst", OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
-        
         // This only works if the partitions are of the same size...
 //      createOperator("centeredMu", "Relative rates",
 //              "Scales codon position rates relative to each other maintaining mean", "allMus",
@@ -296,14 +302,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         //***************************************************
-        createParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" :  " ") + "base frequencies",
+        createParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" : " ") + "base frequencies",
                 PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
         createCachedGammaPrior("trait.rates", "location substitution model rates",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
         createParameter("trait.indicators", "location substitution model rate indicators (if BSSVS was selected)", 1.0);// BSSVS was selected
 
         // = strick clock TODO trait.mu belongs Clock Model?
-        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" :  " ") + "mutation rate parameter",
+        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" : " ") + "mutation rate parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
         // Poisson Prior
         createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // BSSVS was selected
@@ -313,10 +319,19 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("trait.mu", demoTuning, 10);
         //bit Flip on clock.rate in PartitionClockModelSubstModelLink
         createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
-                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"),this, demoTuning, 30);
+                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
         createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(trait.indicators, trait.rates)",
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                 "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
+
+        //=============== microsat ======================
+
+        createParameter("biasConst", "", 0.5);
+        createOperator("deltaBiasConst", "", "", "biasConst", OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
+
+
+
+
     }
 
     ////////////////////////////////////////////////////////////////
@@ -472,9 +487,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     Set<String> states = getDiscreteStateSet();
                     int K = states.size();
                     if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
-                         nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
+                        nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
                     } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
-                         nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+                        nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
                     }
 
                     params.add(nonZeroRates);
@@ -482,7 +497,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.MICRO_SAT:
-                
+
                 break;
 
             default:
@@ -850,16 +865,36 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.discreteSubstType = discreteSubstType;
     }
 
-    public MicroSatModelType getMicrosatSubstModel() {
-        return microsatSubstModel;
+    public MicroSatModelType.RateProportionality getRatePorportion() {
+        return ratePorportion;
     }
 
-    public void setMicrosatSubstModel(MicroSatModelType microsatSubstModel) {
-        this.microsatSubstModel = microsatSubstModel;
+    public void setRatePorportion(MicroSatModelType.RateProportionality ratePorportion) {
+        this.ratePorportion = ratePorportion;
+    }
+
+    public MicroSatModelType.MutationalBias getMutationBias() {
+        return mutationBias;
+    }
+
+    public void setMutationBias(MicroSatModelType.MutationalBias mutationBias) {
+        this.mutationBias = mutationBias;
+    }
+
+    public MicroSatModelType.Phase getPhase() {
+        return phase;
+    }
+
+    public void setPhase(MicroSatModelType.Phase phase) {
+        this.phase = phase;
     }
 
     public Microsatellite getMicrosatellite() {
-        return (Microsatellite) getDataType();
+        return microsatellite;
+    }
+
+    public void setMicrosatellite(Microsatellite microsatellite) {
+        this.microsatellite = microsatellite;
     }
 
     public boolean isActivateBSSVS() {
@@ -955,7 +990,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1) { 
+        if (options.getPartitionSubstitutionModels().size() > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -990,14 +1025,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     /**
      * returns the union of the set of states for all traits using this discrete CTMC model
+     *
      * @return
      */
     public Set<String> getDiscreteStateSet() {
         Set<String> states = new HashSet<String>();
         for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
-             if (partition.getTrait() != null) {
-                 states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
-             }
+            if (partition.getTrait() != null) {
+                states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
+            }
         }
         return states;
     }

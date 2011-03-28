@@ -271,4 +271,7 @@ public abstract class PartitionOptions extends ModelOptions {
         }
     }
 
+    public BeautiOptions getOptions() {
+        return options;
+    }
 }

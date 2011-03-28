@@ -4,18 +4,53 @@ package dr.app.beauti.types;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public enum MicroSatModelType {
+public class MicroSatModelType {
 
-//    ASYM_QUAD_MODEL("Asymmetric Quadratic Model");
-    LINEAR_BIAS_MODEL("Linear Bias Model");
+    public enum RateProportionality {
+        //    ASYM_QUAD_MODEL("Asymmetric Quadratic Model");
+        EQUAL_RATE("Equal Rate"),
+        PROPORTIONAL_RATE("Proportional Rate");
 
-    MicroSatModelType (String displayName) {
-        this.displayName = displayName;
+        RateProportionality(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String toString() {
+            return displayName;
+        }
+
+        private String displayName;
     }
 
-    public String toString() {
-        return displayName;
+    public enum MutationalBias {
+        UNBIASED("Unbiased"),
+        CONSTANT_BIAS("Constant Bias"),
+        LINEAR_BIAS("Linear Bias");
+
+        MutationalBias(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String toString() {
+            return displayName;
+        }
+
+        private String displayName;
     }
 
-    private String displayName;
+    public enum Phase {
+        ONE_PHASE("One Phase"),
+        TWO_PHASE("Two Phase");
+
+        Phase(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String toString() {
+            return displayName;
+        }
+
+        private String displayName;
+    }
+
 }

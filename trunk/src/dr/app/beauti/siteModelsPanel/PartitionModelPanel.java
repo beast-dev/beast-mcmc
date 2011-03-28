@@ -32,8 +32,10 @@ import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
+import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import jam.panels.OptionsPanel;
@@ -41,10 +43,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.EnumSet;
 import java.util.logging.Logger;
 
@@ -62,11 +61,6 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck
             = new JCheckBox("Use ambiguities in the tree likelihood associated with this model");
-
-    private JComboBox microsatSubstCombo = new JComboBox(MicroSatModelType.values());
-    private JTextField microsatName = new JTextField();
-    private JTextField microsatMax = new JTextField();
-    private JTextField microsatMin = new JTextField();
 
     private JComboBox frequencyCombo = new JComboBox(FrequencyPolicyType.values());
 
@@ -93,6 +87,15 @@ public class PartitionModelPanel extends OptionsPanel {
 
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(DiscreteSubstModelType.values());
     private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
+
+    // =========== micro sat ===========
+    private JTextField microsatName = new JTextField();
+    private WholeNumberField microsatMax = new WholeNumberField(2, Integer.MAX_VALUE);
+    private WholeNumberField microsatMin = new WholeNumberField(1, Integer.MAX_VALUE);
+    private JComboBox rateProportionCombo = new JComboBox(MicroSatModelType.RateProportionality.values());
+    private JComboBox mutationBiasCombo = new JComboBox(MicroSatModelType.MutationalBias.values());
+    private JComboBox phaseCombo = new JComboBox(MicroSatModelType.Phase.values());
+    JCheckBox shareMicroSatCheck = new JCheckBox("Share one microsatellite among all substitution model(s)");
 
     protected final PartitionSubstitutionModel model;
 
@@ -129,27 +132,6 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         binarySubstCombo.setToolTipText("<html>Select the type of binary substitution model.</html>");
-
-        PanelUtils.setupComponent(microsatSubstCombo);
-        microsatSubstCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                model.setMicrosatSubstModel((MicroSatModelType) microsatSubstCombo.getSelectedItem());
-            }
-        });
-        microsatSubstCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
-        microsatName.setColumns(30);
-        microsatName.addKeyListener(new java.awt.event.KeyListener() {
-            public void keyTyped(KeyEvent e) {}
-            public void keyPressed(KeyEvent e) {}
-
-            public void keyReleased(KeyEvent e) {
-                model.getMicrosatellite().setName(microsatName.getText());
-            }
-        });
-        microsatMax.setColumns(10);
-        microsatMax.setEditable(false);
-        microsatMin.setColumns(10);
-        microsatMin.setEditable(false);
 
         PanelUtils.setupComponent(useAmbiguitiesTreeLikelihoodCheck);
         useAmbiguitiesTreeLikelihoodCheck.addItemListener(new ItemListener() {
@@ -238,7 +220,78 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
         activateBSSVS.setToolTipText("<html>Actives Bayesian stochastic search variable selection on the rates as decribed in<br>" +
-            "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
+                "Lemey, Rambaut, Drummond & Suchard (2009) <i>PLoS Computational Biology</i> <b>5</b>: e1000520</html>");
+
+        //============ micro-sat ================
+        microsatName.setColumns(30);
+        microsatName.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                model.getMicrosatellite().setName(microsatName.getText());
+            }
+        });
+        microsatMax.setColumns(10);
+        microsatMax.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                model.getMicrosatellite().setMax(Integer.parseInt(microsatMax.getText()));
+            }
+        });
+        microsatMin.setColumns(10);
+        microsatMin.addKeyListener(new java.awt.event.KeyListener() {
+            public void keyTyped(KeyEvent e) {
+            }
+
+            public void keyPressed(KeyEvent e) {
+            }
+
+            public void keyReleased(KeyEvent e) {
+                model.getMicrosatellite().setMin(Integer.parseInt(microsatMin.getText()));
+            }
+        });
+
+        PanelUtils.setupComponent(shareMicroSatCheck);
+        shareMicroSatCheck.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                model.getOptions().shareMicroSat = shareMicroSatCheck.isSelected();
+                if (shareMicroSatCheck.isSelected()) {
+                    model.getOptions().shareMicroSat();
+                } else {
+                    model.getOptions().unshareMicroSat();
+                }
+                setOptions();
+            }
+        });
+
+        PanelUtils.setupComponent(rateProportionCombo);
+        rateProportionCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setRatePorportion((MicroSatModelType.RateProportionality) rateProportionCombo.getSelectedItem());
+            }
+        });
+//        rateProportionCombo.setToolTipText("<html>Select the type of microsatellite substitution model.</html>");
+        PanelUtils.setupComponent(mutationBiasCombo);
+        mutationBiasCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setMutationBias((MicroSatModelType.MutationalBias) mutationBiasCombo.getSelectedItem());
+            }
+        });
+        PanelUtils.setupComponent(phaseCombo);
+        phaseCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                model.setPhase((MicroSatModelType.Phase) phaseCombo.getSelectedItem());
+            }
+        });
 
         setupPanel();
         setOpaque(false);
@@ -248,7 +301,7 @@ public class PartitionModelPanel extends OptionsPanel {
      * Sets the components up according to the partition model - but does not layout the top
      * level options panel.
      */
-    private void setOptions() {
+    public void setOptions() {
 
         if (SiteModelsPanel.DEBUG) {
             String modelName = (model == null) ? "null" : model.getName();
@@ -288,7 +341,11 @@ public class PartitionModelPanel extends OptionsPanel {
                 microsatName.setText(model.getMicrosatellite().getName());
                 microsatMax.setText(Integer.toString(model.getMicrosatellite().getMax()));
                 microsatMin.setText(Integer.toString(model.getMicrosatellite().getMin()));
-                microsatSubstCombo.setSelectedItem(model.getMicrosatSubstModel());
+                shareMicroSatCheck.setSelected(model.getOptions().shareMicroSat);
+                rateProportionCombo.setSelectedItem(model.getRatePorportion());
+                mutationBiasCombo.setSelectedItem(model.getMutationBias());
+                phaseCombo.setSelectedItem(model.getPhase());
+                shareMicroSatCheck.setEnabled(model.getOptions().getPartitionSubstitutionModels(Microsatellite.INSTANCE).size() > 1);
                 break;
 
             default:
@@ -396,15 +453,18 @@ public class PartitionModelPanel extends OptionsPanel {
                 break;
 
             case DataType.MICRO_SAT:
-                addComponentWithLabel("Microsatellite:", microsatName);
-                addComponentWithLabel("Microsatellite Max:", microsatMax);
-                addComponentWithLabel("Microsatellite Min:", microsatMin);
+                addComponentWithLabel("Microsatellite Name:", microsatName);
+                addComponentWithLabel("Max of Length:", microsatMax);
+                addComponentWithLabel("Min of Length:", microsatMin);
+                addComponent(shareMicroSatCheck);
 
                 addSeparator();
 
-                addComponentWithLabel("Substitution Model:", microsatSubstCombo);
+                addComponentWithLabel("Rate Proportionality:", rateProportionCombo);
+                addComponentWithLabel("Mutational Bias:", mutationBiasCombo);
+                addComponentWithLabel("Phase:", phaseCombo);
                 break;
-            
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
 

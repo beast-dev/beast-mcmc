@@ -302,6 +302,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             }
 
             currentModel = model;
+            panel.setOptions();
             modelPanelParent.add(panel);
 
             updateBorder();

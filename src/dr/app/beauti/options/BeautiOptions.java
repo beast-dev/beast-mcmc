@@ -29,6 +29,7 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
@@ -135,6 +136,8 @@ public class BeautiOptions extends ModelOptions {
         parameters.clear();
         operators.clear();
         statistics.clear();
+
+        shareMicroSat = true;
     }
 
     public void selectTaxonSetsStatistics(List<Parameter> params) {
@@ -276,6 +279,30 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return false;
+    }
+
+    public void shareMicroSat() {
+        Microsatellite microsatellite = null;
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
+            if (microsatellite == null) {
+                microsatellite = model.getMicrosatellite();
+            } else {
+                model.setMicrosatellite(microsatellite);
+            }
+        }
+    }
+
+    public void unshareMicroSat() {
+        Microsatellite microsatellite = null;
+        for (PartitionSubstitutionModel model : getPartitionSubstitutionModels(Microsatellite.INSTANCE)) {
+            if (microsatellite == null) {
+                microsatellite = model.getMicrosatellite();
+            } else {
+                microsatellite = new Microsatellite(model.getName() + ".microsat",
+                        microsatellite.getMin(), microsatellite.getMax(), 1);
+                model.setMicrosatellite(microsatellite);
+            }
+        }
     }
 
     public boolean hasPartitionData(String name) {
@@ -1007,6 +1034,8 @@ public class BeautiOptions extends ModelOptions {
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
+
+    public boolean shareMicroSat = true;
 
 //    public static ArrayList<TraitData> getDiscreteTraitsExcludeSpecies() {
 //        return new ArrayList<TraitData>();  //Todo remove after

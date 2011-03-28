@@ -91,6 +91,8 @@ public class OperatorsGenerator extends Generator {
             case RANDOM_WALK_ABSORBING:
                 writeRandomWalkOperator(operator, false, writer);
                 break;
+            case RANDOM_WALK_INT:
+                writeRandomWalkIntegerOperator(operator, writer);
             case RANDOM_WALK_REFLECTING:
                 writeRandomWalkOperator(operator, true, writer);
                 break;
@@ -230,6 +232,18 @@ public class OperatorsGenerator extends Generator {
                 });
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
+        writer.writeCloseTag(name);
+    }
+
+    private void writeRandomWalkIntegerOperator(Operator operator, XMLWriter writer) {
+        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
+        writer.writeOpenTag(
+                name,
+                new Attribute[]{
+                        new Attribute.Default<Double>("windowSize", operator.tuning),
+                        getWeightAttribute(operator.weight)
+                });
+        writeParameter1Ref(writer, operator);
         writer.writeCloseTag(name);
     }
 

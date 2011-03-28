@@ -34,6 +34,7 @@ import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
+import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
@@ -464,8 +465,13 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 
         public boolean isCellEditable(int row, int col) {
             boolean editable;
-            ClockModelGroup group = options.getPartitionClockModels().get(row).getClockModelGroup();
+            PartitionClockModel model = options.getPartitionClockModels().get(row);
+            ClockModelGroup group = model.getClockModelGroup();
             switch (col) {
+                case 1:
+                    editable = !(model.getDataType().getType() == DataType.MICRO_SAT ||
+                            model.getDataType().getType() == DataType.GENERAL);
+                    break;
                 case 2:// Check box
                 case 4:
                     editable = !group.isFixMean();

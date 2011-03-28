@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.StartingTreeType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -103,6 +104,12 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
+
+        //=============== microsat ======================
+        createParameter("treeModel.microsatellite.internalNodesParameter", "Microsatellite sampler tree internal node parameter");
+        createOperator("microsatInternalNodesParameter", "Microsat tree internal node",
+                "Random integer walk on microsatellite sampler tree internal node parameter",
+                "treeModel.microsatellite.internalNodesParameter", OperatorType.RANDOM_WALK_INT, 1.0, branchWeights);
     }
 
     /**
@@ -126,6 +133,9 @@ public class PartitionTreeModel extends PartitionOptions {
             params.add(rootHeightPara);
         }
 
+        if (getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+             getParameter("treeModel.microsatellite.internalNodesParameter");
+        }
     }
 
     /**
@@ -151,6 +161,10 @@ public class PartitionTreeModel extends PartitionOptions {
 
         ops.add(getOperator("treeModel.rootHeight"));
         ops.add(getOperator("uniformHeights"));
+
+        if (getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+             ops.add(getOperator("microsatInternalNodesParameter"));
+        }
     }
 
     /////////////////////////////////////////////////////////////

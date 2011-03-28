@@ -8,6 +8,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.FastaImporter;
 import dr.evolution.io.Importer.ImportException;
@@ -89,11 +90,15 @@ public class BEAUTiImporter {
 
             List<Patterns> microsatPatList = importer.importPatterns();
             Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
+            Microsatellite microsatellite = importer.getMicrosatellite();
 
             bufferedReader.close();
 
+            PartitionSubstitutionModel substModel = new PartitionSubstitutionModel(options, microsatPatList.get(0).getId());
+            substModel.setMicrosatellite(microsatellite);
+
             for (Patterns patterns : microsatPatList) {
-                setData(file.getName(), unionSetTaxonList, patterns, null, null);
+                setData(file.getName(), unionSetTaxonList, patterns, substModel, null);
             }
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
@@ -547,36 +552,10 @@ public class BEAUTiImporter {
 
             options.dataPartitions.add(partition);
 
-            if (model != null) {//TODO Cannot load Clock Model and Tree Model from BEAST file yet
+            if (model != null) {
                 setSubstModel(partition, model);
 
-                // use same tree model and same tree prior in beginning
-                if (options.getPartitionTreeModels() != null
-                        && options.getPartitionTreeModels().size() == 1) {
-                    PartitionTreeModel ptm = options.getPartitionTreeModels().get(0);
-                    partition.setPartitionTreeModel(ptm); // same tree model, therefore same prior
-                }
-                if (partition.getPartitionTreeModel() == null) {
-                    // PartitionTreeModel based on PartitionData
-                    PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-                    partition.setPartitionTreeModel(ptm);
-
-                    // PartitionTreePrior always based on PartitionTreeModel
-                    PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-                    ptm.setPartitionTreePrior(ptp);
-                }
-
-                // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                if (options.getPartitionClockModels() != null
-                        && options.getPartitionClockModels().size() == 1) {
-                    PartitionClockModel pcm = options.getPartitionClockModels().get(0);
-                    partition.setPartitionClockModel(pcm);
-                }
-                if (partition.getPartitionClockModel() == null) {
-                    // PartitionClockModel based on PartitionData
-                    PartitionClockModel pcm = new PartitionClockModel(options, partition);
-                    partition.setPartitionClockModel(pcm);
-                }
+                setClockAndTree(partition);//TODO Cannot load Clock Model and Tree Model from BEAST file yet
 
             } else {// only this works
                 if (options.getPartitionSubstitutionModels(partition.getDataType()).size() < 1) {// use same substitution model in beginning
@@ -589,45 +568,7 @@ public class BEAUTiImporter {
                     setSubstModel(partition, psm);
                 }
 
-                // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
-                if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
-                    // PartitionClockModel based on PartitionData
-                    PartitionClockModel pcm = new PartitionClockModel(options, partition);
-                    partition.setPartitionClockModel(pcm);
-                } else { //if (options.getPartitionClockModels() != null) {
-//                        && options.getPartitionClockModels().size() == 1) {
-                    PartitionClockModel pcm;
-                    if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                        pcm = new PartitionClockModel(options, partition);
-                    } else {
-                        // make sure in the same data type
-                        pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
-                    }
-                    partition.setPartitionClockModel(pcm);
-                }
-
-                // use same tree model and same tree prior in beginning
-                if (options.getPartitionTreeModels().size() < 1) {
-                    // PartitionTreeModel based on PartitionData
-                    PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
-                    partition.setPartitionTreeModel(ptm);
-
-                    // PartitionTreePrior always based on PartitionTreeModel
-                    PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
-                    ptm.setPartitionTreePrior(ptp);
-                } else { //if (options.getPartitionTreeModels() != null) {
-//                        && options.getPartitionTreeModels().size() == 1) {
-                    PartitionTreeModel ptm;
-                    if (partition.getDataType().getType() == DataType.MICRO_SAT) {
-                        ptm = new PartitionTreeModel(options, partition); // different tree model,
-                        PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
-                        ptm.setPartitionTreePrior(ptp);
-                    } else {
-                        ptm = options.getPartitionTreeModels().get(0); // same tree model,
-                    }
-                    partition.setPartitionTreeModel(ptm); // if same tree model, therefore same prior
-                }
-
+                setClockAndTree(partition);
             }
         }
 
@@ -635,14 +576,54 @@ public class BEAUTiImporter {
         options.updateAll();
     }
 
+    private void setClockAndTree(AbstractPartitionData partition) {
+        // use same clock model in beginning, have to create after partition.setPartitionTreeModel(ptm);
+        if (options.getPartitionClockModels(partition.getDataType()).size() < 1) {
+            // PartitionClockModel based on PartitionData
+            PartitionClockModel pcm = new PartitionClockModel(options, partition);
+            partition.setPartitionClockModel(pcm);
+        } else { //if (options.getPartitionClockModels() != null) {
+//                        && options.getPartitionClockModels().size() == 1) {
+            PartitionClockModel pcm;
+            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
+                pcm = new PartitionClockModel(options, partition);
+            } else {
+                // make sure in the same data type
+                pcm = options.getPartitionClockModels(partition.getDataType()).get(0);
+            }
+            partition.setPartitionClockModel(pcm);
+        }
+
+        // use same tree model and same tree prior in beginning
+        if (options.getPartitionTreeModels().size() < 1) {
+            // PartitionTreeModel based on PartitionData
+            PartitionTreeModel ptm = new PartitionTreeModel(options, partition);
+            partition.setPartitionTreeModel(ptm);
+
+            // PartitionTreePrior always based on PartitionTreeModel
+            PartitionTreePrior ptp = new PartitionTreePrior(options, ptm);
+            ptm.setPartitionTreePrior(ptp);
+        } else { //if (options.getPartitionTreeModels() != null) {
+//                        && options.getPartitionTreeModels().size() == 1) {
+            PartitionTreeModel ptm;
+            if (partition.getDataType().getType() == DataType.MICRO_SAT) {
+                ptm = new PartitionTreeModel(options, partition); // different tree model,
+                PartitionTreePrior ptp = options.getPartitionTreePriors().get(0); // but same tree prior
+                ptm.setPartitionTreePrior(ptp);
+            } else {
+                ptm = options.getPartitionTreeModels().get(0); // same tree model,
+            }
+            partition.setPartitionTreeModel(ptm); // if same tree model, therefore same prior
+        }
+    }
+
     private void setSubstModel(AbstractPartitionData partition, PartitionSubstitutionModel psm) {
-        if (psm.getDataType() == partition.getDataType()) {
-            partition.setPartitionSubstitutionModel(psm);
-        } else {
+        partition.setPartitionSubstitutionModel(psm);
+
+        if (psm.getDataType() != partition.getDataType())
             throw new IllegalArgumentException("Partition " + partition.getName()
                     + "\ncannot assign to Substitution Model\n" + psm.getName()
-                    + "\nwith different data type.");
-        }
+                    + "\nwith different data type.");        
     }
 
     private void addTraits(List<TraitData> traits,

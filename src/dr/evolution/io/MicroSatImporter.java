@@ -18,6 +18,7 @@ public class MicroSatImporter implements PatternImporter {
     protected final BufferedReader reader;
     protected String delimiter;
     protected Taxa unionSetTaxonList = new Taxa();
+    protected Microsatellite microsatellite;
 
     public MicroSatImporter(BufferedReader reader) {
         this(reader, "\t");
@@ -32,11 +33,15 @@ public class MicroSatImporter implements PatternImporter {
         return unionSetTaxonList;
     }
 
+    public Microsatellite getMicrosatellite() {
+        return microsatellite;
+    }
+
     public List<Patterns> importPatterns() throws IOException, Importer.ImportException {
         List<Patterns> microsatPatList = new ArrayList<Patterns>();
         List<List<String>> data = new ArrayList<List<String>>(); // 1st List<String> is taxon names
         String[] microsatName = new String[2]; // microsatName[0] is keyword, microsatName[1] is name
-        microsatName[1] = "microsat";
+        microsatName[1] = "unnamed.microsat";
         String line = reader.readLine();
         while (line.startsWith("#")) { // comments
             if (line.toUpperCase().contains("NAME")) {
@@ -82,9 +87,9 @@ public class MicroSatImporter implements PatternImporter {
         }
 
         if (max < min) throw new Importer.ImportException("Importing invaild data: max < min !");
-        if (min - 2 < 0) throw new Importer.ImportException("Importing invaild data: min-2 < 0 where min = " + min);
-        // The min should be the shortest repeat length - 2 and max should be the longest repeat length - 2.
-        Microsatellite microsatellite = new Microsatellite(microsatName[1], min - 2, max - 2, 1);
+//        if (min - 2 < 0) throw new Importer.ImportException("Importing invaild data: min-2 < 0 where min = " + min);
+        // The min also = 1 and max should be the longest repeat length + 2.
+        microsatellite = new Microsatellite(microsatName[1], 1, max + 2, 1);
 
         Taxa taxaHaploid = new Taxa();
         for (String name : data.get(0)) {

@@ -141,7 +141,7 @@ public class PatternListGenerator extends Generator {
      * @param microsatList
      * @param writer
      */
-    public void writePatternList(PartitionPattern partition, List<Microsatellite> microsatList, XMLWriter writer) {
+    public void writePatternList(PartitionPattern partition, List<Microsatellite> microsatList, XMLWriter writer) throws GeneratorException {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
@@ -153,6 +153,7 @@ public class PatternListGenerator extends Generator {
                     });
 
             Microsatellite m = model.getMicrosatellite();
+            if (m == null) throw new GeneratorException("Microsatellite is null in partition:\n" + partition.getName());
 
             if (!microsatList.contains(m)) {
                 microsatList.add(m);

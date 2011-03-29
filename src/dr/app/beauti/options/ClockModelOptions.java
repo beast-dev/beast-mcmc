@@ -303,6 +303,15 @@ public class ClockModelOptions extends ModelOptions {
 //        this.meanRelativeRate = meanRelativeRate;
 //    }
 
+//    public double calculateAvgBranchLength(List<AbstractPartitionData> partitions) { // todo
+//        double avgBranchLength = 1;
+//
+//        for (PartitionTreeModel tree : options.getPartitionTreeModels(partitions)) {
+//        }
+//        return MathUtils.round(avgBranchLength, 2);
+//    }
+
+
     public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
         double avgInitialRootHeight = 1;
         double avgInitialRate = 1;

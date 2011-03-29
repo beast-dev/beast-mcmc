@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.evolution.datatype.DataType;
+import dr.math.MathUtils;
 
 import java.util.List;
 
@@ -228,9 +229,10 @@ public abstract class PartitionOptions extends ModelOptions {
                 case BIRTH_RATE_SCALE:
 //                    param.uniformLower = Math.max(0.0, param.lower);
 //                    param.uniformUpper = Math.min(birthRateMaximum, param.upper);
+                    param.initial = MathUtils.round(1 / options.treeModelOptions.getExpectedAvgBranchLength(avgInitialRootHeight), 2); 
                     break;
                 case ORIGIN_SCALE:
-                    param.initial = avgInitialRootHeight * 1.1;
+                    param.initial = MathUtils.round(avgInitialRootHeight * 1.1, 2);
                     break;
 
                 case SUBSTITUTION_RATE_SCALE:

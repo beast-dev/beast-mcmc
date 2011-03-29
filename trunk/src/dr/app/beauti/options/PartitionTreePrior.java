@@ -27,6 +27,7 @@ import dr.app.beauti.types.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.math.MathUtils;
 
 import java.util.List;
 
@@ -129,19 +130,19 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
 
         createParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, "Birth-Death speciation process relative death rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterBetaDistributionPrior(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB,
                 "Birth-Death the proportion of taxa sampled from birth-death tree",
                 PriorScaleType.NONE, 0.01, 1.0, 1.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA,
                 "Birth-Death speciation process rate", PriorScaleType.BIRTH_RATE_SCALE,
-                1.0, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
+                0.01, 0.0, 100000.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
-                "Birth-Death relative death rate", PriorScaleType.BIRTH_RATE_SCALE,
+                "Birth-Death relative death rate", PriorScaleType.NONE,
                 0.5, 0.0, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterBetaDistributionPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
@@ -158,7 +159,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS,
                 "Birth-Death the probabilty that a sampled individual continues being infectious after sample event", PriorScaleType.NONE,
-                0.0, 0.0, 1.0, 0.0, 1.0); // 0 <= r <= 1
+                0.01, 0.0, 1.0, 0.0, 1.0); // 0 <= r <= 1
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
                 "Birth-Death the time in the past when the process starts with the first individual", PriorScaleType.NONE,
@@ -210,7 +211,9 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, demoTuning, 1);
-        
+//        createOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS,
+//                OperatorType.RANDOM_WALK, 1.0, demoWeights);
     }
 
     /**
@@ -268,8 +271,10 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU));
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
-            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.PSI));
+            Parameter psi = getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+                + BirthDeathSerialSamplingModelParser.PSI);
+            if (options.maximumTipHeight > 0) psi.initial = MathUtils.round(1/options.maximumTipHeight, 4); 
+            params.add(psi);
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN));
             if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {

@@ -24,7 +24,7 @@ public class MicrosatelliteParser extends AbstractXMLObjectParser {
 
         int min = xo.getIntegerAttribute(MIN);
         int max = xo.getIntegerAttribute(MAX);
-        int unitLength = xo.getIntegerAttribute("unitLength");
+        int unitLength = xo.hasAttribute("unitLength") ? xo.getIntegerAttribute("unitLength") : 1;
         String name = xo.getId();
 
         return new Microsatellite(name, min, max, unitLength);
@@ -44,7 +44,7 @@ public class MicrosatelliteParser extends AbstractXMLObjectParser {
                     AttributeRule.newStringRule(XMLObject.ID),
                     AttributeRule.newIntegerRule(MIN),
                     AttributeRule.newIntegerRule(MAX),
-                    AttributeRule.newIntegerRule("unitLength")})
+                    AttributeRule.newIntegerRule("unitLength", true)})
         };
     }
 

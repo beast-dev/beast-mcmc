@@ -193,7 +193,7 @@ public class TreeModelGenerator extends Generator {
             writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.IDREF, treeModelName + ".microsatellite.internalNodesParameter"),
-                    new Attribute.Default<String>(ParameterParser.DIMENSION, "4")}, true);
+                    new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDeminsion())}, true);
             writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
             
             writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);

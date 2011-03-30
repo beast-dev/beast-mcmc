@@ -7,9 +7,9 @@ package dr.app.beauti.types;
 public class MicroSatModelType {
 
     public enum RateProportionality {
-        //    ASYM_QUAD_MODEL("Asymmetric Quadratic Model");
         EQUAL_RATE("Equal Rate"),
-        PROPORTIONAL_RATE("Proportional Rate");
+        PROPORTIONAL_RATE("Proportional Rate"),
+        ASYM_QUAD("Asymetric Quadratic Rate");
 
         RateProportionality(String displayName) {
             this.displayName = displayName;
@@ -40,7 +40,8 @@ public class MicroSatModelType {
 
     public enum Phase {
         ONE_PHASE("One Phase"),
-        TWO_PHASE("Two Phase");
+        TWO_PHASE("Two Phase"),
+        TWO_PHASE_STAR("Two Phase *");
 
         Phase(String displayName) {
             this.displayName = displayName;

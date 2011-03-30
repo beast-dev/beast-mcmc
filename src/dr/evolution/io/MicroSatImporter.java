@@ -125,13 +125,13 @@ public class MicroSatImporter implements PatternImporter {
                 for (int v = 0; v < size; v++) {
                     value = data.get(i).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v] = microsatellite.getState(value);
+                    pattern[v] = parseInt(value);//microsatellite.getState(value);
 //            }
                 }
                 for (int v = 0; v < data.get(i + 1).size(); v++) {
                     value = data.get(i + 1).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v + size] = microsatellite.getState(value);
+                    pattern[v + size] = parseInt(value);//microsatellite.getState(value);
 //            }
                 }
                 microsatPat = new Patterns(microsatellite, taxaDiploid);  
@@ -143,7 +143,7 @@ public class MicroSatImporter implements PatternImporter {
                 for (int v = 0; v < data.get(i).size(); v++) {
                     String value = data.get(i).get(v);
 //            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v] = microsatellite.getState(value);
+                    pattern[v] = parseInt(value);//microsatellite.getState(value);
 //            }
                 }
                 microsatPat = new Patterns(microsatellite, taxaHaploid);

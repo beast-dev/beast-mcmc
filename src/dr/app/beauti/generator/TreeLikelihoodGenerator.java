@@ -36,6 +36,8 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
+import dr.evomodelxml.treelikelihood.MicrosatelliteSamplerTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.SitePatternsParser;
@@ -59,7 +61,7 @@ public class TreeLikelihoodGenerator extends Generator {
      * @param partition the partition  to write likelihood block for
      * @param writer    the writer
      */
-    void writeTreeLikelihood(PartitionData partition, XMLWriter writer) {
+    public void writeTreeLikelihood(PartitionData partition, XMLWriter writer) {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
@@ -80,13 +82,13 @@ public class TreeLikelihoodGenerator extends Generator {
      * @param partition the partition to write likelihood block for
      * @param writer    the writer
      */
-    public void writeTreeLikelihood(String id, int num, PartitionData partition, XMLWriter writer) {
+    private void writeTreeLikelihood(String id, int num, PartitionData partition, XMLWriter writer) {
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeComment("Likelihood for tree given sequence data");
-        
+
         if (num > 0) {
             writer.writeOpenTag(
                     TreeLikelihoodParser.TREE_LIKELIHOOD,
@@ -153,8 +155,6 @@ public class TreeLikelihoodGenerator extends Generator {
            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         }*/
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
-
         writer.writeCloseTag(TreeLikelihoodParser.TREE_LIKELIHOOD);
     }
 
@@ -176,29 +176,43 @@ public class TreeLikelihoodGenerator extends Generator {
         }
     }
 
-// replaced by useAmbiguitiesTreeLikelihoodCheck.setSelected(binarySubstCombo.getSelectedItem() == BinaryModelType.BIN_COVARION);
-// in PartitionModelPanel
-//    private boolean useAmbiguities(PartitionSubstitutionModel model) {
-//        boolean useAmbiguities = false;
-//
-//        switch (model.getDataType().getType()) {
-//            case DataType.TWO_STATES:
-//            case DataType.COVARION:
-//
-//                switch (model.getBinarySubstitutionModel()) {
-//                    case BIN_COVARION:
-//                        useAmbiguities = true;
-//                        break;
-//
-//                    default:
-//                }
-//                break;
-//
-//            default:
-//                useAmbiguities = false;
-//        }
-//
-//        return useAmbiguities;
-//    }
+    /**
+     * Write the tree likelihood XML block.
+     *
+     * @param partition the partition  to write likelihood block for
+     * @param writer    the writer
+     */
+    public void writeTreeLikelihood(PartitionPattern partition, XMLWriter writer) {
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
+
+        writer.writeComment("Microsatellite Sampler Tree Likelihood");
+
+        writer.writeOpenTag(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID,
+                        partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD)});
+
+        writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
+                treeModel.getPrefix() + TreeModel.TREE_MODEL + ".microsatellite");
+
+// todo       writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
+
+        switch (clockModel.getClockType()) {
+            case STRICT_CLOCK:
+                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
+                        + BranchRateModel.BRANCH_RATES);
+                break;
+            case UNCORRELATED:
+            case RANDOM_LOCAL_CLOCK:
+            case AUTOCORRELATED:
+                throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
+
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+
+        writer.writeCloseTag(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
+    }
 
 }

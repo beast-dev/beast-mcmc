@@ -1,12 +1,12 @@
 package dr.evomodelxml.treelikelihood;
 
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.MicrosatelliteModel;
 import dr.evomodel.tree.MicrosatelliteSamplerTreeModel;
 import dr.evomodel.treelikelihood.MicrosatelliteSamplerTreeLikelihood;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.StrictClockBranchRates;
-import dr.xml.*;
 import dr.inference.model.Parameter;
+import dr.xml.*;
 
 /**
  * @author Chieh-Hsi Wu
@@ -14,10 +14,11 @@ import dr.inference.model.Parameter;
  * Parser for MicrosatelliteSamplerTreeLikelihood
  */
 public class MicrosatelliteSamplerTreeLikelihoodParser extends AbstractXMLObjectParser {
+    public static final String TREE_LIKELIHOOD = "microsatelliteSamplerTreeLikelihood";
     public static final String MUTATION_RATE = "mutationRate";
     public static final String BRANCH_RATE_MODEL = "branchRateModel";
     public String getParserName(){
-        return "microsatelliteSamplerTreeLikelihood";
+        return TREE_LIKELIHOOD;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

@@ -477,15 +477,18 @@ public class BeastGenerator extends Generator {
         try {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
-                if (partition instanceof PartitionData) {
-                    if (((PartitionData) partition).getAlignment() != null) {
+                if (partition.getTaxonList() != null) {
+                    generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
+                    
+                    if (partition instanceof PartitionData) {
                         treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
                         writer.writeText("");
+                    } else if (partition instanceof PartitionPattern) { // microsat
+                        treeLikelihoodGenerator.writeTreeLikelihood((PartitionPattern) partition, writer);
+                        writer.writeText("");
+                    } else {
+                        throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                     }
-                } else if (partition instanceof PartitionPattern) { // microsat
-
-                } else {
-                    throw new GeneratorException("Find unrecognized partition:\n" + partition.getName());
                 }
             }
 

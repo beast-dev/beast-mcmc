@@ -325,12 +325,26 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
 
         //=============== microsat ======================
+        createParameterGammaPrior("propLinear", "Proportionality linear function",
+                PriorScaleType.NONE, 0.0, 1.0, 1.0, 0.0, Double.POSITIVE_INFINITY, false);
+        createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
+                0.0, 0.0, 10.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
+                0.0, 0.0, 10.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("geomDist", "The success probability of geometric distribution",
+                PriorScaleType.NONE, 1.0, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series",
+                PriorScaleType.NONE, 0.0, 0.0, 1.0, 0.0, 1.0);
 
-        createParameter("biasConst", "", 0.5);
-        createOperator("deltaBiasConst", "", "", "biasConst", OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
-
-
-
+        createScaleOperator("propLinear", demoTuning, substWeights);
+//        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
+//                OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
+        createOperator("randomWalkBiasConst", "randomWalkBiasConst", "Random walk on constant bias", "biasConst",
+                OperatorType.RANDOM_WALK, 0.01, 2.0);
+        createOperator("randomWalkBiasLinear", "randomWalkBiasLinear", "Random walk on linear bias", "biasLinear",
+                OperatorType.RANDOM_WALK, 0.001, 2.0);
+        createOperator("randomWalkGeom", "randomWalkGeom", "Random walk on geomDist", "geomDist",
+                OperatorType.RANDOM_WALK, 0.01, 2.0);
 
     }
 
@@ -497,7 +511,29 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.MICRO_SAT:
+                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
 
+                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
+                    params.add(getParameter("propLinear"));
+                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
+
+                }
+                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
+
+                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
+                    params.add(getParameter("biasConst"));
+                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
+                    params.add(getParameter("biasConst"));
+                    params.add(getParameter("biasLinear"));
+                }
+                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
+                    
+                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
+                    params.add(getParameter("geomDist"));                    
+                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
+                    params.add(getParameter("geomDist"));
+                    params.add(getParameter("onePhaseProb"));
+                }
                 break;
 
             default:
@@ -692,7 +728,29 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.MICRO_SAT:
-                ops.add(getOperator("deltaBiasConst"));
+                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
+
+                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
+                    ops.add(getOperator("propLinear"));
+                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
+
+                }
+                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
+
+                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
+                    ops.add(getOperator("randomWalkBiasConst"));
+                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
+                    ops.add(getOperator("randomWalkBiasConst"));
+                    ops.add(getOperator("randomWalkBiasLinear"));
+                }
+                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
+
+                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
+                      ops.add(getOperator("randomWalkGeom"));
+                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
+//                    ops.add(getOperator("randomWalkGeom"));
+//                    ops.add(getOperator("onePhaseProb"));
+                }
                 break;
 
             default:

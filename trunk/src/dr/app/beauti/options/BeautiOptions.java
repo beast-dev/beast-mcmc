@@ -32,6 +32,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 import dr.evoxml.util.DateUnitsType;
@@ -725,6 +726,19 @@ public class BeautiOptions extends ModelOptions {
             }
         }
         return legal;
+    }
+
+    public int getNumTaxon(List<AbstractPartitionData> partitionDataList) {
+        if (partitionDataList == null) return 0;
+        
+        List<String> taxonNameList = new ArrayList<String>();
+        for (AbstractPartitionData partition : partitionDataList) {
+            for (Taxon t : partition.getTaxonList()) {
+                if (!taxonNameList.contains(t.getId()))
+                    taxonNameList.add(t.getId()); 
+            }
+        }
+        return taxonNameList.size();
     }
 
     // +++++++++++++ Traits +++++++++++++

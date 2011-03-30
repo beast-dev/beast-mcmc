@@ -7,18 +7,19 @@ import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
-import dr.evomodel.substmodel.NucModelType;
+import dr.evomodel.substmodel.*;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.evomodelxml.substmodel.*;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.GeneralDataTypeParser;
+import dr.evoxml.MicrosatelliteParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.loggers.ColumnsParser;
 import dr.inferencexml.model.CompoundParameterParser;
@@ -169,6 +170,10 @@ public class SubstitutionModelGenerator extends Generator {
                 writeDiscreteTraitsSiteModel(model, writer);
                 break;
 
+            case DataType.MICRO_SAT:
+                writeMicrosatSubstModel(model, writer);
+                break;
+
             default:
                 throw new IllegalArgumentException("Unknown data type");
         }
@@ -305,7 +310,8 @@ public class SubstitutionModelGenerator extends Generator {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
                 for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
-                    if (num >= 0) writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);
+                    if (num >= 0)
+                        writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);
                 }
             } else {
                 for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
@@ -953,4 +959,77 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
     }
+
+
+    private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
+
+        writer.writeOpenTag(AsymmetricQuadraticModel.ASYMQUAD_MODEL, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL),
+                new Attribute.Default<Boolean>(AsymQuadModelParser.IS_SUBMODEL,
+                        !(model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED
+                                && model.getPhase() == MicroSatModelType.Phase.ONE_PHASE)), // ?U1 is false
+        });
+        writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
+
+//        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
+//            // no xml
+//        } else 
+        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
+            writeParameter(AsymQuadModelParser.EXPANSION_LIN, "propLinear", model, writer);
+            writeParameterRef(AsymQuadModelParser.CONTRACTION_LIN, model.getPrefix() + "propLinear", writer);
+        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.ASYM_QUAD) {
+
+        }
+        writer.writeCloseTag(AsymmetricQuadraticModel.ASYMQUAD_MODEL);
+
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        if (model.getMutationBias() != MicroSatModelType.MutationalBias.UNBIASED) {
+            writer.writeOpenTag(LinearBiasModel.LINEAR_BIAS_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL),
+                    new Attribute.Default<Boolean>(LinearBiasModelParser.LOGISTICS, true),
+                    new Attribute.Default<Boolean>(LinearBiasModelParser.ESTIMATE_SUBMODEL_PARAMS,
+                            model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS),
+                    new Attribute.Default<Boolean>(LinearBiasModelParser.IS_SUBMODEL,
+                            model.getPhase() != MicroSatModelType.Phase.ONE_PHASE),
+            });
+            writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
+
+//            if (model.getMutationBias() == MicroSatModelType.MutationalBias.CONSTANT_BIAS)
+            writeParameterRef(LinearBiasModelParser.SUBMODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL, writer);
+
+            writeParameter(LinearBiasModelParser.BIAS_CONSTANT, "biasConst", model, writer);
+
+            if (model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
+                writeParameter(LinearBiasModelParser.BIAS_LINEAR, "biasLinear", model, writer);
+            }
+            writer.writeCloseTag(LinearBiasModel.LINEAR_BIAS_MODEL);
+        }
+
+        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        if (model.getPhase() != MicroSatModelType.Phase.ONE_PHASE) {
+            writer.writeOpenTag(TwoPhaseModel.TWO_PHASE_MODEL, new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + TwoPhaseModel.TWO_PHASE_MODEL),
+                    new Attribute.Default<Boolean>(TwoPhaseModelParser.ESTIMATE_SUBMODEL_PARAMS, true),
+            });
+            writer.writeIDref(MicrosatelliteParser.MICROSAT, model.getMicrosatellite().getName());
+
+            if (model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED) {
+                writeParameterRef(TwoPhaseModelParser.SUBMODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL, writer);
+            } else {
+                writeParameterRef(TwoPhaseModelParser.SUBMODEL, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL, writer);
+            }
+
+            if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE) {
+                writeParameter(TwoPhaseModelParser.GEO_PARAM, "geomDist", model, writer);
+                writer.writeOpenTag(TwoPhaseModelParser.ONEPHASEPR_PARAM);
+                writeParameter(model.getPrefix() + "onePhaseProb", 1, 0.0, Double.NaN, Double.NaN, writer);
+                writer.writeCloseTag(TwoPhaseModelParser.ONEPHASEPR_PARAM);
+            } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE_STAR) {
+                writeParameter(TwoPhaseModelParser.GEO_PARAM, "geomDist", model, writer);
+                writeParameter(TwoPhaseModelParser.ONEPHASEPR_PARAM, "onePhaseProb", model, writer);
+            }
+            writer.writeCloseTag(TwoPhaseModel.TWO_PHASE_MODEL);
+        }
+    }
+
 }

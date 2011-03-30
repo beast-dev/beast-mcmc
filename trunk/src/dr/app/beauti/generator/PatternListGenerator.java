@@ -162,6 +162,7 @@ public class PatternListGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, m.getName()),
                                 new Attribute.Default<Integer>(MicrosatelliteParser.MAX, m.getMax()),
                                 new Attribute.Default<Integer>(MicrosatelliteParser.MIN, m.getMin()),
+                                new Attribute.Default<Integer>(MicrosatelliteParser.MICROSAT, m.getMin()),
                         }, true);
 
             } else {
@@ -173,12 +174,12 @@ public class PatternListGenerator extends Generator {
 
             writer.writeOpenTag(MicrosatellitePatternParser.MICROSAT_SEQ);
             String seq = "";
-            for (int i = 0; i < partition.getPatterns().getPatternCount(); i++) {
+            for (int i = 0; i < partition.getPatterns().getTaxonCount(); i++) {
                 if (i > 0) seq +=",";
-                seq += partition.getPatterns().getPattern(i);
+                seq += partition.getPatterns().getPatternState(i, 0);
             }
             writer.writeText(seq);
-            writer.writeCloseTag(MicrosatellitePatternParser.MICROSATPATTERN);
+            writer.writeCloseTag(MicrosatellitePatternParser.MICROSAT_SEQ);
 
             writer.writeCloseTag(MicrosatellitePatternParser.MICROSATPATTERN);
 

@@ -97,6 +97,12 @@ public class ModelOptions {
                   .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
+    public void createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                                double mean, double stdev, double offset, double lower, double upper) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
+                  .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
+    }
+
     public void createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
                                                 double mean, double scale, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LAPLACE_PRIOR)

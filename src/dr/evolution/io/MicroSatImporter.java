@@ -19,6 +19,7 @@ public class MicroSatImporter implements PatternImporter {
     protected String delimiter;
     protected Taxa unionSetTaxonList = new Taxa();
     protected Microsatellite microsatellite;
+    protected boolean hasDifferentTaxon = false;
 
     public MicroSatImporter(BufferedReader reader) {
         this(reader, "\t");
@@ -35,6 +36,10 @@ public class MicroSatImporter implements PatternImporter {
 
     public Microsatellite getMicrosatellite() {
         return microsatellite;
+    }
+
+    public boolean isHasDifferentTaxon() {
+        return hasDifferentTaxon;
     }
 
     public List<Patterns> importPatterns() throws IOException, Importer.ImportException {
@@ -118,6 +123,7 @@ public class MicroSatImporter implements PatternImporter {
                     throw new Importer.ImportException("Importing invaild data: duplicate taxon name in this locus : " + names[i]);
 
                 unionSetTaxonList.addTaxa(taxaDiploid);
+                hasDifferentTaxon = true;
                 
                 pattern = new int[data.get(i).size() + data.get(i + 1).size()];
                 String value;

@@ -466,7 +466,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeCloseTag(BayesianSkylineLikelihoodParser.SKYLINE_LIKELIHOOD);
 
                 writer.writeText("");
-                writeExponentialMarkovLikelihood(writer);
+                writeExponentialMarkovLikelihood(prior, writer);
 
                 break;
 
@@ -810,14 +810,14 @@ public class TreePriorGenerator extends Generator {
         }
     }
 
-    private void writeExponentialMarkovLikelihood(XMLWriter writer) {
+    private void writeExponentialMarkovLikelihood(PartitionTreePrior prior, XMLWriter writer) {
         writer.writeOpenTag(
                 ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, modelPrefix + "eml1"),
                         new Attribute.Default<String>("jeffreys", "true")}
         );
 
-        writeParameterRef(ExponentialMarkovModelParser.CHAIN_PARAMETER, modelPrefix + "skyline.popSize", writer);
+        writeParameterRef(ExponentialMarkovModelParser.CHAIN_PARAMETER, prior.getPrefix() + "skyline.popSize", writer);
 
         writer.writeCloseTag(ExponentialMarkovModel.EXPONENTIAL_MARKOV_MODEL);
     }

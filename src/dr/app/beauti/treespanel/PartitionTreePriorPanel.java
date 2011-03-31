@@ -206,7 +206,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 citation = citationCoalescent + "\nMinin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
                 break;
             case YULE:
-                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769– 78.";
+                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769-778.";
                 break;
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();
@@ -227,7 +227,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         if (treesPanel.options.maximumTipHeight > 0)
             citation = citation
                     + "\nRODRIGO, A. G., and J. FELSENSTEIN, 1999 Coalescent approaches to HIV population genetics, "
-                    + "pp. 233–272 in Molecular Evolution of HIV,\nedited by K. CRANDALL. Johns Hopkins University Press, Baltimore."
+                    + "pp. 233-272 in Molecular Evolution of HIV,\nedited by K. CRANDALL. Johns Hopkins University Press, Baltimore."
                     + "\nDrummond AJ, Nicholls GK, Rodrigo AG, Solomon W. Estimating mutation parameters, population " +
                     "history and genealogy simultaneously from\ntemporally spaced sequence data.Genetics. 2002, 161(3):1307-1320.";
 

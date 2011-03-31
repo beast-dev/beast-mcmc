@@ -363,12 +363,17 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 if (ptpp != null) {
                     ptpp.setOptions();
 
-                    if (options.contains(Microsatellite.INSTANCE)) {
-                        ptpp.setMicrosatelliteTreePrior();
-                    } else if (options.clockModelOptions.isTipCalibrated()) {
+//                    if (options.contains(Microsatellite.INSTANCE)) {
+//                        ptpp.setMicrosatelliteTreePrior();
+//                    } else
+                    if (options.clockModelOptions.isTipCalibrated()) {
                         ptpp.removeCertainPriorFromTreePriorCombo();
                     } else {
-                        ptpp.recoveryTreePriorCombo();
+                        if (options.getPartitionTreeModels().size() > 1) {
+                            ptpp.removeBayesianSkylineTreePrior();
+                        } else {
+                            ptpp.recoveryTreePriorCombo();
+                        }
                     }
                     ptpp.repaint();
                 }

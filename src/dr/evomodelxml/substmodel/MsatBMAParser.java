@@ -3,7 +3,7 @@ package dr.evomodelxml.substmodel;
 import dr.xml.*;
 import dr.evolution.datatype.Microsatellite;
 import dr.inference.model.Parameter;
-import dr.evomodel.substmodel.MsatAveragingSubsetModel;
+import dr.evomodel.substmodel.MsatBMA;
 
 import java.util.HashMap;
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import java.util.ArrayList;
  *
  * Parser of MsatAveragingSubsetModel
  */
-public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
+public class MsatBMAParser extends AbstractXMLObjectParser{
 
     public static final String MODELS = "models";
     public static final String MODEL = "model";
@@ -22,12 +22,16 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
     public static final String LOGIT = "logit";
     public static final String RATE_PROPS = "rateProps";
     public static final String RATE_PROP = "rateProp";
+    public static final String RATE_QUADS = "rateQuads";
+    public static final String RATE_QUAD = "rateQuad";
     public static final String BIAS_CONSTS = "biasConsts";
     public static final String BIAS_CONST = "biasConst";
     public static final String BIAS_LINS = "biasLins";
     public static final String BIAS_LIN = "biasLin";
     public static final String GEOS = "geos";
     public static final String GEO = "geo";
+    public static final String PHASE_PROBS = "phaseProbs";
+    public static final String PHASE_PROB = "phaseProb";
     public static final String IN_MODELS = "inModels";
     public static final String MODEL_CHOOSE = "modelChoose";
     public static final String MODEL_INDICATOR = "modelIndicator";
@@ -66,7 +70,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
 
         }
 
-        Parameter[][] paramModelMap = new Parameter[4][modelCount];
+        Parameter[][] paramModelMap = new Parameter[6][modelCount];
 
 
 
@@ -75,7 +79,15 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                 processParameters(
                         propRatesXO,
                         paramModelMap,
-                        MsatAveragingSubsetModel.PROP_INDEX
+                        MsatBMA.PROP_INDEX
+                );
+
+        XMLObject quadRatesXO = xo.getChild(RATE_QUADS);
+        ArrayList<Parameter> rateQuads =
+                processParameters(
+                        quadRatesXO,
+                        paramModelMap,
+                        MsatBMA.QUAD_INDEX
                 );
 
         XMLObject biasConstsXO = xo.getChild(BIAS_CONSTS);
@@ -83,7 +95,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                 processParameters(
                         biasConstsXO,
                         paramModelMap,
-                        MsatAveragingSubsetModel.BIAS_CONST_INDEX
+                        MsatBMA.BIAS_CONST_INDEX
                 );
 
         XMLObject biasLinsXO = xo.getChild(BIAS_LINS);
@@ -91,7 +103,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                 processParameters(
                         biasLinsXO,
                         paramModelMap,
-                        MsatAveragingSubsetModel.BIAS_LIN_INDEX
+                        MsatBMA.BIAS_LIN_INDEX
                 );
 
         XMLObject geosXO = xo.getChild(GEOS);
@@ -99,20 +111,30 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                 processParameters(
                         geosXO,
                         paramModelMap,
-                        MsatAveragingSubsetModel.GEO_INDEX
+                        MsatBMA.GEO_INDEX
+                );
+
+        XMLObject phaseProbXO = xo.getChild(PHASE_PROBS);
+        ArrayList<Parameter> phaseProbs =
+                processParameters(
+                        phaseProbXO,
+                        paramModelMap,
+                        MsatBMA.PHASE_PROB_INDEX
                 );
 
         Parameter modelChoose = (Parameter) xo.getElementFirstChild(MODEL_CHOOSE);
         Parameter modelIndicator = (Parameter) xo.getElementFirstChild(MODEL_INDICATOR);
 
         printParameters(paramModelMap);
-        return new MsatAveragingSubsetModel(
+        return new MsatBMA(
                 dataType,
                 logit,
                 rateProps,
+                rateQuads,
                 biasConsts,
                 biasLins,
                 geos,
+                phaseProbs,
                 paramModelMap,
                 modelChoose,
                 modelIndicator,
@@ -177,7 +199,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                                             AttributeRule.newStringRule(CODE)
                                     },
                                     1,
-                                    12
+                                    27
                             )
                     }
             ),
@@ -191,7 +213,21 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                                         new ElementRule(Parameter.class)
                                 },
                                 1,
-                                6
+                                18
+                        )
+                    }
+            ),
+            new ElementRule(
+                    RATE_QUADS,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(
+                                RATE_QUAD,
+                                new XMLSyntaxRule[]{
+                                        AttributeRule.newIntegerArrayRule(IN_MODELS, false),
+                                        new ElementRule(Parameter.class)
+                                },
+                                1,
+                                9
                         )
                     }
             ),
@@ -205,7 +241,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                                         new ElementRule(Parameter.class)
                                 },
                                 1,
-                                8
+                                18
                         )
                     }
             ),
@@ -219,7 +255,7 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                                         new ElementRule(Parameter.class)
                                 },
                                 1,
-                                4
+                                9
                         )
                     }
             ),
@@ -233,7 +269,21 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
                                         new ElementRule(Parameter.class)
                                 },
                                 1,
-                                6
+                                18
+                        )
+                    }
+            ),
+            new ElementRule(
+                    PHASE_PROBS,
+                    new XMLSyntaxRule[]{
+                        new ElementRule(
+                                PHASE_PROB,
+                                new XMLSyntaxRule[]{
+                                        AttributeRule.newIntegerArrayRule(IN_MODELS, false),
+                                        new ElementRule(Parameter.class)
+                                },
+                                1,
+                                9
                         )
                     }
             ),
@@ -247,6 +297,6 @@ public class MsatAveragingSubsetModelParser extends AbstractXMLObjectParser{
     }
 
     public Class getReturnType(){
-        return MsatAveragingSubsetModel.class;
+        return MsatBMA.class;
     }
 }

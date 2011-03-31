@@ -147,13 +147,15 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         removeAll();
 
-        JTextArea citation = new JTextArea(1, 300);
-        citation.setLineWrap(true);
-        citation.setEditable(false);
-        citation.setFont(this.getFont());
+        JTextArea citationText = new JTextArea(1, 200);
+        citationText.setLineWrap(true);
+        citationText.setEditable(false);
+        citationText.setFont(this.getFont());
 //        JScrollPane scrollPane = new JScrollPane(citation, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 //                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 //        scrollPane.setOpaque(true);
+
+        String citation = null;
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
@@ -173,20 +175,24 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             addComponentWithLabel("Number of groups:", groupCountField);
             addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
+            citation = "Drummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
             addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
             treesPanel.linkTreePriorCheck.setSelected(true);
             treesPanel.updateShareSameTreePriorChanged();
 
+            citation = "Insert citation here...";
 //            treesPanel.getFrame().setupEBSP(); TODO
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
             //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet.<br>"
-                    + "It is only available for single tree model partition for this release.<br>"
+            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
+                    + "It is only available for single tree model partition for this release. "
                     + "Please go to Data Partition panel to link all tree models." + "</html>");
+
+            citation = "Minin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
 
 //            treesPanel.linkTreePriorCheck.setSelected(false);
 //            treesPanel.linkTreePriorCheck.setEnabled(false);
@@ -196,25 +202,25 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH) {
 //            samplingProportionField.setColumns(8);
 //            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-            addComponentWithLabel("Citation:", citation);
-            citation.setText(BirthDeathModelParser.getCitation());
+            citation = BirthDeathModelParser.getCitation();
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
-            addComponentWithLabel("Citation:", citation);
-            citation.setText(BirthDeathModelParser.getCitationRHO());
+            citation = BirthDeathModelParser.getCitationRHO();
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_SERI_SAMP) {
-            addComponentWithLabel("Citation:", citation);
-            citation.setText(BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
+            citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
-            addComponentWithLabel("Citation:", citation);
-            citation.setText(BirthDeathSerialSamplingModelParser.getCitationRT());
+            citation = BirthDeathSerialSamplingModelParser.getCitationRT();
 
         } else {
 //            treesPanel.linkTreePriorCheck.setEnabled(true);
 //            treesPanel.linkTreePriorCheck.setSelected(true);
 //            treesPanel.updateShareSameTreePriorChanged();
+        }
+        if (citation != null) {
+            addComponentWithLabel("Citation:", citationText);
+            citationText.setText(citation);
         }
 
 //        getOptions();

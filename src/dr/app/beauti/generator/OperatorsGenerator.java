@@ -100,7 +100,10 @@ public class OperatorsGenerator extends Generator {
                 writeIntegerRandomWalkOperator(operator, writer);
                 break;
             case UP_DOWN:
-                writeUpDownOperator(operator, writer);
+                writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
+                break;
+            case MICROSAT_UP_DOWN:
+                writeUpDownOperator(MicrosatUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
                 break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
             	writeUpDownOperatorAllRatesTrees(operator, writer);
@@ -283,33 +286,6 @@ public class OperatorsGenerator extends Generator {
         }
 
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
-    }
-
-    private void writeUpDownOperator(Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
-                new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
-                        getWeightAttribute(operator.weight)
-                }
-        );
-
-        writer.writeOpenTag(UpDownOperatorParser.UP);
-        // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed && !(operator.getClockModelGroup().getRateTypeOption() == FixRateType.FIX_MEAN)) {
-        	writeParameter1Ref(writer, operator);
-        }
-        writer.writeCloseTag(UpDownOperatorParser.UP);
-
-        writer.writeOpenTag(UpDownOperatorParser.DOWN);
-        if (operator.tag == null) {
-//	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
-            writeParameter2Ref(writer, operator);
-        } else {
-        	writer.writeIDref(operator.tag,  operator.idref);
-        }
-        writer.writeCloseTag(UpDownOperatorParser.DOWN);
-
-        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
     }
 
     private void writeCenteredOperator(Operator operator, XMLWriter writer) {
@@ -551,6 +527,32 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
+    private void writeUpDownOperator(String opTag, Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(opTag,
+                new Attribute[]{
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
+                        getWeightAttribute(operator.weight)
+                }
+        );
+
+        writer.writeOpenTag(UpDownOperatorParser.UP);
+        // for isEstimatedRate() = false, write nothing on up part of upDownOp
+        if (!operator.parameter1.isFixed && !(operator.getClockModelGroup().getRateTypeOption() == FixRateType.FIX_MEAN)) {
+        	writeParameter1Ref(writer, operator);
+        }
+        writer.writeCloseTag(UpDownOperatorParser.UP);
+
+        writer.writeOpenTag(UpDownOperatorParser.DOWN);
+        if (operator.tag == null) {
+//	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
+            writeParameter2Ref(writer, operator);
+        } else {
+        	writer.writeIDref(operator.tag,  operator.idref);
+        }
+        writer.writeCloseTag(UpDownOperatorParser.DOWN);
+
+        writer.writeCloseTag(opTag);
+    }
 
     private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
     	writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,

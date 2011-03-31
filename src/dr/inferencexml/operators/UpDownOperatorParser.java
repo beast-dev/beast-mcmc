@@ -12,7 +12,7 @@ public class UpDownOperatorParser extends AbstractXMLObjectParser {
     public static final String UP = "up";
     public static final String DOWN = "down";
 
-    public static final String SCALE_FACTOR = "scaleFactor";
+    public static final String SCALE_FACTOR = ScaleOperatorParser.SCALE_FACTOR;
 
     public String getParserName() {
         return UP_DOWN_OPERATOR;

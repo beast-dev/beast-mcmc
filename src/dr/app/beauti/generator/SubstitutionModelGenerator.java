@@ -613,7 +613,7 @@ public class SubstitutionModelGenerator extends Generator {
 
     }
 
-    public void writeLog(XMLWriter writer, PartitionSubstitutionModel model) {
+    public void writeLog(PartitionSubstitutionModel model, XMLWriter writer) {
 
         int codonPartitionCount = model.getCodonPartitionCount();
 
@@ -687,10 +687,10 @@ public class SubstitutionModelGenerator extends Generator {
                     case BIN_SIMPLE:
                         break;
                     case BIN_COVARION:
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.alpha");
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "bcov.s");
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "frequencies");
-                        writer.writeIDref(ParameterParser.PARAMETER, prefix + "hfrequencies");
+                        writeParameterRef(prefix + "bcov.alpha", writer);
+                        writeParameterRef(prefix + "bcov.s", writer);
+                        writeParameterRef(prefix + "frequencies", writer);
+                        writeParameterRef(prefix + "hfrequencies", writer);
                         break;
 
                 }
@@ -701,7 +701,7 @@ public class SubstitutionModelGenerator extends Generator {
                 break;
 
             case DataType.MICRO_SAT:
-                //TODO
+                writeMicrosatSubstModelRef(model, writer);
                 break;
 
             default:
@@ -751,6 +751,32 @@ public class SubstitutionModelGenerator extends Generator {
             writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
 
             writer.writeCloseTag(ColumnsParser.COLUMN);
+        }
+    }
+
+    public void writeMicrosatSubstModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
+        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
+
+        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
+            writeParameterRef(model.getPrefix() + "propLinear", writer);
+        } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.ASYM_QUAD) {
+
+        }
+        if (model.getMutationBias() == MicroSatModelType.MutationalBias.UNBIASED) {
+
+        } else if (model.getMutationBias() == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
+            writeParameterRef(model.getPrefix() + "biasConst", writer);
+        } else if (model.getMutationBias() == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
+            writeParameterRef(model.getPrefix() + "biasConst", writer);
+            writeParameterRef(model.getPrefix() + "biasLinear", writer);
+        }
+        if (model.getPhase() == MicroSatModelType.Phase.ONE_PHASE) {
+
+        } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE) {
+            writeParameterRef(model.getPrefix() + "geomDist", writer);
+        } else if (model.getPhase() == MicroSatModelType.Phase.TWO_PHASE_STAR) {
+            writeParameterRef(model.getPrefix() + "geomDist", writer);
+            writeParameterRef(model.getPrefix() + "onePhaseProb", writer);
         }
     }
 

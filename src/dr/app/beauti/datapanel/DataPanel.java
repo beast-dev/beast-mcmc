@@ -31,7 +31,6 @@ import dr.app.beauti.alignmentviewer.AminoAcidDecorator;
 import dr.app.beauti.alignmentviewer.NucleotideDecorator;
 import dr.app.beauti.alignmentviewer.StateCellDecorator;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
@@ -278,16 +277,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     private void fireDataChanged() {
 //        options.updateLinksBetweenPDPCMPSMPTMPTPP();
-        options.updatePartitionAllLinks();
-
-        for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-            if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
-                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
-                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
-                //TODO correct?
-                options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-            }
-        }
+        options.updateAll();
+//        frame.setAllOptions();
         frame.setDirty();
     }
 

@@ -38,7 +38,7 @@ import dr.app.gui.tree.JTreeDisplay;
 import dr.app.gui.tree.JTreePanel;
 import dr.app.gui.tree.SquareTreePainter;
 import dr.app.util.OSType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -220,7 +220,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
         }
 
-        if (partitionTreeModel.getDataType().getType() != Microsatellite.INSTANCE.getType())
+        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT)
             addComponentWithLabel("Starting Tree:", startingTreeCombo);
 
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {

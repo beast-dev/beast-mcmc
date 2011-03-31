@@ -188,7 +188,7 @@ public abstract class PartitionOptions extends ModelOptions {
 //        double timeScaleMaximum = MathUtils.round(avgInitialRootHeight * 1000.0, 2);
 
 
-        if (!options.hasData()) param.setPriorEdited(false);
+//        if (!options.hasData()) param.setPriorEdited(false);
 
         if (!param.isPriorEdited()) {
             switch (param.scaleType) {

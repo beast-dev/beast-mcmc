@@ -451,7 +451,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 //                    }
                     break;
                 case 3:
-                    model.setRate((Double) aValue);
+                    model.setRate((Double) aValue, true);
 //                    options.selectParameters();
                     break;
                 case 4:

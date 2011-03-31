@@ -30,7 +30,7 @@ import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.DataType;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
@@ -181,7 +181,7 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
 
-        if (model.getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+        if (model.getDataType().getType() == DataType.MICRO_SAT) {
             writer.writeComment("Generate a microsatellite tree model");
             writer.writeTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
                     new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite"), false);

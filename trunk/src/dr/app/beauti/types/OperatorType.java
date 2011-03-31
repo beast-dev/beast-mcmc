@@ -41,6 +41,7 @@ public enum OperatorType {
     INTEGER_RANDOM_WALK("integerRandomWalk"),
     UP_DOWN("upDown"),
     UP_DOWN_ALL_RATES_HEIGHTS("upDownAllRatesHeights"),
+    MICROSAT_UP_DOWN("microsatUpDown"),
     SCALE_ALL(ScaleOperatorParser.SCALE_ALL),
     SCALE_INDEPENDENTLY("scaleIndependently"),
     CENTERED_SCALE("centeredScale"),

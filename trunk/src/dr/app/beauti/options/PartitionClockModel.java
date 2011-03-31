@@ -397,11 +397,11 @@ public class PartitionClockModel extends PartitionOptions {
         return rate;
     }
 
-    public void setRate(double rate) {
+    public void setRate(double rate, boolean isUpdatedByUser) {
         this.rate = rate;
         Parameter rateParam = getClockRateParam();
         rateParam.initial = rate;
-        rateParam.setPriorEdited(true);
+        if (isUpdatedByUser) rateParam.setPriorEdited(true);
     }
 
     public ClockModelGroup getClockModelGroup() {

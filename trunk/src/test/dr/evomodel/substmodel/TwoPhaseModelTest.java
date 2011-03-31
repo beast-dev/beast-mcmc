@@ -38,7 +38,7 @@ public class TwoPhaseModelTest extends TestCase {
         }
 
         public double getMParam(){
-            return 0.42;
+            return 0.58;
         }
 
         public double getDistance(){

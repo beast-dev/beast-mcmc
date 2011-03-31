@@ -10,19 +10,22 @@ import dr.math.MathUtils;
  *  This operator performs bitflip operation on the bit vector representing the model.
  * 
  */
-public class MicrosatelliteAveragingOperator extends SimpleMCMCOperator{
+public class MsatBitFlipOperator extends SimpleMCMCOperator{
     private Parameter parameter;
     private Parameter dependencies;
+    private int[] variableIndices;
     public static final int PRESENT = 1;
     public static final int ABSENT = 0;
     public static final int NO_DEPENDENCY = -1;
     public static final String MODEL_CHOOSE = "modelChoose";
     public static final String DEPENDENCIES = "dependencies";
+    public static final String VARIABLE_INDICES = "variableIndices";
 
 
-    public MicrosatelliteAveragingOperator(Parameter parameter, Parameter dependencies, double weight){
+    public MsatBitFlipOperator(Parameter parameter, Parameter dependencies, double weight, int[] variableIndices){
         this.parameter = parameter;
         this.dependencies = dependencies;
+        this.variableIndices = variableIndices;
         if(parameter.getDimension() != dependencies.getDimension())
             throw new RuntimeException("Dimenension of the parameter ("+parameter.getDimension()+
                     ") does not equal to the dimension of the dependencies parameter("+dependencies.getDimension()+").");
@@ -41,7 +44,7 @@ public class MicrosatelliteAveragingOperator extends SimpleMCMCOperator{
             bitVec[i] = parameter.getParameterValue(i);
         }
         //int index = (int)Math.random()*parameter.getDimension();
-        int index = MathUtils.nextInt(parameter.getDimension());
+        int index = variableIndices[MathUtils.nextInt(variableIndices.length)];
         //System.out.println(index);
         int oldVal  = (int)parameter.getParameterValue(index);
         int newVal = -1;
@@ -83,8 +86,20 @@ public class MicrosatelliteAveragingOperator extends SimpleMCMCOperator{
             double weight = xo.getDoubleAttribute(WEIGHT);
             Parameter modelChoose = (Parameter) xo.getElementFirstChild(MODEL_CHOOSE);
             Parameter dependencies = (Parameter)xo.getElementFirstChild(DEPENDENCIES);
+            int[] variableIndices;
+            if(xo.hasChildNamed(VARIABLE_INDICES)){
 
-            return new MicrosatelliteAveragingOperator(modelChoose, dependencies, weight);
+                double[] temp = ((Parameter)xo.getElementFirstChild(VARIABLE_INDICES)).getParameterValues();
+                variableIndices = new int[temp.length];
+                for(int i = 0; i < temp.length;i++){
+                    variableIndices[i] = (int)temp[i];
+                }
+
+            }else{
+                variableIndices = new int[]{0, 1, 2, 3, 4, 5};
+            }
+
+            return new MsatBitFlipOperator(modelChoose, dependencies, weight, variableIndices);
         }
 
         //************************************************************************
@@ -106,7 +121,9 @@ public class MicrosatelliteAveragingOperator extends SimpleMCMCOperator{
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(MODEL_CHOOSE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-                new ElementRule(DEPENDENCIES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})
+                new ElementRule(DEPENDENCIES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+                new ElementRule(VARIABLE_INDICES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)},true)
+
         };
 
     };

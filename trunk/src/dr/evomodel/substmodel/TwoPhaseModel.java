@@ -96,7 +96,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         double e = transformParam.getParameterValue(0);
         double m = geoParam.getParameterValue(0);
         double p = onePhasePrParam.getParameterValue(0);
-        if(p < 1 - e && m < 1 - e || p ==m || e ==0){
+        if(p < 1 -  e && m < 1 - e || p ==m || e ==0){
             transOnePhase = onePhasePrParam;
             transGeo = geoParam;
         }else if(m > Math.max(1 - e,p)){
@@ -110,7 +110,7 @@ public class TwoPhaseModel extends MicrosatelliteModel{
 
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if(submodelParameters !=null && submodelParameters.indexOf((Parameter)variable) != -1){
+        if(submodelParameters !=null && submodelParameters.indexOf(variable) != -1){
             updateSubmodelRates = true;
         }
         updateMatrix = true;
@@ -153,13 +153,13 @@ public class TwoPhaseModel extends MicrosatelliteModel{
         double[] condProbNum = new double[stateCount];
 
         for(int i = 1; i < stateCount; i++){
-            condProbNum[i] = geoParameter*Math.pow((1.0 - geoParameter),i-1);
+            condProbNum[i] = (1.0-geoParameter)*Math.pow(geoParameter,i-1);
         }
         double condGeo = 0.0;
 
         for(int i = 0; i < stateCount; i++){
-            double expansionGeoDenom = 1-Math.pow((1.0-geoParameter),stateCount - 1 - i);
-            double contractionGeoDenom = 1 - Math.pow((1.0-geoParameter), i);
+            double expansionGeoDenom = 1-Math.pow(geoParameter,stateCount - 1 - i);
+            double contractionGeoDenom = 1 - Math.pow(geoParameter, i);
             double rowSum = 0.0;
             double submodelRate = 0.0;
 

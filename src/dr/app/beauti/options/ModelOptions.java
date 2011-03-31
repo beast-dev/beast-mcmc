@@ -167,12 +167,12 @@ public class ModelOptions {
     }
 
     public void createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
-                                     boolean isPara1Up, double tuning, double weight) {
+                                     OperatorType type, boolean isPara1Up, double tuning, double weight) {
         if (isPara1Up) {
-           operators.put(key, new Operator.Builder(name, description, parameter1, OperatorType.UP_DOWN, tuning, weight)
+           operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
                    .parameter2(parameter2).build());
         } else {
-           operators.put(key, new Operator.Builder(name, description, parameter2, OperatorType.UP_DOWN, tuning, weight)
+           operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
                    .parameter2(parameter1).build());
         }
     }

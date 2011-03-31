@@ -31,6 +31,7 @@ import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evolution.util.Taxa;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
@@ -172,6 +173,8 @@ public class LogGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             substitutionModelGenerator.writeStatisticLog(model, writer);
+            if (model.getDataType().getType() == DataType.MICRO_SAT)
+                substitutionModelGenerator.writeMicrosatSubstModelRef(model, writer);
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_SCREEN_LOG, writer);
@@ -267,7 +270,7 @@ public class LogGenerator extends Generator {
 //	    }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            substitutionModelGenerator.writeLog(writer, model);
+            substitutionModelGenerator.writeLog(model, writer);
             if (model.hasCodon()) {
                 writer.writeIDref(CompoundParameterParser.COMPOUND_PARAMETER, model.getPrefix() + "allMus");
             }

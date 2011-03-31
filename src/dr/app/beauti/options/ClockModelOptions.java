@@ -218,7 +218,7 @@ public class ClockModelOptions extends ModelOptions {
 
         for (PartitionClockModel model : options.getPartitionClockModels(group)) {
             model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
-            model.setRate(group.getFixMeanRate());
+            model.setRate(group.getFixMeanRate(), false);
         }
     }
 

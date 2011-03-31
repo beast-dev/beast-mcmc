@@ -25,7 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.StartingTreeType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -133,7 +133,7 @@ public class PartitionTreeModel extends PartitionOptions {
             params.add(rootHeightPara);
         }
 
-        if (getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+        if (getDataType().getType() == DataType.MICRO_SAT) {
              getParameter("treeModel.microsatellite.internalNodesParameter");
         }
     }
@@ -162,7 +162,7 @@ public class PartitionTreeModel extends PartitionOptions {
         ops.add(getOperator("treeModel.rootHeight"));
         ops.add(getOperator("uniformHeights"));
 
-        if (getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+        if (getDataType().getType() == DataType.MICRO_SAT) {
              ops.add(getOperator("microsatInternalNodesParameter"));
         }
     }

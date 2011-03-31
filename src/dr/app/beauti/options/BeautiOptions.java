@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
+import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -651,7 +652,14 @@ public class BeautiOptions extends ModelOptions {
     public void updateAll() {
         updatePartitionAllLinks();
         for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
-            clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
+                clockModelOptions.fixMeanRate(clockModelGroup);
+            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
+                //TODO correct?
+                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+            }
         }
     }
 
@@ -730,12 +738,12 @@ public class BeautiOptions extends ModelOptions {
 
     public int getNumTaxon(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null) return 0;
-        
+
         List<String> taxonNameList = new ArrayList<String>();
         for (AbstractPartitionData partition : partitionDataList) {
             for (Taxon t : partition.getTaxonList()) {
                 if (!taxonNameList.contains(t.getId()))
-                    taxonNameList.add(t.getId()); 
+                    taxonNameList.add(t.getId());
             }
         }
         return taxonNameList.size();

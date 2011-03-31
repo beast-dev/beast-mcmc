@@ -8,6 +8,7 @@ import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evolution.datatype.Nucleotides;
 import dr.evoxml.*;
@@ -145,7 +146,7 @@ public class PatternListGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
-        if (model.getDataType().getType() == Microsatellite.INSTANCE.getType()) {
+        if (model.getDataType().getType() == DataType.MICRO_SAT) {
             writer.writeComment("The patterns for microsatellite");
             writer.writeOpenTag(MicrosatellitePatternParser.MICROSATPATTERN,
                     new Attribute[]{

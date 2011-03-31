@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
+import dr.evolution.datatype.DataType;
 import dr.evomodelxml.tree.RateStatisticParser;
 
 import java.util.List;
@@ -93,13 +94,13 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
         createUpDownOperator("upDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
-                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
         createUpDownOperator("upDownUCEDMeanHeights", "UCED mean and heights",
                 "Scales UCED mean inversely to node heights of the tree", model.getParameter(ClockType.UCED_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
         createUpDownOperator("upDownUCLDMeanHeights", "UCLD mean and heights",
                 "Scales UCLD mean inversely to node heights of the tree", model.getParameter(ClockType.UCLD_MEAN),
-                tree.getParameter("treeModel.allInternalNodeHeights"), true, demoTuning, rateWeights);
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.UP_DOWN, true, demoTuning, rateWeights);
 
 
         // These are statistics which could have priors on...
@@ -111,6 +112,10 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
         createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
                 0.0, Double.POSITIVE_INFINITY);
+
+        createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
+                "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
+                tree.getParameter("treeModel.allInternalNodeHeights"), OperatorType.MICROSAT_UP_DOWN, true, demoTuning, branchWeights);
     }
 
     /**
@@ -152,42 +157,53 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
         if (options.hasData()) {
             // always have upDown(rate, allInternalNodeHeights), but when isEstimatedRate() = false, write nothing on up part (rate)
             Operator op;
-            switch (model.getClockType()) {
-                case STRICT_CLOCK:
-                    op = getOperator("upDownRateHeights");
+            if (model.getDataType().getType() == DataType.MICRO_SAT) {
+                if (model.getClockType() == ClockType.STRICT_CLOCK) {
+                    op = getOperator("microsatUpDownRateHeights");
                     op.setClockModelGroup(model.getClockModelGroup());
                     ops.add(op);
-                    break;
+                } else {
+                    throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
+                }
+                
+            } else {
 
-                case UNCORRELATED:
-                    switch (model.getClockDistributionType()) {
+                switch (model.getClockType()) {
+                    case STRICT_CLOCK:
+                        op = getOperator("upDownRateHeights");
+                        op.setClockModelGroup(model.getClockModelGroup());
+                        ops.add(op);
+                        break;
 
-                        case LOGNORMAL:
-                            op = getOperator("upDownUCLDMeanHeights");
-                            op.setClockModelGroup(model.getClockModelGroup());
-                            ops.add(op);
+                    case UNCORRELATED:
+                        switch (model.getClockDistributionType()) {
 
-                            addBranchRateCategories(ops);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
+                            case LOGNORMAL:
+                                op = getOperator("upDownUCLDMeanHeights");
+                                op.setClockModelGroup(model.getClockModelGroup());
+                                ops.add(op);
+
+                                addBranchRateCategories(ops);
+                                break;
+                            case GAMMA:
+                                throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
 //                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
+                            case CAUCHY:
+                                throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
 //                            break;
-                        case EXPONENTIAL:
-                            op = getOperator("upDownUCEDMeanHeights");
-                            op.setClockModelGroup(model.getClockModelGroup());
-                            ops.add(op);
+                            case EXPONENTIAL:
+                                op = getOperator("upDownUCEDMeanHeights");
+                                op.setClockModelGroup(model.getClockModelGroup());
+                                ops.add(op);
 
-                            addBranchRateCategories(ops);
-                            break;
-                    }
-                    break;
+                                addBranchRateCategories(ops);
+                                break;
+                        }
+                        break;
 
-                case AUTOCORRELATED:
+                    case AUTOCORRELATED:
 
-                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+                        throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 
 //                	if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.RElATIVE_TO) {//&& model.isEstimatedRate()) {
 //	                	ops.add(getOperator("scaleRootRate"));
@@ -203,15 +219,16 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //                	}
 //                    break;
 
-                case RANDOM_LOCAL_CLOCK:
-                    op = getOperator("upDownRateHeights");
-                    op.setClockModelGroup(model.getClockModelGroup());
-                    ops.add(op);
+                    case RANDOM_LOCAL_CLOCK:
+                        op = getOperator("upDownRateHeights");
+                        op.setClockModelGroup(model.getClockModelGroup());
+                        ops.add(op);
 
-                    break;
+                        break;
 
-                default:
-                    throw new IllegalArgumentException("Unknown clock model");
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
+                }
             }
         }
     }

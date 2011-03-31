@@ -1,6 +1,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.FixRateType;
+import dr.evolution.datatype.DataType;
 
 /**
  * @author Alexei Drummond
@@ -41,6 +42,7 @@ public class ClockModelGroup {
 
     public void setRateTypeOption(FixRateType rateTypeOption) {
         this.rateTypeOption = rateTypeOption;
+        setFixMean(rateTypeOption == FixRateType.FIX_MEAN);
     }
 
     public double getFixMeanRate() {
@@ -50,9 +52,17 @@ public class ClockModelGroup {
     public void setFixMeanRate(double fixMeanRate, BeautiOptions options) {
         this.fixMeanRate = fixMeanRate;
         for (PartitionClockModel model : options.getPartitionClockModels(this)) {
-            model.setRate(fixMeanRate);
+            model.setRate(fixMeanRate, false);
         }
     }
 
+    public boolean contain(DataType dataType, BeautiOptions options) {
+        for (AbstractPartitionData pd : options.getAllPartitionData(this)) {
+           if (pd.getDataType().getType() == dataType.getType()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }

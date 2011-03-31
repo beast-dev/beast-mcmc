@@ -160,8 +160,8 @@ public class TreeLikelihoodGenerator extends Generator {
 
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            if (partition instanceof PartitionData) {
-                if (((PartitionData) partition).getAlignment() != null) {
+            if (partition.getTaxonList() != null) {
+                if (partition instanceof PartitionData) {
                     // is an alignment data partition
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
                     if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
@@ -171,6 +171,9 @@ public class TreeLikelihoodGenerator extends Generator {
                     } else {
                         writer.writeIDref(TreeLikelihoodParser.TREE_LIKELIHOOD, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
                     }
+                } else if (partition instanceof PartitionPattern) { // microsat
+                    writer.writeIDref(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD,
+                            partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
             }
         }

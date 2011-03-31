@@ -307,6 +307,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     public void removeCertainPriorFromTreePriorCombo() {
         treePriorCombo.removeItem(TreePriorType.YULE);
         treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+        treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOM_SAMP);
     }
 
     public void recoveryTreePriorCombo() {

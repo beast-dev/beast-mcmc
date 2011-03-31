@@ -1,4 +1,4 @@
-                    BEAST v1.6.0 2002-2010
+                    BEAST v1.7.0 2002-2011
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,8 +17,65 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 15th September 2010
+Last updated: alexei@cs.auckland.ac.nz - 1st April 2011
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+
+================================================================================
+
+Version 1.7.0 released 1st April 2011
+
+	New Features:
+        Birth Death Serial Sampling Model, see:
+             Stadler, T; Sampling-through-time in birth-death trees
+             JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404.
+             and
+             T. Stadler, R. Kouyos , V. von Wyl , S. Yerly , J. Böni ,
+             P. Bürgisser , T. Klimkait , B. Joos , P. Rieder , D. Xie ,
+             H. Günthard , A. Drummond , S. Bonhoeffer;
+             Estimating the basic reproductive number from viral
+             sequence data; Submitted.
+             
+        Added clock model group in BEAUti.
+
+        BEAUti starts to explicitly generate uniform priors in XML.        
+
+	Bug Fixes:
+	    Issue 51: 	log-normal prior in beauti not that usefull presentation
+        Issue 85: 	Add search filter above Included and Excluded taxa in Taxon Sets panel of BEAUti
+        Issue 397: 	*BEAST in BEAUti is broken
+        Issue 398: 	BEAUti text message overlaps with button
+        Issue 399: 	Binary for TreeStat packaged with BEAST v1.6 has wrong version number and icon
+        Issue 403: 	Starting tree generated with constraints by BEAUti is not correct XML for BEAST
+        Issue 404: 	Make "Median heights" as the default of nodeHeightsCombo 
+        Issue 405: 	RandomWalkOperator with reflecting boundary can grind to a halt
+        Issue 407: 	*BEAST needs to log species tree in { }, otherwise TreeAnnotator keeps coming up with null exception on species tree
+        Issue 408: 	TreeAnnotator crashes with Null Pointer Exception on malformed metacomment
+        Issue 409: 	BEAUti should explicitly generate uniform priors
+        Issue 410: 	"Improper priors" on posterior statistics
+	    Issue 411: 	Incorrect validation and error message for random local clock in BEAUti
+	    Issue 412: 	BEAUti generates randomWalkOperator instead of randomWalkIntegerOperator for branchRates.categories
+	    Issue 413: 	BEAUti: duplicate class PartitionModelOptions causes model link conflict
+	    Issue 414: 	BEAUti: incorrect xml for multi-alignment when given complex combination of clock model and tree model           
+        Issue 416: 	Laplace prior parser should use scale same as BEAUti
+        Issue 417: 	BEAUti growthRate related XML causes -INF likelihood
+        Issue 418: 	Set maximun fraction digits for numbers displayed in BEAUti prior panel
+        Issue 419: 	BEAUti RealNumberField should not throw Exception all the time 
+        Issue 420: 	Add error message : Partitions cannot have the same name
+        Issue 422: 	BEAUti: add validation to check whether modified prior initial value is between the boundary
+        Issue 423: 	delta exchange operator discription is wrong
+        Issue 425: 	BEAUti can't re-link subst models anymore
+        Issue 426: 	BEAUti does not preserve model settings when re-linking
+        Issue 427: 	BEAUti generates a mergePatterns even when it is enclosing a single patterns element
+        Issue 432: 	More detail for error message: *BEAST special part generation has failed.
+        Issue 433: 	Typo in BEAUTi and example files
+        Issue 434: 	BEAUti: Initial value missing from prior dialog
+        Issue 435: 	UniformIntegerOperator did not include upper in the value
+        Issue 438: 	BEAST should tell you what frequencies belong to which partition
+        Issue 442: 	BEAUti: taxon set table does not refresh after changing tree model
+        Issue 443: 	BEAUti: change alpha default prior into Exponential mean=0.5 offset=0.0
+        Issue 444: 	BEAUti: model table select row not update
+        Issue 445: 	BEAUti: clock rate configuration is not consistent between clock model panel and prior panel
+              
 
 ================================================================================
 

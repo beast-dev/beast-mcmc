@@ -27,8 +27,6 @@ package dr.app.beast;
 
 import dr.util.Version;
 
-import java.util.regex.Pattern;
-
 /**
  * This class provides a mechanism for returning the version number of the
  * dr software. It relies on the administrator of the dr source using the
@@ -49,7 +47,7 @@ public class BeastVersion implements Version {
      */
     private static final String VERSION = "1.7.0";
 
-    private static final String DATE_STRING = "2002-2010";
+    private static final String DATE_STRING = "2002-2011";
 
     private static final boolean IS_PRERELEASE = true;
 

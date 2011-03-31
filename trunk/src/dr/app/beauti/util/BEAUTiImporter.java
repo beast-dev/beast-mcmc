@@ -91,6 +91,7 @@ public class BEAUTiImporter {
             List<Patterns> microsatPatList = importer.importPatterns();
             Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
             Microsatellite microsatellite = importer.getMicrosatellite();
+            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
 
             bufferedReader.close();
 

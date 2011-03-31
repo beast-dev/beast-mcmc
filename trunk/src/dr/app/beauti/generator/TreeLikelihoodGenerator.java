@@ -27,11 +27,15 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.AsymmetricQuadraticModel;
+import dr.evomodel.substmodel.LinearBiasModel;
+import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
@@ -196,11 +200,11 @@ public class TreeLikelihoodGenerator extends Generator {
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID,
                         partition.getPrefix() + MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD)});
 
+        writeMicrosatSubstModelRef(substModel, writer);
+
         writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
                 treeModel.getPrefix() + TreeModel.TREE_MODEL + ".microsatellite");
-
-// todo       writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
-
+        
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
@@ -216,6 +220,16 @@ public class TreeLikelihoodGenerator extends Generator {
         }
 
         writer.writeCloseTag(MicrosatelliteSamplerTreeLikelihoodParser.TREE_LIKELIHOOD);
+    }
+
+    public void writeMicrosatSubstModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
+        if (model.getPhase() != MicroSatModelType.Phase.ONE_PHASE) {
+            writer.writeIDref(TwoPhaseModel.TWO_PHASE_MODEL, model.getPrefix() + TwoPhaseModel.TWO_PHASE_MODEL);
+        } else if (model.getMutationBias() != MicroSatModelType.MutationalBias.UNBIASED) {
+            writer.writeIDref(LinearBiasModel.LINEAR_BIAS_MODEL, model.getPrefix() + LinearBiasModel.LINEAR_BIAS_MODEL);
+        } else {
+            writer.writeIDref(AsymmetricQuadraticModel.ASYMQUAD_MODEL, model.getPrefix() + AsymmetricQuadraticModel.ASYMQUAD_MODEL);
+        }
     }
 
 }

@@ -701,7 +701,7 @@ public class SubstitutionModelGenerator extends Generator {
                 break;
 
             case DataType.MICRO_SAT:
-                writeMicrosatSubstModelRef(model, writer);
+                writeMicrosatSubstModelParameterRef(model, writer);
                 break;
 
             default:
@@ -754,7 +754,7 @@ public class SubstitutionModelGenerator extends Generator {
         }
     }
 
-    public void writeMicrosatSubstModelRef(PartitionSubstitutionModel model, XMLWriter writer) {
+    public void writeMicrosatSubstModelParameterRef(PartitionSubstitutionModel model, XMLWriter writer) {
         if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
 
         } else if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {

@@ -153,6 +153,12 @@ public class PatternListGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, partition.getName()),
                     });
 
+            if (options.allowDifferentTaxa) {
+                writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);
+            } else {
+                writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+            }
+
             Microsatellite m = model.getMicrosatellite();
             if (m == null) throw new GeneratorException("Microsatellite is null in partition:\n" + partition.getName());
 

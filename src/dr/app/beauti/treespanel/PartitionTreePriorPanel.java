@@ -88,8 +88,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
-                setupPanel();
+                if (treePriorCombo.getSelectedItem() != null) {
+                    partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                    setupPanel();
+                }
             }
         });
 
@@ -156,73 +158,81 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        scrollPane.setOpaque(true);
 
         String citation = null;
+        String citationCoalescent = "KINGMAN, J. F. C., (1982) The coalescent. Stochastic Process. Appl. 13:235-248.";
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL
-                || treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC
-                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
-            addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-            partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+        switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
+            case CONSTANT:
+                citation = citationCoalescent;
+                break;
 
-//        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC //) {//TODO Issue 93
-//                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
-//        	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
-//        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
-//
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
-            groupCountField.setColumns(6);
-            addComponentWithLabel("Number of groups:", groupCountField);
-            addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+            case EXPONENTIAL:
+            case LOGISTIC:
+            case EXPANSION:
+                addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
-            citation = "Drummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                citation = citationCoalescent
+                        + "\nGriffiths, R.C., Tavare, S., 1994. Sampling theory for neutral alleles in a varying environment. " +
+                        "Philos Trans R Soc Lond B Biol Sci, 344(1310):403-410."
+                        + "\nDrummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                break;
 
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
-            addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-            treesPanel.linkTreePriorCheck.setSelected(true);
-            treesPanel.updateShareSameTreePriorChanged();
+            case SKYLINE:
+                groupCountField.setColumns(6);
+                addComponentWithLabel("Number of groups:", groupCountField);
+                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
-            citation = "Joseph Heled and Alexei J Drummond, Bayesian inference of population size history " +
-                    "from multiple loci, BMC Evolutionary Biology 2008, 8:289";
-//            treesPanel.getFrame().setupEBSP(); TODO
+                citation = citationCoalescent + "\nDrummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                break;
 
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
-            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-            //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
-                    + "It is only available for single tree model partition for this release.<br>"
-                    + "Please go to Data Partition panel to link all tree models." + "</html>");
+            case EXTENDED_SKYLINE:
+                addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
+                treesPanel.linkTreePriorCheck.setSelected(true);
+                treesPanel.updateShareSameTreePriorChanged();
 
-            citation = "Minin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
+                citation = citationCoalescent + "\nJoseph Heled and Alexei J Drummond, Bayesian inference of population size history " +
+                        "from multiple loci, BMC Evolutionary Biology 2008, 8:289.";
+                break;
 
-//            treesPanel.linkTreePriorCheck.setSelected(false);
-//            treesPanel.linkTreePriorCheck.setEnabled(false);
-//            treesPanel.linkTreeModel();
-//            treesPanel.updateShareSameTreePriorChanged();
+            case GMRF_SKYRIDE:
+                addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+                addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
+                        + "It is only available for single tree model partition for this release.<br>"
+                        + "Please go to Data Partition panel to link all tree models." + "</html>");
 
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH) {
-//            samplingProportionField.setColumns(8);
-//            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
-            citation = BirthDeathModelParser.getCitation();
-
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
-            citation = BirthDeathModelParser.getCitationRHO();
-
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_SERI_SAMP) {
-            citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
-
-        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
-            citation = BirthDeathSerialSamplingModelParser.getCitationRT();
-
-        } else {
-//            treesPanel.linkTreePriorCheck.setEnabled(true);
-//            treesPanel.linkTreePriorCheck.setSelected(true);
-//            treesPanel.updateShareSameTreePriorChanged();
+                citation = citationCoalescent + "\nMinin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
+                break;
+            case YULE:
+                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769– 78.";
+                break;
+            case BIRTH_DEATH:
+                citation = BirthDeathModelParser.getCitation();
+                break;
+            case BIRTH_DEATH_INCOM_SAMP:
+                citation = BirthDeathModelParser.getCitationRHO();
+                break;
+            case BIRTH_DEATH_SERI_SAMP:
+                citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
+                break;
+            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
+                break;
+            default:
+                throw new RuntimeException("No tree prior has been specified so cannot refer to it");
         }
-        if (citation != null) {
-            addComponentWithLabel("Citation:", citationText);
-            citationText.setText(citation);
-        }
+
+        if (treesPanel.options.maximumTipHeight > 0)
+            citation = citation
+                    + "\nRODRIGO, A. G., and J. FELSENSTEIN, 1999 Coalescent approaches to HIV population genetics, "
+                    + "pp. 233–272 in Molecular Evolution of HIV,\nedited by K. CRANDALL. Johns Hopkins University Press, Baltimore."
+                    + "\nDrummond AJ, Nicholls GK, Rodrigo AG, Solomon W. Estimating mutation parameters, population " +
+                    "history and genealogy simultaneously from\ntemporally spaced sequence data.Genetics. 2002, 161(3):1307-1320.";
+
+        addComponentWithLabel("Citation:", citationText);
+        citationText.setText(citation);
 
 //        getOptions();
 //
@@ -261,7 +271,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
-//        setupPanel();
+        setupPanel();
 
         settingOptions = false;
 

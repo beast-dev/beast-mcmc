@@ -182,14 +182,15 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             treesPanel.linkTreePriorCheck.setSelected(true);
             treesPanel.updateShareSameTreePriorChanged();
 
-            citation = "Insert citation here...";
+            citation = "Joseph Heled and Alexei J Drummond, Bayesian inference of population size history " +
+                    "from multiple loci, BMC Evolutionary Biology 2008, 8:289";
 //            treesPanel.getFrame().setupEBSP(); TODO
 
         } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
             addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
             //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
             addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
-                    + "It is only available for single tree model partition for this release. "
+                    + "It is only available for single tree model partition for this release.<br>"
                     + "Please go to Data Partition panel to link all tree models." + "</html>");
 
             citation = "Minin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
@@ -299,9 +300,13 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     }
 
-    public void setMicrosatelliteTreePrior() {
-        treePriorCombo.removeAllItems();
-        treePriorCombo.addItem(TreePriorType.CONSTANT);
+//    public void setMicrosatelliteTreePrior() {
+//        treePriorCombo.removeAllItems();
+//        treePriorCombo.addItem(TreePriorType.CONSTANT);
+//    }
+
+    public void removeBayesianSkylineTreePrior() {
+        treePriorCombo.removeItem(TreePriorType.SKYLINE);
     }
 
     public void removeCertainPriorFromTreePriorCombo() {

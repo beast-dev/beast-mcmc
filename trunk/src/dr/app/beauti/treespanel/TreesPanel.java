@@ -69,7 +69,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;
-    private BeautiOptions options = null;
+    public BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
@@ -255,8 +255,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
             treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
 
-            for (PartitionTreeModel model : treeModelPanels.keySet()) {
-                if (model != null) treeModelPanels.get(model).setupPanel();
+            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                if (model != null && treeModelPanels.get(model) != null) treeModelPanels.get(model).setupPanel();
 
             }
             updateTreePriorBorder();
@@ -348,8 +348,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 && (!options.contains(Microsatellite.INSTANCE)) && (!options.useStarBEAST));
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
-        for (PartitionTreeModel model : treeModelPanels.keySet()) {
-            if (model != null) treeModelPanels.get(model).setOptions();
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            if (model != null && treeModelPanels.get(model) != null) treeModelPanels.get(model).setupPanel();
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {

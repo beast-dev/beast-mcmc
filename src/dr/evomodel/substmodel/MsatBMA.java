@@ -12,16 +12,15 @@ import java.util.ArrayList;
  *
  * This class is used for model averaging over a subset of microsatellite models.
  */
-public class MsatAveragingSubsetModel extends MicrosatelliteModel{
+public class MsatBMA extends MicrosatelliteModel{
     private boolean logit;
     public static final int PROP_INDEX = 0;
-    public static final int BIAS_CONST_INDEX = 1;
-    public static final int BIAS_LIN_INDEX = 2;
-    public static final int GEO_INDEX = 3;
-    public static final double DEFAULT_PROP = 0.0;
-    public static final double DEFAULT_BIAS_CONSTANT = 0.0;
-    public static final double DEFAULT_BIAS_LINEAR = 0.0;
-    public static final double DEFAULT_GEO = 1.0;
+    public static final int QUAD_INDEX = 1;
+    public static final int BIAS_CONST_INDEX = 2;
+    public static final int BIAS_LIN_INDEX = 3;
+    public static final int GEO_INDEX = 4;
+    public static final int PHASE_PROB_INDEX = 5;
+    public static final double DEFAULT_VALUE = 0.0;
     public static final int PARAMETER_PRESENT = 1;
 
     public Parameter[][] paramModelMap;
@@ -30,17 +29,21 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
     public Parameter modelIndicator;
 
     public ArrayList<Parameter> propRates = new ArrayList<Parameter>();
+    public ArrayList<Parameter> quadRates = new ArrayList<Parameter>();
     public ArrayList<Parameter> biasConsts = new ArrayList<Parameter>();
     public ArrayList<Parameter> biasLins = new ArrayList<Parameter>();
     public ArrayList<Parameter> geos = new ArrayList<Parameter>();
+    public ArrayList<Parameter> phaseProb = new ArrayList<Parameter>();
 
-    public MsatAveragingSubsetModel(
+    public MsatBMA(
             Microsatellite msat,
             boolean logit,
             ArrayList<Parameter> propRates,
+            ArrayList<Parameter> quadRates,
             ArrayList<Parameter> biasConsts,
             ArrayList<Parameter> biasLins,
             ArrayList<Parameter> geos,
+            ArrayList<Parameter> phaseProb,
             Parameter[][] paramModelMap,
             Parameter modelChoose,
             Parameter modelIndicator,
@@ -50,6 +53,10 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
 
         for(int i = 0; i < propRates.size(); i++){
             addVariable(propRates.get(i));
+        }
+
+        for(int i = 0; i < quadRates.size(); i++){
+            addVariable(quadRates.get(i));
         }
 
         for(int i = 0; i < biasConsts.size(); i++){
@@ -64,6 +71,11 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
         for(int i = 0; i < geos.size(); i++){
             addVariable(geos.get(i));
         }
+
+        for(int i = 0; i < phaseProb.size();i++){
+            addVariable(phaseProb.get(i));
+        }
+
         addVariable(modelChoose);
         addVariable(modelIndicator);
         this.propRates = propRates;
@@ -83,19 +95,22 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
 
     }
 
- 
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         modelUpdate = false;
         int paramIndex = -1;
         if(propRates.contains(variable)){
             paramIndex = PROP_INDEX;
+        }else if(quadRates.contains(variable)){
+            paramIndex = QUAD_INDEX;
         }else if(biasConsts.contains(variable)){
             paramIndex = BIAS_CONST_INDEX;
         }else if(biasLins.contains(variable)){
             paramIndex = BIAS_LIN_INDEX;
         }else if(geos.contains(variable)){
             paramIndex = GEO_INDEX;
+        }else if(phaseProb.contains(variable)){
+            paramIndex = PHASE_PROB_INDEX;
         }
         //System.out.println("changeModel: "+ variable);
         if(paramIndex > -1){
@@ -123,16 +138,22 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
 
     public void setupInfinitesimalRates(){
         double rowSum;
-        double prop = DEFAULT_PROP;
-        double biasConst = DEFAULT_BIAS_CONSTANT;
-        double biasLin = DEFAULT_BIAS_LINEAR;
-        double geo = DEFAULT_GEO;
+        double prop = DEFAULT_VALUE;
+        double quad = DEFAULT_VALUE;
+        double biasConst = DEFAULT_VALUE;
+        double biasLin = DEFAULT_VALUE;
+        double geo = DEFAULT_VALUE;
+        double phaseProb = DEFAULT_VALUE;
+
         infinitesimalRateMatrix = new double[stateCount][stateCount];
 
         //if the rate proportional parameter is present
         if((int)modelChoose.getParameterValue(PROP_INDEX) == PARAMETER_PRESENT){
             //
             prop = getModelParameterValue(PROP_INDEX);
+            if((int)modelChoose.getParameterValue(QUAD_INDEX) == PARAMETER_PRESENT){
+                quad = getModelParameterValue(QUAD_INDEX);
+            }
         }
         for(int i = 0; i < stateCount;i++){
             rowSum = 0.0;
@@ -173,13 +194,16 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
 
         if((int)modelChoose.getParameterValue(GEO_INDEX) == PARAMETER_PRESENT){
             geo = getModelParameterValue(GEO_INDEX);
+            if((int)modelChoose.getParameterValue(PHASE_PROB_INDEX) == PARAMETER_PRESENT){
+                phaseProb = getModelParameterValue(PHASE_PROB_INDEX);
+            }
             double[][] subRates =  infinitesimalRateMatrix;
             infinitesimalRateMatrix = new double[stateCount][stateCount];
 
             TwoPhaseModel.setupInfinitesimalRates(
                 stateCount,
                 geo,
-                0.0,
+                phaseProb,
                 infinitesimalRateMatrix,
                 subRates
             );
@@ -197,9 +221,9 @@ public class MsatAveragingSubsetModel extends MicrosatelliteModel{
         for(int i = 0; i < modelChoose.getDimension(); i++){
             bitVec = bitVec + (int)modelChoose.getParameterValue(i);
         }
-        int bitVecVal = Integer.parseInt(bitVec,2);
+        
 
-        return bitVecVal;
+        return Integer.parseInt(bitVec,2);
     }
 
     public void computeStationaryDistribution(){

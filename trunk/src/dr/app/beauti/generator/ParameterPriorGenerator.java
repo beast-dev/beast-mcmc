@@ -100,7 +100,7 @@ public class ParameterPriorGenerator extends Generator {
      * @param parameter the parameter
      * @param writer    the writer
      */
-    private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
+    public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
@@ -214,7 +214,7 @@ public class ParameterPriorGenerator extends Generator {
         }
     }
 
-    private void writeParameterIdref(XMLWriter writer, dr.app.beauti.options.Parameter parameter) {
+    private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
         if (parameter.isStatistic) {
             writer.writeIDref("statistic", parameter.getName());
         } else {

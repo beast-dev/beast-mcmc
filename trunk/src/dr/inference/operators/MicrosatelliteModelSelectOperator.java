@@ -1,6 +1,7 @@
 package dr.inference.operators;
 
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 
 /**
  * @author Chieh-Hsi Wu
@@ -25,15 +26,17 @@ public class MicrosatelliteModelSelectOperator extends SimpleMCMCOperator{
     }
 
     public double doOperation(){
-        int index = (int)(Math.random()*indicators.length);
+        int index = MathUtils.nextInt(indicators.length);
+        //System.out.println(index);
         Parameter newModel = indicators[index];
         for(int i = 0; i < parameter.getDimension() -1 ; i++){
             parameter.setParameterValueQuietly(i,newModel.getParameterValue(i));
         }
-        parameter.setParameterValue(
+        parameter.setParameterValueNotifyChangedAll(
                 parameter.getDimension()-1,
                 newModel.getParameterValue(parameter.getDimension()-1)
         );
+        //System.out.println(parameter+"; "+indicators[index]);
         return 0.0;
     }
 

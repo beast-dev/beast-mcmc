@@ -100,7 +100,7 @@ public class UniformDistribution implements Distribution {
      * @return pdf value
      */
     public static double pdf(double x, double lower, double upper) {
-        return (x > lower && x < upper ? 1.0 / (upper - lower) : 0.0);
+        return (x >= lower && x <= upper ? 1.0 / (upper - lower) : 0.0);
     }
 
     /**

@@ -75,7 +75,9 @@ public class MicroSatImporter implements PatternImporter {
             String[] dataLine = line.trim().split("[" + delimiter + " ]+");
 
             if (dataLine.length != colLen)
-                throw new Importer.ImportException("It contains different number of values in Taxon " + dataLine[0]);
+                throw new Importer.ImportException("The number of name columns are different with values columns," +
+                        "\nplease use only letters or numbers in the name.");
+//                + "\ndataLine.length = " + dataLine.length + ", colLen = " + colLen);
 
             for (int i = 0; i < dataLine.length; i++) {
                 data.get(i).add(dataLine[i]);

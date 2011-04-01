@@ -653,7 +653,12 @@ public class BeautiOptions extends ModelOptions {
         updatePartitionAllLinks();
         for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
             if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
-                clockModelOptions.fixMeanRate(clockModelGroup);
+                if (getPartitionClockModels(clockModelGroup).size() == 1) {
+                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
+                } else {
+                    clockModelOptions.fixMeanRate(clockModelGroup);
+                }
             } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
                     || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
                     || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
@@ -980,6 +985,16 @@ public class BeautiOptions extends ModelOptions {
         }
 //        message += "</p></html>";
         return message;
+    }
+
+    public List<Object> getKeysFromValue(Map<?, ?> hm, Object value){
+        List <Object>list = new ArrayList<Object>();
+        for(Object o:hm.keySet()){
+            if(hm.get(o).equals(value)) {
+                list.add(o);
+            }
+        }
+        return list;
     }
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

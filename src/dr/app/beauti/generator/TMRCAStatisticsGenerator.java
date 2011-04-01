@@ -74,6 +74,8 @@ public class TMRCAStatisticsGenerator extends Generator {
             writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
 
             if (options.taxonSetsMono.get(taxa)) {
+//                    && treeModel.getPartitionTreePrior().getNodeHeightPrior() != TreePriorType.YULE
+//                    && options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 1) {
                 writer.writeOpenTag(
                         MonophylyStatisticParser.MONOPHYLY_STATISTIC,
                         new Attribute[]{

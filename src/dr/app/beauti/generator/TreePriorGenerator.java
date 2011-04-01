@@ -31,11 +31,13 @@ import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.CSVExporterParser;
 import dr.evomodelxml.coalescent.*;
 import dr.evomodelxml.speciation.*;
+import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.model.ParameterParser;
@@ -358,11 +360,13 @@ public class TreePriorGenerator extends Generator {
     /**
      * Write the prior on node heights (coalescent or speciational models)
      *
-     * @param prior  the partition tree prior
-     * @param model  PartitionTreeModel
-     * @param writer the writer
+     * @param prior                   the partition tree prior
+     * @param model                   PartitionTreeModel
+     * @param parameterPriorGenerator
+     * @param writer                  the writer
      */
-    void writePriorLikelihood(PartitionTreePrior prior, PartitionTreeModel model, XMLWriter writer) {
+    void writePriorLikelihood(PartitionTreePrior prior, PartitionTreeModel model,
+                              ParameterPriorGenerator parameterPriorGenerator, XMLWriter writer) {
 
         //tree model prefix
         setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
@@ -376,6 +380,7 @@ public class TreePriorGenerator extends Generator {
             case BIRTH_DEATH_INCOM_SAMP:
             case BIRTH_DEATH_SERI_SAMP:
             case BIRTH_DEATH_SERI_SAMP_ESTIM:
+
                 // generate a speciational process
                 writer.writeComment("Generate a speciation likelihood for Yule or Birth Death");
                 writer.writeOpenTag(
@@ -392,6 +397,35 @@ public class TreePriorGenerator extends Generator {
                 writer.writeOpenTag(SpeciationLikelihoodParser.TREE);
                 writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
+
+                if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE) {
+
+                    if (options.clockModelOptions.isNodeCalibrated(model.getParameter("treeModel.rootHeight"))) {
+
+                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+
+                        parameterPriorGenerator.writeParameterPrior(model.getParameter("treeModel.rootHeight"), writer);
+                        String taxaId;
+                        if (options.allowDifferentTaxa) {
+                            taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
+                        } else {
+                            taxaId = TaxaParser.TAXA;
+                        }
+                        writer.writeIDref(TaxaParser.TAXA, taxaId);
+                        writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+                    } else if (options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
+                            && options.taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0))) {
+                        Taxa t = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0);
+                        Parameter nodeCalib = options.getStatistic(t);
+
+                        if (options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
+                            writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+                            parameterPriorGenerator.writeParameterPrior(nodeCalib, writer);
+                            writer.writeIDref(TaxaParser.TAXA, t.getId());
+                            writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+                        }
+                    }
+                }
 
                 writer.writeCloseTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD);
 

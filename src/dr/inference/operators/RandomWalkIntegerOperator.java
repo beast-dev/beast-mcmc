@@ -23,19 +23,7 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     }
 
 
-    public RandomWalkIntegerOperator(Parameter parameter, Parameter updateIndex, int windowSize, double weight) {
-        this.parameter = parameter;
-        this.windowSize = windowSize;
-        setWeight(weight);
-
-        updateMap = new ArrayList<Integer>();
-        for (int i = 0; i < updateIndex.getDimension(); i++) {
-            if (updateIndex.getParameterValue(i) == 1.0)
-                updateMap.add(i);
-        }
-    }
-
-    /**
+   /**
      * @return the parameter this operator acts on.
      */
     public Parameter getParameter() {
@@ -49,26 +37,24 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
     /**
      * change the parameter and return the hastings ratio.
      */
+    double logq;
     public double doOperation() {
-
+        logq = 0.0;
         // a random dimension to perturb
-        int index;
-        if (updateMap == null)
-            index = MathUtils.nextInt(parameter.getSize()); // use getSize(), which = getDimension()
-        else
-            index = updateMap.get(MathUtils.nextInt(updateMap.size()));
+        int index = MathUtils.nextInt(parameter.getSize()); // use getSize(), which = getDimension()
 
         if (parameter instanceof Parameter) {
             int newValue = calculateNewValue(index);
             ((Parameter) parameter).setParameterValue(index, newValue);
-        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
+            //System.out.println("newValue: "+newValue);
+        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double>
 
             int newValue = calculateNewValue(index);
             ((Variable<Integer>) parameter).setValue(index, newValue);
 
         }
 
-        return 0.0;
+        return logq;
     }
 
     protected int calculateNewValue(int index) {
@@ -76,33 +62,86 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         int oldValue;
         int upper;
         int lower;
+
         if (parameter instanceof Parameter) {
             oldValue = (int) ((Parameter) parameter).getParameterValue(index);
             upper = (int) (double) ((Parameter) parameter).getBounds().getUpperLimit(index);
             lower = (int) (double) ((Parameter) parameter).getBounds().getLowerLimit(index);
-        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double> 
+        } else if (parameter instanceof Variable) { // todo this code is improper if we are going to use Variable<Double>
             oldValue = ((Variable<Integer>) parameter).getValue(index);
             upper = ((Variable<Integer>) parameter).getBounds().getUpperLimit(index);
             lower = ((Variable<Integer>) parameter).getBounds().getLowerLimit(index);
         } else {
             throw new RuntimeException("The parameter (" + parameter.getId() + ") uses invalid class!");
         }
-//        System.out.println("index = " + index + ";  oldValue = " + oldValue + ";  upper = " + upper + ";  lower = " + lower);
+
         if (upper == lower) return upper;
+
+        int maxWindowSize = upper - lower;
+        if(windowSize> maxWindowSize){
+            windowSize = maxWindowSize;
+            System.err.println("The maximum window size should be smaller than the total number of possible integer values.");
+        }
 
         int newValue;
         int roll = MathUtils.nextInt(2 * windowSize); // windowSize="1"; roll = {0, 1}
         if (roll >= windowSize) { // roll = 1
-            newValue = oldValue + 1 + roll - windowSize;
+            //roll - window is the positive step size
+            int step = 1 + (roll - windowSize);
+            newValue = oldValue + step;
 
-            if (newValue > upper)
-                newValue = 2 * upper - newValue;
+            if (newValue > upper){
+                newValue = 2 * upper - newValue; //reflect down
+            }
+
         } else {  // roll = 0
             newValue = oldValue - 1 - roll;
 
-            if (newValue < lower)
-                newValue = 2 * lower - newValue;
+            if (newValue < lower){
+                newValue = 2 * lower - newValue; //reflect up
+            }
+
         }
+
+
+        //New and seemingly correct (accoding to the running MCMC with uniform prior)
+        //calculation of the hastings ratio --CHW
+        int newToOldCount = 0;
+        int oldToNewCount = 0;
+        if(newValue != oldValue){
+            oldToNewCount = oldToNewCount +1;
+            newToOldCount = newToOldCount +1;
+        }
+        int temp = oldValue + windowSize;
+        if(temp > upper){
+            if((2*upper - temp) <= newValue && newValue != upper){
+                oldToNewCount = oldToNewCount+1;
+            }
+        }
+
+        temp = oldValue - windowSize;
+        if(temp < lower){
+            if((2*lower - temp) >= newValue && newValue != lower){
+                oldToNewCount = oldToNewCount+1;
+            }
+        }
+
+        temp = newValue + windowSize;
+        if( temp > upper){
+            if((2*upper - temp) <= oldValue && oldValue != upper){
+                newToOldCount = newToOldCount+1;
+            }
+        }
+
+        temp = newValue - windowSize;
+        if( temp < lower){
+            if((2*lower - temp) >= oldValue && oldValue != lower){
+                newToOldCount = newToOldCount+1;
+            }
+        }
+
+
+        logq = Math.log(newToOldCount)- Math.log(oldToNewCount);
 
         return newValue;
     }
@@ -160,5 +199,4 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
 
     protected Variable parameter = null;
     protected int windowSize = 1;
-    protected List<Integer> updateMap = null;
 }

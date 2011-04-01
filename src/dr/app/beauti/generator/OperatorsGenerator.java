@@ -88,11 +88,13 @@ public class OperatorsGenerator extends Generator {
                 break;
             case RANDOM_WALK:
                 writeRandomWalkOperator(operator, writer);
+                break;
             case RANDOM_WALK_ABSORBING:
                 writeRandomWalkOperator(operator, false, writer);
                 break;
             case RANDOM_WALK_INT:
                 writeRandomWalkIntegerOperator(operator, writer);
+                break;
             case RANDOM_WALK_REFLECTING:
                 writeRandomWalkOperator(operator, true, writer);
                 break;

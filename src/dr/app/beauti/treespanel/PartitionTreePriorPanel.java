@@ -207,8 +207,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 break;
             case YULE:
 
-                citation = "G. Udny Yule (1925) A Mathematical Theory of Evolution, based on the Conclusions of Dr. J. C. Willis, F.R.S., " +
-                        "Philosophical Transactions of the Royal Society of London, Ser. B, 213, 21Ð87.";
+                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769-778.\n" +
+                            "G. Udny Yule (1925) A Mathematical Theory of Evolution, based on the Conclusions of Dr. J. C. Willis, F.R.S., " +
+                            "Philosophical Transactions of the Royal Society of London, Ser. B, 213, 21-87.";
                 break;
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();

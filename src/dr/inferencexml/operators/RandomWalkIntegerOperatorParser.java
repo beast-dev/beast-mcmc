@@ -31,12 +31,6 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
         int windowSize = (int)d;
         Variable parameter = (Variable) xo.getChild(Variable.class);
 
-        if (xo.hasChildNamed(UPDATE_INDEX)) {
-            XMLObject cxo = xo.getChild(UPDATE_INDEX);
-            Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
-            return new RandomWalkIntegerOperator((Parameter) parameter, updateIndex, windowSize, weight);
-        }
-
         return new RandomWalkIntegerOperator(parameter, windowSize, weight);
     }
 

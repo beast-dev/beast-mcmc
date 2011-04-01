@@ -37,7 +37,9 @@ Version 1.7.0 released 1st April 2011
              
         Added clock model group in BEAUti.
 
-        BEAUti starts to explicitly generate uniform priors in XML.        
+        BEAUti starts to explicitly generate uniform priors in XML.
+
+        A new XML for Calibration with Yule.       
 
 	Bug Fixes:
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation

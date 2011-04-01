@@ -407,12 +407,22 @@ public class BeastGenerator extends Generator {
             e.printStackTrace();
             throw new GeneratorException("Tree model generation has failed:\n" + e.getMessage());
         }
+        
+        //++++++++++++++++ Statistics ++++++++++++++++++
+        try {
+            if (taxonSets != null && taxonSets.size() > 0) {
+                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new GeneratorException("TMRCA statistics generation has failed:\n" + e.getMessage());
+        }
 
         //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
         try {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
                 PartitionTreePrior prior = model.getPartitionTreePrior();
-                treePriorGenerator.writePriorLikelihood(prior, model, writer);
+                treePriorGenerator.writePriorLikelihood(prior, model, parameterPriorGenerator, writer);
                 writer.writeText("");
             }
 
@@ -544,16 +554,6 @@ public class BeastGenerator extends Generator {
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
-
-        //++++++++++++++++ Statistics ++++++++++++++++++
-        try {
-            if (taxonSets != null && taxonSets.size() > 0) {
-                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GeneratorException("TMRCA statistics generation has failed:\n" + e.getMessage());
-        }
 
         //++++++++++++++++ Operators ++++++++++++++++++
         try {

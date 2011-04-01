@@ -6,6 +6,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
+import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
 import dr.xml.*;
@@ -89,6 +90,9 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             List<Taxa> taxa = new ArrayList<Taxa>();
             for(int k = 0; k < cal.getChildCount(); ++k) {
                 final Object ck = cal.getChild(k);
+                if ( DistributionLikelihood.class.isInstance(ck) ) {
+                    dists.add( ((DistributionLikelihood) ck).getDistribution() );
+                }
                 if ( Distribution.class.isInstance(ck) ) {
                     dists.add((Distribution) ck);
                 }
@@ -137,7 +141,9 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 //            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
 //                    "as a calibration correction instead of default - used when additional constarints are put on the topology."),
             new ElementRule(Statistic.class, true),
-            new ElementRule(Distribution.class, 1, 100),
+            new XORRule(
+                    new ElementRule(Distribution.class, 1, 100),
+                    new ElementRule(DistributionLikelihood.class, 1, 100)),
             new ElementRule(Taxa.class,1, 100)
     };
 

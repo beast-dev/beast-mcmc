@@ -192,8 +192,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treesPanel.linkTreePriorCheck.setSelected(true);
                 treesPanel.updateShareSameTreePriorChanged();
 
-                citation = citationCoalescent + "\nJoseph Heled and Alexei J Drummond, Bayesian inference of population size history " +
-                        "from multiple loci, BMC Evolutionary Biology 2008, 8:289.";
+                citation = citationCoalescent + "\nJ Heled and AJ Drummond (2008) Bayesian inference of population size history " +
+                        "from multiple loci. BMC Evolutionary Biology, 8, 289.";
                 break;
 
             case GMRF_SKYRIDE:
@@ -206,7 +206,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 citation = citationCoalescent + "\nMinin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
                 break;
             case YULE:
-                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769-778.";
+
+                citation = "G. Udny Yule (1925) A Mathematical Theory of Evolution, based on the Conclusions of Dr. J. C. Willis, F.R.S., " +
+                        "Philosophical Transactions of the Royal Society of London, Ser. B, 213, 21Ð87.";
                 break;
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();

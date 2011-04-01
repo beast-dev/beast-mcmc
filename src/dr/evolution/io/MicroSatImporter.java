@@ -101,12 +101,13 @@ public class MicroSatImporter implements PatternImporter {
             Taxon t = new Taxon(name);
             taxaHaploid.addTaxon(t);
         }
-        unionSetTaxonList.addTaxa(taxaHaploid);
+//        unionSetTaxonList.addTaxa(taxaHaploid);
 
         Patterns microsatPat;
         for (int i = 1; i < data.size(); i++) { // create pattern
 //            List<Integer> pattern = new ArrayList<Integer>();
-            int[] pattern;
+            List<Integer> pattern;
+            Taxa taxa = new Taxa();
 
             if ((i + 1 < data.size()) && names[i].equalsIgnoreCase(names[i + 1])) { // diploid: Locus2	Locus2
                 Taxa taxaDiploid = new Taxa();
@@ -124,38 +125,69 @@ public class MicroSatImporter implements PatternImporter {
 
                 unionSetTaxonList.addTaxa(taxaDiploid);
                 hasDifferentTaxon = true;
-                
-                pattern = new int[data.get(i).size() + data.get(i + 1).size()];
+
+                pattern = new ArrayList<Integer>();
                 String value;
                 int size = data.get(i).size();
+
                 for (int v = 0; v < size; v++) {
                     value = data.get(i).get(v);
-//            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v] = parseInt(value);//microsatellite.getState(value);
-//            }
+                    if (!isUnknownChar(value)) {
+                        Taxon t = taxaDiploid.getTaxon(v);
+                        if (!taxa.contains(t)) {
+                            taxa.addTaxon(t);
+                            pattern.add(parseInt(value));//microsatellite.getState(value);
+                            if (!unionSetTaxonList.contains(t)) {
+                                unionSetTaxonList.addTaxon(t);
+                                if (i > 1) hasDifferentTaxon = true;
+                            }
+                        }
+                    }
                 }
                 for (int v = 0; v < data.get(i + 1).size(); v++) {
                     value = data.get(i + 1).get(v);
-//            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v + size] = parseInt(value);//microsatellite.getState(value);
-//            }
+                    if (!isUnknownChar(value)) {
+                        Taxon t = taxaDiploid.getTaxon(v + size);
+                        if (!taxa.contains(t)) {
+                            taxa.addTaxon(t);
+                            pattern.add(parseInt(value));//microsatellite.getState(value);
+                            if (!unionSetTaxonList.contains(t)) {
+                                unionSetTaxonList.addTaxon(t);
+                                if (i > 1) hasDifferentTaxon = true;
+                            }
+                        }
+                    }
                 }
-                microsatPat = new Patterns(microsatellite, taxaDiploid);  
+
                 i++;
 
             } else { // haploid Locus1
-                pattern = new int[data.get(i).size()];
+                pattern = new ArrayList<Integer>();
 
                 for (int v = 0; v < data.get(i).size(); v++) {
                     String value = data.get(i).get(v);
-//            if (parseInt(value) >= 0) { // todo getState handling unused taxon?
-                    pattern[v] = parseInt(value);//microsatellite.getState(value);
-//            }
+                    if (!isUnknownChar(value)) {
+                        Taxon t = taxaHaploid.getTaxon(v);
+                        if (!taxa.contains(t)) {
+                            taxa.addTaxon(t);
+                            pattern.add(parseInt(value));//microsatellite.getState(value);
+                            if (!unionSetTaxonList.contains(t)) {
+                                unionSetTaxonList.addTaxon(t);
+                                if (i > 1) hasDifferentTaxon = true;
+                            }
+                        }
+                    }
                 }
-                microsatPat = new Patterns(microsatellite, taxaHaploid);
+
+            }
+            int[] p = new int[pattern.size()];
+            for (int v = 0; v < pattern.size(); v++) {
+                p[v] = pattern.get(v);
             }
 
-            microsatPat.addPattern(pattern);
+            microsatPat = new Patterns(microsatellite, taxa);
+
+            microsatPat.addPattern(p);
             microsatPat.setId(names[i]);
             microsatPatList.add(microsatPat);
         }
@@ -169,6 +201,10 @@ public class MicroSatImporter implements PatternImporter {
         } else {
             return Integer.parseInt(s);
         }
+    }
+
+    private boolean isUnknownChar(String s) {
+        return parseInt(s) == -1; // -1
     }
 
     /*

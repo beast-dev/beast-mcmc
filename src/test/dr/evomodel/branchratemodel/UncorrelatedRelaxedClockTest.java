@@ -96,10 +96,10 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(TREE_HEIGHT, treeHeightStats, 69.2953);
 
         TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 18.3053);
+        assertExpectation(HKYParser.KAPPA, kappaStats, 18.06518);
 
         TraceCorrelation ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.MEAN));
-        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.18686E-4);
+        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.0591451486E-4);
 
         ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.STDEV));
         assertExpectation(LogNormalDistributionModelParser.STDEV, ucldStats, 0.16846023066431434);
@@ -111,7 +111,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.15982);
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
-        assertExpectation("covariance", covarianceStats, -3.81803E-2);
+        assertExpectation("covariance", covarianceStats, -0.0260333026);
 
         TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
         assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 37.3524);
@@ -151,7 +151,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 //        System.out.println("rateStats = " + rateStats.getMean());
 
         TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.7462766945263386);
+        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.773609960455);
 //        System.out.println("coefficientOfVariationStats = " + coefficientOfVariationStats.getMean());
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));

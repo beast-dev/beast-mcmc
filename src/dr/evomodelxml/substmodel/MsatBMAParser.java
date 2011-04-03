@@ -35,7 +35,7 @@ public class MsatBMAParser extends AbstractXMLObjectParser{
     public static final String IN_MODELS = "inModels";
     public static final String MODEL_CHOOSE = "modelChoose";
     public static final String MODEL_INDICATOR = "modelIndicator";
-    public static final String MSAT_AVG_SUBSET_MODEL = "msatAvgSubsetModel";
+    public static final String MSAT_BMA = "msatBMA";
     public static final int PROP_RATES_MAX_COUNT = 6;
     public static final int BIAS_CONST_MAX_COUNT = 8;
     public static final int BIAS_LIN_MAX_COUNT = 4;
@@ -44,7 +44,7 @@ public class MsatBMAParser extends AbstractXMLObjectParser{
 
 
     public String getParserName(){
-        return MSAT_AVG_SUBSET_MODEL;
+        return MSAT_BMA;
     }
 
 

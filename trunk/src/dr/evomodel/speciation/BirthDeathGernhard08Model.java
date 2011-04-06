@@ -170,11 +170,22 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
         if( nClade == 1 ) {
             // for parent of taxon
-            double twol = 2 * getR();
+            final double twol = 2 * getR();
             lgp = -twol * h + Math.log(twol);
         } else {
-            double l = getR();
-            lgp = -3 * l * h + (nClade-2) * Math.log(1 - Math.exp(-l*h)) + Math.log(l);
+            final double l = getR();
+            final double lh = l * h;
+            lgp = -3 * lh + (nClade-2) * Math.log(1 - Math.exp(-lh)) + Math.log(l);
+
+            // root is a special case
+            if( tree.getExternalNodeCount() == nClade ) {
+                // n(n-1) factor left out
+                //lgp = -2 * lh + (nClade-2) * v2 + logLam;
+                lgp += lh;
+            } else {
+                // (n^3-n)/2 factor left out
+                //lgp = -3 * lh + (nClade-2) * v2 + logLam;
+            }
         }
 
         return lgp;

@@ -19,12 +19,14 @@ import java.util.logging.Logger;
 public class PlinkImporter implements Citable {
 
     private TaxonList taxonList = null;
-    private Map<String, StringBuffer> taxonHash;
+    private Map<String, List<Double>> taxonHash;
     private Map<String, Integer> taxonCounts;
+    private List<Integer> remove;
 
     public PlinkImporter(Reader reader) throws IOException {
-        taxonHash = new HashMap<String, StringBuffer>();
+        taxonHash = new HashMap<String, List<Double>>();
         taxonCounts = new HashMap<String, Integer>();
+        remove = new ArrayList<Integer>();
         parse(reader);
     }
 
@@ -41,33 +43,69 @@ public class PlinkImporter implements Citable {
         return citations;
     }
 
-    private void transformRow(String line, Map<String, StringBuffer> taxonHash, Map<String, Integer> taxonCounts) {
+    private String formatTransformedValue(double value) {
+        return String.format("%+4.3e", value);
+    }
+
+    private String makeStringAttribute(List<Double> valueList) {
+        StringBuffer sb = new StringBuffer();
+//        sb.append(formatTransformedValue(valueList.get(0)));
+        boolean first = true;
+        for (int i = 0; i < valueList.size(); i++) {
+            if (!remove.contains(i)) {
+                if (!first) {
+                    sb.append(" ");
+                } else {
+                    first = false;
+                }
+                sb.append(formatTransformedValue(valueList.get(i)));
+            }
+        }
+        return sb.toString();
+    }
+
+    private void transformRow(String line, Map<String, List<Double>> taxonHash, Map<String, Integer> taxonCounts, List<Integer> remove) {
         StringTokenizer token = new StringTokenizer(line);
         token.nextToken();
         token.nextToken();
         String name = token.nextToken();
-        token.nextToken();
-        token.nextToken();
+        int a1 = Integer.parseInt(token.nextToken());
+        int a2 = Integer.parseInt(token.nextToken());
         token.nextToken();
         int count1 = Integer.parseInt(token.nextToken());
         int total = Integer.parseInt(token.nextToken());
         int count2 = total - count1;
+//        if (a1 > a2) {
+//            int tmp = count1;
+//            count1 = count2;
+//            count2 = tmp;
+//        }
         double value = transform(count1, count2);
         if (Double.isNaN(value)) {
-            Logger.getLogger("dr.evomodel.continuous").warning("PLINK line: " + line + " generates invalid frequency estimate; filling in zero log-odds");
-            value = 0.0;
+            StringBuffer sb = new StringBuffer();
+            sb.append("PLINK line: " + line + " generates invalid frequency estimate;");
+            if (removeMissingLoci) {
+                sb.append(" marking loci for removal from analysis");
+                List<Double> valueList = taxonHash.get(name);
+                remove.add(valueList.size());
+//                System.err.println("Marking loci #" + valueList.size());
+            } else {
+                sb.append(" filling in with default value");
+                value = defaultMissingValue();
+            }
+            Logger.getLogger("dr.evomodel.continuous").warning(sb.toString());
         }
-        StringBuffer sb = taxonHash.get(name);
-        if (sb == null) {
-            sb = new StringBuffer();
-            taxonHash.put(name, sb);
+        List<Double> valueList = taxonHash.get(name);
+        if (valueList == null) {
+            valueList = new ArrayList<Double>();
+            taxonHash.put(name, valueList);
             taxonCounts.put(name, 1);
         } else {
-            sb.append(" ");
+//            sb.append(" ");
             taxonCounts.put(name, taxonCounts.get(name) + 1);         
         }
-        String valueString = String.format("%+4.3e", value);
-        sb.append(valueString);
+        valueList.add(value);
+//        sb.append(formatTransformedValue(value));
     }
 
     public String toStatisticsString() {
@@ -77,7 +115,7 @@ public class PlinkImporter implements Citable {
         for (String taxon : taxonHash.keySet()) {
             sb.append("\t");
             sb.append(taxonCounts.get(taxon));
-            sb.append(" = ").append(taxon).append("\n");
+            sb.append(" = ").append(taxon).append(taxonHash.get(taxon).size()).append("\n");
         }
         sb.append("\tPlease cite:\n");
         sb.append(Citable.Utils.getCitationString(this));
@@ -98,8 +136,18 @@ public class PlinkImporter implements Citable {
 
         line = reader.readLine();
         while (line != null) {
-            transformRow(line, taxonHash, taxonCounts);
+            transformRow(line, taxonHash, taxonCounts, remove);
             line = reader.readLine();
+        }
+
+        if (remove.size() > 0) {
+            Logger.getLogger("dr.evomodel.continuous").warning("Removing " + remove.size() + " loci from analysis...");
+//            for (int i : remove) {
+//                for (String taxon : taxonHash.keySet()) {
+//                    List<Double> valueList = taxonHash.get(taxon);
+//                    valueList.remove(i);
+//                }
+//            }
         }
     }
 
@@ -107,12 +155,14 @@ public class PlinkImporter implements Citable {
 
         taxonList = new Taxa();
         for (Taxon taxon : inTaxonList) {
-            StringBuffer sb = taxonHash.get(taxon.getId());
-            if (sb == null) {
+            List<Double> valueList = taxonHash.get(taxon.getId());
+
+            if (valueList == null) {
                 Logger.getLogger("dr.evolution").warning("Taxon " + taxon.getId() + " not found in PLINK data");
             } else {
+                 String string = makeStringAttribute(valueList);
                 ((Taxa)taxonList).addTaxon(taxon);
-                taxon.setAttribute(traitName, sb.toString());
+                taxon.setAttribute(traitName, string);
             }
             if (DEBUG) {
                 System.err.println("Added trait for " + taxon.getId());
@@ -138,6 +188,22 @@ public class PlinkImporter implements Citable {
         return sb.toString();
     }
 
+    private double innerTransform(double p) {
+        return Math.log(p / (1.0 - p));
+    }
+
+    private double defaultMissingValue() {
+        return 0.0;
+    }
+
+//    private double innerTransform(double p) {
+//        return Math.asin(Math.sqrt(p));
+//    }
+//
+//    private double defaultMissingValue() {
+//        return Math.asin(Math.sqrt(0.5));
+//    }
+
     private double transform(int count1, int count2) {
         int total = count1 + count2;
         double halfFreq = 0.5 / total;
@@ -149,7 +215,7 @@ public class PlinkImporter implements Citable {
         } else {
             obsFreq = ((double) count1) / ((double) total);
         }
-        return Math.log(obsFreq / (1.0 - obsFreq));
+        return innerTransform(obsFreq);
     }
 
     // **************************************************************
@@ -230,6 +296,7 @@ public class PlinkImporter implements Citable {
 
 
     private static final boolean DEBUG = false;
+    private boolean removeMissingLoci = true;
 
 
 }

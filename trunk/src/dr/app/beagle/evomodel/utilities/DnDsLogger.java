@@ -58,14 +58,16 @@ public class DnDsLogger implements Loggable {
     }
 
     private double doCalculation(int index) {
+        double returnValue;
         if (!useDnMinusDs) {
-            return (cachedValues[CN][index] / cachedValues[UN][index]) /
+            returnValue = (cachedValues[CN][index] / cachedValues[UN][index]) /
                     (cachedValues[CS][index] / cachedValues[US][index]);
 
         } else {
-            return (cachedValues[CN][index] / cachedValues[UN][index]) -
+            returnValue =  (cachedValues[CN][index] / cachedValues[UN][index]) -
                     (cachedValues[CS][index] / cachedValues[US][index]);
         }
+        return returnValue;
     }
 
     private int getNumberSites() {

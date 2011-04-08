@@ -21,6 +21,26 @@ public class EmpiricalBayesPoissonSmoother {
         final int length = in.length;
         double[] out = new double[length];
         double[] gammaStats = getNegBin(in);
+        double alpha = gammaStats[0];
+        double beta = gammaStats[1]; // As defined on wiki page (scale)
+        double mean = gammaStats[2];
+        
+        if (beta == 0) {
+            for (int i = 0; i < length; i++) {
+                out[i] = mean;
+            }
+        } else {        
+            for (int i = 0; i < length; i++) {
+                out[i] = (in[i] + alpha) / (1 + 1 / beta);
+            }
+        }
+        return out;
+    }
+
+    public static double[] smoothOld(double[] in) {
+        final int length = in.length;
+        double[] out = new double[length];
+        double[] gammaStats = getNegBin(in);
         for (int i = 0; i < length; i++) {
             out[i] = (in[i] + gammaStats[0]) / (1 + 1 / gammaStats[1]);
         }
@@ -32,6 +52,6 @@ public class EmpiricalBayesPoissonSmoother {
         double variance = DiscreteStatistics.variance(array, mean);
         double returnArray0 = (1 - (mean / variance));
         double returnArray1 = (mean * ((1 - returnArray0) / returnArray0));
-        return new double[]{returnArray1, (returnArray0 / (1 - returnArray0))};
+        return new double[]{returnArray1, (returnArray0 / (1 - returnArray0)), mean};
     }
 }

@@ -47,11 +47,23 @@ public class EmpiricalBayesPoissonSmoother {
         return out;
     }
 
+    // Method of moments estimators following Martiz 1969
+
     private static double[] getNegBin(double[] array) {
         double mean = DiscreteStatistics.mean(array);
         double variance = DiscreteStatistics.variance(array, mean);
         double returnArray0 = (1 - (mean / variance));
         double returnArray1 = (mean * ((1 - returnArray0) / returnArray0));
-        return new double[]{returnArray1, (returnArray0 / (1 - returnArray0)), mean};
+
+        double shape = returnArray1;
+        double scale = (returnArray0 / (1 - returnArray0));
+
+//        // Check against Martiz 1969 (beta = shape, alpha = rate in the 1969 paper)
+//        double matrizBeta = mean * mean / (variance - mean);
+//        double matrizAlphaInv = mean / matrizBeta; // scale
+//        System.err.println("mb = " + matrizBeta + " shape = " + shape);
+//        System.err.println("ma = " + matrizAlphaInv + " scale = " + scale);
+
+        return new double[]{shape, scale, mean};
     }
 }

@@ -182,10 +182,13 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         } else if (parameter instanceof Variable) {
             maxDelta = ((Variable<Integer>) parameter).getValue(0) * 2.0;
         }
-        double ws = OperatorUtils.optimizeWindowSize(windowSize, maxDelta * 2.0, prob, targetProb);
+        double ws = Math.round(OperatorUtils.optimizeWindowSize(windowSize, maxDelta * 2.0, prob, targetProb));
 
         if (prob < getMinimumGoodAcceptanceLevel()) {
-            return "Try decreasing windowSize to about " + ws;
+            if(ws <= 1.0){
+                return "";
+            }
+            return "Try decreasing windowSize to about " + ws;            
         } else if (prob > getMaximumGoodAcceptanceLevel()) {
             return "Try increasing windowSize to about " + ws;
         } else return "";

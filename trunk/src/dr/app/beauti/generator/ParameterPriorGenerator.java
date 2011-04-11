@@ -28,7 +28,9 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
@@ -79,7 +81,22 @@ public class ParameterPriorGenerator extends Generator {
                 if (parameter.isCached) {
                     writeCachedParameterPrior(parameter, writer);
                 } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    writeParameterPrior(parameter, writer);
+                    if (options.clockModelOptions.isNodeCalibrated(parameter) // not treeModel.rootHeight
+                            && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.YULE) {
+                        if (parameter.taxaId != null) {
+                            for (Taxa taxa : options.taxonSets) {
+                                if (taxa.getId().equalsIgnoreCase(parameter.getBaseName())) {
+                                    PartitionTreeModel model = options.taxonSetsTreeModel.get(taxa);
+                                    if (!(options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
+                                            && options.taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0)))) {
+                                        writeParameterPrior(parameter, writer);
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        writeParameterPrior(parameter, writer);
+                    }
                 }
             }
         }

@@ -84,8 +84,13 @@ public interface BayesianStochasticSearchVariableSelection {
         }
 
         private static int getEntry(int i, int j, int dim, boolean reversible) {
-            if (reversible && j > i)
-                return getEntry(j,i,dim,false);            
+            if (reversible) {
+                if (j < i) {
+                    return getEntry(j,i,dim,reversible);
+                }
+                int entry = i * dim - i * (i + 1) / 2 + j - 1 -i;
+                return entry;
+            }
 
             int entry = i * (dim - 1) + j;
             if (j > i)

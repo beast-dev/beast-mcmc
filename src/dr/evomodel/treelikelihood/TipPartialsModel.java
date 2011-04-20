@@ -85,6 +85,11 @@ public abstract class TipPartialsModel extends AbstractModel {
 
     public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex, String taxonId) {
         if (patternCount == 0) {
+            if (patternList != null) {
+                throw new RuntimeException("The TipPartialsModel with id, " + getId() + ", has already been associated with a patternList.");
+            }
+
+            this.patternList = patternList;
             patternCount = patternList.getPatternCount();
             stateCount = patternList.getDataType().getStateCount();
         }
@@ -148,6 +153,8 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected TaxonList excludeTaxa;
 
     protected Tree tree;
+
+    private PatternList patternList = null;
 
     protected Map<Integer, String> taxonMap = new HashMap<Integer, String>();
 }

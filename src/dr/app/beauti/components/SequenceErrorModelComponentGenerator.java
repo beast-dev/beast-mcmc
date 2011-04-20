@@ -26,7 +26,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
     public boolean usesInsertionPoint(final InsertionPoint point) {
         SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
-        if (comp.errorModelType == SequenceErrorType.NO_ERROR) {
+        if (comp.errorModelType == SequenceErrorType.NO_ERROR || options.dataPartitions.size() != 1) {
             return false;
         }
 

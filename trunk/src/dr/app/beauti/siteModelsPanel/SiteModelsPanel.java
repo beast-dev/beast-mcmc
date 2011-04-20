@@ -27,6 +27,8 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.SequenceErrorModelComponentFactory;
+import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
@@ -204,17 +206,18 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         settingOptions = true;
 
         comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
-        errorModelCombo.setSelectedItem(comp.errorModelType);
 
         boolean enabled;
         String tip;
         if (options.dataPartitions.size() == 1) {
+            errorModelCombo.setSelectedItem(comp.errorModelType);
             enabled = true;
-             tip = "<html>Select how to model sequence error or<br>"
+            tip = "<html>Select how to model sequence error or<br>"
                             + "post-mortem DNA damage.</html>";
         } else {
+            errorModelCombo.setSelectedItem(SequenceErrorType.NO_ERROR);
             enabled = false;
-             tip = "<html>" +
+            tip = "<html>" +
                      "Select how to model sequence error or<br>" +
                      "post-mortem DNA damage.<br>" +
                      "This option is not available for multiple<br>" +

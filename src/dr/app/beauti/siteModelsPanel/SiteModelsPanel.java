@@ -82,6 +82,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean hasAlignment = false;
 
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
+    JLabel errorModelLabel;
     SequenceErrorModelComponentOptions comp;
 
 
@@ -149,8 +150,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setOpaque(false);
 
 		PanelUtils.setupComponent(errorModelCombo);
-		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
-						+ "post-mortem DNA damage.</html>");
+
 		errorModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 fireModelsChanged();
@@ -160,7 +160,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 		comp = new SequenceErrorModelComponentOptions();
 
         OptionsPanel panel1 = new OptionsPanel(12, 12);
-        panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+        errorModelLabel = panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
 
 
         // The bottom panel is now small enough that this is not necessary
@@ -205,6 +205,25 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(comp.errorModelType);
+
+        boolean enabled;
+        String tip;
+        if (options.dataPartitions.size() == 1) {
+            enabled = true;
+             tip = "<html>Select how to model sequence error or<br>"
+                            + "post-mortem DNA damage.</html>";
+        } else {
+            enabled = false;
+             tip = "<html>" +
+                     "Select how to model sequence error or<br>" +
+                     "post-mortem DNA damage.<br>" +
+                     "This option is not available for multiple<br>" +
+                     "partition analyses.</html>";
+        }
+        errorModelLabel.setEnabled(enabled);
+        errorModelCombo.setEnabled(enabled);
+        errorModelLabel.setToolTipText(tip);
+        errorModelCombo.setToolTipText(tip);
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();

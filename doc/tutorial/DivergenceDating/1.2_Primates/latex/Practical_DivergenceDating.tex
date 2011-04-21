@@ -108,7 +108,7 @@ set.
 
 Rename it by double-clicking on the entry that appears (it will
 initially be called \texttt{untitled1}). Call it \texttt{ingroup} (it will contain all taxa except the lemur, which will form the outgroup).
-In the next table along you will see the available taxa. Select all taxa and press the green arrow button. Move the lemur back into the excluded taxa set. Since we know that lemur is the outgroup, we will set select the checkbox in the �Monophyletic?� column. This will ensure that the ingroup is kept monophyletic during the course of the MCMC analysis.
+In the next table along you will see the available taxa. Select all taxa and press the green arrow button. Move the \texttt{Lemur} back into the excluded taxa set. Since we know that lemur is the outgroup, we will set select the checkbox in the \texttt{Monophyletic?} column. This will ensure that the ingroup is kept monophyletic during the course of the MCMC analysis.
 
 Now repeat the whole procedure creating a set called \texttt{Human-Chimp}
 that contains only \texttt{Homo\_sapiens} and \texttt{Pan}
@@ -121,7 +121,27 @@ taxa. The screen should look like this:
 \medskip{}
 
 
-Finally, create a taxon group that contains everything under the hominoid/cercopithecoid split (i.e. everything except Lemur, Saimiri and Tarsius). Call this taxon set something like �HomiCerco�.
+Finally, create a taxon group that contains everything under the hominoid/cercopithecoid split (i.e. everything except \texttt{Lemur}, \texttt{Saimiri} and \texttt{Tarsius}). Call this taxon set something like \texttt{HomiCerco}.
+
+\subsubsection*{Unlink partition models}
+
+At this point we will need to unlink the substitution model so that each parameter is estimated separately for the two partitions. To do this return to {\bf Data Partitions} panel, select both partitions in the table and click the \texttt{Unlink Subst Models} button. 
+
+\medskip{}
+
+\includegraphics[scale=0.4]{figures/BEAUti_Unlink}
+
+\medskip{}
+
+And you can also change the partition model name in its corresponding panel (e.g. {\bf Clock Models}  panel), and make the final partitions as illustrated below:
+
+\medskip{}
+
+\includegraphics[scale=0.4]{figures/BEAUti_DataPartitions_final}
+
+\medskip{}
+
+
 
 \subsubsection*{Setting the substitution model}
 
@@ -144,21 +164,6 @@ between sites in the associated alignment.
 
 \medskip{}
 
-At this point we will need to unlink the substitution model so that each parameter is estimated separately for the two partitions. To do this return to {\bf Data Partitions} panel, select both partitions in the table and click the ``Unlink Subst Models'' button. 
-
-\medskip{}
-
-\includegraphics[scale=0.4]{figures/BEAUti_Unlink}
-
-\medskip{}
-
-And you can also change the partition model name in its respective panel (e.g. {\bf Clock Models}  panel), and make the final partitions as illustrated below:
-
-\medskip{}
-
-\includegraphics[scale=0.4]{figures/BEAUti_DataPartitions_final}
-
-\medskip{}
 
 \subsubsection*{Setting the clock model}
 
@@ -200,10 +205,19 @@ Select this from the {\bf Tree prior} dropdown menu.
 
 We now need to specify a prior distribution for some of the divergence times, based on our prior fossil knowledge. This is known
 as calibrating our tree. We will actually use two calibrations
-in this analysis. Click on the button in the table next to \texttt{tmrca(human-chimp)}: 
+in this analysis. Click on the button in the table next to \texttt{tmrca(human-chimp)}, A dialog box will appear allowing you to specify a prior for the MRCA of species. 
 
-A dialog box will appear allowing you to specify a prior for the
-MRCA of these three species. Select the \textbf{Normal} distribution
+Select the \textbf{Normal} distribution.
+We are going to assume a normal distribution centered at 6 million
+years with a standard deviation of 0.5 million years. This will give
+a central 95\% range of about 5-7 My. This corresponds to the consensus
+estimate of the date of the most recent common ancestor of humans and chimps.
+
+Following the same procedure set a calibration of 24 +/- 0.5 million (stdev) for the hominoid-cercopithecoid split.
+
+Although we created a taxon set for the ingroup (\texttt{tmrca(ingroup)}
+in the prior table), we are not going to put an informative prior
+on this. We can then estimate this divergence time based on the other calibrations. 
 
 \medskip{}
 
@@ -211,23 +225,14 @@ MRCA of these three species. Select the \textbf{Normal} distribution
 
 \medskip{}
 
-We are going to assume a normal distribution centered at 6 million
-years with a standard deviation of 0.5 million years. This will give
-a central 95\% range of about 5-7 My. This corresponds to the consensus
-estimate of the date of the most recent common ancestor of humans and chimps.
-
-
-Following the same procedure set a calibration of 24 +/- 0.5 million (stdev) for the hominoid-cercopithecoid split. 
-
-Although we created a taxon set for the ingroup (\texttt{tmrca(ingroup)}
-in the prior table), we are not going to put an informative prior
-on this. We can then estimate this divergence time based on the other calibrations. The priors table should now look like this: 
+And the clock model parameters will appear when the clock rate is estimated. The priors table should now look like this: 
 
 \medskip{}
 
 \includegraphics[scale=0.4]{figures/BEAUti_Prior2}
 
 \medskip{}
+
 
 \subsubsection*{Setting the MCMC options }
 
@@ -246,6 +251,12 @@ of your data set. For this data set let's initially set the chain
 length to 800,000 as this will run reasonably quickly on most modern
 computers (a few minutes).
 
+\medskip{}
+
+\includegraphics[scale=0.4]{figures/BEAUti_MCMC}
+
+\medskip{}
+
 The next options specify how often the parameter values in the Markov
 chain should be displayed on the screen and recorded in the log file.
 The screen output is simply for monitoring the programs progress so
@@ -257,18 +268,12 @@ very large files with little extra benefit in terms of the precision
 of the analysis. Sample too infrequently and the log file will not
 contain much information about the distributions of the parameters. 
 You probably want to aim to store no more than 10,000 samples so this should be
-set to no less than chain length / 10,000.
+set to no less than chain length / 10000.
 
-For this exercise we will set the screen log to 10000 and the file log to 200. The final two
+For this exercise we will set the screen log to 10,000 and the file log to 200. The final two
 options give the file names of the log files for the sampled parameters and
 the trees. These will be set to a default based on the name of the
 imported NEXUS file. 
-
-\medskip{}
-
-\includegraphics[scale=0.4]{figures/BEAUti_MCMC}
-
-\medskip{}
 
 \begin{itemize}
 \item If you are using windows then we suggest you add the suffix \texttt{.txt} to both of these (so,
@@ -279,15 +284,12 @@ these as text files.
 \subsubsection*{Generating the BEAST XML file }
 
 We are now ready to create the BEAST XML file. To do this,
-either select the {\bf Generate BEAST File...} option from the File menu or click the similarly labelled button at the bottom of the
-window. Save the file with an appropriate name
+either select the \textbf{Generate BEAST File...} option from the \textbf{File} menu or click the similarly labelled button at the bottom of the
+window. Check the default priors, and save the file with an appropriate name
 (we usually end the filename with \texttt{.xml}, i.e., \texttt{Primates.xml}).
 We are now ready to run the file through BEAST. 
 
 \subsection*{Running BEAST }
-
-Now run BEAST and when it asks for an input file, provide your newly
-created XML file as input. 
 
 \medskip{}
 
@@ -295,7 +297,8 @@ created XML file as input.
 
 \medskip{}
 
-BEAST will then run until it has finished
+Now run BEAST and when it asks for an input file, provide your newly
+created XML file as input. BEAST will then run until it has finished
 reporting information to the screen. The actual results files are
 save to the disk in the same location as your input file. The output to the screen will
 look something like this: 
@@ -303,7 +306,7 @@ look something like this:
 {\scriptsize   
 \begin{verbatim}
 
-                  BEAST v1.6.1, 2002-2010
+                   BEAST v1.6.1, 2002-2010
        Bayesian Evolutionary Analysis Sampling Trees
                  Designed and developed by
    Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard
@@ -328,20 +331,18 @@ Source code distributed under the GNU Lesser General Public License:
                               
                      BEAST developers:
 	Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, 
-	Philippe Lemey, Gerton Lunter, Sidney Markowitz, Vladimir Minin, 
-      	Michael Defoin Platel, Oliver Pybus, Walter Xie
+	Philippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, 
+	Vladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie
                               
                          Thanks to:
     	Roald Forsberg, Beth Shapiro and Korbinian Strimmer
 
 
-Random number seed: 1270078661254
+Random number seed: 1303338739767
 
 Parsing XML file: primates.xml
   File encoding: MacRoman
-looking for plugins in/Users/dxie004/Desktop/Practical1a_RelaxedClocks_new/plugins
-Unexpected element in coalescentTree:startingTree:  tmrca in constrainedTaxa, tmrca in constrainedTaxa, tmrca in constrainedTaxa
-Read alignment, ':alignment
+Read alignment: alignment
   Sequences = 12
       Sites = 898
    Datatype = nucleotide
@@ -351,18 +352,18 @@ Site patterns 'secondhalf.patterns' created from positions 450-898 of alignment 
   pattern count = 231
 Using Yule prior on tree
 Creating the tree model, 'treeModel'
-  initial tree topology = ((((((((Homo_sapiens,M_sylvanus),Pongo),Pan),Tarsius_syrichta),Gorilla),Macaca_fuscata),((Hylobates,M_fascicularis),(M_mulatta,Saimiri_sciureus))),Lemur_catta)
-  tree height = 163.55349753059264
+  initial tree topology = ((((((Gorilla,Tarsius_syrichta),Pan),M_sylvanus),(M_mulatta,Macaca_fuscata)),((((Homo_sapiens,Saimiri_sciureus),Pongo),M_fascicularis),Hylobates)),Lemur_catta)
+  tree height = 311.73866128365125
 Using discretized relaxed clock model.
   over sampling = 1
   parametric model = logNormalDistributionModel
    rate categories = 22
 Creating state frequencies model: Initial frequencies = {0.25, 0.25, 0.25, 0.25}
-Creating HKY substitution model. Initial kappa = 1.0
-Creating state frequencies model: Initial frequencies = {0.25, 0.25, 0.25, 0.25}
-Creating HKY substitution model. Initial kappa = 1.0
+Creating HKY substitution model. Initial kappa = 2.0
 Creating site model.
   4 category discrete gamma with initial shape = 0.5
+Creating state frequencies model: Initial frequencies = {0.25, 0.25, 0.25, 0.25}
+Creating HKY substitution model. Initial kappa = 2.0
 Creating site model.
   4 category discrete gamma with initial shape = 0.5
 TreeLikelihood(treeModel) using native nucleotide likelihood core
@@ -379,56 +380,56 @@ Creating the MCMC chain:
   chainLength=800000
   autoOptimize=true
   autoOptimize delayed for 8000 steps
-# BEAST v1.5.4, Build r3085
-# Generated Thu Apr 01 12:38:20 NZDT 2010 [seed=1270078661254]
+# BEAST v1.6.1, Build r3651
+# Generated Thu Apr 21 16:27:15 NZST 2011 [seed=1303338739767]
 state	Posterior   	Prior       	Likelihood  	rootHeight  	ucld.mean   
-0	-17988.8851 	-5960.6020  	-12028.2831 	163.553     	1.00000     	-
-10000	-6123.6529  	-54.5139    	-6069.1390  	45.8562     	2.06435E-2  	-
-20000	-5995.5266  	-58.6663    	-5936.8603  	49.8866     	1.52459E-2  	0.15 hours/million states
-30000	-5937.3075  	-57.7531    	-5879.5544  	46.0397     	9.70747E-3  	0.11 hours/million states
-40000	-5898.5427  	-55.7572    	-5842.7855  	41.5696     	1.23744E-2  	0.1 hours/million states
-50000	-5878.9464  	-56.3634    	-5822.5830  	37.2131     	1.04593E-2  	0.09 hours/million states
-60000	-5841.3595  	-57.0828    	-5784.2767  	36.8985     	1.25161E-2  	0.09 hours/million states
-70000	-5821.5282  	-58.6466    	-5762.8816  	47.1654     	1.1147E-2   	0.08 hours/million states
-80000	-5794.5158  	-58.5858    	-5735.9300  	49.9805     	1.16897E-2  	0.08 hours/million states
-90000	-5783.5819  	-57.4107    	-5726.1712  	47.6737     	1.4616E-2   	0.08 hours/million states
-100000	-5785.0143  	-59.4438    	-5725.5705  	42.0940     	1.77003E-2  	0.08 hours/million states
+0	-115044.0238	-105244.7369	-9799.2869  	311.739     	3.3E-2      	-
+10000	-6019.0942  	-48.1460    	-5970.9482  	31.2013     	1.13161E-2  	-
+20000	-5932.1777  	-53.7968    	-5878.3809  	58.3426     	7.80428E-3  	0.11 hours/million states
+30000	-5864.1836  	-55.6386    	-5808.5450  	54.7400     	9.7303E-3   	0.09 hours/million states
+40000	-5845.2874  	-58.9120    	-5786.3753  	82.1531     	6.86446E-3  	0.08 hours/million states
+50000	-5798.2689  	-60.2217    	-5738.0472  	87.4058     	7.84354E-3  	0.08 hours/million states
+60000	-5779.7566  	-57.1298    	-5722.6268  	49.1015     	1.17545E-2  	0.07 hours/million states
+70000	-5787.4056  	-60.5876    	-5726.8180  	81.5675     	1.03161E-2  	0.07 hours/million states
+80000	-5785.8794  	-58.9768    	-5726.9027  	70.4040     	9.80333E-3  	0.07 hours/million states
+90000	-5778.6354  	-59.2618    	-5719.3737  	77.9236     	1.0054E-2   	0.07 hours/million states
+100000	-5780.4106  	-60.2610    	-5720.1496  	78.7802     	8.80928E-3  	0.07 hours/million states
 
 ... ...
 
-790000	-5786.0332  	-63.5527    	-5722.4805  	52.7075     	1.32915E-2  	0.07 hours/million states
-800000	-5783.6441  	-62.1815    	-5721.4626  	58.5455     	1.23201E-2  	0.07 hours/million states
+790000	-5772.8359  	-59.0540    	-5713.7819  	77.1089     	9.1281E-3   	0.06 hours/million states
+800000	-5774.2917  	-57.2419    	-5717.0498  	61.2605     	9.77329E-3  	0.06 hours/million states
 
 Operator analysis
-Operator                                          Tuning  Count      Time     Time/Op  Pr(accept)  Performance suggestion
-scale(firsthalf.kappa)                            0.541   748        245      0.33     0.2366      good	
-firsthalf.frequencies                             0.05    695        251      0.36     0.295       good	
-scale(firsthalf.alpha)                            0.548   703        268      0.38     0.2731      good	
-scale(secondhalf.kappa)                           0.532   739        235      0.32     0.2896      good	
-secondhalf.frequencies                            0.052   716        256      0.36     0.3492      good	
-scale(secondhalf.alpha)                           0.622   660        235      0.36     0.3636      good	
-scale(ucld.mean)                                  0.694   21202      8048     0.38     0.274       good	
-scale(ucld.stdev)                                 0.616   21469      8204     0.38     0.584       high	Try setting scaleFactor to about 0.3797
-subtreeSlide(treeModel)                           3.069   106439     21629    0.2      0.3145      good	
-Narrow Exchange(treeModel)                                105884     20735    0.2      0.0009      very low	
-Wide Exchange(treeModel)                                  21351      2338     0.11     0.0002      very low	
-wilsonBalding(treeModel)                                  21526      3836     0.18     0.0         very low	
-scale(treeModel.rootHeight)                       0.736   21130      1663     0.08     0.1517      good	
-uniform(nodeHeights(treeModel))                           213236     49425    0.23     0.2091      good	
-scale(yule.birthRate)                             0.284   21382      1168     0.05     0.2949      good	
-up:ucld.mean down:nodeHeights(treeModel)          0.868   21372      8079     0.38     0.219       slightly high	Try setting scaleFactor to about 0.8761
-swapOperator(branchRates.categories)                      71045      18385    0.26     0.4699      slightly high	No suggestions
-randomWalkInteger(branchRates.categories)                 70778      15364    0.22     0.8972      high	Try increasing windowSize to about 2.0
-uniformInteger(branchRates.categories)                    70925      15244    0.21     0.5794      high	
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(firsthalf.kappa)                            0.536   701        232      0.33     0.2596      good	
+firsthalf.frequencies                             0.059   677        206      0.3      0.2851      good	
+scale(firsthalf.alpha)                            0.598   719        220      0.31     0.3255      good	
+scale(secondhalf.kappa)                           0.555   685        222      0.32     0.3109      good	
+secondhalf.frequencies                            0.058   661        216      0.33     0.3238      good	
+scale(secondhalf.alpha)                           0.598   680        210      0.31     0.3015      good	
+scale(ucld.mean)                                  0.697   21192      7410     0.35     0.2786      good	
+scale(ucld.stdev)                                 0.274   21350      7342     0.34     0.3526      good	
+subtreeSlide(treeModel)                           4.405   105795     18763    0.18     0.337       good	
+Narrow Exchange(treeModel)                                106685     19150    0.18     0.0004      very low	
+Wide Exchange(treeModel)                                  21301      2071     0.1      0.0         very low	
+wilsonBalding(treeModel)                                  21229      3431     0.16     0.0         very low	
+scale(treeModel.rootHeight)                       0.853   21224      1334     0.06     0.218       good	
+uniform(nodeHeights(treeModel))                           213114     43645    0.2      0.222       good	
+scale(yule.birthRate)                             0.268   21594      697      0.03     0.2761      good	
+up:ucld.mean down:nodeHeights(treeModel)          0.596   21448      7551     0.35     0.2417      slightly high	Try setting scaleFactor to about 0.586
+swapOperator(branchRates.categories)                      70928      16433    0.23     0.6553      high	No suggestions
+randomWalkInteger(branchRates.categories)                 70818      13509    0.19     0.9432      very high	Try increasing windowSize to about 2.0
+uniformInteger(branchRates.categories)                    71199      14008    0.2      0.7518      high	
 
-3.3444 minutes 
+3.028016666666667 minutes 
 \end{verbatim}}
 
 \subsection*{Analyzing the results}
 
 Run the program called {\bf Tracer} to analyze the output of BEAST. When the main
 window has opened, choose {\bf Import Trace File...} from the {\bf File} menu and select the file that
-BEAST has created called \texttt{Primates.log.txt}.
+BEAST has created called \texttt{Primates.log}.
 You should now see a window like the following:
 
 \medskip{}
@@ -488,8 +489,8 @@ Selecting the \texttt{treeModel.rootHeight} parameter gives the marginal posteri
    \vspace{5 mm}
 
 Select the \texttt{treeModel.rootHeight} parameter and the next three (hold shift whilst selecting). This will show a display of the
-age of the root and the three MRCAs we specified in BEAUti. The two parameters that we used to calibrate the tree
-(\texttt{tmrca(HomiCerco)} and \texttt{tmrca(human-chimp)}) will have posterior distributions very similar to the prior distributions
+age of the root and the three MRCAs we specified in BEAUti. The parameter that we used to calibrate the tree
+(\texttt{tmrca(human-chimp)}) will have posterior distributions very similar to the prior distributions
 that we specified. 
 
 \medskip{}

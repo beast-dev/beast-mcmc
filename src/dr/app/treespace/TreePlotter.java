@@ -17,6 +17,10 @@ import java.util.List;
  */
 public class TreePlotter extends JComponent {
 
+    public TreePlotter() {
+        setTrees(treeLineages);
+    }
+
     public TreePlotter(final TreeLineages treeLineages) {
         setTrees(treeLineages);
     }
@@ -29,78 +33,48 @@ public class TreePlotter extends JComponent {
     }
 
     public void paint(Graphics g) {
-//        if (trees == null || trees.size() == 0) {
-//            return;
-//        }
-//
-//        if (!isCalibrated) {
-//            double[] yPosition = { 0.0 };
-//
-//            calibrateClade((Graphics2D)g, rootClade, yPosition);
-//
-//            scaleX = ((double)getWidth()) / rootClade.x;
-//            scaleY = ((double)getHeight()) / yPosition[0];
-//
-//            isCalibrated = true;
-//        }
-//
-//        paintClade((Graphics2D)g, rootClade);
-    }
-
-    private void paintClade(Graphics2D g2, Clade clade) {
-        if (clade.children != null) {
-            for (Clade child : clade.children.keySet()) {
-                paintClade(g2, child);
-                g2.setColor(Color.black);
-                g2.setStroke(new BasicStroke(1.0F));
-                g2.draw(new Line2D.Double(transformX(child.x), transformY(child.y), transformX(clade.x), transformY(clade.y)));
-            }
-        } else {
-            paintTip(g2, clade);
+        if (treeLineages == null || treeLineages.getRootLineages().size() == 0) {
+            return;
         }
 
-        float x = transformX(clade.x);
-        float y = transformY(clade.y);
+        if (!isCalibrated) {
+            scaleX = ((double)getWidth()) / treeLineages.getMaxWidth();
+            scaleY = ((double)getHeight()) / treeLineages.getMaxHeight();
 
-        Shape node = new Ellipse2D.Float(x, y, (float)(nodeWidth * scaleX), (float)(nodeHeight * scaleY));
-        g2.setColor(Color.yellow);
-        g2.fill(node);
-        g2.setColor(Color.black);
-        g2.draw(node);
-    }
+            isCalibrated = true;
+        }
 
-    private void paintTip(Graphics2D g2, Clade clade) {
-        float x = transformX(clade.x);
-        float y = transformY(clade.y);
-
-        Shape node = new Ellipse2D.Float(x, y, (float)(nodeWidth * scaleX), (float)(nodeHeight * scaleY));
-        g2.setColor(Color.yellow);
-        g2.fill(node);
-        g2.setColor(Color.black);
-        g2.draw(node);
-        if (clade.label != null) {
-            g2.drawString(clade.label, x + xLabelOffset, yLabelOffset);
+        for (TreeLineages.Lineage root : treeLineages.getRootLineages()) {
+            paintLineage((Graphics2D)g, root, 0.0, 0.0);
         }
     }
 
-//    private double calibrate(Graphics2D g2, RootedTree tree, Node node, double[] yPosition) {
-//        double y;
-//        if (clade.children != null) {
-//            y = 0.0;
-//            for (Clade child : clade.children.keySet()) {
-//                y += calibrateClade(g2, child, yPosition);
-//            }
+    private void paintLineage(Graphics2D g2, TreeLineages.Lineage lineage, double x, double y) {
+        double x1 = x + lineage.dx;
+        double y1 = y + lineage.dy;
+
+        if (lineage.child1 != null) {
+            paintLineage(g2, lineage.child1, x1, y1);
+            paintLineage(g2, lineage.child2, x1, y1);
+        }
+
+        g2.setColor(Color.black);
+        g2.setStroke(new BasicStroke(1.0F));
+        g2.draw(new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1)));
+    }
+
+//    private void paintTip(Graphics2D g2, Clade clade) {
+//        float x = transformX(clade.x);
+//        float y = transformY(clade.y);
 //
-//            // todo: use an average weighted by support
-//            y /= clade.children.keySet().size();
-//        } else {
-//            y = yPosition[0];
-//            yPosition[0]++;
+//        Shape node = new Ellipse2D.Float(x, y, (float)(nodeWidth * scaleX), (float)(nodeHeight * scaleY));
+//        g2.setColor(Color.yellow);
+//        g2.fill(node);
+//        g2.setColor(Color.black);
+//        g2.draw(node);
+//        if (clade.label != null) {
+//            g2.drawString(clade.label, x + xLabelOffset, yLabelOffset);
 //        }
-//        clade.x = (float)clade.bits.cardinality();
-//        clade.y = (float)y;
-//
-//        return y;
 //    }
 
     private float transformX(double x) {

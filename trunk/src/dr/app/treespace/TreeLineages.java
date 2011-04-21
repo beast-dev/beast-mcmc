@@ -4,6 +4,7 @@ import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,27 +22,80 @@ public class TreeLineages {
 
     public void addTrees(final List<RootedTree> trees) {
         for (RootedTree tree : trees) {
+            addTree(tree);
         }
+    }
+
+    public double getMaxWidth() {
+        return maxWidth;
+    }
+
+    public double getMaxHeight() {
+        return maxHeight;
+    }
+
+    public List<Lineage> getRootLineages() {
+        return rootLineages;
     }
 
     public void addTree(RootedTree tree) {
-        addTree(tree, tree.getRootNode());
+        // set the tip count to zero for this traversal
+        currentY = 0.0;
+        Lineage lineage = new Lineage();
+        addNode(tree, tree.getRootNode(), lineage, 0.0);
+
+        if (currentY > maxHeight) {
+            maxHeight = currentY;
+        }
+
+        rootLineages.add(lineage);
     }
 
-    public long addTree(RootedTree tree, Node node) {
-        if (!tree.isExternal(node)) {
-            for (Node child : tree.getChildren(node)) {
-                long l = addTree(tree, node);
-
-            }
+    public double addNode(RootedTree tree, Node node, Lineage lineage, double cumulativeX) {
+        lineage.dx = tree.getLength(node);
+        cumulativeX += lineage.dx;
+        if (cumulativeX > maxWidth) {
+            maxWidth = cumulativeX;
         }
-        return 0;
+
+        if (!tree.isExternal(node)) {
+            List<Node> children = tree.getChildren(node);
+            if (children.size() != 2) {
+                throw new RuntimeException("Tree is not binary");
+            }
+
+            lineage.child1 = new Lineage();
+            lineage.child2 = new Lineage();
+
+            lineage.dy = addNode(tree, children.get(0), lineage.child1, cumulativeX);
+            lineage.dy += addNode(tree, children.get(1), lineage.child2, cumulativeX);
+
+            // the y of this node is the average of the two children
+            lineage.dy /= 2;
+
+            // now change the children to relative y positions.
+            lineage.child1.dy = lineage.child1.dy - lineage.dy;
+            lineage.child2.dy = lineage.child2.dy - lineage.dy;
+        } else {
+            // the initial (absolute) y position of a tip is its count in the traversal
+            lineage.dy = currentY;
+            currentY += 1.0;
+        }
+
+        return lineage.dy;
     }
 
     class Lineage {
-        double x1, y1, x2, y2;
-        long child1, child2;
-        boolean isRotated;
+        double dx = 0;
+        double dy = 0;
+        Lineage child1 = null;
+        Lineage child2 = null;
         Paint color;
     }
+
+    private List<Lineage> rootLineages = new ArrayList<Lineage>();
+    private double maxWidth;
+    private double maxHeight;
+
+    private double currentY;
 }

@@ -9,6 +9,7 @@ import dr.xml.*;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -345,6 +346,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             }
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
+
+            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite Rambaut, Bedford, Lemey, Russell, Smith & Suchard (or some such order, in prep.).");
 
             return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform, threshold);
         }

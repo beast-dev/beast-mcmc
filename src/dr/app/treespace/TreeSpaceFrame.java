@@ -34,9 +34,14 @@ public class TreeSpaceFrame extends DocumentFrame {
     private final JTabbedPane tabbedPane = new JTabbedPane();
     private final JLabel statusLabel = new JLabel("No data loaded");
     private final InputPanel inputPanel;
+
     private final CladePanel cladePanel;
-    private final TreePanel treePanel;
     private final CladePlotter cladePlotter;
+
+    private final TreePanel treePanel;
+
+    private final TreePlotter treePlotter;
+    private final JPanel plotterPanel;
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
@@ -66,6 +71,10 @@ public class TreeSpaceFrame extends DocumentFrame {
         treePanel = new TreePanel(this, document);
         cladePlotter = new CladePlotter(cladeSystem);
 
+        treePlotter = new TreePlotter();
+        plotterPanel = new JPanel(new BorderLayout());
+        plotterPanel.add(treePlotter, BorderLayout.CENTER);
+
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent e) {
                 tabbedPaneChanged();
@@ -89,6 +98,7 @@ public class TreeSpaceFrame extends DocumentFrame {
         tabbedPane.addTab("Trees", treePanel);
         tabbedPane.addTab("Clades", cladePanel);
         tabbedPane.addTab("Graph", cladePlotter);
+        tabbedPane.addTab("Plot", plotterPanel);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
@@ -266,7 +276,8 @@ public class TreeSpaceFrame extends DocumentFrame {
                     InputFile inputFile = new InputFile(file, tree, -1);
                     document.addTreeFile(inputFile);
 
-                    treeCount = processTrees(inputFile);
+                    treePlotter.setTrees(loadTrees(inputFile));
+
                     inputFile.setTreeCount(treeCount);
 
                     document.fireDataChanged();
@@ -295,7 +306,69 @@ public class TreeSpaceFrame extends DocumentFrame {
         return tree;
     }
 
-    private int processTrees(InputFile inputFile) throws IOException {
+    private TreeLineages loadTrees(InputFile inputFile) throws IOException {
+
+        PrintStream progressStream = System.out;
+
+        int totalTrees = 10000;
+        int totalTreesUsed = 0;
+
+        progressStream.println("Reading trees (bar assumes 10,000 trees)...");
+        progressStream.println("0              25             50             75            100");
+        progressStream.println("|--------------|--------------|--------------|--------------|");
+
+        int stepSize = totalTrees / 60;
+        if (stepSize < 1) stepSize = 1;
+
+        TreeLineages treeLineages = new TreeLineages();
+
+        FileReader fileReader = new FileReader(inputFile.getFile());
+        jebl.evolution.io.NexusImporter importer = new NexusImporter(fileReader);
+        try {
+            totalTrees = 0;
+            while (importer.hasTree()) {
+                RootedTree tree = (RootedTree)importer.importNextTree();
+
+                if (totalTrees >= inputFile.getBurnin()) {
+                    treeLineages.addTree(tree);
+                    totalTreesUsed += 1;
+                }
+
+                if (totalTrees > 0 && totalTrees % stepSize == 0) {
+                    progressStream.print("*");
+                    progressStream.flush();
+                }
+                totalTrees++;
+            }
+
+        } catch (ImportException e) {
+            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+            return null;
+        }
+        fileReader.close();
+        progressStream.println();
+        progressStream.println();
+
+        if (totalTrees < 1) {
+            System.err.println("No trees");
+            return null;
+        }
+        if (totalTreesUsed <= 1) {
+            if (inputFile.getBurnin() > 0) {
+                System.err.println("No trees to use: burnin too high");
+                return null;
+            }
+        }
+
+        progressStream.println("Total trees read: " + totalTrees);
+        if (inputFile.getBurnin() > 0) {
+            progressStream.println("Ignoring first " + inputFile.getBurnin() + " trees.");
+        }
+
+        return treeLineages;
+    }
+
+    private int processTrees1(InputFile inputFile) throws IOException {
 
         PrintStream progressStream = System.out;
 
@@ -320,7 +393,6 @@ public class TreeSpaceFrame extends DocumentFrame {
 
                 if (totalTrees >= inputFile.getBurnin()) {
                     cladeSystem.add(tree, true);
-
                     totalTreesUsed += 1;
                 }
 

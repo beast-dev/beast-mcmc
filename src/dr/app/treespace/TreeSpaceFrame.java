@@ -36,6 +36,7 @@ public class TreeSpaceFrame extends DocumentFrame {
     private final InputPanel inputPanel;
     private final CladePanel cladePanel;
     private final TreePanel treePanel;
+    private final CladePlotter cladePlotter;
 
     private JFileChooser importChooser; // make JFileChooser chooser remember previous path
     private JFileChooser exportChooser; // make JFileChooser chooser remember previous path
@@ -63,6 +64,7 @@ public class TreeSpaceFrame extends DocumentFrame {
         inputPanel = new InputPanel(this, document, getImportAction());
         cladePanel = new CladePanel(this, document);
         treePanel = new TreePanel(this, document);
+        cladePlotter = new CladePlotter(cladeSystem);
 
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent e) {
@@ -86,6 +88,7 @@ public class TreeSpaceFrame extends DocumentFrame {
         tabbedPane.addTab("Input", inputPanel);
         tabbedPane.addTab("Trees", treePanel);
         tabbedPane.addTab("Clades", cladePanel);
+        tabbedPane.addTab("Graph", cladePlotter);
 
         JPanel panel = new JPanel(new BorderLayout(6, 6));
         panel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 12)));
@@ -112,7 +115,7 @@ public class TreeSpaceFrame extends DocumentFrame {
 
         // make JFileChooser chooser remember previous path
         exportChooser = new JFileChooser(Utils.getCWD());
-        exportChooser.setDialogTitle("Generate Map File...");
+        exportChooser.setDialogTitle("Generate File...");
 
 
         importChooser = new JFileChooser(Utils.getCWD());
@@ -443,6 +446,7 @@ public class TreeSpaceFrame extends DocumentFrame {
         writer.close();
         progressStream.println();
 
+        cladePlotter.setCladeSystem(cladeSystem);
 
         return totalTreesUsed;
     }

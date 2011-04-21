@@ -2,7 +2,6 @@ package dr.app.treespace;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.TaxonList;
-
 import java.util.*;
 
 /**
@@ -28,6 +27,10 @@ public class CladeSystem {
         // annotation purposes).
         addClades(tree, tree.getRoot(), includeTips);
     }
+//
+//        public Clade getClade(NodeRef node) {
+//            return null;
+//        }
 
     private BitSet addClades(Tree tree, NodeRef node, boolean includeTips) {
 
@@ -105,6 +108,17 @@ public class CladeSystem {
                 frequency += 1;
             }
             clade.parents.put(parent, frequency);
+
+            if (parent.children == null) {
+                parent.children = new HashMap<Clade, Integer>();
+            }
+            frequency = parent.children.get(clade);
+            if (frequency == null) {
+                frequency = 1;
+            } else {
+                frequency += 1;
+            }
+            parent.children.put(clade, frequency);
         }
 
         return bits;
@@ -270,8 +284,11 @@ public class CladeSystem {
         int count;
         double credibility;
         BitSet bits;
-        String label;
         int index;
+        String label;
+        double height;
+        float x, y;
+        Map<Clade, Integer> children;
         Map<Clade, Integer> parents;
     }
 

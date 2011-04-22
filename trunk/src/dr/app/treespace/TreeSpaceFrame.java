@@ -73,7 +73,7 @@ public class TreeSpaceFrame extends DocumentFrame {
 
         treePlotter = new TreePlotter();
         plotterPanel = new JPanel(new BorderLayout());
-        plotterPanel.add(treePlotter, BorderLayout.CENTER);
+        plotterPanel.add(new JScrollPane(treePlotter), BorderLayout.CENTER);
 
         tabbedPane.addChangeListener(new ChangeListener() {
             public void stateChanged(final ChangeEvent e) {

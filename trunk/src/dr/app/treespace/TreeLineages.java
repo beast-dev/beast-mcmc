@@ -5,7 +5,9 @@ import jebl.evolution.trees.RootedTree;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -83,21 +85,31 @@ public class TreeLineages {
             lineage.child1.dy = lineage.child1.dy - lineage.dy;
             lineage.child2.dy = lineage.child2.dy - lineage.dy;
 
-            if (lineage.child1.tipCount > lineage.child2.tipCount) {
-                Lineage tmp = lineage.child1;
-                lineage.child1 = lineage.child2;
-                lineage.child2 = tmp;
-
-                lineage.child1.dy = -lineage.child1.dy;
-                lineage.child2.dy = -lineage.child2.dy;
-            }
+//            if (lineage.child1.tipCount > lineage.child2.tipCount ||
+//                    (lineage.child1.tipCount == lineage.child2.tipCount &&
+//                            lineage.child1.tipNumber > lineage.child2.tipNumber)) {
+//                Lineage tmp = lineage.child1;
+//                lineage.child1 = lineage.child2;
+//                lineage.child2 = tmp;
+//
+//                lineage.child1.dy = -lineage.child1.dy;
+//                lineage.child2.dy = -lineage.child2.dy;
+//            }
 
             lineage.tipCount = lineage.child1.tipCount + lineage.child2.tipCount;
 
         } else {
+            Integer tipNumber = tipNumbers.get(tree.getTaxon(node).getName());
+            if (tipNumber == null) {
+                tipNumber = tipNumbers.size();
+                tipNumbers.put(tree.getTaxon(node).getName(), tipNumber);
+            }
+
             // the initial (absolute) y position of a tip is its count in the traversal
+            lineage.tipNumber = tipNumber;
             lineage.tipCount = 1;
-            lineage.dy = currentY;
+            lineage.dy = tipNumber;
+//            lineage.dy = currentY;
             currentY += 1.0;
 
             if (cumulativeX > offsetX) {
@@ -113,11 +125,12 @@ public class TreeLineages {
         double dy = 0;
         Lineage child1 = null;
         Lineage child2 = null;
+        int tipNumber = 0;
         int tipCount = 0;
-        Paint color;
     }
 
     private List<Lineage> rootLineages = new ArrayList<Lineage>();
+    private Map<String, Integer> tipNumbers = new HashMap<String, Integer>();
     private double maxWidth;
     private double maxHeight;
 

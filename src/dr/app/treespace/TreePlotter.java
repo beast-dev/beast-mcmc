@@ -3,11 +3,13 @@ package dr.app.treespace;
 import dr.app.treespace.CladeSystem.Clade;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
+import jebl.math.Random;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Line2D;
+import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,45 +40,53 @@ public class TreePlotter extends JComponent {
         }
 
         if (!isCalibrated) {
-            scaleX = ((double)getWidth()) / treeLineages.getMaxWidth();
-            scaleY = ((double)getHeight()) / (treeLineages.getMaxHeight() + 10.0);
-
+            scaleX = getBounds().getWidth() / treeLineages.getMaxWidth();
+            scaleY = getBounds().getHeight() / (treeLineages.getMaxHeight() - 1.0);
 //            isCalibrated = true;
         }
 
         ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        float count = 0.0F;
         for (TreeLineages.Lineage root : treeLineages.getRootLineages()) {
-            paintLineage((Graphics2D)g, root, treeLineages.getMaxWidth(), 0.0);
+            float hue = count / treeLineages.getRootLineages().size();
+            paintTreeLineages((Graphics2D)g, hue, root, treeLineages.getMaxWidth(), 0.0);
+
+            count += 1.0F;
         }
     }
 
-    private void paintLineage(Graphics2D g2, TreeLineages.Lineage lineage, double x, double y) {
+    private void paintTreeLineages(Graphics2D g2, float hue, TreeLineages.Lineage lineage, double x, double y) {
         double x1 = x + lineage.dx;
         double y1 = y + lineage.dy;
 
-        if (lineage.child1 != null) {
-            paintLineage(g2, lineage.child1, x1, y1);
-            paintLineage(g2, lineage.child2, x1, y1);
-        }
-
-        g2.setColor(Color.black);
-        g2.setStroke(new BasicStroke(0.25F));
-        g2.draw(new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1)));
+        paintLineage(g2, hue, lineage.child1, x1, y1);
+        paintLineage(g2, hue, lineage.child2, x1, y1);
     }
 
-//    private void paintTip(Graphics2D g2, Clade clade) {
-//        float x = transformX(clade.x);
-//        float y = transformY(clade.y);
-//
-//        Shape node = new Ellipse2D.Float(x, y, (float)(nodeWidth * scaleX), (float)(nodeHeight * scaleY));
-//        g2.setColor(Color.yellow);
-//        g2.fill(node);
-//        g2.setColor(Color.black);
-//        g2.draw(node);
-//        if (clade.label != null) {
-//            g2.drawString(clade.label, x + xLabelOffset, yLabelOffset);
-//        }
-//    }
+    private void paintLineage(Graphics2D g2, float hue, TreeLineages.Lineage lineage, double x, double y) {
+        double x1 = x + lineage.dx;
+        double y1 = y + lineage.dy;
+
+//        g2.setColor(Color.getHSBColor(hue, 1.0F, 1.0F));
+        g2.setColor(new Color(0.0F, 0.0F, 0.0F, 0.1F));
+        g2.setStroke(new BasicStroke(0.5F));
+        g2.draw(new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1)));
+
+        if (lineage.child1 != null) {
+            paintLineage(g2, hue, lineage.child1, x1, y1);
+            paintLineage(g2, hue, lineage.child2, x1, y1);
+        } else {
+            paintTip(g2, lineage, x1, y1);
+        }
+    }
+
+    private void paintTip(Graphics2D g2, TreeLineages.Lineage lineage, double x, double y) {
+        Shape node = new Ellipse2D.Float((float)transformX(x) - nodeWidth * 0.5F, (float)transformY(y) - nodeWidth * 0.5F, nodeWidth, nodeWidth);
+        g2.setColor(Color.getHSBColor(((float)lineage.tipNumber) / (float)treeLineages.getMaxHeight(), 0.5F, 1.0F));
+        g2.fill(node);
+        g2.setColor(Color.black);
+        g2.draw(node);
+    }
 
     private double transformX(double x) {
         return (x * scaleX);
@@ -88,9 +98,6 @@ public class TreePlotter extends JComponent {
 
     private TreeLineages treeLineages;
 
-    private double nodeWidth = 5.0;
-    private double nodeHeight = 5.0;
-
     private float xLabelOffset = 5.0F;
     private float yLabelOffset = 5.0F;
     private boolean isCalibrated = false;
@@ -98,4 +105,5 @@ public class TreePlotter extends JComponent {
     private double scaleX = 1.0;
     private double scaleY = 1.0;
 
+    private float nodeWidth = 10.0F;
 }

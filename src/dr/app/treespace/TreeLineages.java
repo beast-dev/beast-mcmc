@@ -41,9 +41,18 @@ public class TreeLineages {
     public void addTree(RootedTree tree) {
         // set the tip count to zero for this traversal
         currentY = 0.0;
+
+        // the offset is the distance to the right most tip - used to align the tips of the tree
+        offsetX = 0.0;
         Lineage lineage = new Lineage();
         addNode(tree, tree.getRootNode(), lineage, 0.0);
 
+
+        lineage.dx = -offsetX;
+
+        if (offsetX > maxWidth) {
+            maxWidth = offsetX;
+        }
         if (currentY > maxHeight) {
             maxHeight = currentY;
         }
@@ -54,9 +63,6 @@ public class TreeLineages {
     public double addNode(RootedTree tree, Node node, Lineage lineage, double cumulativeX) {
         lineage.dx = tree.getLength(node);
         cumulativeX += lineage.dx;
-        if (cumulativeX > maxWidth) {
-            maxWidth = cumulativeX;
-        }
 
         if (!tree.isExternal(node)) {
             List<Node> children = tree.getChildren(node);
@@ -76,10 +82,27 @@ public class TreeLineages {
             // now change the children to relative y positions.
             lineage.child1.dy = lineage.child1.dy - lineage.dy;
             lineage.child2.dy = lineage.child2.dy - lineage.dy;
+
+            if (lineage.child1.tipCount > lineage.child2.tipCount) {
+                Lineage tmp = lineage.child1;
+                lineage.child1 = lineage.child2;
+                lineage.child2 = tmp;
+
+                lineage.child1.dy = -lineage.child1.dy;
+                lineage.child2.dy = -lineage.child2.dy;
+            }
+
+            lineage.tipCount = lineage.child1.tipCount + lineage.child2.tipCount;
+
         } else {
             // the initial (absolute) y position of a tip is its count in the traversal
+            lineage.tipCount = 1;
             lineage.dy = currentY;
             currentY += 1.0;
+
+            if (cumulativeX > offsetX) {
+                offsetX = cumulativeX;
+            }
         }
 
         return lineage.dy;
@@ -90,6 +113,7 @@ public class TreeLineages {
         double dy = 0;
         Lineage child1 = null;
         Lineage child2 = null;
+        int tipCount = 0;
         Paint color;
     }
 
@@ -97,5 +121,6 @@ public class TreeLineages {
     private double maxWidth;
     private double maxHeight;
 
+    private double offsetX;
     private double currentY;
 }

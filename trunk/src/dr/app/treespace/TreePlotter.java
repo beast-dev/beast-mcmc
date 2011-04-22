@@ -39,13 +39,14 @@ public class TreePlotter extends JComponent {
 
         if (!isCalibrated) {
             scaleX = ((double)getWidth()) / treeLineages.getMaxWidth();
-            scaleY = ((double)getHeight()) / treeLineages.getMaxHeight();
+            scaleY = ((double)getHeight()) / (treeLineages.getMaxHeight() + 10.0);
 
-            isCalibrated = true;
+//            isCalibrated = true;
         }
 
+        ((Graphics2D)g).setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         for (TreeLineages.Lineage root : treeLineages.getRootLineages()) {
-            paintLineage((Graphics2D)g, root, 0.0, 0.0);
+            paintLineage((Graphics2D)g, root, treeLineages.getMaxWidth(), 0.0);
         }
     }
 
@@ -59,7 +60,7 @@ public class TreePlotter extends JComponent {
         }
 
         g2.setColor(Color.black);
-        g2.setStroke(new BasicStroke(1.0F));
+        g2.setStroke(new BasicStroke(0.25F));
         g2.draw(new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1)));
     }
 
@@ -77,12 +78,12 @@ public class TreePlotter extends JComponent {
 //        }
 //    }
 
-    private float transformX(double x) {
-        return (float)getWidth() - (float)(x * scaleX);
+    private double transformX(double x) {
+        return (x * scaleX);
     }
 
-    private float transformY(double y) {
-        return (float)(y * scaleY);
+    private double transformY(double y) {
+        return (y * scaleY);
     }
 
     private TreeLineages treeLineages;

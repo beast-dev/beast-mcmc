@@ -4,11 +4,11 @@ import dr.app.treespace.CladeSystem.Clade;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
 import jebl.math.Random;
+import sun.awt.geom.Curve;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Line2D;
+import java.awt.geom.*;
 import java.awt.image.ColorModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,6 +18,23 @@ import java.util.List;
  * @version $Id$
  */
 public class TreePlotter extends JComponent {
+
+    private final static Color[] COLOUR_SCHEME = {
+            new Color(0.879F, 0.261F, 0.262F),	//Africa,
+            new Color(0.816F, 0.765F, 0.376F),	//USA,
+            new Color(0.26F, 0.141F, 0.632F),	//Taiwan,
+            new Color(0.242F, 0.445F, 0.718F),	//China,
+            new Color(0.592F, 0.669F, 0.295F),	//Russia,
+            new Color(0.791F, 0.27F, 0.146F),	//Oceania,
+            new Color(0.359F, 0.425F, 0.833F),	//Asia,
+            new Color(0.374F, 0.623F, 0.505F),	//Japan,
+            new Color(0.785F, 0.585F, 0.209F),	//Mexico,
+            new Color(0.917F, 0.58F, 0.322F),	//South America,
+            new Color(0.64F, 0.46F, 0.28F),	    //Canada,
+            new Color(0.599F, 0.772F, 0.513F),	//Europe,
+            new Color(0.551F, 0.242F, 0.598F),	//Southeast Asia,
+            new Color(0.43F, 0.674F, 0.744F)	//South Korea
+    };
 
     public TreePlotter() {
         setTrees(treeLineages);
@@ -40,8 +57,8 @@ public class TreePlotter extends JComponent {
         }
 
         if (!isCalibrated) {
-            scaleX = getBounds().getWidth() / treeLineages.getMaxWidth();
-            scaleY = getBounds().getHeight() / (treeLineages.getMaxHeight() - 1.0);
+            scaleX = (getBounds().getWidth() - borderWidth - borderWidth) / treeLineages.getMaxWidth();
+            scaleY = (getBounds().getHeight() - borderWidth - borderWidth) / (treeLineages.getMaxHeight() - 1.0);
 //            isCalibrated = true;
         }
 
@@ -67,16 +84,27 @@ public class TreePlotter extends JComponent {
         double x1 = x + lineage.dx;
         double y1 = y + lineage.dy;
 
-//        g2.setColor(Color.getHSBColor(hue, 1.0F, 1.0F));
-        g2.setColor(new Color(0.0F, 0.0F, 0.0F, 0.1F));
-        g2.setStroke(new BasicStroke(0.5F));
-        g2.draw(new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1)));
+        g2.setColor(Color.getHSBColor(hue, 1.0F, 1.0F));
+//        g2.setColor(new Color(0.0F, 0.0F, 0.0F, 0.1F));
+//        g2.setColor(COLOUR_SCHEME[lineage.state]);
+        g2.setStroke(new BasicStroke(0.25F));
+//        Shape curve = new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1));
+
+        double xp1 = transformX(x);
+        double yp1 = transformY(y);
+        double xp2 = transformX(x1);
+        double yp2 = transformY(y1);
+        double xc = (xp1 + xp2) / 2.0;
+
+        Shape curve = new CubicCurve2D.Double(xp1, yp1, xc, yp1, xc, yp2, xp2, yp2);
+
+        g2.draw(curve);
 
         if (lineage.child1 != null) {
             paintLineage(g2, hue, lineage.child1, x1, y1);
             paintLineage(g2, hue, lineage.child2, x1, y1);
         } else {
-            paintTip(g2, lineage, x1, y1);
+//            paintTip(g2, lineage, x1, y1);
         }
     }
 
@@ -89,11 +117,11 @@ public class TreePlotter extends JComponent {
     }
 
     private double transformX(double x) {
-        return (x * scaleX);
+        return (x * scaleX) + borderWidth;
     }
 
     private double transformY(double y) {
-        return (y * scaleY);
+        return (y * scaleY) + borderWidth;
     }
 
     private TreeLineages treeLineages;
@@ -106,4 +134,5 @@ public class TreePlotter extends JComponent {
     private double scaleY = 1.0;
 
     private float nodeWidth = 10.0F;
+    private float borderWidth = 10.0F;
 }

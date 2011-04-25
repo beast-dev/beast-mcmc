@@ -365,6 +365,8 @@ public class TreeSpaceFrame extends DocumentFrame {
             progressStream.println("Ignoring first " + inputFile.getBurnin() + " trees.");
         }
 
+        treeLineages.setupTrees();
+
         return treeLineages;
     }
 

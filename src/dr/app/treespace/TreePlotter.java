@@ -74,7 +74,7 @@ public class TreePlotter extends JComponent {
 
     private void paintTreeLineages(Graphics2D g2, float hue, TreeLineages.Lineage lineage, double x, double y) {
         double x1 = x + lineage.dx;
-        double y1 = y + lineage.dy;
+        double y1 = lineage.dy;
 
         paintLineage(g2, hue, lineage.child1, x1, y1);
         paintLineage(g2, hue, lineage.child2, x1, y1);
@@ -82,12 +82,25 @@ public class TreePlotter extends JComponent {
 
     private void paintLineage(Graphics2D g2, float hue, TreeLineages.Lineage lineage, double x, double y) {
         double x1 = x + lineage.dx;
-        double y1 = y + lineage.dy;
+        double y1 = lineage.dy;
 
-        g2.setColor(Color.getHSBColor(hue, 1.0F, 1.0F));
+        if (lineage.child1 != null) {
+            paintLineage(g2, hue, lineage.child1, x1, y1);
+            paintLineage(g2, hue, lineage.child2, x1, y1);
+        } else {
+            paintTip(g2, lineage, x1, y1);
+        }
+
+//        g2.setColor(Color.getHSBColor(hue, 1.0F, 1.0F));
 //        g2.setColor(new Color(0.0F, 0.0F, 0.0F, 0.1F));
 //        g2.setColor(COLOUR_SCHEME[lineage.state]);
-        g2.setStroke(new BasicStroke(0.25F));
+        g2.setColor(new Color(COLOUR_SCHEME[lineage.state].getRed(), COLOUR_SCHEME[lineage.state].getGreen(), COLOUR_SCHEME[lineage.state].getBlue(), 32));
+
+        float thickness = 0.25F;
+
+        thickness = 2.5F * (Math.min((float)lineage.tipCount, 10.0F) / 10.0F);
+
+        g2.setStroke(new BasicStroke(thickness));
 //        Shape curve = new Line2D.Double(transformX(x), transformY(y), transformX(x1), transformY(y1));
 
         double xp1 = transformX(x);
@@ -100,20 +113,16 @@ public class TreePlotter extends JComponent {
 
         g2.draw(curve);
 
-        if (lineage.child1 != null) {
-            paintLineage(g2, hue, lineage.child1, x1, y1);
-            paintLineage(g2, hue, lineage.child2, x1, y1);
-        } else {
-//            paintTip(g2, lineage, x1, y1);
-        }
     }
 
     private void paintTip(Graphics2D g2, TreeLineages.Lineage lineage, double x, double y) {
         Shape node = new Ellipse2D.Float((float)transformX(x) - nodeWidth * 0.5F, (float)transformY(y) - nodeWidth * 0.5F, nodeWidth, nodeWidth);
-        g2.setColor(Color.getHSBColor(((float)lineage.tipNumber) / (float)treeLineages.getMaxHeight(), 0.5F, 1.0F));
+//        g2.setColor(Color.getHSBColor(((float)lineage.tipNumber) / (float)treeLineages.getMaxHeight(), 0.5F, 1.0F));
+//        g2.setColor(COLOUR_SCHEME[lineage.state]);
+        g2.setColor(new Color(COLOUR_SCHEME[lineage.state].getRed(), COLOUR_SCHEME[lineage.state].getGreen(), COLOUR_SCHEME[lineage.state].getBlue(), 32));
         g2.fill(node);
-        g2.setColor(Color.black);
-        g2.draw(node);
+//        g2.setColor(Color.black);
+//        g2.draw(node);
     }
 
     private double transformX(double x) {
@@ -133,6 +142,6 @@ public class TreePlotter extends JComponent {
     private double scaleX = 1.0;
     private double scaleY = 1.0;
 
-    private float nodeWidth = 10.0F;
+    private float nodeWidth = 5.0F;
     private float borderWidth = 10.0F;
 }

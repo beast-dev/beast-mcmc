@@ -257,16 +257,16 @@ public class TreeSpaceFrame extends DocumentFrame {
 
             do {
                 line = bufferedReader.readLine();
-            } while (line != null && !line.startsWith("tree STATE"));
+            } while (line != null && !line.contains("("));
 
             while (line != null) {
-                if (line.startsWith("tree STATE")) {
+                if (line.contains("(")) {
                     treeCount++;
                     if (treeCount > 1) {
                         break;
                     }
                 }
-                line = bufferedReader.readLine();
+                line = bufferedReader.readLine().toUpperCase();
             }
 
             // is a NEXUS file

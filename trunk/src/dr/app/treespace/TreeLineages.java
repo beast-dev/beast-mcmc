@@ -3,10 +3,7 @@ package dr.app.treespace;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -29,6 +26,23 @@ public class TreeLineages {
             "Europe",
             "Southeast Asia",
             "South Korea"
+    };
+
+    private final static double[] LATITUDES = {
+            0,
+            67.649722,
+            54.257292,
+            66.421146,
+            91.162364,
+            5.285086,
+            57.335063,
+            66.764306,
+            54.193983,
+            16.324475,
+            86.497973,
+            81.405763,
+            46.429514,
+            66.467239
     };
 
     private final static String[] AIR_COMMUNITIES = {
@@ -69,8 +83,6 @@ public class TreeLineages {
     }
 
     public void addTree(RootedTree tree) {
-        // set the tip count to zero for this traversal
-        currentY = 0.0;
 
         // the offset is the distance to the right most tip - used to align the tips of the tree
         offsetX = 0.0;
@@ -83,14 +95,33 @@ public class TreeLineages {
         if (offsetX > maxWidth) {
             maxWidth = offsetX;
         }
-        if (currentY > maxHeight) {
-            maxHeight = currentY;
-        }
 
         rootLineages.add(lineage);
     }
 
-    public void addNode(RootedTree tree, Node node, Lineage lineage, double cumulativeX) {
+    public void setupTrees() {
+        for (BitSet key : nodeCounts.keySet()) {
+            int count = nodeCounts.get(key);
+            if (count > rootLineages.size() / 2) {
+                majorityNodes.add(key);
+            }
+        }
+        Collections.sort(majorityNodes, new Comparator<BitSet>() {
+            public int compare(BitSet bitSet, BitSet bitSet1) {
+                return bitSet.cardinality() - bitSet1.cardinality();
+            }
+        });
+
+        for (Lineage rootLineage : rootLineages) {
+        // set the tip count to zero for this traversal
+//        currentY = 0.0;
+            positionNode(rootLineage);
+        }
+    }
+
+    public BitSet addNode(RootedTree tree, Node node, Lineage lineage, double cumulativeX) {
+        lineage.bits = new BitSet();
+
         lineage.dx = tree.getLength(node);
         cumulativeX += lineage.dx;
 
@@ -108,8 +139,8 @@ public class TreeLineages {
             lineage.child1 = new Lineage();
             lineage.child2 = new Lineage();
 
-            addNode(tree, children.get(0), lineage.child1, cumulativeX);
-            addNode(tree, children.get(1), lineage.child2, cumulativeX);
+            lineage.bits.or(addNode(tree, children.get(0), lineage.child1, cumulativeX));
+            lineage.bits.or(addNode(tree, children.get(1), lineage.child2, cumulativeX));
 
             lineage.tipCount = lineage.child1.tipCount + lineage.child2.tipCount;
 
@@ -120,6 +151,15 @@ public class TreeLineages {
                 lineage.child1 = lineage.child2;
                 lineage.child2 = tmp;
             }
+
+            Integer count = nodeCounts.get(lineage.bits);
+            if (count == null) {
+                count = 1;
+            } else {
+                count ++;
+            }
+            nodeCounts.put(lineage.bits, count);
+
         } else {
             Integer tipNumber = taxonNumbers.get(tree.getTaxon(node).getName());
             if (tipNumber == null) {
@@ -130,10 +170,14 @@ public class TreeLineages {
             lineage.tipNumber = tipNumber;
             lineage.tipCount = 1;
 
+            lineage.bits.set(lineage.tipNumber);
+
             if (cumulativeX > offsetX) {
                 offsetX = cumulativeX;
             }
         }
+
+        return lineage.bits;
     }
 
     public double positionNode(Lineage lineage) {
@@ -143,11 +187,37 @@ public class TreeLineages {
 
             // the y of this node is the average of the two children
             lineage.dy /= 2.0;
-//            lineage.dy = ((double)lineage.tipCount) / 2.0;
 
             // now change the children to relative y positions.
-            lineage.child1.dy = lineage.child1.dy - lineage.dy;
-            lineage.child2.dy = lineage.child2.dy - lineage.dy;
+//            lineage.child1.dy = lineage.child1.dy - lineage.dy;
+//            lineage.child2.dy = lineage.child2.dy - lineage.dy;
+
+//            Double location = nodeLocations.get(lineage.bits);
+//            if (location == null) {
+//                BitSet bestBits = lineage.bits;
+//
+//                if (!majorityNodes.contains(bestBits)) {
+//                    // otherwise find a bigger node...
+//                    for (BitSet bits : majorityNodes) {
+//                        BitSet bits1 = (BitSet)bits.clone();
+//                        bits1.and(lineage.bits);
+//                        if (bits1.cardinality() == lineage.bits.cardinality()) {
+//                            bestBits = bits;
+//                            break;
+//                        }
+//                    }
+//
+//                    location = nodeLocations.get(bestBits);
+//                    if (location != null) {
+//                        lineage.dy = location;
+//                    }
+//                }
+//
+//                nodeLocations.put(bestBits, lineage.dy);
+//
+//            } else {
+//                lineage.dy = location;
+//            }
 
         } else {
             Integer orderedTipNumber = orderedTipNumbers.get(lineage.tipNumber);
@@ -157,9 +227,13 @@ public class TreeLineages {
             }
 
             lineage.tipNumber = orderedTipNumber;
+//            lineage.dy = LATITUDES[lineage.state];
             lineage.dy = lineage.tipNumber;
 //            lineage.dy = currentY;
-            currentY += 1.0;
+//            currentY += 1.0;
+            if (lineage.dy > maxHeight) {
+                maxHeight = lineage.dy;
+            }
         }
 
         return lineage.dy;
@@ -173,14 +247,17 @@ public class TreeLineages {
         int tipNumber = 0;
         int tipCount = 0;
         int state;
+        BitSet bits;
     }
 
     private List<Lineage> rootLineages = new ArrayList<Lineage>();
     private Map<String, Integer> taxonNumbers = new HashMap<String, Integer>();
     private Map<Integer, Integer> orderedTipNumbers = new HashMap<Integer, Integer>();
+    private Map<BitSet, Integer> nodeCounts = new HashMap<BitSet, Integer>();
+    private Map<BitSet, Double> nodeLocations = new HashMap<BitSet, Double>();
+    private List<BitSet> majorityNodes = new ArrayList<BitSet>();
     private double maxWidth;
     private double maxHeight;
 
     private double offsetX;
-    private double currentY;
 }

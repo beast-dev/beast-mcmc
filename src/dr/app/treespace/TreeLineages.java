@@ -63,6 +63,7 @@ public class TreeLineages {
     };
 
     Map<String, Integer> locationMap = new HashMap<String, Integer>();
+    private static final double THRESHOLD = 0.01;
 
     public TreeLineages() {
         for (int i = 0; i < AIR_COMMUNITIES.length; i++) {
@@ -88,7 +89,6 @@ public class TreeLineages {
         offsetX = 0.0;
         Lineage lineage = new Lineage();
         addNode(tree, tree.getRootNode(), lineage, 0.0);
-        positionNode(lineage);
 
         lineage.dx = -offsetX;
 
@@ -102,7 +102,7 @@ public class TreeLineages {
     public void setupTrees() {
         for (BitSet key : nodeCounts.keySet()) {
             int count = nodeCounts.get(key);
-            if (count > rootLineages.size() / 2) {
+            if ((((double)count) / rootLineages.size()) > THRESHOLD) {
                 majorityNodes.add(key);
             }
         }
@@ -192,32 +192,32 @@ public class TreeLineages {
 //            lineage.child1.dy = lineage.child1.dy - lineage.dy;
 //            lineage.child2.dy = lineage.child2.dy - lineage.dy;
 
-//            Double location = nodeLocations.get(lineage.bits);
-//            if (location == null) {
-//                BitSet bestBits = lineage.bits;
-//
-//                if (!majorityNodes.contains(bestBits)) {
-//                    // otherwise find a bigger node...
-//                    for (BitSet bits : majorityNodes) {
-//                        BitSet bits1 = (BitSet)bits.clone();
-//                        bits1.and(lineage.bits);
-//                        if (bits1.cardinality() == lineage.bits.cardinality()) {
-//                            bestBits = bits;
-//                            break;
-//                        }
-//                    }
-//
-//                    location = nodeLocations.get(bestBits);
-//                    if (location != null) {
-//                        lineage.dy = location;
-//                    }
-//                }
-//
-//                nodeLocations.put(bestBits, lineage.dy);
-//
-//            } else {
-//                lineage.dy = location;
-//            }
+            Double location = nodeLocations.get(lineage.bits);
+            if (location == null) {
+                BitSet bestBits = lineage.bits;
+
+                if (!majorityNodes.contains(bestBits)) {
+                    // otherwise find a bigger node...
+                    for (BitSet bits : majorityNodes) {
+                        BitSet bits1 = (BitSet)bits.clone();
+                        bits1.and(lineage.bits);
+                        if (bits1.cardinality() == lineage.bits.cardinality()) {
+                            bestBits = bits;
+                            break;
+                        }
+                    }
+
+                    location = nodeLocations.get(bestBits);
+                    if (location != null) {
+                        lineage.dy = location;
+                    }
+                }
+
+                nodeLocations.put(bestBits, lineage.dy);
+
+            } else {
+                lineage.dy = location;
+            }
 
         } else {
             Integer orderedTipNumber = orderedTipNumbers.get(lineage.tipNumber);

@@ -1,5 +1,6 @@
 package dr.inference.markovjumps;
 
+import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -146,6 +147,30 @@ public class StateHistory {
         }
         sb.append("]");
         return sb.toString();
+    }
+
+    public String toStringChanges(DataType dataType, double startTime) {
+        StringBuilder sb = new StringBuilder("{");
+        int currentState = stateList.get(0).getState();
+        boolean firstChange = true;
+        for (int i = 1; i < stateList.size(); i++) {
+            int nextState = stateList.get(i).getState();
+            if (nextState != currentState) {
+                if (!firstChange) {
+                    sb.append(",");
+                }
+                double time = stateList.get(i).getTime() + startTime;
+                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time);
+                firstChange = false;
+                currentState = nextState;
+            }
+        }
+        sb.append("}");
+        return sb.toString();
+    }
+
+    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
+        sb.append("[").append(source).append(":").append(dest).append(":").append(time).append("]");
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,

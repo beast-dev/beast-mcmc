@@ -113,7 +113,7 @@ public interface TreeTrait<T> {
     }
 
     /**
-     * An abstract base class for Double implementations
+     * An abstract base class for String implementations
      */
     public abstract class S extends DefaultBehavior implements TreeTrait<String> {
 

@@ -36,6 +36,7 @@ import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
+import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 
@@ -490,7 +491,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         if (options.getPartitionSubstitutionModels(Microsatellite.INSTANCE).size() <= 1) {
-            options.shareMicroSat = true; 
+            options.shareMicroSat = true;
         }
 
         modelsChanged();
@@ -574,8 +575,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
-        options.taxonSets.clear();
-        options.taxonSetsMono.clear();
         repaint();
     }
 
@@ -619,13 +618,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
             for (AbstractPartitionData partition : selectedPartitionData) {
                 partition.setPartitionTreeModel(model);
             }
+
+            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree 
+                PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
+                if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
+            }
         }
 
         modelsChanged();
 
         fireDataChanged();
-        options.taxonSets.clear();
-        options.taxonSetsMono.clear();
         repaint();
     }
 

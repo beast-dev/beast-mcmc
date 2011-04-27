@@ -329,8 +329,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 NexusImporter.NexusBlock block = findNextBlock();
 
-                if (block == NexusImporter.TAXA_BLOCK) {
-
+                if (block == NexusImporter.TAXA_BLOCK && taxonList[0] == null) {
+                    // only read the taxon list if one hasn't been set already...
                     taxonList[0] = readTaxaBlock();
 
                 } else if (block == NexusImporter.TREES_BLOCK) {

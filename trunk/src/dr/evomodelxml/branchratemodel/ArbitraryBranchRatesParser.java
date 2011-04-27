@@ -31,8 +31,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         final int numBranches = tree.getNodeCount() - 1;
         if (rateCategoryParameter.getDimension() != numBranches) {
-            throw new XMLParseException("Invalid length for '" + rateCategoryParameter.getId() + "'\n" +
-            "Should have length = " + numBranches);
+            rateCategoryParameter.setDimension(numBranches);
+//            throw new XMLParseException("Invalid length for '" + rateCategoryParameter.getId() + "'\n" +
+//            "Should have length = " + numBranches);
         }
 
         Logger.getLogger("dr.evomodel").info("Using an scaled mixture of normals model.");

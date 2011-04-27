@@ -64,6 +64,10 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         super.handleModelChangedEvent(model, object, index);       
     }
 
+    public void setSaveCompleteHistory(boolean in) {
+        saveCompleteHistory = in;
+    }
+
     public void computeCondStatMarkovJumps(double time,
                                            double[] countMatrix) {
 
@@ -92,9 +96,13 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 tmp[startingState * stateCount + endingState]);
     }
 
+    public String getCompleteHistory() {
+        return completeHistory;
+    }
+
     public double computeCondStatMarkovJumps(int startingState,
                                              int endingState,
-                                             double time,
+                                             double time,                                             
                                              double transitionProbability) {
 
         if (updateSubordinator) {
@@ -113,6 +121,9 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     subordinator
             );
             total += getProcessForSimulant(history);
+            if (saveCompleteHistory) {
+                 completeHistory = history.toStringChanges(dataType,0.0);
+            }
         }
         return total / (double) numSimulants;
     }
@@ -121,6 +132,9 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private boolean updateSubordinator;
     private SubordinatedProcess subordinator;
     private SubordinatedProcess storedSubordinator;
+
+    private boolean saveCompleteHistory = false;
+    private String completeHistory = null;
 
     private double[] tmp;
 }

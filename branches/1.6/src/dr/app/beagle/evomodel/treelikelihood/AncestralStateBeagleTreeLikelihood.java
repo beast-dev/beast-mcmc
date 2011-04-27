@@ -1,6 +1,7 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
 import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.tree.Tree;
@@ -221,7 +222,14 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         } else {
             for (int i : state) {
-                sb.append(dataType.getChar(i));
+                if(dataType.getClass().equals(Codons.class)) {
+                    sb.append(dataType.getTriplet(i));
+                }
+                else {
+                    sb.append(dataType.getChar(i));
+                }
+
+
             }
         }
         sb.append("\"");
@@ -382,8 +390,9 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 double[] partialLikelihood = new double[stateCount * patternCount * categoryCount];
                 getPartials(nodeNum,partialLikelihood);
 
-                if (categoryCount > 1)
-                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
+                // This actually works now
+//                if (categoryCount > 1)
+//                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
 
                 getMatrix(nodeNum,probabilities);
 

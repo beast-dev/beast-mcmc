@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
+import dr.evolution.datatype.DataType;
 import dr.inference.markovjumps.MarkovJumpsCore;
 import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.markovjumps.StateHistory;
@@ -34,6 +35,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         this.type = type;
         setupStorage();
         addModel(substModel);
+        dataType = substModel.getDataType();
     }
 
     protected void setupStorage() {
@@ -54,7 +56,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
     public void setRegistration(double[] inRegistration) {
 
-        if (type == MarkovJumpsType.COUNTS) {
+        if (type == MarkovJumpsType.COUNTS || type == MarkovJumpsType.HISTORY) {
 
             System.arraycopy(inRegistration, 0, registration, 0, stateCount * stateCount);
             for (int i = 0; i < stateCount; i++) {
@@ -86,7 +88,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
                                             double[] rateReg,
                                             double[] ievcRateRegEvec) {
 
-        if (type == MarkovJumpsType.COUNTS) {
+        if (type == MarkovJumpsType.COUNTS || type == MarkovJumpsType.HISTORY) {
 
             substModel.getInfinitesimalMatrix(rateMatrix);
             int index = 0;
@@ -145,7 +147,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
 
     public double getProcessForSimulant(StateHistory history) {
         final double total;
-        if (type == MarkovJumpsType.COUNTS) {
+        if (type == MarkovJumpsType.COUNTS || type == MarkovJumpsType.HISTORY) {
             total = history.getTotalRegisteredCounts(registration);
         } else {
             total = history.getTotalReward(reward);
@@ -234,6 +236,7 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
     private boolean regRateChanged = true;
 
     protected MarkovJumpsType type;
+    protected DataType dataType;
 
     private static final boolean PRECOMPUTE = true;
 }

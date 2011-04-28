@@ -567,7 +567,14 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             switch (col) {
                 case 0:
+                    String oldName = options.traits.get(row).getName();
                     options.traits.get(row).setName(aValue.toString());
+                    Object value;
+                    for (Taxon t : options.taxonList) {
+                        value = t.getAttribute(oldName);
+                        t.setAttribute(aValue.toString(), value);
+                        // cannot remvoe attribute in Attributable inteface
+                    }
                     fireTraitsChanged();
                     break;
                 case 1:

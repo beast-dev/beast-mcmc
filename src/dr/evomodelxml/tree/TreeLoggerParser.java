@@ -23,21 +23,21 @@ public class TreeLoggerParser extends LoggerParser {
 
     public static final String LOG_TREE = "logTree";
     public static final String NEXUS_FORMAT = "nexusFormat";
-//    public static final String USING_RATES = "usingRates";
+    //    public static final String USING_RATES = "usingRates";
     public static final String BRANCH_LENGTHS = "branchLengths";
     public static final String TIME = "time";
     public static final String SUBSTITUTIONS = "substitutions";
     public static final String SORT_TRANSLATION_TABLE = "sortTranslationTable";
     public static final String MAP_NAMES = "mapNamesToNumbers";
     public static final String DECIMAL_PLACES = "dp";
-//    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
+    //    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
     public static final String FILTER_TRAITS = "traitFilter";
 
     public String getParserName() {
         return LOG_TREE;
     }
 
-    protected void parseXMLParameters(XMLObject xo) throws XMLParseException 
+    protected void parseXMLParameters(XMLObject xo) throws XMLParseException
     {
         tree = (Tree) xo.getChild(Tree.class);
 
@@ -104,13 +104,15 @@ public class TreeLoggerParser extends LoggerParser {
             }
             if (cxo instanceof TreeTraitProvider) {
                 if (xo.hasAttribute(FILTER_TRAITS)) {
-                    String match = (String) xo.getAttribute(FILTER_TRAITS);
+                    String[] matches = ((String) xo.getAttribute(FILTER_TRAITS)).split("[\\s,]+");
                     TreeTraitProvider ttp = (TreeTraitProvider) cxo;
                     TreeTrait[] traits = ttp.getTreeTraits();
                     List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
-                    for (TreeTrait trait : traits) {
-                        if (trait.getTraitName().contains(match)) {
-                            filteredTraits.add(trait);
+                    for (String match : matches) {
+                        for (TreeTrait trait : traits) {
+                            if (trait.getTraitName().contains(match)) {
+                                filteredTraits.add(trait);
+                            }
                         }
                     }
                     if (filteredTraits.size() > 0) {
@@ -182,7 +184,7 @@ public class TreeLoggerParser extends LoggerParser {
      * @return an object based on the XML element it was passed.
      */
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-    	parseXMLParameters(xo);
+        parseXMLParameters(xo);
 
         TreeLogger logger = new TreeLogger(tree, branchRates,
                 treeAttributeProviders, treeTraitProviders,

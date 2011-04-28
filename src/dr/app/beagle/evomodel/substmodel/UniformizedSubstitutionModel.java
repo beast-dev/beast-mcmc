@@ -1,6 +1,9 @@
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.inference.markovjumps.*;
+import dr.inference.markovjumps.MarkovJumpsType;
+import dr.inference.markovjumps.StateHistory;
+import dr.inference.markovjumps.SubordinatedProcess;
+import dr.inference.markovjumps.UniformizedStateHistory;
 import dr.inference.model.Model;
 
 /**
@@ -111,7 +114,9 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
         double total = 0;
         for (int i = 0; i < numSimulants; i++) {
-            StateHistory history = UniformizedStateHistory.simulateConditionalOnEndingState(
+            StateHistory history = null;
+            try {
+                history = UniformizedStateHistory.simulateConditionalOnEndingState(
                     0.0,
                     startingState,
                     time,
@@ -119,7 +124,28 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     transitionProbability,
                     stateCount,
                     subordinator
-            );
+                );
+            } catch (SubordinatedProcess.Exception e) {
+                // Error in uniformization; try rejection sampling
+                System.err.println("Attemping rejection sampling after uniformization failure");
+
+                substModel.getInfinitesimalMatrix(tmp);
+                int attempts = 0;
+                boolean success = false;
+
+                while (!success) {
+                    if (attempts >= maxRejectionAttempts) {
+                        throw new RuntimeException("Rejection sampling failure, after uniformization failure");
+                    }
+
+                    history = StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, time, tmp, stateCount);
+                    if (history.getEndingState() == endingState) {
+                        success = true;
+                    }
+                    
+                    attempts++;
+                }
+            }
             total += getProcessForSimulant(history);
             if (saveCompleteHistory) {
                  completeHistory = history.toStringChanges(dataType,0.0);
@@ -137,4 +163,6 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private String completeHistory = null;
 
     private double[] tmp;
+
+    private static int maxRejectionAttempts = 100000;
 }

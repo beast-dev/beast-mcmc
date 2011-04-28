@@ -1,12 +1,12 @@
 package dr.inference.markovjumps;
 
-import dr.math.MathUtils;
 import dr.math.GammaFunction;
+import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
 /**
@@ -31,6 +31,7 @@ public class SubordinatedProcess {
         dtmcCache.add(makeIndentityMatrx(stateCount));
         dtmcCache.add(constructDtmcMatrix(Q, stateCount));
         tmp = new double[stateCount];
+        this.Q = Q;
     }
 
     public double getPoissonRate() {
@@ -152,6 +153,10 @@ public class SubordinatedProcess {
         }
     }
 
+    public class Exception extends java.lang.Exception {
+        // Nothing special
+    }
+
     /**
      * Simulate the number of transitions in the subordinated process, equation (2.9)
      *
@@ -162,17 +167,16 @@ public class SubordinatedProcess {
      * @return the number of transitions in the subordinated process
      */
 
-    public int drawNumberOfChanges(int startingState, int endingState, double time, double ctmcProbability) {
+    public int drawNumberOfChanges(int startingState, int endingState, double time, double ctmcProbability) throws SubordinatedProcess.Exception {
         return drawNumberOfChanges(startingState, endingState, time, ctmcProbability, MathUtils.nextDouble());
     }
 
     public int drawNumberOfChanges(int startingState, int endingState, double time, double ctmcProbability,
-                                   double cutoff) {
+                                   double cutoff) throws SubordinatedProcess.Exception {
         int drawnNumber = -1;
         double cdf = 0;
 
         double effectiveRate = getPoissonRate() * time;
-//        double preFactor = Math.exp(-effectiveRate);
         double preFactor = getCachedExp(-effectiveRate);
         double scale = 1.0;
         int index = startingState * stateCount + endingState;
@@ -196,6 +200,12 @@ public class SubordinatedProcess {
 
             cdf += preFactor * scale * Rn[index] / ctmcProbability;
 
+            if (THROW_EXCEPTION) {
+                if (drawnNumber == maxTries) {
+                    throw new SubordinatedProcess.Exception();
+                }
+            }
+
             if (DEBUG) {
                 check[drawnNumber] = cdf;
                 if (drawnNumber == maxTries) {
@@ -217,6 +227,7 @@ public class SubordinatedProcess {
                     System.err.println("Direct compute = " + new Vector(distr));
                     System.err.println("Via CDF        = " + new Vector(checkCDF));
                     System.err.println("Check distr    = " + new Vector(check));
+                    System.err.println("Q              = " + new Vector(Q));
 
                     throw new RuntimeException("Likely numerical instability in computing end-conditioned CTMC simulant.");
                 }
@@ -254,5 +265,8 @@ public class SubordinatedProcess {
     private double cachedXForExp = Double.NaN;
     private double cachedExpValue;
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
+    private static final boolean THROW_EXCEPTION = true;
+
+    private double[] Q;
 }

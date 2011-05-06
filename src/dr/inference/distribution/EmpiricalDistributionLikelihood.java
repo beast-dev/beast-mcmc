@@ -51,7 +51,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     public static final String EMPIRICAL_DISTRIBUTION_LIKELIHOOD = "empiricalDistributionLikelihood";
 
     private static final double MIN_DENSITY_PROPORTION = 1E-2;
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private int from = -1;
     private int to = Integer.MAX_VALUE;

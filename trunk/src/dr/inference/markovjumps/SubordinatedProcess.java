@@ -265,8 +265,8 @@ public class SubordinatedProcess {
     private double cachedXForExp = Double.NaN;
     private double cachedExpValue;
 
-    private static final boolean DEBUG = false;
-    private static final boolean THROW_EXCEPTION = true;
+    private static final boolean DEBUG = true;
+    private static final boolean THROW_EXCEPTION = false;
 
     private double[] Q;
 }

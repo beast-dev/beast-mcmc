@@ -1,6 +1,7 @@
 package dr.app.beagle.evomodel.sitemodel;
 
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Model;
@@ -13,6 +14,8 @@ import dr.inference.model.Model;
 public interface BranchSubstitutionModel extends Model {
 
     EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);
+
+    SubstitutionModel getSubstitutionModel(int modelIndex, int categoryIndex);
 
     double[] getStateFrequencies(int categoryIndex);
 

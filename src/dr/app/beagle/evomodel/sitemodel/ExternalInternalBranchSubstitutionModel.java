@@ -51,6 +51,10 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
         return substModelList.get(branchIndex).getEigenDecomposition();
     }
 
+    public SubstitutionModel getSubstitutionModel(int branchIndex, int categoryIndex) {
+        return substModelList.get(branchIndex);
+    }
+
     public double[] getStateFrequencies(int categoryIndex) {
         return frequencyModelList.get(categoryIndex).getFrequencies();
     }

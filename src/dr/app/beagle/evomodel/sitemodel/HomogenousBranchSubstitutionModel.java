@@ -35,6 +35,10 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
         return substModel.getEigenDecomposition();
     }
 
+    public SubstitutionModel getSubstitutionModel(int branchIndex, int categoryIndex) {
+        return substModel;
+    }
+
     /**
      * Homogenous model - returns the same frequency model for all categories
      * @param categoryIndex

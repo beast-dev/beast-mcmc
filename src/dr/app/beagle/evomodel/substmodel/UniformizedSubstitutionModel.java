@@ -5,6 +5,7 @@ import dr.inference.markovjumps.StateHistory;
 import dr.inference.markovjumps.SubordinatedProcess;
 import dr.inference.markovjumps.UniformizedStateHistory;
 import dr.inference.model.Model;
+import dr.math.matrixAlgebra.Vector;
 
 /**
  * A class extension for implementing Markov chain-induced counting processes (markovjumps)
@@ -127,7 +128,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 );
             } catch (SubordinatedProcess.Exception e) {
                 // Error in uniformization; try rejection sampling
-                System.err.println("Attemping rejection sampling after uniformization failure");
+                System.err.println("Attempting rejection sampling after uniformization failure");
 
                 substModel.getInfinitesimalMatrix(tmp);
                 int attempts = 0;

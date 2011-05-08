@@ -91,7 +91,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      * @param node the node to retrieve the variable of
      * @return the raw real-valued variable at this node
      */
-    public final double getVariable(TreeModel tree, NodeRef node) {
+    public final double getVariable(Tree tree, NodeRef node) {
         return rates.getNodeValue(tree, node);
     }
 
@@ -101,7 +101,7 @@ public class RandomLocalClockModel extends AbstractBranchRateModel
      * @return true of the variable at this node is included in function, thus representing a change in the
      *         function looking down the tree.
      */
-    public final boolean isVariableSelected(TreeModel tree, NodeRef node) {
+    public final boolean isVariableSelected(Tree tree, NodeRef node) {
         return indicators.getNodeValue(tree, node) > 0.5;
     }
 

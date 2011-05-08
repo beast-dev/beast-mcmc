@@ -85,7 +85,7 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
             }
 
             public Integer getTrait(Tree tree, NodeRef node) {
-                return (isVariableSelected((TreeModel) tree, node) ? 1 : 0);
+                return (isVariableSelected(tree, node) ? 1 : 0);
             }
 
         });
@@ -106,12 +106,12 @@ public class RandomLocalYuleModel extends UltrametricSpeciationModel implements 
         });
     }
 
-    public final double getVariable(TreeModel tree, NodeRef node) {
-        return tree.getNodeTrait(node, birthRatesName);
+    public final double getVariable(Tree tree, NodeRef node) {
+        return ((TreeModel)tree).getNodeTrait(node, birthRatesName);
     }
 
-    public final boolean isVariableSelected(TreeModel tree, NodeRef node) {
-        return tree.getNodeTrait(node, indicatorsName) > 0.5;
+    public final boolean isVariableSelected(Tree tree, NodeRef node) {
+        return ((TreeModel)tree).getNodeTrait(node, indicatorsName) > 0.5;
     }
 
     //

@@ -165,8 +165,8 @@ public class SubordinatedProcess {
      * @param time            length of chain
      * @param ctmcProbability the CTMC finite-time transition probability
      * @return the number of transitions in the subordinated process
+     * @throws dr.inference.markovjumps.SubordinatedProcess.Exception exception
      */
-
     public int drawNumberOfChanges(int startingState, int endingState, double time, double ctmcProbability) throws SubordinatedProcess.Exception {
         return drawNumberOfChanges(startingState, endingState, time, ctmcProbability, MathUtils.nextDouble());
     }

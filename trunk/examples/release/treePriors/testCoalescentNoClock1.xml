@@ -151,7 +151,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="2" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<coalescentLikelihood idref="coalescent"/>
@@ -163,7 +163,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1">
+		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -186,7 +186,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1" fileName="testCoalescentNoClock1.log" overwrite="false">
+		<log id="fileLog" logEvery="1000" fileName="testCoalescentNoClock1.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -199,7 +199,7 @@
 		</log>
 
 		<!-- write tree log to file                                                  -->
-		<logTree id="treeFileLog" logEvery="1" nexusFormat="true" fileName="testCoalescentNoClock1.trees" sortTranslationTable="true">
+		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testCoalescentNoClock1.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<posterior idref="posterior"/>
 		</logTree>

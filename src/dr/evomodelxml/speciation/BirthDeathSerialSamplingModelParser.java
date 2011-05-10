@@ -95,7 +95,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     // AbstractXMLObjectParser implementation
     //************************************************************************
     public static String getCitationPsiOrg() {
-        return "Stadler, T; Sampling-through-time in birth-death trees; JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404";
+//        return "Stadler, T; Sampling-through-time in birth-death trees; JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404";
+        return "Stadler T (2010) J Theor Biol 267, 396-404 [Yule Process with Serial Samples].";
     }
     
     public static String getCitationRT() {

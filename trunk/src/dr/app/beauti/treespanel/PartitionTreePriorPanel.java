@@ -157,8 +157,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 //        scrollPane.setOpaque(true);
 
-        String citation = null;
-        String citationCoalescent = "KINGMAN, J. F. C., (1982) The coalescent. Stochastic Process. Appl. 13:235-248.";
+        String citation;
+        String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
 
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
@@ -173,10 +173,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
                 partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
-                citation = citationCoalescent
-                        + "\nGriffiths, R.C., Tavare, S., 1994. Sampling theory for neutral alleles in a varying environment. " +
-                        "Philos Trans R Soc Lond B Biol Sci, 344(1310):403-410."
-                        + "\nDrummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                citation = //citationCoalescent +  "\n" +
+                         "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
+//                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
                 break;
 
             case SKYLINE:
@@ -184,7 +183,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 addComponentWithLabel("Number of groups:", groupCountField);
                 addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
-                citation = citationCoalescent + "\nDrummond AJ, Rambaut A & Shapiro B and Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
+                citation = //citationCoalescent + "\n" +
+                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
                 break;
 
             case EXTENDED_SKYLINE:
@@ -192,8 +192,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treesPanel.linkTreePriorCheck.setSelected(true);
                 treesPanel.updateShareSameTreePriorChanged();
 
-                citation = citationCoalescent + "\nJ Heled and AJ Drummond (2008) Bayesian inference of population size history " +
-                        "from multiple loci. BMC Evolutionary Biology, 8, 289.";
+                citation = //citationCoalescent + "\n" +
+                        "Heled J, Drummond AJ (2008) BMC Evol Biol 8, 289 [Extended Skyline Coalescent].";
                 break;
 
             case GMRF_SKYRIDE:
@@ -203,13 +203,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                         + "It is only available for single tree model partition for this release.<br>"
                         + "Please go to Data Partition panel to link all tree models." + "</html>");
 
-                citation = citationCoalescent + "\nMinin, Bloomquist and Suchard (2008) Mol Biol Evol, 25, 1459-1471.";
+                citation = //citationCoalescent + "\n" +
+                        "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
                 break;
             case YULE:
-
-                citation = "Gernhard, T., 2008. The conditioned reconstructed process. J Theor Biol 253, 769-778.\n" +
-                            "G. Udny Yule (1925) A Mathematical Theory of Evolution, based on the Conclusions of Dr. J. C. Willis, F.R.S., " +
-                            "Philosophical Transactions of the Royal Society of London, Ser. B, 213, 21-87.";
+                citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
+                           "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
                 break;
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();
@@ -229,10 +228,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         if (treesPanel.options.maximumTipHeight > 0)
             citation = citation
-                    + "\nRODRIGO, A. G., and J. FELSENSTEIN, 1999 Coalescent approaches to HIV population genetics, "
-                    + "pp. 233-272 in Molecular Evolution of HIV,\nedited by K. CRANDALL. Johns Hopkins University Press, Baltimore."
-                    + "\nDrummond AJ, Nicholls GK, Rodrigo AG, Solomon W. Estimating mutation parameters, population " +
-                    "history and genealogy simultaneously from\ntemporally spaced sequence data.Genetics. 2002, 161(3):1307-1320.";
+//                    + "\n" +
+//                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
+                    + "\n" +
+                    "Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W (2002) Genetics 161, 1307-1320 [Serially Sampled Data].";
 
         addComponentWithLabel("Citation:", citationText);
         citationText.setText(citation);

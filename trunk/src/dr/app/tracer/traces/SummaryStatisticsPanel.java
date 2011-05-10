@@ -21,6 +21,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     static final String MEAN_ROW = "mean";
     static final String MODE_ROW = "mode";
     static final String STDEV_ROW = "stderr of mean";
+    static final String STDEV = "stdev";
     static final String FREQ_MODE_ROW = "frequency of mode";
     static final String VARIANCE_ROW = "variance";
     //    static final String STDEV_VAR_ROW = "stderr of variance";
@@ -187,7 +188,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNames = {MEAN_ROW, STDEV_ROW, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
+        String[] rowNames = {MEAN_ROW, STDEV_ROW, STDEV, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
                 LOWER_UPPER_ROW, ACT_ROW, ESS_ROW};
 
         public StatisticsModel() {
@@ -257,39 +258,46 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
-                            value = tc.getVariance();
+                            value = tc.getStdError();
                         }
                         break;
                     case 3:
                         if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
                             return "n/a";
                         } else {
-                            value = tc.getMedian();
+                            value = tc.getVariance();
                         }
                         break;
                     case 4:
+                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
+                            return "n/a";
+                        } else {
+                            value = tc.getMedian();
+                        }
+                        break;
+                    case 5:
                         if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "n/a";
                         } else {
                             return tc.getMode();
                         }
-                    case 5:
+                    case 6:
                         if (!tc.hasGeometricMean()) return "n/a";
                         value = tc.getGeometricMean();
                         break;
-                    case 6:
+                    case 7:
                         if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
                             return tc.printCredibleSet();
                         }
-                    case 7:
+                    case 8:
                         value = tc.getACT();
                         break;
-                    case 8:
+                    case 9:
                         value = tc.getESS();
                         break;
-                    case 9:
+                    case 10:
                         if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
                             return "-";
                         } else {

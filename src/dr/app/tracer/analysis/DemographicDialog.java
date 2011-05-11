@@ -28,6 +28,8 @@ package dr.app.tracer.analysis;
 import dr.app.gui.components.RealNumberField;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.gui.util.LongTask;
+import dr.evolution.coalescent.TwoEpochDemographic;
+import dr.evolution.util.Units;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
@@ -65,7 +67,9 @@ public class DemographicDialog {
             "Constant-Logistic",
             "Constant-Exponential-Constant",
             "Exponential-Logistic",
-            "Boom-Bust"};
+            "Boom-Bust",
+            "Two Epoch"
+    };
 
     private String[][] argumentGuesses = {
             {"populationsize", "population", "popsize", "n0", "size", "pop"},
@@ -76,7 +80,9 @@ public class DemographicDialog {
             {"spikefactor", "spike", "factor", "f"},
             {"cataclysmtime", "cataclysm", "time", "t"},
             {"transitiontime", "time1", "time", "t1", "t"},
-            {"logisticgrowthrate", "logisticgrowth", "loggrowth", "logisticrate"}
+            {"logisticgrowthrate", "logisticgrowth", "loggrowth", "logisticrate"},
+            {"populationsize2", "population2", "popsize2", "n02", "size2", "pop2"},
+            {"exponentialgrowthrate2", "exponentialrate2", "growthrate2", "expgrowth2", "growth2", "rate2", "r2"}
     };
 
     private String[] argumentNames = new String[]{
@@ -89,6 +95,8 @@ public class DemographicDialog {
             "Spike Time",
             "Transition Time",
             "Logistic Growth Rate",
+            "Population Size 2",
+            "Growth Rate 2"
     };
 
     private int[][] argumentIndices = {
@@ -103,7 +111,8 @@ public class DemographicDialog {
             {0, 1, 2, 4},   // const-log
             {0, 1, 2, 7},   // const-exp-const
             {0, 2, 4, 7, 8},// exp-logistic
-            {0, 2, 5, 6}    // boom bust
+            {0, 2, 5, 6},    // boom bust
+            {0, 2, 9, 10, 7}    // Two Epoch
     };
 
     private String[] argumentTraces = new String[argumentNames.length];
@@ -642,7 +651,24 @@ public class DemographicDialog {
                     current++;
                 }
 
+            } else if (demographicCombo.getSelectedIndex() == 12) { // Two Epoch
+                title = "Two Epoch";
+                dr.evolution.coalescent.ExponentialGrowth demo1 = new dr.evolution.coalescent.ExponentialGrowth(Units.Type.SUBSTITUTIONS);
+                dr.evolution.coalescent.ExponentialGrowth demo2 = new dr.evolution.coalescent.ExponentialGrowth(Units.Type.SUBSTITUTIONS);
+                TwoEpochDemographic demo = new TwoEpochDemographic(demo1, demo2, Units.Type.SUBSTITUTIONS);
+                for (int i = 0; i < values.get(0).size(); i++) {
+                    demo1.setN0((Double) values.get(0).get(i));
+                    demo1.setGrowthRate((Double) values.get(1).get(i));
+                    demo2.setN0((Double) values.get(2).get(i));
+                    demo2.setGrowthRate((Double) values.get(3).get(i));
+                    demo.setTransitionTime((Double) values.get(4).get(i));
+
+                    addDemographic(bins, binCount, maxHeight, delta, demo);
+
+                    current++;
+                }
             }
+
             Variate xData = new Variate.D();
             Variate yDataMean = new Variate.D();
             Variate yDataMedian = new Variate.D();
@@ -685,6 +711,23 @@ public class DemographicDialog {
         }
 
         private void addDemographic(Variate[] bins, int binCount, double maxHeight, double delta, DemographicFunction demo) {
+            double height;
+            if (ageOfYoungest > 0.0) {
+                height = ageOfYoungest - maxTime;
+            } else {
+                height = ageOfYoungest;
+            }
+
+            for (int k = 0; k < binCount; k++) {
+                if (height >= 0.0 && height <= maxHeight) {
+                    bins[k].add(demo.getDemographic(height));
+                }
+                height += delta;
+            }
+            current++;
+        }
+
+        private void addDemographic(Variate[] bins, int binCount, double maxHeight, double delta, dr.evolution.coalescent.DemographicFunction demo) {
             double height;
             if (ageOfYoungest > 0.0) {
                 height = ageOfYoungest - maxTime;

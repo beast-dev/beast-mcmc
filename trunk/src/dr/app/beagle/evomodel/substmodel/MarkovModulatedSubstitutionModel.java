@@ -1,6 +1,7 @@
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.evolution.datatype.DataType;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.util.Citable;
@@ -18,46 +19,109 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
 
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
-    private final int[] stateSizes;
-    private final ProductChainFrequencyModel pcFreqModel;
+    private final int baseStateCount;
+//    private final int stateCount;
     private final Parameter switchingRates;
+
+    private static final boolean IGNORE_RATES = true;
+
+    private final double[] baseMatrix;
 
     public MarkovModulatedSubstitutionModel(String name,
                                          List<SubstitutionModel> baseModels,
-                                         Parameter switchingRates) {
-        super(name);
+                                         Parameter switchingRates,
+                                         DataType dataType,
+                                         EigenSystem eigenSystem) {
+        super(name, dataType, null, eigenSystem);
 
         this.baseModels = baseModels;
         numBaseModel = baseModels.size();
 
         if (numBaseModel == 0) {
-            throw new RuntimeException("May not construct ProductChainSubstitutionModel with 0 base models");
+            throw new RuntimeException("May not construct MarkovModulatedSubstitutionModel with 0 base models");
         }
 
         this.switchingRates = switchingRates;
         addVariable(switchingRates);
 
         List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-        stateSizes = new int[numBaseModel];
-        stateCount = 1;
+        int stateSizes = 0;
+
+        baseStateCount = baseModels.get(0).getFrequencyModel().getFrequencyCount();
+        baseMatrix = new double[baseStateCount * baseStateCount];
+
         for (int i = 0; i < numBaseModel; i++) {
             addModel(baseModels.get(i));
             freqModels.add(baseModels.get(i).getFrequencyModel());
-            DataType dataType = baseModels.get(i).getDataType();
-            stateSizes[i] = dataType.getStateCount();
-            stateCount *= dataType.getStateCount();
+            addModel(baseModels.get(i).getFrequencyModel());
+            DataType thisDataType = baseModels.get(i).getDataType();
+            stateSizes += thisDataType.getStateCount();
         }
 
-        pcFreqModel = new ProductChainFrequencyModel("pc",freqModels);
+        // This constructor also checks that all models have the same base stateCount
+        freqModel = new MarkovModulatedFrequencyModel("mm",freqModels);
 
-//        String[] codeStrings = getCharacterStrings();
-//        dataType = new GeneralDataType(codeStrings);
+        if (stateCount != stateSizes) {
+            throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
+        }
+
+        // Check switching rate dimension
+        if (numBaseModel > 1) {
+            if (switchingRates.getDimension() != 2 * (numBaseModel - 1)) {
+                throw new RuntimeException("Wrong dimension of switching rates in MarkovModulatedSubstitutionModel");
+            }
+        }
 
         updateMatrix = true;
 
-        Logger.getLogger("dr.app.beagle").info("\tConstructing a Markov-modulated Markov chain substitution model,  please cite:\n"
+        Logger.getLogger("dr.app.beagle").info("\tConstructing a Markov-modulated Markov chain substitution model with " + stateCount + " states;  please cite:\n"
                 + Citable.Utils.getCitationString(this));
     }
+
+    protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
+
+        // Set the instantaneous rate matrix
+        for (int m = 0; m < numBaseModel; ++m) {
+            final int offset = m * baseStateCount;            
+            baseModels.get(m).getInfinitesimalMatrix(baseMatrix);
+            int k = 0;
+            for (int i = 0; i < baseStateCount; i++) {
+                for (int j = 0; j < baseStateCount; j++) {
+                    matrix[offset + i][offset + j] = baseMatrix[k];
+                    k++;
+                }
+            }
+        }
+
+        // Add switching rates to matrix
+        if (!IGNORE_RATES && numBaseModel > 1) {
+            double[] swRates = switchingRates.getParameterValues();
+            int sw = 0;
+            for (int g = 0; g < numBaseModel; ++g) {
+                for (int h = 0; h < numBaseModel; ++h) { // from g -> h
+                    if (g != h) {
+                        for (int i = 0; i < baseStateCount; ++i) {
+                            matrix[g * baseStateCount + i][h * baseStateCount + i] = swRates[sw]; // TODO Need to modify by stationary distribution?
+                        }
+                        sw++;
+                    }
+                }
+            }
+        }
+    }
+
+//    protected double setupMatrix() {
+////        System.err.println("In MM.setupMatrix");
+////        setupRelativeRates(relativeRates);
+////        double[] pi = freqModel.getFrequencies();
+//        setupQMatrix(null, null, q);
+////        makeValid(q, stateCount);
+//        return 1.0;
+//    }
+
+//    public FrequencyModel getFrequencyModel() {
+//        return pcFreqModel;
+//    }
 
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
@@ -70,7 +134,6 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
     @Override
     protected void frequenciesChanged() {
         // Do nothing
-
     }
 
     @Override
@@ -83,10 +146,18 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
         // Do nothing
     }
 
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        // base substitution model changed!
+        updateMatrix = true;
+//        frequenciesChanged();
+//        System.err.println("Model " + model.getId() + " changed");
+        fireModelChanged(); // TODO Determine why this is necessary
+    }
+
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == switchingRates) {
             // Update rates
-            ratesChanged();
+            updateMatrix = true;
         }
         // else do nothing, action taken care of at individual base models
     }

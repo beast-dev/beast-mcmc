@@ -1,9 +1,9 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.substmodel.*;
+import dr.app.beagle.evomodel.substmodel.MarkovModulatedSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneticCode;
-import dr.evolution.datatype.HiddenCodons;
+import dr.evolution.datatype.NewHiddenNucleotides;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -28,11 +28,15 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         DataType dataType = DataTypeUtils.getDataType(xo);
-//        HiddenCodons codons;
-//        if (dataType instanceof HiddenCodons)
-//            codons = (HiddenCodons) dataType;
-//        else
-//            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden codons");
+         System.err.println("dataType = " + dataType);
+        NewHiddenNucleotides nucleotides;
+        if (dataType instanceof NewHiddenNucleotides) {
+            nucleotides = (NewHiddenNucleotides) dataType;
+        } else {
+            throw new XMLParseException("Must construct " + MARKOV_MODULATED_MODEL + " with hidden nucleotides");
+        }
+
+
 //
 //        Parameter omegaParam = (Parameter) xo.getElementFirstChild(OMEGA);
 //        Parameter kappaParam = (Parameter) xo.getElementFirstChild(KAPPA);
@@ -49,13 +53,13 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
 
         List<SubstitutionModel> substModels = new ArrayList<SubstitutionModel>();
         for (int i = 0; i < xo.getChildCount(); i++) {
-            XMLObject cxo = (XMLObject) xo.getChild(i);
+            Object cxo = xo.getChild(i);
             if (cxo instanceof SubstitutionModel) {
                 substModels.add((SubstitutionModel)cxo);
             }
         }
 
-        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates);
+        return new MarkovModulatedSubstitutionModel(xo.getId(), substModels, switchingRates, dataType, null);
     }
 
     public String getParserDescription() {
@@ -82,6 +86,6 @@ public class MarkovModulatedSubstitutionModelParser extends AbstractXMLObjectPar
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
 //            new ElementRule(FrequencyModel.class),
 //            AttributeRule.newStringRule(DIAGONALIZATION),
-            new ElementRule(SubstitutionModel.class, 2, Integer.MAX_VALUE),
+            new ElementRule(SubstitutionModel.class, 1, Integer.MAX_VALUE),
     };
 }

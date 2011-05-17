@@ -3,6 +3,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.HiddenDataType;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
 import dr.xml.*;
@@ -19,6 +20,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
     public static final String FREQUENCIES = "frequencies";
     public static final String FREQUENCY_MODEL = "frequencyModel";
     public static final String NORMALIZE = "normalize";
+    public static final String COMPRESS = "compress";
 
     public String getParserName() {
         return FREQUENCY_MODEL;
@@ -34,7 +36,20 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object obj = xo.getChild(i);
             if (obj instanceof PatternList) {
-                frequencies = ((PatternList) obj).getStateFrequencies();
+                PatternList patternList = (PatternList) obj;
+                if (xo.getAttribute(COMPRESS, false) && (patternList.getDataType() instanceof HiddenDataType)) {
+                    double[] hiddenFrequencies = patternList.getStateFrequencies();
+                    int hiddenCount = ((HiddenDataType) patternList.getDataType()).getHiddenClassCount();
+                    int baseStateCount = hiddenFrequencies.length / hiddenCount;
+                    frequencies = new double[baseStateCount];
+                    for (int j = 0; j < baseStateCount; ++j) {
+                        for (int k = 0; k < hiddenCount; ++k) {
+                            frequencies[j] += hiddenFrequencies[j + k * baseStateCount];
+                        }
+                    }
+                } else {
+                    frequencies = patternList.getStateFrequencies();
+                }                
                 break;
             }
         }
@@ -93,6 +108,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(NORMALIZE, true),
+            AttributeRule.newBooleanRule(COMPRESS, true),
 
             new ElementRule(PatternList.class, "Initial value", 0, 1),
 

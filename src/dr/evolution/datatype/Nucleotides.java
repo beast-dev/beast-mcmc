@@ -99,7 +99,7 @@ public class Nucleotides extends DataType {
 	/**
 	 * Private constructor - DEFAULT_INSTANCE provides the only instance
 	 */
-	private Nucleotides() {
+	protected Nucleotides() {
 		stateCount = 4;
 		ambiguousStateCount = 18;
 	}

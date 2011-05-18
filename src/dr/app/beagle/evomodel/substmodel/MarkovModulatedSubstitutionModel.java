@@ -4,18 +4,20 @@ import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.math.matrixAlgebra.Matrix;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
  */
-public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel implements Citable {
+public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel implements Citable {
 
     private List<SubstitutionModel> baseModels;
     private final int numBaseModel;
@@ -23,7 +25,8 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
 //    private final int stateCount;
     private final Parameter switchingRates;
 
-    private static final boolean IGNORE_RATES = true;
+    private static final boolean IGNORE_RATES = false;
+    private static final boolean DEBUG = false;
 
     private final double[] baseMatrix;
 
@@ -32,7 +35,8 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
                                          Parameter switchingRates,
                                          DataType dataType,
                                          EigenSystem eigenSystem) {
-        super(name, dataType, null, eigenSystem);
+//        super(name, dataType, null, eigenSystem);
+        super(name, dataType, null, null);
 
         this.baseModels = baseModels;
         numBaseModel = baseModels.size();
@@ -59,7 +63,7 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
         }
 
         // This constructor also checks that all models have the same base stateCount
-        freqModel = new MarkovModulatedFrequencyModel("mm",freqModels);
+        freqModel = new MarkovModulatedFrequencyModel("mm",freqModels, switchingRates);
 
         if (stateCount != stateSizes) {
             throw new RuntimeException("Incompatible state counts in " + getModelName() + ". Models add up to " + stateSizes + ".");
@@ -80,6 +84,10 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
 
     protected void setupQMatrix(double[] rates, double[] pi, double[][] matrix) {
 
+        // Zero matrix
+        for (int i = 0; i < matrix.length; ++i) {
+            Arrays.fill(matrix[i], 0.0);
+        }
         // Set the instantaneous rate matrix
         for (int m = 0; m < numBaseModel; ++m) {
             final int offset = m * baseStateCount;            
@@ -107,6 +115,10 @@ public class MarkovModulatedSubstitutionModel extends BaseSubstitutionModel impl
                     }
                 }
             }
+        }
+
+        if (DEBUG) {
+            System.err.println(new Matrix(matrix));
         }
     }
 

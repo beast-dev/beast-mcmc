@@ -163,7 +163,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
                 "Birth-Death the time in the past when the process starts with the first individual", PriorScaleType.NONE,
-                80.0, 1.0, 1000.0, 0.0, Double.POSITIVE_INFINITY);
+                80.0, 0.0, 1000.0, 0.0, Double.POSITIVE_INFINITY);
        
         createScaleOperator("constant.popSize", demoTuning, demoWeights);
         createScaleOperator("exponential.popSize", demoTuning, demoWeights);

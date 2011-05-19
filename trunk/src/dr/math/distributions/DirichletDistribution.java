@@ -38,9 +38,13 @@ public class DirichletDistribution implements MultivariateDistribution {
         }
 
         double logPDF = logNormalizingConstant;
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++) {
             logPDF += (counts[i] - 1) * Math.log(x[i]);
-
+            if (x[i] <= 0.0 || x[i] >= 1.0) {
+                logPDF = Double.NEGATIVE_INFINITY;
+                break;
+            }
+        }       
         return logPDF;
     }
 

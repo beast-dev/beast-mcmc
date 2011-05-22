@@ -98,4 +98,8 @@
         </log>
     </mcmc>
 
+    <report>
+        <treeModel idref="treeModel"/>
+    </report>
+    
 </beast>

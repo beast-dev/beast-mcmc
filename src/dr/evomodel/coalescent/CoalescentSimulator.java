@@ -98,7 +98,8 @@ public class CoalescentSimulator {
 
         if (rootHeight > 0.0) {
             if (preserveSubtrees) {
-                limitNodes(tree, rootHeight);
+                limitNodes(tree, rootHeight - 1e-12);
+                tree.setRootHeight(rootHeight); 
             } else {
                 attemptToScaleTree(tree, rootHeight);
             }
@@ -153,7 +154,7 @@ public class CoalescentSimulator {
      */
     private void limitNodes(MutableTree tree, double limit) {
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            NodeRef n = tree.getInternalNode(i);
+            final NodeRef n = tree.getInternalNode(i);
             if (tree.getNodeHeight(n) > limit) {
                 tree.setNodeHeight(n, limit);
             }

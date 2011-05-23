@@ -16,26 +16,32 @@ public class GetDateFromTree extends NewickImporter {
 
     public GetDateFromTree(Reader reader) {
         super(reader);
+        getDate(this);
     }
 
     public GetDateFromTree(String treeString) {
         super(treeString);
+        getDate(this);
     }
 
     static public void main(String[] args) {
         GetDateFromTree getDateFromTree = new GetDateFromTree(treeImported);
 
+
+    }
+
+    private void getDate(GetDateFromTree getDateFromTree) {
         Taxa taxa = new Taxa();
         for (int n = 1; n <= 100; n++) {
             Taxon t = new Taxon(Integer.toString(n));
             taxa.addTaxon(t);
         }
-        double[] tips = new double[taxa.getTaxonCount()+1];
+        double[] tips = new double[taxa.getTaxonCount() + 1];
 
         try {
             Tree tree = getDateFromTree.importTree(taxa);
             System.out.println(tree);
-            
+
             for (int i = 0; i < tree.getTaxonCount(); i++) {
                 FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);
 
@@ -44,7 +50,7 @@ public class GetDateFromTree extends NewickImporter {
                 tips[Integer.parseInt(node.getTaxon().getId())] = node.getHeight();
             }
             System.out.println("tree root height = " + ((FlexibleNode) tree.getRoot()).getHeight());
-        } catch (Importer.ImportException e) {
+        } catch (ImportException e) {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return;
         } catch (IOException e) {
@@ -53,14 +59,14 @@ public class GetDateFromTree extends NewickImporter {
         }
 
         outputXML(tips);
+    }
 //        double sum = 0;
 //        for (int n = 2; n <= 100; n++) {
 //             sum += 1/(double) n;
 //        }
-//        System.out.println("sum = " + sum);
-    }
 
-    private static void outputXML(double[] tips) {
+    //        System.out.println("sum = " + sum);
+    private void outputXML(double[] tips) {
         System.out.println("\n");
         System.out.println("\t<taxa id=\"taxa\">");
         for (int n = 1; n < tips.length; n++) {

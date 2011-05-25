@@ -125,6 +125,14 @@ public class TraceDistribution<T> {
         return maximum;
     }
 
+    public double getHpdLowerCustom() {
+        return hpdLowerCustom;
+    }
+
+    public double getHpdUpperCustom() {
+        return hpdUpperCustom;
+    }
+
     public double getMeanSquaredError(double[] values, double trueValue) {
 
         if (values == null) {
@@ -173,8 +181,9 @@ public class TraceDistribution<T> {
         cpdUpper = DiscreteStatistics.quantile(0.975, valuesC, indices);
         calculateHPDInterval(proportion, valuesC, indices);
         ESS = valuesC.length;
+        calculateHPDIntervalCustom(0.5, valuesC, indices);
 
-//        isValid = true;
+        isValid = true;
     }
 
     /**
@@ -188,6 +197,12 @@ public class TraceDistribution<T> {
         hpdUpper = hpd[1];
     }
 
+    private void calculateHPDIntervalCustom(double proportion, double[] array, int[] indices) {
+        final double[] hpd = DiscreteStatistics.HPDInterval(proportion, array, indices);
+        hpdLowerCustom = hpd[0];
+        hpdUpperCustom = hpd[1];
+    }
+
     protected boolean isValid = false;
     protected boolean hasGeometricMean = false;
 
@@ -198,6 +213,7 @@ public class TraceDistribution<T> {
     protected double stdError, meanSquaredError;
     protected double variance;
     protected double cpdLower, cpdUpper, hpdLower, hpdUpper;
+    protected double hpdLowerCustom, hpdUpperCustom;
     protected double ESS;
 
     //************************************************************************
@@ -247,9 +263,8 @@ public class TraceDistribution<T> {
                 }
             }
             calculateMode();
+            isValid = true; // what purpose?
         }
-
-        isValid = true; // what purpose?
     }
 
     public boolean inside(T value) {

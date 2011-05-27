@@ -45,7 +45,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
-    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousRate";
+    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousProb";
     public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
@@ -78,12 +78,15 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             origin = (Parameter) xo.getElementFirstChild(ORIGIN);
         }
 
-        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
-        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+        //    for r=1, this is sampledRemainInfectiousProb=0
+        //    for r=0, this is sampledRemainInfectiousProb=1
         final Parameter r = xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ?
-                (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS) : new Parameter.Default(1.0);
+                (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS) : new Parameter.Default(1.0);        
+        // the r parameter is 1 - sampleRemainsInfectiousProbability
+        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0));
+
         final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
-                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
+                        (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 

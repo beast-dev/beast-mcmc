@@ -59,8 +59,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
 
 //    the additional parameter 0 <= r <= 1 has to be estimated.
-    //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
-    //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+    //    for r=1, this is sampledRemainInfectiousProb=0
+    //    for r=0, this is sampledRemainInfectiousProb=1
     Variable<Double> r;
 
     Variable<Double> finalTimeInterval;

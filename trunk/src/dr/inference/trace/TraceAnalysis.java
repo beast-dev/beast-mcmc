@@ -61,7 +61,7 @@ public class TraceAnalysis {
     }
 
     public static TraceList report(String fileName, int burnin, String likelihoodName) throws java.io.IOException, TraceException {
-        return report(fileName, burnin, likelihoodName,false);
+        return report(fileName, burnin, likelihoodName, true);
     }
 
     public static TraceList report(String fileName, int inBurnin, String likelihoodName, boolean withStdError)
@@ -69,7 +69,7 @@ public class TraceAnalysis {
 
         int fieldWidth = 14;
         int firstField = 25;
-        NumberFormatter formatter = new NumberFormatter(6);
+        NumberFormatter formatter = new NumberFormatter(4);
         formatter.setPadding(true);
         formatter.setFieldWidth(fieldWidth);
 
@@ -80,6 +80,8 @@ public class TraceAnalysis {
 //            throw new TraceException("Trace file is empty.");
 //        }
         traces.loadTraces();
+
+//        traces.addTrace("R0", traces.getTraceIndex("bdss.psi"));
 
         int burnin = inBurnin;
         if (burnin == -1) {
@@ -99,7 +101,7 @@ public class TraceAnalysis {
         if (!withStdError)
             names = new String[]{"mean", "hpdLower", "hpdUpper", "ESS"};
         else
-            names = new String[]{"mean", "stdErr", "hpdLower", "hpdUpper", "ESS"};
+            names = new String[]{"mean", "stdErr", "median", "hpdLower", "hpdUpper", "ESS", "50hpdLower", "50hpdUpper"};
 
         for (String name : names) {
             System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
@@ -122,6 +124,12 @@ public class TraceAnalysis {
             System.out.print(formatter.format(distribution.getLowerHPD()));
             System.out.print(formatter.format(distribution.getUpperHPD()));
             System.out.print(formatter.format(ess));
+
+            if (withStdError) {
+                System.out.print(formatter.format(distribution.getHpdLowerCustom()));
+                System.out.print(formatter.format(distribution.getHpdUpperCustom()));
+            }
+
             if (ess < 100) {
                 warning += 1;
                 System.out.println("*");

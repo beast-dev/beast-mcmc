@@ -414,7 +414,7 @@ public class LogFileTraces extends AbstractTraceList {
             if (trace.getTraceType() == TraceFactory.TraceType.STRING || newType == TraceFactory.TraceType.STRING) {
                 if (newTrace.getValuesSize() != trace.getValuesSize())
                     throw new TraceException("Type change is failed, because values size is different after copy !");
-                
+
                 traces.set(id, newTrace);
             } else {
                 trace.setTraceType(newType);
@@ -449,6 +449,13 @@ public class LogFileTraces extends AbstractTraceList {
     protected final String name;
 
     private final List<Trace> traces = new ArrayList<Trace>();
+
+    public void addTrace(String newTName, int i) {
+        TraceCustomized tc = new TraceCustomized(newTName);
+        tc.addValues(traces.get(i)); // only Double
+        traces.add(tc);
+        tracesType.put(newTName, TraceFactory.TraceType.DOUBLE);
+    }
 
     // tracesType only save INTEGER and STRING, and only use during loading files
     private TreeMap<String, TraceFactory.TraceType> tracesType = new TreeMap<String, TraceFactory.TraceType>();

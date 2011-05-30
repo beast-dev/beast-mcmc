@@ -51,6 +51,9 @@ public class StateChange {
         this.state = state;
     }
 
+    public final void setTime(double time) {
+        this.time = time;
+    }
 
     public String toString() {
         StringBuilder sb = new StringBuilder();

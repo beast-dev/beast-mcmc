@@ -5,7 +5,6 @@ import dr.inference.markovjumps.StateHistory;
 import dr.inference.markovjumps.SubordinatedProcess;
 import dr.inference.markovjumps.UniformizedStateHistory;
 import dr.inference.model.Model;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * A class extension for implementing Markov chain-induced counting processes (markovjumps)
@@ -101,7 +100,15 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     }
 
     public String getCompleteHistory() {
-        return completeHistory;
+        return getCompleteHistory(null, null);
+    }
+
+    public String getCompleteHistory(Double newStartTime, Double newEndTime) {
+        if (newStartTime != null && newEndTime != null) {
+            // Rescale time of events
+            completeHistory.rescaleTimesOfEvents(newStartTime, newEndTime);
+        }
+        return completeHistory.toStringChanges(dataType); //, 0.0);
     }
 
     public double computeCondStatMarkovJumps(int startingState,
@@ -149,7 +156,11 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             }
             total += getProcessForSimulant(history);
             if (saveCompleteHistory) {
-                 completeHistory = history.toStringChanges(dataType,0.0);
+                if (numSimulants == 1) {
+                    completeHistory = history;
+                } else {
+                    throw new RuntimeException("Use single simulant when saving complete histories");
+                }
             }
         }
         return total / (double) numSimulants;
@@ -161,7 +172,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private SubordinatedProcess storedSubordinator;
 
     private boolean saveCompleteHistory = false;
-    private String completeHistory = null;
+    private StateHistory completeHistory = null;
 
     private double[] tmp;
 

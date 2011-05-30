@@ -282,7 +282,9 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
 
         final double branchRate = branchRateModel.getBranchRate(tree, childNode);
-        final double substTime = (tree.getNodeHeight(parentNode) - tree.getNodeHeight(childNode));
+        final double parentTime = tree.getNodeHeight(parentNode);
+        final double childTime = tree.getNodeHeight(childNode);
+        final double substTime = parentTime - childTime;
 
         for (int r = 0; r < markovjumps.size(); r++) {
             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
@@ -297,7 +299,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                             expectedJumps.get(r), rateCategory);
                     if (r == historyRegisterNumber) {
                         // Save complete history as well
-                        histories[childNum] = ((UniformizedSubstitutionModel) thisMarkovJumps).getCompleteHistory();
+                        histories[childNum] = ((UniformizedSubstitutionModel) thisMarkovJumps).getCompleteHistory(
+                                parentTime, childTime);
                     }
                 } else {
                     computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,

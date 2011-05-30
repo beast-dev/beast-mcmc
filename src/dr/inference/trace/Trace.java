@@ -42,16 +42,16 @@ public class Trace<T> {
 //    public static final int INCREMENT_SIZE = 1000;
 
     // use <Double> for integer, but traceType must = INTEGER
-    private TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
+    protected TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
     protected List<T> values = new ArrayList<T>();
     //    protected int valueCount = 0;
     protected String name;
 
 //    private Object[] range;
 
-//    public Trace(String name) {
-//        this.name = name;
-//    }
+    public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
+        this.name = name;
+    }
 
     public Trace(String name, TraceFactory.TraceType traceType) {
         this.name = name;

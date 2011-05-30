@@ -39,7 +39,7 @@ public class CompleteHistoryLogger implements Loggable {
 
             @Override
             protected String getFormattedValue() {
-                return treeTraitCount.getTraitString(tree, null); 
+                return treeTraitCount.getTraitString(tree, null);
             }
         };
         columns[1] = new LogColumn.Abstract(COMPLETE_HISTORY_NAME) {
@@ -70,6 +70,9 @@ public class CompleteHistoryLogger implements Loggable {
                                 String dest = value.nextToken();
                                 double deltaTime = Double.parseDouble(value.nextToken());
                                 double thisTime = parentTime - deltaTime;
+                                if (thisTime < 0.0) {
+                                    throw new RuntimeException("negative time");
+                                }
                                 StateHistory.addEventToStringBuilder(bf, source, dest, thisTime);
                                 count++;
                                 empty = false;

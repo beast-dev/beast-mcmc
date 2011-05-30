@@ -134,7 +134,30 @@ public class StateHistory {
 
     public double getEndingTime() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getState();
+        return stateList.get(stateList.size()-1).getTime();
+    }
+
+    public void rescaleTimesOfEvents(double inStartTime, double inEndTime) {
+
+        final double scale = (inEndTime - inStartTime) / (getEndingTime() - getStartingTime());
+
+        StateChange currentStateChange = stateList.get(0);
+        double oldCurrentTime = currentStateChange.getTime();
+        currentStateChange.setTime(inStartTime);
+        double newCurrentTime = inStartTime;
+
+        for (int i = 1; i < stateList.size(); ++i) {
+            StateChange nextStateChange = stateList.get(i);
+            double oldNextTime = nextStateChange.getTime();
+            double oldTimeDiff = oldNextTime - oldCurrentTime;
+
+            double newNextTime = oldTimeDiff * scale + newCurrentTime;
+            nextStateChange.setTime(newNextTime);
+            
+            oldCurrentTime = oldNextTime;
+            newCurrentTime = newNextTime;
+
+        }
     }
 
     public String toString() {
@@ -149,7 +172,25 @@ public class StateHistory {
         return sb.toString();
     }
 
-    public String toStringChanges(DataType dataType, double startTime) {
+    public static void main(String[] args) {
+        System.err.println("Testing time rescaling:");
+        StateHistory stateHistory = new StateHistory(1, 1, 4);
+        StateChange stateChange;
+        stateChange = new StateChange(2, 2);
+        stateHistory.addChange(stateChange);
+        stateChange = new StateChange(5, 2);
+        stateHistory.addEndingState(stateChange);
+
+        System.err.println("Initial history: " + stateHistory);
+
+        stateHistory.rescaleTimesOfEvents(8.0, 0.0);
+        System.err.println("Rescale history: " + stateHistory);
+
+        stateHistory.rescaleTimesOfEvents(0.0, 4.0);
+        System.err.println("Rescale history: " + stateHistory);
+    }
+
+    public String toStringChanges(DataType dataType) { //}, double startTime) {
         StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
@@ -159,7 +200,7 @@ public class StateHistory {
                 if (!firstChange) {
                     sb.append(",");
                 }
-                double time = stateList.get(i).getTime() + startTime;
+                double time = stateList.get(i).getTime(); // + startTime;
                 addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time);
                 firstChange = false;
                 currentState = nextState;

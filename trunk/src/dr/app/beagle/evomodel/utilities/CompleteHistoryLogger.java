@@ -6,7 +6,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.Loggable;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.markovjumps.StateHistory;
 
 import java.util.StringTokenizer;
@@ -69,11 +68,13 @@ public class CompleteHistoryLogger implements Loggable {
                                 String source = value.nextToken();
                                 String dest = value.nextToken();
                                 double deltaTime = Double.parseDouble(value.nextToken());
-                                double thisTime = parentTime - deltaTime;
-                                if (thisTime < 0.0) {
+//                                double thisTime = parentTime - deltaTime;
+                                if (deltaTime < 0.0) {
                                     throw new RuntimeException("negative time");
                                 }
-                                StateHistory.addEventToStringBuilder(bf, source, dest, thisTime);
+                                StateHistory.addEventToStringBuilder(bf, source, dest,
+                                        deltaTime);
+                                        //thisTime);
                                 count++;
                                 empty = false;
                             }

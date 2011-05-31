@@ -11,8 +11,23 @@ import dr.inference.markovjumps.StateHistory;
 import java.util.StringTokenizer;
 
 /**
+ * A class to conveniently log a complete state history of a continuous-time Markov chain along a tree
+ * simulated using the Uniformization Method
+ * <p/>
+ * This work is supported by NSF grant 0856099
+ * <p/>
+ * Minin VN and Suchard MA (2008) Counting labeled transitions in continous-time Markov models of evolution.
+ * Journal of Mathematical Biology, 56, 391-412.
+ * <p/>
+ * Rodrigue N, Philippe H and Lartillot N (2006) Uniformization for sampling realizations of Markov processes:
+ * applications to Bayesian implementations of codon substitution models. Bioinformatics, 24, 56-62.
+ * <p/>
+ * Hobolth A and Stone E (2009) Simulation from endpoint-conditioned, continuous-time Markov chains on a finite
+ * state space, with applications to molecular evolution. Annals of Applied Statistics, 3, 1204-1231.
+ *
  * @author Marc A. Suchard
  * @author Philippe Lemey
+ * @author Andrew Rambaut
  */
 public class CompleteHistoryLogger implements Loggable {
 
@@ -53,10 +68,12 @@ public class CompleteHistoryLogger implements Loggable {
                     if (!tree.isRoot(node)) {
                         NodeRef parent = tree.getParent(node);
                         double parentTime = tree.getNodeHeight(parent);
+                        double childTime = tree.getNodeHeight(node);
+                        double minTime = Math.min(parentTime, childTime);
+                        double maxTime = Math.max(parentTime, childTime);
                         String trait = treeTraitHistory.getTraitString(tree,node);
                         if (trait.compareTo("{}") != 0) {
                             trait = trait.substring(1,trait.length()-1);
-//                            System.err.print(trait + " : ");
                             StringTokenizer st = new StringTokenizer(trait,",");
                             while(st.hasMoreTokens()) {
                                 if (!empty) {
@@ -67,14 +84,16 @@ public class CompleteHistoryLogger implements Loggable {
                                 StringTokenizer value = new StringTokenizer(event,":");
                                 String source = value.nextToken();
                                 String dest = value.nextToken();
-                                double deltaTime = Double.parseDouble(value.nextToken());
-//                                double thisTime = parentTime - deltaTime;
-                                if (deltaTime < 0.0) {
+                                double thisTime = Double.parseDouble(value.nextToken());
+                                if (thisTime < 0.0) {
                                     throw new RuntimeException("negative time");
                                 }
+                                if (thisTime > maxTime || thisTime < minTime) {
+                                    throw new RuntimeException("Invalid simulation time");
+                                }
+
                                 StateHistory.addEventToStringBuilder(bf, source, dest,
-                                        deltaTime);
-                                        //thisTime);
+                                        thisTime);
                                 count++;
                                 empty = false;
                             }

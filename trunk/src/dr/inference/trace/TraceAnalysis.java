@@ -25,7 +25,7 @@
 
 package dr.inference.trace;
 
-import dr.util.NumberFormatter;
+import dr.app.tracer.traces.SummaryStatisticsPanel;
 
 import java.io.File;
 import java.util.List;
@@ -67,11 +67,11 @@ public class TraceAnalysis {
     public static TraceList report(String fileName, int inBurnin, String likelihoodName, boolean withStdError)
             throws java.io.IOException, TraceException {
 
-        int fieldWidth = 14;
-        int firstField = 25;
-        NumberFormatter formatter = new NumberFormatter(4);
-        formatter.setPadding(true);
-        formatter.setFieldWidth(fieldWidth);
+//        int fieldWidth = 14;
+//        int firstField = 25;
+//        NumberFormatter formatter = new NumberFormatter(4);
+//        formatter.setPadding(true);
+//        formatter.setFieldWidth(fieldWidth);
 
         File file = new File(fileName);
 
@@ -90,12 +90,11 @@ public class TraceAnalysis {
 
         traces.setBurnIn(burnin);
 
-        System.out.println();
-        System.out.println("burnIn   <= " + burnin);
-        System.out.println("maxState  = " + traces.getMaxState());
-        System.out.println();
+//        System.out.println();
+        System.out.println("burnIn   <= " + burnin + ",   maxState  = " + traces.getMaxState());
+//        System.out.println();
 
-        System.out.print(formatter.formatToFieldWidth("statistic", firstField));
+        System.out.print("statistic");
         String[] names;
 
         if (!withStdError)
@@ -104,7 +103,7 @@ public class TraceAnalysis {
             names = new String[]{"mean", "stdErr", "median", "hpdLower", "hpdUpper", "ESS", "50hpdLower", "50hpdUpper"};
 
         for (String name : names) {
-            System.out.print(formatter.formatToFieldWidth(name, fieldWidth));
+            System.out.print("\t" + name);
         }
         System.out.println();
 
@@ -115,20 +114,22 @@ public class TraceAnalysis {
             TraceDistribution distribution = traces.getDistributionStatistics(i);
 
             double ess = distribution.getESS();
-            System.out.print(formatter.formatToFieldWidth(traces.getTraceName(i), firstField));
-            System.out.print(formatter.format(distribution.getMean()));
-
-            if (withStdError)
-                System.out.print(formatter.format(distribution.getStdError()));
-
-            System.out.print(formatter.format(distribution.getLowerHPD()));
-            System.out.print(formatter.format(distribution.getUpperHPD()));
-            System.out.print(formatter.format(ess));
+            System.out.print(traces.getTraceName(i) + "\t");
+            System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getMean()) + "\t");
 
             if (withStdError) {
-                System.out.print(formatter.format(distribution.getHpdLowerCustom()));
-                System.out.print(formatter.format(distribution.getHpdUpperCustom()));
+                System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getStdError()) + "\t");
+                System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getMedian()) + "\t");
             }
+
+            System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getLowerHPD()) + "\t");
+            System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getUpperHPD()) + "\t");
+            if (withStdError) {
+                System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getHpdLowerCustom()) + "\t");
+                System.out.print(SummaryStatisticsPanel.formattedNumber(distribution.getHpdUpperCustom()) + "\t");
+            }
+            
+            System.out.print(SummaryStatisticsPanel.formattedNumber(ess));
 
             if (ess < 100) {
                 warning += 1;

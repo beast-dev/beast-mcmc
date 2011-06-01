@@ -25,6 +25,8 @@
 
 package dr.app.util;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.File;
@@ -65,6 +67,26 @@ public class Utils {
         frame.dispose();
 
         return file;
+    }
+
+    public static File[] getLoadFiles(String message, File openDefaultDirectory, String description, String... extensions) {
+        // No file name in the arguments so throw up a dialog box...
+        java.awt.Frame frame = new java.awt.Frame();
+        frame.setTitle(message);
+        final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
+        chooser.setMultiSelectionEnabled(true);
+
+        FileNameExtensionFilter filter = new FileNameExtensionFilter(description, extensions);
+        chooser.setFileFilter(filter);
+
+        final int returnVal = chooser.showOpenDialog(frame);
+        File[] files = null;
+        if (returnVal == JFileChooser.APPROVE_OPTION) {
+            files = chooser.getSelectedFiles();
+
+        }
+        frame.dispose();
+        return files;
     }
 
     public static File getSaveFile(String message) {
@@ -133,8 +155,9 @@ public class Utils {
      * @param file      File
      * @param delimiter String
      * @return A map whose key is the trait. The value is a list of <taxa, value> as a string array of size 2.
-     * @throws java.io.IOException  IOException
-     * @throws dr.app.util.Arguments.ArgumentException   ArgumentException
+     * @throws java.io.IOException IOException
+     * @throws dr.app.util.Arguments.ArgumentException
+     *                             ArgumentException
      */
     public static Map<String, List<String[]>> importTraitsFromFile(File file, final String delimiter)
             throws IOException, Arguments.ArgumentException {
@@ -164,7 +187,7 @@ public class Utils {
 
             assert (values.length > 0);
             if (values.length != traitNames.length)
-                 throw new Arguments.ArgumentException("Wrong file format:\neach trait should have its corresponding value");
+                throw new Arguments.ArgumentException("Wrong file format:\neach trait should have its corresponding value");
 
             try {
                 if (traitNames[0].equalsIgnoreCase(TRAITS)) {
@@ -229,8 +252,8 @@ public class Utils {
      * then it is returned with this trimmed off. Otherwise the file name is
      * return as it is.
      *
-     * @param fileName        String
-     * @param extensions      String[]
+     * @param fileName   String
+     * @param extensions String[]
      * @return the trimmed filename
      */
     public static String trimExtensions(String fileName, String[] extensions) {
@@ -248,8 +271,8 @@ public class Utils {
     }
 
     /**
-     * @param caller   Object
-     * @param name     String
+     * @param caller Object
+     * @param name   String
      * @return a named image from file or resource bundle.
      */
     public static Image getImage(Object caller, String name) {

@@ -65,6 +65,39 @@ public class LogAnalyser {
         analyze(parentFile, burnin, verbose, new boolean[]{true}, hpds, ess, stdErr, marginalLikelihood);
     }
 
+    public LogAnalyser(int burnin, File[] files, String outputFileName, boolean verbose,
+                       boolean hpds, boolean ess, boolean stdErr,
+                       String marginalLikelihood) throws java.io.IOException, TraceException {
+
+        for (File f : files) {
+            if (f.isFile()) {
+                System.out.println("Analysing log file: " + f.getAbsoluteFile());
+            } else {
+                System.err.println(f.getAbsoluteFile() + " does not exist!");
+                System.exit(0);
+            }
+
+            if (outputFileName != null) {
+                FileOutputStream outputStream = new FileOutputStream(outputFileName);
+                System.setOut(new PrintStream(outputStream));
+            }
+            
+//            setDefaultDir(f);
+            analyze(f, burnin, verbose, new boolean[]{true}, hpds, ess, stdErr, marginalLikelihood);
+        }
+    }
+//
+    private static File openDefaultDirectory = null;
+//
+//    private void setDefaultDir(File file) {
+//        final String s = file.getAbsolutePath();
+//        String p = s.substring(0, s.length() - file.getName().length());
+//        openDefaultDirectory = new File(p);
+//        if (!openDefaultDirectory.isDirectory()) {
+//            openDefaultDirectory = null;
+//        }
+//    }
+
     /**
      * Recursively analyzes log files.
      *
@@ -213,10 +246,15 @@ public class LogAnalyser {
 
         if (inputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            inputFileName = Utils.getLoadFileName("LogAnalyser " + version.getVersionString() + " - Select log file to analyse");
-        }
+//            inputFileName = Utils.getLoadFileName("LogAnalyser " + version.getVersionString() + " - Select log file to analyse");
+            File[] files = Utils.getLoadFiles("LogAnalyser " + version.getVersionString() + " - Select log file to analyse",
+                    openDefaultDirectory, "BEAST log (*.log) Files", "log", "txt");
+            new LogAnalyser(burnin, files, outputFileName, !shortReport, hpds, ess, stdErr, marginalLikelihood);
 
-        new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport, hpds, ess, stdErr, marginalLikelihood);
+        } else {
+
+            new LogAnalyser(burnin, inputFileName, outputFileName, !shortReport, hpds, ess, stdErr, marginalLikelihood);
+        }
 
         System.exit(0);
     }

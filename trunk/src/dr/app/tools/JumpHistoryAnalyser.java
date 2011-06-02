@@ -61,7 +61,7 @@ public class JumpHistoryAnalyser {
     private double maxTime;
     private double ageOfYoungest;
 
-    public JumpHistoryAnalyser(String inputFileName, Set<String> fromStates, Set<String> toStates, int burnin, int binCount, double minTime, double maxTime, double ageOfYoungest)
+    public JumpHistoryAnalyser(String inputFileName, Set<String> fromStates, Set<String> toStates, boolean iterateFrom, boolean iterateTo, int burnin, int binCount, double minTime, double maxTime, double ageOfYoungest)
             throws IOException, ImportException, TraceException {
 
         this.binCount = binCount;
@@ -70,6 +70,116 @@ public class JumpHistoryAnalyser {
         this.ageOfYoungest = ageOfYoungest;
 
         double delta = (maxTime - minTime) / (binCount - 1);
+
+        Set<Set<String>> fromSets = new HashSet<Set<String>>();
+
+        // if a particular set of from states is specified then use them
+        if (fromStates.size() > 0) {
+            if (iterateFrom) {
+                for (String state : fromStates) {
+                    Set<String> set = new HashSet<String>();
+                    set.add(state);
+                    fromSets.add(set);
+                }
+            } else {
+                fromSets.add(fromStates);
+            }
+        }
+
+        // if a particular set of to states is specified then use them
+        Set<Set<String>> toSets = new HashSet<Set<String>>();
+        if (toStates.size() > 0) {
+            if (iterateTo) {
+                for (String state : toStates) {
+                    Set<String> set = new HashSet<String>();
+                    set.add(state);
+                    toSets.add(set);
+                }
+            } else {
+                toSets.add(toStates);
+            }
+        }
+
+        Pattern pattern = Pattern.compile("\\[([^:]+):([^:]+):([^\\]]+)\\]");
+        Set<String> allStates = new HashSet<String>();
+
+        if (fromSets.size() == 0 || toSets.size() == 0) {
+            // from or to states have not been specified so parse file to get full set.
+            BufferedReader reader = new BufferedReader(new FileReader(inputFileName));
+
+            String line = reader.readLine();
+            while (line != null && line.startsWith("#")) {
+                line = reader.readLine();
+            }
+
+            // read heading line
+            line = reader.readLine();
+
+            // read next line
+            line = reader.readLine();
+
+            while (line != null) {
+                String[] columns = line.split("\t");
+                if (columns.length == 3) {
+                    Matcher matcher = pattern.matcher(columns[2]);
+                    while (matcher.find()) {
+                        String fromState = matcher.group(1);
+                        allStates.add(fromState);
+                        String toState = matcher.group(2);
+                        allStates.add(toState);
+                    }
+                }
+
+                line = reader.readLine();
+            }
+
+            reader.close();
+        }
+
+        if (fromStates.size() == 0) {
+            // if particular from states have not been specified, use them all
+            if (iterateFrom) {
+                for (String state : allStates) {
+                    Set<String> set = new HashSet<String>();
+                    set.add(state);
+                    fromSets.add(set);
+                }
+            } else {
+                fromSets.add(allStates);
+            }
+        }
+
+        if (toStates.size() == 0) {
+            // if particular to states have not been specified, use them all
+            if (iterateTo) {
+                for (String state : allStates) {
+                    Set<String> set = new HashSet<String>();
+                    set.add(state);
+                    toSets.add(set);
+                }
+            } else {
+                toSets.add(allStates);
+            }
+        }
+
+        int fromSetCount = fromSets.size();
+        int toSetCount = fromSets.size();
+
+        int[][][] bins = new int[fromSetCount][toSetCount][binCount];
+
+        int index = 0;
+        Map<Set<String>, Integer> fromSetIndices = new HashMap<Set<String>, Integer>();
+        for (Set<String> fromSet : fromSets) {
+            fromSetIndices.put(fromSet, index);
+            index++;
+        }
+
+        index = 0;
+        Map<Set<String>, Integer> toSetIndices = new HashMap<Set<String>, Integer>();
+        for (Set<String> toSet : toSets) {
+            toSetIndices.put(toSet, index);
+            index++;
+        }
 
         BufferedReader reader = new BufferedReader(new FileReader(inputFileName));
 
@@ -81,34 +191,55 @@ public class JumpHistoryAnalyser {
         // read heading line
         line = reader.readLine();
 
-        int[] bins = new int[binCount];
+        // read next line
+        line = reader.readLine();
 
         while (line != null) {
-           String[] columns = line.split("\t");
+            String[] columns = line.split("\t");
             if (columns.length == 3) {
                 int state = Integer.parseInt(columns[0]);
                 int count = (int)Double.parseDouble(columns[1]);
 
                 if (state >= burnin) {
-                    Pattern pattern = Pattern.compile("\\[([^:]+):([^:]+):([^\\]]+)\\]");
                     Matcher matcher = pattern.matcher(columns[2]);
                     while (matcher.find()) {
                         String fromState = matcher.group(1);
                         String toState = matcher.group(2);
                         String timeString = matcher.group(3);
 
-                        if ((fromStates.size() == 0 || fromStates.contains(fromState)) && (toStates.size() == 0 || toStates.contains(toState))) {
-                            double time = Double.parseDouble(timeString);
-                            time = ageOfYoungest - time;
-                            double binTime = minTime;
-                            int bin = 0;
-                            while (time > binTime) {
-                                binTime += delta;
-                                bin ++;
+                        Set<String> fromSet = null;
+                        for (Set<String> set : fromSets) {
+                            if (set.contains(fromState)) {
+                                fromSet = set;
+                                break;
                             }
-                            bins[bin] ++;
                         }
+                        if (fromSet != null) {
+                            int fromIndex = fromSetIndices.get(fromSet);
 
+                            Set<String> toSet = null;
+                            for (Set<String> set : toSets) {
+                                if (set.contains(toState)) {
+                                    toSet = set;
+                                    break;
+                                }
+                            }
+
+                            if (toSet != null) {
+
+                                int toIndex = toSetIndices.get(toSet);
+
+                                double time = Double.parseDouble(timeString);
+                                time = ageOfYoungest - time;
+                                double binTime = minTime;
+                                int bin = 0;
+                                while (time > binTime) {
+                                    binTime += delta;
+                                    bin ++;
+                                }
+                                bins[fromIndex][toIndex][bin] ++;
+                            }
+                        }
 //                        System.out.println(fromState + " ->" + toState + ": " + timeString);
                     }
                 }
@@ -119,11 +250,68 @@ public class JumpHistoryAnalyser {
 
         reader.close();
 
-        System.out.println("time\tcount");
+        System.out.print("time");
+        for (Set<String> fromSet : fromSets) {
+            String fromLabel = "all";
+            if (fromSet.size() == 1) {
+                fromLabel = fromSet.toArray(new String[1])[0];
+            } else if (!fromSet.equals(allStates)) {
+                StringBuilder sb = new StringBuilder("{");
+                boolean first = true;
+                for (String state : fromSet) {
+                    if (!first) {
+                        sb.append(",");
+                    } else {
+                        first = false;
+                    }
+                    sb.append(state);
+                }
+                sb.append("}");
+                fromLabel = sb.toString();
+            }
+
+            for (Set<String> toSet : toSets) {
+                String toLabel = "all";
+                if (toSet.size() == 1) {
+                    toLabel = toSet.toArray(new String[1])[0];
+                } else if (!toSet.equals(allStates)) {
+                    StringBuilder sb = new StringBuilder("{");
+                    boolean first = true;
+                    for (String state : toSet) {
+                        if (!first) {
+                            sb.append(",");
+                        } else {
+                            first = false;
+                        }
+                        sb.append(state);
+                    }
+                    sb.append("}");
+                    toLabel = sb.toString();
+                }
+
+                if (!fromLabel.equals(toLabel)) {
+                    System.out.print("\t" + fromLabel + "->" + toLabel);
+                }
+            }
+        }
+        System.out.println();
 
         double time = minTime;
         for (int bin = 0; bin < binCount; bin++) {
-            System.out.println(time + "\t" + bins[bin]);
+            System.out.print(time);
+
+            for (Set<String> fromSet : fromSets) {
+                int fromIndex = fromSetIndices.get(fromSet);
+
+                for (Set<String> toSet : toSets) {
+                    int toIndex = toSetIndices.get(toSet);
+                    if (fromIndex != toIndex) {
+                        System.out.print("\t" + bins[fromIndex][toIndex][bin]);
+                    }
+                }
+            }
+            System.out.println();
+
             time += delta;
         }
     }
@@ -149,6 +337,8 @@ public class JumpHistoryAnalyser {
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
                         new Arguments.StringOption("from", "from_states", "set of 'from' states to limit the history [default all states]"),
                         new Arguments.StringOption("to", "to_states", "set of 'to' states to limit the history [default all states]"),
+                        new Arguments.Option("iterateFrom", "iterate over 'from' states [default combine states]"),
+                        new Arguments.Option("iterateTo", "iterate over 'to' states [default combine states]"),
                         new Arguments.IntegerOption("bins", "the number of discrete bins [default 100]"),
                         new Arguments.RealOption("min", "the minimum bound of the time range"),
                         new Arguments.RealOption("max", "the maximum bound of the time range"),
@@ -213,6 +403,10 @@ public class JumpHistoryAnalyser {
             }
         }
 
+        boolean iterateFrom = arguments.hasOption("iterateFrom");
+        boolean iterateTo = arguments.hasOption("iterateTo");
+
+
         final String[] args2 = arguments.getLeftoverArguments();
 
         switch (args2.length) {
@@ -231,8 +425,10 @@ public class JumpHistoryAnalyser {
         try {
             JumpHistoryAnalyser jumpHistory = new JumpHistoryAnalyser(
                     inputFileName,
-                    new HashSet<String>(),
-                    new HashSet<String>(),
+                    fromStates,
+                    toStates,
+                    iterateFrom,
+                    iterateTo,
                     burnin,
                     binCount,
                     minTime,

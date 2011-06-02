@@ -45,7 +45,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
-    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousProb";
+    public static final String SAMPLE_BECOMES_NON_INFECTIOUS = "sampleBecomesNonInfectiousProb";
+    public static final String R = "r";
     public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
@@ -78,17 +79,14 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             origin = (Parameter) xo.getElementFirstChild(ORIGIN);
         }
 
-        //    for r=1, this is sampledRemainInfectiousProb=0
-        //    for r=0, this is sampledRemainInfectiousProb=1
-        final Parameter r = xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ?
-                (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS) : new Parameter.Default(1.0);        
-        // the r parameter is 1 - sampleRemainsInfectiousProbability
-        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0));
+        final Parameter r = xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ?
+                (Parameter) xo.getElementFirstChild(SAMPLE_BECOMES_NON_INFECTIOUS) : new Parameter.Default(0.0);
+//        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0)); // donot use it, otherwise log is changed improperly
 
         final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
                         (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
-        Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLED_REMAIN_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
+        Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
                 r, finalTimeInterval, origin, units);
@@ -128,7 +126,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                     new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SAMPLED_REMAIN_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SAMPLE_BECOMES_NON_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };

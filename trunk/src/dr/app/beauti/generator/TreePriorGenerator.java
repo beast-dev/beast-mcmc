@@ -299,8 +299,8 @@ public class TreePriorGenerator extends Generator {
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
 
                 if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
-                    writeParameter(BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS,
-                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS, prior, writer);
+                    writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
+                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, prior, writer);
                     writeParameter(BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
                             BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, prior, writer);
                 }
@@ -777,7 +777,7 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.ORIGIN, writer);
                 if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
                     writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-                            + BirthDeathSerialSamplingModelParser.SAMPLED_REMAIN_INFECTIOUS, writer);
+                            + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, writer);
                     writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                             + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, writer);
 

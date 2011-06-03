@@ -26,32 +26,22 @@
 package dr.app.tools;
 
 import dr.app.util.Arguments;
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
-import dr.stats.Variate;
-import dr.util.DataTable;
-import jam.console.ConsoleApplication;
-import jebl.evolution.coalescent.IntervalList;
-import jebl.evolution.coalescent.Intervals;
 import jebl.evolution.io.ImportException;
-import jebl.evolution.io.NewickImporter;
-import jebl.evolution.io.NexusImporter;
-import jebl.evolution.io.TreeImporter;
-import jebl.evolution.trees.RootedTree;
 
-import javax.swing.*;
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
  * @author Andrew Rambaut
+ * @author Marc A. Suchard
  * @version $Id$
  */
 public class JumpHistoryAnalyser {
@@ -61,7 +51,9 @@ public class JumpHistoryAnalyser {
     private double maxTime;
     private double ageOfYoungest;
 
-    public JumpHistoryAnalyser(String inputFileName, Set<String> fromStates, Set<String> toStates, boolean iterateFrom, boolean iterateTo, int burnin, int binCount, double minTime, double maxTime, double ageOfYoungest)
+    public JumpHistoryAnalyser(String inputFileName, Set<String> fromStates, Set<String> toStates, boolean iterateFrom,
+                               boolean iterateTo, int burnin, int binCount, double minTime, double maxTime,
+                               boolean backwardsTime, double ageOfYoungest)
             throws IOException, ImportException, TraceException {
 
         this.binCount = binCount;
@@ -163,7 +155,7 @@ public class JumpHistoryAnalyser {
         }
 
         int fromSetCount = fromSets.size();
-        int toSetCount = fromSets.size();
+        int toSetCount = toSets.size();
 
         int[][][] bins = new int[fromSetCount][toSetCount][binCount];
 
@@ -230,14 +222,25 @@ public class JumpHistoryAnalyser {
                                 int toIndex = toSetIndices.get(toSet);
 
                                 double time = Double.parseDouble(timeString);
-                                time = ageOfYoungest - time;
+                                if (!backwardsTime) {
+                                    time = ageOfYoungest - time;
+                                }
                                 double binTime = minTime;
-                                int bin = 0;
+                                int bin = -1;
                                 while (time > binTime) {
                                     binTime += delta;
                                     bin ++;
                                 }
-                                bins[fromIndex][toIndex][bin] ++;
+                                try {
+                                    bins[fromIndex][toIndex][bin] ++;
+                                } catch (Exception e) {
+                                    System.err.println("Caught error: " + e.getMessage());
+                                    System.err.println(fromState + " ->" + toState + ": " + timeString);
+                                    System.err.println("Min time: " + minTime);
+                                    System.err.println("Max time: " + maxTime);
+                                    System.err.println("Bin est : " + bin);
+                                    System.err.println("Delta   : " + delta);                                    
+                                }
                             }
                         }
 //                        System.out.println(fromState + " ->" + toState + ": " + timeString);
@@ -249,6 +252,8 @@ public class JumpHistoryAnalyser {
         }
 
         reader.close();
+
+        boolean allToAllCounts = false;
 
         System.out.print("time");
         for (Set<String> fromSet : fromSets) {
@@ -288,8 +293,8 @@ public class JumpHistoryAnalyser {
                     sb.append("}");
                     toLabel = sb.toString();
                 }
-
-                if (!fromLabel.equals(toLabel)) {
+                allToAllCounts = (fromLabel.equals("all") && toLabel.equals("all"));
+                if (!fromLabel.equals(toLabel) || allToAllCounts ) {
                     System.out.print("\t" + fromLabel + "->" + toLabel);
                 }
             }
@@ -305,7 +310,7 @@ public class JumpHistoryAnalyser {
 
                 for (Set<String> toSet : toSets) {
                     int toIndex = toSetIndices.get(toSet);
-                    if (fromIndex != toIndex) {
+                    if ((fromIndex != toIndex) || allToAllCounts) {
                         System.out.print("\t" + bins[fromIndex][toIndex][bin]);
                     }
                 }
@@ -339,6 +344,7 @@ public class JumpHistoryAnalyser {
                         new Arguments.StringOption("to", "to_states", "set of 'to' states to limit the history [default all states]"),
                         new Arguments.Option("iterateFrom", "iterate over 'from' states [default combine states]"),
                         new Arguments.Option("iterateTo", "iterate over 'to' states [default combine states]"),
+                        new Arguments.Option("backwardsTime", "time runs backwards [default false]"),
                         new Arguments.IntegerOption("bins", "the number of discrete bins [default 100]"),
                         new Arguments.RealOption("min", "the minimum bound of the time range"),
                         new Arguments.RealOption("max", "the maximum bound of the time range"),
@@ -367,7 +373,7 @@ public class JumpHistoryAnalyser {
 
         int binCount = 100;
         if (arguments.hasOption("bins")) {
-            burnin = arguments.getIntegerOption("bins");
+            binCount = arguments.getIntegerOption("bins");
         }
 
         double minTime = arguments.getRealOption("min");
@@ -406,6 +412,7 @@ public class JumpHistoryAnalyser {
         boolean iterateFrom = arguments.hasOption("iterateFrom");
         boolean iterateTo = arguments.hasOption("iterateTo");
 
+        boolean backwardsTime = arguments.hasOption("backwardsTime");
 
         final String[] args2 = arguments.getLeftoverArguments();
 
@@ -433,6 +440,7 @@ public class JumpHistoryAnalyser {
                     binCount,
                     minTime,
                     maxTime,
+                    backwardsTime,
                     mrsd
             );
         } catch (IOException e) {

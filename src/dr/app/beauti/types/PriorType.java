@@ -22,7 +22,9 @@ public enum PriorType {
     ONE_OVER_X_PRIOR,
     TRUNC_NORMAL_PRIOR,
     POISSON_PRIOR,
-    BETA_PRIOR;
+    BETA_PRIOR,
+    NORMAL_HPM_PRIOR,
+    LOGNORMAL_HPM_PRIOR;
 
 
     public String toString() {
@@ -56,6 +58,10 @@ public enum PriorType {
                 return "Truncated Normal";
             case BETA_PRIOR:
                 return "Beta";
+            case NORMAL_HPM_PRIOR:
+                return "Normal HPM";
+            case LOGNORMAL_HPM_PRIOR:
+                return "Lognormal HPM";
             default:
                 return "";
         }
@@ -208,6 +214,12 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(param.shapeB, 10, 6));
                 buffer.append("]");
                 break;
+            case NORMAL_HPM_PRIOR:
+                buffer.append("Normal HPM [mean, precision]");
+                break;
+            case LOGNORMAL_HPM_PRIOR:
+                buffer.append("Lognormal HPM [mean, precision]");
+                break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
@@ -244,6 +256,8 @@ public enum PriorType {
             case POISSON_PRIOR:
             case BETA_PRIOR:
             case TRUNC_NORMAL_PRIOR:
+            case NORMAL_HPM_PRIOR:
+            case LOGNORMAL_HPM_PRIOR:
                 buffer.append("[");
                 buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
                 buffer.append(", ");

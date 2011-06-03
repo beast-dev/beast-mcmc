@@ -258,7 +258,8 @@ public class TreeTraitParserUtilities {
                     }
                     if (sampleSize != traitParam.getDimension()) {
                         if (existingTraitParameter) {
-                            throw new RuntimeException("Trait length must match trait parameter dimension");
+                            throw new RuntimeException("Trait length must match trait parameter dimension: " +
+                            sampleSize + " != " + traitParam.getDimension());
                         } else {
                             traitParam.setDimension(sampleSize);
                         }
@@ -276,6 +277,11 @@ public class TreeTraitParserUtilities {
                             } else {
                                 try {
                                     value = new Double(oneValue);
+                                    if (Double.isNaN(value)) {
+                                        Logger.getLogger("dr.evomodel.continuous").info(
+                                                "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName
+                                        );
+                                    }
                                 } catch (NumberFormatException e) {
                                     throw new RuntimeException(e.getMessage());
                                 }

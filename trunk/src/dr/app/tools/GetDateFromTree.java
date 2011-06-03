@@ -377,7 +377,7 @@ public class GetDateFromTree extends NewickImporter {
 
     // T2 sampledRemainInfectiousProb = 1; T1 sampledRemainInfectiousProb = 0
     static final String path = "C:/Users/dxie004/Documents/HIV Swiss Cohort study/Tanjia Birth-Death/T32/";
-    static final String curD = "1";
+    static final String curD = "10";
     
     static final String inputFileName = path + curD + "/T32.trees";
 //    static final String[] trees = {

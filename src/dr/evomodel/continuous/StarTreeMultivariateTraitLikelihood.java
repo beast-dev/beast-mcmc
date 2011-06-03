@@ -1,27 +1,24 @@
 package dr.evomodel.continuous;
 
-import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.distributions.WishartSufficientStatistics;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.Vector;
 
 import java.util.List;
 
 /**
- * Integrated multivariate trait likelihood that assumes a fully-conjugate prior on the root.
- * The fully-conjugate prior is a multivariate normal distribution with a precision scaled by
- * diffusion process
+ * Integrated multivariate trait likelihood that assumes exchangeable tip outcomes (star tree); used as
+ * a null hypothesis for testing phylogenetic correlation
  *
  * @author Marc A. Suchard
+ * @author Bridgett vonHoldt
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood {
+public class StarTreeMultivariateTraitLikelihood extends FullyConjugateMultivariateTraitLikelihood {
 
-    public FullyConjugateMultivariateTraitLikelihood(String traitName,
+    public StarTreeMultivariateTraitLikelihood(String traitName,
                                                      TreeModel treeModel,
                                                      MultivariateDiffusionModel diffusionModel,
                                                      CompoundParameter traitParameter,
@@ -38,7 +35,9 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
                                                      boolean reciprocalRates) {
 
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
+                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, rootPriorMean, rootPriorSampleSize, reciprocalRates);
+//        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+//                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
         // fully-conjugate multivariate normal with own mean and prior sample size
         this.rootPriorMean = rootPriorMean;
@@ -47,88 +46,30 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         priorInformationKnown = false;
     }
 
-
-    protected double getRescaledLengthToRoot(NodeRef nodeRef) {
-
-        double length = 0;
-        NodeRef parent = treeModel.getParent(nodeRef);
-
-        if (!treeModel.isRoot(parent)) {
-            length += getRescaledLengthToRoot(parent);
-        }
-
-        length += getRescaledBranchLength(nodeRef);
-
-        return length;
-    }
-
-
-    protected double calculateAscertainmentCorrection(int taxonIndex) {
-
-        NodeRef tip = treeModel.getNode(taxonIndex);
-        int nodeIndex = treeModel.getNode(taxonIndex).getNumber();
-
-        if (ascertainedData == null) { // Assumes that ascertained data are fixed
-            ascertainedData = new double[dimTrait];
-        }
-
-//        diffusionModel.diffusionPrecisionMatrixParameter.setParameterValue(0,2); // For debugging non-1 values
-        double[][] traitPrecision = diffusionModel.getPrecisionmatrix();
-        double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
-
-        double lengthToRoot = getRescaledLengthToRoot(tip);
-        double marginalPrecisionScalar = 1.0 / lengthToRoot + rootPriorSampleSize;
-        double logLikelihood = 0;
-
-        for (int datum = 0; datum < numData; ++datum) {
-
-            // Get observed trait value
-            System.arraycopy(meanCache, nodeIndex * dim + datum * dimTrait, ascertainedData, 0, dimTrait);
-
-            if (DEBUG_ASCERTAINMENT) {
-                System.err.println("Datum #" + datum);
-                System.err.println("Value: " + new Vector(ascertainedData));
-                System.err.println("Cond : " + lengthToRoot);
-                System.err.println("MargV: " + 1.0 / marginalPrecisionScalar);
-                System.err.println("MargP: " + marginalPrecisionScalar);
-                System.err.println("diffusion prec: " + new Matrix(traitPrecision));
-            }
-
-            double SSE;
-            if (dimTrait > 1) {
-                throw new RuntimeException("Still need to implement multivariate ascertainment correction");
-            } else {
-                double precision = traitPrecision[0][0] * marginalPrecisionScalar;
-
-                SSE = ascertainedData[0] * precision * ascertainedData[0];
-            }
-
-            double thisLogLikelihood = -LOG_SQRT_2_PI * dimTrait
-                    + 0.5 * (logDetTraitPrecision + dimTrait * Math.log(marginalPrecisionScalar) - SSE);
-
-            if (DEBUG_ASCERTAINMENT) {
-                System.err.println("LogLik: " + thisLogLikelihood);
-                dr.math.distributions.NormalDistribution normal = new dr.math.distributions.NormalDistribution(0,
-                        Math.sqrt(1.0 / (traitPrecision[0][0] * marginalPrecisionScalar)));
-                System.err.println("TTTLik: " + normal.logPdf(ascertainedData[0]));
-                if (datum >= 10) {
-                    System.exit(-1);
-                }
-            }
-            logLikelihood += thisLogLikelihood;
-        }
-        return logLikelihood;
-    }
-
-//    public double getRootPriorSampleSize() {
-//        return rootPriorSampleSize;
+//    public double getRescaledBranchLength(NodeRef node) {
+//
+//        // This should be
+//        double length = treeModel.getBranchLength(node);
+//
+//        if (hasRateModel) {
+//            if (reciprocalRates) {
+//                length /= rateModel.getBranchRate(treeModel, node); // branch rate scales as precision (inv-time)
+//            } else {
+//                length *= rateModel.getBranchRate(treeModel, node); // branch rate scales as variance (time)
+//            }
+//        }
+//
+//        if (scaleByTime) {
+//            length /= treeLength;
+//        }
+//
+//        if (deltaParameter != null && treeModel.isExternal(node)) {
+//            length += deltaParameter.getParameterValue(0);
+//        }
+//
+//        return length;
 //    }
 
-//    public double[] getRootPriorMean() {
-//        double[] out = new double[rootPriorMean.length];
-//        System.arraycopy(rootPriorMean, 0, out, 0, out.length);
-//        return out;
-//    }
 
     public WishartSufficientStatistics getWishartStatistics() {
         computeWishartStatistics = true;
@@ -137,32 +78,28 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return wishartStatistics;
     }
 
-//    private double getLogPrecisionDetermination() {
-//        return Math.log(diffusionModel.getDeterminantPrecisionMatrix()) + dimTrait * Math.log(rootPriorSampleSize);
+//    protected void handleModelChangedEvent(Model model, Object object, int index) {
+//
+//        if (model == diffusionModel) {
+//            priorInformationKnown = false;
+//        }
+//        super.handleModelChangedEvent(model, object, index);
+//    }
+//
+//    public void restoreState() {
+//        super.restoreState();
+//        priorInformationKnown = false;
+//    }
+//
+//    public void makeDirty() {
+//        super.makeDirty();
+//        priorInformationKnown = false;
 //    }
 
-    protected void handleModelChangedEvent(Model model, Object object, int index) {
-
-        if (model == diffusionModel) {
-            priorInformationKnown = false;
-        }
-        super.handleModelChangedEvent(model, object, index);
-    }
-
-    public void restoreState() {
-        super.restoreState();
-        priorInformationKnown = false;
-    }
-
-    public void makeDirty() {
-        super.makeDirty();
-        priorInformationKnown = false;
-    }
-
-    @Override
-    public boolean getComputeWishartSufficientStatistics() {
-        return computeWishartStatistics;
-    }
+//    @Override
+//    public boolean getComputeWishartSufficientStatistics() {
+//        return computeWishartStatistics;
+//    }
 
     protected double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,
                                                   double[] marginalRootMean,
@@ -259,6 +196,4 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     private double zBz; // Prior sum-of-squares contribution
 
     private boolean computeWishartStatistics = false;
-    private double[] ascertainedData = null;
-    private static final boolean DEBUG_ASCERTAINMENT = false;
 }

@@ -226,6 +226,10 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.BETA_PRIOR);
                 break;
+            case NORMAL_HPM_PRIOR:
+            case LOGNORMAL_HPM_PRIOR:
+                // Do nothing, densities are already in a distributionLikelihood
+                break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
@@ -238,5 +242,4 @@ public class ParameterPriorGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
         }
     }
-
 }

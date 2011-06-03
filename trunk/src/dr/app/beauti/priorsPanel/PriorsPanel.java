@@ -57,6 +57,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JTable priorTable = null;
     PriorTableModel priorTableModel = null;
     JLabel messageLabel = new JLabel();
+    JButton linkButton = null;
 
     public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
@@ -69,6 +70,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private final boolean isDefaultOnly;
 
+    private final static boolean HIERARCHICAL_ENABLED = false; // Change to true to enable
+
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
         this.isDefaultOnly = isDefaultOnly;
@@ -76,7 +79,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTableModel = new PriorTableModel(this);
         priorTable = new JTable(priorTableModel);
 
-        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
+        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
         priorTable.getTableHeader().setReorderingAllowed(false);
 //        priorTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -108,6 +111,19 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         scrollPane.setOpaque(false);
 
+        Action setHierarchicalAction = new AbstractAction("Link parameters into a phylogenetic hierarchical model") {
+            public void actionPerformed(ActionEvent actionEvent) {
+                System.err.println("Button pressed");
+                // Make list of selected parameters;
+                int[] rows = priorTable.getSelectedRows();
+                hierarchicalButtonPressed(rows);
+            }
+        };
+
+        linkButton = new JButton(setHierarchicalAction);        
+        linkButton.setVisible(true);
+        linkButton.setToolTipText("Select two or more parameters.");
+
         messageLabel.setText(getMessage());
 
         setOpaque(false);
@@ -119,7 +135,16 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         add(scrollPane, BorderLayout.CENTER);
-        add(messageLabel, BorderLayout.SOUTH);
+
+        if (HIERARCHICAL_ENABLED) {
+            JPanel southPanel = new JPanel();
+            southPanel.setLayout(new BorderLayout(0,0));
+            southPanel.add(linkButton, BorderLayout.NORTH);
+            southPanel.add(messageLabel, BorderLayout.SOUTH);
+            add(southPanel, BorderLayout.SOUTH);
+        } else {
+            add(messageLabel, BorderLayout.SOUTH);
+        }
     }
 
     public void setOptions(BeautiOptions options) {
@@ -194,6 +219,39 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private PriorDialog priorDialog = null;
     private DiscretePriorDialog discretePriorDialog = null;
+    private HierarchicalPriorDialog hierarchicalPriorDialog = null;
+
+    private void hierarchicalButtonPressed(int[] rows) {
+
+        if (rows.length < 2) {
+            System.err.println("Less than 2 parameters selected!");
+            return; // TODO Flash error dialog
+        }
+
+        List<Parameter> paramList = new ArrayList<Parameter>();
+        for (int i = 0; i < rows.length; ++i) {            
+            Parameter parameter = parameters.get(rows[i]);
+            if (parameter.isNodeHeight || parameter.isStatistic) {
+                // TODO Flash error dialog
+                return;
+            }
+            // TODO Flash error dialog if bounds differ between parameters
+            paramList.add(parameter);
+        }
+
+        if (hierarchicalPriorDialog == null) {
+            hierarchicalPriorDialog = new HierarchicalPriorDialog(frame);
+        }
+
+        if (hierarchicalPriorDialog.showDialog(paramList) == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        for (Parameter parameter : paramList) {
+            parameter.setPriorEdited(true);
+        }
+        priorTableModel.fireTableDataChanged();        
+    }
 
     private void priorButtonPressed(int row) {
         Parameter param = parameters.get(row);

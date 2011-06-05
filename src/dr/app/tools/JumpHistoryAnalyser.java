@@ -159,6 +159,13 @@ public class JumpHistoryAnalyser {
 
         int[][][] bins = new int[fromSetCount][toSetCount][binCount];
 
+        Set<Double>[][] allTimes = new Set[fromSetCount][toSetCount];
+        for (int i = 0; i < fromSetCount; ++i) {
+            for (int j = 0; j < toSetCount; ++j) {
+                allTimes[i][j] = new HashSet<Double>();
+            }
+        }
+
         int index = 0;
         Map<Set<String>, Integer> fromSetIndices = new HashMap<Set<String>, Integer>();
         for (Set<String> fromSet : fromSets) {
@@ -225,6 +232,9 @@ public class JumpHistoryAnalyser {
                                 if (!backwardsTime) {
                                     time = ageOfYoungest - time;
                                 }
+
+                                (allTimes[fromIndex][toIndex]).add(time);
+
                                 double binTime = minTime;
                                 int bin = -1;
                                 while (time > binTime) {
@@ -254,6 +264,8 @@ public class JumpHistoryAnalyser {
         reader.close();
 
         boolean allToAllCounts = false;
+
+        boolean useBinning = true;
 
         System.out.print("time");
         for (Set<String> fromSet : fromSets) {
@@ -301,6 +313,8 @@ public class JumpHistoryAnalyser {
         }
         System.out.println();
 
+
+        if (useBinning) {
         double time = minTime;
         for (int bin = 0; bin < binCount; bin++) {
             System.out.print(time);
@@ -318,6 +332,18 @@ public class JumpHistoryAnalyser {
             System.out.println();
 
             time += delta;
+        }
+        } else {
+            for (Set<String> fromSet : fromSets) {
+                int fromIndex = fromSetIndices.get(fromSet);
+                for (Set<String> toSet: toSets) {
+                    int toIndex = toSetIndices.get(toSet);
+
+                    for (Double time : (allTimes[fromIndex][toIndex])) {
+                        System.out.println(time);
+                    }
+                }
+            }
         }
     }
 

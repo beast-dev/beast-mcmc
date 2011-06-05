@@ -31,10 +31,12 @@ import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 
 public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean relativeDensity = true;
+    boolean pointsOnly = false;
     int minimumBinCount;
 
     public boolean isSolid() {
@@ -70,6 +72,10 @@ public class NumericalDensityPlot extends FrequencyPlot {
     public void setRelativeDensity(boolean relative) {
         relativeDensity = relative;
         setData((Variate.D)getRawData(), minimumBinCount);
+    }
+
+    public void setPointsOnly(boolean pointsOnly) {
+        this.pointsOnly = pointsOnly;
     }
 
     /**
@@ -126,31 +132,60 @@ public class NumericalDensityPlot extends FrequencyPlot {
 
         int n = xData.getCount();
 
-        float x = (float) transformX(((Number)xData.get(0)).doubleValue());
-        float y = (float) transformY(((Number)yData.get(0)).doubleValue());
+        if (pointsOnly) {
+            setMarkStyle(Plot.CIRCLE_MARK, 3, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+            Rectangle2D bounds = mark.getBounds2D();
+            float w = (float) bounds.getWidth();
+            float h = (float) bounds.getHeight();
 
-        GeneralPath path = new GeneralPath();
-        path.moveTo(x, y);
+            for (int i = 0; i < n; i++) {
+                float x = (float) transformX(((Number)xData.get(i)).doubleValue());
+                float y = (float) transformY(((Number)yData.get(i)).doubleValue());
 
-        for (int i = 1; i < n; i++) {
-            x = (float) transformX(((Number)xData.get(i)).doubleValue());
-            y = (float) transformY(((Number)yData.get(i)).doubleValue());
+                x = x - (w / 2);
+                y = y - (h / 2);
 
-            path.lineTo(x, y);
+                g2.translate(x, y);
+
+                if (markFillPaint != null) {
+                    g2.setPaint(markFillPaint);
+                    g2.fill(mark);
+                }
+
+                g2.setPaint(markPaint);
+                g2.setStroke(markStroke);
+                g2.draw(mark);
+
+                g2.translate(-x, -y);
+            }
+
+        } else {
+            float x = (float) transformX(((Number)xData.get(0)).doubleValue());
+            float y = (float) transformY(((Number)yData.get(0)).doubleValue());
+
+            GeneralPath path = new GeneralPath();
+            path.moveTo(x, y);
+
+            for (int i = 1; i < n; i++) {
+                x = (float) transformX(((Number)xData.get(i)).doubleValue());
+                y = (float) transformY(((Number)yData.get(i)).doubleValue());
+
+                path.lineTo(x, y);
+            }
+
+            if (solid) {
+                path.closePath();
+                Paint fillPaint = new Color(
+                        ((Color) linePaint).getRed(),
+                        ((Color) linePaint).getGreen(),
+                        ((Color) linePaint).getBlue(), 32);
+                g2.setPaint(fillPaint);
+                g2.fill(path);
+            }
+
+            g2.setStroke(lineStroke);
+            g2.setPaint(linePaint);
+            g2.draw(path);
         }
-
-        if (solid) {
-            path.closePath();
-            Paint fillPaint = new Color(
-                    ((Color) linePaint).getRed(),
-                    ((Color) linePaint).getGreen(),
-                    ((Color) linePaint).getBlue(), 32);
-            g2.setPaint(fillPaint);
-            g2.fill(path);
-        }
-
-        g2.setStroke(lineStroke);
-        g2.setPaint(linePaint);
-        g2.draw(path);
-	}
+    }
 }

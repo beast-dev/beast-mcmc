@@ -225,17 +225,17 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         realButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                    changeTraceType(TraceFactory.TraceType.DOUBLE);
+                changeTraceType(TraceFactory.TraceType.DOUBLE);
             }
         });
         integerButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                    changeTraceType(TraceFactory.TraceType.INTEGER);
+                changeTraceType(TraceFactory.TraceType.INTEGER);
             }
         });
         categoryButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                    changeTraceType(TraceFactory.TraceType.STRING);
+                changeTraceType(TraceFactory.TraceType.STRING);
             }
         });
 
@@ -284,15 +284,15 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
-        int[] selRow = traceTable.getSelectedRows();
-        int[] rows = statisticTable.getSelectedRows();
+        int[] selectedTraces = traceTable.getSelectedRows();
+        int[] selectedStatistics = statisticTable.getSelectedRows();
         String m = "Are you going to change trace type into " + newType.toString() + " for\n";
 
         if (combinedTraces != null) {
-            if (selRow[0] > traceLists.size()) selRow[0] = 0; // user may only select combinedTraces
-            for (int row : rows) {
-                int id = traceLists.get(selRow[0]).getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + traceLists.get(selRow[0]).getTrace(id).getTraceType().toString() + "), ";
+            if (selectedTraces[0] > traceLists.size()) selectedTraces[0] = 0; // user may only select combinedTraces
+            for (int row : selectedStatistics) {
+                int id = traceLists.get(selectedTraces[0]).getTraceIndex(commonTraceNames.get(row));
+                m += commonTraceNames.get(row) + "(" + traceLists.get(selectedTraces[0]).getTrace(id).getTraceType().toString() + "), ";
             }
 
             int result = JOptionPane.YES_OPTION;
@@ -305,7 +305,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
             if (result == JOptionPane.YES_OPTION) {
                 for (LogFileTraces tl : traceLists) {
-                    for (int row : rows) {
+                    for (int row : selectedStatistics) {
                         int id = tl.getTraceIndex(commonTraceNames.get(row));
 
                         try {
@@ -319,43 +319,53 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 }
                 updateCombinedTraces();
                 statisticTableModel.fireTableDataChanged();
+
+                // selection will be lost by fireTableDataChanged so reselect them
+                for (int row : selectedStatistics) {
+                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
+                }
             }
 
-        } else if (selRow[selRow.length - 1] >= traceLists.size()) {
+        } else if (selectedTraces[selectedTraces.length - 1] >= traceLists.size()) {
             // I take it this should never happen... why not just throw an exception?
             JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces.",
                     "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
         } else {
-            LogFileTraces seleTraceList = traceLists.get(selRow[0]);
-            for (int row : rows) {
-                int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + seleTraceList.getTrace(id).getTraceType().toString() + "), ";
+            LogFileTraces selectedTraceList = traceLists.get(selectedTraces[0]);
+            for (int row : selectedStatistics) {
+                int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
+                m += commonTraceNames.get(row) + "(" + selectedTraceList.getTrace(id).getTraceType().toString() + "), ";
             }
 
             int result = JOptionPane.YES_OPTION;
 
             if (CONFIRM_BUTTON_PRESSES) {
-                result = JOptionPane.showConfirmDialog(this, m + "\nin file " + seleTraceList.getName() + " ?",
+                result = JOptionPane.showConfirmDialog(this, m + "\nin file " + selectedTraceList.getName() + " ?",
                         "Change Trace Type", JOptionPane.YES_NO_OPTION);
             }
 
             if (result == JOptionPane.YES_OPTION) {
-                for (int row : rows) {
-                    int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
+                for (int row : selectedStatistics) {
+                    int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
 
                     try {
-                        seleTraceList.changeTraceType(id, newType);
+                        selectedTraceList.changeTraceType(id, newType);
                     } catch (TraceException e) {
                         JOptionPane.showMessageDialog(this, e,
-                                "Trace Type Exception in " + seleTraceList.getName(), JOptionPane.ERROR_MESSAGE);
+                                "Trace Type Exception in " + selectedTraceList.getName(), JOptionPane.ERROR_MESSAGE);
 //        } catch (IOException e) {
 //            System.err.println("selRow = " + selRow + "; new type = " + newType);
 //            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
                     }
-                    seleTraceList.analyseTrace(id);
+                    selectedTraceList.analyseTrace(id);
                 }
 
                 statisticTableModel.fireTableDataChanged();
+
+                // selection will be lost by fireTableDataChanged so reselect them
+                for (int row : selectedStatistics) {
+                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
+                }
             }
         }
     }

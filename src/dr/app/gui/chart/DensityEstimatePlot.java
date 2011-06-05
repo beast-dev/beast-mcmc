@@ -64,19 +64,19 @@ public class DensityEstimatePlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
         int n = xData.getCount();
 
-        float x = (float) transformX((Double) xData.get(0));
-        float y = (float) transformY((Double) yData.get(0));
+        float x = (float) transformX(((Number)xData.get(0)).doubleValue());
+        float y = (float) transformY(((Number)yData.get(0)).doubleValue());
 
         GeneralPath path = new GeneralPath();
         path.moveTo(x, y);
 
         for (int i = 1; i < n; i++) {
-            x = (float) transformX((Double) xData.get(i));
-            y = (float) transformY((Double) yData.get(i));
+            x = (float) transformX(((Number)xData.get(i)).doubleValue());
+            y = (float) transformY(((Number)yData.get(i)).doubleValue());
 
             path.lineTo(x, y);
         }

@@ -46,7 +46,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public RegressionPlot(Variate xData, Variate yData, boolean forceOrigin) {
+    public RegressionPlot(Variate.N xData, Variate.N yData, boolean forceOrigin) {
         super(xData, yData);
         setForceOrigin(forceOrigin);
     }
@@ -70,7 +70,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Variate xData, Variate yData) {
+    public void setData(Variate.N xData, Variate.N yData) {
         super.setData(xData, yData);
         regression = new Regression(this.xData, this.yData);
     }
@@ -113,7 +113,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);

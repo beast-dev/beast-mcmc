@@ -69,13 +69,13 @@ public class NumericalDensityPlot extends FrequencyPlot {
 
     public void setRelativeDensity(boolean relative) {
         relativeDensity = relative;
-        setData(getRawData(), minimumBinCount);
+        setData((Variate.D)getRawData(), minimumBinCount);
     }
 
     /**
      * Set data
      */
-    public void setData(Variate data, int minimumBinCount) {
+    public void setData(Variate.D data, int minimumBinCount) {
 
         setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
@@ -122,19 +122,19 @@ public class NumericalDensityPlot extends FrequencyPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.D xData, Variate.D yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
         int n = xData.getCount();
 
-        float x = (float) transformX(xData.get(0));
-        float y = (float) transformY(yData.get(0));
+        float x = (float) transformX(((Number)xData.get(0)).doubleValue());
+        float y = (float) transformY(((Number)yData.get(0)).doubleValue());
 
         GeneralPath path = new GeneralPath();
         path.moveTo(x, y);
 
         for (int i = 1; i < n; i++) {
-            x = (float) transformX(xData.get(i));
-            y = (float) transformY(yData.get(i));
+            x = (float) transformX(((Number)xData.get(i)).doubleValue());
+            y = (float) transformY(((Number)yData.get(i)).doubleValue());
 
             path.lineTo(x, y);
         }

@@ -13,7 +13,7 @@ import java.util.List;
  * @author Marc A. Suchard
  */
 public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.AbstractPlot {
-
+    private final static boolean DEBUG = false;
 
     public KDENumericalDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD); // TODO Remove when all linked together
@@ -100,9 +100,13 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
             x += frequency.getBinSize();
             count++;
         }
-        System.err.println("kde = " + kde.pdf(x));
+        if (DEBUG) {
+            System.err.println("kde = " + kde.pdf(x));
+        }
         while (kde.pdf(x) > minDensity ) {
-            System.err.println("add bit on end!!!");
+            if (DEBUG) {
+                System.err.println("add bit on end!!!");
+            }
             xData.add(x);
             yData.add(kde.pdf(x));
             x += frequency.getBinSize();

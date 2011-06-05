@@ -121,7 +121,7 @@ public interface Variate<T> {
                 add((Number) values.get(i));
             }
         }
-                
+
         public void add(Number value) {
             values.add(value);
         }

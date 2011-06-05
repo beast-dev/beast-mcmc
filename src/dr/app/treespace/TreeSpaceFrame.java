@@ -266,7 +266,7 @@ public class TreeSpaceFrame extends DocumentFrame {
                         break;
                     }
                 }
-                line = bufferedReader.readLine().toUpperCase();
+                line = bufferedReader.readLine();
             }
 
             // is a NEXUS file
@@ -284,6 +284,12 @@ public class TreeSpaceFrame extends DocumentFrame {
                 } else {
                     InputFile inputFile = new InputFile(file, tree);
                     document.addTreeFile(inputFile);
+
+                    treePlotter.setTrees(loadTrees(inputFile));
+
+                    inputFile.setTreeCount(treeCount);
+
+                    document.fireDataChanged();
                 }
             }
         } else {

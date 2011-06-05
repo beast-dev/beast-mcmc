@@ -60,7 +60,7 @@ public class ParentPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);
@@ -68,14 +68,14 @@ public class ParentPlot extends Plot.AbstractPlot {
         if (getSelectedPoints() != null && getSelectedPoints().size() > 0) {
             for (int i : getSelectedPoints()) {
 
-                double x = (Double) xTipData.get(i);
-                double y = (Double) yTipData.get(i);
-                
+                double x = ((Number) xTipData.get(i)).doubleValue();
+                double y = ((Number) yTipData.get(i)).doubleValue();
+
                 double x1 = transformX(x);
                 double y1 = transformY(y);
 
-                double x2 = transformX((Double) xData.get(0));
-                double y2 = transformY((Double) yData.get(0));
+                double x2 = transformX(((Number) xData.get(0)).doubleValue());
+                double y2 = transformY(((Number) yData.get(0)).doubleValue());
 
                 GeneralPath path = new GeneralPath();
                 path.moveTo((float) x1, (float) y1);
@@ -87,11 +87,11 @@ public class ParentPlot extends Plot.AbstractPlot {
         } else {
         for (int i = 0; i < xData.getCount(); i++) {
 
-            double x1 = transformX((Double) xTipData.get(i));
-            double y1 = transformY((Double) yTipData.get(i));
+            double x1 = transformX(((Number) xTipData.get(i)).doubleValue());
+            double y1 = transformY(((Number) yTipData.get(i)).doubleValue());
 
-            double x2 = transformX((Double) xData.get(i));
-            double y2 = transformY((Double) yData.get(i));
+            double x2 = transformX(((Number) xData.get(i)).doubleValue());
+            double y2 = transformY(((Number) yData.get(i)).doubleValue());
 
             GeneralPath path = new GeneralPath();
             path.moveTo((float) x1, (float) y1);
@@ -108,8 +108,8 @@ public class ParentPlot extends Plot.AbstractPlot {
     private final Variate xTipData;
     private final Variate yTipData;
 
-    private final Variate xParentData;
-    private final Variate yParentData;
+    private final Variate.N xParentData;
+    private final Variate.N yParentData;
 
     public void setSelectedPoints(Set<Integer> selectedPoints, double mrcaTime, double mrcaDistance) {
         List<Double> x = new ArrayList<Double>();

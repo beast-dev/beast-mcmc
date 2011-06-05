@@ -329,26 +329,31 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        if (!likelihoodKnown) {
-            if (!distancesKnown) {
-                calculateDistances();
-                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-                distancesKnown = true;
-            }
+//        if (!likelihoodKnown) {
+//            if (!distancesKnown) {
+//                calculateDistances();
+//                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+//                distancesKnown = true;
+//            }
+//
+//            logLikelihood = computeLogLikelihood();
+//            likelihoodKnown = true;
+//        }
+//
+//        for (int i = 0; i < rowLocationUpdated.length; i++) {
+//            rowLocationUpdated[i] = false;
+//        }
+//        for (int i = 0; i < columnLocationUpdated.length; i++) {
+//            columnLocationUpdated[i] = false;
+//        }
+//        for (int i = 0; i < distanceUpdate.length; i++) {
+//            distanceUpdate[i] = false;
+//        }
 
-            logLikelihood = computeLogLikelihood();
-            likelihoodKnown = true;
-        }
+        calculateDistances();
+        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
 
-        for (int i = 0; i < rowLocationUpdated.length; i++) {
-            rowLocationUpdated[i] = false;
-        }
-        for (int i = 0; i < columnLocationUpdated.length; i++) {
-            columnLocationUpdated[i] = false;
-        }
-        for (int i = 0; i < distanceUpdate.length; i++) {
-            distanceUpdate[i] = false;
-        }
+        logLikelihood = computeLogLikelihood();
 
         return logLikelihood;
     }
@@ -361,13 +366,13 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
         double logLikelihood = (pointObservationCount / 2) * Math.log(precision) - 0.5 * precision * sumOfSquaredResiduals;
 
-//        if (thresholdCount > 0) {
-//            if (!thresholdsKnown) {
-//                thresholdSum = calculateThresholdObservations(precision);
-//                thresholdsKnown = true;
-//            }
-//            logLikelihood += thresholdSum;
-//        }
+        if (thresholdCount > 0) {
+            if (!thresholdsKnown) {
+                thresholdSum = calculateThresholdObservations(precision);
+                thresholdsKnown = true;
+            }
+            logLikelihood += thresholdSum;
+        }
 
         if (isLeftTruncated) {
             if (!truncationKnown) {

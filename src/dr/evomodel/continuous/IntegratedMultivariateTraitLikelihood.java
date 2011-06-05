@@ -121,6 +121,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         // Set tip data values
         int index = node.getNumber();
         double[] traitValue = traitParameter.getParameter(index).getParameterValues();
+        if (traitValue.length < dim) {
+            throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
+        }
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
         missing[index] = false;
     }

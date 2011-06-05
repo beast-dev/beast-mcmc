@@ -56,7 +56,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Variate xData, Variate yData) {
+    public void setData(Variate.N xData, Variate.N yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
@@ -129,7 +129,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         // do nothing because paintPlot is overridden
     }
 }

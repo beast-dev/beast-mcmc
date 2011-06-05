@@ -179,11 +179,11 @@ public class Regression {
         return x * getGradient() + getIntercept();
     }
 
-    public Variate getXData() {
+    public Variate.N getXData() {
         return xData;
     }
 
-    public Variate getYData() {
+    public Variate.N getYData() {
         return yData;
     }
 

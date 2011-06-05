@@ -49,7 +49,7 @@ import java.util.Map;
  * @version $Id: DensityPanel.java,v 1.3 2006/11/29 09:54:30 rambaut Exp $
  */
 public class DensityPanel extends JPanel implements Exportable {
-    private static final int DEFAULT_KDE_BINS = 1000;
+    private static final int DEFAULT_KDE_BINS = 5000;
 
     public static enum ColourByOptions {
         COLOUR_BY_TRACE,
@@ -86,8 +86,10 @@ public class DensityPanel extends JPanel implements Exportable {
     private Settings currentSettings = new Settings();
     private Map<String, Settings> settingsMap = new HashMap<String, Settings>();
 
-    //    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
-    protected DiscreteJChart densityChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK), new LinearAxis());
+    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
+
+    // as far as I can see DiscreteJChart is superfluous (discrete stats use the CategoryDensityPlot):
+//    protected DiscreteJChart densityChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK), new LinearAxis());
 
     protected JChartPanel chartPanel = new JChartPanel(densityChart, null, "", "");
 
@@ -445,6 +447,7 @@ public class DensityPanel extends JPanel implements Exportable {
                         if (currentSettings.showHistogram) {
                             plot = setupDensityPlot(tl, traceIndex, td);
                             ((NumericalDensityPlot)plot).setRelativeDensity(currentSettings.relativeDensity);
+                            ((NumericalDensityPlot)plot).setPointsOnly(currentSettings.showKDE);
                         } else {
                             plot = null;
                         }
@@ -549,7 +552,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
         if (traceType == TraceFactory.TraceType.DOUBLE) {
             chartPanel.setYAxisTitle("Density");
-            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+//            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         } else {
             chartPanel.setYAxisTitle("Probability");
         }

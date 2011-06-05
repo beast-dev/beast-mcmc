@@ -3,13 +3,15 @@ package dr.inference.trace;
 /**
  * @author Alexei Drummond
  * @author Walter Xie
+ * @author Andrew Rambaut
  */
 public class TraceFactory {
 
     public enum TraceType {
-        DOUBLE("double", "D", Double.class),
+        // changed this to 'real' as this is less Comp Sci. than 'double'
+        DOUBLE("real", "R", Double.class),
         INTEGER("integer", "I", Integer.class),
-        STRING("string", "S", String.class);
+        STRING("categorical", "C", String.class);
 
         TraceType(String name, String brief, Class type) {
             this.name = name;

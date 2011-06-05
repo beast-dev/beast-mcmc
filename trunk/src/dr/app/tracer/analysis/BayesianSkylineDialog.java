@@ -30,6 +30,7 @@ import dr.app.gui.components.WholeNumberField;
 import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
+import dr.math.Integral;
 import dr.stats.Variate;
 import jam.framework.DocumentFrame;
 import jam.panels.OptionsPanel;
@@ -57,6 +58,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class BayesianSkylineDialog {
 
@@ -276,7 +279,7 @@ public class BayesianSkylineDialog {
         optionPanel.removeAll();
 
         JLabel label = new JLabel(
-                "<html>Warning! This analysis should only be run on traces where<br>" +
+                "<html>Warning: This analysis should only be run on traces where<br>" +
                         "the Bayesian Skyline plot was specified as the demographic in BEAST.<br>" +
                         "<em>Any other model will produce meaningless results.</em></html>");
         label.setFont(label.getFont().deriveFont(((float) label.getFont().getSize() - 2)));
@@ -625,21 +628,27 @@ public class BayesianSkylineDialog {
                     state += 1;
                 }
 
-                int treeStateCount = state;
+                // AR - there seems to be lots of uncommented behaviour perhaps to allow different
+                // numbers of trees in tree files than rows in log files? The log file and tree
+                // file have to correspond to exactly the same samples.
 
-                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
-                    JOptionPane.showMessageDialog(frame, "The number of log state and tree state not match !",
-                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
-                }
+//                int treeStateCount = state;
+
+                // AR - this test was always throwing a warning - even though it was apparently able to make
+                // a skyline. If the log file and the tree file are not in sync then the skyline would be invalid.
+//                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
+//                    JOptionPane.showMessageDialog(frame, "The number of states in the log file and tree file not match",
+//                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
+//                }
 
                 double[][] groupTimes;
-                if (treeStateCount > stateCount) {
-                    // the age of the end of this group
-                    groupTimes = new double[treeStateCount][];
-                } else {
-                    // the age of the end of this group
-                    groupTimes = new double[stateCount][];
-                }
+//                if (treeStateCount > stateCount) {
+//                    // the age of the end of this group
+//                    groupTimes = new double[treeStateCount][];
+//                } else {
+                // the age of the end of this group
+                groupTimes = new double[stateCount][];
+//                }
 
                 //int treeState = 0;
                 //int logState = 0;
@@ -654,11 +663,12 @@ public class BayesianSkylineDialog {
                 try {
                     while (importer.hasTree()) {
                         RootedTree tree = (RootedTree) importer.importNextTree();
+
                         IntervalList intervals = new Intervals(tree);
                         int intervalCount = intervals.getIntervalCount();
                         //tips = tree.getExternalNodes().size();
 
-                        // get the coalescent intervales only
+                        // get the coalescent intervals only
                         groupTimes[state] = new double[groupSizeCount];
                         double totalTime = 0.0;
                         int groupSize = 1;
@@ -711,7 +721,7 @@ public class BayesianSkylineDialog {
                     ex.printStackTrace(System.out);
                 }
 
-                Variate[] bins = new Variate[binCount];
+                Variate.D[] bins = new Variate.D[binCount];
                 double height;
                 if (ageOfYoungest > 0.0) {
                     height = ageOfYoungest - maxTime;
@@ -779,22 +789,24 @@ public class BayesianSkylineDialog {
                                 }
                             }
 
-                            if (treeStateCount > stateCount) {
-                                state += treeStateCount / stateCount;
-                            } else {
-                                state += stateCount / treeStateCount;
-                            }
+                            // AR - I don't understand what this is for...
+//                            if (treeStateCount > stateCount) {
+//                                state += treeStateCount / stateCount;
+//                            } else {
+//                                state += stateCount / treeStateCount;
+//                            }
+                            state += 1;
                         }
                     }
                     height += delta;
                     current += 1;
                 }
 
-                Variate xData = new Variate.D();
-                Variate yDataMean = new Variate.D();
-                Variate yDataMedian = new Variate.D();
-                Variate yDataUpper = new Variate.D();
-                Variate yDataLower = new Variate.D();
+                Variate.D xData = new Variate.D();
+                Variate.D yDataMean = new Variate.D();
+                Variate.D yDataMedian = new Variate.D();
+                Variate.D yDataUpper = new Variate.D();
+                Variate.D yDataLower = new Variate.D();
 
                 double t;
                 if (ageOfYoungest > 0.0) {
@@ -802,7 +814,7 @@ public class BayesianSkylineDialog {
                 } else {
                     t = minTime;
                 }
-                for (Variate bin : bins) {
+                for (Variate.D bin : bins) {
                     xData.add(t);
                     if (bin.getCount() > 0) {
                         yDataMean.add(bin.getMean());
@@ -845,5 +857,22 @@ public class BayesianSkylineDialog {
         private double getPopSize(int index, int state) {
             return (Double) popSizes.get(index).get(state);
         }
+    }
+
+    private final static Pattern pattern = Pattern.compile("STATE_(\\d+)");
+
+    public final static int parseState(String label) {
+        Matcher matcher = pattern.matcher(label);
+
+        try {
+            if (matcher.matches()) {
+                String stateLabel = matcher.group(1);
+                return Integer.parseInt(stateLabel);
+            }
+        } catch (NumberFormatException nfe) {
+            // do nothing
+        }
+
+        return -1;
     }
 }

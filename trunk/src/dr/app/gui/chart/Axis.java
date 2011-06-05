@@ -660,7 +660,7 @@ public interface Axis {
             if (minAxisFlag==AT_MAJOR_TICK_PLUS || minAxisFlag==AT_MINOR_TICK_PLUS) {
                 if (minAxis==minData) {
                     majorTickCount++;
-                    minTick-=majorTick;
+//                    minTick-=majorTick;
                     minAxis=minTick;
                 }
             }

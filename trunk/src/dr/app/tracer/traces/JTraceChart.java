@@ -104,7 +104,7 @@ public class JTraceChart extends DiscreteJChart {
         }
 
         Plot plot = new Plot.AbstractPlot() { // create a dummy plot to store paint styles
-            protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+            protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
             }
         };
 

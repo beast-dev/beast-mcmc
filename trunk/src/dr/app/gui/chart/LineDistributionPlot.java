@@ -91,7 +91,7 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
         // do nothing because paintPlot is overridden
 	}
 }

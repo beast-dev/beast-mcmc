@@ -462,7 +462,7 @@ public class TraitThroughTimeDialog {
 
                 current = 0;
 
-                Variate[] bins = new Variate[binCount];
+                Variate.D[] bins = new Variate.D[binCount];
                 for (int k = 0; k < binCount; k++) {
                     bins[k] = new Variate.D();
                 }
@@ -525,11 +525,11 @@ public class TraitThroughTimeDialog {
                     ex.printStackTrace(System.out);
                 }
 
-                Variate xData = new Variate.D();
-                Variate yDataMean = new Variate.D();
-                Variate yDataMedian = new Variate.D();
-                Variate yDataUpper = new Variate.D();
-                Variate yDataLower = new Variate.D();
+                Variate.D xData = new Variate.D();
+                Variate.D yDataMean = new Variate.D();
+                Variate.D yDataMedian = new Variate.D();
+                Variate.D yDataUpper = new Variate.D();
+                Variate.D yDataLower = new Variate.D();
 
                 double t;
                 if (ageOfYoungest > 0.0) {
@@ -537,7 +537,7 @@ public class TraitThroughTimeDialog {
                 } else {
                     t = minTime;
                 }
-                for (Variate bin : bins) {
+                for (Variate.D bin : bins) {
                     xData.add(t);
                     if (bin.getCount() > 0) {
                         yDataMean.add(bin.getMean());

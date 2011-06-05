@@ -221,7 +221,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
         double x1, y1, x2, y2;
         double lower = 0.0, upper = 0.0;

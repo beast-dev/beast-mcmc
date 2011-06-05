@@ -39,8 +39,10 @@ import java.util.List;
 import java.util.Set;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
+    private final static boolean CONFIRM_BUTTON_PRESSES = false;
+
     private final String[] columnToolTips = {null, null, null,
-            "Traces Type: real(R) is double, integer(I) is integer, category(C) is string"};
+            "Trace Type: real(R), integer(I) or categorical(C)"};
 
     private TracePanel tracePanel = null;
 
@@ -63,6 +65,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private final List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
+
+    private JButton realButton;
+    private JButton integerButton;
+    private JButton categoryButton;
 
 //    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
 
@@ -114,7 +120,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void initializeComponents() {
 
-        setSize(new java.awt.Dimension(1000, 700));
+        setSize(new java.awt.Dimension(1200, 800));
 
         tracePanel = new TracePanel(this);
         tracePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 6, 12, 12)));
@@ -195,12 +201,28 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         changeTraceTypePanel.add(new JLabel("Change type to:"));
-        JButton realButton = new JButton(TraceFactory.TraceType.DOUBLE.getBrief());
+
+        realButton = new JButton("(R)eal");
         realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
-        JButton integerButton = new JButton(TraceFactory.TraceType.INTEGER.getBrief());
+        // Only affect Mac OS X - nicer GUI
+        realButton.putClientProperty("Quaqua.Button.style", "placard");
+        realButton.setFont(UIManager.getFont("SmallSystemFont"));
+        realButton.setEnabled(false);
+
+        integerButton = new JButton("(I)nt");
         integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
-        JButton categoryButton = new JButton(TraceFactory.TraceType.STRING.getBrief());
+        // Only affect Mac OS X - nicer GUI
+        integerButton.putClientProperty("Quaqua.Button.style", "placard");
+        integerButton.setFont(UIManager.getFont("SmallSystemFont"));
+        integerButton.setEnabled(false);
+
+        categoryButton = new JButton("(C)at");
         categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
+        // Only affect Mac OS X - nicer GUI
+        categoryButton.putClientProperty("Quaqua.Button.style", "placard");
+        categoryButton.setFont(UIManager.getFont("SmallSystemFont"));
+        categoryButton.setEnabled(false);
+
 //        realButton.setPreferredSize(new Dimension(40, 25));
 //        integerButton.setPreferredSize(new Dimension(40, 25));
 //        categoryButton.setPreferredSize(new Dimension(40, 25));
@@ -274,11 +296,15 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 m += commonTraceNames.get(row) + "(" + traceLists.get(selRow[0]).getTrace(id).getTraceType().toString() + "), ";
             }
 
-            int n = JOptionPane.showConfirmDialog(this, "Because Combined Traces exits, change type function\n" +
-                    "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
-                    "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.YES_OPTION;
 
-            if (n == JOptionPane.YES_OPTION) {
+            if (CONFIRM_BUTTON_PRESSES) {
+                result = JOptionPane.showConfirmDialog(this, "Because Combined Traces exists, change type function\n" +
+                        "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
+                        "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
+            }
+
+            if (result == JOptionPane.YES_OPTION) {
                 for (LogFileTraces tl : traceLists) {
                     for (int row : rows) {
                         int id = tl.getTraceIndex(commonTraceNames.get(row));
@@ -297,7 +323,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
 
         } else if (selRow[selRow.length - 1] >= traceLists.size()) {
-            JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces !",
+            // I take it this should never happen... why not just throw an exception?
+            JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces.",
                     "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
         } else {
             LogFileTraces seleTraceList = traceLists.get(selRow[0]);
@@ -306,10 +333,14 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 m += commonTraceNames.get(row) + "(" + seleTraceList.getTrace(id).getTraceType().toString() + "), ";
             }
 
-            int n = JOptionPane.showConfirmDialog(this, m + "\nin file " + seleTraceList.getName() + " ?",
-                    "Change Trace Type", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.YES_OPTION;
 
-            if (n == JOptionPane.YES_OPTION) {
+            if (CONFIRM_BUTTON_PRESSES) {
+                result = JOptionPane.showConfirmDialog(this, m + "\nin file " + seleTraceList.getName() + " ?",
+                        "Change Trace Type", JOptionPane.YES_NO_OPTION);
+            }
+
+            if (result == JOptionPane.YES_OPTION) {
                 for (int row : rows) {
                     int id = seleTraceList.getTraceIndex(commonTraceNames.get(row));
 
@@ -688,6 +719,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                         JOptionPane.ERROR_MESSAGE);
             }
         }
+
+        realButton.setEnabled(selRows.length > 0);
+        integerButton.setEnabled(selRows.length > 0);
+        categoryButton.setEnabled(selRows.length > 0);
     }
 
     public void analyseTraceList(TraceList job) {

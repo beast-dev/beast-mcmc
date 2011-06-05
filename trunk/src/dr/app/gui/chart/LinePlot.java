@@ -25,6 +25,7 @@
 
 package dr.app.gui.chart;
 
+import com.sun.java.swing.plaf.nimbus.NimbusStyle;
 import dr.stats.Variate;
 
 import java.awt.*;
@@ -45,7 +46,7 @@ public class LinePlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public LinePlot(Variate xData, Variate yData) {
+    public LinePlot(Variate.N xData, Variate.N yData) {
         super(xData, yData);
     }
 
@@ -59,10 +60,10 @@ public class LinePlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
-        double x = transformX((Double) xData.get(0));
-        double y = transformY((Double) yData.get(0));
+        double x = transformX(((Number) xData.get(0)).doubleValue());
+        double y = transformY(((Number) yData.get(0)).doubleValue());
 
         GeneralPath path = new GeneralPath();
         path.moveTo((float) x, (float) y);
@@ -70,8 +71,8 @@ public class LinePlot extends Plot.AbstractPlot {
         int n = xData.getCount();
         boolean failed = false;
         for (int i = 1; i < n; i++) {
-            x = transformX((Double) xData.get(i));
-            y = transformY((Double) yData.get(i));
+            x = transformX(((Number) xData.get(i)).doubleValue());
+            y = transformY(((Number) yData.get(i)).doubleValue());
             if (x == Double.NEGATIVE_INFINITY || y == Double.NEGATIVE_INFINITY ||
                     Double.isNaN(x) || Double.isNaN(y)) {
                 failed = true;

@@ -41,13 +41,13 @@ import java.util.List;
 
 public class AreaPlot extends Plot.AbstractPlot {
 
-    protected Variate xData2 = null;
-    protected Variate yData2 = null;
+    protected Variate.N xData2 = null;
+    protected Variate.N yData2 = null;
 
     /**
      * Constructor
      */
-    public AreaPlot(Variate xData, Variate yData) {
+    public AreaPlot(Variate.N xData, Variate.N yData) {
         super(xData, yData);
     }
 
@@ -61,7 +61,7 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public AreaPlot(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
+    public AreaPlot(Variate.N xData1, Variate.N yData1, Variate.N xData2, Variate.N yData2) {
         super(xData1, yData1);
         this.xData2 = xData2;
         this.yData2 = yData2;
@@ -88,7 +88,7 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
+    public void setData(Variate.N xData1, Variate.N yData1, Variate.N xData2, Variate.N yData2) {
         setData(xData1, yData1);
         this.xData2 = xData2;
         this.yData2 = yData2;
@@ -119,10 +119,10 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
+    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
 
-        double x0 = transformX((Double) xData.get(0));
-        double y0 = transformY((Double) yData.get(0));
+        double x0 = transformX(((Number) xData.get(0)).doubleValue());
+        double y0 = transformY(((Number) yData.get(0)).doubleValue());
 
         GeneralPath path = new GeneralPath();
         path.moveTo((float) x0, (float) y0);
@@ -131,15 +131,15 @@ public class AreaPlot extends Plot.AbstractPlot {
         double y = y0;
 
         for (int i = 1, n = xData.getCount(); i < n; i++) {
-            x = transformX((Double) xData.get(i));
-            y = transformY((Double) yData.get(i));
+            x = transformX(((Number) xData.get(i)).doubleValue());
+            y = transformY(((Number) yData.get(i)).doubleValue());
             path.lineTo((float) x, (float) y);
         }
 
         if (xData2 != null & yData2 != null) {
             for (int i = xData2.getCount() - 1; i >= 0; i--) {
-                x = transformX((Double) xData2.get(i));
-                y = transformY((Double) yData2.get(i));
+                x = transformX(((Number) xData2.get(i)).doubleValue());
+                y = transformY(((Number) yData2.get(i)).doubleValue());
                 path.lineTo((float) x, (float) y);
             }
 

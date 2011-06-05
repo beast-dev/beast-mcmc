@@ -76,7 +76,7 @@ public interface Plot {
     /**
      * Set data
      */
-    void setData(Variate xData, Variate yData);
+    void setData(Variate.N xData, Variate.N yData);
 
     /**
      * Set line style
@@ -192,8 +192,8 @@ public interface Plot {
     public abstract class AbstractPlot implements Plot {
 
         protected Axis xAxis, yAxis;
-        protected Variate xData = null;
-        protected Variate yData = null;
+        protected Variate.N xData = null;
+        protected Variate.N yData = null;
 
         protected Shape mark;
 
@@ -221,7 +221,7 @@ public interface Plot {
         /**
          * Constructor
          */
-        public AbstractPlot(Variate xData, Variate yData) {
+        public AbstractPlot(Variate.N xData, Variate.N yData) {
             setData(xData, yData);
         }
 
@@ -248,7 +248,7 @@ public interface Plot {
         /**
          * Set data
          */
-        public void setData(Variate xData, Variate yData) {
+        public void setData(Variate.N xData, Variate.N yData) {
             this.xData = xData;
             this.yData = yData;
         }
@@ -528,7 +528,7 @@ public interface Plot {
         /**
          * Paint data series
          */
-        abstract protected void paintData(Graphics2D g2, Variate xData, Variate yData);
+        abstract protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData);
 
         /**
          * A point on the plot has been clicked

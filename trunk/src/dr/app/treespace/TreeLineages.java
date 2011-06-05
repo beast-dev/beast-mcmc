@@ -1,8 +1,10 @@
 package dr.app.treespace;
 
+import dr.xml.Reference;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.trees.RootedTree;
 
+import java.awt.geom.Rectangle2D;
 import java.util.*;
 
 /**
@@ -26,23 +28,6 @@ public class TreeLineages {
             "Europe",
             "Southeast Asia",
             "South Korea"
-    };
-
-    private final static double[] LATITUDES = {
-            0,
-            67.649722,
-            54.257292,
-            66.421146,
-            91.162364,
-            5.285086,
-            57.335063,
-            66.764306,
-            54.193983,
-            16.324475,
-            86.497973,
-            81.405763,
-            46.429514,
-            66.467239
     };
 
     private final static String[] AIR_COMMUNITIES = {
@@ -71,16 +56,16 @@ public class TreeLineages {
         }
     }
 
-    public double getMaxWidth() {
-        return maxWidth;
-    }
-
-    public double getMaxHeight() {
-        return maxHeight;
-    }
-
     public List<Lineage> getRootLineages() {
         return rootLineages;
+    }
+
+    public Rectangle2D getTreeBounds() {
+        return treeBounds;
+    }
+
+    public Rectangle2D getAntigenicBounds() {
+        return antigenicBounds;
     }
 
     public void addTree(RootedTree tree) {
@@ -90,11 +75,7 @@ public class TreeLineages {
         Lineage lineage = new Lineage();
         addNode(tree, tree.getRootNode(), lineage, 0.0);
 
-        lineage.dx = -offsetX;
-
-        if (offsetX > maxWidth) {
-            maxWidth = offsetX;
-        }
+        lineage.dx = offsetX;
 
         rootLineages.add(lineage);
     }
@@ -122,8 +103,8 @@ public class TreeLineages {
     public BitSet addNode(RootedTree tree, Node node, Lineage lineage, double cumulativeX) {
         lineage.bits = new BitSet();
 
-        lineage.dx = tree.getLength(node);
-        cumulativeX += lineage.dx;
+        cumulativeX += tree.getLength(node);
+        lineage.dx = cumulativeX;
 
         String location = (String)node.getAttribute("states");
         if (location != null) {
@@ -175,6 +156,29 @@ public class TreeLineages {
             if (cumulativeX > offsetX) {
                 offsetX = cumulativeX;
             }
+        }
+
+        Object[] ag = (Object[])node.getAttribute("antigenic");
+        if (ag != null) {
+//            lineage.ax = (Double)ag[0];
+//            lineage.ay = (Double)ag[1];
+            lineage.ax = lineage.dx;
+            lineage.ay = (Double)ag[0];
+
+            antigenicBounds.add(lineage.ax, lineage.ay);
+        } else {
+            Double ag1 = (Double)node.getAttribute("antigenic1");
+            Double ag2 = (Double)node.getAttribute("antigenic2");
+            if (ag1 != null) {
+                double ad =
+
+                lineage.ay = ag1;
+//                lineage.ay = ag2;
+                lineage.ax = lineage.dx;
+
+                antigenicBounds.add(lineage.ax, lineage.ay);
+            }
+
         }
 
         return lineage.bits;
@@ -231,10 +235,9 @@ public class TreeLineages {
             lineage.dy = lineage.tipNumber;
 //            lineage.dy = currentY;
 //            currentY += 1.0;
-            if (lineage.dy > maxHeight) {
-                maxHeight = lineage.dy;
-            }
         }
+
+        treeBounds.add(lineage.dx, lineage.dy);
 
         return lineage.dy;
     }
@@ -242,6 +245,8 @@ public class TreeLineages {
     class Lineage {
         double dx = 0;
         double dy = 0;
+        double ax = 0;
+        double ay = 0;
         Lineage child1 = null;
         Lineage child2 = null;
         int tipNumber = 0;
@@ -256,8 +261,9 @@ public class TreeLineages {
     private Map<BitSet, Integer> nodeCounts = new HashMap<BitSet, Integer>();
     private Map<BitSet, Double> nodeLocations = new HashMap<BitSet, Double>();
     private List<BitSet> majorityNodes = new ArrayList<BitSet>();
-    private double maxWidth;
-    private double maxHeight;
 
     private double offsetX;
+
+    private Rectangle2D treeBounds = new Rectangle2D.Double();
+    private Rectangle2D antigenicBounds = new Rectangle2D.Double();
 }

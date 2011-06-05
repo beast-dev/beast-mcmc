@@ -609,7 +609,7 @@ public class GMRFSkyrideDialog {
                     ex.printStackTrace(System.out);
                 }
 
-                Variate[] bins = new Variate[binCount];
+                Variate.D[] bins = new Variate.D[binCount];
                 double height;
                 if (ageOfYoungest > 0.0) {
                     height = ageOfYoungest - maxTime;
@@ -646,11 +646,11 @@ public class GMRFSkyrideDialog {
                     current += 1;
                 }
 
-                Variate xData = new Variate.D();
-                Variate yDataMean = new Variate.D();
-                Variate yDataMedian = new Variate.D();
-                Variate yDataUpper = new Variate.D();
-                Variate yDataLower = new Variate.D();
+                Variate.D xData = new Variate.D();
+                Variate.D yDataMean = new Variate.D();
+                Variate.D yDataMedian = new Variate.D();
+                Variate.D yDataUpper = new Variate.D();
+                Variate.D yDataLower = new Variate.D();
 
                 double t;
                 if (ageOfYoungest > 0.0) {
@@ -658,7 +658,7 @@ public class GMRFSkyrideDialog {
                 } else {
                     t = minTime;
                 }
-                for (Variate bin : bins) {
+                for (Variate.D bin : bins) {
                     xData.add(t);
                     if (bin.getCount() > 0) {
                         yDataMean.add(bin.getMean());

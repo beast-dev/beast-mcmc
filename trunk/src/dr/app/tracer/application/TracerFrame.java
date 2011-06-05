@@ -223,23 +223,22 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         categoryButton.setFont(UIManager.getFont("SmallSystemFont"));
         categoryButton.setEnabled(false);
 
-//        realButton.setPreferredSize(new Dimension(40, 25));
-//        integerButton.setPreferredSize(new Dimension(40, 25));
-//        categoryButton.setPreferredSize(new Dimension(40, 25));
-        ActionListener traceTypeButton = new ActionListener() {
+        realButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                if (((JButton) e.getSource()).getText().equals(TraceFactory.TraceType.INTEGER.getBrief())) {
-                    changeTraceType(TraceFactory.TraceType.INTEGER);
-                } else if (((JButton) e.getSource()).getText().equals(TraceFactory.TraceType.STRING.getBrief())) {
-                    changeTraceType(TraceFactory.TraceType.STRING);
-                } else {
                     changeTraceType(TraceFactory.TraceType.DOUBLE);
-                }
             }
-        };
-        realButton.addActionListener(traceTypeButton);
-        integerButton.addActionListener(traceTypeButton);
-        categoryButton.addActionListener(traceTypeButton);
+        });
+        integerButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    changeTraceType(TraceFactory.TraceType.INTEGER);
+            }
+        });
+        categoryButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                    changeTraceType(TraceFactory.TraceType.STRING);
+            }
+        });
+
         changeTraceTypePanel.add(realButton);
         changeTraceTypePanel.add(integerButton);
         changeTraceTypePanel.add(categoryButton);

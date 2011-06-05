@@ -87,7 +87,7 @@ public class DensityPanel extends JPanel implements Exportable {
     private Map<String, Settings> settingsMap = new HashMap<String, Settings>();
 
     //    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK), new LinearAxis());
-    protected JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK), new LinearAxis());
+    protected DiscreteJChart densityChart = new DiscreteJChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK), new LinearAxis());
 
     protected JChartPanel chartPanel = new JChartPanel(densityChart, null, "", "");
 
@@ -549,7 +549,7 @@ public class DensityPanel extends JPanel implements Exportable {
 
         if (traceType == TraceFactory.TraceType.DOUBLE) {
             chartPanel.setYAxisTitle("Density");
-//            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
+            densityChart.setXAxis(false, new HashMap<Integer, String>());// make HashMap empty
         } else {
             chartPanel.setYAxisTitle("Probability");
         }

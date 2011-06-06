@@ -165,59 +165,66 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
     }
 
     @Override
-    public double logCalibrationCorrectionDensity(Tree tree, final double h, int nClade) {
+    public double logCalibrationCorrectionDensity(int nTaxa, final double h, int nClade, boolean forParent) {
         double lgp;
 
-        if( nClade == 1 ) {
-            // for parent of taxon
-            final double twol = 2 * getR();
-            lgp = -twol * h + Math.log(twol);
+        final double lam = getR();
+        final double lh = lam * h;
+
+        if( forParent ) {
+            // n(n+1) factor left out
+
+            lgp = -2 * lh + Math.log(lam);
+            if( nClade > 1 ) {
+                lgp += (nClade-1) * Math.log(1 - Math.exp(-lh));
+            }
         } else {
-            final double l = getR();
-            final double lh = l * h;
-            lgp = -3 * lh + (nClade-2) * Math.log(1 - Math.exp(-lh)) + Math.log(l);
+            assert nClade > 1;
+
+            lgp = -3 * lh + (nClade-2) * Math.log(1 - Math.exp(-lh)) + Math.log(lam);
 
             // root is a special case
-            if( tree.getExternalNodeCount() == nClade ) {
+            if( nTaxa == nClade ) {
                 // n(n-1) factor left out
-                //lgp = -2 * lh + (nClade-2) * v2 + logLam;
                 lgp += lh;
             } else {
                 // (n^3-n)/2 factor left out
-                //lgp = -3 * lh + (nClade-2) * v2 + logLam;
             }
         }
 
         return lgp;
     }
 
-//    @Override
-//       public double logCalibrationCorrectionDensity(Tree tree, final double h, int nClade, double[] coefficients) {
-//           double lgp;
-//           if( coefficients != null ) {
-//               final double l = getR();
-//               final double hLam = -h * l;
-//               lgp = coefficients[0] *  hLam + Math.log(l);
-//               final double z = Math.exp(hLam);
-//               double zn = 1.0;
-//               double s = 0.0;
-//               for(int k = 1; k < coefficients.length; ++k) {
-//                   s += zn * coefficients[k];
-//                   zn *= z;
-//               }
-//               lgp += Math.log(s);
-//           } else {
-//               if( nClade == 1 ) {
-//                   // for parent of taxon
-//                   double twol = 2 * getR();
-//                   lgp = -twol * h + Math.log(twol);
-//               } else {
-//                   double l = getR();
-//                   lgp = -3 * l * h + (nClade-2) * Math.log(1 - Math.exp(-l*h)) + Math.log(l);
-//               }
-//           }
-//           return lgp;
-//       }
+    @Override
+    public double logCalibrationCorrectionDensity(final int nTaxa, double h2, final int n, double h1, int nm) {
+
+        assert h2 <= h1 && n < nm;
+        
+        final double lam = getR();
+        final int m = nm - n;
+
+        final double elh2 = Math.exp(-lam*h2);
+        final double elh1 = Math.exp(-lam*h1);
+
+        double lgl= 2 * Math.log(lam);
+
+        lgl += (n-2) * Math.log(1-elh2);
+        lgl += (m-3) * Math.log(1-elh1);
+
+        lgl += Math.log(1 - 2*m*elh1 + 2*(m-1)*elh2
+                - m*(m-1)*elh1*elh2 + (m*(m+1)/2.)*elh1*elh1
+                + ((m-1)*(m-2)/2.)*elh2*elh2);
+
+        if( nm < nTaxa ) {
+            /* lgl += Math.log(0.5*(n*(n*n-1))*(n+1+m)) */
+            lgl -= lam*(h2+3*h1);
+        } else {
+            /* lgl += Math.log(lam) /* + Math.log(n*(n*n-1)) */
+            lgl -= lam*(h2+2*h1);
+        }
+
+        return lgl;
+    }
 
     public double logNodeProbability(Tree tree, NodeRef node) {
         final double height = tree.getNodeHeight(node);

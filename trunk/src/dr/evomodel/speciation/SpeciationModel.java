@@ -60,12 +60,13 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
         return false;
     }
 
-    // Likelihhod for the speciation model conditional on the clade containing 'taxa' being
-    // monophyletic, and the root of the clade following the distribution in 'distribution'
+    // Likelihood for the speciation model conditional on monophyly of clade 'taxa',
+    // and the clade root (or its parent) following the distribution in 'distribution'
     //
-    // The likelihood enforces the monophyly, so there is no need to specifiy it again in the XML.
+    // The likelihood enforces the monophyly, so there is no need to specify it again in the XML.
 
-    public double calculateTreeLogLikelihood(Tree tree, int[][] taxa, Distribution[] distribution, Statistic calPDF) {
+    public double calculateTreeLogLikelihood(Tree tree, int[][] taxa, boolean[] forParent, 
+                                             Distribution[] distribution, Statistic calPDF) {
         return Double.NEGATIVE_INFINITY;
     }
 

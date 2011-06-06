@@ -65,14 +65,17 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     public abstract double logNodeProbability(Tree tree, NodeRef node);
 
     /**
-     * The adjustment for a monophyletic clade 'taxa' inside 'tree', where root of clade is
-     * to follow a prior of 'dist'
-     * @param tree
-     * @param h
+     * @param nTaxa
+     *@param h
      * @param nClade
-     * @return
+     * @param forParent    @return The marginal density for a monophyletic clade of size nClade inside 'tree' (or parent of),
+     *         where root of clade has height h.
      */
-    public double logCalibrationCorrectionDensity(Tree tree, double h, int nClade) {
+    public double logCalibrationCorrectionDensity(int nTaxa, double h, int nClade, boolean forParent) {
+        return 0.0;
+    }
+
+    public double logCalibrationCorrectionDensity(int nTaxa, double h0, int size0, double h1, int size1) {
         return 0.0;
     }
 
@@ -162,12 +165,14 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     }
 
     @Override
-    public double calculateTreeLogLikelihood(Tree tree, int[][] taxas, Distribution[] distributions, Statistic calPDF) {
+    public double calculateTreeLogLikelihood(Tree tree, int[][] taxas, boolean[] forParent,
+                                             Distribution[] distributions, Statistic calPDF) {
         double logL = calculateTreeLogLikelihood(tree);
+        double hs[] = new double[distributions.length];
 
         for(int k = 0; k < distributions.length; ++k) {
             NodeRef c;
-            int[] taxa = taxas[k];
+            final int[] taxa = taxas[k];
             if( taxa.length > 1 ) {
                 // check if monophyly and find node
                 c = Tree.Utils.getCommonAncestor(tree, taxa);
@@ -176,18 +181,28 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
                     return Double.NEGATIVE_INFINITY;
                 }
             } else {
-                c = tree.getParent(tree.getNode(taxa[0]));
+                c = tree.getNode(taxa[0]);
+                assert forParent[k];
             }
+
+            if( forParent[k] ) {
+               c = tree.getParent(c);
+            }
+
             final double h = tree.getNodeHeight(c);
             logL += distributions[k].logPdf(h);
 
-            if( calPDF == null ) {  
-                assert k == 0;
-                logL -= logCalibrationCorrectionDensity(tree, h, taxa.length);
-            }
+            hs[k] = h;
         }
 
-        if( calPDF != null ) {
+        if( calPDF == null ) {
+            if( distributions.length == 1 ) {
+                logL -= logCalibrationCorrectionDensity(tree.getExternalNodeCount(), hs[0], taxas[0].length, forParent[0]);
+            } else if( distributions.length == 2 ) {
+                logL -= logCalibrationCorrectionDensity(tree.getExternalNodeCount(), hs[0], taxas[0].length,
+                        hs[1], taxas[1].length);
+            }
+        } else {
             final double value = calPDF.getStatisticValue(0);
             if( Double.isNaN(value) || Double.isInfinite(value) )  {
                 logL = Double.NEGATIVE_INFINITY;

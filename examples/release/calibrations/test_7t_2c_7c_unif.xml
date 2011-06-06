@@ -105,4 +105,10 @@
 	    <!-- </scaleOperator> -->
         </operators>
     </mcmc>
+
+    <traceAnalysis fileName="test_7t_2c_7c_unif.log" burnIn="1000">
+        <expectation name="tmrca(ab)" value="2.5"/>
+        <expectation name="tree.rootHeight" value="9"/>
+    </traceAnalysis>
+    
 </beast>

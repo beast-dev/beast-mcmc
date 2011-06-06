@@ -92,4 +92,9 @@
 	    </scaleOperator>
         </operators>
     </mcmc>
+
+    <traceAnalysis fileName="test_5t_1c_unif.log" burnIn="1000">
+        <expectation name="tmrca(a)" value="5.5"/>
+    </traceAnalysis>
+
 </beast>

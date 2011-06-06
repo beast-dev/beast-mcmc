@@ -1,5 +1,6 @@
 package dr.app.tracer.traces;
 
+import dr.inference.trace.TraceAnalysis;
 import jam.framework.Exportable;
 
 import javax.swing.*;
@@ -118,7 +119,7 @@ public class TableScrollPane extends JScrollPane implements Exportable {
 
         public Object getValueAt(int row, int col) {
             if (defaultNumberFormat) {
-                return SummaryStatisticsPanel.formattedNumber(data[row][col]);
+                return TraceAnalysis.formattedNumber(data[row][col]);
             }
             return data[row][col];
         }

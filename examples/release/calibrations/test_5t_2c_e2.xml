@@ -98,4 +98,9 @@
 	    <!-- </scaleOperator> -->
         </operators>
     </mcmc>
+
+    <traceAnalysis fileName="test_5t_2c_e2.log" burnIn="1000">
+        <expectation name="tmrca(a)" value="2"/>
+    </traceAnalysis>
+    
 </beast>

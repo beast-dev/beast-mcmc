@@ -1,5 +1,6 @@
 package dr.app.tracer.traces;
 
+import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
@@ -12,7 +13,6 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
-import java.text.DecimalFormat;
 
 
 public class SummaryStatisticsPanel extends JPanel implements Exportable {
@@ -115,15 +115,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
             splitPane1.setDividerLocation(dividerLocation);
         }
-    }
-
-    public static String formattedNumber(double value) {
-        DecimalFormat formatter = new DecimalFormat("0.####E0");
-        DecimalFormat formatter2 = new DecimalFormat("####0.####");
-
-        if (value > 0 && (Math.abs(value) < 0.01 || Math.abs(value) >= 100000.0)) {
-            return formatter.format(value);
-        } else return formatter2.format(value);
     }
 
     public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
@@ -287,7 +278,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                         break;
                     case 7:
                         if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                            return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
+                            return "[" + TraceAnalysis.formattedNumber(tc.getLowerHPD()) + ", " + TraceAnalysis.formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
                             return tc.printCredibleSet();
                         }
@@ -309,7 +300,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 return "-";
             }
 
-            return formattedNumber(value);
+            return TraceAnalysis.formattedNumber(value);
         }
 
         public String getColumnName(int column) {

@@ -29,9 +29,18 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
    // public static final String COEFFS = "coefficients";
 
     public static final String CALIBRATION = "calibration";
+    public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
 
     public String getParserName() {
         return SPECIATION_LIKELIHOOD;
+    }
+
+    static private <T> void swap(List<T> l)  {
+        assert l.size() == 2;
+
+        final T o = l.get(0);
+        l.set(0, l.get(1));
+        l.set(1, o);
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -84,20 +93,45 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
               throw new XMLParseException("Sorry, not implemented: internal calibration prior for this model.");
             }
 
-            //final double[] coef = cal.hasAttribute(COEFFS) ? cal.getDoubleArrayAttribute(COEFFS) : null;
-
             List<Distribution> dists = new ArrayList<Distribution>();
             List<Taxa> taxa = new ArrayList<Taxa>();
+            List<Boolean> forParent = new ArrayList<Boolean>();
+
             for(int k = 0; k < cal.getChildCount(); ++k) {
                 final Object ck = cal.getChild(k);
                 if ( DistributionLikelihood.class.isInstance(ck) ) {
                     dists.add( ((DistributionLikelihood) ck).getDistribution() );
-                }
-                if ( Distribution.class.isInstance(ck) ) {
+                } else if ( Distribution.class.isInstance(ck) ) {
                     dists.add((Distribution) ck);
-                }
-                if ( Taxa.class.isInstance(ck) ) {
-                    taxa.add((Taxa) ck);
+                } else if ( Taxa.class.isInstance(ck) ) {
+                    final Taxa tx = (Taxa) ck;
+                    taxa.add(tx);
+                    forParent.add( tx.getTaxonCount() == 1 );
+                } else {
+                    XMLObject cko = (XMLObject) ck;
+                    assert cko.getChildCount() == 2;
+
+                    for(int i = 0; i < 2; ++i) {
+                        final Object chi = cko.getChild(i);
+                        if ( DistributionLikelihood.class.isInstance(chi) ) {
+                            dists.add( ((DistributionLikelihood) chi).getDistribution() );
+                        } else if ( Distribution.class.isInstance(chi) ) {
+                            dists.add((Distribution) chi);
+                        } else if ( Taxa.class.isInstance(chi) ) {
+                            taxa.add((Taxa) chi);
+                            boolean fp =  ((Taxa) chi).getTaxonCount() == 1;
+                            if( cko.hasAttribute(PARENT) ) {
+                                boolean ufp = cko.getBooleanAttribute(PARENT);
+                                if( fp && ! ufp ) {
+                                   throw new XMLParseException("forParent==false for a single taxon?? (must be true)");
+                                }
+                                fp = ufp;
+                            }
+                            forParent.add(fp);
+                        } else {
+                            assert false;
+                        }
+                    }
                 }
             }
 
@@ -105,16 +139,24 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Mismatch in number of distributions and taxa specs");
             }
 
-            final Statistic s = (Statistic) cal.getChild(Statistic.class);
-            if( dists.size() > 1 && s == null ) {
-                throw new XMLParseException("Sorry, not implemented: multiple internal calibrations - please provide the " +
-                        "correction explicitly.");
+            final Statistic userPDF = (Statistic) cal.getChild(Statistic.class);
+            if( userPDF == null ) {
+                if( dists.size() > 2 ) {
+                    throw new XMLParseException("Sorry, not implemented: multiple internal calibrations - please provide the " +
+                            "log marginal explicitly.");
+                }
+                if( taxa.get(0).getTaxonCount() > taxa.get(1).getTaxonCount() ) {
+                    swap(taxa);
+                    swap(dists);
+                    swap(forParent);
+                }
+                
+                if( ! taxa.get(1).containsAll(taxa.get(0)) ) {
+                    throw new XMLParseException("Sorry, not implemented: two non-nested clades");
+                }
             }
 
-            return new SpeciationLikelihood(tree, specModel, null, dists, taxa, s);
-//                    (Distribution) cal.getChild(Distribution.class),
-//                    (Taxa) cal.getChild(Taxa.class),
-//                    coef);
+            return new SpeciationLikelihood(tree, specModel, null, dists, taxa, forParent, userPDF);
         }
 
         return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
@@ -136,6 +178,13 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
         return rules;
     }
 
+    private final XMLSyntaxRule[] calibrationPoint = {
+            AttributeRule.newBooleanRule(PARENT, true),
+            new XORRule(
+                    new ElementRule(Distribution.class),
+                    new ElementRule(DistributionLikelihood.class)),
+            new ElementRule(Taxa.class)
+    };
 
     private final XMLSyntaxRule[] calibration = {
 //            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
@@ -144,7 +193,8 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             new XORRule(
                     new ElementRule(Distribution.class, 1, 100),
                     new ElementRule(DistributionLikelihood.class, 1, 100)),
-            new ElementRule(Taxa.class,1, 100)
+            new ElementRule(Taxa.class, 1, 100),
+            new ElementRule("point", calibrationPoint, 0, 100)
     };
 
     private final XMLSyntaxRule[] rules = {

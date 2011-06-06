@@ -64,23 +64,14 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         this(tree, speciationModel, null, id);
     }
 
-//    public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
-//                                Distribution dist, Taxa taxa, double[] coefficients) {
-//        this(tree, speciationModel, id);
-//        this.distribution = dist;
-//        this.coefficients = coefficients;
-//
-//        this.taxa = new int[taxa.getTaxonCount()];
-//        for(int nt = 0; nt < taxa.getTaxonCount(); ++nt) {
-//            this.taxa[nt] = tree.getTaxonIndex(taxa.getTaxon(nt));
-//        }
-//    }
-
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id,
-                                List<Distribution> dists, List<Taxa> taxa, Statistic s) {
+                                List<Distribution> dists, List<Taxa> taxa, List<Boolean> forParent,
+                                Statistic userPDF) {
         this(tree, speciationModel, id);
         this.distribution = dists.toArray(new Distribution[dists.size()]);
         this.taxa = new int[taxa.size()][];
+        this.forParent = new boolean[taxa.size()];
+
         for(int k = 0; k < taxa.size(); ++k) {
             final Taxa tk = taxa.get(k);
             final int tkcount = tk.getTaxonCount();
@@ -88,8 +79,23 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
             for(int nt = 0; nt < tkcount; ++nt) {
                 this.taxa[k][nt] = tree.getTaxonIndex(tk.getTaxon(nt));
             }
+            this.forParent[k] = forParent.get(k);
         }
-        this.calibrationLogPDF = s;
+        this.calibrationLogPDF = userPDF;
+
+        if( userPDF != null && taxa.size() == 2 ) {
+            assert this.taxa[0].length < this.taxa[1].length;
+            for( int t : this.taxa[0] ) {
+                boolean found = false;
+                for( int x : this.taxa[1] ) {
+                    if( x == t ) {
+                        found = true;
+                        break;
+                    }
+                }
+                assert found;
+            }
+        }
     }
 
     public SpeciationLikelihood(String name, Tree tree, SpeciationModel speciationModel, Set<Taxon> exclude) {
@@ -179,7 +185,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
         if ( distribution != null ) {
             //return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, coefficients);
-            return speciationModel.calculateTreeLogLikelihood(tree, taxa, distribution, calibrationLogPDF);
+            return speciationModel.calculateTreeLogLikelihood(tree, taxa, forParent, distribution, calibrationLogPDF);
         }
 
         return speciationModel.calculateTreeLogLikelihood(tree);
@@ -249,6 +255,8 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
 
     private  Distribution[] distribution = null;
     private  int[][] taxa = null;
+    private  boolean[] forParent = null;
+
     private  Statistic calibrationLogPDF = null;
     //private double[] coefficients = null;
 

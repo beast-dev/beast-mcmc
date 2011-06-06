@@ -172,7 +172,7 @@ MCLogger logger) {
             if (step > pathSteps) {
                 return -1;
             }
-            if (step == pathSteps - 1) {
+            if (step == pathSteps) { //pathSteps instead of pathSteps - 1
                 step += 1;
                 return 0;
             }

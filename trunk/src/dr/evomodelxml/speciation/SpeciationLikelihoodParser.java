@@ -4,6 +4,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodel.speciation.SpeciationLikelihood;
 import dr.evomodel.speciation.SpeciationModel;
 import dr.inference.distribution.DistributionLikelihood;
@@ -26,30 +27,23 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE = "speciesTree";
     public static final String INCLUDE = "include";
     public static final String EXCLUDE = "exclude";
-   // public static final String COEFFS = "coefficients";
 
     public static final String CALIBRATION = "calibration";
+    public static final String APPROX = "approx";
+
     public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
 
     public String getParserName() {
         return SPECIATION_LIKELIHOOD;
     }
 
-    static private <T> void swap(List<T> l)  {
-        assert l.size() == 2;
-
-        final T o = l.get(0);
-        l.set(0, l.get(1));
-        l.set(1, o);
-    }
-
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxo = xo.getChild(MODEL);
-        SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
+        final SpeciationModel specModel = (SpeciationModel) cxo.getChild(SpeciationModel.class);
 
         cxo = xo.getChild(TREE);
-        Tree tree = (Tree) cxo.getChild(Tree.class);
+        final Tree tree = (Tree) cxo.getChild(Tree.class);
 
         Set<Taxon> excludeTaxa = null;
 
@@ -89,10 +83,6 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Sorry, not implemented: internal calibration prior + excluded taxa");
             }
 
-            if( ! specModel.supportsInternalCalibration() ) {
-              throw new XMLParseException("Sorry, not implemented: internal calibration prior for this model.");
-            }
-
             List<Distribution> dists = new ArrayList<Distribution>();
             List<Taxa> taxa = new ArrayList<Taxa>();
             List<Boolean> forParent = new ArrayList<Boolean>();
@@ -119,7 +109,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                             dists.add((Distribution) chi);
                         } else if ( Taxa.class.isInstance(chi) ) {
                             taxa.add((Taxa) chi);
-                            boolean fp =  ((Taxa) chi).getTaxonCount() == 1;
+                            boolean fp = ((Taxa) chi).getTaxonCount() == 1;
                             if( cko.hasAttribute(PARENT) ) {
                                 boolean ufp = cko.getBooleanAttribute(PARENT);
                                 if( fp && ! ufp ) {
@@ -140,23 +130,15 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             }
 
             final Statistic userPDF = (Statistic) cal.getChild(Statistic.class);
-            if( userPDF == null ) {
-                if( dists.size() > 2 ) {
-                    throw new XMLParseException("Sorry, not implemented: multiple internal calibrations - please provide the " +
-                            "log marginal explicitly.");
-                }
-                if( taxa.get(0).getTaxonCount() > taxa.get(1).getTaxonCount() ) {
-                    swap(taxa);
-                    swap(dists);
-                    swap(forParent);
-                }
-                
-                if( ! taxa.get(1).containsAll(taxa.get(0)) ) {
-                    throw new XMLParseException("Sorry, not implemented: two non-nested clades");
-                }
-            }
+            try {
+                boolean approx = cal.getAttribute(APPROX, false);
 
-            return new SpeciationLikelihood(tree, specModel, null, dists, taxa, forParent, userPDF);
+                final CalibrationPoints calib = new CalibrationPoints(tree, specModel.isYule(), dists, taxa, forParent, userPDF, approx);
+                final SpeciationLikelihood speciationLikelihood = new SpeciationLikelihood(tree, specModel, null, calib);
+                return speciationLikelihood;
+            } catch( IllegalArgumentException e ) {
+                throw new XMLParseException( e.getMessage() );
+            }
         }
 
         return new SpeciationLikelihood(tree, specModel, excludeTaxa, null);
@@ -189,6 +171,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] calibration = {
 //            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
 //                    "as a calibration correction instead of default - used when additional constarints are put on the topology."),
+            AttributeRule.newBooleanRule(APPROX, true),
             new ElementRule(Statistic.class, true),
             new XORRule(
                     new ElementRule(Distribution.class, 1, 100),

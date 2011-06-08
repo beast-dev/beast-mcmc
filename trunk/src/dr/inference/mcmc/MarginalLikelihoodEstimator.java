@@ -133,6 +133,21 @@ MCLogger logger) {
             return pathParameter;
         }
     }
+    
+    public class BetaQuantileIntegrator extends Integrator {
+    	private double alpha;
+    	
+    	public BetaQuantileIntegrator(double alpha, int pathSteps) {
+    		super(pathSteps);
+    		this.alpha = alpha;
+    	}
+    	
+    	double nextPathParameter() {
+    		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
+    		step++;
+    		return result;
+    	}
+    }
 
     public class BetaIntegrator extends Integrator {
         private BetaDistributionImpl betaDistribution;
@@ -265,6 +280,9 @@ MCLogger logger) {
             case BETA:
                 integrate(new BetaIntegrator(alphaFactor, betaFactor, pathSteps));
                 break;
+            case BETA_QUANTILE:
+            	integrate(new BetaQuantileIntegrator(alphaFactor, pathSteps));
+            	break;
             default:
                 throw new RuntimeException("Illegal path scheme");
         }
@@ -426,6 +444,8 @@ MCLogger logger) {
                 alphaBetaText += "1," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA) {
                 alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
+            } else if (scheme == PathScheme.BETA_QUANTILE) {
+            	alphaBetaText += mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
@@ -484,7 +504,8 @@ MCLogger logger) {
         LINEAR("linear"),
         GEOMETRIC("geometric"),
         BETA("beta"),
-        ONE_SIDED_BETA("oneSidedBeta");
+        ONE_SIDED_BETA("oneSidedBeta"),
+        BETA_QUANTILE("betaQuantile");
 
         PathScheme(String text) {
             this.text = text;

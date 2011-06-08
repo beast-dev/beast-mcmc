@@ -28,8 +28,10 @@ package dr.evomodel.speciation;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
-import dr.inference.model.*;
-import dr.math.distributions.Distribution;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.Set;
 
@@ -52,21 +54,19 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
 
-    // True if model has correct implementation of internal calibration for one
-    // monophyletic clade.
+    // True if Yule.
     //
     // Not abstract - non supporting derived classes do not need to override anything
-    public boolean supportsInternalCalibration() {
+    public boolean isYule() {
         return false;
     }
 
-    // Likelihood for the speciation model conditional on monophyly of clade 'taxa',
-    // and the clade root (or its parent) following the distribution in 'distribution'
+    // Likelihood for the speciation model conditional on monophyly and calibration densities in
+    // 'calibration'.
     //
     // The likelihood enforces the monophyly, so there is no need to specify it again in the XML.
-
-    public double calculateTreeLogLikelihood(Tree tree, int[][] taxa, boolean[] forParent, 
-                                             Distribution[] distribution, Statistic calPDF) {
+    //
+    public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
         return Double.NEGATIVE_INFINITY;
     }
 

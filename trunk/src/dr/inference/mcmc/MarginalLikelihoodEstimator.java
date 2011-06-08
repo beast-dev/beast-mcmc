@@ -61,9 +61,9 @@ MCLogger logger) {
         this.pathSteps = pathSteps;
         this.scheme = scheme;
         this.schedule = schedule;
-        // depricated
-//        this.linear = (scheme == PathScheme.LINEAR);
-//        this.lacing = false; // Was not such a good idea
+        // deprecated
+        // this.linear = (scheme == PathScheme.LINEAR);
+        // this.lacing = false; // Was not such a good idea
 
         this.burninLength = burninLength;
 
@@ -182,23 +182,23 @@ MCLogger logger) {
         }
     }
 
-    public void linearIntegration() {
+    /*public void linearIntegration() {
         setDefaultBurnin();
         mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            mc.runChain(chainLength + burnin, false/*, 0*/);
+            //mc.runChain(chainLength + burnin, false, 0);
+            mc.runChain(chainLength + burnin, false);
             pathParameter -= pathDelta;
-
         }
-
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, chainLength, burnin);
-        mc.runChain(chainLength + burnin, false/*, 0*/);
-    }
+        //mc.runChain(chainLength + burnin, false, 0);
+        mc.runChain(chainLength + burnin, false);
+    }*/
 
-    public void betaIntegration(double alpha, double beta) {
+    /*public void betaIntegration(double alpha, double beta) {
         setDefaultBurnin();
         mc.setCurrentLength(0);
 
@@ -219,11 +219,12 @@ MCLogger logger) {
             }
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            mc.runChain(chainLength + burnin, false/*, 0*/);
+            //mc.runChain(chainLength + burnin, false, 0);
+            mc.runChain(chainLength + burnin, false);
             (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
             ((CombinedOperatorSchedule) schedule).reset();
         }
-    }
+    }*/
 
     private void reportIteration(double pathParameter, int cl, int burn) {
         System.out.println("Attempting theta = " + pathParameter + " for " + cl + " iterations + " + burn + " burnin.");
@@ -233,8 +234,8 @@ MCLogger logger) {
 
         logger.startLogging();
         mc.addMarkovChainListener(chainListener);
-/*
-        switch (scheme) {
+
+        /*switch (scheme) {
             case LINEAR:
                 linearIntegration();
                 break;
@@ -249,7 +250,7 @@ MCLogger logger) {
                 break;
             default:
                 throw new RuntimeException("Illegal path scheme");
-        }    */
+        }*/
 
         switch (scheme) {
             case LINEAR:
@@ -364,9 +365,9 @@ MCLogger logger) {
                 prerunLength = xo.getIntegerAttribute(PRERUN);
             }
 
-            // deciprated
+            // deprecated
             boolean linear = xo.getAttribute(LINEAR, true);
-//            boolean lacing = xo.getAttribute(LACING,false);
+            // boolean lacing = xo.getAttribute(LACING,false);
             PathScheme scheme;
             if (linear) {
                 scheme = PathScheme.LINEAR;
@@ -375,7 +376,7 @@ MCLogger logger) {
             }
 
             // new approach
-            if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once depricated approach removed
+            if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once deprecated approach removed
                 scheme = PathScheme.parseFromString(xo.getAttribute(PATH_SCHEME, PathScheme.LINEAR.getText()));
             }
 

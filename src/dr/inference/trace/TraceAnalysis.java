@@ -123,12 +123,13 @@ public class TraceAnalysis {
 
             System.out.print(formattedNumber(distribution.getLowerHPD()) + "\t");
             System.out.print(formattedNumber(distribution.getUpperHPD()) + "\t");
+
+            System.out.print(formattedNumber(ess));
+            
             if (withStdError) {
                 System.out.print(formattedNumber(distribution.getHpdLowerCustom()) + "\t");
                 System.out.print(formattedNumber(distribution.getHpdUpperCustom()) + "\t");
             }
-
-            System.out.print(formattedNumber(ess));
 
             if (ess < 100) {
                 warning += 1;

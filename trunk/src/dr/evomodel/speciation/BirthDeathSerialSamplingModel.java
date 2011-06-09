@@ -55,6 +55,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     //boolean death rate is relative?
     boolean relativeDeath = false;
 
+    boolean logTransformed = false; // log lambda, mu, psi
+
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
 
@@ -79,7 +81,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> origin,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, origin, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, origin, units, false);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -92,27 +94,29 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> r,
             Variable<Double> finalTimeInterval,
             Variable<Double> origin,
-            Type units) {
+            Type units,
+            boolean logTransformed) {
 
         super(modelName, units);
 
+        this.logTransformed = logTransformed;
+        this.relativeDeath = relativeDeath;
+
         this.lambda = lambda;
         addVariable(lambda);
-        lambda.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        lambda.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
 
         this.mu = mu;
         addVariable(mu);
-        mu.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        mu.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
+
+        this.psi = psi;
+        addVariable(psi);
+        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
 
         this.p = p;
         addVariable(p);
         p.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
-
-        this.psi = psi;
-        addVariable(psi);
-        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
-        this.relativeDeath = relativeDeath;
 
         this.finalTimeInterval = finalTimeInterval;
         addVariable(finalTimeInterval);
@@ -172,17 +176,23 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     public double birth() {
         if (mask != null) return mask.birth();
+
+        if (logTransformed) return Math.exp(lambda.getValue(0));
         return lambda.getValue(0);
     }
 
     public double death() {
         if (mask != null) return mask.death();
-        return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
+
+        double muValue = logTransformed ?  Math.exp(mu.getValue(0)) : mu.getValue(0);
+
+        return relativeDeath ? muValue * birth() : muValue;
     }
 
     public double psi() {
         if (mask != null) return mask.psi();
 
+        if (logTransformed) return Math.exp(psi.getValue(0));
         return psi.getValue(0);
     }
 
@@ -198,6 +208,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public double r() {
         if (mask != null) return mask.r();
 
+        if (logTransformed) return Math.exp(r.getValue(0));
         return r.getValue(0);
     }
 

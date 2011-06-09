@@ -229,6 +229,32 @@
     	True logMarginalLikelihood = -89.40 (kappa = 10)
     </report>
     
+    <marginalLikelihoodEstimator chainLength="50000" pathSteps="20" pathScheme="sigmoid" alpha="8.0">
+    	<samplers>
+	        <mcmc idref="mcmc.fixed"/>
+	    </samplers>
+        <pathLikelihood id="pathLikelihood.sigmoid">
+            <source>
+                <posterior idref="posterior.fixed"/>
+            </source>
+            <destination>
+                <prior idref="prior.fixed"/>
+            </destination>
+        </pathLikelihood>
+        <log id="testMarginalThree" logEvery="100" fileName="testTreePathSamplingMLE.sigmoid.log">
+            <pathLikelihood idref="pathLikelihood.sigmoid"/>
+        </log>
+    </marginalLikelihoodEstimator>
+    
+   	<pathSamplingAnalysis fileName="testTreePathSamplingMLE.sigmoid.log">
+        <likelihoodColumn name="pathLikelihood.sigmoid.delta"/>
+        <thetaColumn name="pathLikelihood.sigmoid.theta"/>      
+    </pathSamplingAnalysis>
+    
+    <report>
+    	True logMarginalLikelihood = -89.40 (kappa = 10)
+    </report>
+    
     <marginalLikelihoodEstimator chainLength="500000" pathSteps="21" pathScheme="beta" alpha="0.5" beta="0.25">
 		<samplers>
 			<mcmc idref="mcmc.random"/>

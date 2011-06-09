@@ -134,6 +134,31 @@ MCLogger logger) {
         }
     }
     
+    public class SigmoidIntegrator extends Integrator {
+    	private double alpha;
+    	
+    	public SigmoidIntegrator(double alpha, int pathSteps) {
+    		super(pathSteps);
+    		this.alpha = alpha;
+    	}
+    	
+    	double nextPathParameter() {
+    		if (step == 0) {
+    			step++;
+    			return 1.0;
+    		} else if (step == pathSteps) {
+    			step++;
+    			return 0.0;
+    		} else if (step > pathSteps) {
+    			return -1.0;
+    		} else {
+    			double xvalue = ((pathSteps - step)/((double)pathSteps)) - 0.5;
+    			step++;
+    			return Math.exp(alpha*xvalue)/(Math.exp(alpha*xvalue) + Math.exp(-alpha*xvalue));
+    		}
+    	}
+    }
+    
     public class BetaQuantileIntegrator extends Integrator {
     	private double alpha;
     	
@@ -282,6 +307,9 @@ MCLogger logger) {
                 break;
             case BETA_QUANTILE:
             	integrate(new BetaQuantileIntegrator(alphaFactor, pathSteps));
+            	break;
+            case SIGMOID:
+            	integrate(new SigmoidIntegrator(alphaFactor, pathSteps));
             	break;
             default:
                 throw new RuntimeException("Illegal path scheme");
@@ -446,6 +474,8 @@ MCLogger logger) {
                 alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA_QUANTILE) {
             	alphaBetaText += mle.getAlphaFactor() + ")";
+            } else if (scheme == PathScheme.SIGMOID) {
+            	alphaBetaText += mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
@@ -505,7 +535,8 @@ MCLogger logger) {
         GEOMETRIC("geometric"),
         BETA("beta"),
         ONE_SIDED_BETA("oneSidedBeta"),
-        BETA_QUANTILE("betaQuantile");
+        BETA_QUANTILE("betaQuantile"),
+        SIGMOID("sigmoid");
 
         PathScheme(String text) {
             this.text = text;

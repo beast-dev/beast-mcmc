@@ -75,6 +75,7 @@ public class Utils {
         frame.setTitle(message);
         final JFileChooser chooser = new JFileChooser(openDefaultDirectory);
         chooser.setMultiSelectionEnabled(true);
+        chooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
 
         FileNameExtensionFilter filter = new FileNameExtensionFilter(description, extensions);
         chooser.setFileFilter(filter);

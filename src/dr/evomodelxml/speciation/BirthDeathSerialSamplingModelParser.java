@@ -51,6 +51,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
     public static final String BDSS = "bdss";
+    public static final String LOG_TRANSFORMED = "logTransformed";
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -86,10 +87,17 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
                         (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
+        boolean logTransformed = xo.getAttribute(LOG_TRANSFORMED, false);
+//        if (logTransformed) {
+//            lambda.setParameterValueQuietly(0, Math.log(lambda.getParameterValue(0)));
+//            mu.setParameterValueQuietly(0, Math.log(mu.getParameterValue(0)));
+//            psi.setParameterValueQuietly(0, Math.log(psi.getParameterValue(0)));
+//        }
+
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                r, finalTimeInterval, origin, units);
+                r, finalTimeInterval, origin, units, logTransformed);
     }
 
     //************************************************************************
@@ -119,6 +127,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
 //            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
+            AttributeRule.newBooleanRule(LOG_TRANSFORMED, true),
             new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

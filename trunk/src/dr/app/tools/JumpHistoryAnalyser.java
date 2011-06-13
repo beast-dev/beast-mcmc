@@ -375,7 +375,6 @@ public class JumpHistoryAnalyser {
                         new Arguments.RealOption("min", "the minimum bound of the time range"),
                         new Arguments.RealOption("max", "the maximum bound of the time range"),
                         new Arguments.RealOption("mrsd", "the date of the most recently sampled tip"),
-                        new Arguments.StringOption("to", "to_states", "set of 'to' states to limit the history [default all states]"),
                         new Arguments.Option("help", "option to print this message"),
                 });
 

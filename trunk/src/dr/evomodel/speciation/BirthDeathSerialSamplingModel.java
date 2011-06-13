@@ -55,7 +55,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     //boolean death rate is relative?
     boolean relativeDeath = false;
 
-    boolean logTransformed = false; // log lambda, mu, psi
+    boolean logTransformed = false; // log lambda, psi
 
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
@@ -108,7 +108,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         this.mu = mu;
         addVariable(mu);
-        mu.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
+        mu.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.psi = psi;
         addVariable(psi);
@@ -183,10 +183,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     public double death() {
         if (mask != null) return mask.death();
-
-        double muValue = logTransformed ?  Math.exp(mu.getValue(0)) : mu.getValue(0);
-
-        return relativeDeath ? muValue * birth() : muValue;
+        return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
     }
 
     public double psi() {

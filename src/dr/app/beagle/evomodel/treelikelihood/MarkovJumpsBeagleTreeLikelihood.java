@@ -12,12 +12,12 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
+import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.inference.markovjumps.MarkovJumpsType;
+import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 
 import java.util.*;
 
@@ -225,6 +225,12 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         if (tree != treeModel) {
             throw new RuntimeException("Must call with internal tree");
         }
+
+        if (!likelihoodKnown) {
+            calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        
         if (!areStatesRedrawn) {
             redrawAncestralStates();
         }

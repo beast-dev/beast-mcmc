@@ -138,7 +138,7 @@ public class MarkovModulatedSubstitutionModel extends ComplexSubstitutionModel i
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();
         citations.add(
-                CommonCitations.OBRIEN_2009
+                CommonCitations.SUCHARD_2012
         );
         return citations;
     }

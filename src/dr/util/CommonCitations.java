@@ -58,5 +58,31 @@ public class CommonCitations {
                     new Author("C", "Simon"),
             },
             Citation.Status.IN_PREPARATION
-    ); 
+    );
+
+    public static Citation SHAPIRO_2012 = new Citation(
+            new Author[] {
+                    new Author("B", "Shapiro"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
+
+    public static Citation LEMEY_2012 = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("T", "Bedford"),
+                    new Author("A", "Rambaut"),
+                    new Author("MA", "Suchard"),                   
+            },
+            Citation.Status.IN_PREPARATION
+    );
+
+    public static Citation BLOOM_2012 = new Citation(
+            new Author[] {
+                    new Author("J", "Bloom"),                    
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 }

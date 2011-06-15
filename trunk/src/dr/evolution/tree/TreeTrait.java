@@ -414,7 +414,7 @@ public interface TreeTrait<T> {
         protected int index;
 
         public PickEntry(TreeTrait<TA> base, int index) {
-            this(base.getTraitName() + "[" + index + "]", base, index);
+            this(base.getTraitName() + "_" + (index + 1), base, index);
         }
 
         public PickEntry(String name, TreeTrait<TA> base, int index) {
@@ -455,6 +455,21 @@ public interface TreeTrait<T> {
 
         public String getTraitString(Tree tree, NodeRef node) {
             return D.formatTrait(getTrait(tree, node));
+        }
+    }
+
+    public class PickEntryDAndScale extends PickEntryD {
+
+        public PickEntryDAndScale(TreeTrait<double[]> base, int index) {
+            super(base, index);
+        }
+
+        public PickEntryDAndScale(String name, TreeTrait<double[]> base, int index) {
+            super(name, base, index);
+        }
+
+        public Double getTrait(Tree tree, NodeRef node) {
+            return (base.getTrait(tree, node)[index]) / tree.getBranchLength(node);
         }
     }
 

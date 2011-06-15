@@ -50,5 +50,13 @@ public class CommonCitations {
             57,
             772, 784,
             Citation.Status.PUBLISHED
-    );    
+    );
+
+    public static Citation SUCHARD_2012 = new Citation(
+            new Author[] {
+                    new Author("MA", "Suchard"),
+                    new Author("C", "Simon"),
+            },
+            Citation.Status.IN_PREPARATION
+    ); 
 }

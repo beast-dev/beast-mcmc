@@ -67,7 +67,7 @@ public class LogCombiner {
 
         boolean firstFile = true;
         boolean firstTree = true;
-        long stateCount = (renumberOutput ? -1 : 0);        
+        long stateCount = (renumberOutput ? -1 : 0);
         int stateStep = -1;
         int columnCount = 0;
 
@@ -311,9 +311,29 @@ public class LogCombiner {
 
         StringBuffer buffer = new StringBuffer("tree STATE_");
         buffer.append(state);
-        Double lnP = (Double) tree.getAttribute("lnP");
-        if (lnP != null) {
-            buffer.append(" [&lnP=").append(lnP).append("]");
+//        Double lnP = (Double) tree.getAttribute("lnP");
+//        if (lnP != null) {
+//            buffer.append(" [&lnP=").append(lnP).append("]");
+//        }
+
+        boolean hasAttribute = false;
+        Iterator iter = tree.getAttributeNames();
+        while (iter != null && iter.hasNext()) {
+            String name = (String) iter.next();
+            Object value = tree.getAttribute(name);
+
+            if (!hasAttribute) {
+                buffer.append(" [&");
+                hasAttribute = true;
+            } else {
+                buffer.append(",");
+            }
+
+            buffer.append(name).append("=").append(formatValue(value));
+        }
+
+        if (hasAttribute) {
+            buffer.append("]");
         }
 
         buffer.append(" = [&R] ");

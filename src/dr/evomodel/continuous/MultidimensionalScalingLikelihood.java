@@ -329,31 +329,31 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-//        if (!likelihoodKnown) {
-//            if (!distancesKnown) {
-//                calculateDistances();
-//                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-//                distancesKnown = true;
-//            }
-//
-//            logLikelihood = computeLogLikelihood();
-//            likelihoodKnown = true;
-//        }
-//
-//        for (int i = 0; i < rowLocationUpdated.length; i++) {
-//            rowLocationUpdated[i] = false;
-//        }
-//        for (int i = 0; i < columnLocationUpdated.length; i++) {
-//            columnLocationUpdated[i] = false;
-//        }
-//        for (int i = 0; i < distanceUpdate.length; i++) {
-//            distanceUpdate[i] = false;
-//        }
+        if (!likelihoodKnown) {
+            if (!distancesKnown) {
+                calculateDistances();
+                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+                distancesKnown = true;
+            }
 
-        calculateDistances();
-        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+            logLikelihood = computeLogLikelihood();
+            likelihoodKnown = true;
+        }
 
-        logLikelihood = computeLogLikelihood();
+        for (int i = 0; i < rowLocationUpdated.length; i++) {
+            rowLocationUpdated[i] = false;
+        }
+        for (int i = 0; i < columnLocationUpdated.length; i++) {
+            columnLocationUpdated[i] = false;
+        }
+        for (int i = 0; i < distanceUpdate.length; i++) {
+            distanceUpdate[i] = false;
+        }
+
+//        calculateDistances();
+//        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+//
+//        logLikelihood = computeLogLikelihood();
 
         return logLikelihood;
     }

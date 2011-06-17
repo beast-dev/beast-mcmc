@@ -90,11 +90,11 @@ public class AntigenicPlotter {
             int traceCount = traces.getTraceCount() / 2;
             int stateCount = traces.getStateCount();
             double[][][] data = new double[stateCount][traceCount][2];
-            String[] names = new String[traceCount];
+            String[] labels = new String[traceCount];
 
             for (int i = 0; i < traceCount; i++) {
                 String name = traces.getTraceName(i * 2);
-                names[i] = name.substring(0, name.length() - 1);
+                labels[i] = name.substring(0, name.length() - 1);
                 for (int j = 0; j < stateCount; j++) {
                     data[j][i][0] = traces.getStateValue(i * 2, j);
                     data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
@@ -104,7 +104,7 @@ public class AntigenicPlotter {
 
 //            rotateData(data);
 
-            writeKML(outputFileName, data);
+            writeKML(outputFileName, labels, data);
 
         } catch (Exception e) {
             System.err.println("Error Parsing Input File: " + e.getMessage());
@@ -225,7 +225,7 @@ public class AntigenicPlotter {
         return pcs.getRow(0);
     }
 
-    private void writeKML(String fileName, double[][][] data) {
+    private void writeKML(String fileName, String[] labels, double[][][] data) {
         Element hpdSchema = new Element("Schema");
         hpdSchema.setAttribute("id", "HPD_Schema");
         hpdSchema.addContent(new Element("SimpleField")
@@ -243,6 +243,10 @@ public class AntigenicPlotter {
 
         Element traceSchema = new Element("Schema");
         traceSchema.setAttribute("id", "Trace_Schema");
+        traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Label")
+                .setAttribute("type", "string")
+                .addContent(new Element("displayName").addContent("State")));
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Trace")
                 .setAttribute("type", "double")
@@ -278,7 +282,7 @@ public class AntigenicPlotter {
         rootElement = new Element("kml");
         rootElement.addContent(documentElement);
 
-        Element traceElement = generateTraceElement(data);
+        Element traceElement = generateTraceElement(labels, data);
         traceFolderElement.addContent(traceElement);
 
 //            ContourMaker contourMaker;
@@ -321,7 +325,7 @@ public class AntigenicPlotter {
 
     }
 
-    private Element generateTraceElement(double[][][] points) {
+    private Element generateTraceElement(String[] labels, double[][][] points) {
         Element traceElement = new Element("Folder");
         Element nameKDEElement = new Element("name");
         String name = "points";
@@ -333,7 +337,7 @@ public class AntigenicPlotter {
             for (int j = 0; j < points[i].length; j++)  {
                 Element placemarkElement = new Element("Placemark");
 
-                placemarkElement.addContent(generateTraceData(j, i));
+                placemarkElement.addContent(generateTraceData(labels[j], j, i));
 
 
                 Element pointElement = new Element("Point");
@@ -350,10 +354,11 @@ public class AntigenicPlotter {
         return traceElement;
     }
 
-    private Element generateTraceData(int trace, int state) {
+    private Element generateTraceData(String label, int trace, int state) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "Trace_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "State").addContent(Integer.toString(state)));
         data.addContent(schemaData);

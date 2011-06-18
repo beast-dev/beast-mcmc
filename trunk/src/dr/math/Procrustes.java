@@ -51,7 +51,7 @@ public class Procrustes {
 
 //       svd.out <- svd(C)
 //       R <- svd.out$v %*% t(svd.out$u)
-
+//      NB: Apache math does a different SVD from R.  TODO Should use Colt library
         SingularValueDecomposition SVD = new SingularValueDecompositionImpl(C);
         R = SVD.getV().multiply(SVD.getUT());
 
@@ -98,6 +98,18 @@ public class Procrustes {
         T = tmpT;
     }
 
+    public final RealMatrix getTranslation() {
+        return T.copy(); // NB Different from R
+    }
+
+    public final double getDilation() {
+        return s;
+    }
+
+    public final RealMatrix getR() {
+        return R.copy(); // NB Different from R
+    }
+
     /**
      * procrustinate the complete matrix of coordinates
      * @param X the matrix containing coordinates (same dimensions as X in the constructor)
@@ -119,7 +131,7 @@ public class Procrustes {
         }
 
         // rotate, scale and translate
-        return X.multiply(R).scalarMultiply(s).add(T);
+        return X.multiply(R).scalarMultiply(s).add(tt);  // Was a bug here
     }
 
     /**

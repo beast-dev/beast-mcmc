@@ -109,6 +109,8 @@ public class AntigenicPlotter {
 
         } catch (Exception e) {
             System.err.println("Error Parsing Input File: " + e.getMessage());
+
+            e.printStackTrace(System.err);
             return;
         }
         fileReader.close();

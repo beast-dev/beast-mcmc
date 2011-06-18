@@ -87,7 +87,7 @@ public class Procrustes {
                 denom = denom + mat2.getEntry(i, i);
             }
 //           s <- s.numer/s.denom
-           s = numer / denom;
+            s = numer / denom;
         }
 
 //       tt <- matrix(0, m, 1)

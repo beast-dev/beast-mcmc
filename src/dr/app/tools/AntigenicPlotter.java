@@ -40,6 +40,7 @@ import org.jdom.Element;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 
+import javax.transaction.xa.Xid;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.*;

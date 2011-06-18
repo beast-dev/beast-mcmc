@@ -2,6 +2,8 @@ package dr.math;
 
 import org.apache.commons.math.linear.*;
 
+import java.awt.geom.AffineTransform;
+
 /**
  * Procrustination function based on procrustes.r
  *
@@ -10,8 +12,7 @@ import org.apache.commons.math.linear.*;
  * @version $Id$
  */
 public class Procrustes {
-    public final static RealMatrix procrustinate(RealMatrix X, RealMatrix Xstar, boolean allowTranslation, boolean allowDilation) {
-
+    public Procrustes(RealMatrix X, RealMatrix Xstar, boolean allowTranslation, boolean allowDilation) {
         int n = X.getRowDimension();
         int m = X.getColumnDimension();
 
@@ -54,7 +55,7 @@ public class Procrustes {
 //       R <- svd.out$v %*% t(svd.out$u)
 
         SingularValueDecomposition SVD = new SingularValueDecompositionImpl(C);
-        RealMatrix R = SVD.getV().multiply(SVD.getUT());
+        R = SVD.getV().multiply(SVD.getUT());
 
 //       s <- 1
         double s = 1.0; // scale = 1 unless dilation is being used
@@ -82,6 +83,7 @@ public class Procrustes {
 //           s <- s.numer/s.denom
             s = numer / denom;
         }
+        this.s = s;
 
 //       tt <- matrix(0, m, 1)
         RealMatrix tt = new Array2DRowRealMatrix(m, 1); // a translation vector of zero unless translation is being used
@@ -96,15 +98,47 @@ public class Procrustes {
         }
 
 //       X.new <- s * X %*% R + matrix(tt, nrow(X), ncol(X), byrow = TRUE)
-        RealMatrix tt2 = new Array2DRowRealMatrix(n, m);
+        T = new Array2DRowRealMatrix(n, m);
 
         for (int i = 0; i < n; i++) {
-            tt2.setRowMatrix(i, tt.transpose());
+            T.setRowMatrix(i, tt.transpose());
         }
+    }
+
+    /**
+     * procrustinate the complete matrix of coordinates
+     * @param X the matrix containing coordinates (same dimensions as X in the constructor)
+     * @return the transformed matrix
+     */
+    public final RealMatrix procrustinate(RealMatrix X) {
+        // rotate, scale and translate
+        return X.multiply(R).scalarMultiply(s).add(T);
+    }
+
+    /**
+     * procrustinate a single set of coordinates
+     * @param X
+     */
+    public final void procrustinate(double[] X) {
+        RealMatrix tmp = new Array2DRowRealMatrix(X);
 
         // rotate, scale and translate
-        RealMatrix Xnew = X.multiply(R).scalarMultiply(s).add(tt2);
+        RealMatrix tmp2 = tmp.multiply(R).scalarMultiply(s).add(T);
 
-        return Xnew;
+        for (int i = 0; i < X.length; i++) {
+            X[i] = tmp2.getEntry(i, 0);
+        }
     }
+
+    /**
+     * procrustinate the complete matrix of coordinates
+     */
+    public final static RealMatrix procrustinate(RealMatrix X, RealMatrix Xstar, boolean allowTranslation, boolean allowDilation) {
+       return new Procrustes(X, Xstar, allowTranslation, allowDilation).procrustinate(X);
+    }
+
+
+    private final RealMatrix R;
+    private final RealMatrix T;
+    private final double s;
 }

@@ -1,7 +1,5 @@
 package dr.math;
 
-import dr.xml.Reference;
-import no.uib.cipr.matrix.SVD;
 import org.apache.commons.math.linear.*;
 
 /**
@@ -28,12 +26,10 @@ public class Procrustes {
 
         if (allowTranslation) {
 //           J <- diag(n) - 1/n * matrix(1, n, n)
-//           diag(n) : diagonal matrix of size n x n
-//           matrix(1, n, n) : an n x n matrix with all entries = 1
 //           for n = 3, J = {{1, -2/3, -2/3}, {-2/3, 1, -2/3}, {-2/3, -2/3, 1}}
 
             for (int i = 0; i < n; i++) {
-                J.setEntry(i, i, 1);
+                J.setEntry(i, i, 1.0 - (1.0 / n));
 
                 for (int j = i + 1; j < n; j++) {
                     J.setEntry(i, j, -1.0 / n);
@@ -51,10 +47,8 @@ public class Procrustes {
 
 
 //       C <- t(Xstar) %*% J %*% X
-//        t(XStar) : transpose of Xstar
-//        X %*% Y : X (matrix-multiply) Y
 
-        RealMatrix C = X.multiply(J.multiply(Xstar.transpose()));
+        RealMatrix C = Xstar.transpose().multiply(J.multiply(X));
 
 //       svd.out <- svd(C)
 //       R <- svd.out$v %*% t(svd.out$u)
@@ -63,14 +57,14 @@ public class Procrustes {
         RealMatrix R = SVD.getV().multiply(SVD.getUT());
 
 //       s <- 1
-        double s = 1.0;
+        double s = 1.0; // scale = 1 unless dilation is being used
 
         if (allowDilation) {
 //           mat1 <- t(Xstar) %*% J %*% X %*% R
-            RealMatrix mat1 = R.multiply(X.multiply(J.multiply(Xstar.transpose())));
+            RealMatrix mat1 = Xstar.transpose().multiply(J.multiply(X.multiply(R)));
 
 //           mat2 <- t(X) %*% J %*% X
-            RealMatrix mat2 = X.multiply(J.multiply(X.transpose()));
+            RealMatrix mat2 = X.transpose().multiply(J.multiply(X));
 
 //           s.numer <- 0
 //           s.denom <- 0
@@ -79,7 +73,6 @@ public class Procrustes {
 
 //           for (i in 1:m) {
 //               s.numer <- s.numer + mat1[i, i]
-            // mat1[i,i] : entry (i,i) of matrix mat1, remember R uses Fortran numbering (starting with 1)
 //               s.denom <- s.denom + mat2[i, i]
 //           }
             for (int i = 0; i < m; i++) {
@@ -91,23 +84,26 @@ public class Procrustes {
         }
 
 //       tt <- matrix(0, m, 1)
-        // an m x 1 matrix of all 0s
-        RealMatrix tt = new Array2DRowRealMatrix(m, 1);
+        RealMatrix tt = new Array2DRowRealMatrix(m, 1); // a translation vector of zero unless translation is being used
 
         if (allowTranslation) {
 //           tt <- 1/n * t(Xstar - s * X %*% R) %*% matrix(1, n, 1)
-            tt = Xstar.subtract(R.multiply(X.scalarMultiply(s))).scalarMultiply(- 1.0 / n);
+            RealMatrix tmp = new Array2DRowRealMatrix(n, 1);
+            for (int i = 0; i < n; i++) {
+                tmp.setEntry(i, 0, 1);
+            }
+            tt = Xstar.subtract(X.multiply(R).scalarMultiply(s)).transpose().scalarMultiply(1.0 / n).multiply(tmp);
         }
 
 //       X.new <- s * X %*% R + matrix(tt, nrow(X), ncol(X), byrow = TRUE)
-//        s * X  : element-wise multiply of all entries in X by s
-//        nrow(X) : return the number of rows in X
-//        ncol(X) : return the number of cols in X
+        RealMatrix tt2 = new Array2DRowRealMatrix(n, m);
 
-        // AR - I don't think this is correct (I am not sure what the byrow = TRUE does above):
-        RealMatrix Xnew = R.multiply(X).scalarMultiply(s).add(tt);
+        for (int i = 0; i < n; i++) {
+            tt2.setRowMatrix(i, tt.transpose());
+        }
 
-//       return(list(X.new = X.new, R = R, tt = tt, s = s))
+        // rotate, scale and translate
+        RealMatrix Xnew = X.multiply(R).scalarMultiply(s).add(tt2);
 
         return Xnew;
     }

@@ -2,8 +2,6 @@ package dr.math;
 
 import org.apache.commons.math.linear.*;
 
-import java.awt.geom.AffineTransform;
-
 /**
  * Procrustination function based on procrustes.r
  *
@@ -13,34 +11,34 @@ import java.awt.geom.AffineTransform;
  */
 public class Procrustes {
     public Procrustes(RealMatrix X, RealMatrix Xstar, boolean allowTranslation, boolean allowDilation) {
-        int n = X.getRowDimension();
-        int m = X.getColumnDimension();
+        rowDimension = X.getRowDimension();
+        columnDimension = X.getColumnDimension();
 
-        if (Xstar.getRowDimension() != n) {
-            throw new IllegalArgumentException("X and Xstar do not have same number of rows");
+        if (Xstar.getRowDimension() != rowDimension) {
+            throw new IllegalArgumentException("X and Xstar do not have the same number of rows");
         }
-        if (Xstar.getColumnDimension() != m) {
-            throw new IllegalArgumentException("X and Xstar do not have same number of columns");
+        if (Xstar.getColumnDimension() != columnDimension) {
+            throw new IllegalArgumentException("X and Xstar do not have the same number of columns");
         }
 
-        RealMatrix J = new Array2DRowRealMatrix(n, n);
+        RealMatrix J = new Array2DRowRealMatrix(rowDimension, rowDimension);
 
         if (allowTranslation) {
 //           J <- diag(n) - 1/n * matrix(1, n, n)
 //           for n = 3, J = {{1, -2/3, -2/3}, {-2/3, 1, -2/3}, {-2/3, -2/3, 1}}
 
-            for (int i = 0; i < n; i++) {
-                J.setEntry(i, i, 1.0 - (1.0 / n));
+            for (int i = 0; i < rowDimension; i++) {
+                J.setEntry(i, i, 1.0 - (1.0 / rowDimension));
 
-                for (int j = i + 1; j < n; j++) {
-                    J.setEntry(i, j, -1.0 / n);
-                    J.setEntry(j, i, -1.0 / n);
+                for (int j = i + 1; j < rowDimension; j++) {
+                    J.setEntry(i, j, -1.0 / rowDimension);
+                    J.setEntry(j, i, -1.0 / rowDimension);
                 }
             }
         } else {
 //           J <- diag(n)
 
-            for (int i = 0; i < n; i++) {
+            for (int i = 0; i < rowDimension; i++) {
                 J.setEntry(i, i, 1);
             }
 
@@ -76,7 +74,7 @@ public class Procrustes {
 //               s.numer <- s.numer + mat1[i, i]
 //               s.denom <- s.denom + mat2[i, i]
 //           }
-            for (int i = 0; i < m; i++) {
+            for (int i = 0; i < columnDimension; i++) {
                 numer = numer + mat1.getEntry(i, i);
                 denom = denom + mat2.getEntry(i, i);
             }
@@ -86,23 +84,18 @@ public class Procrustes {
         this.s = s;
 
 //       tt <- matrix(0, m, 1)
-        RealMatrix tt = new Array2DRowRealMatrix(m, 1); // a translation vector of zero unless translation is being used
+        RealMatrix tmpT = new Array2DRowRealMatrix(columnDimension, 1); // a translation vector of zero unless translation is being used
 
         if (allowTranslation) {
 //           tt <- 1/n * t(Xstar - s * X %*% R) %*% matrix(1, n, 1)
-            RealMatrix tmp = new Array2DRowRealMatrix(n, 1);
-            for (int i = 0; i < n; i++) {
+            RealMatrix tmp = new Array2DRowRealMatrix(rowDimension, 1);
+            for (int i = 0; i < rowDimension; i++) {
                 tmp.setEntry(i, 0, 1);
             }
-            tt = Xstar.subtract(X.multiply(R).scalarMultiply(s)).transpose().scalarMultiply(1.0 / n).multiply(tmp);
+            tmpT = Xstar.subtract(X.multiply(R).scalarMultiply(s)).transpose().scalarMultiply(1.0 / rowDimension).multiply(tmp);
         }
 
-//       X.new <- s * X %*% R + matrix(tt, nrow(X), ncol(X), byrow = TRUE)
-        T = new Array2DRowRealMatrix(n, m);
-
-        for (int i = 0; i < n; i++) {
-            T.setRowMatrix(i, tt.transpose());
-        }
+        T = tmpT;
     }
 
     /**
@@ -111,6 +104,20 @@ public class Procrustes {
      * @return the transformed matrix
      */
     public final RealMatrix procrustinate(RealMatrix X) {
+        if (X.getRowDimension() != rowDimension) {
+            throw new IllegalArgumentException("X does not have the expected number of rows");
+        }
+        if (X.getColumnDimension() != columnDimension) {
+            throw new IllegalArgumentException("X does not have the expected number of columns");
+        }
+
+//       X.new <- s * X %*% R + matrix(tt, nrow(X), ncol(X), byrow = TRUE)
+        RealMatrix tt = new Array2DRowRealMatrix(rowDimension, columnDimension);
+
+        for (int i = 0; i < rowDimension; i++) {
+            tt.setRowMatrix(i, T.transpose());
+        }
+
         // rotate, scale and translate
         return X.multiply(R).scalarMultiply(s).add(T);
     }
@@ -119,15 +126,17 @@ public class Procrustes {
      * procrustinate a single set of coordinates
      * @param X
      */
-    public final void procrustinate(double[] X) {
+    public double[] procrustinate(double[] X) {
+        if (X.length != columnDimension) {
+            throw new IllegalArgumentException("X does not have the expected number of elements");
+        }
+
         RealMatrix tmp = new Array2DRowRealMatrix(X);
 
         // rotate, scale and translate
-        RealMatrix tmp2 = tmp.multiply(R).scalarMultiply(s).add(T);
+        RealMatrix Xnew = tmp.multiply(R).scalarMultiply(s).add(T);
 
-        for (int i = 0; i < X.length; i++) {
-            X[i] = tmp2.getEntry(i, 0);
-        }
+        return Xnew.getRow(0);
     }
 
     /**
@@ -141,4 +150,6 @@ public class Procrustes {
     private final RealMatrix R;
     private final RealMatrix T;
     private final double s;
+    private final int rowDimension;
+    private final int columnDimension;
 }

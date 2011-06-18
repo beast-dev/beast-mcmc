@@ -4,14 +4,13 @@ import dr.app.beauti.util.XMLWriter;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.FlexibleNode;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
 
 import java.io.*;
 import java.text.DecimalFormat;
+import java.util.Random;
+import java.util.StringTokenizer;
 
 /**
- * @author Alexei Drummond
  * @author Walter Xie
  */
 public class GetDateFromTree extends NewickImporter {
@@ -27,7 +26,7 @@ public class GetDateFromTree extends NewickImporter {
     static public void main(String[] args) {
         for (int c = 1; c <= 10; c++) {
             int index = 10;
-                
+
             try {
                 System.out.println("Input trees from " + pathInput + c + inputFileName + "\n\n");
                 FileReader fileReader = new FileReader(pathInput + c + inputFileName);
@@ -37,9 +36,11 @@ public class GetDateFromTree extends NewickImporter {
                 try {
                     while (getDateFromTree.hasTree()) {
                         Tree tree = getDateFromTree.importNextTree();
+//                        System.out.println(tree.toString());
+//                        System.out.println(insetTreeIndex(2, tree.toString()));
 
                         if (totalTrees == index * 100) { // 1000
-                            System.out.println(totalTrees);
+                            System.out.println("input " + totalTrees + "th tree");
                             getDate(Integer.toString(c), index, tree);
                             index += 10;
                         }
@@ -67,69 +68,42 @@ public class GetDateFromTree extends NewickImporter {
 //        }
     }
 
-    private static void getDate(String curD, int index, Tree tree) { // many trees
-        double[] tips = new double[tree.getExternalNodeCount() + 1];
+    private static void getDate(String curD, int index, Tree treeOne) throws ImportException { // many trees
         double rootHeight;
+        DecimalFormat twoDForm = new DecimalFormat("####0.##");
 
-        System.out.println(tree);
+        Tree[] trees = new Tree[combiTrees];
+        double[][] tips = new double[combiTrees][treeOne.getExternalNodeCount() + 1];
+        double[] origins = new double[trees.length];
 
-        for (int i = 0; i < tree.getTaxonCount(); i++) {
-            FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);
+        trees[0] = treeOne;
+
+        for (int t = 1; t < combiTrees; t++) {
+            trees[t] = getRandomTree();
+            if (trees[t] == null) throw new ImportException("get null random tree");
+//            System.out.println(t + " => " + trees[t].toString());
+        }
+
+        for (int t = 0; t < trees.length; t++) {
+            System.out.println(t + " => " + trees[t]);
+
+            for (int i = 0; i < trees[t].getTaxonCount(); i++) {
+                FlexibleNode node = (FlexibleNode) trees[t].getExternalNode(i);
 //                System.out.println(node.getTaxon() + " has " + node.getHeight());
-            tips[Integer.parseInt(node.getTaxon().getId())] = node.getHeight();
-        }
-        rootHeight = ((FlexibleNode) tree.getRoot()).getHeight();
-        System.out.println("tree " + index + " root height = " + rootHeight);
-        System.out.println("\n");
-
-        if (index < 0) {
-            printXML(tips);
-        } else {
-            DecimalFormat twoDForm = new DecimalFormat("#0.##");
-            try {
-                outputXML(curD, index, tips, Double.valueOf(twoDForm.format(rootHeight + 1.0)), tree.toString());
-            } catch (IOException e) {
-                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+                tips[t][Integer.parseInt(node.getTaxon().getId())] = node.getHeight();
             }
-        }
-        System.out.println("\n");
-    }
-
-    private static void getDate(int index, GetDateFromTree getDateFromTree, String treeString) { // single tree or import trees
-        Taxa taxa = new Taxa();
-        for (int n = 1; n <= 100; n++) {
-            Taxon t = new Taxon(Integer.toString(n));
-            taxa.addTaxon(t);
-        }
-        double[] tips = new double[taxa.getTaxonCount() + 1];
-        double rootHeight;
-        try {
-            Tree tree = getDateFromTree.importTree(taxa);
-            System.out.println(tree);
-
-            for (int i = 0; i < tree.getTaxonCount(); i++) {
-                FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);
-//                System.out.println(node.getTaxon() + " has " + node.getHeight());
-                tips[Integer.parseInt(node.getTaxon().getId())] = node.getHeight();
-            }
-            rootHeight = ((FlexibleNode) tree.getRoot()).getHeight();
-            System.out.println("tree " + index + " root height = " + rootHeight);
+            rootHeight = ((FlexibleNode) trees[t].getRoot()).getHeight();
+            origins[t] = Double.valueOf(twoDForm.format(rootHeight + 100.0));
+            System.out.println("tree " + t + " root height = " + rootHeight + " origin = " + origins[t]);
             System.out.println("\n");
-
-        } catch (ImportException e) {
-            System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
-        } catch (IOException e) {
-            System.err.println("Error Parsing Input Tree: " + e.getMessage());
-            return;
         }
 
+
         if (index < 0) {
-            printXML(tips);
+            printXML(tips[0]);
         } else {
-            DecimalFormat twoDForm = new DecimalFormat("#0.##");
             try {
-                outputXML("", index, tips, Double.valueOf(twoDForm.format(rootHeight + 1.0)), treeString);
+                outputXML(curD, index, tips, origins, trees);
             } catch (IOException e) {
                 e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
@@ -137,7 +111,63 @@ public class GetDateFromTree extends NewickImporter {
         System.out.println("\n");
     }
 
-    private static void outputXML(String curD, int index, double[] tips, double orign, String treeString) throws IOException {
+    private static Tree getRandomTree() {
+        Random random = new Random();
+        int c = random.nextInt(10) + 1; // [1, 10]
+        int tId = random.nextInt(9000) + 1000; // [1000, 10000]
+
+        try {
+            System.out.println("randomly get " + tId + "th tree from " + pathInput + c + inputFileName + "\n\n");
+            FileReader fileReader = new FileReader(pathInput + c + inputFileName);
+            GetDateFromTree getDateFromTree = new GetDateFromTree(fileReader); // many trees
+            int totalTrees = 0;
+
+            try {
+                while (getDateFromTree.hasTree()) {
+                    Tree tree = getDateFromTree.importNextTree();
+                    totalTrees++;
+                    if (totalTrees == tId) {
+                        return tree;
+                    }
+                }
+
+            } catch (ImportException e) {
+                System.err.println("Error Parsing Input Tree: " + e.getMessage());
+                return null;
+            }
+
+            fileReader.close();
+
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        } catch (IOException e) {
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+        }
+
+        return null;
+    }
+
+    private static String insetTreeIndex(int treeIndex, String tree) {
+        int inserts = 0;
+        String newTaxaTree = "";
+        StringTokenizer st = new StringTokenizer(tree, ":");
+        String tmp;
+        while (st.hasMoreTokens()) {
+            tmp = st.nextToken();
+            if (tmp.endsWith(")") || tmp.endsWith(");")) {
+                if (!tmp.endsWith(");")) tmp += ":";
+            } else {
+                tmp += "t" + treeIndex + ":";
+                inserts++;
+            }
+//            System.out.println (tmp);
+            newTaxaTree += tmp;
+        }
+//        System.out.println ("changed " + inserts + " taxon");
+        return newTaxaTree;
+    }
+
+    private static void outputXML(String curD, int index, double[][] tips, double[] origin, Tree[] trees) throws IOException {
         String f = path + curD + "/T_" + Integer.toString(index) + ".xml";
         System.out.println("Creating xml : " + f);
         XMLWriter w = new XMLWriter(new BufferedWriter(new FileWriter(new File(f))));
@@ -153,13 +183,23 @@ public class GetDateFromTree extends NewickImporter {
                 "\t<!-- ntax=100                                                                -->\n" +
                 "\t<taxa id=\"taxa\">\n");
 
-        for (int n = 1; n < tips.length; n++) {
+        for (int n = 1; n < tips[0].length; n++) {
             w.writeText("\t<taxon id=\"" + n + "\">\n" +
-                    "\t\t<date value=\"" + tips[n] + "\" direction=\"backwards\" units=\"years\" />\n" +
+                    "\t\t<date value=\"" + tips[0][n] + "\" direction=\"backwards\" units=\"years\" />\n" +
                     "\t</taxon>\n");
         }
         w.writeText("\t</taxa>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t<taxa id=\"taxa" + tree + "\">\n");
+            for (int n = 1; n < tips[tree - 1].length; n++) {
+                w.writeText("\t<taxon id=\"" + n + "t" + tree + "\">\n" +
+                        "\t\t<date value=\"" + tips[tree - 1][n] + "\" direction=\"backwards\" units=\"years\" />\n" +
+                        "\t</taxon>\n");
+            }
+            w.writeText("\t</taxa>\n");
+        }
 
+        w.flush();
         w.writeText("\t<!-- Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.-->\n" +
                 "\t<birthDeathSerialSampling id=\"bdss\" units=\"substitutions\">\n" +//logTransformed=\"true\">\n" +
                 "\t\t<birthRate>\n" +
@@ -175,7 +215,7 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<parameter id=\"bdss.psi\" value=\"2.82E-4\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
                 "\t\t</psi>\n" +
                 "\t\t<origin>\n" +
-                "\t\t\t<parameter id=\"bdss.origin\" value=\"" + orign + "\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
+                "\t\t\t<parameter id=\"bdss.origin\" value=\"" + origin[0] + "\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
                 "\t\t</origin>\n" +
                 "\t\t<sampleBecomesNonInfectiousProb>\n" +
                 "\t\t\t<parameter id=\"bdss.r\" value=\"1.0\" lower=\"0.0\" upper=\"1.0\"/>\n" +
@@ -184,33 +224,33 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<parameter id=\"bdss.finalTimeInterval\" value=\"0.1\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
                 "\t\t</finalTimeInterval>\n" +
                 "\t</birthDeathSerialSampling>\n");
-
-        for (int tree=2; tree <= combiTrees; tree++) {
-           w.writeText("\t<!-- Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.-->\n" +
-                "\t<birthDeathSerialSampling id=\"bdss" + tree + "\" units=\"substitutions\">\n" +//logTransformed=\"true\">\n" +
-                "\t\t<birthRate>\n" +
-                "\t\t\t<parameter id=\"bdss" + tree + ".birthRate\" value=\"8.14E-4\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
-                "\t\t</birthRate>\n" +
-                "\t\t<relativeDeathRate>\n" +
-                "\t\t\t<parameter id=\"bdss" + tree + ".relativeDeathRate\" value=\"0.132678\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
-                "\t\t</relativeDeathRate>\n" +
-                "\t\t<sampleProbability>\n" +
-                "\t\t\t<parameter idref=\"bdss" + tree + ".sampleProbability\"/>\n" +
-                "\t\t</sampleProbability>\n" +
-                "\t\t<psi>\n" +
-                "\t\t\t<parameter id=\"bdss" + tree + ".psi\" value=\"2.82E-4\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
-                "\t\t</psi>\n" +
-                "\t\t<origin>\n" +
-                "\t\t\t<parameter id=\"bdss" + tree + ".origin\" value=\"" + orign + "\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
-                "\t\t</origin>\n" +
-                "\t\t<sampleBecomesNonInfectiousProb>\n" +
-                "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
-                "\t\t</sampleBecomesNonInfectiousProb>\n" +
-                "\t\t<finalTimeInterval>\n" +
-                "\t\t\t<parameter id=\"bdss.finalTimeInterval\"/>\n" +
-                "\t\t</finalTimeInterval>\n" +
-                "\t</birthDeathSerialSampling>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t<!-- Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.-->\n" +
+                    "\t<birthDeathSerialSampling id=\"bdss" + tree + "\" units=\"substitutions\">\n" +//logTransformed=\"true\">\n" +
+                    "\t\t<birthRate>\n" +
+                    "\t\t\t<parameter idref=\"bdss.birthRate\"/>\n" +
+                    "\t\t</birthRate>\n" +
+                    "\t\t<relativeDeathRate>\n" +
+                    "\t\t\t<parameter idref=\"bdss.relativeDeathRate\"/>\n" +
+                    "\t\t</relativeDeathRate>\n" +
+                    "\t\t<sampleProbability>\n" +
+                    "\t\t\t<parameter idref=\"bdss.sampleProbability\"/>\n" +
+                    "\t\t</sampleProbability>\n" +
+                    "\t\t<psi>\n" +
+                    "\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
+                    "\t\t</psi>\n" +
+                    "\t\t<origin>\n" +
+                    "\t\t\t<parameter id=\"bdss" + tree + ".origin\" value=\"" + origin[tree - 1] + "\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
+                    "\t\t</origin>\n" +
+                    "\t\t<sampleBecomesNonInfectiousProb>\n" +
+                    "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
+                    "\t\t</sampleBecomesNonInfectiousProb>\n" +
+                    "\t\t<finalTimeInterval>\n" +
+                    "\t\t\t<parameter idref=\"bdss.finalTimeInterval\"/>\n" +
+                    "\t\t</finalTimeInterval>\n" +
+                    "\t</birthDeathSerialSampling>\n");
         }
+        w.flush();
 
         w.writeText("\t<RPNcalculator id=\"R0\">\n" +
                 "\t\t<variable name=\"b\">\n" +
@@ -237,36 +277,43 @@ public class GetDateFromTree extends NewickImporter {
 //                "\t\t\tp exp\n" +
 //                "\t\t</expression>\n" +
 //                "\t</RPNcalculator>\n");
-        for (int tree=2; tree <= combiTrees; tree++) {
-            w.writeText("\t<RPNcalculator id=\"R0" + tree + "\">\n" +
-                    "\t\t<variable name=\"b\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-                    "\t\t</variable>\n" +
-                    "\t\t<variable name=\"d\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-                    "\t\t</variable>\n" +
-                    "\t\t<variable name=\"s\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
-                    "\t\t</variable>\n" +
-                    "\t\t<variable name=\"r\">\n" +
-                    "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
-                    "\t\t</variable>\n" +
-                    "\t\t<expression name=\"R0" + tree + "\">\n" +
-                    "\t\t\tb b d * s r * + /\n" +
-                    "\t\t</expression>\n" +
-                    "\t</RPNcalculator>\n");
-        }
+//        for (int tree = 2; tree <= combiTrees; tree++) {
+//            w.writeText("\t<RPNcalculator id=\"R0" + tree + "\">\n" +
+//                    "\t\t<variable name=\"b\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
+//                    "\t\t</variable>\n" +
+//                    "\t\t<variable name=\"d\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
+//                    "\t\t</variable>\n" +
+//                    "\t\t<variable name=\"s\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
+//                    "\t\t</variable>\n" +
+//                    "\t\t<variable name=\"r\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
+//                    "\t\t</variable>\n" +
+//                    "\t\t<expression name=\"R0" + tree + "\">\n" +
+//                    "\t\t\tb b d * s r * + /\n" +
+//                    "\t\t</expression>\n" +
+//                    "\t</RPNcalculator>\n");
+//        }
 
+        w.flush();
         w.writeText("\n" +
                 "\t<!-- Generate a random starting tree under the coalescent process      -->\n" +
                 "\t<newick id=\"startingTree\">\n");
-
+        w.write(trees[0].toString());
+        w.writeText("\n" + "\t</newick>\n");
         w.flush();
-        w.write(treeString);
-        w.flush();
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\n" +
+                    "\t<!-- Generate a random starting tree under the coalescent process      -->\n" +
+                    "\t<newick id=\"startingTree" + tree + "\">\n");
+            w.write(insetTreeIndex(tree, trees[tree - 1].toString()));
+            w.writeText("\n" + "\t</newick>\n");
+            w.flush();
+        }
 
-        w.writeText("\n" + "\t</newick>\n" +
-                "\n" +
+        w.writeText("\n" +
                 "\t<!-- Generate a tree model                                                   -->\n" +
                 "\t<treeModel id=\"treeModel\">\n" +
                 "\t\t<coalescentTree idref=\"startingTree\"/>\n" +
@@ -282,6 +329,26 @@ public class GetDateFromTree extends NewickImporter {
                 "\n" +
                 "\t\t<!-- END Tip date sampling                                                   -->\n" +
                 "\t</treeModel>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\n" +
+                    "\t<!-- Generate a tree model                                                   -->\n" +
+                    "\t<treeModel id=\"treeModel" + tree + "\">\n" +
+                    "\t\t<coalescentTree idref=\"startingTree" + tree + "\"/>\n" +
+                    "\t\t<rootHeight>\n" +
+                    "\t\t\t<parameter id=\"treeModel" + tree + ".rootHeight\"/>\n" +
+                    "\t\t</rootHeight>\n" +
+                    "\t\t<nodeHeights internalNodes=\"true\">\n" +
+                    "\t\t\t<parameter id=\"treeModel" + tree + ".internalNodeHeights\"/>\n" +
+                    "\t\t</nodeHeights>\n" +
+                    "\t\t<nodeHeights internalNodes=\"true\" rootNode=\"true\">\n" +
+                    "\t\t\t<parameter id=\"treeModel" + tree + ".allInternalNodeHeights\"/>\n" +
+                    "\t\t</nodeHeights>\n" +
+                    "\n" +
+                    "\t\t<!-- END Tip date sampling                                                   -->\n" +
+                    "\t</treeModel>\n");
+
+        }
+        w.flush();
 
         w.writeText("\n" +
                 "\t<!-- Generate a speciation likelihood for Yule or Birth Death                -->\n" +
@@ -293,6 +360,18 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
                 "\t\t</speciesTree>\n" +
                 "\t</speciationLikelihood>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\n" +
+                    "\t<!-- Generate a speciation likelihood for Yule or Birth Death                -->\n" +
+                    "\t<speciationLikelihood id=\"speciation" + tree + "\">\n" +
+                    "\t\t<model>\n" +
+                    "\t\t\t<birthDeathSerialSampling idref=\"bdss" + tree + "\"/>\n" +
+                    "\t\t</model>\n" +
+                    "\t\t<speciesTree>\n" +
+                    "\t\t\t<treeModel idref=\"treeModel" + tree + "\"/>\n" +
+                    "\t\t</speciesTree>\n" +
+                    "\t</speciationLikelihood>\n");
+        }
 
         w.writeText("\n" + "\t<!-- Define operators                                                        -->\n" +
                 "\t<operators id=\"operators\">\n" +
@@ -314,19 +393,19 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
                 "\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
                 "\t\t</scaleOperator>\n");
-        for (int tree=2; tree <= combiTrees; tree++) {
+        for (int tree = 2; tree <= combiTrees; tree++) {
             w.writeText("\n" +
-                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-                    "\t\t</scaleOperator>\n" +
-                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-                    "\t\t</scaleOperator>\n" +
+//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
+//                    "\t\t</scaleOperator>\n" +
+//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
+//                    "\t\t</scaleOperator>\n" +
+//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
+//                    "\t\t</scaleOperator>\n" +
                     "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
                     "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n" +
-                    "\t\t</scaleOperator>\n" +
-                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
                     "\t\t</scaleOperator>\n");
         }
         w.writeText("\n" + "\t</operators>");
@@ -348,19 +427,40 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t\t</uniformPrior>\n" +
                 "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"100.0\">\n" +
                 "\t\t\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
-                "\t\t\t\t</uniformPrior>\n" +
+                "\t\t\t\t</uniformPrior>\n");
 //                "\t\t\t\t<oneOnXPrior>\n" +
 //                "\t\t\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
 //                "\t\t\t\t</oneOnXPrior>\n" +
-                "\n" +
+//        for (int tree = 2; tree <= combiTrees; tree++) {
+//            w.writeText("\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"100000.0\">\n" +
+//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
+//                    "\t\t\t\t</uniformPrior>\n" +
+//                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1000.0\">\n" +
+//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
+//                    "\t\t\t\t</uniformPrior>\n" +
+//                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"100.0\">\n" +
+//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
+//                    "\t\t\t\t</uniformPrior>\n");
+//        }
+        w.writeText("\n" +
                 "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1.7976931348623157E308\">\n" +
                 "\t\t\t\t\t<parameter idref=\"bdss.origin\"/>\n" +
-                "\t\t\t\t</uniformPrior>\n" +
-                "\n" +
+                "\t\t\t\t</uniformPrior>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\n" +
+                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1.7976931348623157E308\">\n" +
+                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n" +
+                    "\t\t\t\t</uniformPrior>\n");
+        }
+
+        w.writeText("\n" +
                 "\t\t\t</prior>\n" +
                 "\t\t\t<likelihood id=\"likelihood\">\n" +
-                "\t\t\t\t<speciationLikelihood idref=\"speciation\"/>\n" +
-                "\t\t\t</likelihood>\n" +
+                "\t\t\t\t<speciationLikelihood idref=\"speciation\"/>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t\t\t<speciationLikelihood idref=\"speciation" + tree + "\"/>\n");
+        }
+        w.writeText("\t\t\t</likelihood>\n" +
                 "\t\t</posterior>\n" +
                 "\t\t<operators idref=\"operators\"/>\n");
 
@@ -374,8 +474,8 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<column label=\"Prior\" dp=\"4\" width=\"12\">\n" +
                 "\t\t\t\t<prior idref=\"prior\"/>\n" +
                 "\t\t\t</column>\n" +
-                "\t\t\t<column label=\"Likelihood\" dp=\"4\" width=\"12\">\n" +
-                "\t\t\t\t<likelihood idref=\"likelihood\"/>\n" +
+                "\t\t\t<column label=\"speciation\" dp=\"4\" width=\"12\">\n" +
+                "\t\t\t\t<likelihood idref=\"speciation\"/>\n" +
                 "\t\t\t</column>\n" +
                 "\t\t\t<column label=\"rootHeight\" sf=\"6\" width=\"12\">\n" +
                 "\t\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
@@ -384,17 +484,23 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<parameter idref=\"bdss.relativeDeathRate\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
-                "\t\t\t<RPNcalculator idref=\"R0\"/>\n" +
-                "\t\t\t\n" +
-                "\t\t</log>\n" +
+                "\t\t\t<RPNcalculator idref=\"R0\"/>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t\t<parameter idref=\"treeModel" + tree + ".rootHeight\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
+//                    "\t\t\t<RPNcalculator idref=\"R0" + tree + "\"/>\n" +
+                    "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n");
+        }
+
+        w.writeText("\t\t</log>\n" +
                 "\n" +
                 "\t\t<!-- write log to file                                                       -->\n" +
                 "\t\t<log id=\"fileLog\" logEvery=\"1000\" fileName=\"T" + curD + "_" + Integer.toString(index) + ".log\" overwrite=\"false\">\n" +
                 "\t\t\t<posterior idref=\"posterior\"/>\n" +
                 "\t\t\t<prior idref=\"prior\"/>\n" +
-                "\t\t\t<likelihood idref=\"likelihood\"/>\n" +
                 "\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
-                "\n" +
                 "\t\t\t<parameter idref=\"bdss.birthRate\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.relativeDeathRate\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.sampleProbability\"/>\n" +
@@ -402,11 +508,23 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<parameter idref=\"bdss.origin\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
                 "\t\t\t<parameter idref=\"bdss.finalTimeInterval\"/>\n" +
-                "\t\t\t<RPNcalculator idref=\"R0\"/>\n" +
-                "\n" +
-                "\t\t\t<!-- END Tip date sampling                                                   -->\n" +
-                "\t\t\t<speciationLikelihood idref=\"speciation\"/>\n" +
-                "\t\t</log>\n" +
+                "\t\t\t<RPNcalculator idref=\"R0\"/>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t\t<parameter idref=\"treeModel" + tree + ".rootHeight\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
+//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
+//                    "\t\t\t<RPNcalculator idref=\"R0" + tree + "\"/>\n" +
+                    "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n");
+        }
+
+        w.writeText("\n" +
+                "\t\t\t<speciationLikelihood idref=\"speciation\"/>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t\t\t<speciationLikelihood idref=\"speciation" + tree + "\"/>\n");
+        }
+
+        w.writeText("\t\t</log>\n" +
                 "\n" +
 //                "\t\t<!-- write tree log to file                                                  -->\n" +
 //                "\t\t<logTree id=\"treeFileLog\" logEvery=\"1000\" nexusFormat=\"true\" fileName=\"T" + curD + "_" + Integer.toString(index) + ".trees\" sortTranslationTable=\"true\">\n" +
@@ -438,13 +556,13 @@ public class GetDateFromTree extends NewickImporter {
 //    static final String testingTree = "((1:1,2:1):1,(3:0.25,4:0.75):1);";
 //
 //    static final String treeImported = "((3:0.3824976747708124,94:3.401966643328916):0.2131455444432433,((63:0.7035650391093435,(((61:0.2412493040961774,(((69:0.8620006828340152,((48:0.5302937984554452,((66:0.49360327162170314,96:0.7203824406192432):0.26805517248648547,(84:1.6647723439430746,18:1.7899504518955753):8.032342341470766E-4):0.3878430419933654):0.0020541955766213427,(((39:0.547175618789725,41:0.7713476736692841):1.5199644442202225,59:2.300348903048058):0.3545780299502965,(5:2.173657685837823,(7:0.4831518556113801,46:0.04259431830686622):0.9936840610288644):0.3828314786413345):0.06944108321445075):0.2916463175592021):0.8511296243775233,(((13:0.21179557713185626,65:0.9050599247224358):1.2063337719436882,(19:0.961325550099684,(71:0.27227635823039753,((72:0.3623541449244776,34:1.1593527329427098):0.4329707059057515,24:1.750349112100648):0.8548087225791183):0.33826729136137956):0.014057115381393093):0.6343929119615161,99:3.7025837488577316):0.543866697708435):0.1836689943905121,((((((82:1.7276842975724649,91:1.607723421568065):0.1933685581812319,((28:0.23706203140931148,((86:0.5529558273083699,67:0.29663788595939145):0.281373008673687,31:0.8632750147330384):0.5341346272330105):0.7280205172816232,73:0.11489207430514847):0.1042334879532878):0.22023308807550723,97:2.0816724934432385):0.16356342886852548,(25:0.85596627446141,81:0.10864654588741773):0.3265316815053567):0.7052085780791693,((((54:1.2513925633251677,15:1.7216422570576408):1.1052980890372737,79:1.4025557656843413):0.4324573365468609,((60:1.2665130997995677,(23:0.9699990116584232,(58:0.17796506940081697,27:0.3614456732505629):1.3967642598709824):0.4421690408682921):0.7888785083571337,((76:0.1711906024989267,49:1.2710678644023476):0.060131414497704094,64:1.2593916884637246):1.5454624508194899):0.24056330854342534):0.015283090096886554,((32:1.3278266797752578,50:1.2629774321495602):0.7777520083215703,88:0.02772431983654222):1.1101361895232151):0.5963623233265598):0.3665009131043293,((((16:1.9309003970287875,(((90:0.5445216783903744,6:0.8548831149642158):0.2741249294450656,30:0.008362111012826023):1.022234909613422,(40:0.7366132749777619,83:0.5070914524648216):1.3875613903422281):0.5001700205337869):0.7233479987224163,((1:0.6003333838940725,98:0.3415505496586113):2.588962722413393,(4:0.2759376488056353,29:0.47002294631420005):0.898552467271085):0.2362157981780597):0.11672800780799664,((10:1.1355322499789322,43:0.5843151524612831):0.701686409717148,52:1.9374978201794926):1.417945520858075):0.7586500833008447,9:0.3178627566272416):0.03155457313484966):0.14868731051955386):0.3667216608428072):0.02390814464028157,(((((35:1.086623144974067,74:0.692186651442158):0.10673574135114072,(78:0.1638180965937629,89:0.250663800794962):0.08265189041229482):1.4629757070659404,93:1.6063646891197325):1.4550877544464176,((37:0.9226166936844796,21:1.044343709701885):1.5676034487217074,100:1.3447223957080423):1.088773395481709):0.08284086233381505,((((56:2.355869340652318,45:0.4032979506669325):0.3330320301280212,((2:0.5357734051244822,53:1.0622382154097905):1.0714020295534217,(57:1.9553678171881557,92:1.9351676011453818):0.3176309095081522):0.33889485298905964):1.0910719751499318,51:0.06358005997870864):0.24119223678720436,(12:1.0464825190142348,8:1.0984225849334481):1.6150168196252994):0.13538891424735233):0.654056534527701):0.68828126623945,((((95:1.5084591517564723,87:1.0618807586778019):0.13101510403314265,75:1.1323197425395333):2.2878458817626433,36:2.864052872624789):0.6509399099742286,(((17:0.06524692359560014,((((33:0.017056678783653467,(77:0.768977532338945,22:0.2066823108679694):0.3345642602125296):0.600193544474839,47:0.6997906421703952):0.5100738160877549,(70:0.5677418730833756,42:1.9551556564280363):1.6169469279243813):0.3307075738681533,20:2.492040542806981):0.525443622448492):0.09433286051003886,((11:0.3113555135611077,(38:0.44389504903251376,44:1.2708469141489145):0.2622045045057788):1.2732398364643553,(26:1.6716254866488542,(55:0.9828398772396151,68:0.21551121655825067):1.106998506688205):0.5526554864260289):1.671928572660197):0.12614845672773534,(80:0.34195834822687576,(85:0.09264904116899952,62:1.713709090294202):0.18592099291105324):0.4792020544951763):0.2727014597498254):0.2650194727743962):2.4225764992771586):0.12072071192465827,14:0.47972787703636754):2.757605090929111);";
-    static final int combiTrees = 2;
+    static final int combiTrees = 10;
     // T2 sampleBecomesNonInfectiousProb = 1; T1 sampleBecomesNonInfectiousProb = 0
-    static final String path = "C:/Users/dxie004/Documents/HIV Swiss Cohort study/Tanjia Birth-Death/20110616/r1brdp/";
-//    static final String path = "/Users/dxie004/BirthDeath/r1brdp/";
+//    static final String path = "C:/Users/dxie004/Documents/HIV Swiss Cohort study/Tanjia Birth-Death/20110616/r1brdp/";
+    static final String path = "/Users/dxie004/BirthDeath/20110616/r1brdp10/";
 //    static final String curD = "10";
-    static final String pathInput = "C:/Users/dxie004/Documents/HIV Swiss Cohort study/Tanjia Birth-Death/20110616/T/";
-//    static final String pathInput = "/Users/dxie004/BirthDeath/T32/";
+//    static final String pathInput = "C:/Users/dxie004/Documents/HIV Swiss Cohort study/Tanjia Birth-Death/20110616/T/";
+    static final String pathInput = "/Users/dxie004/BirthDeath/20110616/T/";
     static final String inputFileName = "/T.trees";
 //    static final String[] trees = {
 //            /* 1 */  "(((100:0.2759295941079598,((6:0.1780547126475307,90:0.2773585176913773):0.4324798358805104,(77:0.4366037591568581,(((60:0.06114593641368682,(((45:1.1858532193532096,69:0.4857462933631136):1.0703793675170519,14:1.0080965286106625):0.7531830236235892,(((72:0.4734480373733323,13:1.6414737257868168):0.31345510548895206,9:1.2799154503620205):0.36580160160488395,55:0.6521307508046301):0.13222292659177048):0.6843395008777939):0.08358823875237409,(63:0.1173962764017622,(((((83:0.06388497493919498,(87:0.06971104871286249,96:0.11513746603637598):0.2617677248167065):0.23523100742624647,11:2.5488642344318637):0.5709241701969603,(((59:0.13001207544150828,4:0.534509372507409):0.9065013929723875,(((78:0.4300613180395787,(54:0.5881259163967514,37:0.09161743362459873):0.10007317973276297):0.3581939195808168,71:0.8417847156069083):0.6760435746540918,56:0.34728849185761557):0.0011569801790649592):1.6147112046099765,(98:1.8505753493501458,17:0.9280241884545952):1.5062115835297483):0.6173650351656441):0.0175798939167926,40:1.4327849159224866):0.6484216994792886,42:0.5649331356339093):0.044490735903595535):0.10065007060014697):0.7480152893310459,((19:1.0453148233101777,65:0.03982690649499432):0.015852971398985005,((((((((24:0.6426142775167778,49:0.26507022798260027):0.7090057146513142,((41:0.14186057102002847,67:0.026961796503665925):0.36991918712876304,79:0.5815959657493615):1.024603334843216):0.024183855106581387,86:0.08436576474963875):0.3946779683409196,((61:0.21049623087835378,(16:0.22329709973960155,93:0.0980200763866037):0.11081431464717495):0.8467610850802538,31:1.2165550002603938):0.06206931566212637):0.7024059789204573,((18:0.5110908536902983,34:0.21183915417614707):0.882488365662339,73:0.23324499594150505):2.0871456603448966):0.44201612676651125,99:0.455825827781966):0.638245486290975,(39:0.07658437481359659,58:0.1764000007473152):0.8470799448815418):0.13252970716211898,53:0.5440963965993131):0.7116321144589479):0.04446103714470162):0.5570925454659523):0.8349620719218072):0.39537618606560354):0.23246534833540267,((70:0.1996975744937446,((30:0.25043743640342697,((((89:1.6127193503514903,(82:0.14048148155413376,57:1.0784083186686084):0.38780755293423397):0.24644757705303455,80:0.24722619589322203):0.06489043744710532,7:1.6582683265776672):0.4481749866378619,(2:1.8804071294900604,3:0.023035004075473875):0.7446717171494495):0.2814795274087576):1.0069357276627375,((((((50:0.009904531387953774,(51:0.04974396264227465,((28:0.6164291583816088,33:0.7028750326597675):0.020632702991932206,52:0.2620934650458022):1.6169083530976258):0.11188677321436113):0.5897740532249305,((((84:0.00915957993005767,75:1.403360151297104):0.17953794102191267,81:0.0627513917657474):0.37241766310854807,(((94:0.7136713627250614,10:0.008279153277477747):0.11337143032465669,(68:0.9476218248680841,8:0.46104904327810214):0.3082656519911391):1.0277836373882483,35:1.139900635404104):0.3649293864599641):0.04053080400729936,62:0.43372394838795225):0.8450036334702116):0.21676992831331532,97:0.3937210281260244):0.6217923509933945,66:0.3065474310864129):0.8170463207263605,44:0.026894004345598965):0.015539344835022284,((20:0.1252746831931999,12:0.2706972912118957):0.23084681536101925,(((21:0.04108670219976496,((26:0.21683708421460812,(32:0.14412489943602447,(((74:0.18560721020572668,(95:0.362902776402263,((25:0.42464905250257207,1:0.5164820341492313):0.5925646746092141,85:0.13636374873279244):0.0031874038009704897):0.0044990893278598065):0.10197883895896687,(43:0.05393610804603166,46:0.926216914294938):0.1084119847356193):0.34337795022535045,29:0.5918636480714469):1.0448119892689047):0.31409259065885076):0.6919113759361757,91:0.7479793351634823):0.6136793015327289):0.27258213498288786,((((((48:0.1306215018764466,(88:0.8711354400164752,36:0.4491587803517647):0.055997269374821856):0.06583165565941829,27:1.0506149946403638):2.364007453784181,5:0.45338514679037667):0.053644616923241184,92:0.7051063242279012):0.35121217569111796,47:0.5874377988158308):0.3714369733787217,(64:0.032098512520678746,15:0.07581713088827158):0.03448907859428907):0.2810624510789914):0.30792407694989077,76:1.1156644058672276):0.39531170115012415):0.08177480035578455):0.5568135150951967):0.14934174255400912):1.1303652342548354,(38:0.2423418362203531,23:0.3173102378974546):0.32247555533508354):0.5340110001664744):0.3446866710113099,22:0.12145978249112854);",
@@ -464,3 +582,45 @@ public class GetDateFromTree extends NewickImporter {
 //             sum += 1/(double) n;
 //        }
 //        System.out.println("sum = " + sum);
+
+//    private static void getDate(int index, GetDateFromTree getDateFromTree, String treeString) { // single tree or import trees
+//        Taxa taxa = new Taxa();
+//        for (int n = 1; n <= 100; n++) {
+//            Taxon t = new Taxon(Integer.toString(n));
+//            taxa.addTaxon(t);
+//        }
+//        double[] tips = new double[taxa.getTaxonCount() + 1];
+//        double rootHeight;
+//        try {
+//            Tree tree = getDateFromTree.importTree(taxa);
+//            System.out.println(tree);
+//
+//            for (int i = 0; i < tree.getTaxonCount(); i++) {
+//                FlexibleNode node = (FlexibleNode) tree.getExternalNode(i);
+////                System.out.println(node.getTaxon() + " has " + node.getHeight());
+//                tips[Integer.parseInt(node.getTaxon().getId())] = node.getHeight();
+//            }
+//            rootHeight = ((FlexibleNode) tree.getRoot()).getHeight();
+//            System.out.println("tree " + index + " root height = " + rootHeight);
+//            System.out.println("\n");
+//
+//        } catch (ImportException e) {
+//            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+//            return;
+//        } catch (IOException e) {
+//            System.err.println("Error Parsing Input Tree: " + e.getMessage());
+//            return;
+//        }
+//
+//        if (index < 0) {
+//            printXML(tips);
+//        } else {
+//            DecimalFormat twoDForm = new DecimalFormat("#0.##");
+//            try {
+//                outputXML("", index, tips, Double.valueOf(twoDForm.format(rootHeight + 1.0)), treeString);
+//            } catch (IOException e) {
+//                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+//            }
+//        }
+//        System.out.println("\n");
+//    }

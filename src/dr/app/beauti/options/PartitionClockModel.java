@@ -393,6 +393,15 @@ public class PartitionClockModel extends PartitionOptions {
         return isEstimatedRate;
     }
 
+    public void setUseReferencePrior(boolean useReferencePrior) {
+        Parameter rateParam = getClockRateParam();
+        if (useReferencePrior) {
+            rateParam.priorType = PriorType.SUBSTITUTION_REFERENCE_PRIOR;
+        } else {
+            rateParam.priorType = PriorType.UNDEFINED;
+        }
+    }
+
     public double getRate() {
         return rate;
     }

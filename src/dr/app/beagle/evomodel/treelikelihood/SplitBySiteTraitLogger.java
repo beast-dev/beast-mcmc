@@ -1,8 +1,11 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -23,7 +26,7 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
     public static final String TRAIT_NAME = "traitName";
     public static final String SCALE = "scaleByBranchLength";
 
-    public SplitBySiteTraitLogger(AncestralStateBeagleTreeLikelihood treeLikelihood, String traitName, boolean scale) throws XMLParseException {
+    public SplitBySiteTraitLogger(final AncestralStateBeagleTreeLikelihood treeLikelihood, String traitName, boolean scale) throws XMLParseException {
         TreeTrait trait = treeLikelihood.getTreeTrait(traitName);
         if (trait == null) {
             throw new XMLParseException("TreeTraitProvider does not provide trait named '" + traitName + ".");
@@ -33,21 +36,44 @@ public class SplitBySiteTraitLogger extends TreeTraitProvider.Helper implements 
         int length;
         Object obj = trait.getTrait(tree, tree.getNode(0));
 
+        boolean isDoubleArray = false;
+        boolean isIntegerArray = false;
+
         if (obj instanceof double[]) {
             length = ((double[]) obj).length;
+            isDoubleArray = true;
+        } else if (obj instanceof int[]) {
+            length = ((int[])obj).length;
+            isIntegerArray = true;
         } else {
             throw new XMLParseException("Unknown trait type to split");
         }
 
         TreeTrait[] partitionedTraits = new TreeTrait[length];
-        for (int i = 0; i < length; i++) {
-            if (scale) {
-                partitionedTraits[i] = new TreeTrait.PickEntryDAndScale(trait, i);
-            } else {
-                partitionedTraits[i] = new TreeTrait.PickEntryD(trait, i);
+        if (isDoubleArray) {
+            for (int i = 0; i < length; i++) {
+                if (scale) {
+                    partitionedTraits[i] = new TreeTrait.PickEntryDAndScale(trait, i);
+                } else {
+                    partitionedTraits[i] = new TreeTrait.PickEntryD(trait, i);
+                }
+            }
+        } else if (isIntegerArray) {
+            for (int i = 0; i < length; ++i) {
+                if (traitName.compareTo(AncestralStateTreeLikelihood.STATES_KEY) == 0) {
+                    partitionedTraits[i] = new TreeTrait.PickEntryI(trait, i) {
+                        public String getTraitString(Tree tree, NodeRef node) {
+                            int[] state = new int[1];
+                            state[0] = getTrait(tree, node);
+                            return treeLikelihood.formattedState(state);
+                        }
+                    };
+                } else {
+                    partitionedTraits[i] = new TreeTrait.PickEntryI(trait, i);
+                }
             }
         }
-        addTraits(partitionedTraits);
+        addTraits(partitionedTraits);        
 
         Logger.getLogger("dr.app.beagle").info("\tConstructing a split logger with " + length + " partitions;  please cite:\n"
                 + Citable.Utils.getCitationString(this));

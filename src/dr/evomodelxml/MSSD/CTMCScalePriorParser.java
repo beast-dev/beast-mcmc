@@ -25,7 +25,7 @@ public class CTMCScalePriorParser extends AbstractXMLObjectParser {
 
         Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating ctmcScalePrior model.");
         Logger.getLogger("dr.evolution").info("\tIf you publish results using this prior, please reference:");
-        Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (in press) for the conditional reference prior on CTMC scale parameter prior;");
+        Logger.getLogger("dr.evolution").info("\t\t 1. Ferreira and Suchard (2008) for the conditional reference prior on CTMC scale parameter prior;");
 
         return new CTMCScalePrior(MODEL_NAME, ctmcScale, treeModel);
     }

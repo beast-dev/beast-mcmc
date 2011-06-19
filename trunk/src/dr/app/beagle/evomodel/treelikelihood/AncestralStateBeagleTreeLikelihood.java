@@ -198,6 +198,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return jointLogLikelihood;
     }
 
+    public String formattedState(int[] state) {
+        return formattedState(state, dataType);
+    }
+
     private static String formattedState(int[] state, DataType dataType) {
         StringBuffer sb = new StringBuffer();
         sb.append("\"");

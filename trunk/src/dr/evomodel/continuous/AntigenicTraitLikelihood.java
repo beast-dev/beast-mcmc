@@ -3,6 +3,9 @@ package dr.evomodel.continuous;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import dr.util.DataTable;
 import dr.xml.*;
 
@@ -16,7 +19,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
-public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood  {
+public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood implements Citable {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
@@ -31,6 +34,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             final double threshold) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
+
+        Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(this));
 
         String[] virusNames = dataTable.getRowLabels();
         boolean hasAliases = false;
@@ -228,12 +233,13 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
         }
 
-        System.out.println("AntigenicTraitLikelihood:");
-        System.out.println("  " + virusNames.length + " viruses");
-        System.out.println("  " + serumNames.length + " antisera");
-        System.out.println("  " + observations.length + " observations");
-        System.out.println("  " + thresholdCount + " threshold observations");
-        System.out.println();
+        StringBuilder sb = new StringBuilder();        
+        sb.append("\tAntigenicTraitLikelihood:\n");
+        sb.append("\t\t" + virusNames.length + " viruses\n");
+        sb.append("\t\t" + serumNames.length + " antisera\n");
+        sb.append("\t\t" + observations.length + " observations\n");
+        sb.append("\t\t" + thresholdCount + " threshold observations\n");
+        Logger.getLogger("dr.evomodel").info(sb.toString());
 
         initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
 
@@ -347,8 +353,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite Rambaut, Bedford, Lemey, Russell, Smith & Suchard (or some such order, in prep.).");
-
             return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform, threshold);
         }
 
@@ -381,4 +385,19 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         }
     };
 
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(new Citation(
+                new Author[]{
+                        new Author("A", "Rambaut"),
+                        new Author("T", "Bedford"),
+                        new Author("P", "Lemey"),
+                        new Author("C", "Russell"),
+                        new Author("D", "Smith"),
+                        new Author("MA", "Suchard"),
+                },
+                Citation.Status.IN_PREPARATION
+        ));
+        return citations;
+    }
 }

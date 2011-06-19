@@ -30,8 +30,10 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.PriorType;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
@@ -64,7 +66,11 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
     private final String[] columnToolTips = {"Name", "Clock model",
             "Decide whether to estimate this clock model",
             "Provide the rate if it is fixed",
-            "The group which the clock model is belonging to"};
+            "The group which the clock model is belonging to",
+            "<html>Use the approximate reference prior<br>" +
+                    "developed in Ferreira & Suchard (2008).<br>" +
+                    "Good when little prior information<br>" +
+                    "is available</html>"};
     private final String[] columnToolTips2 = {"A group of clock models",
             "<html>Fix mean rate of this group of clock models." +
                     "<br>Select this option to fix the mean substitution rate,<br>" +
@@ -74,6 +80,8 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     "In addition, it is only available for multi-clock partitions.</html>",
             "Enter the fixed mean rate here."};
     private static final int MINIMUM_TABLE_HEIGHT = 400;
+
+    private static final boolean includeReferencePrior = true;
 
     JTable clockModelTable = null;
     ClockModelTableModel clockModelTableModel = null;
@@ -299,6 +307,11 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         col.setCellRenderer(comboBoxRenderer);
         col.setMinWidth(200);
 
+        if (includeReferencePrior) {
+            col = dataTable.getColumnModel().getColumn(5);
+            col.setMinWidth(120);
+        }
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
     }
 
@@ -388,9 +401,15 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = -2852144669936634910L;
 
         //        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};
-        String[] columnNames = {"Name", "Model", "Estimate", "Rate", "Group"};
+        final private String[] columnNames;
 
         public ClockModelTableModel() {
+
+            if (includeReferencePrior) {
+                columnNames = new String[] {"Name", "Model", "Estimate", "Rate", "Group", "Reference Prior"};
+            } else {
+                columnNames = new String[] {"Name", "Model", "Estimate", "Rate", "Group" };
+            }
         }
 
         public int getColumnCount() {
@@ -424,6 +443,10 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     return model.getRate();
                 case 4:
                     return model.getClockModelGroup().getName();
+                case 5:
+                    Parameter rateParam =  model.getClockRateParam();
+//                    return model.useReferencePrior();
+                    return rateParam.priorType == PriorType.SUBSTITUTION_REFERENCE_PRIOR;
             }
             return null;
         }
@@ -457,6 +480,9 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 case 4:
                     model.setClockModelGroup(options.clockModelOptions.getGroup(aValue.toString(), clockModelGroupList));
                     break;
+                case 5:
+                    model.setUseReferencePrior((Boolean) aValue);
+                    break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
@@ -478,6 +504,9 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     break;
                 case 3:
                     editable = !group.isFixMean();// && !((Boolean) getValueAt(row, 2));
+                    break;
+                case 5:
+                    editable = !group.isFixMean();
                     break;
                 default:
                     editable = true;

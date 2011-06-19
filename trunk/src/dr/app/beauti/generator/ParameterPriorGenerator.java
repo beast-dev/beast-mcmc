@@ -26,13 +26,13 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.MSSD.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
@@ -225,6 +225,23 @@ public class ParameterPriorGenerator extends Generator {
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.BETA_PRIOR);
+                break;
+            case SUBSTITUTION_REFERENCE_PRIOR:
+                writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME);
+                writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
+                // Find correct tree for this rate parameter
+                PartitionTreeModel treeModel = null;
+                for (int i = 0; i < options.getPartitionClockModels().size(); ++i) {
+                    PartitionClockModel pcm = options.getPartitionClockModels().get(i);
+                    if (pcm.getClockRateParam() == parameter) {
+                        treeModel = options.getPartitionTreeModels().get(i);
+                        break;
+                    }
+                }
+                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
                 break;
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:

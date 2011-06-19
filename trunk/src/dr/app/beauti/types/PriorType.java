@@ -23,6 +23,7 @@ public enum PriorType {
     TRUNC_NORMAL_PRIOR,
     POISSON_PRIOR,
     BETA_PRIOR,
+    SUBSTITUTION_REFERENCE_PRIOR,
     NORMAL_HPM_PRIOR,
     LOGNORMAL_HPM_PRIOR;
 
@@ -58,6 +59,8 @@ public enum PriorType {
                 return "Truncated Normal";
             case BETA_PRIOR:
                 return "Beta";
+            case SUBSTITUTION_REFERENCE_PRIOR:
+                return "Subst Reference";
             case NORMAL_HPM_PRIOR:
                 return "Normal HPM";
             case LOGNORMAL_HPM_PRIOR:
@@ -214,6 +217,9 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(param.shapeB, 10, 6));
                 buffer.append("]");
                 break;
+            case SUBSTITUTION_REFERENCE_PRIOR:
+                buffer.append("Approx. Reference Prior");
+                break;
             case NORMAL_HPM_PRIOR:
                 buffer.append("Normal HPM [mean, precision]");
                 break;
@@ -256,6 +262,7 @@ public enum PriorType {
             case POISSON_PRIOR:
             case BETA_PRIOR:
             case TRUNC_NORMAL_PRIOR:
+            case SUBSTITUTION_REFERENCE_PRIOR:
             case NORMAL_HPM_PRIOR:
             case LOGNORMAL_HPM_PRIOR:
                 buffer.append("[");

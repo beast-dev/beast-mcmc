@@ -9,6 +9,8 @@ import dr.util.Citation;
 import dr.util.DataTable;
 import dr.xml.*;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -23,6 +25,18 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
+    /**
+     * Constructor
+     * @param mdsDimension dimension of the mds space
+     * @param mdsPrecision parameter which gives the precision of the bmds
+     * @param tipTraitParameter a parameter of locations for the tips of the tree (mapped to virus locations)
+     * @param virusLocationsParameter a parameter of locations for viruses
+     * @param serumLocationsParameter a parameter of locations for sera
+     * @param dataTable the assay table (virus in rows, serum assays in columns)
+     * @param virusAntiserumMap a map of viruses to corresponding sera
+     * @param assayAntiserumMap a map of repeated assays for a given sera
+     * @param log2Transform transform the data into log 2 space
+     */
     public AntigenicTraitLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
@@ -30,6 +44,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             DataTable<String[]> dataTable,
+            Map<String, String> virusAntiserumMap,
+            Map<String, String> assayAntiserumMap,
             final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
@@ -37,49 +53,29 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(this));
 
         String[] virusNames = dataTable.getRowLabels();
-        boolean hasAliases = false;
-        if (virusNames[0].equals("aliases")) {
-            // if the first row is labelled aliases then there are aliases so the
-            // viruses start on row 2.
-            hasAliases = true;
-
-            // Java 1.6:
-//            virusNames = Arrays.copyOfRange(virusNames, 1, virusNames.length);
-
-            // Java 1.5:
-            virusNames = new String[virusNames.length - 1];
-            for (int i = 0; i < virusNames.length; i++) {
-                virusNames[i] = dataTable.getRowLabels()[i + 1];
-            }
-
-        }
 
         // the total number of viruses is the number of rows in the table
-        int virusCount = dataTable.getRowCount() - (hasAliases ? 1 : 0);
+        int virusCount = dataTable.getRowCount();
         int assayCount = dataTable.getColumnCount();
         int serumCount;
 
         String[] assayNames = dataTable.getColumnLabels();
         int[] assayToSerumIndices = new int[assayNames.length];
 
-        Set<String> aliasSet = null;
         List<String> aliasNames = null;
 
         String[] serumNames = null;
 
-        if (hasAliases) {
-            aliasSet = new HashSet<String>();
-            aliasNames = new ArrayList<String>();
+        if (assayAntiserumMap != null) {
+            aliasNames = new ArrayList<String>(new TreeSet<String>(assayAntiserumMap.values()));
 
-            String[] aliases = dataTable.getRow(0);
             for (int i = 0; i < assayNames.length; i++) {
-                if (aliasSet.contains(aliases[i])) {
-                    assayToSerumIndices[i] = aliasNames.indexOf(aliases[i]);
-                } else {
-                    aliasSet.add(aliases[i]);
-                    aliasNames.add(aliases[i]);
-                    assayToSerumIndices[i] = aliasNames.size() - 1;
+                String alias = assayAntiserumMap.get(assayNames[i]);
+                if (alias == null) {
+                    throw new IllegalArgumentException("Alias missing for assay, " + assayNames[i]);
                 }
+
+                assayToSerumIndices[i] = aliasNames.indexOf(alias);
             }
 
             // the number of serum locations is the number of aliases
@@ -99,8 +95,31 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             serumNames = assayNames;
         }
 
+        int[] virusToSerumIndices = new int[virusNames.length];
 
-        int start = hasAliases ? 1 : 0;
+        if (virusAntiserumMap != null) {
+            aliasNames = new ArrayList<String>(new TreeSet<String>(assayAntiserumMap.values()));
+
+            for (int i = 0; i < virusNames.length; i++) {
+                String alias = virusAntiserumMap.get(virusNames[i]);
+                if (alias != null) {
+                    virusToSerumIndices[i] = aliasNames.indexOf(alias);
+                } else {
+                    virusToSerumIndices[i] = -1;
+                }
+
+            }
+
+            // the number of serum locations is the number of aliases
+            serumCount = aliasNames.size();
+            serumNames = new String[aliasNames.size()];
+            aliasNames.toArray(serumNames);
+
+        } else {
+            for (int i = 0; i < virusToSerumIndices.length; i++) {
+                virusToSerumIndices[i] = -1;
+            }
+        }
 
         List<Double> observationList = new ArrayList<Double>();
         List<Integer> distanceIndexList = new ArrayList<Integer>();
@@ -111,6 +130,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         int[] virusObservationCounts = new int[virusCount];
         int[] serumObservationCounts = new int[serumCount];
 
+        int virusSerumPairObservationCounts = 0;
+
         // the largest measured value for any given column of data
         // Currently this is the largest across any assay column for a given antisera.
         // Optionally could normalize by individual assay column
@@ -120,9 +141,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         // Build a sparse matrix of non-missing assay values
         int u = 0;
         for (int i = 0; i < virusCount; i++) {
-            String[] dataRow = dataTable.getRow(i + start);
+            String[] dataRow = dataTable.getRow(i);
 
             for (int j = 0; j < serumCount; j++) {
+
+                boolean isVirusSerumPair = (virusToSerumIndices[i] == j);
 
                 boolean first = true;
 
@@ -155,6 +178,10 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                             distanceIndexList.add(u);
                             virusObservationCounts[i]++;
                             serumObservationCounts[j]++;
+
+                            if(isVirusSerumPair) {
+                                virusSerumPairObservationCounts ++;
+                            }
 
                             if (value > maxColumnValue[j]) {
                                 maxColumnValue[j] = value;
@@ -232,11 +259,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
         }
 
-        StringBuilder sb = new StringBuilder();        
+        StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicTraitLikelihood:\n");
         sb.append("\t\t" + virusNames.length + " viruses\n");
         sb.append("\t\t" + serumNames.length + " antisera\n");
         sb.append("\t\t" + observations.length + " observations\n");
+        sb.append("\t\t" + virusSerumPairObservationCounts + " observations for virus/serum pairs\n");
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
@@ -294,6 +322,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public final static String FILE_NAME = "fileName";
+        public final static String VIRUS_MAP_FILE_NAME = "virusMapFile";
+        public final static String ASSAY_MAP_FILE_NAME = "assayMapFile";
 
         public final static String TIP_TRAIT = "tipTrait";
         public final static String VIRUS_LOCATIONS = "virusLocations";
@@ -316,6 +346,24 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 assayTable = DataTable.Text.parse(new FileReader(fileName));
             } catch (IOException e) {
                 throw new XMLParseException("Unable to read assay data from file, " + fileName);
+            }
+
+            Map<String, String> virusAntiserumMap = null;
+            if (xo.hasAttribute(VIRUS_MAP_FILE_NAME)) {
+                try {
+                    virusAntiserumMap = readMap(xo.getStringAttribute(VIRUS_MAP_FILE_NAME));
+                } catch (IOException e) {
+                    throw new XMLParseException("Virus map file not found: " + xo.getStringAttribute(VIRUS_MAP_FILE_NAME));
+                }
+            }
+
+            Map<String, String> assayAntiserumMap = null;
+            if (xo.hasAttribute(ASSAY_MAP_FILE_NAME)) {
+                try {
+                    assayAntiserumMap = readMap(xo.getStringAttribute(ASSAY_MAP_FILE_NAME));
+                } catch (IOException e) {
+                    throw new XMLParseException("Assay map file not found: " + xo.getStringAttribute(ASSAY_MAP_FILE_NAME));
+                }
             }
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
@@ -346,7 +394,28 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+        }
+
+        private  Map<String, String> readMap(String fileName) throws IOException {
+            BufferedReader reader = new BufferedReader(new FileReader(fileName));
+
+            Map<String, String> map = new HashMap<String, String>();
+
+            String line = reader.readLine();
+            while (line != null) {
+                if (line.trim().length() > 0) {
+                    String[] parts = line.split("\t");
+                    if (parts.length > 1) {
+                        map.put(parts[0], parts[1]);
+                    }
+                }
+                line = reader.readLine();
+            }
+
+            reader.close();
+
+            return map;
         }
 
         //************************************************************************
@@ -364,6 +433,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
+                AttributeRule.newStringRule(VIRUS_MAP_FILE_NAME, false, "The name of the file containing the virus to serum map"),
+                AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, false, "The name of the file containing the assay to serum map"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

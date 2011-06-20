@@ -129,9 +129,10 @@ public class DiscretePriorDialog {
             result = value;
         }
 
-        if (result == JOptionPane.OK_OPTION) {
-            getArguments();
-        }
+        // Moved outside
+//        if (result == JOptionPane.OK_OPTION) {
+//            getArguments();
+//        }
 
         return result;
     }
@@ -143,7 +144,7 @@ public class DiscretePriorDialog {
 
     }
 
-    private void getArguments() {
+    public void getArguments() {
         parameter.priorType = priorCombo.getSelectedIndex() == 0 ? PriorType.UNIFORM_PRIOR : PriorType.POISSON_PRIOR;
 
         if (initialField.getValue() != null) parameter.initial = initialField.getValue();

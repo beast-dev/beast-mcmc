@@ -6,6 +6,8 @@
 
 package dr.app.beauti.priorsPanel;
 
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
 import dr.app.gui.chart.Axis;
@@ -45,6 +47,7 @@ public class HierarchicalPriorDialog {
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
 
+    private JTextField nameField;
     private JPanel panel;
 
 //    private final SpecialNumberPanel specialNumberPanel;
@@ -55,8 +58,11 @@ public class HierarchicalPriorDialog {
     private java.util.List<Parameter> parameterList;
     private Parameter parameter;
 
-    public HierarchicalPriorDialog(JFrame frame) {
+    final private BeautiOptions options;
+
+    public HierarchicalPriorDialog(JFrame frame, BeautiOptions options) {
         this.frame = frame;
+        this.options = options;
 
         initialField.setColumns(10);
 
@@ -90,6 +96,61 @@ public class HierarchicalPriorDialog {
 
 //        specialNumberPanel = new SpecialNumberPanel(this);
 //        specialNumberPanel.setEnabled(false);
+    }
+
+
+    public void addHPM(java.util.List<Parameter> parameterList) {
+        HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+        comp.addHPM(nameField.getText(), parameterList);
+    }
+
+    public boolean validateModelName() {
+        return validateModelName(nameField.getText());
+    }
+
+    private boolean validateModelName(String modelName) {
+        System.err.println("Validating: " + modelName);
+        // check that the name is valid
+        if (modelName.trim().length() == 0) {
+            Toolkit.getDefaultToolkit().beep();
+            return false;
+        }
+
+//        // disallow a trait called 'date'
+//        if (modelName.equalsIgnoreCase("date")) {
+//            JOptionPane.showMessageDialog(frame,
+//                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
+//                            " to set dates for taxa.",
+//                    "Reserved trait name",
+//                    JOptionPane.WARNING_MESSAGE);
+//
+//            return false;
+//        }
+
+        // check that the trait name doesn't exist
+        if (modelExists(modelName)) {
+            JOptionPane.showMessageDialog(frame,
+                    "A model with this name already exists.",
+                    "HPM name error",
+//                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+            System.err.println("Model name exists");
+            return false;
+
+//            if (option == JOptionPane.NO_OPTION) {
+//                return false;
+//            }
+        }
+
+        return true;
+    }
+
+    private boolean modelExists(String modelName) {
+
+        HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+        return comp.modelExists(modelName);
     }
 
     public int showDialog(final java.util.List<Parameter> parameterList) {
@@ -195,14 +256,14 @@ public class HierarchicalPriorDialog {
 //            }
 //        };
 
-        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-            for (JComponent component : optionsPanel.getJComponents()) {
-                if (component instanceof RealNumberField) {
-//                    component.addKeyListener(listener);
-//                    component.addFocusListener(flistener);
-                }
-            }
-        }
+//        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+//            for (JComponent component : optionsPanel.getJComponents()) {
+//                if (component instanceof RealNumberField) {
+////                    component.addKeyListener(listener);
+////                    component.addFocusListener(flistener);
+//                }
+//            }
+//        }
 
         dialog.pack();
         if (OSType.isMac()) {
@@ -230,9 +291,9 @@ public class HierarchicalPriorDialog {
             result = value;
         }
 
-        if (result == JOptionPane.OK_OPTION) {
-            getArguments();
-        }
+//        if (result == JOptionPane.OK_OPTION) {
+//            getArguments();
+//        }
 
         return result;
     }
@@ -261,7 +322,7 @@ public class HierarchicalPriorDialog {
         }
     }
 
-    private void getArguments() {        
+    public void getArguments() {        
         for (Parameter parameter : parameterList) {
             parameter.priorType = (PriorType) priorCombo.getSelectedItem();
             optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
@@ -297,6 +358,17 @@ public class HierarchicalPriorDialog {
         PriorType modelType;
         optionsPanel.addComponentWithLabel("Model Distribution: ", priorCombo);
         modelType = (PriorType) priorCombo.getSelectedItem();
+
+        optionsPanel.addSeparator();
+
+        String modelName = "untitled";
+        nameField = new JTextField(modelName);
+        nameField.setColumns(20);
+
+//        optionsPanel.addSpanningComponent(new JLabel("Name: "));
+//        optionsPanel.addSpanningComponent(nameField);
+        
+        optionsPanel.addComponentWithLabel("Name: ", nameField);
 
 //        PriorType priorType;
 //        if (parameter.isNodeHeight || parameter.isStatistic) {

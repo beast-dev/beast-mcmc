@@ -249,9 +249,10 @@ public class PriorDialog {
             result = value;
         }
 
-        if (result == JOptionPane.OK_OPTION) {
-            getArguments();
-        }
+        // Moved outside
+//        if (result == JOptionPane.OK_OPTION) {
+//            getArguments();
+//        }
 
         return result;
     }
@@ -337,7 +338,7 @@ public class PriorDialog {
 
     }
 
-    private void getArguments() {
+    public void getArguments() {
         if (parameter.isNodeHeight || parameter.isStatistic) {
             parameter.priorType = (PriorType) nonPriorCombo.getSelectedItem();
             if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {

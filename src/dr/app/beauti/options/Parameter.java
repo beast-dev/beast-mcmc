@@ -73,6 +73,7 @@ public class Parameter {
     public double shapeB;
     public double scale;
     public double offset;
+    public double precision;
 
     public static class Builder {
         // Required para
@@ -101,6 +102,7 @@ public class Parameter {
         public double shapeB = 3.0;
         public double scale = 1.0;
         public double offset = 0.0;
+        public double precision = 1.0;
 
         private boolean isDiscrete = false;
         private boolean isFixed = false;
@@ -200,6 +202,11 @@ public class Parameter {
 
         public Builder stdev(double stdev) {
             this.stdev = stdev;
+            return this;
+        }
+
+        public Builder precision(double precision) {
+            this.precision = precision;
             return this;
         }
 

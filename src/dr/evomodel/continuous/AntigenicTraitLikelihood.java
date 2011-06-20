@@ -30,8 +30,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
             DataTable<String[]> dataTable,
-            final boolean log2Transform,
-            final double threshold) {
+            final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
@@ -326,12 +325,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 log2Transform = xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
-            double threshold = 0.0;
-            if (xo.hasAttribute(TITRATION_THRESHOLD)) {
-                threshold = xo.getDoubleAttribute(TITRATION_THRESHOLD);
-            }
-
-
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -353,7 +346,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform, threshold);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, log2Transform);
         }
 
         //************************************************************************
@@ -373,7 +366,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
-                AttributeRule.newDoubleRule(TITRATION_THRESHOLD, true, "Titration threshold below which the measurement is not valid"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "An optional set of serum locations", true),

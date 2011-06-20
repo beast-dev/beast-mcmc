@@ -1,24 +1,24 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.tree.Tree;
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.TreeTrait;
-import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.evolution.tree.TreeTraitProvider;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.inference.model.Model;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -219,7 +219,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         } else {
             for (int i : state) {
-                sb.append(dataType.getChar(i));
+                if (dataType.getClass().equals(Codons.class)) {
+                    sb.append(dataType.getTriplet(i));
+                } else {
+                    sb.append(dataType.getChar(i));
+                }
             }
         }
         sb.append("\"");
@@ -379,9 +383,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 // This is an internal node, but not the root
                 double[] partialLikelihood = new double[stateCount * patternCount * categoryCount];
                 getPartials(nodeNum,partialLikelihood);
-
-                if (categoryCount > 1)
-                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
+                
+                // Sibon says that this actually works now
+//                if (categoryCount > 1)
+//                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
 
                 getMatrix(nodeNum,probabilities);
 

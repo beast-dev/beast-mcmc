@@ -27,6 +27,7 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
@@ -223,16 +224,22 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private void hierarchicalButtonPressed(int[] rows) {
 
-        if (rows.length < 2) {
-            System.err.println("Less than 2 parameters selected!");
-            return; // TODO Flash error dialog
+        if (rows.length < 2) {           
+            JOptionPane.showMessageDialog(frame,
+                    "Less than two parameters selected.",
+                    "Parameter linking error",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
         }
 
         List<Parameter> paramList = new ArrayList<Parameter>();
         for (int i = 0; i < rows.length; ++i) {            
             Parameter parameter = parameters.get(rows[i]);
             if (parameter.isNodeHeight || parameter.isStatistic) {
-                // TODO Flash error dialog
+                JOptionPane.showMessageDialog(frame,
+                        "Node heights or statistics are not currently allowed.",
+                        "Parameter linking error",
+                        JOptionPane.WARNING_MESSAGE);
                 return;
             }
             // TODO Flash error dialog if bounds differ between parameters
@@ -240,12 +247,24 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         if (hierarchicalPriorDialog == null) {
-            hierarchicalPriorDialog = new HierarchicalPriorDialog(frame);
+            hierarchicalPriorDialog = new HierarchicalPriorDialog(frame, options);
         }
 
-        if (hierarchicalPriorDialog.showDialog(paramList) == JOptionPane.CANCEL_OPTION) {
-            return;
+        boolean done = false;
+
+        while (!done) {
+            int result = hierarchicalPriorDialog.showDialog(paramList);
+            if (result == JOptionPane.OK_OPTION && hierarchicalPriorDialog.validateModelName()) {
+                hierarchicalPriorDialog.getArguments();
+                done = true;
+            }
+            if (result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
         }
+
+        // Add HPM to component manager
+        hierarchicalPriorDialog.addHPM(paramList);
 
         for (Parameter parameter : paramList) {
             parameter.setPriorEdited(true);
@@ -256,23 +275,63 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     private void priorButtonPressed(int row) {
         Parameter param = parameters.get(row);
 
+        if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
+            // Check that parameter is not already in a HPM
+            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            if (comp.isHierarchicalParameter(param)) {
+                 int option = JOptionPane.showConfirmDialog(this,
+                    "Parameter already exists in a HPM. Selecting a\n" +
+                    "new prior will remove the parameter. Continue?",
+                    "HPM warning",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                if (option == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+        }
+
+        int result;
         if (param.isDiscrete) {
             if (discretePriorDialog == null) {
                 discretePriorDialog = new DiscretePriorDialog(frame);
             }
-
-            if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
+            result = discretePriorDialog.showDialog(param);
         } else {
             if (priorDialog == null) {
                 priorDialog = new PriorDialog(frame);
             }
+            result = priorDialog.showDialog(param);
+        }
 
-            if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
-                return;
+        if (result == JOptionPane.CANCEL_OPTION) {
+            return;
+        }
+
+        if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
+            // Possibly remove parameter from its HPM
+            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            if (comp.isHierarchicalParameter(param)) {
+                if (comp.removeParameter(this, param) == JOptionPane.NO_OPTION) {
+                    // Bail out
+                    System.err.println("Bailing out of modification");
+                    return;
+                }
+                System.err.println("Parameter removed from an HPM");
             }
         }
+
+        // Moved OK-button pressed action to here
+        if (result == JOptionPane.OK_OPTION) {
+            if (param.isDiscrete) {
+                discretePriorDialog.getArguments();
+            } else {
+                priorDialog.getArguments();
+            }
+        }
+
         param.setPriorEdited(true);
 
         if (isDefaultOnly) {

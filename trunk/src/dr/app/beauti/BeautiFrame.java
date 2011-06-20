@@ -10,6 +10,7 @@ package dr.app.beauti;
 
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
@@ -105,6 +106,7 @@ public class BeautiFrame extends DocumentFrame {
         ComponentFactory[] components = {
                 SequenceErrorModelComponentFactory.INSTANCE,
                 TipDateSamplingComponentFactory.INSTANCE,
+                HierarchicalModelComponentFactory.INSTANCE,
 //                DiscreteTraitsComponentFactory.INSTANCE
         };
 

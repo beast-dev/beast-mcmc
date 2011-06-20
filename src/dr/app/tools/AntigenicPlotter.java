@@ -103,7 +103,6 @@ public class AntigenicPlotter {
                 }
             }
 
-
             procrustinate(data);
 
             writeKML(outputFileName, labels, data);
@@ -187,32 +186,6 @@ public class AntigenicPlotter {
         Element traceElement = generateTraceElement(labels, data);
         traceFolderElement.addContent(traceElement);
 
-//            ContourMaker contourMaker;
-//            if (CONTOUR_MODE == ContourMode.JAVA)
-//                contourMaker = new KernelDensityEstimator2D(xy[0], xy[1], GRIDSIZE);
-//            else if (CONTOUR_MODE == ContourMode.R)
-//                contourMaker = new ContourWithR(xy[0], xy[1], GRIDSIZE);
-//            else if (CONTOUR_MODE == ContourMode.SNYDER)
-//                contourMaker = new ContourWithSynder(xy[0], xy[1], GRIDSIZE);
-//            else
-//                throw new RuntimeException("Unimplemented ContourModel!");
-//
-//            ContourPath[] paths = contourMaker.getContourPaths(HPD_VALUE);
-//            int pathCounter = 1;
-//            for (ContourPath path : paths) {
-//
-//                KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
-//
-//                //because KML polygons require long,lat,alt we need to switch lat and long first
-//                coords.switchXY();
-//                Element placemarkElement = generatePlacemarkElementWithPolygon(HPD_VALUE, Double.NaN, coords, -1, pathCounter);
-//                //testing how many points are within the polygon
-//                contourFolderElement.addContent(placemarkElement);
-//
-//                pathCounter ++;
-//            }
-
-
         PrintStream resultsStream;
 
         try {
@@ -227,13 +200,69 @@ public class AntigenicPlotter {
 
     }
 
+    private Element generateKDEElement(double hpdValue, String[] labels, double[][][] points) {
+        Element traceElement = new Element("Folder");
+        Element nameElement = new Element("name");
+        String name = "intervals";
+
+        nameElement.addContent(name);
+        traceElement.addContent(nameElement);
+
+        for (int i = 0; i < points.length; i++)  {
+            double x[] = new double[points[i].length];
+            double y[] = new double[points[i].length];
+            for (int j = 0; j < points[i].length; j++)  {
+                x[j] = points[i][j][0];
+                y[j] = points[i][j][1];
+            }
+
+//            Element placemarkElement = new Element("Placemark");
+//
+//            placemarkElement.addContent(generateTraceData(labels[j], j, i));
+//
+//
+//            Element pointElement = new Element("Point");
+//            Element coordinates = new Element("coordinates");
+//            coordinates.addContent(points[i][j][1]+","+points[i][j][0]+",0");
+//            pointElement.addContent(coordinates);
+//            placemarkElement.addContent(pointElement);
+
+            ContourMaker contourMaker;
+            if (CONTOUR_MODE == ContourMode.JAVA)
+                contourMaker = new KernelDensityEstimator2D(x, y, GRIDSIZE);
+            else if (CONTOUR_MODE == ContourMode.R)
+                contourMaker = new ContourWithR(x, y, GRIDSIZE);
+            else if (CONTOUR_MODE == ContourMode.SNYDER)
+                contourMaker = new ContourWithSynder(x, y, GRIDSIZE);
+            else
+                throw new RuntimeException("Unimplemented ContourModel!");
+
+            ContourPath[] paths = contourMaker.getContourPaths(HPD_VALUE);
+            int pathCounter = 1;
+            for (ContourPath path : paths) {
+
+                KMLCoordinates coords = new KMLCoordinates(path.getAllX(), path.getAllY());
+
+                //because KML polygons require long,lat,alt we need to switch lat and long first
+                coords.switchXY();
+                Element placemarkElement = generatePlacemarkElementWithPolygon(hpdValue, coords, -1, pathCounter);
+                //testing how many points are within the polygon
+                traceElement.addContent(placemarkElement);
+
+                pathCounter ++;
+            }
+
+        }
+        return traceElement;
+    }
+
     private Element generateTraceElement(String[] labels, double[][][] points) {
         Element traceElement = new Element("Folder");
-        Element nameKDEElement = new Element("name");
+        Element nameElement = new Element("name");
         String name = "points";
 
-        nameKDEElement.addContent(name);
-        traceElement.addContent(nameKDEElement);
+        nameElement.addContent(name);
+        traceElement.addContent(nameElement);
 
         for (int i = 0; i < points.length; i++)  {
             for (int j = 0; j < points[i].length; j++)  {
@@ -267,12 +296,12 @@ public class AntigenicPlotter {
         return data;
     }
 
-    private Element generatePlacemarkElementWithPolygon(double hpdValue, double sliceValue, KMLCoordinates coords, int pointNumber, int pathCounter) {
+    private Element generatePlacemarkElementWithPolygon(double hpdValue, KMLCoordinates coords, int pointNumber, int pathCounter) {
         Element placemarkElement = new Element("Placemark");
 
         String name;
         Element placemarkNameElement = new Element("name");
-        name = "hpdRegion_" + sliceValue + "_path_" + pathCounter;
+        name = "kde_" + pathCounter;
 
         placemarkNameElement.addContent(name);
         placemarkElement.addContent(placemarkNameElement);

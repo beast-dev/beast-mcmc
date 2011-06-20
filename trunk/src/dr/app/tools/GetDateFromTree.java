@@ -612,49 +612,39 @@ public class GetDateFromTree extends NewickImporter {
         w.flush();
 
         w.writeText("\n" +
-                "   <coalescentLikelihood id=\"tanjaCLST1stt.coalescent\">\n" +
-                "        <model>\n" +
-                "            <exponentialGrowth idref=\"exponential\"/>\n" +
-                "        </model>\n" +
-                "        <populationTree>\n" +
-                "            <treeModel idref=\"treeModel\"/>\n" +
-                "        </populationTree>\n" +
-                "    </coalescentLikelihood>\n");
+                "\t<coalescentLikelihood id=\"coalescent\">\n" +
+                "\t\t<model>\n" +
+                "\t\t\t<exponentialGrowth idref=\"exponential\"/>\n" +
+                "\t\t</model>\n" +
+                "\t\t<populationTree>\n" +
+                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
+                "\t\t</populationTree>\n" +
+                "\t</coalescentLikelihood>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
             w.writeText("\n" +
-                    "\t<!-- Generate a speciation likelihood for Yule or Birth Death                -->\n" +
-                    "\t<speciationLikelihood id=\"speciation" + tree + "\">\n" +
-                    "\t\t<model>\n" +
-                    "\t\t\t<birthDeathSerialSampling idref=\"bdss" + tree + "\"/>\n" +
-                    "\t\t</model>\n" +
-                    "\t\t<speciesTree>\n" +
-                    "\t\t\t<treeModel idref=\"treeModel" + tree + "\"/>\n" +
-                    "\t\t</speciesTree>\n" +
-                    "\t</speciationLikelihood>\n");
+                "\t<coalescentLikelihood id=\"coalescent" + tree + "\">\n" +
+                "\t\t<model>\n" +
+                "\t\t\t<exponentialGrowth idref=\"exponential" + tree + "\"/>\n" +
+                "\t\t</model>\n" +
+                "\t\t<populationTree>\n" +
+                "\t\t\t<treeModel idref=\"treeModel" + tree + "\"/>\n" +
+                "\t\t</populationTree>\n" +
+                "\t</coalescentLikelihood>\n");
         }
 
         w.writeText("\n" + "\t<!-- Define operators                                                        -->\n" +
-                "        <randomWalkOperator windowSize=\"1.0\" weight=\"10\">\n" +
-                "            <parameter idref=\"exponential.growthRate\"/>\n" +
-                "        </randomWalkOperator>\n" +
                 "\t<operators id=\"operators\">\n" +
-                "<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-                "            <parameter idref=\"exponential.popSize\"/>\n" +
-                "        </scaleOperator>\n");
+                "\t<randomWalkOperator windowSize=\"1.0\" weight=\"10\">\n" +
+                "\t\t<parameter idref=\"exponential.growthRate\"/>\n" +
+                "\t</randomWalkOperator>\n" +
+                "\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
+                "\t\t<parameter idref=\"exponential.popSize\"/>\n" +
+                "\t</scaleOperator>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
             w.writeText("\n" +
-//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-//                    "\t\t</scaleOperator>\n" +
-//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-//                    "\t\t</scaleOperator>\n" +
-//                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
-//                    "\t\t</scaleOperator>\n" +
-                    "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n" +
-                    "\t\t</scaleOperator>\n");
+                "\t<scaleOperator scaleFactor=\"0.75\" weight=\"10\">\n" +
+                "\t\t<parameter idref=\"exponential" + tree + ".popSize\"/>\n" +
+                "\t</scaleOperator>\n");
         }
         w.writeText("\n" + "\t</operators>");
 
@@ -664,56 +654,23 @@ public class GetDateFromTree extends NewickImporter {
                 "\t<mcmc id=\"mcmc\" chainLength=\"10000000\" autoOptimize=\"true\">\n" +
                 "\t\t<posterior id=\"posterior\">\n" +
                 "\t\t\t<prior id=\"prior\">\n" +
-                "<oneOnXPrior>\n" +
-                "                    <parameter idref=\"exponential1.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential2.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential3.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential4.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential5.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential6.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential7.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential8.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential9.popSize\"/>\n" +
-                "                    <parameter idref=\"exponential10.popSize\"/>\n" +
-                "                </oneOnXPrior>\n" +
-                "\n" +
-                "                <laplacePrior mean=\"0.0010\" scale=\"2.0467423048835964E-4\">\n" +
-                "                    <parameter idref=\"exponential.growthRate\"/>\n" +
-                "                </laplacePrior>\n" +
-                "                <coalescentLikelihood idref=\"tanjaCLST10stt.coalescent\"/>\n");
-//                "\t\t\t\t<oneOnXPrior>\n" +
-//                "\t\t\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
-//                "\t\t\t\t</oneOnXPrior>\n" +
-//        for (int tree = 2; tree <= combiTrees; tree++) {
-//            w.writeText("\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"100000.0\">\n" +
-//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-//                    "\t\t\t\t</uniformPrior>\n" +
-//                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1000.0\">\n" +
-//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-//                    "\t\t\t\t</uniformPrior>\n" +
-//                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"100.0\">\n" +
-//                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
-//                    "\t\t\t\t</uniformPrior>\n");
-//        }
-        w.writeText("\n" +
-                "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1.7976931348623157E308\">\n" +
-                "\t\t\t\t\t<parameter idref=\"bdss.origin\"/>\n" +
-                "\t\t\t\t</uniformPrior>\n");
+                "\t\t\t\t<oneOnXPrior>\n" +
+                "\t\t\t\t\t<parameter idref=\"exponential.popSize\"/>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
-            w.writeText("\n" +
-                    "\t\t\t\t<uniformPrior lower=\"0.0\" upper=\"1.7976931348623157E308\">\n" +
-                    "\t\t\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n" +
-                    "\t\t\t\t</uniformPrior>\n");
+            w.writeText("\t\t\t\t\t<parameter idref=\"exponential" + tree + ".popSize\"/>\n");
+        }
+         w.writeText("\t\t\t\t</oneOnXPrior>\n" +
+                "\n" +
+                "\t\t\t\t<laplacePrior mean=\"0.0010\" scale=\"2.0467423048835964E-4\">\n" +
+                "\t\t\t\t\t<parameter idref=\"exponential.growthRate\"/>\n" +
+                "\t\t\t\t</laplacePrior>\n" +
+                 "\t\t\t\t<coalescentLikelihood idref=\"coalescent\"\n/>");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t\t\t<coalescentLikelihood idref=\"coalescent" + tree + "\"/>\n");
         }
 
         w.writeText("\n" +
                 "\t\t\t</prior>\n" +
-                "\t\t\t<likelihood id=\"likelihood\">\n" +
-                "\t\t\t\t<speciationLikelihood idref=\"speciation\"/>\n");
-        for (int tree = 2; tree <= combiTrees; tree++) {
-            w.writeText("\t\t\t\t<speciationLikelihood idref=\"speciation" + tree + "\"/>\n");
-        }
-        w.writeText("\t\t\t</likelihood>\n" +
                 "\t\t</posterior>\n" +
                 "\t\t<operators idref=\"operators\"/>\n");
 
@@ -727,64 +684,54 @@ public class GetDateFromTree extends NewickImporter {
                 "\t\t\t<column label=\"Prior\" dp=\"4\" width=\"12\">\n" +
                 "\t\t\t\t<prior idref=\"prior\"/>\n" +
                 "\t\t\t</column>\n" +
-                "\t\t\t<column label=\"speciation\" dp=\"4\" width=\"12\">\n" +
-                "\t\t\t\t<likelihood idref=\"speciation\"/>\n" +
+                "\t\t\t<column label=\"coalescentLikelihood\" dp=\"4\" width=\"12\">\n" +
+                "\t\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n" +
                 "\t\t\t</column>\n" +
                 "\t\t\t<column label=\"rootHeight\" sf=\"6\" width=\"12\">\n" +
                 "\t\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
                 "\t\t\t</column>\n" +
-                "\t\t\t<parameter idref=\"bdss.birthRate\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.relativeDeathRate\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
-                "\t\t\t<RPNcalculator idref=\"R0\"/>\n");
+                "\t\t\t<parameter idref=\"exponential.growthRate\"/>\n" +
+                "\t\t\t<parameter idref=\"exponential.popSize\"/>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
             w.writeText("\t\t\t<parameter idref=\"treeModel" + tree + ".rootHeight\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
-//                    "\t\t\t<RPNcalculator idref=\"R0" + tree + "\"/>\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n");
+                   "\t\t\t<parameter idref=\"exponential" + tree + ".popSize\"/>\n");
         }
 
         w.writeText("\t\t</log>\n" +
                 "\n" +
                 "\t\t<!-- write log to file                                                       -->\n" +
-                "\t\t<log id=\"fileLog\" logEvery=\"1000\" fileName=\"T" + curD + "_" + Integer.toString(index) + ".log\" overwrite=\"false\">\n" +
+                "\t\t<log id=\"fileLog\" logEvery=\"1000\" fileName=\"E" + curD + "_" + Integer.toString(index) + ".log\" overwrite=\"false\">\n" +
                 "\t\t\t<posterior idref=\"posterior\"/>\n" +
                 "\t\t\t<prior idref=\"prior\"/>\n" +
                 "\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.birthRate\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.relativeDeathRate\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.sampleProbability\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.psi\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.origin\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.r\"/>\n" +
-                "\t\t\t<parameter idref=\"bdss.finalTimeInterval\"/>\n" +
-                "\t\t\t<RPNcalculator idref=\"R0\"/>\n");
+                "\t\t\t<parameter idref=\"exponential.growthRate\"/>\n" +
+                "\t\t\t<parameter idref=\"exponential.popSize\"/>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
             w.writeText("\t\t\t<parameter idref=\"treeModel" + tree + ".rootHeight\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".birthRate\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".relativeDeathRate\"/>\n" +
-//                    "\t\t\t<parameter idref=\"bdss" + tree + ".psi\"/>\n" +
-//                    "\t\t\t<RPNcalculator idref=\"R0" + tree + "\"/>\n" +
-                    "\t\t\t<parameter idref=\"bdss" + tree + ".origin\"/>\n");
+                   "\t\t\t<parameter idref=\"exponential" + tree + ".popSize\"/>\n");
         }
 
         w.writeText("\n" +
-                "\t\t\t<speciationLikelihood idref=\"speciation\"/>\n");
+                "\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n");
         for (int tree = 2; tree <= combiTrees; tree++) {
-            w.writeText("\t\t\t\t<speciationLikelihood idref=\"speciation" + tree + "\"/>\n");
+            w.writeText("\t\t\t\t<coalescentLikelihood idref=\"coalescent" + tree + "\"/>\n");
         }
 
         w.writeText("\t\t</log>\n" +
                 "\n" +
-//                "\t\t<!-- write tree log to file                                                  -->\n" +
-//                "\t\t<logTree id=\"treeFileLog\" logEvery=\"1000\" nexusFormat=\"true\" fileName=\"T" + curD + "_" + Integer.toString(index) + ".trees\" sortTranslationTable=\"true\">\n" +
-//                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
-//                "\t\t\t<posterior idref=\"posterior\"/>\n" +
-//                "\t\t</logTree>\n" +
-                "\t</mcmc>\n" +
+                "\t\t<!-- write tree log to file                                                  -->\n" +
+                "\t\t<logTree id=\"treeFileLog\" logEvery=\"1000\" nexusFormat=\"true\" fileName=\"E" + curD + "_" + Integer.toString(index) + ".trees\" sortTranslationTable=\"true\">\n" +
+                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
+                "\t\t\t<posterior idref=\"posterior\"/>\n" +
+                "\t\t</logTree>\n");
+        for (int tree = 2; tree <= combiTrees; tree++) {
+            w.writeText("\t\t<logTree id=\"treeFileLog" + tree + "\" logEvery=\"1000\" nexusFormat=\"true\" fileName=\"E" + curD + "_" + Integer.toString(index) + "_" + tree + ".trees\" sortTranslationTable=\"true\">\n" +
+                "\t\t\t<treeModel idref=\"treeModel" + tree + "\"/>\n" +
+                "\t\t\t<posterior idref=\"posterior\"/>\n" +
+                "\t\t</logTree>\n");
+        }
+
+        w.writeText("\t</mcmc>\n" +
                 "\t<report>\n" +
                 "\t\t<property name=\"timer\">\n" +
                 "\t\t\t<mcmc idref=\"mcmc\"/>\n" +

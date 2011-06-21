@@ -89,9 +89,23 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     protected void errorMsg() {
+        String message = "";
+        if (min == Double.MIN_VALUE) {
+            message = " greater than 0";
+        } else if (!Double.isInfinite(min) && min != -Double.MAX_VALUE) {
+            message = " greater than " + min;
+        }
+        if (max == -Double.MIN_VALUE) {
+            message = " less than 0";
+        } else if (!Double.isInfinite(max) && max != Double.MAX_VALUE) {
+            if (message.length() > 0) {
+                message += " and";
+            }
+            message = " less than " + max;
+        }
+
         JOptionPane.showMessageDialog(this,
-                "Illegal entry\nValue must be between " + min + " and " +
-                max + " inclusive", "Error", JOptionPane.ERROR_MESSAGE);
+                "Value must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
     }
 
     public void setRange(double min, double max) {

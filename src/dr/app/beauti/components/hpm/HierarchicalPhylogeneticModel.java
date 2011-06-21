@@ -1,8 +1,11 @@
 package dr.app.beauti.components.hpm;
 
+import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorType;
+import dr.app.beauti.util.XMLWriter;
 
 import java.util.List;
 
@@ -44,13 +47,21 @@ public class HierarchicalPhylogeneticModel {
         return getArgumentParameterList().size() == 0;
     }
 
-    public void selectOperators(final List<Operator> ops) {
-        // TODO
+    public void selectOperators(ModelOptions modelOptions, final List<Operator> ops) {
+        // Do nothing because Gibbs operator format do not fit into the current Operator implementation
     }
 
-    public void removeParameter(Parameter parameter) {
-        if (argumentParameterList.contains(parameter)) {
-            argumentParameterList.remove(parameter);
-        }
-    } 
+//    public void removeParameter(Parameter parameter) {
+//        if (argumentParameterList.contains(parameter)) {
+//            argumentParameterList.remove(parameter);
+//        }
+//    }
+//
+//    public void generateDistribution(final XMLWriter writer) {
+//        System.err.println("Generating distribution for " + getName());
+//    }
+//
+//    public void generatePriors(final XMLWriter writer) {
+//        System.err.println("Generating priors for " + getName());
+//    }
 }

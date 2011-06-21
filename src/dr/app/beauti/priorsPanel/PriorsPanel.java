@@ -246,6 +246,31 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             paramList.add(parameter);
         }
 
+        if (hierarchicalPriorDialog != null) { // Already called
+            // Check to see if selected parameters are already in a HPM
+            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            boolean anyConflicts = false;
+            for (Parameter parameter : paramList) {
+                if (comp.isHierarchicalParameter(parameter)) {
+                    anyConflicts = true;
+                    break;
+                }
+            }
+            if (anyConflicts) {
+                 int option = JOptionPane.showConfirmDialog(this,
+                    "At one selected parameter already exists in a HPM.\n" +
+                    "Constructing a new prior will remove these parameter\n" +
+                    "from the original model. Continue?",
+                    "HPM warning",
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.WARNING_MESSAGE);
+                if (option == JOptionPane.NO_OPTION) {
+                    return;
+                }
+            }
+        }
+
         if (hierarchicalPriorDialog == null) {
             hierarchicalPriorDialog = new HierarchicalPriorDialog(frame, options);
         }
@@ -261,6 +286,16 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (result == JOptionPane.CANCEL_OPTION) {
                 return;
             }
+        }
+
+        // Remove parameters from old list
+        for (Parameter parameter : paramList) {
+            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+            if (comp.isHierarchicalParameter(parameter)) {
+                comp.removeParameter(this, parameter, false);
+            }
+
         }
 
         // Add HPM to component manager
@@ -317,7 +352,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                         options.getComponentOptions(HierarchicalModelComponentOptions.class);
                 if (comp.isHierarchicalParameter(param)) {
-                    if (comp.removeParameter(this, param) == JOptionPane.NO_OPTION) {
+                    if (comp.removeParameter(this, param, true) == JOptionPane.NO_OPTION) {
                         // Bail out
                         System.err.println("Bailing out of modification");
                         return;

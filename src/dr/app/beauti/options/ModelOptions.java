@@ -67,9 +67,9 @@ public class ModelOptions {
                   .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).build(parameters);
     }
 
-    public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+    public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
                                           double shape, double scale, double lower, double upper, boolean priorFixed) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
                   .initial(initial).shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).build(parameters);
     }
 
@@ -97,9 +97,9 @@ public class ModelOptions {
                   .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
-    public void createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
+    public Parameter createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                 double mean, double stdev, double offset, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
+        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
                   .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
@@ -200,6 +200,11 @@ public class ModelOptions {
             throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
         }
         return parameter;
+    }
+
+    public boolean parameterExists(String name) {
+        Parameter parameter = parameters.get(name);
+        return parameter != null;
     }
 
     public Parameter getStatistic(TaxonList taxonList) {

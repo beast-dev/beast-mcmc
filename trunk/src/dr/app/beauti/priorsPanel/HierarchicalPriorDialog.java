@@ -102,7 +102,7 @@ public class HierarchicalPriorDialog {
     public void addHPM(java.util.List<Parameter> parameterList) {
         HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
                 options.getComponentOptions(HierarchicalModelComponentOptions.class);
-        comp.addHPM(nameField.getText(), parameterList);
+        comp.addHPM(nameField.getText(), parameterList, parameterList.get(0).priorType);
     }
 
     public boolean validateModelName() {

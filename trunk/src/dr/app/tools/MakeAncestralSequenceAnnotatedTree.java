@@ -281,17 +281,15 @@ public class MakeAncestralSequenceAnnotatedTree {
     public static void printTitle() {
         System.out.println();
         centreLine("MakeAncestralSequenceAnnotatedTree " + version.getVersionString() + ", " + version.getDateString(), 60);
-        centreLine("MCMC Output analysis", 60);
+        centreLine("BAli-Phy MCMC Output analysis", 60);
         centreLine("by", 60);
-        centreLine("Andrew Rambaut and Alexei J. Drummond", 60);
+        centreLine("Wai Lok Sibon Li and Marc A. Suchard", 60);
         System.out.println();
-        centreLine("Institute of Evolutionary Biology", 60);
-        centreLine("University of Edinburgh", 60);
-        centreLine("a.rambaut@ed.ac.uk", 60);
-        System.out.println();
-        centreLine("Department of Computer Science", 60);
-        centreLine("University of Auckland", 60);
-        centreLine("alexei@cs.auckland.ac.nz", 60);
+        centreLine("David Geffen School of Medicine", 60);
+        centreLine("University of California, Los Angeles", 60);
+        centreLine("sibonli@ucla.edu", 60);
+        centreLine("and", 60);
+        centreLine("msuchard@ucla.edu",60);
         System.out.println();
         System.out.println();
     }

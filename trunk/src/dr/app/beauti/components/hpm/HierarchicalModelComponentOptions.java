@@ -2,6 +2,8 @@ package dr.app.beauti.components.hpm;
 
 import dr.app.beauti.options.*;
 import dr.app.beauti.priorsPanel.PriorsPanel;
+import dr.app.beauti.types.PriorScaleType;
+import dr.app.beauti.types.PriorType;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -23,12 +25,13 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-            if (!hpm.isEmpty()) {
-                List<Parameter> hpmParameterList = hpm.getConditionalParameterList();
-                params.addAll(hpmParameterList);
-            }
-        }        
+        // Do nothing because priors are previously defined for idref in operator schedule
+//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
+//            if (!hpm.isEmpty()) {
+//                List<Parameter> hpmParameterList = hpm.getConditionalParameterList();
+//                params.addAll(hpmParameterList);
+//            }
+//        }
     }
 
     public void selectStatistics(final ModelOptions modelOptions, final List<Parameter> stats) {
@@ -36,11 +39,12 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        for (HierarchicalPhylogeneticModel hpm : hpmList) {
-            if (!hpm.isEmpty()) {
-                hpm.selectOperators(ops);
-            }
-        }
+        // Do nothing because Gibbs operator format do not fit into the current Operator implementation
+//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
+//            if (!hpm.isEmpty()) {
+//                hpm.selectOperators(modelOptions, ops);
+//            }
+//        }
     }
 
     public boolean modelExists(String name) {
@@ -54,8 +58,25 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         return found;        
     }
 
-    public void addHPM(String text, List<Parameter> parameterList) {
-        HierarchicalPhylogeneticModel hpm = new HierarchicalPhylogeneticModel(text, parameterList, null, null);
+    public void addHPM(String text, List<Parameter> parameterList, PriorType priorType) {
+        List<Parameter> argumentList = new ArrayList<Parameter>();
+
+        // TODO May have to remove these constructors
+        String meanName = text + HierarchicalModelComponentGenerator.MEAN_SUFFIX;
+        Parameter mean = options.parameterExists(meanName) ?
+                options.getParameter(meanName) :
+                options.createParameterNormalPrior(meanName, "Unknown mean of HPM",
+                PriorScaleType.NONE, 0.0, 0.0, 1.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        argumentList.add(mean);
+
+        String precisionName = text + HierarchicalModelComponentGenerator.PRECISION_SUFFIX;
+        Parameter precision = options.parameterExists(precisionName) ?
+                options.getParameter(precisionName) :
+                options.createParameterGammaPrior(precisionName, "Unknown precision of HPM",
+                PriorScaleType.NONE, 1.0, 0.001, 1000.0, 0.0, Double.POSITIVE_INFINITY, true);
+        argumentList.add(precision);
+
+        HierarchicalPhylogeneticModel hpm = new HierarchicalPhylogeneticModel(text, parameterList, argumentList, priorType);
         hpmList.add(hpm);
     }
 
@@ -70,16 +91,16 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         return found;
     }
 
-    public int removeParameter(PriorsPanel priorsPanel, Parameter parameter) {
+    public int removeParameter(PriorsPanel priorsPanel, Parameter parameter, boolean caution) {
         HierarchicalPhylogeneticModel toRemove = null;
         for (HierarchicalPhylogeneticModel hpm : hpmList) {
             List<Parameter> parameterList = hpm.getArgumentParameterList();
             if (parameterList.contains(parameter)) {
-                if (parameterList.size() == 2) {
+                if (caution && parameterList.size() == 2 && priorsPanel != null) {
                     String modelName = hpm.getName();
                     // Throw special warning
                     int option = JOptionPane.showConfirmDialog(priorsPanel,
-                        "Removing this parameter from HPM '" + modelName + "' will result in one only\n" +
+                        "Removing this parameter from HPM '" + modelName + "' will result in only one\n" +
                         "parameter remaining the HPM.  Single parameter models are not recommended.\n" +
                         "Continue?",
                         "HPM warning",
@@ -100,9 +121,28 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         }
         return JOptionPane.YES_OPTION;
     }
+
+    public List<HierarchicalPhylogeneticModel> getHPMList() {
+        return hpmList;
+    }
+
+//    public void generateDistributions(final XMLWriter writer) {
+//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
+//            hpm.generateDistribution(writer);
+//        }
+//    }
         
     final private BeautiOptions options;
     final private List<HierarchicalPhylogeneticModel> hpmList;
 
 
+//    public void generatePriors(final XMLWriter writer) {
+//        for (HierarchicalPhylogeneticModel hpm : hpmList) {
+//            hpm.generatePriors(writer);
+//        }
+//    }
+
+    public boolean isEmpty() {
+        return hpmList.isEmpty();
+    }
 }

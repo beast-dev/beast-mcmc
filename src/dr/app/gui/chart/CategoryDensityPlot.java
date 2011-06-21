@@ -33,13 +33,13 @@ import java.awt.*;
 import java.util.List;
 
 public class CategoryDensityPlot extends FrequencyPlot {
-    private int numOfBars = 0;
+    private int barCount = 0;
     private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
-        super(traceD);
-        this.numOfBars = numOfBars;
+    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution, int barCount, int barId) {
+        super(traceDistribution);
+        this.barCount = barCount;
         this.barId = barId;
 
 //        Double[] doubleData = new Double[data.length];
@@ -140,9 +140,9 @@ public class CategoryDensityPlot extends FrequencyPlot {
                x2 = xData.get(i + 1);
                x = x2 - x1;
 
-            if (numOfBars > 1) {
-                x1 = x1 - ((double) (numOfBars - 1)) * x + 2.0 * ((double) barId) * x;
-                x2 = x2 - ((double) (numOfBars - 1)) * x + 2.0 * ((double) barId) * x;
+            if (barCount > 1) {
+                x1 = x1 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
+                x2 = x2 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
             }
 
             y1 = yData.get(i);

@@ -54,18 +54,18 @@ import java.util.Map;
  */
 public class PriorDialog {
 
-    private JFrame frame;
+    private final JFrame frame;
 
-    private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
+    private final Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-    private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.BETA_PRIOR).toArray());
-    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.BETA_PRIOR).toArray());
-    private JCheckBox meanInRealSpaceCheck = new JCheckBox();
-    private RealNumberField initialField = new RealNumberField();
-    private RealNumberField selectedField;
+    private final JComboBox priorCombo = new JComboBox();
+    private final JComboBox nonPriorCombo= new JComboBox();
+    private final JCheckBox meanInRealSpaceCheck = new JCheckBox();
+    private final RealNumberField initialField = new RealNumberField();
 
     private JPanel panel;
 
+    private RealNumberField selectedField;
     private final SpecialNumberPanel specialNumberPanel;
     private JChart chart;
     private JPanel quantilePanel;
@@ -78,15 +78,25 @@ public class PriorDialog {
 
         initialField.setColumns(10);
 
+        for (PriorType priorType : PriorType.values()) {
+            if (!priorType.isSpecial() && !priorType.isDiscrete()) {
+                priorCombo.addItem(priorType);
+            }
+            nonPriorCombo.addItem(priorType);
+        }
+
         optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
+        optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
         optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());
         optionsPanels.put(PriorType.NORMAL_PRIOR, new NormalOptionsPanel());
-        optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
         optionsPanels.put(PriorType.LOGNORMAL_PRIOR, new LogNormalOptionsPanel());
         optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
         optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
-         optionsPanels.put(PriorType.BETA_PRIOR, new BetaOptionsPanel());
+        optionsPanels.put(PriorType.BETA_PRIOR, new BetaOptionsPanel());
+//        optionsPanels.put(PriorType.SUBSTITUTION_REFERENCE_PRIOR, new SubstitutionReferenceOptionsPanel());
+//        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
+//        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
@@ -115,6 +125,9 @@ public class PriorDialog {
 
         this.parameter = parameter;
         PriorType priorType = parameter.priorType;
+        if (priorType.isSpecial()) {
+            priorType = PriorType.NORMAL_PRIOR;
+        }
 
         if (parameter.isNodeHeight || parameter.isStatistic) {
             nonPriorCombo.setSelectedItem(priorType);
@@ -249,10 +262,9 @@ public class PriorDialog {
             result = value;
         }
 
-        // Moved outside
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
+        if (result == JOptionPane.OK_OPTION) {
+            getArguments();
+        }
 
         return result;
     }
@@ -338,7 +350,7 @@ public class PriorDialog {
 
     }
 
-    public void getArguments() {
+    private void getArguments() {
         if (parameter.isNodeHeight || parameter.isStatistic) {
             parameter.priorType = (PriorType) nonPriorCombo.getSelectedItem();
             if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
@@ -403,17 +415,18 @@ public class PriorDialog {
             initialField.setEnabled(!pcm.getClockModelGroup().isFixMean());
         }
 
-        if (priorType != PriorType.ONE_OVER_X_PRIOR) {
-            optionsPanel.addSpanningComponent(optionsPanels.get(priorType));
+        PriorOptionsPanel panel3 = optionsPanels.get(priorType);
+
+        if (panel3 != null) {
+            optionsPanel.addSpanningComponent(panel3);
         }
 
-        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+        if (priorType.hasBounds()) {
             optionsPanel.addSeparator();
             optionsPanel.addSpanningComponent(specialNumberPanel);
         }
 
-        // UNIFORM_PRIOR and ONE_OVER_X_PRIOR have no chart
-        if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.ONE_OVER_X_PRIOR) {
+        if (priorType.hasChart()) {
             optionsPanel.addSeparator();
 
             setupChart();
@@ -645,7 +658,7 @@ public class PriorDialog {
         }
     }
 
-     class BetaOptionsPanel extends PriorOptionsPanel {
+    class BetaOptionsPanel extends PriorOptionsPanel {
 
         public BetaOptionsPanel() {
             addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);

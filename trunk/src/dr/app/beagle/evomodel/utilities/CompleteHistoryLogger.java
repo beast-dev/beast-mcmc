@@ -46,7 +46,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
 
         treeTraitHistory = new TreeTrait[patternCount];
         for (int site = 0; site < patternCount; ++site) {
-            String traitName = (patternCount == 0) ? MarkovJumpsBeagleTreeLikelihood.HISTORY : MarkovJumpsBeagleTreeLikelihood.HISTORY + "_" + (site + 1);
+            String traitName = (patternCount == 1) ? MarkovJumpsBeagleTreeLikelihood.HISTORY : MarkovJumpsBeagleTreeLikelihood.HISTORY + "_" + (site + 1);
             treeTraitHistory[site] = treeLikelihood.getTreeTrait(traitName);
             if (treeTraitHistory[site] == null) {
                 throw new RuntimeException("Tree '" + treeLikelihood.getId() + "' does not have a complete history trait at site " + (site + 1));

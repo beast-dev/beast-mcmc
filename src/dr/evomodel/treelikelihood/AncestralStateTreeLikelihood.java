@@ -59,7 +59,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
       
-        treeTraits.addTrait(new TreeTrait.IA() {
+        treeTraits.addTrait(STATES_KEY, new TreeTrait.IA() {
             public String getTraitName() {
                 return tag;
             }
@@ -268,6 +268,9 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
 
                 // This is an internal node, but not the root
                 double[] partialLikelihood = new double[stateCount * patternCount];
+                if (categoryCount > 1)
+                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
+
                 likelihoodCore.getPartials(nodeNum, partialLikelihood);
 
 //				final double branchRate = branchRateModel.getBranchRate(tree, node);
@@ -283,8 +286,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
 //
 
 
-                if (categoryCount > 1)
-                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
+
 
                 ((AbstractLikelihoodCore) likelihoodCore).getNodeMatrix(nodeNum, 0, probabilities);
 

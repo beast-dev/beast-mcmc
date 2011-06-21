@@ -70,7 +70,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
     public void testLogNormal() throws Exception {
         meanParam = new Parameter.Default(LogNormalDistributionModelParser.MEAN, 2.3E-5, 0, 100.0);
         stdevParam = new Parameter.Default(LogNormalDistributionModelParser.STDEV, 0.1, 0, 10.0);
-        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(meanParam, stdevParam, 0.0, true); // meanInRealSpace="true"
+        ParametricDistributionModel distributionModel = new LogNormalDistributionModel(meanParam, stdevParam, 0.0, true, false); // meanInRealSpace="true"
 
         ArrayTraceList traceList = UncorrelatedRelaxedClock(distributionModel);
 

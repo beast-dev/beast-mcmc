@@ -76,6 +76,8 @@ public class OperatorsGenerator extends Generator {
             }
         }
 
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_OPERATORS, writer); // Added for special operators
+
         writer.writeCloseTag(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
     }
 

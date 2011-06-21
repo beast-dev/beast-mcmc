@@ -50,11 +50,11 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     private boolean hasIncredibleSet = false;
 //    private TraceDistribution.CredibleSet credSet;
 
-    protected TraceDistribution traceD = null;
+    protected TraceDistribution traceDistribution = null;
 
-    protected FrequencyPlot(TraceDistribution traceD) {
+    protected FrequencyPlot(TraceDistribution traceDistribution) {
         super();
-        this.traceD = traceD;
+        this.traceDistribution = traceDistribution;
     }
 
     public FrequencyPlot(Variate.D data, int minimumBinCount) {
@@ -67,8 +67,8 @@ public class FrequencyPlot extends Plot.AbstractPlot {
         setData(data, minimumBinCount);
     }
 
-    public FrequencyPlot(List<Double> data, int minimumBinCount, TraceDistribution traceD) {
-        this(traceD);
+    public FrequencyPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution) {
+        this(traceDistribution);
         setData(data, minimumBinCount);
     }
 
@@ -206,7 +206,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
      * Set arbitrary intervals to use (0 for none).
      */
     public void setInCredibleSet(TraceDistribution traceD) {
-        this.traceD = traceD;
+        this.traceDistribution = traceD;
         hasIncredibleSet = traceD.inCredibleSet.size() > 0;
     }
 
@@ -271,7 +271,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
                             fillRect(g2, x1, y1, x2, y2);
                         }
                     } else if (hasIncredibleSet) {
-                        if (traceD.inCredibleSetContains((int) x1) || traceD.inCredibleSetContains((int) x2)) {
+                        if (traceDistribution.inCredibleSetContains((int) x1) || traceDistribution.inCredibleSetContains((int) x2)) {
                             g2.setPaint(quantilePaint);
                         } else {
                             g2.setPaint(barPaint);
@@ -293,7 +293,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 	}
 
     protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (traceDistribution != null && traceDistribution.getTraceType() != TraceFactory.TraceType.DOUBLE) {
             super.fillRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.fillRect(g2, x1, y1, x2, y2);
@@ -301,7 +301,7 @@ public class FrequencyPlot extends Plot.AbstractPlot {
     }
 
     protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (traceDistribution != null && traceDistribution.getTraceType() != TraceFactory.TraceType.DOUBLE) {
             super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
         } else {
             super.drawRect(g2, x1, y1, x2, y2);

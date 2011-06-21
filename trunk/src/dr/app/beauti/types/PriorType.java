@@ -6,68 +6,38 @@ import dr.math.distributions.*;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public enum PriorType {
 
-    UNDEFINED,
-    NONE_TREE_PRIOR,
-    NONE_STATISTIC,
-    UNIFORM_PRIOR,
-    EXPONENTIAL_PRIOR,
-    LAPLACE_PRIOR,
-    NORMAL_PRIOR,
-    LOGNORMAL_PRIOR,
-    GAMMA_PRIOR,
-    INVERSE_GAMMA_PRIOR,
-    ONE_OVER_X_PRIOR,
-    TRUNC_NORMAL_PRIOR,
-    POISSON_PRIOR,
-    BETA_PRIOR,
-    SUBSTITUTION_REFERENCE_PRIOR,
-    NORMAL_HPM_PRIOR,
-    LOGNORMAL_HPM_PRIOR;
+    UNDEFINED("undefined", false, true, false, false),
+    NONE_TREE_PRIOR("None (Tree Prior Only)", false, true, false, false),
+    NONE_STATISTIC("None (Statistic)", false, true, false, false),
+    UNIFORM_PRIOR("Uniform", false, false, true, false),
+    EXPONENTIAL_PRIOR("Exponential", false, false, true, true),
+    LAPLACE_PRIOR("Laplace", false, false, true, true),
+    NORMAL_PRIOR("Normal", false, false, true, true),
+    LOGNORMAL_PRIOR("Lognormal", false, false, true, true),
+    GAMMA_PRIOR("Gamma", false, false, true, true),
+    INVERSE_GAMMA_PRIOR("Inverse Gamma", false, false, true, true),
+    BETA_PRIOR("Beta", false, false, true, true),
+    ONE_OVER_X_PRIOR("1/x", false, false, false, false),
+    TRUNC_NORMAL_PRIOR("Truncated Normal", false, false, true, true),
+    SUBSTITUTION_REFERENCE_PRIOR("Subst Reference", false, false, false, false),
+    NORMAL_HPM_PRIOR("Normal HPM", false, false, false, false),
+    LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false, false, false),
+    POISSON_PRIOR("Poisson", true, false, false, false);
 
+    PriorType(final String name, final boolean isDiscrete, final boolean isSpecial, final boolean hasBounds, final boolean hasChart) {
+        this.name = name;
+        this.isDiscrete = isDiscrete;
+        this.isSpecial = isSpecial;
+        this.hasBounds = hasBounds;
+        this.hasChart = hasChart;
+    }
 
     public String toString() {
-
-        switch (this) {
-            case UNDEFINED:
-                return "undefined";
-            case NONE_TREE_PRIOR:
-                return "None (Tree Prior Only)";
-            case NONE_STATISTIC:
-                return "None (Statistic)";
-            case UNIFORM_PRIOR:
-                return "Uniform";
-            case EXPONENTIAL_PRIOR:
-                return "Exponential";
-            case LAPLACE_PRIOR:
-                return "Laplace";
-            case NORMAL_PRIOR:
-                return "Normal";
-            case LOGNORMAL_PRIOR:
-                return "Lognormal";
-            case GAMMA_PRIOR:
-                return "Gamma";
-            case INVERSE_GAMMA_PRIOR:
-                return "Inverse Gamma";
-            case ONE_OVER_X_PRIOR:
-                return "1/x"; //rename Jeffreys prior to 1/x prior everywhere in Beauti
-            case POISSON_PRIOR:
-                return "Poisson";
-            case TRUNC_NORMAL_PRIOR:
-                return "Truncated Normal";
-            case BETA_PRIOR:
-                return "Beta";
-            case SUBSTITUTION_REFERENCE_PRIOR:
-                return "Subst Reference";
-            case NORMAL_HPM_PRIOR:
-                return "Normal HPM";
-            case LOGNORMAL_HPM_PRIOR:
-                return "Lognormal HPM";
-            default:
-                return "";
-        }
+        return name;
     }
 
     public Distribution getDistributionClass(Parameter param) {
@@ -78,7 +48,7 @@ public enum PriorType {
                 break;
             case EXPONENTIAL_PRIOR:
                 if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
-                dist = new OffsetPositiveDistribution(new ExponentialDistribution(1/param.mean), param.offset);
+                dist = new OffsetPositiveDistribution(new ExponentialDistribution(1 / param.mean), param.offset);
                 break;
             case LAPLACE_PRIOR:
                 dist = new LaplaceDistribution(param.mean, param.scale);
@@ -95,8 +65,6 @@ public enum PriorType {
             case INVERSE_GAMMA_PRIOR:
                 dist = new OffsetPositiveDistribution(new InverseGammaDistribution(param.shape, param.scale), param.offset);
                 break;
-//            case ONE_OVER_X_PRIOR:
-//                return ;
             case POISSON_PRIOR:
                 dist = new OffsetPositiveDistribution(new PoissonDistribution(param.mean), param.offset);
                 break;
@@ -106,8 +74,21 @@ public enum PriorType {
             case BETA_PRIOR:
                 dist = new OffsetPositiveDistribution(new BetaDistribution(param.shape, param.shapeB), param.offset);
                 break;
-//            default: // wrong Exception for other priors without distribution implementation
-//                throw new IllegalArgumentException("Distribution class not available for this prior");
+            // The rest do not give a distribution class (return null)
+            case UNDEFINED:
+                break;
+            case NONE_TREE_PRIOR:
+                break;
+            case NONE_STATISTIC:
+                break;
+            case ONE_OVER_X_PRIOR:
+                break;
+            case SUBSTITUTION_REFERENCE_PRIOR:
+                break;
+            case NORMAL_HPM_PRIOR:
+                break;
+            case LOGNORMAL_HPM_PRIOR:
+                break;
         }
         return dist;
     }
@@ -276,4 +257,31 @@ public enum PriorType {
         }
         return buffer.toString();
     }
+
+    public String getName() {
+        return name;
+    }
+
+    public boolean isDiscrete() {
+        return isDiscrete;
+    }
+
+    public boolean isSpecial() {
+        return isSpecial;
+    }
+
+    public boolean hasBounds() {
+        return hasBounds;
+    }
+
+    public boolean hasChart() {
+        return hasChart;
+    }
+
+    private final String name;
+    private final boolean isDiscrete;
+    private final boolean isSpecial;
+    private final boolean hasBounds;
+    private final boolean hasChart;
+
 }

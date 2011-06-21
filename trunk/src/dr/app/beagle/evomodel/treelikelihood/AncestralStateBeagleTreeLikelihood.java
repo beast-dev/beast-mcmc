@@ -396,7 +396,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int childIndex = j * stateCount;
 
                     int category = rateCategory == null ? 0 : rateCategory[j];
-                    System.out.println("\t\t" + rateCategory[j]);
                     int matrixIndex = category * stateCount * stateCount;
                     int partialIndex = category * stateCount * patternCount;
 

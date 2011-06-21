@@ -121,7 +121,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         };
 
-        linkButton = new JButton(setHierarchicalAction);        
+        linkButton = new JButton(setHierarchicalAction);
         linkButton.setVisible(true);
         linkButton.setToolTipText("Select two or more parameters.");
 
@@ -224,7 +224,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private void hierarchicalButtonPressed(int[] rows) {
 
-        if (rows.length < 2) {           
+        if (rows.length < 2) {
             JOptionPane.showMessageDialog(frame,
                     "Less than two parameters selected.",
                     "Parameter linking error",
@@ -233,7 +233,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         List<Parameter> paramList = new ArrayList<Parameter>();
-        for (int i = 0; i < rows.length; ++i) {            
+        for (int i = 0; i < rows.length; ++i) {
             Parameter parameter = parameters.get(rows[i]);
             if (parameter.isNodeHeight || parameter.isStatistic) {
                 JOptionPane.showMessageDialog(frame,
@@ -269,7 +269,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         for (Parameter parameter : paramList) {
             parameter.setPriorEdited(true);
         }
-        priorTableModel.fireTableDataChanged();        
+        priorTableModel.fireTableDataChanged();
     }
 
     private void priorButtonPressed(int row) {
@@ -278,14 +278,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
             // Check that parameter is not already in a HPM
             HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
             if (comp.isHierarchicalParameter(param)) {
-                 int option = JOptionPane.showConfirmDialog(this,
-                    "Parameter already exists in a HPM. Selecting a\n" +
-                    "new prior will remove the parameter. Continue?",
-                    "HPM warning",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
+                int option = JOptionPane.showConfirmDialog(this,
+                        "Parameter already exists in a HPM. Selecting a\n" +
+                                "new prior will remove the parameter. Continue?",
+                        "HPM warning",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
                 if (option == JOptionPane.NO_OPTION) {
                     return;
                 }
@@ -305,53 +305,49 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             result = priorDialog.showDialog(param);
         }
 
-        if (result == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
+//        if (result == JOptionPane.CANCEL_OPTION) {
+//            return;
+//        }
 
-        if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
-            // Possibly remove parameter from its HPM
-            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-            if (comp.isHierarchicalParameter(param)) {
-                if (comp.removeParameter(this, param) == JOptionPane.NO_OPTION) {
-                    // Bail out
-                    System.err.println("Bailing out of modification");
-                    return;
-                }
-                System.err.println("Parameter removed from an HPM");
-            }
-        }
-
-        // Moved OK-button pressed action to here
         if (result == JOptionPane.OK_OPTION) {
-            if (param.isDiscrete) {
-                discretePriorDialog.getArguments();
-            } else {
-                priorDialog.getArguments();
-            }
-        }
+            // Only do this if OK button is pressed (not cancel):
 
-        param.setPriorEdited(true);
-
-        if (isDefaultOnly) {
-            setParametersList(options);
-        }
-
-        if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
-            if (options.clockModelOptions.isNodeCalibrated(param)) {
-                List<ClockModelGroup> groupList = options.clockModelOptions.
-                        getClockModelGroups(options.getAllPartitionData(param.getOptions()));
-                for (ClockModelGroup clockModelGroup : groupList) {
-                    options.clockModelOptions.nodeCalibration(clockModelGroup);
+            if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
+                // Possibly remove parameter from its HPM
+                HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
+                        options.getComponentOptions(HierarchicalModelComponentOptions.class);
+                if (comp.isHierarchicalParameter(param)) {
+                    if (comp.removeParameter(this, param) == JOptionPane.NO_OPTION) {
+                        // Bail out
+                        System.err.println("Bailing out of modification");
+                        return;
+                    }
+                    System.err.println("Parameter removed from an HPM");
                 }
-                frame.setAllOptions();
+            }
+
+            param.setPriorEdited(true);
+
+            if (isDefaultOnly) {
+                setParametersList(options);
+            }
+
+            if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
+                if (options.clockModelOptions.isNodeCalibrated(param)) {
+                    List<ClockModelGroup> groupList = options.clockModelOptions.
+                            getClockModelGroups(options.getAllPartitionData(param.getOptions()));
+                    for (ClockModelGroup clockModelGroup : groupList) {
+                        options.clockModelOptions.nodeCalibration(clockModelGroup);
+                    }
+                    frame.setAllOptions();
 //        	} else {
 //        		options.clockModelOptions.fixRateOfFirstClockPartition();
+                }
             }
+
+            priorTableModel.fireTableDataChanged();
         }
 
-        priorTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {

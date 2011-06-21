@@ -38,124 +38,124 @@ import java.util.Vector;
 public class JChart extends JPanel {
 
     /**
-	 *
-	 */
-	private static final long serialVersionUID = -7064065852204509247L;
-	protected Axis yAxis, xAxis;
-	private Vector<Plot> plots = new Vector<Plot>();
+     *
+     */
+    private static final long serialVersionUID = -7064065852204509247L;
+    protected Axis yAxis, xAxis;
+    private Vector<Plot> plots = new Vector<Plot>();
 
-	private Paint plotBackgroundPaint = Color.white;
+    private Paint plotBackgroundPaint = Color.white;
 
-	private Stroke originStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
-	private Paint originPaint = Color.lightGray;
+    private Stroke originStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL);
+    private Paint originPaint = Color.lightGray;
 
-	private Stroke frameStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	private Paint framePaint = Color.black;
+    private Stroke frameStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+    private Paint framePaint = Color.black;
 
-	private Stroke axisStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
-	private Paint axisPaint = Color.black;
+    private Stroke axisStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_MITER);
+    private Paint axisPaint = Color.black;
 
-	private Font labelFont = new Font("Helvetica", Font.PLAIN, 12);
-	private Paint labelPaint = Color.black;
+    private Font labelFont = new Font("Helvetica", Font.PLAIN, 12);
+    private Paint labelPaint = Color.black;
 
-	private Rectangle2D plotBounds = null;
+    private Rectangle2D plotBounds = null;
 
     private Rectangle2D dragRectangle = null;
 
-	private double majorTickSize = 4;
-	private double minorTickSize = 2;
+    private double majorTickSize = 4;
+    private double minorTickSize = 2;
 
     private double xTickLabelOffset;
-	private double yTickLabelOffset;
+    private double yTickLabelOffset;
 
-	private boolean showLegend = false;
-	private int legendAlignment = SwingConstants.NORTH_EAST;
+    private boolean showLegend = false;
+    private int legendAlignment = SwingConstants.NORTH_EAST;
 
-	private double xScale, yScale, xOffset, yOffset;
+    private double xScale, yScale, xOffset, yOffset;
 
-	public JChart(Axis xAxis, Axis yAxis) {
-		this(null, xAxis, yAxis);
-	}
+    public JChart(Axis xAxis, Axis yAxis) {
+        this(null, xAxis, yAxis);
+    }
 
-	public JChart(Plot plot, Axis xAxis, Axis yAxis) {
+    public JChart(Plot plot, Axis xAxis, Axis yAxis) {
 
-		setOpaque(false);
+        setOpaque(false);
 
-		this.xAxis = xAxis;
-		this.yAxis = yAxis;
+        this.xAxis = xAxis;
+        this.yAxis = yAxis;
 
-		if (plot != null)
-			addPlot(plot);
+        if (plot != null)
+            addPlot(plot);
 
-		addMouseListener(new MListener());
-		addMouseMotionListener(new MMListener());
+        addMouseListener(new MListener());
+        addMouseMotionListener(new MMListener());
 
-	}
+    }
 
-	public void setXAxis(Axis xAxis) {
-		this.xAxis = xAxis;
+    public void setXAxis(Axis xAxis) {
+        this.xAxis = xAxis;
         for (Object plot : plots) {
             Plot p = (Plot) plot;
             p.setAxes(xAxis, yAxis);
         }
         recalibrate();
-		repaint();
-	}
+        repaint();
+    }
 
     public Axis getXAxis() {
         return xAxis;
     }
 
-	public void setYAxis(Axis yAxis) {
-		this.yAxis = yAxis;
+    public void setYAxis(Axis yAxis) {
+        this.yAxis = yAxis;
         for (Plot p : plots) {
             p.setAxes(xAxis, yAxis);
         }
         recalibrate();
-		repaint();
-	}
+        repaint();
+    }
 
     public Axis getYAxis() {
         return yAxis;
-	}
+    }
 
-	public void setFontSize(int size) {
-		labelFont = new Font("Helvetica", Font.PLAIN, size);
-	}
+    public void setFontSize(int size) {
+        labelFont = new Font("Helvetica", Font.PLAIN, size);
+    }
 
-	public void addPlot(Plot plot) {
-		plot.setAxes(xAxis, yAxis);
-		plots.add(plot);
-		recalibrate();
-		repaint();
-	}
+    public void addPlot(Plot plot) {
+        plot.setAxes(xAxis, yAxis);
+        plots.add(plot);
+        recalibrate();
+        repaint();
+    }
 
-	public void removePlot(Plot plot) {
-		plots.remove(plot);
-		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+    public void removePlot(Plot plot) {
+        plots.remove(plot);
+        xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+        yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         for (Plot p : plots) {
             p.setAxes(xAxis, yAxis);
         }
         recalibrate();
-		repaint();
-	}
+        repaint();
+    }
 
-	public void removeAllPlots() {
-		plots.clear();
-		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
-		recalibrate();
-		repaint();
-	}
+    public void removeAllPlots() {
+        plots.clear();
+        xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+        yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
+        recalibrate();
+        repaint();
+    }
 
-	public int getPlotCount() {
-		return plots.size();
-	}
+    public int getPlotCount() {
+        return plots.size();
+    }
 
-	public Plot getPlot(int index) {
-		return plots.get(index);
-	}
+    public Plot getPlot(int index) {
+        return plots.get(index);
+    }
 
     public Rectangle2D getDragRectangle() {
         return dragRectangle;
@@ -180,7 +180,7 @@ public class JChart extends JPanel {
         repaint();
     }
 
-	private void resetPlots() {
+    private void resetPlots() {
 //		xAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
 //		yAxis.setRange(Double.POSITIVE_INFINITY,Double.NEGATIVE_INFINITY);
         for (Plot p : plots) {
@@ -188,476 +188,481 @@ public class JChart extends JPanel {
         }
     }
 
-	/**
-	 *	Set origin style. Use a stroke of null to not draw origin
-	 */
-	public void setOriginStyle(Stroke originStroke, Paint originPaint) {
-		this.originStroke = originStroke;
-		this.originPaint = originPaint;
-	}
+    /**
+     *	Set origin style. Use a stroke of null to not draw origin
+     */
+    public void setOriginStyle(Stroke originStroke, Paint originPaint) {
+        this.originStroke = originStroke;
+        this.originPaint = originPaint;
+    }
 
-	/**
-	 *	Set axis style.
-	 */
-	public void setAxisStyle(Stroke axisStroke, Paint axisPaint) {
-		this.axisStroke = axisStroke;
-		this.axisPaint = axisPaint;
-	}
+    /**
+     *	Set axis style.
+     */
+    public void setAxisStyle(Stroke axisStroke, Paint axisPaint) {
+        this.axisStroke = axisStroke;
+        this.axisPaint = axisPaint;
+    }
 
-	/**
-	 *	Get axis stroke.
-	 */
-	public Stroke getAxisStroke() {
-		return axisStroke;
-	}
+    /**
+     *	Get axis stroke.
+     */
+    public Stroke getAxisStroke() {
+        return axisStroke;
+    }
 
-	/**
-	 *	Get axis paint.
-	 */
-	public Paint getAxisPaint() {
-		return axisPaint;
-	}
+    /**
+     *	Get axis paint.
+     */
+    public Paint getAxisPaint() {
+        return axisPaint;
+    }
 
-	/**
-	 *	Set frame style. Use a stroke of null to not draw frame
-	 */
-	public void setFrameStyle(Stroke frameStroke, Paint framePaint) {
-		this.frameStroke = frameStroke;
-		this.framePaint = framePaint;
-	}
+    /**
+     *	Set frame style. Use a stroke of null to not draw frame
+     */
+    public void setFrameStyle(Stroke frameStroke, Paint framePaint) {
+        this.frameStroke = frameStroke;
+        this.framePaint = framePaint;
+    }
 
-	/**
-	 *	Set label style.
-	 */
-	public void setLabelStyle(Font labelFont, Paint labelPaint) {
-		this.labelFont = labelFont;
-		this.labelPaint = labelPaint;
-	}
+    /**
+     *	Set label style.
+     */
+    public void setLabelStyle(Font labelFont, Paint labelPaint) {
+        this.labelFont = labelFont;
+        this.labelPaint = labelPaint;
+    }
 
-	/**
-	 *	Get label font.
-	 */
-	public Font getLabelFont() {
-		return labelFont;
-	}
+    /**
+     *	Get label font.
+     */
+    public Font getLabelFont() {
+        return labelFont;
+    }
 
-	/**
-	 *	Get label paint.
-	 */
-	public Paint getLabelPaint() {
-		return labelPaint;
-	}
+    /**
+     *	Get label paint.
+     */
+    public Paint getLabelPaint() {
+        return labelPaint;
+    }
 
-	/**
-	 *	Set legend on/off.
-	 */
-	public void setShowLegend(boolean showLegend) {
-		this.showLegend = showLegend;
-		repaint();
-	}
+    /**
+     *	Set legend on/off.
+     */
+    public void setShowLegend(boolean showLegend) {
+        this.showLegend = showLegend;
+        repaint();
+    }
 
-	/**
-	 *	Set legend alignment (use SwingConstants.NORTH_EAST etc.).
-	 */
-	public void setLegendAlignment(int alignment) {
-		this.legendAlignment = alignment;
-		repaint();
-	}
+    /**
+     *	Set legend alignment (use SwingConstants.NORTH_EAST etc.).
+     */
+    public void setLegendAlignment(int alignment) {
+        this.legendAlignment = alignment;
+        repaint();
+    }
 
-	public Dimension getMinimumSize() {
-		return new Dimension(128, 128);
-	}
+    public Dimension getMinimumSize() {
+        return new Dimension(128, 128);
+    }
 
-	public Rectangle2D getPlotBounds() {
-		return plotBounds;
-	}
+    public Rectangle2D getPlotBounds() {
+        return plotBounds;
+    }
 
-	public double getMajorTickSize() {
-		return majorTickSize;
-	}
+    public double getMajorTickSize() {
+        return majorTickSize;
+    }
 
-	public double getMinorTickSize() {
-		return minorTickSize;
-	}
+    public double getMinorTickSize() {
+        return minorTickSize;
+    }
 
-	public double getXTickLabelOffset() {
-		return xTickLabelOffset;
-	}
+    public double getXTickLabelOffset() {
+        return xTickLabelOffset;
+    }
 
-	public double getYTickLabelOffset() {
-		return yTickLabelOffset;
-	}
+    public double getYTickLabelOffset() {
+        return yTickLabelOffset;
+    }
 
-	private boolean calibrated = true;
-	public void recalibrate() { calibrated = false; }
-	protected void calibrate(Graphics2D g2, Dimension size) {
-		resetPlots();
-	}
-	protected boolean hasContents() {
-		return plots.size() > 0;
-	}
+    private boolean calibrated = true;
+    public void recalibrate() { calibrated = false; }
+    protected void calibrate(Graphics2D g2, Dimension size) {
+        resetPlots();
+    }
+    protected boolean hasContents() {
+        return plots.size() > 0;
+    }
 
-	public void paintComponent(Graphics g) {
+    public void paintComponent(Graphics g) {
 
-		if (!hasContents()) return;
+        if (!hasContents()) return;
 
-		Graphics2D g2 = (Graphics2D)g;
-		Dimension size = getSize();
+        Graphics2D g2 = (Graphics2D)g;
+        Dimension size = getSize();
 
 //        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        if (!calibrated) {
-			calibrate(g2, size);
-			calibrated = true;
-		}
+        try {
 
-		g2.setFont(labelFont);
+            if (!calibrated) {
+                calibrate(g2, size);
+                calibrated = true;
+            }
 
-        double tickLabelHeight = g2.getFontMetrics().getHeight();
+            g2.setFont(labelFont);
 
-		xTickLabelOffset = g2.getFontMetrics().getAscent();
-		yTickLabelOffset = g2.getFontMetrics().getAscent() / 2;
+            double tickLabelHeight = g2.getFontMetrics().getHeight();
 
-		double maxXTickLabelWidth = getMaxTickLabelWidth(g2, xAxis);
-		double maxYTickLabelWidth = getMaxTickLabelWidth(g2, yAxis);
+            xTickLabelOffset = g2.getFontMetrics().getAscent();
+            yTickLabelOffset = g2.getFontMetrics().getAscent() / 2;
 
-		double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
-		double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
+            double maxXTickLabelWidth = getMaxTickLabelWidth(g2, xAxis);
+            double maxYTickLabelWidth = getMaxTickLabelWidth(g2, yAxis);
 
-		plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
+            double w = size.width - (majorTickSize * 1.25) - maxYTickLabelWidth - (maxXTickLabelWidth / 2);
+            double h = size.height - yTickLabelOffset - (majorTickSize * 1.25) - tickLabelHeight;
 
-		xOffset = plotBounds.getX();
-		yOffset = plotBounds.getMaxY();
-		xScale = w / (xAxis.transform(xAxis.getMaxAxis()) - xAxis.transform(xAxis.getMinAxis()));
-		yScale = -h / (yAxis.transform(yAxis.getMaxAxis()) - yAxis.transform(yAxis.getMinAxis()));
+            plotBounds = new Rectangle2D.Double((majorTickSize * 1.25) + maxYTickLabelWidth, yTickLabelOffset, w, h);
 
-		g2.setPaint(plotBackgroundPaint);
-		g2.fill(plotBounds);
-		g2.setClip(plotBounds);
+            xOffset = plotBounds.getX();
+            yOffset = plotBounds.getMaxY();
+            xScale = w / (xAxis.transform(xAxis.getMaxAxis()) - xAxis.transform(xAxis.getMinAxis()));
+            yScale = -h / (yAxis.transform(yAxis.getMaxAxis()) - yAxis.transform(yAxis.getMinAxis()));
 
-		Stroke oldStroke = g2.getStroke();
+            g2.setPaint(plotBackgroundPaint);
+            g2.fill(plotBounds);
+            g2.setClip(plotBounds);
 
-		if (originStroke != null && originPaint != null) {
-			double minX = xAxis.getMinAxis();
-			double maxX = xAxis.getMaxAxis();
-			double minY = yAxis.getMinAxis();
-			double maxY = yAxis.getMaxAxis();
+            Stroke oldStroke = g2.getStroke();
 
-			g2.setPaint(originPaint);
-			g2.setStroke(originStroke);
+            if (originStroke != null && originPaint != null) {
+                double minX = xAxis.getMinAxis();
+                double maxX = xAxis.getMaxAxis();
+                double minY = yAxis.getMinAxis();
+                double maxY = yAxis.getMaxAxis();
 
-			if (minX<0.0 && maxX>0.0) {
-				Line2D line = new Line2D.Double(transformX(0.0), transformY(minY),
-												transformX(0.0), transformY(maxY));
-				g2.draw(line);
-			}
+                g2.setPaint(originPaint);
+                g2.setStroke(originStroke);
 
-			if (minY<0.0 && maxY>0.0) {
-				Line2D line = new Line2D.Double(transformX(minX), transformY(0.0),
-												transformX(maxX), transformY(0.0));
-				g2.draw(line);
-			}
-		}
-		g2.setStroke(oldStroke);
+                if (minX<0.0 && maxX>0.0) {
+                    Line2D line = new Line2D.Double(transformX(0.0), transformY(minY),
+                            transformX(0.0), transformY(maxY));
+                    g2.draw(line);
+                }
 
-		paintContents(g2);
+                if (minY<0.0 && maxY>0.0) {
+                    Line2D line = new Line2D.Double(transformX(minX), transformY(0.0),
+                            transformX(maxX), transformY(0.0));
+                    g2.draw(line);
+                }
+            }
+            g2.setStroke(oldStroke);
 
-		if (showLegend) {
-			paintLegend(g2);
-		}
+            paintContents(g2);
 
-        if (dragRectangle != null) {
-            g2.setPaint(new Color(128, 128, 128, 128));
-            g2.fill(dragRectangle);
+            if (showLegend) {
+                paintLegend(g2);
+            }
+
+            if (dragRectangle != null) {
+                g2.setPaint(new Color(128, 128, 128, 128));
+                g2.fill(dragRectangle);
+            }
+
+            g2.setClip(null);
+
+            paintFrame(g2);
+
+            paintAxis(g2, xAxis, true);
+            paintAxis(g2, yAxis, false);
+        } catch (ChartRuntimeException cre) {
+            // ignore (just won't paint chart)
         }
 
+    }
 
-		g2.setClip(null);
-
-		paintFrame(g2);
-
-		paintAxis(g2, xAxis, true);
-		paintAxis(g2, yAxis, false);
-	}
-
-	protected void paintContents(Graphics2D g2) {
+    protected void paintContents(Graphics2D g2) {
         for (Plot plot : plots) {
             plot.paintPlot(g2, xScale, yScale, xOffset, yOffset);
         }
     }
 
-	protected void paintFrame(Graphics2D g2) {
-		g2.setPaint(framePaint);
-		g2.setStroke(frameStroke);
-		g2.draw(plotBounds);
-	}
+    protected void paintFrame(Graphics2D g2) {
+        g2.setPaint(framePaint);
+        g2.setStroke(frameStroke);
+        g2.draw(plotBounds);
+    }
 
 
-	/**
-	*	Transform a chart co-ordinates into a drawing co-ordinates
-	*/
-	protected double transformX(double value) {
-		return ((xAxis.transform(value) - xAxis.transform(xAxis.getMinAxis())) * xScale) + xOffset;
-	}
+    /**
+     *	Transform a chart co-ordinates into a drawing co-ordinates
+     */
+    protected double transformX(double value) {
+        return ((xAxis.transform(value) - xAxis.transform(xAxis.getMinAxis())) * xScale) + xOffset;
+    }
 
-	/**
-	*	Transform a chart co-ordinates into a drawing co-ordinates
-	*/
-	protected double transformY(double value) {
-		return ((yAxis.transform(value) - yAxis.transform(yAxis.getMinAxis())) * yScale) + yOffset;
-	}
+    /**
+     *	Transform a chart co-ordinates into a drawing co-ordinates
+     */
+    protected double transformY(double value) {
+        return ((yAxis.transform(value) - yAxis.transform(yAxis.getMinAxis())) * yScale) + yOffset;
+    }
 
-	/*
-	*	Transform a drawing co-ordinate into a chart co-ordinate
-	 * /
-	private double untransformX(double value) {
+    /*
+     *	Transform a drawing co-ordinate into a chart co-ordinate
+      * /
+     private double untransformX(double value) {
 
-		return xAxis.untransform(
-						xAxis.transform(xAxis.getMinAxis()) + ((value - xOffset) / xScale));
-	}*/
+         return xAxis.untransform(
+                         xAxis.transform(xAxis.getMinAxis()) + ((value - xOffset) / xScale));
+     }*/
 
-	/*
-	*	Transform a drawing co-ordinate into a chart co-ordinate
-	 * /
-	private double untransformY(double value) {
+    /*
+     *	Transform a drawing co-ordinate into a chart co-ordinate
+      * /
+     private double untransformY(double value) {
 
-		return yAxis.untransform(
-						yAxis.transform(yAxis.getMinAxis()) + ((value - yOffset) / yScale));
-	}*/
+         return yAxis.untransform(
+                         yAxis.transform(yAxis.getMinAxis()) + ((value - yOffset) / yScale));
+     }*/
 
-	protected void paintLegend(Graphics2D g2)
-	{
-		float width = 0;
-		int itemCount = 0;
+    protected void paintLegend(Graphics2D g2)
+    {
+        float width = 0;
+        int itemCount = 0;
 
-		for (int i = 0; i < getPlotCount(); i++) {
-			String name = getPlot(i).getName();
-			if (name != null) {
-				float w = (float)g2.getFontMetrics().stringWidth(name);
-				if (width < w) {
-					width = w;
-				}
-				itemCount++;
-			}
-		}
+        for (int i = 0; i < getPlotCount(); i++) {
+            String name = getPlot(i).getName();
+            if (name != null) {
+                float w = (float)g2.getFontMetrics().stringWidth(name);
+                if (width < w) {
+                    width = w;
+                }
+                itemCount++;
+            }
+        }
 
-		if (width == 0) return; // no plots have names so just return
+        if (width == 0) return; // no plots have names so just return
 
-		width += 32;
-		float height = (float)(g2.getFontMetrics().getAscent() + 8) * itemCount;
+        width += 32;
+        float height = (float)(g2.getFontMetrics().getAscent() + 8) * itemCount;
 
-		float x, y;
+        float x, y;
 
-		if (legendAlignment == SwingConstants.NORTH_WEST ||
-			legendAlignment == SwingConstants.WEST ||
-			legendAlignment == SwingConstants.SOUTH_WEST) {
-			x = (float)(plotBounds.getX() + 8);
-		} else if (legendAlignment == SwingConstants.NORTH_EAST ||
-			legendAlignment == SwingConstants.EAST ||
-			legendAlignment == SwingConstants.SOUTH_EAST) {
-			x = (float)(plotBounds.getX() + plotBounds.getWidth() - width - 8);
-		} else { // centered
-			x = (float)(plotBounds.getX() + ((plotBounds.getWidth() - width) / 2));
-		}
+        if (legendAlignment == SwingConstants.NORTH_WEST ||
+                legendAlignment == SwingConstants.WEST ||
+                legendAlignment == SwingConstants.SOUTH_WEST) {
+            x = (float)(plotBounds.getX() + 8);
+        } else if (legendAlignment == SwingConstants.NORTH_EAST ||
+                legendAlignment == SwingConstants.EAST ||
+                legendAlignment == SwingConstants.SOUTH_EAST) {
+            x = (float)(plotBounds.getX() + plotBounds.getWidth() - width - 8);
+        } else { // centered
+            x = (float)(plotBounds.getX() + ((plotBounds.getWidth() - width) / 2));
+        }
 
-		if (legendAlignment == SwingConstants.NORTH_WEST ||
-			legendAlignment == SwingConstants.NORTH ||
-			legendAlignment == SwingConstants.NORTH_EAST) {
-			y = (float)(plotBounds.getY() + 8);
-		} else if (legendAlignment == SwingConstants.SOUTH_EAST ||
-			legendAlignment == SwingConstants.SOUTH ||
-			legendAlignment == SwingConstants.SOUTH_WEST) {
-			y = (float)(plotBounds.getY() + plotBounds.getHeight() - height - 8);
-		} else { // centered
-			y = (float)(plotBounds.getY() + ((plotBounds.getHeight() - height) / 2));
-		}
+        if (legendAlignment == SwingConstants.NORTH_WEST ||
+                legendAlignment == SwingConstants.NORTH ||
+                legendAlignment == SwingConstants.NORTH_EAST) {
+            y = (float)(plotBounds.getY() + 8);
+        } else if (legendAlignment == SwingConstants.SOUTH_EAST ||
+                legendAlignment == SwingConstants.SOUTH ||
+                legendAlignment == SwingConstants.SOUTH_WEST) {
+            y = (float)(plotBounds.getY() + plotBounds.getHeight() - height - 8);
+        } else { // centered
+            y = (float)(plotBounds.getY() + ((plotBounds.getHeight() - height) / 2));
+        }
 
-		Rectangle2D legendBounds = new Rectangle2D.Float(x, y, width, height);
-		g2.setPaint(framePaint);
-		g2.setStroke(frameStroke);
-		g2.draw(legendBounds);
+        Rectangle2D legendBounds = new Rectangle2D.Float(x, y, width, height);
+        g2.setPaint(framePaint);
+        g2.setStroke(frameStroke);
+        g2.draw(legendBounds);
 
-		x += 8;
+        x += 8;
 
-		float iy = 8 + g2.getFontMetrics().getAscent();
-		y += g2.getFontMetrics().getAscent() + 4;
-		for (int i = 0; i < getPlotCount(); i++) {
-			Plot plot = getPlot(i);
-			String name = plot.getName();
-			if (name != null) {
+        float iy = 8 + g2.getFontMetrics().getAscent();
+        y += g2.getFontMetrics().getAscent() + 4;
+        for (int i = 0; i < getPlotCount(); i++) {
+            Plot plot = getPlot(i);
+            String name = plot.getName();
+            if (name != null) {
 
-				g2.setPaint(plot.getLineColor());
-				g2.fill(new Rectangle2D.Float(x, y - 8, 8, 8));
+                g2.setPaint(plot.getLineColor());
+                g2.fill(new Rectangle2D.Float(x, y - 8, 8, 8));
 
-				g2.setPaint(framePaint);
-				g2.drawString(name, x + 16, y);
+                g2.setPaint(framePaint);
+                g2.drawString(name, x + 16, y);
 
-				y += iy;
-			}
-		}
+                y += iy;
+            }
+        }
 
-	}
+    }
 
-	/**
-	*	Get the maximum width of the labels of an axis
-	*/
-	protected double getMaxTickLabelWidth(Graphics2D g2, Axis axis)
-	{
-		String label;
-		double width;
-		double maxWidth = 0;
+    /**
+     *	Get the maximum width of the labels of an axis
+     */
+    protected double getMaxTickLabelWidth(Graphics2D g2, Axis axis)
+    {
+        String label;
+        double width;
+        double maxWidth = 0;
 
-		if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
-			label = axis.format(axis.getMinorTickValue(0, -1));
-			width = g2.getFontMetrics().stringWidth(label);
-			if (maxWidth < width)
-				maxWidth = width;
-		}
-		int n = axis.getMajorTickCount();
-		for (int i = 0; i < n; i++) {
-			label = axis.format(axis.getMajorTickValue(i));
-			width = g2.getFontMetrics().stringWidth(label);
-			if (maxWidth < width)
-				maxWidth = width;
-		}
-		if (axis.getLabelLast()) { // Draw first minor tick as a major one (with a label)
-			label = axis.format(axis.getMinorTickValue(0, n - 1));
-			width = g2.getFontMetrics().stringWidth(label);
-			if (maxWidth < width)
-				maxWidth = width;
-		}
+        if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
+            label = axis.format(axis.getMinorTickValue(0, -1));
+            width = g2.getFontMetrics().stringWidth(label);
+            if (maxWidth < width)
+                maxWidth = width;
+        }
+        int n = axis.getMajorTickCount();
+        for (int i = 0; i < n; i++) {
+            label = axis.format(axis.getMajorTickValue(i));
+            width = g2.getFontMetrics().stringWidth(label);
+            if (maxWidth < width)
+                maxWidth = width;
+        }
+        if (axis.getLabelLast()) { // Draw first minor tick as a major one (with a label)
+            label = axis.format(axis.getMinorTickValue(0, n - 1));
+            width = g2.getFontMetrics().stringWidth(label);
+            if (maxWidth < width)
+                maxWidth = width;
+        }
 
-		return maxWidth;
-	}
+        return maxWidth;
+    }
 
-	protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis)
-	{
-		int n1 = axis.getMajorTickCount();
-		int n2, i, j;
+    protected void paintAxis(Graphics2D g2, Axis axis, boolean horizontalAxis)
+    {
+        int n1 = axis.getMajorTickCount();
+        int n2, i, j;
 
-		n2 = axis.getMinorTickCount(-1);
-		if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
+        n2 = axis.getMinorTickCount(-1);
+        if (axis.getLabelFirst()) { // Draw first minor tick as a major one (with a label)
 
-			paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
+            paintMajorTick(g2, axis.getMinorTickValue(0, -1), horizontalAxis);
 
-			for (j = 1; j < n2; j++) {
-				paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
-			}
-		} else {
+            for (j = 1; j < n2; j++) {
+                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+            }
+        } else {
 
-			for (j = 0; j < n2; j++) {
-				paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
-			}
-		}
+            for (j = 0; j < n2; j++) {
+                paintMinorTick(g2, axis.getMinorTickValue(j, -1), horizontalAxis);
+            }
+        }
 
-		for (i = 0; i < n1; i++) {
+        for (i = 0; i < n1; i++) {
 
-			paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
-			n2 = axis.getMinorTickCount(i);
+            paintMajorTick(g2, axis.getMajorTickValue(i), horizontalAxis);
+            n2 = axis.getMinorTickCount(i);
 
-			if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
+            if (i == (n1-1) && axis.getLabelLast()) { // Draw last minor tick as a major one
 
-				paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
+                paintMajorTick(g2, axis.getMinorTickValue(0, i), horizontalAxis);
 
-				for (j = 1; j < n2; j++) {
-					paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
-				}
-			} else {
+                for (j = 1; j < n2; j++) {
+                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                }
+            } else {
 
-				for (j = 0; j <  n2; j++) {
-					paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
-				}
-			}
-		}
-	}
+                for (j = 0; j <  n2; j++) {
+                    paintMinorTick(g2, axis.getMinorTickValue(j, i), horizontalAxis);
+                }
+            }
+        }
+    }
 
-	protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
-	{
-		g2.setPaint(axisPaint);
-		g2.setStroke(axisStroke);
-		if (horizontalAxis) {
-			String label = xAxis.format(value);
-			double pos = transformX(value);
+    protected void paintMajorTick(Graphics2D g2, double value, boolean horizontalAxis)
+    {
+        g2.setPaint(axisPaint);
+        g2.setStroke(axisStroke);
+        if (horizontalAxis) {
+            String label = xAxis.format(value);
+            double pos = transformX(value);
 
-			Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
-			g2.draw(line);
+            Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + majorTickSize);
+            g2.draw(line);
 
-			g2.setPaint(labelPaint);
-			double width = g2.getFontMetrics().stringWidth(label);
-			g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
-		} else {
-			String label = yAxis.format(value);
-			double pos = transformY(value);
+            g2.setPaint(labelPaint);
+            double width = g2.getFontMetrics().stringWidth(label);
+            g2.drawString(label, (float)(pos - (width / 2)), (float)(plotBounds.getMaxY() + (majorTickSize * 1.25) + xTickLabelOffset));
+        } else {
+            String label = yAxis.format(value);
+            double pos = transformY(value);
 
-			Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
-			g2.draw(line);
+            Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - majorTickSize, pos);
+            g2.draw(line);
 
-			g2.setPaint(labelPaint);
-			double width = g2.getFontMetrics().stringWidth(label);
-			g2.drawString(label, (float)(plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float)(pos + yTickLabelOffset));
-		}
-	}
+            g2.setPaint(labelPaint);
+            double width = g2.getFontMetrics().stringWidth(label);
+            g2.drawString(label, (float)(plotBounds.getMinX() - width - (majorTickSize * 1.25)), (float)(pos + yTickLabelOffset));
+        }
+    }
 
-	protected void paintMinorTick(Graphics2D g2, double value, boolean horizontalAxis)
-	{
+    protected void paintMinorTick(Graphics2D g2, double value, boolean horizontalAxis)
+    {
 
-		g2.setPaint(axisPaint);
-		g2.setStroke(axisStroke);
-		if (horizontalAxis) {
-			double pos = transformX(value);
+        g2.setPaint(axisPaint);
+        g2.setStroke(axisStroke);
+        if (horizontalAxis) {
+            double pos = transformX(value);
 
-			Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + minorTickSize);
-			g2.draw(line);
-		} else {
-			double pos = transformY(value);
+            Line2D line = new Line2D.Double(pos, plotBounds.getMaxY(), pos, plotBounds.getMaxY() + minorTickSize);
+            g2.draw(line);
+        } else {
+            double pos = transformY(value);
 
-			Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - minorTickSize, pos);
-			g2.draw(line);
-		}
-	}
+            Line2D line = new Line2D.Double(plotBounds.getMinX(), pos, plotBounds.getMinX() - minorTickSize, pos);
+            g2.draw(line);
+        }
+    }
 
 //	private Point2D currentPoint = null;
 
-	public class MMListener extends MouseMotionAdapter {
+    public class MMListener extends MouseMotionAdapter {
 
-		public void mouseMoved(MouseEvent me) {
+        public void mouseMoved(MouseEvent me) {
 //			currentPoint = me.getPoint();
-		}
+        }
 
-		public void mouseDragged(MouseEvent me) {
+        public void mouseDragged(MouseEvent me) {
 
 //			selectionEnd = boundedPoint(me.getPoint(), getSize());
 //			currentPoint = realPoint(selectionEnd);
 
 //			repaint(200);
-		}
-	}
+        }
+    }
 
-	public class MListener extends MouseAdapter {
+    public class MListener extends MouseAdapter {
 
-		Point2D start, finish;
+        Point2D start, finish;
 
-		public void mouseExited(MouseEvent me) {
+        public void mouseExited(MouseEvent me) {
 //			currentPoint = null;
-		}
+        }
 
-		public void mousePressed(MouseEvent me) {
-		}
+        public void mousePressed(MouseEvent me) {
+        }
 
 
-		public void mouseReleased(MouseEvent me) {
-		}
+        public void mouseReleased(MouseEvent me) {
+        }
 
-		public void mouseClicked(MouseEvent me) {
+        public void mouseClicked(MouseEvent me) {
 
-			if (plotBounds != null && plotBounds.contains(me.getPoint())) {
+            if (plotBounds != null && plotBounds.contains(me.getPoint())) {
                 for (Plot plot : plots) {
                     plot.pointClicked(me.getPoint());
                 }
 
 
             }
-		}
-	}
+        }
+    }
 }

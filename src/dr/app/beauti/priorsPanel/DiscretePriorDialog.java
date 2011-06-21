@@ -129,10 +129,12 @@ public class DiscretePriorDialog {
             result = value;
         }
 
+        // AR - No reason to have it outside - must be called here when OK button pressed
         // Moved outside
-//        if (result == JOptionPane.OK_OPTION) {
-//            getArguments();
-//        }
+
+        if (result == JOptionPane.OK_OPTION) {
+            getArguments();
+        }
 
         return result;
     }
@@ -144,7 +146,7 @@ public class DiscretePriorDialog {
 
     }
 
-    public void getArguments() {
+    private void getArguments() {
         parameter.priorType = priorCombo.getSelectedIndex() == 0 ? PriorType.UNIFORM_PRIOR : PriorType.POISSON_PRIOR;
 
         if (initialField.getValue() != null) parameter.initial = initialField.getValue();

@@ -72,14 +72,20 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
             return 0;
         } else if (x == 0) {
             if (alpha < 1) {
-                throw MathRuntimeException.createIllegalArgumentException(
-                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
             }
             return 0;
         } else if (x == 1) {
             if (beta < 1) {
-                throw MathRuntimeException.createIllegalArgumentException(
-                        "Cannot compute beta density at 1 when beta = %.3g", beta);
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 1 when beta = %.3g", beta);
             }
             return 0;
         } else {
@@ -101,14 +107,20 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
             return 0;
         } else if (x == 0) {
             if (alpha < 1) {
-                throw MathRuntimeException.createIllegalArgumentException(
-                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 0 when alpha = {0,number}", alpha);
             }
             return 0;
         } else if (x == 1) {
             if (beta < 1) {
-                throw MathRuntimeException.createIllegalArgumentException(
-                        "Cannot compute beta density at 1 when beta = %.3g", beta);
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                        "Cannot compute beta density at 1 when beta = %.3g", beta);
             }
             return 0;
         } else {
@@ -133,8 +145,11 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
             try{
                 return super.inverseCumulativeProbability(y);
             } catch (MathException e) {
-                System.err.println("Couldn't calculate beta quantile for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
-                throw new RuntimeException();
+//                throw MathRuntimeException.createIllegalArgumentException(                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+
+//                    "Couldn't calculate beta quantile for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
             }
         }
     }
@@ -163,8 +178,11 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
             try {
                 return Beta.regularizedBeta(x, alpha, beta);
             } catch (MathException e) {
-                System.err.println("Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
-                throw new RuntimeException();
+                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+                // exceptions is bad. Better to return NaN and let the calling code deal with it.
+                return Double.NaN;
+//                throw MathRuntimeException.createIllegalArgumentException(
+//                "Couldn't calculate beta cdf for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
             }
         }
 
@@ -223,9 +241,25 @@ public class BetaDistribution extends AbstractContinuousDistribution implements 
     /**
      * @return a probability density function representing this distribution
      */
-    public UnivariateFunction getProbabilityDensityFunction(){
-        throw new UnsupportedOperationException();
+    public final UnivariateFunction getProbabilityDensityFunction() {
+        return pdfFunction;
     }
+
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
+        public final double evaluate(double x) {
+            return pdf(x);
+        }
+
+        public final double getLowerBound() {
+            return 0.0;
+        }
+
+        public final double getUpperBound() {
+            return 1.0;
+        }
+    };
+
+
 }
 
 

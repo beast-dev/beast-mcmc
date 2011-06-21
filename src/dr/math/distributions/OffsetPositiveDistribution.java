@@ -94,11 +94,11 @@ public class OffsetPositiveDistribution implements Distribution {
         }
 
         public final double getLowerBound() {
-            return offset;
+            return offset + distribution.getProbabilityDensityFunction().getLowerBound();
         }
 
         public final double getUpperBound() {
-            return Double.POSITIVE_INFINITY;
+            return offset + distribution.getProbabilityDensityFunction().getUpperBound();
         }
     };
 

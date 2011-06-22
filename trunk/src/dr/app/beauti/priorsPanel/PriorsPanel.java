@@ -28,6 +28,7 @@ package dr.app.beauti.priorsPanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
+import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
@@ -71,7 +72,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private final boolean isDefaultOnly;
 
-    private final static boolean HIERARCHICAL_ENABLED = false; // Change to true to enable
+    private final static boolean HIERARCHICAL_ENABLED = true; // Change to false to disable
 
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
@@ -122,7 +123,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         linkButton = new JButton(setHierarchicalAction);
         linkButton.setVisible(true);
-        linkButton.setToolTipText("Select two or more parameters.");
+        linkButton.setToolTipText(HierarchicalPhylogeneticModel.TIP_TOOL);
 
         messageLabel.setText(getMessage());
 

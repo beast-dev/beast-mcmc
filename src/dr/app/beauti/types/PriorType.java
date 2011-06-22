@@ -1,5 +1,6 @@
 package dr.app.beauti.types;
 
+import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.NumberUtil;
 import dr.math.distributions.*;
@@ -10,30 +11,32 @@ import dr.math.distributions.*;
  */
 public enum PriorType {
 
-    UNDEFINED("undefined", false, true, false, false),
-    NONE_TREE_PRIOR("None (Tree Prior Only)", false, true, false, false),
-    NONE_STATISTIC("None (Statistic)", false, true, false, false),
-    UNIFORM_PRIOR("Uniform", false, false, true, false),
-    EXPONENTIAL_PRIOR("Exponential", false, false, true, true),
-    LAPLACE_PRIOR("Laplace", false, false, true, true),
-    NORMAL_PRIOR("Normal", false, false, true, true),
-    LOGNORMAL_PRIOR("Lognormal", false, false, true, true),
-    GAMMA_PRIOR("Gamma", false, false, true, true),
-    INVERSE_GAMMA_PRIOR("Inverse Gamma", false, false, true, true),
-    BETA_PRIOR("Beta", false, false, true, true),
-    ONE_OVER_X_PRIOR("1/x", false, false, false, false),
-    TRUNC_NORMAL_PRIOR("Truncated Normal", false, false, true, true),
-    SUBSTITUTION_REFERENCE_PRIOR("Subst Reference", false, false, false, false),
-    NORMAL_HPM_PRIOR("Normal HPM", false, false, false, false),
-    LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false, false, false),
-    POISSON_PRIOR("Poisson", true, false, false, false);
+    UNDEFINED("undefined", false, true, false, false, true),
+    NONE_TREE_PRIOR("None (Tree Prior Only)", false, true, false, false, true),
+    NONE_STATISTIC("None (Statistic)", false, true, false, false, true),
+    UNIFORM_PRIOR("Uniform", false, false, true, false, true),
+    EXPONENTIAL_PRIOR("Exponential", false, false, true, true, true),
+    LAPLACE_PRIOR("Laplace", false, false, true, true, true),
+    NORMAL_PRIOR("Normal", false, false, true, true, true),
+    LOGNORMAL_PRIOR("Lognormal", false, false, true, true, true),
+    GAMMA_PRIOR("Gamma", false, false, true, true, true),
+    INVERSE_GAMMA_PRIOR("Inverse Gamma", false, false, true, true, true),
+    BETA_PRIOR("Beta", false, false, true, true, true),
+    ONE_OVER_X_PRIOR("1/x", false, false, false, false, true),
+    TRUNC_NORMAL_PRIOR("Truncated Normal", false, false, true, true, true),
+    SUBSTITUTION_REFERENCE_PRIOR("Subst Reference", false, false, false, false, false),
+    LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false, false, false, false),
+    NORMAL_HPM_PRIOR("Normal HPM", false, false, false, false, false),    
+    POISSON_PRIOR("Poisson", true, false, false, false, true);
 
-    PriorType(final String name, final boolean isDiscrete, final boolean isSpecial, final boolean hasBounds, final boolean hasChart) {
+    PriorType(final String name, final boolean isDiscrete, final boolean isSpecial,
+              final boolean hasBounds, final boolean hasChart, final boolean displayByDefault) {
         this.name = name;
         this.isDiscrete = isDiscrete;
         this.isSpecial = isSpecial;
         this.hasBounds = hasBounds;
         this.hasChart = hasChart;
+        this.displayByDefault = displayByDefault;
     }
 
     public String toString() {
@@ -202,10 +205,14 @@ public enum PriorType {
                 buffer.append("Approx. Reference Prior");
                 break;
             case NORMAL_HPM_PRIOR:
-                buffer.append("Normal HPM [mean, precision]");
+                buffer.append("Normal HPM [");
+                buffer.append(param.hpmModelName);
+                buffer.append("]");
                 break;
             case LOGNORMAL_HPM_PRIOR:
-                buffer.append("Lognormal HPM [mean, precision]");
+                buffer.append("Lognormal HPM [");
+                buffer.append(param.hpmModelName);
+                buffer.append("]");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
@@ -278,10 +285,15 @@ public enum PriorType {
         return hasChart;
     }
 
+    public boolean displayByDefault() {
+        return displayByDefault;
+    }
+
     private final String name;
     private final boolean isDiscrete;
     private final boolean isSpecial;
     private final boolean hasBounds;
     private final boolean hasChart;
+    private final boolean displayByDefault;
 
 }

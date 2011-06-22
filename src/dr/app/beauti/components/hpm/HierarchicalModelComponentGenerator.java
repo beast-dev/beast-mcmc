@@ -7,6 +7,7 @@ import dr.app.beauti.util.XMLWriter;
 import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.MCMCOperator;
+import dr.inference.operators.NormalGammaPrecisionGibbsOperator;
 import dr.inference.operators.NormalNormalMeanGibbsOperator;
 import dr.inferencexml.distribution.DistributionLikelihoodParser;
 import dr.inferencexml.distribution.LogNormalDistributionModelParser;
@@ -79,23 +80,6 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
 
     private void generateOperators(HierarchicalPhylogeneticModel hpm, XMLWriter writer) {
 
-//        <normalNormalMeanGibbsOperator weight="3">
-//            <likelihood>
-//                <distributionLikelihood idref="hierarchicalPopSizeModel"/>
-//            </likelihood>
-//            <prior>
-//                <normalPrior idref="normalMeanPopSizePrior"/>
-//            </prior>
-//        </normalNormalMeanGibbsOperator>
-//
-//        <normalGammaPrecisionGibbsOperator weight="3">
-//            <likelihood>
-//                <distributionLikelihood idref="hierarchicalPopSizeModel"/>
-//            </likelihood>
-//            <prior>
-//                <gammaPrior idref="gammaPrecisionPopSizePrior"/>
-//            </prior>
-
         // Generate Normal-normal operator on mean
         writer.writeOpenTag(NormalNormalMeanGibbsOperator.OPERATOR_NAME, getOperatorAttributes());
 
@@ -110,6 +94,17 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
         writer.writeCloseTag(NormalNormalMeanGibbsOperator.OPERATOR_NAME);
 
         // Generate Gamma-normal operator on precision
+        writer.writeOpenTag(NormalGammaPrecisionGibbsOperator.OPERATOR_NAME, getOperatorAttributes());
+
+        writer.writeOpenTag(NormalGammaPrecisionGibbsOperator.LIKELIHOOD);
+        writer.writeIDref(DistributionLikelihoodParser.DISTRIBUTION, getDistributionName(hpm));
+        writer.writeCloseTag(NormalGammaPrecisionGibbsOperator.LIKELIHOOD);
+
+        writer.writeOpenTag(NormalGammaPrecisionGibbsOperator.PRIOR);
+        writer.writeIDref(PriorParsers.GAMMA_PRIOR, getPrecisionPriorName(hpm));
+        writer.writeCloseTag(NormalGammaPrecisionGibbsOperator.PRIOR);
+
+        writer.writeCloseTag(NormalGammaPrecisionGibbsOperator.OPERATOR_NAME);
     }
 
     private void generateLogs(List<HierarchicalPhylogeneticModel> hpmList, XMLWriter writer) {
@@ -187,8 +182,8 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
     private Attribute[] getMeanPriorAttributes(HierarchicalPhylogeneticModel hpm) {
         return new Attribute[] {
                 new Attribute.Default<String>(XMLParser.ID, getMeanPriorName(hpm)),
-                new Attribute.Default<Double>(PriorParsers.MEAN, 0.0),
-                new Attribute.Default<Double>(PriorParsers.STDEV, 1000.0),
+                new Attribute.Default<Double>(PriorParsers.MEAN, hpm.getConditionalParameterList().get(0).mean),
+                new Attribute.Default<Double>(PriorParsers.STDEV, hpm.getConditionalParameterList().get(0).stdev),
         };
     }
 
@@ -203,8 +198,8 @@ public class HierarchicalModelComponentGenerator extends BaseComponentGenerator 
     private Attribute[] getPrecisionPriorAttributes(HierarchicalPhylogeneticModel hpm) {
         return new Attribute[] {
                 new Attribute.Default<String>(XMLParser.ID, getPrecisionPriorName(hpm)),
-                new Attribute.Default<Double>(PriorParsers.SHAPE, 0.001),
-                new Attribute.Default<Double>(PriorParsers.SCALE, 1000.0),
+                new Attribute.Default<Double>(PriorParsers.SHAPE, hpm.getConditionalParameterList().get(1).shape),
+                new Attribute.Default<Double>(PriorParsers.SCALE, hpm.getConditionalParameterList().get(1).scale),
                 new Attribute.Default<Double>(PriorParsers.OFFSET, 0.0),
         };
     }

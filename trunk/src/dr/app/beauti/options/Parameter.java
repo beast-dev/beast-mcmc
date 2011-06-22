@@ -75,6 +75,8 @@ public class Parameter {
     public double offset;
     public double precision;
 
+    public String hpmModelName;
+
     public static class Builder {
         // Required para
         private final String baseName;

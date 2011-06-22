@@ -41,8 +41,7 @@ public class HierarchicalPriorDialog {
 
     private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-    private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.LOGNORMAL_HPM_PRIOR, PriorType.NORMAL_HPM_PRIOR).toArray());
-//    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.BETA_PRIOR).toArray());
+    private JComboBox priorCombo = new JComboBox();
     private JCheckBox meanInRealSpaceCheck = new JCheckBox();
     private RealNumberField initialField = new RealNumberField();
     private RealNumberField selectedField;
@@ -129,17 +128,6 @@ public class HierarchicalPriorDialog {
             return false;
         }
 
-//        // disallow a trait called 'date'
-//        if (modelName.equalsIgnoreCase("date")) {
-//            JOptionPane.showMessageDialog(frame,
-//                    "This trait name has a special meaning. Use the 'Tip Date' panel\n" +
-//                            " to set dates for taxa.",
-//                    "Reserved trait name",
-//                    JOptionPane.WARNING_MESSAGE);
-//
-//            return false;
-//        }
-
         // check that the trait name doesn't exist
         if (modelExists(modelName)) {
             JOptionPane.showMessageDialog(frame,
@@ -170,8 +158,15 @@ public class HierarchicalPriorDialog {
         this.parameterList = parameterList;
         this.parameter = parameterList.get(0);
         PriorType priorType = parameter.priorType;
-        priorCombo.setSelectedItem(priorType);
 
+        // Set-up combo box depending on parameters
+        priorCombo.removeAllItems();
+        if (parameter.lower >= 0) {
+            priorCombo.addItem(PriorType.LOGNORMAL_HPM_PRIOR);
+        }
+        priorCombo.addItem(PriorType.NORMAL_HPM_PRIOR);
+            
+        priorCombo.setSelectedItem(priorType);
         if (!parameter.isStatistic) {
             initialField.setRange(parameter.lower, parameter.upper);
             initialField.setValue(parameter.initial);

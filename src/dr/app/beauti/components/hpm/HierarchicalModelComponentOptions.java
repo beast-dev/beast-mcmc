@@ -58,7 +58,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         return found;        
     }
 
-    public void addHPM(String text, List<Parameter> parameterList, PriorType priorType) {
+    public HierarchicalPhylogeneticModel addHPM(String text, List<Parameter> parameterList, PriorType priorType) {
         List<Parameter> argumentList = new ArrayList<Parameter>();
 
         // TODO May have to remove these constructors
@@ -78,6 +78,11 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
 
         HierarchicalPhylogeneticModel hpm = new HierarchicalPhylogeneticModel(text, parameterList, argumentList, priorType);
         hpmList.add(hpm);
+
+        for (Parameter parameter : parameterList) {
+            parameter.hpmModelName = hpm.getName();
+        }
+        return hpm;
     }
 
     public boolean isHierarchicalParameter(Parameter parameter) {

@@ -114,7 +114,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         Action setHierarchicalAction = new AbstractAction("Link parameters into a phylogenetic hierarchical model") {
             public void actionPerformed(ActionEvent actionEvent) {
-                System.err.println("Button pressed");
                 // Make list of selected parameters;
                 int[] rows = priorTable.getSelectedRows();
                 hierarchicalButtonPressed(rows);
@@ -232,17 +231,44 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             return;
         }
 
+        Double lowerBound = null;
+        Double upperBound = null;
+
         List<Parameter> paramList = new ArrayList<Parameter>();
         for (int i = 0; i < rows.length; ++i) {
             Parameter parameter = parameters.get(rows[i]);
-            if (parameter.isNodeHeight || parameter.isStatistic) {
+            if (parameter.isStatistic) {
                 JOptionPane.showMessageDialog(frame,
-                        "Node heights or statistics are not currently allowed.",
-                        "Parameter linking error",
+                        "Statistics are not currently allowed.",
+                        "HPM parameter linking error",
                         JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            // TODO Flash error dialog if bounds differ between parameters
+            boolean sameBounds = true;
+            if (lowerBound == null) {
+                lowerBound = parameter.lower;
+            } else {
+                if (lowerBound != parameter.lower) {
+                    sameBounds = false;
+                }
+            }
+            if (upperBound == null) {
+                upperBound = parameter.upper;
+            } else {
+                if (upperBound != parameter.upper) {
+                    sameBounds = false;
+                }
+            }
+
+            if (!sameBounds) {
+                JOptionPane.showMessageDialog(frame,
+                        "Only parameters that share the same bounds\n" +
+                        "should be included in a HPM.",
+                        "HPM parameter link error",
+                        JOptionPane.WARNING_MESSAGE);
+                return; // Bail out
+            }
+
             paramList.add(parameter);
         }
 

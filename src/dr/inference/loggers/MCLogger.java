@@ -31,8 +31,6 @@ import java.io.PrintWriter;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Stack;
-import java.util.LinkedList;
 
 /**
  * A class for a general purpose logger.
@@ -227,7 +225,14 @@ public class MCLogger implements Logger {
 
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
-                    values[columnCount + 1] = formatter.format(hoursPerMillionStates) + " hours/million states";
+                    String hpm = formatter.format(hoursPerMillionStates);
+                    if( hpm.equals("0") ) {
+                        // test cases can run fast :)
+                        hpm = formatter.format(1000 * hoursPerMillionStates);
+                        values[columnCount + 1] = hpm + " hours/billion states";
+                    } else {
+                        values[columnCount + 1] = hpm + " hours/million states";
+                    }
 
                 } else {
                     values[columnCount + 1] = "-";
@@ -270,6 +275,6 @@ public class MCLogger implements Logger {
     private long startTime;
     private int startState;
 
-    private NumberFormat formatter = NumberFormat.getNumberInstance();
+    private final NumberFormat formatter = NumberFormat.getNumberInstance();
 
 }

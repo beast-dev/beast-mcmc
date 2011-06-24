@@ -158,7 +158,6 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LAPLACE_PRIOR);
                 break;
-            case TRUNC_NORMAL_PRIOR: // this will be removed - can add a truncation to any prior
             case NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{

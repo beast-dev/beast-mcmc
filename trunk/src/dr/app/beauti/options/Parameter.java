@@ -67,7 +67,8 @@ public class Parameter {
     // Editable fields
     public boolean isFixed;
     public double initial;
-    public boolean isTruncated;
+    public boolean
+            isTruncated;
     public double truncationUpper;
     public double truncationLower;
     public double mean;
@@ -344,7 +345,7 @@ public class Parameter {
 
     public double getPriorExpectationMean() {
         double expMean = 1.0;
-        Distribution dist = priorType.getDistributionClass(this);
+        Distribution dist = priorType.getDistributionInstance(this);
         if (dist != null) {
             expMean = dist.mean();
 

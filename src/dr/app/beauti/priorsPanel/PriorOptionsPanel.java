@@ -30,9 +30,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private final SpecialNumberPanel specialNumberPanel;
 
     private final JCheckBox isTruncatedCheck = new JCheckBox("Truncate to:");
-    private final RealNumberField lowerField;
+    private final RealNumberField lowerField = new RealNumberField();
     private final JLabel lowerLabel = new JLabel("Lower: ");
-    private final RealNumberField upperField;
+    private final RealNumberField upperField = new RealNumberField();
     private final JLabel upperLabel = new JLabel("Upper: ");
 
     PriorOptionsPanel(boolean isTruncatable) {
@@ -43,10 +43,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         setup();
 
         initialField.setColumns(10);
-
-        lowerField  = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         lowerField.setColumns(10);
-        upperField  = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         upperField.setColumns(10);
 
         isTruncatedCheck.addActionListener(new ActionListener() {
@@ -351,9 +348,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     };
 
     static final PriorOptionsPanel LOG_NORMAL = new PriorOptionsPanel(true) {
-        private final JCheckBox meanInRealSpaceCheck = new JCheckBox();
+        private JCheckBox meanInRealSpaceCheck;
 
         void setup() {
+            meanInRealSpaceCheck = new JCheckBox();
             if (meanInRealSpaceCheck.isSelected()) {
                 addField("Mean", 0.01, 0.0, Double.POSITIVE_INFINITY);
             } else {

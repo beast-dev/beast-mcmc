@@ -109,7 +109,8 @@ public class PriorOptions extends ModelOptions {
 //                        param.lower = Math.max(0.0, param.lower);
 //                        param.upper = Math.min(timeScaleMaximum, param.upper);
                         if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
-                            param.lower = options.maximumTipHeight;
+                            param.truncationLower = options.maximumTipHeight;
+                            param.isTruncated = true;
 //                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
                             if (param.getOptions() instanceof PartitionTreeModel) {
@@ -158,11 +159,6 @@ public class PriorOptions extends ModelOptions {
                     case SUBSTITUTION_PARAMETER_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(substitutionParameterMaximum, param.upper);
-                        break;
-
-                    case UNITY_SCALE:
-                        param.lower = 0.0;
-                        param.upper = 1.0;
                         break;
 
                     case ROOT_RATE_SCALE:

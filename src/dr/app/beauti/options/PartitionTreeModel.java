@@ -81,12 +81,12 @@ public class PartitionTreeModel extends PartitionOptions {
         ploidyType = source.ploidyType;
     }
 
-    protected void initModelParaAndOpers() {
+    protected void initModelParametersAndOpererators() {
 
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -115,22 +115,23 @@ public class PartitionTreeModel extends PartitionOptions {
     /**
      * return a list of parameters that are required
      *
-     * @param params the parameter list
+     * @param parameters the parameter list
      */
-    public void selectParameters(List<Parameter> params) {
+    public void selectParameters(List<Parameter> parameters) {
         setAvgRootAndRate();
 
         getParameter("tree");
         getParameter("treeModel.internalNodeHeights");
         getParameter("treeModel.allInternalNodeHeights");
 
-        Parameter rootHeightPara = getParameter("treeModel.rootHeight");
-    	rootHeightPara.initial = getInitialRootHeight();
-        rootHeightPara.lower = options.maximumTipHeight;
+        Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
+    	rootHeightParameter.initial = getInitialRootHeight();
+        rootHeightParameter.truncationLower = options.maximumTipHeight;
+        rootHeightParameter.isTruncated = true;
 //        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
 
         if (!options.useStarBEAST) {
-            params.add(rootHeightPara);
+            parameters.add(rootHeightParameter);
         }
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
@@ -141,9 +142,9 @@ public class PartitionTreeModel extends PartitionOptions {
     /**
      * return a list of operators that are required
      *
-     * @param ops the operator list
+     * @param operators the operator list
      */
-    public void selectOperators(List<Operator> ops) {
+    public void selectOperators(List<Operator> operators) {
         setAvgRootAndRate();
 
         // if not a fixed tree then sample tree space
@@ -153,17 +154,17 @@ public class PartitionTreeModel extends PartitionOptions {
                 subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
             }
 
-            ops.add(subtreeSlideOp);
-            ops.add(getOperator("narrowExchange"));
-            ops.add(getOperator("wideExchange"));
-            ops.add(getOperator("wilsonBalding"));
+            operators.add(subtreeSlideOp);
+            operators.add(getOperator("narrowExchange"));
+            operators.add(getOperator("wideExchange"));
+            operators.add(getOperator("wilsonBalding"));
         }
 
-        ops.add(getOperator("treeModel.rootHeight"));
-        ops.add(getOperator("uniformHeights"));
+        operators.add(getOperator("treeModel.rootHeight"));
+        operators.add(getOperator("uniformHeights"));
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
-             ops.add(getOperator("microsatInternalNodesParameter"));
+             operators.add(getOperator("microsatInternalNodesParameter"));
         }
     }
 

@@ -25,8 +25,8 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
     }
 
     public void createParameters(final ModelOptions modelOptions) {
-        modelOptions.createParameterUniformPrior("treeModel.tipDates", "date of specified tips",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
+        modelOptions.createNonNegativeParameterUniformPrior("treeModel.tipDates", "date of specified tips",
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE);
 
         modelOptions.createScaleOperator("treeModel.tipDates", modelOptions.demoTuning, 3.0);
     }
@@ -43,8 +43,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                 }
                 if (parameter == null) {
                     parameter = new Parameter.Builder("age(" + taxon.getId() + ")", "sampled age of taxon, " + taxon.getId())
-                            .scaleType(PriorScaleType.TIME_SCALE).prior(PriorType.UNIFORM_PRIOR).initial(height)
-                            .uniformLower(0.0).uniformUpper(Double.MAX_VALUE).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
+                            .scaleType(PriorScaleType.TIME_SCALE).prior(PriorType.UNIFORM_PRIOR).initial(height).isNonNegative(true).build();
                     parameter.setPriorEdited(true);
                     tipDateParameters.put(taxon, parameter);
                 }

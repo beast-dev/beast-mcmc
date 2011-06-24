@@ -122,8 +122,19 @@ public class BEAUTiImporter {
 
             TaxonList taxa = taxonLists.get(0);
 
+            int count = 1;
             for (Alignment alignment : alignments) {
-                setData(file.getName(), taxa, alignment, null, null, null, null);
+                String name = file.getName();
+                if (alignment.getId() != null && alignment.getId().length() > 0) {
+                    name = alignment.getId();
+                } else {
+                    if (alignments.size() > 1) {
+                        name += count;
+                    }
+                }
+                setData(name, taxa, alignment, null, null, null, null);
+
+                count ++;
             }
 
             // assume that any additional taxon lists are taxon sets...
@@ -547,8 +558,7 @@ public class BEAUTiImporter {
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {
             if (options.hasPartitionData(partition.getName())) {
-                throw new IllegalArgumentException("Partitions cannot have duplicate name :\n"
-                        + partition.getName() + "\nFile loading is failed.");
+                throw new IllegalArgumentException("New partition has a duplicate name: " + partition.getName());
             }
 
             options.dataPartitions.add(partition);
@@ -573,7 +583,7 @@ public class BEAUTiImporter {
             }
         }
 
-        options.clockModelOptions.initClockModelGroup();                
+        options.clockModelOptions.initClockModelGroup();
         options.updateAll();
     }
 
@@ -624,7 +634,7 @@ public class BEAUTiImporter {
         if (psm.getDataType() != partition.getDataType())
             throw new IllegalArgumentException("Partition " + partition.getName()
                     + "\ncannot assign to Substitution Model\n" + psm.getName()
-                    + "\nwith different data type.");        
+                    + "\nwith different data type.");
     }
 
     private void addTraits(List<TraitData> traits,

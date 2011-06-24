@@ -51,10 +51,10 @@ public abstract class PartitionOptions extends ModelOptions {
         this.options = options;
         this.partitionName = name;
 
-        initModelParaAndOpers();
+        initModelParametersAndOpererators();
     }
 
-    protected abstract void initModelParaAndOpers();
+    protected abstract void initModelParametersAndOpererators();
 
     protected abstract void selectParameters(List<Parameter> params);
 
@@ -62,35 +62,46 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public abstract String getPrefix();
 
-    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-                                                          double initial, double uniformLower, double uniformUpper, double lower, double upper) { // it will change to Uniform
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
-                .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
-    }
-
-    protected void createParameterClockRateUniform(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-                                                   double initial, double uniformLower, double uniformUpper, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).initial(initial)
-                .uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).partitionOptions(options).build(parameters);
-    }
-
-    protected void createParameterClockRateGamma(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-                                                 double initial, double shape, double scale, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial).
-                shape(shape).scale(scale).lower(lower).upper(upper).partitionOptions(options).build(parameters);
-    }
-
-    public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType,
-                                                    double initial, double mean, double offset, double lower, double upper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
-                .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).partitionOptions(options).build(parameters);
-    }
-
-
-    protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value,
-                                       double lower, double upper) {
+//    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//                                                          double initial, double truncationLower, double truncationUpper) { // it will change to Uniform
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
+//                .isCMTCRate(true).isNonNegative(true)
+//                .truncationLower(truncationLower).truncationUpper(truncationUpper).partitionOptions(options).build(parameters);
+//    }
+//
+//    protected void createParameterClockRateReferencePrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//                                                          double initial) { // it will change to Uniform
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(initial)
+//                .isCMTCRate(true).isNonNegative(true)
+//                .truncationLower(truncationLower).truncationUpper(truncationUpper).partitionOptions(options).build(parameters);
+//    }
+//
+//    protected void createParameterClockRateUniform(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//                                                   double initial, double truncationLower, double truncationUpper) {
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).initial(initial)
+//                .isCMTCRate(true).isNonNegative(true)
+//                .truncationLower(truncationLower).truncationUpper(truncationUpper).partitionOptions(options).build(parameters);
+//    }
+//
+//    protected void createParameterClockRateGamma(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//                                                 double initial, double shape, double scale) {
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial)
+//                .isCMTCRate(true).isNonNegative(true)
+//                .shape(shape).scale(scale).partitionOptions(options).build(parameters);
+//    }
+//
+//    public void createParameterClockRateExponential(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//                                                    double initial, double mean, double offset) {
+//        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
+//                .isCMTCRate(true).isNonNegative(true)
+//                .initial(initial).mean(mean).offset(offset).partitionOptions(options).build(parameters);
+//    }
+//
+//
+    protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
-                .initial(value).lower(lower).upper(upper).partitionOptions(options).build(parameters);
+                .isNonNegative(true)
+                .initial(value).partitionOptions(options).build(parameters);
     }
 
     protected void createAllMusParameter(PartitionOptions options, String name, String description) {
@@ -229,7 +240,7 @@ public abstract class PartitionOptions extends ModelOptions {
                 case BIRTH_RATE_SCALE:
 //                    param.uniformLower = Math.max(0.0, param.lower);
 //                    param.uniformUpper = Math.min(birthRateMaximum, param.upper);
-                    param.initial = MathUtils.round(1 / options.treeModelOptions.getExpectedAvgBranchLength(avgInitialRootHeight), 2); 
+                    param.initial = MathUtils.round(1 / options.treeModelOptions.getExpectedAvgBranchLength(avgInitialRootHeight), 2);
                     break;
                 case ORIGIN_SCALE:
                     param.initial = MathUtils.round(avgInitialRootHeight * 1.1, 2);
@@ -251,10 +262,11 @@ public abstract class PartitionOptions extends ModelOptions {
                     //param.upper = Math.min(substitutionParameterMaximum, param.upper);
                     break;
 
-                case UNITY_SCALE:
-                    param.lower = 0.0;
-                    param.upper = 1.0;
-                    break;
+                // Now have a field 'isZeroOne'
+//                case UNITY_SCALE:
+//                    param.lower = 0.0;
+//                    param.upper = 1.0;
+//                    break;
 
                 case ROOT_RATE_SCALE:
                     param.initial = avgInitialRate;

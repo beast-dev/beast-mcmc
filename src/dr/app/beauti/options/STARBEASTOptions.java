@@ -81,20 +81,20 @@ public class STARBEASTOptions extends ModelOptions {
         double spWeights = 5.0;
         double spTuning = 0.9;
 
-        createParameterJeffreysPrior(TraitData.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterOneOverXPrior(TraitData.TRAIT_SPECIES + "." + POP_MEAN, "Species tree: population hyper-parameter operator",
+                PriorScaleType.TIME_SCALE, 1.0);
         // species tree Yule
-        createParameterJeffreysPrior(TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
-                "Species tree: Yule process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterOneOverXPrior(TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE,
+                "Species tree: Yule process birth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0);
 
         // species tree Birth Death
-        createParameterJeffreysPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
-                "Species tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Species tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterOneOverXPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
+                "Species tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0);
+        createZeroOneParameterUniformPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
+                "Species tree: Birth Death model relative death rate", 0.5);
 
-        createParameterJeffreysPrior(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
-        		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterOneOverXPrior(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
+                PriorScaleType.TIME_SCALE, 1.0);
 
         createParameter(TraitData.TRAIT_SPECIES + "." + TreeNodeSlideParser.TREE_NODE_REHEIGHT, "Species tree: tree node operator");
 

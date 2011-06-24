@@ -194,25 +194,23 @@ public class STARBEASTGenerator extends Generator {
                     new Attribute.Default<String>(XMLUnits.UNITS, XMLUnits.SUBSTITUTIONS)});
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTHDIFF_RATE);
-
             para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME),
-                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
-                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
-                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
-
+//            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+//                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME),
+//                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
+//                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+//                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
+            writeParameter(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, para, writer);
             writer.writeCloseTag(BirthDeathModelParser.BIRTHDIFF_RATE);
 
             writer.writeOpenTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
-
             para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
-                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
-                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
-                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
-
+//            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+//                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME),
+//                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
+//                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+//                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
+            writeParameter(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, para, writer);
             writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
@@ -224,14 +222,13 @@ public class STARBEASTGenerator extends Generator {
                     new Attribute.Default<String>(XMLUnits.UNITS, XMLUnits.SUBSTITUTIONS)});
 
             writer.writeOpenTag(YuleModelParser.BIRTH_RATE);
-
             para = options.starBEASTOptions.getParameter(TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
-                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
-                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
-                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
-
+//            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+//                    new Attribute.Default<String>(XMLParser.ID, TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE),
+//                    new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(para.initial)),
+//                    new Attribute.Default<String>(ParameterParser.LOWER, Double.toString(para.lower)),
+//                    new Attribute.Default<String>(ParameterParser.UPPER, Double.toString(para.upper))}, true);
+            writeParameter(TraitData.TRAIT_SPECIES + "." + YuleModelParser.YULE + "." + YuleModelParser.BIRTH_RATE, para, writer);
             writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
 
             writer.writeCloseTag(YuleModelParser.YULE_MODEL);

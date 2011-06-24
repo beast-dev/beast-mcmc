@@ -43,14 +43,14 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
     public PartitionClockModelTreeModelLink(BeautiOptions options, PartitionClockModel model, PartitionTreeModel tree) {
 //        super(options, model.getName() + "." + tree.getName());
-        // clockModel and substModel have to be assigned before initModelParaAndOpers()
+        // clockModel and substModel have to be assigned before initModelParametersAndOpererators()
         super(options);
         this.model = model;
         this.tree = tree;
-        initModelParaAndOpers();
+        initModelParametersAndOpererators();
     }
 
-    protected void initModelParaAndOpers() {
+    protected void initModelParametersAndOpererators() {
 //        {
 //            final Parameter p = createParameter("branchRates.var", "autocorrelated lognormal relaxed clock rate variance ", PriorScaleType.LOG_VAR_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
 //            p.priorType = PriorType.GAMMA_PRIOR;
@@ -58,7 +58,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //            p.scale = 0.0001;
 //        }
         createParameterGammaPrior("branchRates.var", "autocorrelated lognormal relaxed clock rate variance",
-                PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false);
+                PriorScaleType.LOG_VAR_SCALE, 0.1, 1, 0.0001, false);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
 
 //        {
@@ -68,11 +68,11 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //            p.scale = 0.0001;
 //        }
         createParameterGammaPrior("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate",
-                PriorScaleType.ROOT_RATE_SCALE, 1.0, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false);
+                PriorScaleType.ROOT_RATE_SCALE, 1.0, 1, 0.0001, false);
         createParameterUniformPrior("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE);
         createParameterUniformPrior("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE);
 
 
         createScaleOperator("branchRates.var", demoTuning, rateWeights);
@@ -105,13 +105,11 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
         // These are statistics which could have priors on...
         // #meanRate = #Relaxed Clock Model * #Tree Model
-        createStatistic("meanRate", "The mean rate of evolution over the whole tree", 0.0, Double.POSITIVE_INFINITY);
+        createNonNegativeStatistic("meanRate", "The mean rate of evolution over the whole tree");
         // #covariance = #Relaxed Clock Model * #Tree Model
-        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages",
-                Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        createStatistic("covariance", "The covariance in rates of evolution on each lineage with their ancestral lineages");
         // #COEFFICIENT_OF_VARIATION = #Uncorrelated Clock Model
-        createStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree",
-                0.0, Double.POSITIVE_INFINITY);
+        createNonNegativeStatistic(RateStatisticParser.COEFFICIENT_OF_VARIATION, "The variation in rate of evolution over the whole tree");
 
         createUpDownOperator("microsatUpDownRateHeights", "Substitution rate and heights",
                 "Scales substitution rates inversely to node heights of the tree", model.getParameter("clock.rate"),
@@ -165,7 +163,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
                 } else {
                     throw new UnsupportedOperationException("Microsatellite only supports strict clock model");
                 }
-                
+
             } else {
 
                 switch (model.getClockType()) {

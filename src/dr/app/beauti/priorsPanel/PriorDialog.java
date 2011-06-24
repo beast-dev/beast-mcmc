@@ -42,7 +42,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,13 +77,6 @@ public class PriorDialog {
 
         initialField.setColumns(10);
 
-        for (PriorType priorType : PriorType.values()) {
-            if (!priorType.isSpecial() && !priorType.isDiscrete()) {
-                priorCombo.addItem(priorType);
-            }
-            nonPriorCombo.addItem(priorType);
-        }
-
         optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
         optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
         optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());
@@ -94,7 +86,7 @@ public class PriorDialog {
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
         optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
         optionsPanels.put(PriorType.BETA_PRIOR, new BetaOptionsPanel());
-//        optionsPanels.put(PriorType.SUBSTITUTION_REFERENCE_PRIOR, new SubstitutionReferenceOptionsPanel());
+        optionsPanels.put(PriorType.CMTC_RATE_REFERENCE_PRIOR, new CMTCRateReferenceOptionsPanel());
 //        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
@@ -124,19 +116,13 @@ public class PriorDialog {
     public int showDialog(final Parameter parameter) {
 
         this.parameter = parameter;
-        PriorType priorType = parameter.priorType;
-        if (priorType.isSpecial()) {
-            priorType = PriorType.NORMAL_PRIOR;
-        }
 
-        if (parameter.isNodeHeight || parameter.isStatistic) {
-            nonPriorCombo.setSelectedItem(priorType);
-        } else {
-            priorCombo.setSelectedItem(priorType);
+        for (PriorType priorType : PriorType.getPriorTypes(parameter)) {
+            priorCombo.addItem(priorType);
         }
 
         if (!parameter.isStatistic) {
-            initialField.setRange(parameter.lower, parameter.upper);
+            setFieldRange(initialField, parameter.isTruncated);
             initialField.setValue(parameter.initial);
         }
 
@@ -269,20 +255,40 @@ public class PriorDialog {
         return result;
     }
 
+    private void setFieldRange(RealNumberField field, boolean isTruncated) {
+        double lower = Double.NEGATIVE_INFINITY;
+        double upper = Double.POSITIVE_INFINITY;
+
+        if (parameter.isZeroOne) {
+            lower = 0.0;
+            upper = 1.0;
+        } else if (parameter.isNonNegative) {
+            lower = 0.0;
+        }
+
+        if (isTruncated) {
+            lower = parameter.truncationLower;
+            upper = parameter.truncationUpper;
+        }
+
+        field.setRange(lower, upper);
+    }
+
     private void setArguments(PriorType priorType) {
         PriorOptionsPanel panel;
         switch (priorType) {
             case UNIFORM_PRIOR:
                 panel = optionsPanels.get(priorType);
-//                panel.getField(0).setRange(parameter.lower, parameter.upper);
-                panel.getField(0).setValue(parameter.uniformLower);
-//                panel.getField(1).setRange(parameter.lower, parameter.upper);
-                panel.getField(1).setValue(parameter.uniformUpper);
+                setFieldRange(panel.getField(0), false);
+                setFieldRange(panel.getField(1), false);
+
+                panel.getField(0).setValue(parameter.truncationLower);
+                panel.getField(1).setValue(parameter.truncationUpper);
                 break;
 
             case EXPONENTIAL_PRIOR:
                 panel = optionsPanels.get(priorType);
-//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
                 if (parameter.mean != 0) {// ExponentialDistribution(1.0 / mean)
                     panel.getField(0).setValue(parameter.mean);
                 }
@@ -291,8 +297,9 @@ public class PriorDialog {
 
             case NORMAL_PRIOR:
                 panel = optionsPanels.get(priorType);
+                setFieldRange(panel.getField(0), true);
                 panel.getField(0).setValue(parameter.mean);
-//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setRange(0.0, Double.POSITIVE_INFINITY);
                 panel.getField(1).setValue(parameter.stdev);
                 break;
 
@@ -317,9 +324,9 @@ public class PriorDialog {
             case GAMMA_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.shape);
-//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
                 panel.getField(1).setValue(parameter.scale);
-//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setRange(0.0, Double.POSITIVE_INFINITY);
                 panel.getField(2).setValue(parameter.offset);
                 break;
 
@@ -334,16 +341,16 @@ public class PriorDialog {
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.mean);
                 panel.getField(1).setValue(parameter.stdev);
-                panel.getField(2).setValue(parameter.uniformLower);
-                panel.getField(3).setValue(parameter.uniformUpper);
+                panel.getField(2).setValue(parameter.truncationLower);
+                panel.getField(3).setValue(parameter.truncationUpper);
                 break;
 
             case BETA_PRIOR:
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.shape);
-//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
                 panel.getField(1).setValue(parameter.shapeB);
-//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setRange(0.0, Double.POSITIVE_INFINITY);
                 panel.getField(2).setValue(parameter.offset);
                 break;
         }
@@ -398,7 +405,7 @@ public class PriorDialog {
             }
         } else {
             priorType = (PriorType) priorCombo.getSelectedItem();
-            if (!parameter.priorFixed) {
+            if (!parameter.isPriorFixed) {
                 optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
             } else {
                 optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
@@ -503,6 +510,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.mean = getValue(0);
             parameter.scale = getValue(1);
         }
@@ -520,8 +528,9 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
-            parameter.uniformLower = getValue(0);
-            parameter.uniformUpper = getValue(1);
+            parameter.isTruncated = true;
+            parameter.truncationLower = getValue(0);
+            parameter.truncationUpper = getValue(1);
         }
 
     }
@@ -539,6 +548,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.mean = getValue(0);
             parameter.offset = getValue(1);
         }
@@ -557,6 +567,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
         }
@@ -588,6 +599,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
             parameter.offset = getValue(2);
@@ -610,6 +622,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.shape = getValue(0);
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
@@ -630,6 +643,7 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.shape = getValue(0);
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
@@ -653,8 +667,9 @@ public class PriorDialog {
         public void setParameterPrior(Parameter parameter) {
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
-            parameter.uniformLower = getValue(2);
-            parameter.uniformUpper = getValue(3);
+            parameter.isTruncated = true;
+            parameter.truncationLower = getValue(2);
+            parameter.truncationUpper = getValue(3);
         }
     }
 
@@ -672,10 +687,24 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
             parameter.shape = getValue(0);
             parameter.shapeB = getValue(1);
             parameter.offset = getValue(2);
         }
     }
 
+    class CMTCRateReferenceOptionsPanel extends PriorOptionsPanel {
+
+        public CMTCRateReferenceOptionsPanel() {
+        }
+
+        public Distribution getDistribution() {
+            return null;
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.isTruncated = false;
+        }
+    }
 }

@@ -34,11 +34,13 @@ import java.util.List;
  * @version $Id$
  */
 public class PartitionClockModel extends PartitionOptions {
+    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
+
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
     private boolean isEstimatedRate = true;
-    private double rate; // move to initModelParaAndOpers() to initial
+    private double rate; // move to initModelParametersAndOpererators() to initial
 
     private ClockModelGroup clockModelGroup = null;
 
@@ -68,34 +70,63 @@ public class PartitionClockModel extends PartitionOptions {
 //        this.name = name;
 //    }
 
-    protected void initModelParaAndOpers() {
+    protected void initModelParametersAndOpererators() {
         rate = 1.0;
         int dataLength = 0;
         for (AbstractPartitionData partitionData : options.getAllPartitionData(this)) {
             dataLength += partitionData.getSiteCount();
         }
-        // all clock rate not use auto scale
-        if (dataLength <= 1) { // TODO Discuss threshold
-            createParameterClockRateUndefinedPrior(this, "clock.rate", "substitution rate",
-                    PriorScaleType.NONE, this.getRate(), 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateUndefinedPrior(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean",
-                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateUndefinedPrior(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean",
-                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
-        } else {
 
-            createParameterClockRateUniform(this, "clock.rate", "substitution rate. ",
-                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateUniform(this, ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean. ",
-                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
-            createParameterClockRateUniform(this, ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean. ",
-                    PriorScaleType.NONE, rate, 0.0, 100.0, 0.0, Double.POSITIVE_INFINITY);
+        if (DEFAULT_CMTC_RATE_REFERENCE_PRIOR) {
+            new Parameter.Builder("clock.rate", "substitution rate").
+                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+            new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
+                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+            new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
+                    prior(PriorType.CMTC_RATE_REFERENCE_PRIOR).initial(rate)
+                    .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+        } else {
+            if (dataLength <= 1) { // TODO Discuss threshold
+                new Parameter.Builder("clock.rate", "substitution rate").prior(PriorType.UNDEFINED).initial(rate)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+                new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
+                        prior(PriorType.UNDEFINED).initial(rate)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+                new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
+                        prior(PriorType.UNDEFINED).initial(rate)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+            } else {
+                new Parameter.Builder("clock.rate", "substitution rate").
+                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
+                        .truncationLower(0.0).truncationUpper(100)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+                new Parameter.Builder(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean").
+                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
+                        .truncationLower(0.0).truncationUpper(100)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+
+                new Parameter.Builder(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean").
+                        prior(PriorType.UNIFORM_PRIOR).initial(rate)
+                        .truncationLower(0.0).truncationUpper(100)
+                        .isCMTCRate(true).isNonNegative(true).partitionOptions(this).build(parameters);
+            }
         }
-        createParameterClockRateExponential(this, ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev",
-                PriorScaleType.LOG_STDEV_SCALE, 1.0 / 3.0, 1.0 / 3.0, 0.0, 0.0, Double.POSITIVE_INFINITY);
+
+        new Parameter.Builder(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev").
+                scaleType(PriorScaleType.LOG_STDEV_SCALE).prior(PriorType.EXPONENTIAL_PRIOR).isNonNegative(true)
+                .initial(1.0 / 3.0).mean(1.0 / 3.0).offset(0.0).partitionOptions(this).build(parameters);
+
         // Random local clock
         createParameterGammaPrior(ClockType.LOCAL_CLOCK + ".relativeRates", "random local clock relative rates",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, 0.0, Double.POSITIVE_INFINITY, false);
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.5, 2.0, false);
         createParameter(ClockType.LOCAL_CLOCK + ".changes", "random local clock rate change indicator");
 
         createScaleOperator("clock.rate", demoTuning, rateWeights);
@@ -160,7 +191,7 @@ public class PartitionClockModel extends PartitionOptions {
             }
 
             Parameter rateParam = getClockRateParam();
-            
+
 //            if (this.getAllPartitionData().get(0) instanceof TraitData) {
 //                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
 //            }
@@ -396,7 +427,7 @@ public class PartitionClockModel extends PartitionOptions {
     public void setUseReferencePrior(boolean useReferencePrior) {
         Parameter rateParam = getClockRateParam();
         if (useReferencePrior) {
-            rateParam.priorType = PriorType.SUBSTITUTION_REFERENCE_PRIOR;
+            rateParam.priorType = PriorType.CMTC_RATE_REFERENCE_PRIOR;
         } else {
             rateParam.priorType = PriorType.UNDEFINED;
         }

@@ -446,7 +446,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 case 5:
                     Parameter rateParam =  model.getClockRateParam();
 //                    return model.useReferencePrior();
-                    return rateParam.priorType == PriorType.SUBSTITUTION_REFERENCE_PRIOR;
+                    return rateParam.priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR;
             }
             return null;
         }

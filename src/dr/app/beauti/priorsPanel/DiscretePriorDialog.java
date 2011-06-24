@@ -40,6 +40,7 @@ import java.awt.event.ItemListener;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
+ * @deprecated
  */
 public class DiscretePriorDialog {
 
@@ -82,7 +83,7 @@ public class DiscretePriorDialog {
         priorCombo.setSelectedIndex(parameter.priorType == PriorType.POISSON_PRIOR ? 1 : 0);
 
         if (!parameter.isStatistic) {
-            initialField.setRange(parameter.lower, parameter.upper);
+//            initialField.setRange(parameter.lower, parameter.upper);
             initialField.setValue(parameter.initial);
         }
 
@@ -153,8 +154,8 @@ public class DiscretePriorDialog {
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
+                if (argumentFields[0].getValue() != null) parameter.truncationLower = argumentFields[0].getValue();
+                if (argumentFields[1].getValue() != null) parameter.truncationUpper = argumentFields[1].getValue();
                 break;
             case POISSON_PRIOR:
                 if (argumentFields[0].getValue() != null) parameter.mean = argumentFields[0].getValue();

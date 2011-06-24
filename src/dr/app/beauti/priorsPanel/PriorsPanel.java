@@ -219,7 +219,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private PriorDialog priorDialog = null;
-    private DiscretePriorDialog discretePriorDialog = null;
+//    private DiscretePriorDialog discretePriorDialog = null;
     private HierarchicalPriorDialog hierarchicalPriorDialog = null;
 
     private void hierarchicalButtonPressed(int[] rows) {
@@ -247,16 +247,16 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
             boolean sameBounds = true;
             if (lowerBound == null) {
-                lowerBound = parameter.lower;
+                lowerBound = parameter.truncationLower;
             } else {
-                if (lowerBound != parameter.lower) {
+                if (lowerBound != parameter.truncationLower) {
                     sameBounds = false;
                 }
             }
             if (upperBound == null) {
-                upperBound = parameter.upper;
+                upperBound = parameter.truncationUpper;
             } else {
-                if (upperBound != parameter.upper) {
+                if (upperBound != parameter.truncationUpper) {
                     sameBounds = false;
                 }
             }
@@ -355,17 +355,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         int result;
-        if (param.isDiscrete) {
-            if (discretePriorDialog == null) {
-                discretePriorDialog = new DiscretePriorDialog(frame);
-            }
-            result = discretePriorDialog.showDialog(param);
-        } else {
+//        if (param.isDiscrete) {
+//            if (discretePriorDialog == null) {
+//                discretePriorDialog = new DiscretePriorDialog(frame);
+//            }
+//            result = discretePriorDialog.showDialog(param);
+//        } else {
             if (priorDialog == null) {
                 priorDialog = new PriorDialog(frame);
             }
             result = priorDialog.showDialog(param);
-        }
+//        }
 
 //        if (result == JOptionPane.CANCEL_OPTION) {
 //            return;

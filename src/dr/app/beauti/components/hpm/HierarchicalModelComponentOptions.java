@@ -55,7 +55,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
                 break;
             }
         }
-        return found;        
+        return found;
     }
 
     public HierarchicalPhylogeneticModel addHPM(String text, List<Parameter> parameterList, PriorType priorType) {
@@ -66,14 +66,14 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
         Parameter mean = options.parameterExists(meanName) ?
                 options.getParameter(meanName) :
                 options.createParameterNormalPrior(meanName, "Unknown mean of HPM",
-                PriorScaleType.NONE, 0.0, 0.0, 1.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.NONE, 0.0, 0.0, 1.0, 0.0);
         argumentList.add(mean);
 
         String precisionName = text + HierarchicalModelComponentGenerator.PRECISION_SUFFIX;
         Parameter precision = options.parameterExists(precisionName) ?
                 options.getParameter(precisionName) :
                 options.createParameterGammaPrior(precisionName, "Unknown precision of HPM",
-                PriorScaleType.NONE, 1.0, 0.001, 1000.0, 0.0, Double.POSITIVE_INFINITY, true);
+                PriorScaleType.NONE, 1.0, 0.001, 1000.0, true);
         argumentList.add(precision);
 
         HierarchicalPhylogeneticModel hpm = new HierarchicalPhylogeneticModel(text, parameterList, argumentList, priorType);
@@ -116,7 +116,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
                     }
                 }
                 parameterList.remove(parameter);
-            }           
+            }
             if (hpm.isEmpty())  {
                 toRemove = hpm;
             }
@@ -136,7 +136,7 @@ public class HierarchicalModelComponentOptions implements ComponentOptions {
 //            hpm.generateDistribution(writer);
 //        }
 //    }
-        
+
     final private BeautiOptions options;
     final private List<HierarchicalPhylogeneticModel> hpmList;
 

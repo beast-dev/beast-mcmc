@@ -313,7 +313,7 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.WARNING_MESSAGE);
 
             if (option == JOptionPane.YES_OPTION) {
-                return !doGenerate();
+                return doGenerate();
             } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
                 return false;
             }

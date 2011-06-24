@@ -117,19 +117,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     // only init in PartitionSubstitutionModel
-    protected void initModelParaAndOpers() {
+    protected void initModelParametersAndOpererators() {
         double substWeights = 0.1;
 
         //Substitution model parameters
-        createParameterUniformPrior("frequencies", "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1",
-                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2",
-                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2",
-                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3",
-                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25);
+        createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25);
+        createZeroOneParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2", 0.25);
+        createZeroOneParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", 0.25);
+        createZeroOneParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3", 0.25);
 
         //This prior is moderately diffuse with a median of 2.718
         createParameterLognormalPrior("kappa", "HKY transition-transversion parameter",
@@ -175,72 +171,66 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         for (int j = 0; j < 5; j++) {
             if (j == 1) { // ag
                 createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
             } else {
                 createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
             }
 
             for (int i = 1; i <= 3; i++) {
                 if (j == 1) { // ag
                     createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
                 } else {
                     createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
                 }
             }
 
             if (j == 1) { // ag
                 createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
             } else {
                 createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
             }
         }
 
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates",
-                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode",
-                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createZeroOneParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", 0.5);
+        createZeroOneParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", 0.5);
         createParameterGammaPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, false);
 
         createParameterExponentialPrior("alpha", "gamma shape parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
         createParameterExponentialPrior("CP1.alpha", "gamma shape parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
         createParameterExponentialPrior("CP2.alpha", "gamma shape parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
         createParameterExponentialPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
         createParameterExponentialPrior("CP3.alpha", "gamma shape parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0, 0.0, 1000.0);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
 
-        createParameterUniformPrior("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1",
-                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2",
-                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2",
-                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3",
-                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createZeroOneParameterUniformPrior("pInv", "proportion of invariant sites parameter", 0.5);
+        createZeroOneParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", 0.5);
+        createZeroOneParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2", 0.5);
+        createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5);
+        createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5);
 
-        createParameterUniformPrior("mu", "relative rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE, 0.0, Double.POSITIVE_INFINITY);
+        createNonNegativeParameterUniformPrior("mu", "relative rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createNonNegativeParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createNonNegativeParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createNonNegativeParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createNonNegativeParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
 
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
@@ -302,17 +292,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         //***************************************************
-        createParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" : " ") + "base frequencies",
-                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createZeroOneParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" : " ") + "base frequencies", 0.25);
         createCachedGammaPrior("trait.rates", "location substitution model rates",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
-        createParameter("trait.indicators", "location substitution model rate indicators (if BSSVS was selected)", 1.0);// BSSVS was selected
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, false);
+        createParameter("trait.indicators", "location substitution model rate indicators", 1.0);// used if BSSVS was selected
 
         // = strick clock TODO trait.mu belongs Clock Model?
-        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" : " ") + "mutation rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
+        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" : " ") + "CTMC rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0);
+
         // Poisson Prior
-        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // BSSVS was selected
+        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // used if BSSVS was selected
 
         createOperator("trait.rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
         createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);// BSSVS was selected
@@ -326,15 +316,13 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.0, 1.0, 1.0, 0.0, Double.POSITIVE_INFINITY, false);
+                PriorScaleType.NONE, 0.0, 1.0, 1.0, false);
         createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                0.0, 0.0, 10.0, 0.0);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("geomDist", "The success probability of geometric distribution",
-                PriorScaleType.NONE, 1.0, 0.0, 1.0, 0.0, 1.0);
-        createParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series",
-                PriorScaleType.NONE, 0.0, 0.0, 1.0, 0.0, 1.0);
+                0.0, 0.0, 10.0, 0.0);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  1.0);
+        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0);
 
         createScaleOperator("propLinear", demoTuning, substWeights);
 //        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
@@ -527,9 +515,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     params.add(getParameter("biasLinear"));
                 }
                 if (phase == MicroSatModelType.Phase.ONE_PHASE) {
-                    
+
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                    params.add(getParameter("geomDist"));                    
+                    params.add(getParameter("geomDist"));
                 } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
                     params.add(getParameter("geomDist"));
                     params.add(getParameter("onePhaseProb"));

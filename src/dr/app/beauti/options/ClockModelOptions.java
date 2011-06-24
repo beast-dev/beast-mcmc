@@ -551,7 +551,7 @@ public class ClockModelOptions extends ModelOptions {
                 || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.shape > 1)
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.offset > 0)
-                || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
+                || (para.priorType == PriorType.UNIFORM_PRIOR && para.truncationLower > 0 && para.truncationUpper < Double.POSITIVE_INFINITY)
                 || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0);
     }
 

@@ -161,16 +161,25 @@ public class HierarchicalPriorDialog {
 
         // Set-up combo box depending on parameters
         priorCombo.removeAllItems();
-        if (parameter.lower >= 0) {
+        if (parameter.isNonNegative) {
             priorCombo.addItem(PriorType.LOGNORMAL_HPM_PRIOR);
         }
         priorCombo.addItem(PriorType.NORMAL_HPM_PRIOR);
-            
+
         priorCombo.setSelectedItem(priorType);
-        if (!parameter.isStatistic) {
-            initialField.setRange(parameter.lower, parameter.upper);
+
+            double lower = Double.NEGATIVE_INFINITY;
+            double upper = Double.POSITIVE_INFINITY;
+
+            if (parameter.isZeroOne) {
+                lower = 0.0;
+                upper = 1.0;
+            } else if (parameter.isNonNegative) {
+                lower = 0.0;
+            }
+
+            initialField.setRange(lower, upper);
             initialField.setValue(parameter.initial);
-        }
 
         panel = new JPanel(new GridBagLayout());
 
@@ -321,7 +330,7 @@ public class HierarchicalPriorDialog {
             optionsPanel[i] = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
             panel[i] = new JPanel(new FlowLayout(FlowLayout.CENTER));
             if (i > 1) {
-                panel[i].setLayout(new BoxLayout(panel[i], BoxLayout.PAGE_AXIS));                
+                panel[i].setLayout(new BoxLayout(panel[i], BoxLayout.PAGE_AXIS));
             }
             panel[i].add(optionsPanel[i]);
 
@@ -357,7 +366,7 @@ public class HierarchicalPriorDialog {
         optionsPanel[1].addComponentWithLabel("Unique Name: ", nameField);
 
         optionsPanel[2].addSeparator();
-        optionsPanel[3].addSeparator();        
+        optionsPanel[3].addSeparator();
 
         optionsPanel[2].addSpanningComponent(new JLabel("Population Mean Hyperprior: Normal"));
         optionsPanel[3].addSpanningComponent(new JLabel("Population Precision Hyperprior: Gamma"));

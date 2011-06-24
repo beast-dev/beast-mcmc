@@ -222,20 +222,20 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Prior Bounds ++++++++++++++++++
         for (Parameter param : options.selectParameters()) {
-            if (param.initial != Double.NaN && param.lower != Double.NaN && param.upper != Double.NaN) {
-                if (param.initial < param.lower || param.initial > param.upper) {
+            if (param.initial != Double.NaN) {
+                if (param.isTruncated && (param.initial < param.truncationLower || param.initial > param.truncationUpper)) {
                     throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
-                            "\ninitial value " + param.initial + " is NOT in the range [" + param.lower + ", " + param.upper + "]," +
+                            "\ninitial value " + param.initial + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
                             "\nor this range is wrong. Please check the Prior panel.");
                 }
+                if (param.isNonNegative && param.initial < 0.0) {
+                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
+                            "\ninitial value " + param.initial + " should be non-negative. Please check the Prior panel.");
+                }
 
-                if (param.priorType == PriorType.UNIFORM_PRIOR || param.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
-                    if (param.uniformLower < param.lower || param.uniformUpper > param.upper) {
-                        throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
-                                "\nuniform prior bound [" + param.uniformLower + ", " + param.uniformUpper + "]," +
-                                "\nis NOT in the hand bound [" + param.lower + ", " + param.upper + "]," +
-                                "\nor this bound is wrong. Please check the Prior panel.");
-                    }
+                if (param.isZeroOne && (param.initial < 0.0 || param.initial > 1.0)) {
+                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
+                            "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.");
                 }
             }
         }
@@ -408,7 +408,7 @@ public class BeastGenerator extends Generator {
             e.printStackTrace();
             throw new GeneratorException("Tree model generation has failed:\n" + e.getMessage());
         }
-        
+
         //++++++++++++++++ Statistics ++++++++++++++++++
         try {
             if (taxonSets != null && taxonSets.size() > 0) {
@@ -490,7 +490,7 @@ public class BeastGenerator extends Generator {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
                     generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
-                    
+
                     if (partition instanceof PartitionData) {
                         treeLikelihoodGenerator.writeTreeLikelihood((PartitionData) partition, writer);
                         writer.writeText("");

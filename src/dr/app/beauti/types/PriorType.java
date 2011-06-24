@@ -1,9 +1,9 @@
 package dr.app.beauti.types;
 
-import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.NumberUtil;
 import dr.math.distributions.*;
+import dr.util.DataTable;
 
 /**
  * @author Alexei Drummond
@@ -24,9 +24,9 @@ public enum PriorType {
     BETA_PRIOR("Beta", false, false, true, true, true),
     ONE_OVER_X_PRIOR("1/x", false, false, false, false, true),
     TRUNC_NORMAL_PRIOR("Truncated Normal", false, false, true, true, true),
-    SUBSTITUTION_REFERENCE_PRIOR("Subst Reference", false, false, false, false, false),
+    CMTC_RATE_REFERENCE_PRIOR("Subst Reference", false, false, false, false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false, false, false, false),
-    NORMAL_HPM_PRIOR("Normal HPM", false, false, false, false, false),    
+    NORMAL_HPM_PRIOR("Normal HPM", false, false, false, false, false),
     POISSON_PRIOR("Poisson", true, false, false, false, true);
 
     PriorType(final String name, final boolean isDiscrete, final boolean isSpecial,
@@ -47,7 +47,7 @@ public enum PriorType {
         Distribution dist = null;
         switch (this) {
             case UNIFORM_PRIOR:
-                dist = new UniformDistribution(param.uniformLower, param.uniformUpper);
+                dist = new UniformDistribution(param.truncationLower, param.truncationUpper);
                 break;
             case EXPONENTIAL_PRIOR:
                 if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
@@ -72,7 +72,7 @@ public enum PriorType {
                 dist = new OffsetPositiveDistribution(new PoissonDistribution(param.mean), param.offset);
                 break;
             case TRUNC_NORMAL_PRIOR:
-                dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.uniformLower, param.uniformUpper);
+                dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.truncationLower, param.truncationUpper);
                 break;
             case BETA_PRIOR:
                 dist = new OffsetPositiveDistribution(new BetaDistribution(param.shape, param.shapeB), param.offset);
@@ -86,7 +86,7 @@ public enum PriorType {
                 break;
             case ONE_OVER_X_PRIOR:
                 break;
-            case SUBSTITUTION_REFERENCE_PRIOR:
+            case CMTC_RATE_REFERENCE_PRIOR:
                 break;
             case NORMAL_HPM_PRIOR:
                 break;
@@ -96,22 +96,25 @@ public enum PriorType {
         return dist;
     }
 
-    public String getPriorString(Parameter param) {
+    public String getPriorString(Parameter parameter) {
 
 //        NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
 
-        if (param.priorType == PriorType.UNDEFINED) {
+        if (parameter.priorType == PriorType.UNDEFINED) {
             buffer.append("? ");
-        } else if (param.isPriorImproper()) {
+        } else if (parameter.isPriorImproper()) {
             buffer.append("! ");
-        } else if (!param.isPriorEdited()) {
+        } else if (!parameter.isPriorEdited()) {
             buffer.append("* ");
         } else {
             buffer.append("  ");
         }
 
-        switch (param.priorType) {
+        double lower = parameter.getLowerBound();
+        double upper = parameter.getUpperBound();
+
+        switch (parameter.priorType) {
             case NONE_TREE_PRIOR:
                 buffer.append("Using Tree Prior");
                 break;
@@ -122,11 +125,11 @@ public enum PriorType {
                 buffer.append("Not yet specified");
                 break;
             case UNIFORM_PRIOR:
-                if (!param.isDiscrete) { // && !param.isStatistic) {
+                if (!parameter.isDiscrete) { // && !param.isStatistic) {
                     buffer.append("Uniform [");
-                    buffer.append(NumberUtil.formatDecimal(param.uniformLower, 10, 6));
+                    buffer.append(NumberUtil.formatDecimal(lower, 10, 6));
                     buffer.append(", ");
-                    buffer.append(NumberUtil.formatDecimal(param.uniformUpper, 10, 6));
+                    buffer.append(NumberUtil.formatDecimal(upper, 10, 6));
                     buffer.append("]");
                 } else {
                     buffer.append("Uniform");
@@ -134,43 +137,44 @@ public enum PriorType {
                 break;
             case EXPONENTIAL_PRIOR:
                 buffer.append("Exponential [");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append("]");
                 break;
             case LAPLACE_PRIOR:
                 buffer.append("Laplace [");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
             case NORMAL_PRIOR:
+            case TRUNC_NORMAL_PRIOR:
                 buffer.append("Normal [");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.stdev, 10, 6));
                 buffer.append("]");
                 break;
             case LOGNORMAL_PRIOR:
                 buffer.append("LogNormal [");
-                if (param.isMeanInRealSpace()) buffer.append("R");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
+                if (parameter.isMeanInRealSpace()) buffer.append("R");
+                buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.stdev, 10, 6));
                 buffer.append("]");
                 break;
             case GAMMA_PRIOR:
                 buffer.append("Gamma [");
-                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.shape, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
             case INVERSE_GAMMA_PRIOR:
                 buffer.append("Inverse Gamma [");
-                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.shape, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.scale, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.scale, 10, 6));
                 buffer.append("]");
                 break;
             case ONE_OVER_X_PRIOR:
@@ -178,91 +182,118 @@ public enum PriorType {
                 break;
             case POISSON_PRIOR:
                 buffer.append("Poisson [");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.mean, 10, 6));
                 buffer.append("]");
-                break;
-            case TRUNC_NORMAL_PRIOR:
-                buffer.append("Truncated Normal [");
-                buffer.append(NumberUtil.formatDecimal(param.mean, 10, 6));
-                buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
-                buffer.append("]");
-                buffer.append(" in [");
-                buffer.append(NumberUtil.formatDecimal(param.uniformLower, 10, 6));
-                buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.uniformUpper, 10, 6));
-                buffer.append("]");
-
                 break;
             case BETA_PRIOR:
                 buffer.append("Beta [");
-                buffer.append(NumberUtil.formatDecimal(param.shape, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.shape, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.shapeB, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(parameter.shapeB, 10, 6));
                 buffer.append("]");
                 break;
-            case SUBSTITUTION_REFERENCE_PRIOR:
+            case CMTC_RATE_REFERENCE_PRIOR:
                 buffer.append("Approx. Reference Prior");
                 break;
             case NORMAL_HPM_PRIOR:
                 buffer.append("Normal HPM [");
-                buffer.append(param.hpmModelName);
+                buffer.append(parameter.hpmModelName);
                 buffer.append("]");
                 break;
             case LOGNORMAL_HPM_PRIOR:
                 buffer.append("Lognormal HPM [");
-                buffer.append(param.hpmModelName);
+                buffer.append(parameter.hpmModelName);
                 buffer.append("]");
                 break;
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
-        if (param.priorType != PriorType.NONE_TREE_PRIOR && (!param.isStatistic) && param.initial != Double.NaN) {
-            buffer.append(", initial=").append(NumberUtil.formatDecimal(param.initial, 10, 6));
+        if (parameter.priorType != UNIFORM_PRIOR && parameter.isTruncated) {
+            buffer.append(" in [");
+            buffer.append(NumberUtil.formatDecimal(parameter.truncationLower, 10, 6));
+            buffer.append(", ");
+            buffer.append(NumberUtil.formatDecimal(parameter.truncationUpper, 10, 6));
+            buffer.append("]");
+        }
+
+
+        if (parameter.priorType != PriorType.NONE_TREE_PRIOR && (!parameter.isStatistic) && parameter.initial != Double.NaN) {
+            buffer.append(", initial=").append(NumberUtil.formatDecimal(parameter.initial, 10, 6));
         }
 
         return buffer.toString();
     }
 
-    public String getPriorBoundString(Parameter param) {
+    public String getPriorBoundString(Parameter parameter) {
 
-        if (param.isStatistic) {
+        if (parameter.isStatistic) {
             return "n/a";
         }
 
+        double lower = parameter.getLowerBound();
+        double upper = parameter.getUpperBound();
+
 //        NumberFormat formatter = NumberFormat.getNumberInstance();
         StringBuffer buffer = new StringBuffer();
+        buffer.append("[");
+        buffer.append(NumberUtil.formatDecimal(lower, 10, 6));
+        buffer.append(", ");
+        buffer.append(NumberUtil.formatDecimal(upper, 10, 6));
+        buffer.append("]");
 
-        switch (param.priorType) {
-            case NONE_TREE_PRIOR:
-            case NONE_STATISTIC:
-//                buffer.append("None");
-//                break;
-            case UNDEFINED:
-            case UNIFORM_PRIOR:
-            case EXPONENTIAL_PRIOR:
-            case LAPLACE_PRIOR:
-            case NORMAL_PRIOR:
-            case LOGNORMAL_PRIOR:
-            case GAMMA_PRIOR:
-            case INVERSE_GAMMA_PRIOR:
-            case ONE_OVER_X_PRIOR:
-            case POISSON_PRIOR:
-            case BETA_PRIOR:
-            case TRUNC_NORMAL_PRIOR:
-            case SUBSTITUTION_REFERENCE_PRIOR:
-            case NORMAL_HPM_PRIOR:
-            case LOGNORMAL_HPM_PRIOR:
-                buffer.append("[");
-                buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
-                buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
-                buffer.append("]");
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown prior type");
-        }
         return buffer.toString();
+    }
+
+    public static PriorType[] getPriorTypes(Parameter parameter) {
+        if (parameter.isDiscrete) {
+            return new PriorType[] {UNIFORM_PRIOR, POISSON_PRIOR};
+        } else if (parameter.isCMTCRate) {
+            return new PriorType[] {
+                    CMTC_RATE_REFERENCE_PRIOR,
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    NORMAL_PRIOR,
+                    TRUNC_NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR,
+                    ONE_OVER_X_PRIOR};
+        } else if (parameter.isHierarchical) {
+            return new PriorType[] {
+                    LOGNORMAL_HPM_PRIOR,
+                    NORMAL_HPM_PRIOR};
+        } else if (parameter.isZeroOne) {
+            return new PriorType[] {
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    NORMAL_PRIOR,
+                    TRUNC_NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR,
+                    BETA_PRIOR};
+        } else if (parameter.isNonNegative) {
+            return new PriorType[] {
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    LAPLACE_PRIOR,
+                    NORMAL_PRIOR,
+                    TRUNC_NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR,
+                    ONE_OVER_X_PRIOR};
+        } else { // just a continuous parameter
+            return new PriorType[] {
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    LAPLACE_PRIOR,
+                    NORMAL_PRIOR,
+                    TRUNC_NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR};
+        }
     }
 
     public String getName() {

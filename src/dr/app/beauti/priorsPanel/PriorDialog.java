@@ -107,6 +107,7 @@ public class PriorDialog {
 
         this.parameter = parameter;
 
+        priorCombo.removeAllItems();
         for (PriorType priorType : PriorType.getPriorTypes(parameter)) {
             priorCombo.addItem(priorType);
         }
@@ -138,6 +139,17 @@ public class PriorDialog {
                 dialog.pack();
             }
         });
+
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
+                public void optionsPanelChanged() {
+                    setupChart();
+                    dialog.validate();
+                    dialog.repaint();
+                }
+            });
+        }
+
 
         dialog.pack();
         if (OSType.isMac()) {
@@ -269,7 +281,7 @@ public class PriorDialog {
 
     NumberFormatter formatter = new NumberFormatter(4);
 
-    private void setupChart() {
+    void setupChart() {
         chart.removeAllPlots();
 
         PriorType priorType = (PriorType) priorCombo.getSelectedItem();
@@ -288,6 +300,7 @@ public class PriorDialog {
                     "\n" + formatter.format(distribution.quantile(0.95)) +
                     "\n" + formatter.format(distribution.quantile(0.975)));
         }
+
     }
 
 

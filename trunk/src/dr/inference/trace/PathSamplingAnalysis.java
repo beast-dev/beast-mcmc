@@ -99,7 +99,7 @@ public class PathSamplingAnalysis {
         sb.append("\nlog Bayes factor from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
-        sb.append(String.format(FORMAT, bf));
+        sb.append(String.format(FORMAT, bf) + " (" + bf + ")");
         sb.append("\nInner area for path parameter in ("
                 + String.format(FORMAT, orderedTheta.get(1)) + ","
                 + String.format(FORMAT, orderedTheta.get(orderedTheta.size() - 2)) + ") = "
@@ -148,7 +148,7 @@ public class PathSamplingAnalysis {
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
                 }
 
-                //burnin = 0;   // TODO Double-check with Alex that burnin is ignored.
+                burnin = 0;
 
                 traces.setBurnIn(burnin);
 

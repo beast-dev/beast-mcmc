@@ -15,17 +15,23 @@ import java.util.List;
  */
 public class CalibrationPoints {
 
-    public CalibrationPoints(Tree tree, boolean isYule, List<Distribution> dists, List<Taxa> taxa,
-                           List<Boolean> forParent, Statistic userPDF, boolean approxOK) {
+    public static enum CorrectionType {
+        EXACT ,
+        APPROXIMATED,
+        NONE,
+    }
 
-        this.distributions = new Distribution[dists.size()];
-        this.taxa = new int[taxa.size()][];
-        this.forParent = new boolean[taxa.size()];
+    public CalibrationPoints(Tree tree, boolean isYule, List<Distribution> dists, List<Taxa> clades,
+                           List<Boolean> forParent, Statistic userPDF, CorrectionType correctionType) {
 
-        for(int k = 0; k < taxa.size(); ++k) {
-            final Taxa tk = taxa.get(k);
-            for(int i = k+1; i < taxa.size(); ++i) {
-                final Taxa ti = taxa.get(i);
+        this.densities = new Distribution[dists.size()];
+        this.clades = new int[clades.size()][];
+        this.forParent = new boolean[clades.size()];
+
+        for(int k = 0; k < clades.size(); ++k) {
+            final Taxa tk = clades.get(k);
+            for(int i = k+1; i < clades.size(); ++i) {
+                final Taxa ti = clades.get(i);
                 if( ti.containsAny(tk) ) {
                     if( ! (ti.containsAll(tk) || tk.containsAll(ti) ) ) {
                         throw new IllegalArgumentException("Overlapping clades??");
@@ -34,30 +40,29 @@ public class CalibrationPoints {
             }
         }
 
-        Taxa[] taxaInOrder = new Taxa[taxa.size()];
+        Taxa[] taxaInOrder = new Taxa[clades.size()];
 
         {
-            int loc = taxa.size() - 1;
+            int loc = clades.size() - 1;
             while( loc >= 0 ) {
                 //  place maximal clades at end one at a time
                 int k = 0;
-                for(/**/; k < taxa.size(); ++k) {
-                    if( isMaximal(taxa, k) ) {
+                for(/**/; k < clades.size(); ++k) {
+                    if( isMaximal(clades, k) ) {
                         break;
                     }
                 }
-                this.distributions[loc] = dists.remove(k);
+                this.densities[loc] = dists.remove(k);
                 this.forParent[loc] = forParent.remove(k);
 
-
-                final Taxa tk = taxa.get(k);
+                final Taxa tk = clades.get(k);
                 final int tkcount = tk.getTaxonCount();
-                this.taxa[loc] = new int[tkcount];
+                this.clades[loc] = new int[tkcount];
                 for(int nt = 0; nt < tkcount; ++nt) {
-                    this.taxa[loc][nt] = tree.getTaxonIndex(tk.getTaxon(nt));
+                    this.clades[loc][nt] = tree.getTaxonIndex(tk.getTaxon(nt));
                 }
                 taxaInOrder[loc] = tk;
-                taxa.remove(k);
+                clades.remove(k);
 
                 --loc;
             }
@@ -76,6 +81,7 @@ public class CalibrationPoints {
                 }
             }
         }
+
         this.taxaPartialOrder = new int[taxaInOrder.length][];
         for(int k = 0; k < taxaInOrder.length; ++k) {
             List<Integer> tiok = tio[k];
@@ -85,51 +91,111 @@ public class CalibrationPoints {
                 this.taxaPartialOrder[k][j] = tiok.get(j);
             }
         }
-        this.freeHeights = new int[this.taxa.length];
+        this.freeHeights = new int[this.clades.length];
 
-        for(int k = 0; k < this.taxa.length; ++k) {
+        for(int k = 0; k < this.clades.length; ++k) {
             int taken = 0;
             for( int i : this.taxaPartialOrder[k] ) {
                 taken += this.taxaPartialOrder[i].length - (this.forParent[i] ? 0 : 1);
             }
-            this.freeHeights[k] = this.taxa[k].length - (this.forParent[k] ? 1 : 2) - taken;
+            this.freeHeights[k] = this.clades[k].length - (this.forParent[k] ? 1 : 2) - taken;
             assert this.freeHeights[k] >= 0;
         }
 
-        this.maximal = new boolean[this.taxa.length];
-        for(int k = 0; k < this.taxa.length; ++k) {
+        this.maximal = new boolean[this.clades.length];
+        for(int k = 0; k < this.clades.length; ++k) {
             maximal[k] = true;
         }
-        for(int k = 0; k < this.taxa.length; ++k) {
+
+        for(int k = 0; k < this.clades.length; ++k) {
            for( int i : this.taxaPartialOrder[k] ) {
                maximal[i] = false;
            }
         }
-        
+
+        rootCorrection = this.clades[this.clades.length-1].length < tree.getExternalNodeCount();
+
         this.calibrationLogPDF = userPDF;
+
+        this.correctionType = correctionType;
 
         if( userPDF == null ) {
             if( ! isYule ) {
                 throw new IllegalArgumentException("Sorry, not implemented: conditional calibration prior for this non Yule models.");
             }
 
-            if( ! approxOK ) {
-                if( distributions.length > 2 ) {
-                    throw new IllegalArgumentException("Sorry, not implemented: multiple internal calibrations - please provide the " +
-                            "log marginal explicitly.");
-                }
-
-                if( distributions.length == 2 ) {
-
-                    if( ! taxaInOrder[1].containsAll(taxaInOrder[0]) ) {
-                        throw new IllegalArgumentException( "Sorry, not implemented: two non-nested clades.");
+            if( correctionType == CorrectionType.EXACT ) {
+                if( densities.length == 1 ) {
+                   // closed form formula
+                } else {
+                    boolean anyParent = false;
+                    for( boolean in : this.forParent ) {
+                        if( in ) {
+                            anyParent = true;
+                        }
                     }
-
-                    if( this.forParent[0] || this.forParent[1] ) {
+                    if( anyParent ) {
                         throw new IllegalArgumentException("Sorry, not implemented: calibration on parent for more than one clade.");
                     }
+                    if( densities.length == 2 && taxaInOrder[1].containsAll(taxaInOrder[0])) {
+                       // closed form formulas
+                    } else {
+                        setUpTables(tree);
+                        linsIter = new CalibrationLineagesIterator(this.clades, this.taxaPartialOrder, this.maximal,
+                                tree.getExternalNodeCount());
+                        lastHeights = new double[this.clades.length];
+                    }
                 }
+//                if( densities.length > 2 ) {
+//                    throw new IllegalArgumentException("Sorry, not implemented: multiple internal calibrations - please provide the " +
+//                            "log marginal explicitly.");
+//                }
+//
+//                if( densities.length == 2 ) {
+//
+//                    if( ! taxaInOrder[1].containsAll(taxaInOrder[0]) ) {
+//                        throw new IllegalArgumentException( "Sorry, not implemented: two non-nested clades.");
+//                    }
+//
+//                    if( this.forParent[0] || this.forParent[1] ) {
+//                        throw new IllegalArgumentException("Sorry, not implemented: calibration on parent for more than one clade.");
+//                    }
+//                }
             }
+
+
+        }
+    }
+
+    private void setUpTables(Tree tree) {
+        final int MAX_N = tree.getExternalNodeCount() + 1;
+        double[] lints = new double [MAX_N];
+        lc2 = new double [MAX_N];
+        lfactorials = new double [MAX_N];
+        lNR = new double [MAX_N];
+
+        lints[0] = Double.NEGATIVE_INFINITY; //-infinity, should never be used
+        lints[1] = 0.0;
+        for(int i = 2; i < MAX_N; ++i) {
+            lints[i] = Math.log(i);
+        }
+
+        //double const lg2 = log(2.0);
+        lc2[0] = lc2[1] = Double.NEGATIVE_INFINITY;
+        for(int i = 2; i < MAX_N; ++i) {
+            lc2[i] = lints[i] + lints[i-1] - lg2;
+        }
+
+        lfactorials[0] = 0.0;
+        for(int i = 1; i < MAX_N; ++i) {
+            lfactorials[i] =  lfactorials[i-1] + lints[i];
+        }
+
+        lNR[0] = Double.NEGATIVE_INFINITY; //-infinity, should never be used
+        lNR[1] = 0.0;
+
+        for(int i = 2; i < MAX_N; ++i) {
+            lNR[i] =  lNR[i-1] + lc2[i];
         }
     }
 
@@ -148,13 +214,13 @@ public class CalibrationPoints {
 
     public double getCorrection(Tree tree, final double lam) {
         double logL = 0.0;
-        final int nDists = distributions.length;
+        final int nDists = densities.length;
         double hs[] = new double[nDists];
 
         for(int k = 0; k < nDists; ++k) {
             NodeRef c;
-            final int[] taxk = taxa[k];
-            if( taxa.length > 1 ) {
+            final int[] taxk = clades[k];
+            if( taxk.length > 1 ) {
                 // check if monophyly and find node
                 c = Tree.Utils.getCommonAncestor(tree, taxk);
 
@@ -171,39 +237,95 @@ public class CalibrationPoints {
             }
 
             final double h = tree.getNodeHeight(c);
-            logL += distributions[k].logPdf(h);
+            logL += densities[k].logPdf(h);
 
             hs[k] = h;
         }
 
+        if( correctionType == CorrectionType.NONE ) {
+            return logL;
+        }
+
+        if( Double.isInfinite(logL) ) {
+            return logL;
+        }
+
         if( calibrationLogPDF == null ) {
-            if( nDists == 1 ) {
-                logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], taxa[0].length, forParent[0]);
-            } else if( nDists == 2 && taxaPartialOrder[1].length == 1
-                    && !forParent[0] && !forParent[1] ) {
-                logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], taxa[0].length,
-                                           hs[1], taxa[1].length);
-            } else {
-                final double loglam = Math.log(lam);
-                if( false ) {
-                    for(int k = 0; k < nDists; ++k) {
-                        final double v = -lam * hs[k];
-                        logL -= v  + loglam;
-                    }
+            if( correctionType == CorrectionType.EXACT ) {
+                if( nDists == 1 ) {
+                    logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length, forParent[0]);
+                } else if( nDists == 2 && taxaPartialOrder[1].length == 1) {
+                    assert !forParent[0] && !forParent[1];
+                    logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length,
+                            hs[1], clades[1].length);
                 } else {
+
+                    if( lastLam == lam ) {
+                        int k = 0;
+                        for(; k < hs.length; ++k) {
+                            if( hs[k] != lastHeights[k] ) {
+                                break;
+                            }
+                        }
+                        if( k == hs.length ) {
+                            return lastValue;
+                        }
+                    }
+
+                    // the slow and painful way
+                    double[] hss = new double[hs.length];
+                    int[] ranks = new int[hs.length];
+                    for(int k = 0; k < hs.length; ++k) {
+                        int r = 0;
+                        for (double h : hs) {
+                            r += (h < hs[k]) ? 1 : 0;
+                        }
+                        ranks[k] = r+1;
+                        hss[r] = hs[k];
+                    }
+                    logL -= logMarginalDensity(lam, hss, ranks, linsIter);
+
+                    lastLam = lam;
+                    System.arraycopy(hs, 0, lastHeights, 0, lastHeights.length);
+                    lastValue = logL;
+                }
+            } else {
+                assert correctionType == CorrectionType.APPROXIMATED;
+                
+                final double loglam = Math.log(lam);
+//                if( false ) {
+//                    for(int k = 0; k < nDists; ++k) {
+//                        final double v = -lam * hs[k];
+//                        logL -= v  + loglam;
+//                    }
+//                } else {
                     int maxh = 0;
                     for(int k = 0; k < nDists; ++k) {
                         final double v = -lam * hs[k];
 
-                        logL -= Math.log1p(-Math.exp(v)) * freeHeights[k];
-
+                        if( freeHeights[k] > 0 ) {
+                          logL -= Math.log1p(-Math.exp(v)) * freeHeights[k];
+                        }
+//                        if( Double.isNaN(logL))  {
+//                            int x = 1;
+//                        }
                         logL -= v * ((forParent[k] ? 1 : 2) - (maximal[k] ? 0 : 1)) + loglam;
+//                        if( Double.isNaN(logL))  {
+//                            int x = 1;
+//                        }
                         if( hs[k] > hs[maxh] ) {
                             maxh = k;
                         }
                     }
-                    logL -= -(forParent[maxh] ? 0 : 1) * lam * hs[maxh];
-                }
+                    
+                    if( rootCorrection ) {
+                      logL -= -(forParent[maxh] ? 0 : 1) * lam * hs[maxh];
+                    }
+
+                    if( Double.isNaN(logL) ) {
+                      logL = Double.NEGATIVE_INFINITY;
+                    }
+//                }
             }
         } else {
             final double value = calibrationLogPDF.getStatisticValue(0);
@@ -274,13 +396,154 @@ public class CalibrationPoints {
         return lgl;
     }
 
-    private  final Distribution[] distributions;
-    private  final int[][] taxa;
+    private double logMarginalDensity(final double lam, double[] hs, int[] ranks, CalibrationLineagesIterator cli) {
+
+        final int ni = cli.setup(ranks);
+
+        final int nHeights = hs.length;
+
+        double[] lehs = new double[nHeights +1];
+        lehs[0] = 0.0;
+        for(int i = 1; i < lehs.length; ++i) {
+            lehs[i] = -lam*hs[i-1];
+        }
+
+        // assert maxRank == len(sit)
+        boolean  noRoot = ni == lehs.length;
+
+        int nLevels = nHeights + (noRoot ? 1 : 0);
+
+        double[] lebase = new double[nLevels];
+
+        for(int i = 0; i < nHeights; ++i) {
+            lebase[i] = lehs[i] + Math.log1p(-Math.exp(lehs[i + 1] - lehs[i]));
+        }
+
+        if( noRoot ) {
+            lebase[nHeights] = lehs[nHeights];
+        }
+
+        int[] linsAtLevel = new int[nLevels];
+
+        int[][] joiners = cli.allJoiners();
+
+        double val = 0;
+        boolean first = true;
+
+        int[][] linsInLevels;
+
+        while( (linsInLevels = cli.next()) != null ) {
+            double v = countRankedTrees(nLevels, linsInLevels, joiners, linsAtLevel);
+            // 1 for root formula, 1 for kludge in iterator which sets root as 2 lineages
+            if( noRoot ) {
+                final int ll = linsAtLevel[nLevels-1] + 2;
+                linsAtLevel[nLevels-1] = ll;
+
+                v -= lc2[ll] + lg2;
+            }
+
+            for(int i = 0; i < nLevels; ++i) {
+                v += linsAtLevel[i] * lebase[i];
+            }
+
+            if( first ) {
+                val = v;
+                first = false;
+            } else {
+                if( val > v ) {
+                    val += Math.log1p(Math.exp(v - val));
+                } else {
+                    val = v + Math.log1p(Math.exp(val-v));
+                }
+            }
+        }
+
+        double logc0 = 0.0;
+        int totLin = 0;
+        for(int i = 0; i < ni; ++i) {
+            final int l = cli.nStart(i);
+            logc0 += lNR[l];
+            totLin += l;
+        }
+
+        final double logc1 = lfactorials[totLin];
+
+        double logc2 = nHeights * Math.log(lam);
+
+        for(int i = 1; i < nHeights+1; ++i) {
+            logc2 += lehs[i];
+        }
+
+        if( ! noRoot ) {
+            // we dont have an iterator for 0 free lineages
+            logc2 += 2 * lehs[nHeights];
+        }
+
+        // scale by total for all possible ranking orders, scale outside if needed for comparison
+
+        val += logc0 + logc1 + logc2;
+
+        return val;
+    }
+
+    private double
+    countRankedTrees(final int nLevels, final int[][] linsAtCrossings, final int[][] joiners, int[] linsAtLevel) {
+        double logCount = 0;
+
+        for(int i = 0; i < nLevels; ++i) {
+            int sumLins = 0;
+            for(int k = i; k < nLevels; ++k) {
+                int[] lack = linsAtCrossings[k];
+                int cki = lack[i];
+                if( joiners[k][i] > 0 ) {
+                    ++cki;
+                    logCount += lc2[cki];
+                }
+                final int l = cki - lack[i+1];
+                logCount -= lfactorials[l];
+                sumLins += l;
+            }
+            linsAtLevel[i] = sumLins;
+        }
+
+        return logCount;
+    }
+
+    // Flavour of marginal computation.
+    private final CorrectionType correctionType;
+
+    // Calibrated clades, each as a list of node ids.
+    // Clades are partially ordered by inclusion - if X <= Y then X appears before Y.
+    private  final int[][] clades;
+
+    // One calibration density associated with each clade
+    private  final Distribution[] densities;
+
+    // true if density is for clade parent
     private  final boolean[] forParent;
+
+    // For each clade, lists the clades contained in it (using their index in clades)
     private  final int[][] taxaPartialOrder;
+
     private  final int[] freeHeights;
 
+    // true if clade is not contained in any other clade
     private  final boolean[] maximal;
+    private  final boolean rootCorrection;
 
+    // Used provided function to calculate the marginal density
     private  final Statistic calibrationLogPDF;
+
+    private double[] lc2;
+    private final double lg2 =  Math.log(2.0);
+    private double[] lNR;
+    private double[] lfactorials;
+    private CalibrationLineagesIterator linsIter = null;
+
+    // simple cache of last result can go a long way in a big tree with a few calibration nodes, for non-global tree operators which do
+    // not change the calibration nodes heights.
+
+    double lastLam = Double.NEGATIVE_INFINITY;
+    double[] lastHeights;
+    double lastValue = Double.NEGATIVE_INFINITY;
 }

@@ -29,7 +29,11 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String EXCLUDE = "exclude";
 
     public static final String CALIBRATION = "calibration";
-    public static final String APPROX = "approx";
+    public static final String CORRECTION = "correction";
+
+    public static final String EXACT = "exact";
+    public static final String APPROX = "approximated";
+    public static final String NONE = "none";
 
     public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
 
@@ -131,9 +135,14 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
             final Statistic userPDF = (Statistic) cal.getChild(Statistic.class);
             try {
-                boolean approx = cal.getAttribute(APPROX, false);
+                final String correction = cal.getAttribute(CORRECTION, EXACT);
 
-                final CalibrationPoints calib = new CalibrationPoints(tree, specModel.isYule(), dists, taxa, forParent, userPDF, approx);
+                final CalibrationPoints.CorrectionType type = correction.equals(EXACT) ? CalibrationPoints.CorrectionType.EXACT :
+                        (correction.equals(APPROX) ? CalibrationPoints.CorrectionType.APPROXIMATED :
+                                (correction.equals(NONE) ? CalibrationPoints.CorrectionType.NONE : null));
+
+                final CalibrationPoints calib = new CalibrationPoints(tree, specModel.isYule(), dists, taxa, forParent, userPDF,
+                        type);
                 final SpeciationLikelihood speciationLikelihood = new SpeciationLikelihood(tree, specModel, null, calib);
                 return speciationLikelihood;
             } catch( IllegalArgumentException e ) {
@@ -171,7 +180,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     private final XMLSyntaxRule[] calibration = {
 //            AttributeRule.newDoubleArrayRule(COEFFS,true, "use log(lam) -lam * c[0] + sum_k=1..n (c[k+1] * e**(-k*lam*x)) " +
 //                    "as a calibration correction instead of default - used when additional constarints are put on the topology."),
-            AttributeRule.newBooleanRule(APPROX, true),
+            AttributeRule.newStringRule(CORRECTION, true),
             new ElementRule(Statistic.class, true),
             new XORRule(
                     new ElementRule(Distribution.class, 1, 100),

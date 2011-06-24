@@ -159,7 +159,8 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
     @Override
     public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
         double logL = calculateTreeLogLikelihood(tree);
-        logL += getMarginal(tree, calibration);
+        double mar = getMarginal(tree, calibration);
+        logL += mar;
         return logL;
     }
 }

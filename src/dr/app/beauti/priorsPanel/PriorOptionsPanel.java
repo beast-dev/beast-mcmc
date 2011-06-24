@@ -2,15 +2,19 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.PriorType;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.math.distributions.*;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
+import java.text.NumberFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -29,8 +33,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private final boolean isTruncatable;
 
     private final RealNumberField initialField = new RealNumberField();
-    private RealNumberField selectedField;
-    private final SpecialNumberPanel specialNumberPanel;
+    private final JButton negativeInfinityButton;
+    private final JButton positiveInfinityButton;
 
     private final JCheckBox isTruncatedCheck = new JCheckBox("Truncate to:");
     private final RealNumberField lowerField = new RealNumberField();
@@ -45,9 +49,27 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         this.isTruncatable = isTruncatable;
 
-        specialNumberPanel = new SpecialNumberPanel();
-        specialNumberPanel.setEnabled(false);
+        negativeInfinityButton = new JButton(NumberFormat.getNumberInstance().format(Double.NEGATIVE_INFINITY));
+        PanelUtils.setupComponent(negativeInfinityButton);
+        negativeInfinityButton.setFocusable(false);
+        negativeInfinityButton.setActionCommand(RealNumberField.NEGATIVE_INFINITY);
+        negativeInfinityButton.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                lowerField.setText(e.getActionCommand());
+            }
+        });
+        negativeInfinityButton.setToolTipText("Click to set 'Positive Infinity' in the numerical field.");
 
+        positiveInfinityButton = new JButton(NumberFormat.getNumberInstance().format(Double.POSITIVE_INFINITY));
+        PanelUtils.setupComponent(positiveInfinityButton);
+        positiveInfinityButton.setFocusable(false);
+        positiveInfinityButton.setActionCommand(RealNumberField.POSITIVE_INFINITY);
+        positiveInfinityButton.addActionListener(new ActionListener() {
+            public void actionPerformed(final ActionEvent e) {
+                upperField.setText(e.getActionCommand());
+            }
+        });
+        positiveInfinityButton.setToolTipText("Click to set 'Negative Infinity' in the numerical field.");
 
         initialField.setColumns(10);
         lowerField.setColumns(10);
@@ -59,8 +81,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             public void actionPerformed(ActionEvent actionEvent) {
                 lowerField.setEnabled(isTruncatedCheck.isSelected());
                 lowerLabel.setEnabled(isTruncatedCheck.isSelected());
+                negativeInfinityButton.setEnabled(isTruncatedCheck.isSelected());
                 upperField.setEnabled(isTruncatedCheck.isSelected());
                 upperLabel.setEnabled(isTruncatedCheck.isSelected());
+                positiveInfinityButton.setEnabled(isTruncatedCheck.isSelected());
             }
         });
 
@@ -81,34 +105,16 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             }
         };
 
-        FocusListener flistener = new FocusAdapter() {
-            public void focusGained(FocusEvent e) {
-                if (e.getComponent() instanceof RealNumberField) {
-                    selectedField = (RealNumberField) e.getComponent();
-                    specialNumberPanel.setEnabled(true);
-                }
-            }
-
-            public void focusLost(FocusEvent e) {
-                selectedField = null;
-                specialNumberPanel.setEnabled(false);
-            }
-        };
-
         initialField.addKeyListener(listener);
-        initialField.addFocusListener(flistener);
 
         for (JComponent component : argumentFields) {
             if (component instanceof RealNumberField) {
                 component.addKeyListener(listener);
-                component.addFocusListener(flistener);
             }
         }
 
         lowerField.addKeyListener(listener);
         upperField.addKeyListener(listener);
-        lowerField.addFocusListener(flistener);
-        upperField.addFocusListener(flistener);
     }
 
     void addListener(Listener listener) {
@@ -194,15 +200,23 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         if (isTruncatable) {
             addSpanningComponent(isTruncatedCheck);
-            addComponents(lowerLabel, lowerField);
-            addComponents(upperLabel, upperField);
+            JPanel panel = new JPanel();
+            panel.add(upperField);
+            panel.add(positiveInfinityButton);
+            addComponents(upperLabel, panel);
+             panel = new JPanel();
+            panel.add(lowerField);
+            panel.add(negativeInfinityButton);
+            addComponents(lowerLabel, panel);
+
+            positiveInfinityButton.setMinimumSize(new Dimension(negativeInfinityButton.getWidth(), negativeInfinityButton.getHeight()));
 
             lowerField.setEnabled(isTruncatedCheck.isSelected());
             lowerLabel.setEnabled(isTruncatedCheck.isSelected());
+            negativeInfinityButton.setEnabled(isTruncatedCheck.isSelected());
             upperField.setEnabled(isTruncatedCheck.isSelected());
             upperLabel.setEnabled(isTruncatedCheck.isSelected());
-
-            addSpanningComponent(specialNumberPanel);
+            positiveInfinityButton.setEnabled(isTruncatedCheck.isSelected());
         }
     }
 

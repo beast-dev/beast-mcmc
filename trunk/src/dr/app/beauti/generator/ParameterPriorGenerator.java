@@ -111,20 +111,6 @@ public class ParameterPriorGenerator extends Generator {
         writer.writeCloseTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
     }
 
-    private String getBoundString(double bound) {
-
-        if (Double.isInfinite(bound)) {
-            if (bound < 0) {
-                return "-Inf";
-            } else {
-                return "Inf";
-            }
-        } else if (Double.isNaN(bound)) {
-            return "NaN";
-        }
-
-        return "" + bound;
-    }
     /**
      * Write the priors for each parameter
      *
@@ -137,8 +123,8 @@ public class ParameterPriorGenerator extends Generator {
         if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
             writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                     new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, getBoundString(parameter.getLowerBound())),
-                            new Attribute.Default<String>(PriorParsers.UPPER, getBoundString(parameter.getUpperBound()))
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
                     });
             writeParameterIdref(writer, parameter);
             writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);

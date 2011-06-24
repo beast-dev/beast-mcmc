@@ -111,6 +111,20 @@ public class ParameterPriorGenerator extends Generator {
         writer.writeCloseTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
     }
 
+    private String getBoundString(double bound) {
+
+        if (Double.isInfinite(bound)) {
+            if (bound < 0) {
+                return "-Inf";
+            } else {
+                return "Inf";
+            }
+        } else if (Double.isNaN(bound)) {
+            return "NaN";
+        }
+
+        return "" + bound;
+    }
     /**
      * Write the priors for each parameter
      *
@@ -118,8 +132,20 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
+        // if there is a truncation then put it at the top so it short-circuits any other prior
+        // calculations
+        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
+            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, getBoundString(parameter.getLowerBound())),
+                            new Attribute.Default<String>(PriorParsers.UPPER, getBoundString(parameter.getUpperBound()))
+                    });
+            writeParameterIdref(writer, parameter);
+            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+        }
         switch (parameter.priorType) {
-//            case UNIFORM_PRIOR:
+            case UNIFORM_PRIOR:
+                // already handled, above
 //                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
 //                        new Attribute[]{
 //                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
@@ -127,7 +153,7 @@ public class ParameterPriorGenerator extends Generator {
 //                        });
 //                writeParameterIdref(writer, parameter);
 //                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-//                break;
+                break;
             case EXPONENTIAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
                         new Attribute[]{
@@ -234,15 +260,6 @@ public class ParameterPriorGenerator extends Generator {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
-        }
-        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
         }
     }
 

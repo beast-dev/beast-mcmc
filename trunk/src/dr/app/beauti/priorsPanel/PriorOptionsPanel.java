@@ -10,14 +10,17 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.event.*;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Alexei Drummond
  * @author Walter Xie
  */
 abstract class PriorOptionsPanel extends OptionsPanel {
+
+    interface Listener {
+        void optionsPanelChanged();
+    }
 
     private List<JComponent> argumentFields = new ArrayList<JComponent>();
     private List<String> argumentNames = new ArrayList<String>();
@@ -35,16 +38,22 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private final RealNumberField upperField = new RealNumberField();
     private final JLabel upperLabel = new JLabel("Upper: ");
 
+    protected final Set<Listener> listeners = new HashSet<Listener>();
+
     PriorOptionsPanel(boolean isTruncatable) {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.isTruncatable = isTruncatable;
 
-        setup();
+        specialNumberPanel = new SpecialNumberPanel();
+        specialNumberPanel.setEnabled(false);
+
 
         initialField.setColumns(10);
         lowerField.setColumns(10);
         upperField.setColumns(10);
+
+        setup();
 
         isTruncatedCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -55,9 +64,6 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             }
         });
 
-        specialNumberPanel = new SpecialNumberPanel();
-        specialNumberPanel.setEnabled(false);
-
         KeyListener listener = new KeyAdapter() {
             public void keyReleased(KeyEvent e) {
                 if (e.getComponent() instanceof RealNumberField) {
@@ -67,7 +73,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 //                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
 //                        setupChart();
 //                        dialog.repaint();
-//                        dialog.updateChart();
+                        for (Listener listener : listeners) {
+                            listener.optionsPanelChanged();
+                        }
                     }
                 }
             }
@@ -101,6 +109,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         upperField.addKeyListener(listener);
         lowerField.addFocusListener(flistener);
         upperField.addFocusListener(flistener);
+    }
+
+    void addListener(Listener listener) {
+        listeners.add(listener);
     }
 
     protected void setFieldRange(RealNumberField field, boolean isNonNegative, boolean isZeroOne) {
@@ -184,6 +196,13 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             addSpanningComponent(isTruncatedCheck);
             addComponents(lowerLabel, lowerField);
             addComponents(upperLabel, upperField);
+
+            lowerField.setEnabled(isTruncatedCheck.isSelected());
+            lowerLabel.setEnabled(isTruncatedCheck.isSelected());
+            upperField.setEnabled(isTruncatedCheck.isSelected());
+            upperLabel.setEnabled(isTruncatedCheck.isSelected());
+
+            addSpanningComponent(specialNumberPanel);
         }
     }
 
@@ -303,8 +322,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
     };
 
-        static final PriorOptionsPanel LAPLACE = new PriorOptionsPanel(true) {
-            void setup() {
+    static final PriorOptionsPanel LAPLACE = new PriorOptionsPanel(true) {
+        void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
         }
@@ -375,7 +394,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                         getField(0).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
                     }
 
-//                    dialog.updateChart();
+                    for (Listener listener : listeners) {
+                        listener.optionsPanelChanged();
+                    }
                 }
             });
         }
@@ -524,4 +545,5 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         public void getArguments(Parameter parameter) {
         }
     };
+
 }

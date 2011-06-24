@@ -165,10 +165,10 @@ public class InitialTreeGenerator extends Generator {
 
                     writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                     if (statistic.isNodeHeight) {
-                        if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+                        if (statistic.isTruncated /*|| statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR*/) {
                             writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.truncationLower, true);
-                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.truncationUpper, true);
+                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
+                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);
                             writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                         }
                     }

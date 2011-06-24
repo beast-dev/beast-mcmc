@@ -48,25 +48,28 @@ public class Parameter {
     public final String taxaId;
     public final boolean isNodeHeight;
     public final boolean isStatistic;
+    public final boolean isDiscrete;
+    public final boolean isHierarchical;
+    public final boolean isCMTCRate;
+    public final boolean isNonNegative;
+    public final boolean isZeroOne;
     public final boolean isCached;
+//    public final double lower;
+//    public final double upper;
 
     private final PartitionOptions options;
 
-    // editable Builder para
-    public PriorScaleType scaleType;
-    public double initial;
+    public final PriorScaleType scaleType;
 
-    public boolean isFixed;
-    public boolean isDiscrete;
-
-    public boolean priorFixed;
-
+    public final boolean isPriorFixed;
     public PriorType priorType;
 
-    public double lower;
-    public double upper;
-    public double uniformUpper;
-    public double uniformLower;
+    // Editable fields
+    public boolean isFixed;
+    public double initial;
+    public boolean isTruncated;
+    public double truncationUpper;
+    public double truncationLower;
     public double mean;
     public double stdev;
     public double shape;
@@ -84,20 +87,28 @@ public class Parameter {
 
         // Optional para - initialized to default values
         private PriorScaleType scaleType = PriorScaleType.NONE;
-        private double initial = Double.NaN;
-        private int dimension = -1;
 
         private String taxaId = null;
         private boolean isNodeHeight = false;
+        private boolean isDiscrete = false;
+        private boolean isHierarchical = false;
+        private boolean isCMTCRate = false;
+        private boolean isNonNegative = false;
+        private boolean isZeroOne = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
+
         private PartitionOptions options = null;
 
         private PriorType priorType = PriorType.NONE_TREE_PRIOR;
-        private double upper = Double.NaN;
-        private double lower = Double.NaN;
-        public double uniformUpper = 0.0;
-        public double uniformLower = 0.0;
+        private boolean isPriorFixed = false;
+
+        private double initial = Double.NaN;
+        //        private double upper = Double.NaN;
+//        private double lower = Double.NaN;
+        private boolean isTruncated = false;
+        public double truncationUpper = Double.POSITIVE_INFINITY;
+        public double truncationLower = Double.NEGATIVE_INFINITY;
         public double mean = 0.0;
         public double stdev = 1.0;
         public double shape = 1.0;
@@ -106,10 +117,7 @@ public class Parameter {
         public double offset = 0.0;
         public double precision = 1.0;
 
-        private boolean isDiscrete = false;
         private boolean isFixed = false;
-
-        private boolean priorFixed = false;
 
 
         public Builder(String name, String description) {
@@ -124,11 +132,6 @@ public class Parameter {
 
         public Builder initial(double initial) {
             this.initial = initial;
-            return this;
-        }
-
-        public Builder dimension(int dimension) {
-            this.dimension = dimension;
             return this;
         }
 
@@ -167,33 +170,55 @@ public class Parameter {
             return this;
         }
 
+        public Builder isHierarchical(boolean isHierarchical) {
+            this.isHierarchical = isHierarchical;
+            return this;
+        }
+
+        public Builder isNonNegative(boolean isNonNegative) {
+            this.isNonNegative = isNonNegative;
+            return this;
+        }
+
+        public Builder isZeroOne(boolean isZeroOne) {
+            this.isZeroOne = isZeroOne;
+            return this;
+        }
+
+        public Builder isCMTCRate(boolean isCMTCRate) {
+            this.isCMTCRate = isCMTCRate;
+            return this;
+        }
+
         public Builder isFixed(boolean isFixed) {
             this.isFixed = isFixed;
             return this;
         }
 
-        public Builder priorFixed(boolean priorFixed) {
-            this.priorFixed = priorFixed;
+        public Builder isPriorFixed(boolean priorFixed) {
+            this.isPriorFixed = priorFixed;
             return this;
         }
 
-        public Builder upper(double upper) {
-            this.upper = upper;
+        //        public Builder upper(double upper) {
+//            this.upper = upper;
+//            return this;
+//        }
+//
+//        public Builder lower(double lower) {
+//            this.lower = lower;
+//            return this;
+//        }
+//
+        public Builder truncationUpper(double truncationUpper) {
+            this.isTruncated = true;
+            this.truncationUpper = truncationUpper;
             return this;
         }
 
-        public Builder lower(double lower) {
-            this.lower = lower;
-            return this;
-        }
-
-        public Builder uniformUpper(double uniformUpper) {
-            this.uniformUpper = uniformUpper;
-            return this;
-        }
-
-        public Builder uniformLower(double uniformLower) {
-            this.uniformLower = uniformLower;
+        public Builder truncationLower(double truncationLower) {
+            this.isTruncated = true;
+            this.truncationLower = truncationLower;
             return this;
         }
 
@@ -256,11 +281,16 @@ public class Parameter {
         priorType = builder.priorType;
         isDiscrete = builder.isDiscrete;
         isFixed = builder.isFixed;
-        priorFixed = builder.priorFixed;
-        upper = builder.upper;
-        lower = builder.lower;
-        uniformUpper = builder.uniformUpper;
-        uniformLower = builder.uniformLower;
+        isHierarchical = builder.isHierarchical;
+        isCMTCRate = builder.isCMTCRate;
+        isNonNegative = builder.isNonNegative;
+        isZeroOne = builder.isZeroOne;
+        isPriorFixed = builder.isPriorFixed;
+//        upper = builder.upper;
+//        lower = builder.lower;
+        isTruncated = builder.isTruncated;
+        truncationUpper = builder.truncationUpper;
+        truncationLower = builder.truncationLower;
         mean = builder.mean;
         stdev = builder.stdev;
         shape = builder.shape;
@@ -348,10 +378,38 @@ public class Parameter {
             // such (or we want to make a more explicit distinction about when it
             // might be appropriate:
             /* priorType == PriorType.ONE_OVER_X_PRIOR || */
-                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
+                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(getLowerBound()) || Double.isInfinite(getUpperBound())))) {
             return true;
         }
         return false;
+    }
+
+    public double getLowerBound() {
+        double lower = Double.NEGATIVE_INFINITY;
+
+        if (isNonNegative || isZeroOne) {
+            lower = 0.0;
+        }
+
+        if (isTruncated && !Double.isInfinite(truncationLower)) {
+            lower = truncationLower;
+        }
+
+        return lower;
+    }
+
+    public double getUpperBound() {
+        double upper = Double.POSITIVE_INFINITY;
+
+        if (isZeroOne) {
+            upper = 1.0;
+        }
+
+        if (isTruncated && !Double.isInfinite(truncationUpper)) {
+            upper = truncationUpper;
+        }
+
+        return upper;
     }
 
     public boolean isMeanInRealSpace() {

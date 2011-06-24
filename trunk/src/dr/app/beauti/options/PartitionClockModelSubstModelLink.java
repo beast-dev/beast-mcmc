@@ -13,14 +13,14 @@ public class PartitionClockModelSubstModelLink extends PartitionOptions {
 
     public PartitionClockModelSubstModelLink(BeautiOptions options, PartitionClockModel clockModel, PartitionSubstitutionModel substModel) {
 //        super(options, clockModel.getName() + "." + substModel.getName());
-        // clockModel and substModel have to be assigned before initModelParaAndOpers()
+        // clockModel and substModel have to be assigned before initModelParametersAndOpererators()
         super(options);
         this.clockModel = clockModel;
         this.substModel = substModel;
-        initModelParaAndOpers();
+        initModelParametersAndOpererators();
     }
 
-    protected void initModelParaAndOpers() {
+    protected void initModelParametersAndOpererators() {
         // <svsGeneralSubstitutionModel idref="originModel"/>
 //        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
 //                "bit Flip In Substitution Model Operator",

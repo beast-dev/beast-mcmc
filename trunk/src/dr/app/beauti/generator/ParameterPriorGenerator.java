@@ -119,15 +119,15 @@ public class ParameterPriorGenerator extends Generator {
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
-            case UNIFORM_PRIOR:
-                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-                break;
+//            case UNIFORM_PRIOR:
+//                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+//                        new Attribute[]{
+//                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+//                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+//                        });
+//                writeParameterIdref(writer, parameter);
+//                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+//                break;
             case EXPONENTIAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
                         new Attribute[]{
@@ -146,6 +146,7 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.LAPLACE_PRIOR);
                 break;
+            case TRUNC_NORMAL_PRIOR: // this will be removed - can add a truncation to any prior
             case NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
                         new Attribute[]{
@@ -200,22 +201,6 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
                 break;
-            case TRUNC_NORMAL_PRIOR:
-                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
-                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
-                break;
             case BETA_PRIOR:
                 writer.writeOpenTag(PriorParsers.BETA_PRIOR,
                         new Attribute[]{
@@ -226,7 +211,7 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.BETA_PRIOR);
                 break;
-            case SUBSTITUTION_REFERENCE_PRIOR:
+            case CMTC_RATE_REFERENCE_PRIOR:
                 writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME);
                 writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
                 writeParameterIdref(writer, parameter);
@@ -249,6 +234,15 @@ public class ParameterPriorGenerator extends Generator {
                 break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
+        }
+        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
+            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
+                    });
+            writeParameterIdref(writer, parameter);
+            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
         }
     }
 

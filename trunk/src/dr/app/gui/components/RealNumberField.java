@@ -56,10 +56,14 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             try {
                 double value = getValue();
                 if (value < min || value > max) {
-                    errorMsg();
+                    displayErrorMessage();
+                    // regain focus for this component
+                    this.requestFocus();
                 }
             } catch (NumberFormatException e) {
-                errorMsg();
+                displayErrorMessage();
+                // regain focus for this component
+                this.requestFocus();
             }
         }
     }
@@ -88,7 +92,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         setText(obj.toString()); // where used?
     }
 
-    protected void errorMsg() {
+    protected void displayErrorMessage() {
         String message = "";
         if (min == Double.MIN_VALUE) {
             message = " greater than 0";
@@ -117,7 +121,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     public void setValue(double value) {
         if (range_check) {
             if (value < min || value > max) {
-                errorMsg();
+                displayErrorMessage();
                 return;
             }
         }
@@ -145,8 +149,8 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             }
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Unable to parse number correctly",
-                        "Number Format Exception",
-                        JOptionPane.ERROR_MESSAGE);
+                    "Number Format Exception",
+                    JOptionPane.ERROR_MESSAGE);
             return null;
         }
     }
@@ -173,7 +177,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     static char[] numberSet = {
-        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 
     class RealNumberFieldDocument extends PlainDocument {

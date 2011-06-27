@@ -75,7 +75,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         }
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, null, rowLabels, columnLabels, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, null, rowLabels, columnLabels, observations, observationTypes, distanceIndices, new int[0], rowIndices, columnIndices);
     }
 
     protected void initialize(
@@ -89,6 +89,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             final double[] observations,
             final ObservationType[] observationTypes,
             final int[] distanceIndices,
+            final int[] diagonalIndices,
             final int[] rowIndices,
             final int[] columnIndices) {
 
@@ -127,6 +128,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.observations = observations;
         this.observationTypes = observationTypes;
         this.distanceIndices = distanceIndices;
+        this.diagonalIndices = diagonalIndices;
         this.rowIndices = rowIndices;
         this.columnIndices = columnIndices;
 
@@ -350,9 +352,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             distanceUpdate[i] = false;
         }
 
+        // To override all the caching:
 //        calculateDistances();
 //        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-//
 //        logLikelihood = computeLogLikelihood();
 
         return logLikelihood;
@@ -385,6 +387,32 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return logLikelihood;
     }
 
+//    protected double computeDiagonalLogLikelihood() {
+//
+//        double precision = diagonalPrecisionParameter.getParameterValue(0);
+//
+//        // totalNonMissingCount should be totalObservedCount (not > or < threshold)
+//        double logLikelihood = (diagonalPointObservationCount / 2) * Math.log(precision) - 0.5 * precision * diagonalSumOfSquaredResiduals;
+//
+//        if (thresholdCount > 0) {
+//            if (!thresholdsKnown) {
+//                thresholdSum = calculateThresholdObservations(precision);
+//                thresholdsKnown = true;
+//            }
+//            logLikelihood += thresholdSum;
+//        }
+//
+//        if (isLeftTruncated) {
+//            if (!truncationKnown) {
+//                truncationSum = calculateTruncation(precision);
+//                truncationKnown = true;
+//            }
+//            logLikelihood -= truncationSum;
+//        }
+//
+//        return logLikelihood;
+//    }
+//
     private double calculateThresholdObservations(double precision) {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
@@ -548,6 +576,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double[] observations;
     private ObservationType[] observationTypes;
     private int[] distanceIndices;
+    private int[] diagonalIndices;
     private int[] rowIndices;
     private int[] columnIndices;
     private int[] tipIndices;

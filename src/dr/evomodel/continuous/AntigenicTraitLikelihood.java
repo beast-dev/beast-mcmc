@@ -123,6 +123,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         List<Double> observationList = new ArrayList<Double>();
         List<Integer> distanceIndexList = new ArrayList<Integer>();
+        List<Integer> pairedObservationIndexList = new ArrayList<Integer>();
         List<Integer> rowIndexList = new ArrayList<Integer>();
         List<Integer> columnIndexList = new ArrayList<Integer>();
         List<ObservationType> observationTypeList = new ArrayList<ObservationType>();
@@ -176,6 +177,9 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                             observationList.add(value);
                             observationTypeList.add(type);
                             distanceIndexList.add(u);
+                            if (isVirusSerumPair) {
+                                pairedObservationIndexList.add(u);
+                            }
                             virusObservationCounts[i]++;
                             serumObservationCounts[j]++;
 
@@ -229,7 +233,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             distanceIndices[i] = distanceIndexList.get(i);
         }
 
-        int[] rowIndices = new int[rowIndexList.size()];
+        int[] pairedObservationIndices = new int[pairedObservationIndexList.size()];
+        for (int i = 0; i < pairedObservationIndexList.size(); i++) {
+            pairedObservationIndices[i] = pairedObservationIndexList.get(i);
+        }
+
+       int[] rowIndices = new int[rowIndexList.size()];
         for (int i = 0; i < rowIndexList.size(); i++) {
             rowIndices[i] = rowIndexList.get(i);
         }
@@ -268,7 +277,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, pairedObservationIndices, rowIndices, columnIndices);
 
         // some random initial locations
         for (int i = 0; i < virusCount; i++) {
@@ -433,8 +442,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
-                AttributeRule.newStringRule(VIRUS_MAP_FILE_NAME, false, "The name of the file containing the virus to serum map"),
-                AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, false, "The name of the file containing the assay to serum map"),
+                AttributeRule.newStringRule(VIRUS_MAP_FILE_NAME, true, "The name of the file containing the virus to serum map"),
+                AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, true, "The name of the file containing the assay to serum map"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

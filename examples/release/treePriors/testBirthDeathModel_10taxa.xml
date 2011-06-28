@@ -30,13 +30,17 @@
         <taxa idref="taxa1"/>
     </coalescentTree>
 
-    <!-- A prior on the distribution node heights defined given                  -->
-    <!-- a Yule speciation process (a pure birth process).                       -->
-    <yuleModel id="yule" units="substitutions">
-        <birthRate>
-            <parameter id="yule.birthRate" value="2.0" lower="0.0" upper="100.0"/>
-        </birthRate>
-    </yuleModel>
+	<!-- A prior on the distribution node heights defined given                  -->
+	<!-- a Birth-Death speciation process (Gernhard 2008).                       -->
+	<birthDeathModel id="birthDeath" units="substitutions">
+		<birthMinusDeathRate>
+			<parameter id="birthDiffRate" value="2.0" lower="0.0" upper="1000000.0"/>
+		</birthMinusDeathRate>
+		<relativeDeathRate>
+			<parameter id="relativeDeathRate" value="0.5" lower="0.0" upper="100.0"/>
+		</relativeDeathRate>
+	</birthDeathModel>
+
 
     <treeModel id="treeModel1">
         <tree idref="tree1"/>
@@ -53,7 +57,7 @@
 
     <speciationLikelihood id="speciation">
         <model>
-            <yuleModel idref="yule"/>
+            <yuleModel idref="birthDeath"/>
         </model>
         <speciesTree>
             <treeModel idref="treeModel1"/>
@@ -73,13 +77,12 @@
                 <treeLengthStatistic idref="TL"/>
             </column>
         </log>
-        <log id="log1" logEvery="10" fileName="yulePrior10taxa.log">
+        <log id="log1" logEvery="10" fileName="birthDeath10taxa.log">
             <likelihood idref="speciation"/>
             <parameter idref="treeModel1.rootHeight"/>
             <treeLengthStatistic idref="TL"/>
         </log>
-        <logTree id="logTree1" logEvery="100" nexusFormat="true"
-                 fileName="yulePrior10taxa.trees">
+        <logTree id="logTree1" logEvery="100" nexusFormat="true" fileName="birthDeath10taxa.trees">
             <treeModel idref="treeModel1"/>
         </logTree>
         <operators>
@@ -96,11 +99,11 @@
         </property>
     </report>
 
-    <traceAnalysis fileName="yulePrior10taxa.log" burnIn="1000">
-        <!-- expectation of root height for 10 tips and lambda = 2 -->
-        <expectation name="treeModel1.rootHeight" value="0.964484127"/>
-        <!-- expectation of tree length for 10 tips and lambda = 2 -->
-        <expectation name="TL" value="4.5"/>
+    <traceAnalysis fileName="birthDeath10taxa.log" burnIn="1000">
+        <!-- expectation of root height for 10 tips and lambda = 2
+        <expectation name="treeModel1.rootHeight" value="0.964484127"/> ? 0.70105 -->
+        <!-- expectation of tree length for 10 tips and lambda = 2
+        <expectation name="TL" value="4.5"/> ? 2.99054 -->
     </traceAnalysis>
 
 </beast>

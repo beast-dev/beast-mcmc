@@ -116,12 +116,10 @@
     <!-- a Birth-Death speciation process (Gernhard 2008).                       -->
     <birthDeathModel id="birthDeath" units="substitutions">
         <birthMinusDeathRate>
-            <parameter id="birthDeath.birthParameter" value="1.0" lower="0.0"
-                       upper="1000000.0"/>
+            <parameter id="birthDeath.birthParameter" value="1.0" lower="0.0" upper="1000000.0"/>
         </birthMinusDeathRate>
         <relativeDeathRate>
-            <parameter id="birthDeath.deathParameter" value="0.0" lower="0.0"
-                       upper="1000000.0"/>
+            <parameter id="birthDeath.deathParameter" value="0.0" lower="0.0" upper="1.0"/>
         </relativeDeathRate>
         <samplingProportion>
             <parameter id="birthDeath.samplingProportion" value="1.0"/>

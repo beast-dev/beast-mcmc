@@ -86,7 +86,10 @@ public class PartitionModelPanel extends OptionsPanel {
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical", "Sample"});
 
     private JComboBox discreteTraitSiteModelCombo = new JComboBox(DiscreteSubstModelType.values());
-    private JCheckBox activateBSSVS = new JCheckBox("Activate BSSVS");
+    private JCheckBox activateBSSVS = new JCheckBox(
+//            "Activate BSSVS"
+            "Infer social network with BSSVS"
+    );
 
     // =========== micro sat ===========
     private JTextField microsatName = new JTextField();

@@ -593,9 +593,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     double pseudoObservations = sampleSizeParameter.getParameterValue(0);
 
                     if (ignorePhylogeny) {
-                        throw new XMLParseException("Non-phylogenetic trait model not yet implemented"); // TODO
+                        like = new NonPhylogeneticMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
+                                traitParameter, deltaParameter, missingIndices, cacheBranches,
+                                scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
+                                mean, pseudoObservations, reciprocalRates);
                     } else {
-
                         like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                 traitParameter, deltaParameter, missingIndices, cacheBranches,
                                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,

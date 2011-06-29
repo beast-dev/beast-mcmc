@@ -25,8 +25,7 @@ public class DnDsLogger implements Loggable {
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
-                System.err.println("BAD");
-                System.exit(-1);
+                throw new IllegalArgumentException("Only whole tree traits are currently supported in DnDsLogger");
             }
         }
     }
@@ -82,9 +81,10 @@ public class DnDsLogger implements Loggable {
         }
 
         for (int i = 0; i < NUM_TRAITS; i++) {
-            cachedValues[i] = (double[]) traits[i].getTrait(tree, tree.getRoot());
             if (useSmoothing) {
                 cachedValues[i] = EmpiricalBayesPoissonSmoother.smooth((double[]) traits[i].getTrait(tree, tree.getRoot()));
+            } else {
+                cachedValues[i] = (double[]) traits[i].getTrait(tree, tree.getRoot());
             }
         }
     }

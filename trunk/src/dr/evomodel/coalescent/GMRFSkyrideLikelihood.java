@@ -87,6 +87,10 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		super(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD);
 	}
 
+    public GMRFSkyrideLikelihood(String name) {
+		super(name);
+	}
+
 	public GMRFSkyrideLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter, Parameter precParameter,
 	                             Parameter lambda, Parameter beta, MatrixParameter dMatrix,
 	                             boolean timeAwareSmoothing, boolean rescaleByRootHeight) {
@@ -393,7 +397,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 	 * given a demographic model.
      * @return coalescent part of density
 	 */
-	private double calculateLogCoalescentLikelihood() {
+	protected double calculateLogCoalescentLikelihood() {
 
 		if (!intervalsKnown) {
 			// intervalsKnown -> false when handleModelChanged event occurs in super.
@@ -414,7 +418,7 @@ public class GMRFSkyrideLikelihood extends OldAbstractCoalescentLikelihood {
 		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
 	}
 
-    private double calculateLogFieldLikelihood() {
+    protected double calculateLogFieldLikelihood() {
 
         if (!intervalsKnown) {
             // intervalsKnown -> false when handleModelChanged event occurs in super.

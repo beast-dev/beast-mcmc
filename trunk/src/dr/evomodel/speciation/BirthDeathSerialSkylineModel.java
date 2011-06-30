@@ -25,21 +25,25 @@
 
 package dr.evomodel.speciation;
 
-import dr.evolution.tree.NodeRef;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
-import java.util.*;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Beginning of tree prior for birth-death + serial sampling + extant sample proportion. More Tanja magic...
- *
+ * <p/>
  * log:
  * 25 Mar 2011, Denise: added int i (index) for the Variables that change over time such as the methods p0(..), q(..); fixed some formulas (old versions commented out)
- *                      unclear marked with todo
- *
+ * unclear marked with todo
  *
  * @author Alexei Drummond
  */
@@ -60,13 +64,23 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     // extant sampling proportion
     Variable<Double> p;
 
+    Variable<Double> origin;
+
     //boolean death rate is relative?
     boolean relativeDeath = false;
 
-    // boolean stating whether sampled individuals remain infectious, or become non-infectious
-    boolean sampledIndividualsRemainInfectious = false;
+    // the number of intervals;
+    int size = 1;
 
-    double finalTimeInterval = 0.0;
+    double t_root;
+    double x0;
+    protected double[] p0_iMinus1;
+    protected double[] Ai;
+    protected double[] Bi;
+
+    protected boolean birthChanges = true;
+    protected boolean deathChanges = true;
+    protected boolean samplingChanges = true;
 
     public BirthDeathSerialSkylineModel(
             Variable<Double> times,
@@ -74,12 +88,12 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
             Variable<Double> mu,
             Variable<Double> psi,
             Variable<Double> p,
+            Variable<Double> origin,
             boolean relativeDeath,
             boolean sampledIndividualsRemainInfectious,
-            double finalTimeInterval,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", times, lambda, mu, psi, p, relativeDeath, sampledIndividualsRemainInfectious, finalTimeInterval, units);
+        this("birthDeathSerialSamplingModel", times, lambda, mu, psi, p, origin, relativeDeath, sampledIndividualsRemainInfectious, units);
     }
 
     public BirthDeathSerialSkylineModel(
@@ -89,14 +103,14 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
             Variable<Double> mu,
             Variable<Double> psi,
             Variable<Double> p,
+            Variable<Double> origin,
             boolean relativeDeath,
             boolean sampledIndividualsRemainInfectious,
-            double finalTimeInterval,
             Type units) {
 
         super(modelName, units);
 
-        int size = times.getSize();
+        this.size = times.getSize();
 
         if (lambda.getSize() != 1 && lambda.getSize() != size)
             throw new RuntimeException("Length of Lambda parameter should be one or equal to the size of time parameter (size = " + size + ")");
@@ -120,60 +134,65 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         addVariable(p);
         p.addBounds(new Parameter.DefaultBounds(1.0, 0.0, p.getSize()));
 
+        this.origin = origin;
+        addVariable(origin);
+        p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, origin.getSize()));
+
         this.psi = psi;
         addVariable(psi);
         psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, psi.getSize()));
 
+
         this.relativeDeath = relativeDeath;
-
-        this.finalTimeInterval = finalTimeInterval;
-
-        this.sampledIndividualsRemainInfectious = sampledIndividualsRemainInfectious;
-
     }
 
-    public static double p0(double b, double d, double p, double psi, double t) {
-        double c1 = c1(b, d, psi);
-        double c2 = c2(b, d, p, psi);
 
-        double expc1trc2 = Math.exp(-c1 * t) * (1.0 - c2);
+    public int nCurrentLineages(double time, Tree tree) {
 
-//        return (b + d + psi + c1 * ((expc1trc2 - (1.0 + c2)) / (expc1trc2 + (1.0 + c2)))) / (2.0 * b);
-
-        return (b + d + psi - c1 * ((expc1trc2 - (1.0 + c2)) / (expc1trc2 + (1.0 + c2)))) / (2.0 * b);
+        int x = 0;
+        int y = 0;
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            if (tree.getNodeHeight(tree.getInternalNode(i)) > time) x += 1;
+        }
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            if (tree.getNodeHeight(tree.getExternalNode(i)) > time) y += 1;
+        }
+        return x - y + 1;
     }
 
-    public static double q(double b, double d, double p, double psi, double t) {
-        double c1 = c1(b, d, psi);
-        double c2 = c2(b, d, p, psi);
-        double res = 2 * (1 - c2 * c2) + Math.exp(-c1 * t) * (1 - c2) * (1 - c2) + Math.exp(c1 * t) * (1 + c2) * (1 + c2);     // todo: why do you only multiply with t here? (rather than (t-t_i)?
-        return res;
+
+    public double Ai(double b, double g, double psi) {
+
+        //System.out.println("Ai: b=" + b + "g=" + g + "psi=" + psi);
+
+        return Math.sqrt((b - g - psi) * (b - g - psi) + 4.0 * b * psi);
     }
 
-    public double p0(int i, double t) {
-        return p0(birth(i), death(i), p(), psi(), t);
+    public double Bi(double b, double g, double psi, double A, double p0) {
+
+        return (-((1.0 - 2.0 * p0) * b + g + psi) / A);
     }
 
-    public double q(int i, double t) {
-        return q(birth(i), death(i), p(), psi(), t);
+    public double p0(int index, double t, double ti) {
+
+        return p0(birth(birthChanges ? index : 0), death(deathChanges ? index : 0), psi(samplingChanges ? index : 0), Ai[index], Bi[index], t, ti);
     }
 
-    private static double c1(double b, double d, double psi) {
-        return Math.abs(Math.sqrt(Math.pow(b - d - psi, 2.0) + 4.0 * b * psi));
+    public double p0(double b, double g, double psi, double A, double B, double t, double ti) {
+
+        return ((b + g + psi - A * ((Math.exp(A * (t - ti)) * (1.0 - B) - (1.0 + B))) / (Math.exp(A * (t - ti)) * (1.0 - B) + (1.0 + B))) / (2.0 * b));
     }
 
-    private static double c2(double b, double d, double p, double psi) {
-//        return -(b - d - 2.0 * b * p - psi) / c1(b, d, psi);
+    public double g(int index, double t, double ti) {
 
-        return -(b - 2.0 * b * p + d + psi) / c1(b, d, psi);
+        double oneMinusBiSq = (1.0 - Bi[index]) * (1.0 - Bi[index]);
+        double onePlusBiSq = (1.0 + Bi[index]) * (1.0 + Bi[index]);
+
+        return 4.0 / (2.0 * (1.0 - Bi[index] * Bi[index]) + Math.exp(Ai[index] * (t - ti)) * oneMinusBiSq + Math.exp(-Ai[index] * (t - ti)) * onePlusBiSq);
     }
 
-    private double c1(int i) {
-        return c1(birth(i), death(i), psi());
-    }
-
-    private double c2(int i) {
-        return c2(birth(i), death(i), (i>1? p0(i-1, times.getValue(i)): 1), psi());
+    public double t(int i) {
+        return times.getValue(i);
     }
 
     public double birth(int i) {
@@ -184,14 +203,12 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         return relativeDeath ? mu.getValue(i) * birth(i) : mu.getValue(i);
     }
 
-    public double psi() {
-        return psi.getValue(0);
+    public double psi(int i) {
+        return psi.getValue(i);
     }
 
     public double p() {
-
-        if (finalTimeInterval == 0.0) return p.getValue(0);
-        return 0;
+        return p.getValue(0);
     }
 
     /**
@@ -211,8 +228,6 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     public double mu(double t) {
 
         return mu.getValue(index(t));
-
-
     }
 
     public int index(double t) {
@@ -223,17 +238,35 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
         if (epoch < 0) {
             epoch = -epoch - 1;
-
         }
-        return epoch;
-
-//        int index = 0;
-//        while (time > times.getValue(index)) {
-//            index += 1;
-//        }
-//        return mu.getValue(index);
+        return Math.max(epoch - 1, 0);
     }
 
+    /*    calculate and store Ai, Bi and p0_iMinus1        */
+    public void preCalculation(Tree tree) {
+
+        t_root = tree.getNodeHeight(tree.getRoot());
+        x0 = t_root + origin.getValue(0);
+
+        Ai = new double[size];
+        Bi = new double[size];
+        p0_iMinus1 = new double[size];
+
+        for (int i = 0; i < size; i++) {
+            Ai[i] = Ai(birth(birthChanges ? i : 0), death(deathChanges ? i : 0), psi(samplingChanges ? i : 0));
+
+            //System.out.println("Ai[" + i + "]=" + Ai[i]);
+        }
+
+        Bi[0] = Bi(birth(0), death(0), psi(0), Ai[0], 1);
+        //System.out.println("Bi[0]=" + Bi[0]);
+        for (int i = 1; i < size; i++) {
+            p0_iMinus1[i - 1] = p0(birth(birthChanges ? (i - 1) : 0), death(deathChanges ? (i - 1) : 0), psi(samplingChanges ? (i - 1) : 0), Ai[i - 1], Bi[i - 1], t(i), t(i - 1));
+            Bi[i] = Bi(birth(birthChanges ? i : 0), death(deathChanges ? i : 0), psi(samplingChanges ? i : 0), Ai[i], p0_iMinus1[i - 1]);
+
+            //System.out.println("Bi[" + i + "]=" + Bi[i]);
+        }
+    }
 
     /**
      * Generic likelihood calculation
@@ -243,62 +276,79 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
 
-        //System.out.println("calculating tree log likelihood");
-        double time = finalTimeInterval;
+        // number of lineages at each time ti
+        int[] n = new int[size];
+        int nTips = tree.getExternalNodeCount();
+        preCalculation(tree);
 
-        // extant leaves
-        int n = 0;
-        // extinct leaves
-        int m = 0;
+        int index = size - 1;      // x0 must be in last interval
 
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            NodeRef node = tree.getExternalNode(i);
-            if (tree.getNodeHeight(node) + time == 0.0) {
-                n += 1;
-            } else {
-                m += 1;
-            }
-        }
+        // the first factor for origin
+//        TestFactor[0] =  Math.log(g(index, x0, times[index]));
 
-        double x1 = tree.getNodeHeight(tree.getRoot()) + time;
-        double c1 = c1(0);
-        double c2 = c2(0);
-        double b = birth(0);
-        double p = p();
+        double t = t(index);
+        double g = g(index, x0, t);
 
-        int index;
+        double logP = Math.log(g);
 
-        double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
-        double logL = Math.log(1 / bottom);
+        //System.out.println("origin.logP=" + logP + " t=" + t + " x0=" + x0);
 
-        if (n > 0) {
-            logL += n * Math.log(4 * p);
-        }
+
+        //System.out.println("logP=" + logP + " g=" + g + " t=" + t);
+
+        // first product term in f[T]
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            double x = tree.getNodeHeight(tree.getInternalNode(i)) + time;
 
-            index = index(x); 
-            logL += Math.log(b / q(index, x));
+            double x = tree.getNodeHeight(tree.getInternalNode(i));
+            index = index(x);
+
+            //System.out.println("index of " + x + " is " + index);
+
+//            TestFactor[1] += Math.log(birthRate.getArrayValue(birthChanges? index:0) * g(index, x, times[index]));
+
+            double contrib = Math.log(birth(birthChanges ? index : 0) * g(index, x, t(index)));
+
+            logP += contrib;
+
+            //System.out.println("internalNode.logP=" + contrib);
+
+            t = t(index);
+            g = g(index, x, t);
+
+
+            //System.out.println("logP+=" + (Math.log(birth(birthChanges ? index : 0) * g)) + " t= " + t + " g=" + g);
         }
 
+        // middle product term in f[T]
+        for (int i = 0; i < nTips; i++) {
 
-        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            double y = tree.getNodeHeight(tree.getExternalNode(i)) + time;
+            double y = tree.getNodeHeight(tree.getExternalNode(i));
+            index = index(y);
 
-            if (y > 0.0) {
+            double contrib = Math.log(psi(samplingChanges ? index : 0)) - Math.log(g(index, y, t(index)));
+            ;
+            logP += contrib;
 
-                index = index(y);
+            //System.out.println("externalNode.logP=" + contrib);
 
-                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
-                    logL += Math.log(psi() * q(index, y) * p0(index, y));
-                } else {
+        }
 
-                    logL += Math.log(psi() * q(index, y));
-                }
+        // last product term in f[T], factorizing from 1 to m
+        for (int j = 0; j < size - 1; j++) {
+
+            double contrib = 0;
+
+            double time = t(j + 1);
+            n[j] = nCurrentLineages(time, tree);
+            if (n[j] > 0) {
+                contrib += n[j] * Math.log(g(j, time, t(j)));
+                //System.out.println("n[" + j + "]" + n[j] + " time=" + time + " t(" + j + ")=" + t(j));
             }
-        }
 
-        return logL;
+            logP += contrib;
+            //System.out.println("last term=" + contrib);
+        }
+        return logP;
     }
 
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
@@ -308,13 +358,18 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
     public List<Double> getEndTimes() {
         List<Double> endTimes = new ArrayList<Double>();
+//        endTimes.add(0.0);
+//        for (int i = 1; i < times.getSize(); i++) {
+//            endTimes.add(x0 - times.getValue(times.getSize()-i));
+//        }
+
         for (int i = 0; i < times.getSize(); i++) {
             endTimes.add(times.getValue(i));
         }
         return endTimes;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, Importer.ImportException {
 
         // test framework
 
@@ -322,25 +377,29 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
         Variable<Double> mu = new Variable.D(1, 10);
         for (int i = 0; i < mu.getSize(); i++) {
-            times.setValue(i, i+.5);
+            times.setValue(i, (i + 1) * 2.0);
             mu.setValue(i, i + 1.0);
         }
-
 
         Variable<Double> lambda = new Variable.D(1, 10);
         Variable<Double> psi = new Variable.D(0.5, 1);
         Variable<Double> p = new Variable.D(0.5, 1);
+        Variable<Double> origin = new Variable.D(0.5, 1);
         boolean relativeDeath = false;
         boolean sampledIndividualsRemainInfectious = false;
-        double finalTime = 50;
 
         BirthDeathSerialSkylineModel model =
-                new BirthDeathSerialSkylineModel(times, lambda, mu, psi, p, relativeDeath,
-                        sampledIndividualsRemainInfectious, finalTime, Type.SUBSTITUTIONS);
+                new BirthDeathSerialSkylineModel(times, lambda, mu, psi, p, origin, relativeDeath,
+                        sampledIndividualsRemainInfectious, Type.SUBSTITUTIONS);
+
+        NewickImporter importer = new NewickImporter("((A:6,B:5):4,(C:3,D:2):1);");
+        Tree tree = importer.importNextTree();
+
+        model.calculateTreeLogLikelihood(tree);
 
         for (int i = 0; i < times.getSize(); i += 1) {
             System.out.println("mu at time " + i + " is " + model.mu(i));
-            System.out.println("p0 at time " + i + " is " + model.p0(i, i));
+            System.out.println("p0 at time " + i + " is " + model.p0(0, i, i));
         }
 
     }

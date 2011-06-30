@@ -55,12 +55,10 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     //boolean death rate is relative?
     boolean relativeDeath = false;
 
-    boolean logTransformed = false; // log lambda, psi
-
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
 
-//    the additional parameter 0 <= r <= 1 has to be estimated.
+    //    the additional parameter 0 <= r <= 1 has to be estimated.
     //    for r=1, this is sampledRemainInfectiousProb=0
     //    for r=0, this is sampledRemainInfectiousProb=1
     Variable<Double> r;
@@ -101,7 +99,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         super(modelName, units);
 
-        this.logTransformed = logTransformed;
         this.relativeDeath = relativeDeath;
 
         this.lambda = lambda;
@@ -153,7 +150,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public static double q(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
-        double res = 2 * (1 - c2 * c2) + Math.exp(-c1 * t) * (1 - c2) * (1 - c2) + Math.exp(c1 * t) * (1 + c2) * (1 + c2);
+        double res = 2.0 * (1.0 - c2 * c2) + Math.exp(-c1 * t) * (1.0 - c2) * (1.0 - c2) + Math.exp(c1 * t) * (1.0 + c2) * (1.0 + c2);
         return res;
     }
 
@@ -185,7 +182,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public double birth() {
         if (mask != null) return mask.birth();
 
-        if (logTransformed) return Math.exp(lambda.getValue(0));
         return lambda.getValue(0);
     }
 
@@ -197,20 +193,21 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public double psi() {
         if (mask != null) return mask.psi();
 
-        if (logTransformed) return Math.exp(psi.getValue(0));
         return psi.getValue(0);
     }
 
+    /**
+     * @return the proportion of population sampled at final sample, or zero if there is no final sample
+     */
     public double p() {
 
         if (mask != null) return mask.p.getValue(0);
-        return p.getValue(0);
+        return hasFinalSample ? p.getValue(0) : 0;
     }
 
     public double r() {
         if (mask != null) return mask.r();
 
-        if (logTransformed) return Math.exp(r.getValue(0));
         return r.getValue(0);
     }
 
@@ -267,7 +264,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         double logL;
         if (isSamplingOrigin()) {
-            logL = Math.log(1 / q(x0()));
+            logL = Math.log(1.0 / q(x0()));
+            //System.out.println("originLogL=" + logL + " x0");
         } else {
             throw new RuntimeException(
                     "The origin must be sampled, as integrating it out is not implemented!");
@@ -276,20 +274,28 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             //logL = Math.log(1 / bottom);
         }
         if (hasFinalSample) {
-            logL += n * Math.log(4 * p);
+            logL += n * Math.log(4.0 * p);
         }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             double x = tree.getNodeHeight(tree.getInternalNode(i));
             logL += Math.log(b / q(x));
+
+            //System.out.println("internalNodeLogL=" + Math.log(b / q(x)));
+
         }
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             double y = tree.getNodeHeight(tree.getExternalNode(i));
 
             if (y > 0.0) {
-                logL += Math.log(psi() * (r() + (1 - r()) * p0(y)) * q(y));
+                logL += Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y));
+
+                //System.out.println("externalNodeLogL=" + Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y)));
+
             } else if (!hasFinalSample) {
                 //handle condition ending on final tip in sampling-through-time-only situation
                 logL += Math.log(psi() * q(y));
+                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
+
             }
         }
 

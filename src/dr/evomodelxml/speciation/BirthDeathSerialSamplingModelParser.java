@@ -1,7 +1,7 @@
 /*
- * BirthDeathModelParser.java
+ * BirthDeathSerialSamplingModelParser.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -52,6 +52,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String TREE_TYPE = "type";
     public static final String BDSS = "bdss";
     public static final String LOG_TRANSFORMED = "logTransformed";
+    public static final String HAS_FINAL_SAMPLE = "hasFinalSample";
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -85,29 +86,26 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 //        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0)); // donot use it, otherwise log is changed improperly
 
         final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
-                        (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
+                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
         boolean logTransformed = xo.getAttribute(LOG_TRANSFORMED, false);
-//        if (logTransformed) {
-//            lambda.setParameterValueQuietly(0, Math.log(lambda.getParameterValue(0)));
-//            mu.setParameterValueQuietly(0, Math.log(mu.getParameterValue(0)));
-//            psi.setParameterValueQuietly(0, Math.log(psi.getParameterValue(0)));
-//        }
+        boolean hasFinalSample = xo.getAttribute(HAS_FINAL_SAMPLE, false);
 
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                r, finalTimeInterval, origin, units, logTransformed);
+                r, hasFinalSample, origin, units, logTransformed);
     }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
+
     public static String getCitationPsiOrg() {
 //        return "Stadler, T; Sampling-through-time in birth-death trees; JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404";
         return "Stadler T (2010) J Theor Biol 267, 396-404 [Yule Process with Serial Samples].";
     }
-    
+
     public static String getCitationRT() {
         return "Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.";
     }

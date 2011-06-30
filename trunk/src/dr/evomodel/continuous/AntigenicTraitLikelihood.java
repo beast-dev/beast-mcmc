@@ -110,11 +110,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             }
 
-            // the number of serum locations is the number of aliases
-            serumCount = aliasNames.size();
-            serumNames = new String[aliasNames.size()];
-            aliasNames.toArray(serumNames);
-
         } else {
             for (int i = 0; i < virusToSerumIndices.length; i++) {
                 virusToSerumIndices[i] = -1;
@@ -123,7 +118,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         List<Double> observationList = new ArrayList<Double>();
         List<Integer> distanceIndexList = new ArrayList<Integer>();
-        List<Integer> pairedObservationIndexList = new ArrayList<Integer>();
         List<Integer> rowIndexList = new ArrayList<Integer>();
         List<Integer> columnIndexList = new ArrayList<Integer>();
         List<ObservationType> observationTypeList = new ArrayList<ObservationType>();
@@ -173,13 +167,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                             value = convertString(dataRow[k]);
                             type = ObservationType.POINT;
                         }
+
                         if (!Double.isNaN(value)) {
                             observationList.add(value);
                             observationTypeList.add(type);
                             distanceIndexList.add(u);
-                            if (isVirusSerumPair) {
-                                pairedObservationIndexList.add(u);
-                            }
                             virusObservationCounts[i]++;
                             serumObservationCounts[j]++;
 
@@ -193,12 +185,13 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                             if (value > maxAssayValue) {
                                 maxAssayValue = value;
                             }
+
+                            rowIndexList.add(i);
+                            columnIndexList.add(j);
                         }
 
                         if (first) {
                             // if this is the first time an observation for this virus/serum pair is found:
-                            rowIndexList.add(i);
-                            columnIndexList.add(j);
                             first = false;
                             u++;
                         }
@@ -221,7 +214,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             }
         }
 
-
         // Convert into arrays
         double[] observations = new double[observationList.size()];
         for (int i = 0; i < observationList.size(); i++) {
@@ -233,12 +225,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             distanceIndices[i] = distanceIndexList.get(i);
         }
 
-        int[] pairedObservationIndices = new int[pairedObservationIndexList.size()];
-        for (int i = 0; i < pairedObservationIndexList.size(); i++) {
-            pairedObservationIndices[i] = pairedObservationIndexList.get(i);
-        }
-
-       int[] rowIndices = new int[rowIndexList.size()];
+        int[] rowIndices = new int[rowIndexList.size()];
         for (int i = 0; i < rowIndexList.size(); i++) {
             rowIndices[i] = rowIndexList.get(i);
         }
@@ -277,14 +264,16 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, pairedObservationIndices, rowIndices, columnIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
 
         // some random initial locations
         for (int i = 0; i < virusCount; i++) {
             virusLocationsParameter.getParameter(i).setId(virusNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+//                double r = MathUtils.nextGaussian();
+//                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+
+                virusLocationsParameter.getParameter(i).setParameterValue(j, i * 1000);
             }
         }
 
@@ -297,19 +286,9 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                     serumLocationsParameter.getParameter(i).setParameterValue(j, r);
                 }
             }
-
-//            serumLocationsParameter.getParameter(0).setParameterValue(0, -20);
-//            serumLocationsParameter.getParameter(0).setParameterValue(1, -20);
-//
-//            serumLocationsParameter.getParameter(1).setParameterValue(0, 20);
-//            serumLocationsParameter.getParameter(1).setParameterValue(1, -20);
-//
-//            serumLocationsParameter.getParameter(2).setParameterValue(0, 20);
-//            serumLocationsParameter.getParameter(2).setParameterValue(1, 20);
-//
-//            serumLocationsParameter.getParameter(3).setParameterValue(0, -20);
-//            serumLocationsParameter.getParameter(3).setParameterValue(1, 20);
         }
+
+
     }
 
     private double convertString(String value) {

@@ -47,6 +47,7 @@ public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser 
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
     public static final String SAMPLE_BECOMES_NON_INFECTIOUS = "sampleBecomesNonInfectiousProb";
+    public static final String TIMES_START_FROM_ORIGIN = "timesStartFromOrigin";
     public static final String R = "r";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
@@ -75,6 +76,8 @@ public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser 
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
 
+        final boolean timesStartFromOrigin = xo.getAttribute(TIMES_START_FROM_ORIGIN, false);
+
         Parameter origin = null;
         if (xo.hasChildNamed(ORIGIN)) {
             origin = (Parameter) xo.getElementFirstChild(ORIGIN);
@@ -87,7 +90,7 @@ public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser 
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSkylineModel(modelName, times, lambda, mu, psi, p, origin, relativeDeath,
-                false, units);
+                false, timesStartFromOrigin, units);
     }
 
     //************************************************************************
@@ -117,6 +120,8 @@ public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
+            new ElementRule(TIMES_START_FROM_ORIGIN, Boolean.class, "if true, then the time vector represents the epoch widths in times starting from the origin and moving tipwards. " +
+                    "Note that the birth/death/sampling rate vectors still specify the parameters starting from tips and moving to root.", false),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(TIMES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

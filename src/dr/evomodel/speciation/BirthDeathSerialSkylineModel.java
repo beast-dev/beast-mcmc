@@ -33,9 +33,7 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Set;
 
 /**
@@ -82,6 +80,9 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     protected boolean deathChanges = true;
     protected boolean samplingChanges = true;
 
+    protected boolean timesStartFromOrigin = true;
+    protected double[] timesFromTips;
+
     public BirthDeathSerialSkylineModel(
             Variable<Double> times,
             Variable<Double> lambda,
@@ -91,9 +92,11 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
             Variable<Double> origin,
             boolean relativeDeath,
             boolean sampledIndividualsRemainInfectious,
+            boolean timesStartFromOrigin,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", times, lambda, mu, psi, p, origin, relativeDeath, sampledIndividualsRemainInfectious, units);
+        this("birthDeathSerialSamplingModel", times, lambda, mu, psi, p, origin, relativeDeath,
+                sampledIndividualsRemainInfectious, timesStartFromOrigin, units);
     }
 
     public BirthDeathSerialSkylineModel(
@@ -106,6 +109,7 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
             Variable<Double> origin,
             boolean relativeDeath,
             boolean sampledIndividualsRemainInfectious,
+            boolean timesStartFromOrigin,
             Type units) {
 
         super(modelName, units);
@@ -117,6 +121,8 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
         if (mu.getSize() != 1 && mu.getSize() != size)
             throw new RuntimeException("Length of mu parameter should be one or equal to the size of time parameter (size = " + size + ")");
+
+        this.timesStartFromOrigin = timesStartFromOrigin;
 
         this.times = times;
         addVariable(times);
@@ -146,24 +152,24 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         this.relativeDeath = relativeDeath;
     }
 
+    /**
+     * @param time the time
+     * @param tree the tree
+     * @return the number of lineages that exist at the given time in the given tree.
+     */
+    public int lineageCountAtTime(double time, Tree tree) {
 
-    public int nCurrentLineages(double time, Tree tree) {
-
-        int x = 0;
-        int y = 0;
+        int count = 1;
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            if (tree.getNodeHeight(tree.getInternalNode(i)) > time) x += 1;
+            if (tree.getNodeHeight(tree.getInternalNode(i)) > time) count += 1;
         }
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            if (tree.getNodeHeight(tree.getExternalNode(i)) > time) y += 1;
+            if (tree.getNodeHeight(tree.getExternalNode(i)) > time) count -= 1;
         }
-        return x - y + 1;
+        return count;
     }
 
-
     public double Ai(double b, double g, double psi) {
-
-        //System.out.println("Ai: b=" + b + "g=" + g + "psi=" + psi);
 
         return Math.sqrt((b - g - psi) * (b - g - psi) + 4.0 * b * psi);
     }
@@ -188,11 +194,18 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         double oneMinusBiSq = (1.0 - Bi[index]) * (1.0 - Bi[index]);
         double onePlusBiSq = (1.0 + Bi[index]) * (1.0 + Bi[index]);
 
-        return 4.0 / (2.0 * (1.0 - Bi[index] * Bi[index]) + Math.exp(Ai[index] * (t - ti)) * oneMinusBiSq + Math.exp(-Ai[index] * (t - ti)) * onePlusBiSq);
+        return 4.0 / (2.0 * (1.0 - Bi[index] * Bi[index]) + Math.exp(Ai[index] * (t - ti)) *
+                oneMinusBiSq + Math.exp(-Ai[index] * (t - ti)) * onePlusBiSq);
     }
 
+    /**
+     * Returns the time at which epoch i begins. If
+     *
+     * @param i index of the epoch
+     * @return the time at which this epoch begins
+     */
     public double t(int i) {
-        return times.getValue(i);
+        return timesFromTips[i];
     }
 
     public double birth(int i) {
@@ -232,9 +245,7 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
     public int index(double t) {
 
-        List<Double> endTime = getEndTimes();
-
-        int epoch = Collections.binarySearch(endTime, t);
+        int epoch = Arrays.binarySearch(timesFromTips, t);
 
         if (epoch < 0) {
             epoch = -epoch - 1;
@@ -247,6 +258,22 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
         t_root = tree.getNodeHeight(tree.getRoot());
         x0 = t_root + origin.getValue(0);
+
+        // set up timesFromTips array
+        if (timesFromTips == null) {
+            timesFromTips = new double[times.getSize()];
+        }
+        if (timesStartFromOrigin) {
+            timesFromTips[0] = 0;
+            for (int i = 1; i < timesFromTips.length; i++) {
+                timesFromTips[i] = Math.max(0, x0 - times.getValue(timesFromTips.length - i));
+            }
+
+        } else {
+            for (int i = 0; i < timesFromTips.length; i++) {
+                timesFromTips[i] = times.getValue(i);
+            }
+        }
 
         Ai = new double[size];
         Bi = new double[size];
@@ -283,28 +310,16 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
 
         int index = size - 1;      // x0 must be in last interval
 
-        // the first factor for origin
-//        TestFactor[0] =  Math.log(g(index, x0, times[index]));
-
         double t = t(index);
         double g = g(index, x0, t);
 
         double logP = Math.log(g);
-
-        //System.out.println("origin.logP=" + logP + " t=" + t + " x0=" + x0);
-
-
-        //System.out.println("logP=" + logP + " g=" + g + " t=" + t);
 
         // first product term in f[T]
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
 
             double x = tree.getNodeHeight(tree.getInternalNode(i));
             index = index(x);
-
-            //System.out.println("index of " + x + " is " + index);
-
-//            TestFactor[1] += Math.log(birthRate.getArrayValue(birthChanges? index:0) * g(index, x, times[index]));
 
             double contrib = Math.log(birth(birthChanges ? index : 0) * g(index, x, t(index)));
 
@@ -339,7 +354,7 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
             double contrib = 0;
 
             double time = t(j + 1);
-            n[j] = nCurrentLineages(time, tree);
+            n[j] = lineageCountAtTime(time, tree);
             if (n[j] > 0) {
                 contrib += n[j] * Math.log(g(j, time, t(j)));
                 //System.out.println("n[" + j + "]" + n[j] + " time=" + time + " t(" + j + ")=" + t(j));
@@ -354,19 +369,6 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
     public double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude) {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
-    }
-
-    public List<Double> getEndTimes() {
-        List<Double> endTimes = new ArrayList<Double>();
-//        endTimes.add(0.0);
-//        for (int i = 1; i < times.getSize(); i++) {
-//            endTimes.add(x0 - times.getValue(times.getSize()-i));
-//        }
-
-        for (int i = 0; i < times.getSize(); i++) {
-            endTimes.add(times.getValue(i));
-        }
-        return endTimes;
     }
 
     public static void main(String[] args) throws IOException, Importer.ImportException {
@@ -387,10 +389,11 @@ public class BirthDeathSerialSkylineModel extends SpeciationModel {
         Variable<Double> origin = new Variable.D(0.5, 1);
         boolean relativeDeath = false;
         boolean sampledIndividualsRemainInfectious = false;
+        boolean timesStartFromOrigin = false;
 
         BirthDeathSerialSkylineModel model =
                 new BirthDeathSerialSkylineModel(times, lambda, mu, psi, p, origin, relativeDeath,
-                        sampledIndividualsRemainInfectious, Type.SUBSTITUTIONS);
+                        sampledIndividualsRemainInfectious, timesStartFromOrigin, Type.SUBSTITUTIONS);
 
         NewickImporter importer = new NewickImporter("((A:6,B:5):4,(C:3,D:2):1);");
         Tree tree = importer.importNextTree();

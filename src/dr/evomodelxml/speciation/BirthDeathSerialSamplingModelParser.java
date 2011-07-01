@@ -51,7 +51,6 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
     public static final String BDSS = "bdss";
-    public static final String LOG_TRANSFORMED = "logTransformed";
     public static final String HAS_FINAL_SAMPLE = "hasFinalSample";
 
     public String getParserName() {
@@ -88,13 +87,12 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
                 (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
-        boolean logTransformed = xo.getAttribute(LOG_TRANSFORMED, false);
         boolean hasFinalSample = xo.getAttribute(HAS_FINAL_SAMPLE, false);
 
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                r, hasFinalSample, origin, units, logTransformed);
+                r, hasFinalSample, origin, units);
     }
 
     //************************************************************************
@@ -124,8 +122,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-//            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
-            AttributeRule.newBooleanRule(LOG_TRANSFORMED, true),
+            AttributeRule.newBooleanRule(HAS_FINAL_SAMPLE, true),
             new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

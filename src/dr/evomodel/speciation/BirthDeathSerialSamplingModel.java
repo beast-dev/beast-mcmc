@@ -81,7 +81,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> origin,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, hasFinalSample, origin, units, false);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, hasFinalSample, origin, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -94,8 +94,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> r,
             boolean hasFinalSample,
             Variable<Double> origin,
-            Type units,
-            boolean logTransformed) {
+            Type units) {
 
         super(modelName, units);
 
@@ -103,7 +102,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         this.lambda = lambda;
         addVariable(lambda);
-        lambda.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
+        lambda.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.mu = mu;
         addVariable(mu);
@@ -111,7 +110,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         this.psi = psi;
         addVariable(psi);
-        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, logTransformed ? Double.NEGATIVE_INFINITY : 0.0, 1));
+        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.p = p;
         addVariable(p);

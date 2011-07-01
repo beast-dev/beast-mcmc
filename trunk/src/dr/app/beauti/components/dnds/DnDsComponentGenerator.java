@@ -212,8 +212,8 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		writer.writeComment("Robust counting for: " + model.getName());
 
 		writer.writeOpenTag("report");
-		writer.write("<dNdSPerSiteAnalysis fileName=" + "'" + model.getName()
-				+ ".log'/>");
+		writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
+				+ ".log\"/>");
 		writer.writeCloseTag("report");
 
 	}// END: writeDNdSReport()

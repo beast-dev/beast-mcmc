@@ -84,9 +84,9 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
 
     }
 
-    public void testBirthDeathLikelihood() {
-        likelihoodTester(tree, birthRate, deathRate, null, -4.633233508436623);
-    }
+//    public void testBirthDeathLikelihood() {
+//        likelihoodTester(tree, birthRate, deathRate, null, -4.633233508436623);
+//    }
 
     public void testBirthDeathLikelihoodOrigin() {
         System.out.println("RootHeight = " + tree.getRootHeight());

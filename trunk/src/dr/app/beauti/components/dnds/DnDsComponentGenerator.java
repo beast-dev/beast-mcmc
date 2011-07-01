@@ -2,6 +2,7 @@ package dr.app.beauti.components.dnds;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.util.Attribute;
 
@@ -18,8 +19,13 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 	public boolean usesInsertionPoint(InsertionPoint point) {
 
-		// DnDsComponentOptions component = (DnDsComponentOptions) options
-		// .getComponentOptions(DnDsComponentOptions.class);
+		 DnDsComponentOptions component = (DnDsComponentOptions)
+                 options.getComponentOptions(DnDsComponentOptions.class);
+
+        if (component.getPartitionList().size() == 0) {
+            // Empty, so do nothing
+            return false;
+        }
 
 		switch (point) {
 		case IN_OPERATORS:
@@ -65,19 +71,29 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 	private void writeCodonPartitionedRobustCounting(XMLWriter writer,
 			DnDsComponentOptions component) {
 
-		// Just sth to see if it works at all
-		writer.writeOpenTag("codonPartitionedRobustCounting",
-				new Attribute[] {
-						new Attribute.Default<String>("id", "robustCounting1"),
-						new Attribute.Default<String>("labeling", "S"),
-						new Attribute.Default<String>("useUniformization",
-								"true"),
-						new Attribute.Default<String>("unconditionedPerBranch",
-								"true") });
-
-		writer.writeIDref("treeModel", "");
-		writer.writeCloseTag("codonPartitionedRobustCounting");
-
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            writeCodonPartitionedRobustCounting(writer, model);
+        }
 	}// END: writeCodonPartitionedRobustCounting()
+
+    // Called for each model that requires robust counting (can be more than one)
+    private void writeCodonPartitionedRobustCounting(XMLWriter writer,
+                                                     PartitionSubstitutionModel model) {
+
+        System.err.println("DEBUG: Writing RB for " + model.getName());
+        writer.writeComment("Robust counting for: " + model.getName());
+//		// Just sth to see if it works at all
+//		writer.writeOpenTag("codonPartitionedRobustCounting",
+//				new Attribute[] {
+//						new Attribute.Default<String>("id", "robustCounting1"),
+//						new Attribute.Default<String>("labeling", "S"),
+//						new Attribute.Default<String>("useUniformization",
+//								"true"),
+//						new Attribute.Default<String>("unconditionedPerBranch",
+//								"true") });
+//
+//		writer.writeIDref("treeModel", "");
+//		writer.writeCloseTag("codonPartitionedRobustCounting");
+    }
 
 }

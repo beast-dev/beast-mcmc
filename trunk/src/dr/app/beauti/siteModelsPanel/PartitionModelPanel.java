@@ -26,6 +26,7 @@
 package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiApp;
+import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.types.DiscreteSubstModelType;
@@ -241,7 +242,7 @@ public class PartitionModelPanel extends OptionsPanel {
 		// ///////////////////
 		// ---dNdS button---//
 		// ///////////////////
-		Action setDndsAction = new AbstractAction("dNdS counting") {
+		Action setDndsAction = new AbstractAction("Use robust counting for dN/dS estimation") {
 			public void actionPerformed(ActionEvent e) {
 				setDndsCounting();
 			}
@@ -470,7 +471,23 @@ public class PartitionModelPanel extends OptionsPanel {
 		substUnlinkCheck.setSelected(true);
 		heteroUnlinkCheck.setSelected(false);
 		freqsUnlinkCheck.setSelected(true);
+                
+        DnDsComponentOptions comp = (DnDsComponentOptions)
+                model.getOptions().getComponentOptions(DnDsComponentOptions.class);
+
+        // Add model to ComponentOptions
+        comp.addPartition(model);
 	}
+
+    // TODO Need some way to remove a partition for this list if user changes the substitution model to something else
+     
+    private void removeDnDsCounting() {
+        DnDsComponentOptions comp = (DnDsComponentOptions)
+                model.getOptions().getComponentOptions(DnDsComponentOptions.class);
+
+        // Remove model from ComponentOptions
+        comp.removePartition(model);
+    }
 
 	// ////////////////////////
 	// ---END: dNdS button---//

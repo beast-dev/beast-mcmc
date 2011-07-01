@@ -1,13 +1,9 @@
 package dr.app.beauti.components.dnds;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ComponentOptions;
-import dr.app.beauti.options.ModelOptions;
-import dr.app.beauti.options.Operator;
-import dr.app.beauti.options.Parameter;
-import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.options.*;
 
 /**
  * @author Filip Bielejec
@@ -24,31 +20,40 @@ public class DnDsComponentOptions implements ComponentOptions {
 	}
 
 	public void createParameters(ModelOptions modelOptions) {
-
-		modelOptions.createOperator("CODON_PARTITIONED_ROBUST_COUNTING",
-				OperatorType.BITFLIP, -1.0, -1.0);
-
+        // Do nothing; this is only called at launch
 	}
 
 	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
-
-		ops.add(modelOptions.getOperator(CODON_PARTITIONED_ROBUST_COUNTING));
-
+        // Do nothing
 	}
 
 	public void selectParameters(ModelOptions modelOptions,
 			List<Parameter> params) {
-
-		params
-				.add(modelOptions
-						.getParameter(CODON_PARTITIONED_ROBUST_COUNTING));
-
+        // Do nothing
 	}
 
 	public void selectStatistics(ModelOptions modelOptions,
 			List<Parameter> stats) {
-		// TODO Auto-generated method stub
-
+        // Do nothing
 	}
 
+    public boolean addPartition(PartitionSubstitutionModel partition) {
+        if (!partitionList.contains(partition)) {
+            partitionList.add(partition);
+        }
+        return true; // No error
+    }
+
+    public void removePartition(PartitionSubstitutionModel model) {
+        if (partitionList.contains(model)) {
+            partitionList.remove(model);
+        }
+    }
+
+    public List<PartitionSubstitutionModel> getPartitionList() {
+        return partitionList;
+    }
+
+    private List<PartitionSubstitutionModel> partitionList = new ArrayList<PartitionSubstitutionModel>();
+    
 }

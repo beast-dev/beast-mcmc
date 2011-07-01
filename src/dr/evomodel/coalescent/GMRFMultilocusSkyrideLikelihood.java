@@ -1,18 +1,18 @@
 package dr.evomodel.coalescent;
 
 import dr.evolution.coalescent.TreeIntervals;
-import dr.evolution.tree.NodeRef;
+//import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GMRFSkyrideLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.math.MathUtils;
+//import dr.inference.model.Variable;
+//import dr.math.MathUtils;
 import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.NotConvergedException;
-import no.uib.cipr.matrix.SymmTridiagEVD;
+//import no.uib.cipr.matrix.NotConvergedException;
+//import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
 import java.util.ArrayList;

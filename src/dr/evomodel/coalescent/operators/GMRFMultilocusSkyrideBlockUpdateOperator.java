@@ -1,10 +1,7 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
-import dr.evomodelxml.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
-import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;

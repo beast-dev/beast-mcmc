@@ -1,10 +1,16 @@
 package dr.app.beauti.components.dnds;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.util.Attribute;
+import dr.evolution.alignment.Alignment;
+import dr.evoxml.AlignmentParser;
 
 /**
  * @author Filip Bielejec
@@ -43,6 +49,8 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
+
+//		modifySitePatterns();
 
 		switch (point) {
 		case IN_OPERATORS:
@@ -171,6 +179,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		for (PartitionSubstitutionModel model : component.getPartitionList()) {
 			writeDNdSLogger(writer, model);
+			// model.getDataType()
 		}
 	}
 
@@ -212,17 +221,45 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		writer.writeComment("Robust counting for: " + model.getName());
 
 		writer.writeOpenTag("report");
+		// TODO: is there other way to do it?
 		writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
-				+ ".log\"/>");
+				+ ".log\"/> \n");
 		writer.writeCloseTag("report");
 
 	}// END: writeDNdSReport()
 
-	
-	
-	
-	
-	
-	
-	
+	private void modifySitePatterns() {
+
+		try {
+
+			DnDsComponentOptions component = (DnDsComponentOptions) options
+					.getComponentOptions(DnDsComponentOptions.class);
+
+			Thread thread = Thread.currentThread();
+			ClassLoader classLoader = thread.getContextClassLoader();
+			Class<?> classToModify = Class.forName(
+					"dr.evolution.alignment.SitePatterns", true, classLoader);
+			Constructor<?>[] constructors = classToModify
+					.getDeclaredConstructors();
+			Field[] fields = classToModify.getDeclaredFields();
+
+
+			// TODO: feed it with an instance of Alignment
+			Object classObj = constructors[0].newInstance();
+
+			for (int i = 0; i < fields.length; i++) {
+				if (fields[i].getName() == "unique") {
+
+					fields[i].setAccessible(true);
+					fields[i].set(classObj, false);
+
+				}
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}// END: modifySitePatterns()
+
 }// END: class

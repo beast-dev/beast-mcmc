@@ -95,10 +95,10 @@
 	<randomLocalClockModel id="branchRates" ratesAreMultipliers="false">
 		<treeModel idref="treeModel"/>
 		<rates>
-			<parameter id="localClock.relativeRates"/>
+			<parameter id="localClock.relativeRates" value="1.0" lower='0.0'/>
 		</rates>
 		<rateIndicator>
-			<parameter id="localClock.changes"/>
+			<parameter id="localClock.changes" value="0.0" lower='0.0'/>
 		</rateIndicator>
 		<clockRate>
 			<parameter id="clock.rate" value="1.0"/>
@@ -203,9 +203,9 @@
 				<uniformPrior lower="0.0" upper="1.0">
 					<parameter idref="frequencies"/>
 				</uniformPrior>
-				<poissonPrior mean="0.6931471805599453" offset="0.0">
+				<!--<poissonPrior mean="0.6931471805599453" offset="0.0">
 					<statistic idref="rateChanges"/>
-				</poissonPrior>
+				</poissonPrior> -->
 				<gammaPrior shape="0.5" scale="2.0" offset="0.0">
 					<parameter idref="localClock.relativeRates"/>
 				</gammaPrior>

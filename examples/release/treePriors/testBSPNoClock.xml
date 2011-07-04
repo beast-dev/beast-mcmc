@@ -62,7 +62,7 @@
     </constantSize>
 
     <!-- Generate a random starting tree under the coalescent process            -->
-    <coalescentTree id="startingTree" rootHeight="100">
+    <coalescentTree id="startingTree" rootHeight="0.077">
         <taxa idref="taxa"/>
         <constantSize idref="constant"/>
     </coalescentTree>
@@ -83,7 +83,7 @@
 
     <generalizedSkyLineLikelihood id="skyline" linear="false">
         <populationSizes>
-            <parameter id="skyline.popSize" dimension="3" value="380" lower="0.0" upper="38000.0"/>
+            <parameter id="skyline.popSize" dimension="3" value="0.077" lower="0.0" upper="Infinity"/>
         </populationSizes>
         <groupSizes>
             <parameter id="skyline.groupSize" dimension="3"/>
@@ -93,11 +93,11 @@
         </populationTree>
     </generalizedSkyLineLikelihood>
 
-    <exponentialMarkovLikelihood id="eml1" jeffreys="true">
+ <!--   <exponentialMarkovLikelihood id="eml1" jeffreys="true">
         <chainParameter>
             <parameter idref="skyline.popSize"/>
         </chainParameter>
-    </exponentialMarkovLikelihood>
+    </exponentialMarkovLikelihood> -->
 
     <!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
     <HKYModel id="hky">
@@ -179,7 +179,7 @@
                     <parameter idref="frequencies"/>
                 </uniformPrior>
                 <generalizedSkyLineLikelihood idref="skyline"/>
-                <exponentialMarkovLikelihood idref="eml1"/>
+           <!--        <exponentialMarkovLikelihood idref="eml1"/>  -->
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>
@@ -204,6 +204,7 @@
             <column label="L(coalecent)" dp="4" width="12">
                 <generalizedSkyLineLikelihood idref="skyline"/>
             </column>
+            <parameter idref="skyline.popSize"/>
         </log>
 
         <!-- write log to file                                                       -->
@@ -218,7 +219,7 @@
             <parameter idref="frequencies"/>
             <treeLikelihood idref="treeLikelihood"/>
             <generalizedSkyLineLikelihood idref="skyline"/>
-            <exponentialMarkovLikelihood idref="eml1"/>
+        <!--       <exponentialMarkovLikelihood idref="eml1"/> -->
         </log>
 
         <!-- write tree log to file

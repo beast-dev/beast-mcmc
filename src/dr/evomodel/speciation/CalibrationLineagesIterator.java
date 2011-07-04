@@ -23,7 +23,7 @@ public class CalibrationLineagesIterator {
             for( int l : taxaPartialOrder[k] ) {
                 cladesFreeLins[k] -= clades[l].length;
             }
-            assert cladesFreeLins[k] > 0;
+            assert cladesFreeLins[k] >= 0;
         }
 
         this.taxaPartialOrder = taxaPartialOrder;

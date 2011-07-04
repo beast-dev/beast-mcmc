@@ -1308,7 +1308,8 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
     }
 
     public int getTaxonIndex(Taxon taxon) {
-        return spTree.getTaxonIndex(taxon);
+        // can't compare taxa
+        return getTaxonIndex(taxon.getId());
     }
 
     public List<Taxon> asList() {

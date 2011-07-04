@@ -141,8 +141,12 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                         (correction.equals(APPROX) ? CalibrationPoints.CorrectionType.APPROXIMATED :
                                 (correction.equals(NONE) ? CalibrationPoints.CorrectionType.NONE : null));
 
-                final CalibrationPoints calib = new CalibrationPoints(tree, specModel.isYule(), dists, taxa, forParent, userPDF,
-                        type);
+                if( cal.hasAttribute(CORRECTION) && type == null ) {
+                   throw new XMLParseException("correction type == " + correction + "???");
+                }
+
+                final CalibrationPoints calib =
+                        new CalibrationPoints(tree, specModel.isYule(), dists, taxa, forParent, userPDF, type);
                 final SpeciationLikelihood speciationLikelihood = new SpeciationLikelihood(tree, specModel, null, calib);
                 return speciationLikelihood;
             } catch( IllegalArgumentException e ) {

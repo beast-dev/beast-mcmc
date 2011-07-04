@@ -59,7 +59,11 @@ public class CalibrationPoints {
                 final int tkcount = tk.getTaxonCount();
                 this.clades[loc] = new int[tkcount];
                 for(int nt = 0; nt < tkcount; ++nt) {
-                    this.clades[loc][nt] = tree.getTaxonIndex(tk.getTaxon(nt));
+                    final int taxonIndex = tree.getTaxonIndex(tk.getTaxon(nt));
+                    this.clades[loc][nt] = taxonIndex;
+                    if( taxonIndex < 0 ) {
+                       throw new IllegalArgumentException("Taxon not found in tree: " + tk.getTaxon(nt));
+                    }
                 }
                 taxaInOrder[loc] = tk;
                 clades.remove(k);
@@ -96,13 +100,14 @@ public class CalibrationPoints {
         for(int k = 0; k < this.clades.length; ++k) {
             int taken = 0;
             for( int i : this.taxaPartialOrder[k] ) {
-                taken += this.taxaPartialOrder[i].length - (this.forParent[i] ? 0 : 1);
+                taken += this.clades[i].length - (this.forParent[i] ? 0 : 1);
             }
             this.freeHeights[k] = this.clades[k].length - (this.forParent[k] ? 1 : 2) - taken;
             assert this.freeHeights[k] >= 0;
         }
 
-        this.maximal = new boolean[this.clades.length];
+        // true if clade is not contained in any other clade
+        boolean[] maximal = new boolean[this.clades.length];
         for(int k = 0; k < this.clades.length; ++k) {
             maximal[k] = true;
         }
@@ -141,29 +146,12 @@ public class CalibrationPoints {
                        // closed form formulas
                     } else {
                         setUpTables(tree);
-                        linsIter = new CalibrationLineagesIterator(this.clades, this.taxaPartialOrder, this.maximal,
+                        linsIter = new CalibrationLineagesIterator(this.clades, this.taxaPartialOrder, maximal,
                                 tree.getExternalNodeCount());
                         lastHeights = new double[this.clades.length];
                     }
                 }
-//                if( densities.length > 2 ) {
-//                    throw new IllegalArgumentException("Sorry, not implemented: multiple internal calibrations - please provide the " +
-//                            "log marginal explicitly.");
-//                }
-//
-//                if( densities.length == 2 ) {
-//
-//                    if( ! taxaInOrder[1].containsAll(taxaInOrder[0]) ) {
-//                        throw new IllegalArgumentException( "Sorry, not implemented: two non-nested clades.");
-//                    }
-//
-//                    if( this.forParent[0] || this.forParent[1] ) {
-//                        throw new IllegalArgumentException("Sorry, not implemented: calibration on parent for more than one clade.");
-//                    }
-//                }
             }
-
-
         }
     }
 
@@ -180,7 +168,6 @@ public class CalibrationPoints {
             lints[i] = Math.log(i);
         }
 
-        //double const lg2 = log(2.0);
         lc2[0] = lc2[1] = Double.NEGATIVE_INFINITY;
         for(int i = 2; i < MAX_N; ++i) {
             lc2[i] = lints[i] + lints[i-1] - lg2;
@@ -306,19 +293,15 @@ public class CalibrationPoints {
                         if( freeHeights[k] > 0 ) {
                           logL -= Math.log1p(-Math.exp(v)) * freeHeights[k];
                         }
-//                        if( Double.isNaN(logL))  {
-//                            int x = 1;
-//                        }
-                        logL -= v * ((forParent[k] ? 1 : 2) - (maximal[k] ? 0 : 1)) + loglam;
-//                        if( Double.isNaN(logL))  {
-//                            int x = 1;
-//                        }
+
+                        logL -= v + loglam;
+
                         if( hs[k] > hs[maxh] ) {
                             maxh = k;
                         }
                     }
                     
-                    if( rootCorrection ) {
+                    if( rootCorrection || true ) {
                       logL -= -(forParent[maxh] ? 0 : 1) * lam * hs[maxh];
                     }
 
@@ -462,8 +445,10 @@ public class CalibrationPoints {
         int totLin = 0;
         for(int i = 0; i < ni; ++i) {
             final int l = cli.nStart(i);
-            logc0 += lNR[l];
-            totLin += l;
+            if( l > 0 ) {
+                logc0 += lNR[l];
+                totLin += l;
+            }
         }
 
         final double logc1 = lfactorials[totLin];
@@ -476,10 +461,11 @@ public class CalibrationPoints {
 
         if( ! noRoot ) {
             // we dont have an iterator for 0 free lineages
-            logc2 += 2 * lehs[nHeights];
+            logc2 += 1 * lehs[nHeights];
         }
 
-        // scale by total for all possible ranking orders, scale outside if needed for comparison
+        // Missing scale by total of all possible trees over all ranking orders.
+        // Add it outside if needed for comparison.
 
         val += logc0 + logc1 + logc2;
 
@@ -497,9 +483,12 @@ public class CalibrationPoints {
                 int cki = lack[i];
                 if( joiners[k][i] > 0 ) {
                     ++cki;
-                    logCount += lc2[cki];
+                    if( cki > 1 ) {
+                        // can be 1 if iterator without lins - for joiners only - need to check this is correct
+                      logCount += lc2[cki];
+                    } //assert(cki >= 2);
                 }
-                final int l = cki - lack[i+1];
+                final int l = cki - lack[i+1];   //assert(l >= 0);
                 logCount -= lfactorials[l];
                 sumLins += l;
             }
@@ -527,17 +516,17 @@ public class CalibrationPoints {
 
     private  final int[] freeHeights;
 
-    // true if clade is not contained in any other clade
-    private  final boolean[] maximal;
     private  final boolean rootCorrection;
 
-    // Used provided function to calculate the marginal density
+    // User provided function to calculate the marginal density
     private  final Statistic calibrationLogPDF;
 
-    private double[] lc2;
+    // speedup constants
     private final double lg2 =  Math.log(2.0);
+    private double[] lc2;
     private double[] lNR;
     private double[] lfactorials;
+
     private CalibrationLineagesIterator linsIter = null;
 
     // simple cache of last result can go a long way in a big tree with a few calibration nodes, for non-global tree operators which do

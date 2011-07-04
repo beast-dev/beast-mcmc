@@ -29,6 +29,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.inference.model.Parameter;
+
 import static org.apache.commons.math.special.Gamma.logGamma;
 
 /**
@@ -171,74 +172,6 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         }
         return c1;
     }
-
-
-//    @Override
-//    public double logMarginalDensity(int nTaxa, final double h[], int nClade, boolean forParent) {
-//
-//     }
-
-//    @Override
-//    public double logMarginalDensity(int nTaxa, final double h, int nClade, boolean forParent) {
-//        double lgp;
-//
-//        final double lam = getR();
-//        final double lh = lam * h;
-//
-//        if( forParent ) {
-//            // n(n+1) factor left out
-//
-//            lgp = -2 * lh + Math.log(lam);
-//            if( nClade > 1 ) {
-//                lgp += (nClade-1) * Math.log(1 - Math.exp(-lh));
-//            }
-//        } else {
-//            assert nClade > 1;
-//
-//            lgp = -3 * lh + (nClade-2) * Math.log(1 - Math.exp(-lh)) + Math.log(lam);
-//
-//            // root is a special case
-//            if( nTaxa == nClade ) {
-//                // n(n-1) factor left out
-//                lgp += lh;
-//            } else {
-//                // (n^3-n)/2 factor left out
-//            }
-//        }
-//
-//        return lgp;
-//    }
-//
-//    @Override
-//    public double logMarginalDensity(final int nTaxa, double h2, final int n, double h1, int nm) {
-//
-//        assert h2 <= h1 && n < nm;
-//
-//        final double lam = getR();
-//        final int m = nm - n;
-//
-//        final double elh2 = Math.exp(-lam*h2);
-//        final double elh1 = Math.exp(-lam*h1);
-//
-//        double lgl= 2 * Math.log(lam);
-//
-//        lgl += (n-2) * Math.log(1-elh2);
-//        lgl += (m-3) * Math.log(1-elh1);
-//
-//        lgl += Math.log(1 - 2*m*elh1 + 2*(m-1)*elh2
-//                - m*(m-1)*elh1*elh2 + (m*(m+1)/2.)*elh1*elh1
-//                + ((m-1)*(m-2)/2.)*elh2*elh2);
-//
-//        if( nm < nTaxa ) {
-//            /* lgl += Math.log(0.5*(n*(n*n-1))*(n+1+m)) */
-//            lgl -= lam*(h2+3*h1);
-//        } else {
-//            /* lgl += Math.log(lam) /* + Math.log(n*(n*n-1)) */
-//            lgl -= lam*(h2+2*h1);
-//        }
-//
-//        return lgl;
-//    }
 
     public double logNodeProbability(Tree tree, NodeRef node) {
         final double height = tree.getNodeHeight(node);

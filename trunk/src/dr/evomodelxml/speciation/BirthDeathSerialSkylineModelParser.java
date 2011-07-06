@@ -120,8 +120,10 @@ public class BirthDeathSerialSkylineModelParser extends AbstractXMLObjectParser 
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            new ElementRule(TIMES_START_FROM_ORIGIN, Boolean.class, "if true, then the time vector represents the epoch widths in times starting from the origin and moving tipwards. " +
-                    "Note that the birth/death/sampling rate vectors still specify the parameters starting from tips and moving to root.", false),
+            AttributeRule.newBooleanRule(TIMES_START_FROM_ORIGIN, false, "if true, then the time vector represents the " +
+                    "epoch widths in times starting from the origin and moving tipwards. " +
+                    "Note that the birth/death/sampling rate vectors still specify the parameters starting from tips " +
+                    "and moving to root."),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(TIMES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

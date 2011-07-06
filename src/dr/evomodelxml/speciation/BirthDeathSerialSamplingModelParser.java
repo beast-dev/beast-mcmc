@@ -47,7 +47,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
     public static final String SAMPLE_BECOMES_NON_INFECTIOUS = "sampleBecomesNonInfectiousProb";
     public static final String R = "r";
-    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
+//    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String ORIGIN = "origin";
     public static final String TREE_TYPE = "type";
     public static final String BDSS = "bdss";
@@ -61,6 +61,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
         final String modelName = xo.getId();
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
+        
+        boolean hasFinalSample = xo.getAttribute(HAS_FINAL_SAMPLE, false);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
 
@@ -84,10 +86,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
                 (Parameter) xo.getElementFirstChild(SAMPLE_BECOMES_NON_INFECTIOUS) : new Parameter.Default(0.0);
 //        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0)); // donot use it, otherwise log is changed improperly
 
-        final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
-                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
-
-        boolean hasFinalSample = xo.getAttribute(HAS_FINAL_SAMPLE, false);
+//        final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
+//                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
 
         Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
 
@@ -123,7 +123,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
             AttributeRule.newBooleanRule(HAS_FINAL_SAMPLE, true),
-            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+//            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(

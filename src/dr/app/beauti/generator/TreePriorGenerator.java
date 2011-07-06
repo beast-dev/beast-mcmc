@@ -283,7 +283,8 @@ public class TreePriorGenerator extends Generator {
                         BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, modelPrefix + BirthDeathSerialSamplingModelParser.BDSS),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units)),
+                                new Attribute.Default<Boolean>(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, false)
                         }
                 );
 
@@ -301,8 +302,8 @@ public class TreePriorGenerator extends Generator {
                 if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
                     writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
                             BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, prior, writer);
-                    writeParameter(BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL,
-                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, prior, writer);
+//                    writeParameter(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE,
+//                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, prior, writer);
                 }
 
                 writer.writeCloseTag(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL);
@@ -778,8 +779,8 @@ public class TreePriorGenerator extends Generator {
                 if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
                     writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                             + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, writer);
-                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-                            + BirthDeathSerialSamplingModelParser.FINAL_TIME_INTERVAL, writer);
+//                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
+//                            + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, writer);
 
                 }
                 break;

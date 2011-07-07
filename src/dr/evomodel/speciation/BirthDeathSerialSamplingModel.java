@@ -293,7 +293,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             } else if (!hasFinalSample) {
                 //handle condition ending on final tip in sampling-through-time-only situation
                 logL += Math.log(psi() * q(y));
-                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
+//                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
 
             }
         }

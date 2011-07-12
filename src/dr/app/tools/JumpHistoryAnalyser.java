@@ -249,7 +249,7 @@ public class JumpHistoryAnalyser {
                                     System.err.println("Min time: " + minTime);
                                     System.err.println("Max time: " + maxTime);
                                     System.err.println("Bin est : " + bin);
-                                    System.err.println("Delta   : " + delta);                                    
+                                    System.err.println("Delta   : " + delta);
                                 }
                             }
                         }
@@ -306,7 +306,7 @@ public class JumpHistoryAnalyser {
                     toLabel = sb.toString();
                 }
                 allToAllCounts = (fromLabel.equals("all") && toLabel.equals("all"));
-                if (!fromLabel.equals(toLabel) || allToAllCounts ) {
+                if (fromSet.size() > 1 || toSet.size() > 1 || !fromSet.equals(toSet)) {
                     System.out.print("\t" + fromLabel + "->" + toLabel);
                 }
             }
@@ -315,24 +315,24 @@ public class JumpHistoryAnalyser {
 
 
         if (useBinning) {
-        double time = minTime;
-        for (int bin = 0; bin < binCount; bin++) {
-            System.out.print(time);
+            double time = minTime;
+            for (int bin = 0; bin < binCount; bin++) {
+                System.out.print(time);
 
-            for (Set<String> fromSet : fromSets) {
-                int fromIndex = fromSetIndices.get(fromSet);
+                for (Set<String> fromSet : fromSets) {
+                    int fromIndex = fromSetIndices.get(fromSet);
 
-                for (Set<String> toSet : toSets) {
-                    int toIndex = toSetIndices.get(toSet);
-                    if ((fromIndex != toIndex) || allToAllCounts) {
-                        System.out.print("\t" + bins[fromIndex][toIndex][bin]);
+                    for (Set<String> toSet : toSets) {
+                        int toIndex = toSetIndices.get(toSet);
+                        if (fromSet.size() > 1 || toSet.size() > 1 || !fromSet.equals(toSet)) {
+                            System.out.print("\t" + bins[fromIndex][toIndex][bin]);
+                        }
                     }
                 }
-            }
-            System.out.println();
+                System.out.println();
 
-            time += delta;
-        }
+                time += delta;
+            }
         } else {
             for (Set<String> fromSet : fromSets) {
                 int fromIndex = fromSetIndices.get(fromSet);

@@ -26,8 +26,17 @@ public class TruncatedDistribution implements Distribution {
         this.lower = lower;
         this.upper = upper;
 
-        this.lowerCDF = source.cdf(lower);
-        this.normalization = source.cdf(upper) - lowerCDF;
+        if (!Double.isInfinite(this.lower)) {
+            this.lowerCDF = source.cdf(lower);
+        } else {
+            this.lowerCDF = 0;
+        }
+
+        if (!Double.isInfinite(this.upper)) {
+            this.normalization = source.cdf(upper) - lowerCDF;
+        } else {
+            this.normalization = 1.0 - lowerCDF;
+        }
     }
 
 

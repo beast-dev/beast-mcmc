@@ -104,11 +104,9 @@ public class MakeAncestralSequenceAnnotatedTree {
     }
 
     /**
-     * Recursively analyzes log files.
      *
-     * @param outInputFile       the file to analyze (if this is a directory then the files within it are analyzed)
-     * @throws dr.inference.trace.TraceException
-     *          if the trace file is in the wrong format or corrupted
+     * Analyses the output files
+     *
      */
     private void analyze(File outInputFile, File fastasInputFile, File treesInputfileName, int skip, int thin) throws TraceException {
 
@@ -314,7 +312,9 @@ public class MakeAncestralSequenceAnnotatedTree {
 
     }
 
-    //Main method
+    /**
+     * Main method
+     */
     public static void main(String[] args) throws IOException, TraceException {
 
         printTitle();
@@ -323,7 +323,6 @@ public class MakeAncestralSequenceAnnotatedTree {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("thin", "thin"),
                         new Arguments.IntegerOption("skip", "skip"),
-                        //new Arguments.StringOption("discreteVariable", "variable_name", "indicates the name of a variable that is actually discrete in nature"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -383,17 +382,17 @@ public class MakeAncestralSequenceAnnotatedTree {
 
         if (outInputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            outInputFileName = Utils.getLoadFileName("MixtureModelLogAnalyser " + version.getVersionString() + " - Select *.out file to analyse");
+            outInputFileName = Utils.getLoadFileName("MakeAncestralSequenceAnnotatedTree " + version.getVersionString() + " - Select *.out file to analyse");
         }
 
         if (fastasInputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            fastasInputFileName = Utils.getLoadFileName("MixtureModelLogAnalyser " + version.getVersionString() + " - Select *.fastas file to analyse");
+            fastasInputFileName = Utils.getLoadFileName("MakeAncestralSequenceAnnotatedTree " + version.getVersionString() + " - Select *.fastas file to analyse");
         }
 
         if (treesInputfileName == null) {
             // No input file name was given so throw up a dialog box...
-            treesInputfileName = Utils.getLoadFileName("MixtureModelLogAnalyser " + version.getVersionString() + " - Select *.trees file to analyse");
+            treesInputfileName = Utils.getLoadFileName("MakeAncestralSequenceAnnotatedTree " + version.getVersionString() + " - Select *.trees file to analyse");
         }
 
         if(skip==-1) {

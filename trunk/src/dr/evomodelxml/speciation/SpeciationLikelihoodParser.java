@@ -33,6 +33,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String EXACT = "exact";
     public static final String APPROX = "approximated";
+    public static final String ALE = "pexact";
     public static final String NONE = "none";
 
     public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
@@ -90,6 +91,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
             List<Distribution> dists = new ArrayList<Distribution>();
             List<Taxa> taxa = new ArrayList<Taxa>();
             List<Boolean> forParent = new ArrayList<Boolean>();
+            Statistic userPDF = null; // (Statistic) cal.getChild(Statistic.class);
 
             for(int k = 0; k < cal.getChildCount(); ++k) {
                 final Object ck = cal.getChild(k);
@@ -101,7 +103,13 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                     final Taxa tx = (Taxa) ck;
                     taxa.add(tx);
                     forParent.add( tx.getTaxonCount() == 1 );
-                } else {
+                } else if ( Statistic.class.isInstance(ck) ) {
+                    if( userPDF != null ) {
+                        throw new XMLParseException("more than one userPDF correction???");
+                    }
+                    userPDF = (Statistic) cal.getChild(Statistic.class);
+                }
+                else {
                     XMLObject cko = (XMLObject) ck;
                     assert cko.getChildCount() == 2;
 
@@ -133,13 +141,13 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Mismatch in number of distributions and taxa specs");
             }
 
-            final Statistic userPDF = (Statistic) cal.getChild(Statistic.class);
             try {
                 final String correction = cal.getAttribute(CORRECTION, EXACT);
 
                 final CalibrationPoints.CorrectionType type = correction.equals(EXACT) ? CalibrationPoints.CorrectionType.EXACT :
                         (correction.equals(APPROX) ? CalibrationPoints.CorrectionType.APPROXIMATED :
-                                (correction.equals(NONE) ? CalibrationPoints.CorrectionType.NONE : null));
+                                (correction.equals(NONE) ? CalibrationPoints.CorrectionType.NONE :
+                                        (correction.equals(ALE) ? CalibrationPoints.CorrectionType.PEXACT :  null)));
 
                 if( cal.hasAttribute(CORRECTION) && type == null ) {
                    throw new XMLParseException("correction type == " + correction + "???");

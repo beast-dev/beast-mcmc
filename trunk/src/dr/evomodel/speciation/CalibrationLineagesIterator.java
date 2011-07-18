@@ -75,14 +75,14 @@ public class CalibrationLineagesIterator {
         LinsIterator itr = null;
         if( nSubs == 0 ) {
             itr = new LinsIterator(nl, rank, null);
-        } else if( nl > 0 || nSubs > 2 ) {
+        } else /*if( nl > 0 || nSubs > 2 ) */ {
             final int[] s = new int[nSubs];
             for(int i = 0; i < nSubs; ++i) {
                 s[i] = ranks[joinerClades[i]];
             }
             itr = new LinsIterator(nl, rank, s);
-
         }
+
         if( itr != null ) {
             // sorted according to rank
             iters[itr.rank-1] = itr;

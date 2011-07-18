@@ -7,6 +7,7 @@ import dr.inference.model.Statistic;
 import dr.math.distributions.Distribution;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,6 +19,7 @@ public class CalibrationPoints {
     public static enum CorrectionType {
         EXACT ,
         APPROXIMATED,
+        PEXACT,
         NONE,
     }
 
@@ -131,7 +133,7 @@ public class CalibrationPoints {
 
             if( correctionType == CorrectionType.EXACT ) {
                 if( densities.length == 1 ) {
-                   // closed form formula
+                    // closed form formula
                 } else {
                     boolean anyParent = false;
                     for( boolean in : this.forParent ) {
@@ -143,7 +145,7 @@ public class CalibrationPoints {
                         throw new IllegalArgumentException("Sorry, not implemented: calibration on parent for more than one clade.");
                     }
                     if( densities.length == 2 && taxaInOrder[1].containsAll(taxaInOrder[0])) {
-                       // closed form formulas
+                        // closed form formulas
                     } else {
                         setUpTables(tree);
                         linsIter = new CalibrationLineagesIterator(this.clades, this.taxaPartialOrder, maximal,
@@ -151,6 +153,8 @@ public class CalibrationPoints {
                         lastHeights = new double[this.clades.length];
                     }
                 }
+            } else if( correctionType == CorrectionType.PEXACT )  {
+                setUpTables(tree);
             }
         }
     }
@@ -229,69 +233,67 @@ public class CalibrationPoints {
             hs[k] = h;
         }
 
-        if( correctionType == CorrectionType.NONE ) {
-            return logL;
-        }
-
         if( Double.isInfinite(logL) ) {
             return logL;
         }
 
-        if( calibrationLogPDF == null ) {
-            if( correctionType == CorrectionType.EXACT ) {
-                if( nDists == 1 ) {
-                    logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length, forParent[0]);
-                } else if( nDists == 2 && taxaPartialOrder[1].length == 1) {
-                    assert !forParent[0] && !forParent[1];
-                    logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length,
-                            hs[1], clades[1].length);
-                } else {
+        if( correctionType == CorrectionType.NONE ) {
+            return logL;
+        }
 
-                    if( lastLam == lam ) {
-                        int k = 0;
-                        for(; k < hs.length; ++k) {
-                            if( hs[k] != lastHeights[k] ) {
-                                break;
+
+        if( calibrationLogPDF == null ) {
+            switch( correctionType ) {
+                case EXACT: {
+                    if( nDists == 1 ) {
+                        logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length, forParent[0]);
+                    } else if( nDists == 2 && taxaPartialOrder[1].length == 1) {
+                        assert !forParent[0] && !forParent[1];
+                        logL -= logMarginalDensity(lam, tree.getExternalNodeCount(), hs[0], clades[0].length,
+                                hs[1], clades[1].length);
+                    } else {
+
+                        if( lastLam == lam ) {
+                            int k = 0;
+                            for(; k < hs.length; ++k) {
+                                if( hs[k] != lastHeights[k] ) {
+                                    break;
+                                }
+                            }
+                            if( k == hs.length ) {
+                                return lastValue;
                             }
                         }
-                        if( k == hs.length ) {
-                            return lastValue;
-                        }
-                    }
 
-                    // the slow and painful way
-                    double[] hss = new double[hs.length];
-                    int[] ranks = new int[hs.length];
-                    for(int k = 0; k < hs.length; ++k) {
-                        int r = 0;
-                        for (double h : hs) {
-                            r += (h < hs[k]) ? 1 : 0;
+                        // the slow and painful way
+                        double[] hss = new double[hs.length];
+                        int[] ranks = new int[hs.length];
+                        for(int k = 0; k < hs.length; ++k) {
+                            int r = 0;
+                            for (double h : hs) {
+                                r += (h < hs[k]) ? 1 : 0;
+                            }
+                            ranks[k] = r+1;
+                            hss[r] = hs[k];
                         }
-                        ranks[k] = r+1;
-                        hss[r] = hs[k];
-                    }
-                    logL -= logMarginalDensity(lam, hss, ranks, linsIter);
+                        logL -= logMarginalDensity(lam, hss, ranks, linsIter);
 
-                    lastLam = lam;
-                    System.arraycopy(hs, 0, lastHeights, 0, lastHeights.length);
-                    lastValue = logL;
+                        lastLam = lam;
+                        System.arraycopy(hs, 0, lastHeights, 0, lastHeights.length);
+                        lastValue = logL;
+                    }
+                    break;
                 }
-            } else {
-                assert correctionType == CorrectionType.APPROXIMATED;
-                
-                final double loglam = Math.log(lam);
-//                if( false ) {
-//                    for(int k = 0; k < nDists; ++k) {
-//                        final double v = -lam * hs[k];
-//                        logL -= v  + loglam;
-//                    }
-//                } else {
+                case APPROXIMATED: {
+
+                    final double loglam = Math.log(lam);
+
                     int maxh = 0;
                     for(int k = 0; k < nDists; ++k) {
                         final double v = -lam * hs[k];
 
                         if( freeHeights[k] > 0 ) {
-                          logL -= Math.log1p(-Math.exp(v)) * freeHeights[k];
+                            logL -= Math.log1p(-Math.exp(v)) * freeHeights[k];
                         }
 
                         logL -= v + loglam;
@@ -300,15 +302,60 @@ public class CalibrationPoints {
                             maxh = k;
                         }
                     }
-                    
+
                     if( rootCorrection || true ) {
-                      logL -= -(forParent[maxh] ? 0 : 1) * lam * hs[maxh];
+                        logL -= -(forParent[maxh] ? 0 : 1) * lam * hs[maxh];
                     }
 
                     if( Double.isNaN(logL) ) {
-                      logL = Double.NEGATIVE_INFINITY;
+                        logL = Double.NEGATIVE_INFINITY;
                     }
-//                }
+                    break;
+                }
+                case PEXACT:
+                {
+                    Arrays.sort(hs);
+                    int cs[] = new int[nDists+1];
+
+                    final int internalNodeCount = tree.getInternalNodeCount();
+                    for(int k = 0; k < internalNodeCount; ++k) {
+                        final double nhk = tree.getNodeHeight(tree.getInternalNode(k));
+                        int i = 0;
+                        for(/**/; i < hs.length; ++i) {
+                            if( hs[i] >= nhk ) {
+                                break;
+                            }
+                        }
+                        if( i == hs.length ) {
+                            cs[i] ++;
+                        } else {
+                            if( nhk < hs[i] ) {
+                                cs[i] ++;
+                            }
+                        }
+                    }
+
+                    if( false ) {
+                        int l = nDists;
+                        for(int i = 0; i < cs.length; ++i) {
+                            l += cs[i];
+                        }
+                        assert l == internalNodeCount;
+                    }
+                    double ll = 0;
+
+                    ll += cs[0] * Math.log1p(-Math.exp(-lam*hs[0])) - lam * hs[0] - lfactorials[cs[0]];
+                    for(int i = 1; i < cs.length-1; ++i) {
+                        int c = cs[i];
+                        ll += c * (Math.log1p(-Math.exp(-lam* (hs[i] - hs[i-1]))) - lam*hs[i-1]);
+                        ll += -lam * hs[i] - lfactorials[c];
+                    }
+                    ll += -lam * (cs[nDists]+1) * hs[nDists-1] - lfactorials[cs[nDists]+1];
+                    ll += Math.log(lam) * nDists;
+
+                    logL -= ll;
+                    break;
+                }
             }
         } else {
             final double value = calibrationLogPDF.getStatisticValue(0);
@@ -414,8 +461,9 @@ public class CalibrationPoints {
         boolean first = true;
 
         int[][] linsInLevels;
-
+        int ccc =  0;
         while( (linsInLevels = cli.next()) != null ) {
+            ccc ++;
             double v = countRankedTrees(nLevels, linsInLevels, joiners, linsAtLevel);
             // 1 for root formula, 1 for kludge in iterator which sets root as 2 lineages
             if( noRoot ) {

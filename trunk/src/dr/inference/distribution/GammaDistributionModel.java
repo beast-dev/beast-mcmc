@@ -82,19 +82,15 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     // *****************************************************************
 
     public double pdf(double x) {
-        return (new GammaDistributionImpl(getShape(), getScale())).density(x);
+        return GammaDistribution.pdf(x, getShape(), getScale());
     }
 
     public double logPdf(double x) {
-        return Math.log((new GammaDistributionImpl(getShape(), getScale())).density(x));
+        return GammaDistribution.logPdf(x, getShape(), getScale());
     }
 
     public double cdf(double x) {
-        try {
-            return (new GammaDistributionImpl(getShape(), getScale())).cumulativeProbability(x);
-        } catch (MathException e) {
-            return Double.NaN;
-        }
+        return GammaDistribution.cdf(x, getShape(), getScale());
     }
 
     public double quantile(double y) {

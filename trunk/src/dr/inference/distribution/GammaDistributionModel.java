@@ -31,6 +31,8 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.GammaDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -80,19 +82,27 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     // *****************************************************************
 
     public double pdf(double x) {
-        return GammaDistribution.pdf(x, getShape(), getScale());
+        return (new GammaDistributionImpl(getShape(), getScale())).density(x);
     }
 
     public double logPdf(double x) {
-        return GammaDistribution.logPdf(x, getShape(), getScale());
+        return Math.log((new GammaDistributionImpl(getShape(), getScale())).density(x));
     }
 
     public double cdf(double x) {
-        return GammaDistribution.cdf(x, getShape(), getScale());
+        try {
+            return (new GammaDistributionImpl(getShape(), getScale())).cumulativeProbability(x);
+        } catch (MathException e) {
+            return Double.NaN;
+        }
     }
 
     public double quantile(double y) {
-        return GammaDistribution.quantile(y, getShape(), getScale());
+        try {
+            return (new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y);
+        } catch (MathException e) {
+            return Double.NaN;
+        }
     }
 
     public double mean() {

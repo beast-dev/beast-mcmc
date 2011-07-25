@@ -12,7 +12,7 @@ import dr.math.UnivariateFunction;
  * Date: Mar 25, 2011
  * Time: 11:32:25 AM
  */
-public class BetaDistribution extends AbstractContinuousDistribution implements Distribution{
+public class BetaDistribution extends AbstractContinuousDistribution implements Distribution {
 
     // Default inverse cumulative probability accurac
     public static final double DEFAULT_INVERSE_ABSOLUTE_ACCURACY = 1e-9;

@@ -34,12 +34,15 @@ import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.types.ClockType;
 import dr.app.beauti.types.PriorType;
+import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.util.NumberFormatter;
 import jam.framework.Exportable;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
@@ -123,6 +126,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         linkButton = new JButton(setHierarchicalAction);
         linkButton.setVisible(true);
+        linkButton.setEnabled(false);
         linkButton.setToolTipText(HierarchicalPhylogeneticModel.TIP_TOOL);
 
         messageLabel.setText(getMessage());
@@ -139,14 +143,35 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         if (HIERARCHICAL_ENABLED) {
             JPanel southPanel = new JPanel();
-            southPanel.setLayout(new BorderLayout(0,0));
-            southPanel.add(linkButton, BorderLayout.NORTH);
+            southPanel.setLayout(new BorderLayout(0, 0));
+            JToolBar toolBar1 = new JToolBar();
+            toolBar1.setFloatable(false);
+            toolBar1.setOpaque(false);
+            toolBar1.setLayout(new BoxLayout(toolBar1, BoxLayout.X_AXIS));
+
+            PanelUtils.setupComponent(linkButton);
+            toolBar1.add(linkButton);
+            southPanel.add(toolBar1, BorderLayout.NORTH);
             southPanel.add(messageLabel, BorderLayout.SOUTH);
             add(southPanel, BorderLayout.SOUTH);
         } else {
             add(messageLabel, BorderLayout.SOUTH);
         }
+
+        priorTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent evt) {
+                selectionChanged();
+            }
+        });
+
     }
+
+    public void selectionChanged() {
+        int[] selRows = priorTable.getSelectedRows();
+        boolean hasSelection = (selRows != null && selRows.length != 0);
+        linkButton.setEnabled(hasSelection);
+    }
+
 
     public void setOptions(BeautiOptions options) {
         this.options = options;

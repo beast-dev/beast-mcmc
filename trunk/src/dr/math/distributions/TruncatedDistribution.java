@@ -2,11 +2,13 @@ package dr.math.distributions;
 
 import dr.math.ErrorFunction;
 import dr.math.UnivariateFunction;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.AbstractContinuousDistribution;
 
 /**
  * @author Andrew Rambaut
  */
-public class TruncatedDistribution implements Distribution {
+public class TruncatedDistribution extends AbstractContinuousDistribution implements Distribution {
 
     public double getLower() {
         return lower;
@@ -71,24 +73,19 @@ public class TruncatedDistribution implements Distribution {
         if (y == 1.0)
             return upper;
 
-        return quantileSearch(y, lower, upper, 20);
-    }
+        if (Double.isInfinite(lower) && Double.isInfinite(upper)) {
+            return source.quantile(y);
+        }
 
-    /*Implements a geometic search for the quantiles*/
-    private double quantileSearch(double y, double l, double u, int step) {
-        double q, a;
+        try{
+            return super.inverseCumulativeProbability(y);
+        } catch (MathException e) {
+//                throw MathRuntimeException.createIllegalArgumentException(                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
+            // exceptions is bad. Better to return NaN and let the calling code deal with it.
+            return Double.NaN;
 
-        q = (u + l) / 2.0;
-
-        if (step == 0 || q == l || q == u)
-            return q;
-
-        a = cdf(q);
-
-        if (y <= a)
-            return quantileSearch(y, l, q, step - 1);
-        else
-            return quantileSearch(y, q, u, step - 1);
+//                    "Couldn't calculate beta quantile for alpha = " + alpha + ", beta = " + beta + ": " +e.getMessage());
+        }
     }
 
     /**
@@ -132,4 +129,30 @@ public class TruncatedDistribution implements Distribution {
     private final double upper;
     private final double normalization;
     private final double lowerCDF;
+
+    @Override
+    protected double getInitialDomain(double v) {
+        if (!Double.isInfinite(lower) && !Double.isInfinite(upper)) {
+            return (upper + lower) / 2;
+        } else if (!Double.isInfinite(upper)) {
+            return upper / 2;
+        } else if (!Double.isInfinite(lower)) {
+            return lower * 2;
+        }
+        return v;
+    }
+
+    @Override
+    protected double getDomainLowerBound(double v) {
+        return lower;
+    }
+
+    @Override
+    protected double getDomainUpperBound(double v) {
+        return upper;
+    }
+
+    public double cumulativeProbability(double v) throws MathException {
+        return cdf(v);
+    }
 }

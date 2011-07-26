@@ -40,7 +40,7 @@ BEAST. At the time of writing, the current version is v1.3.1. It is available fo
 
 \section*{*BEAST}
 
-This tutorial will guide you through the analysis of three loci sampled from 26 individuals representing nine species of pocket gophers. This is a subset of previous published data \cite{belfiore2008multilocus}. The objective of this tutorial is to estimate the species tree that is most probably given the multi-individual multi-locus sequence data. The species tree has 9 taxa, whereas each gene tree has 26 taxa. *BEAST will co-estimate three gene trees embedded in a shared species tree (see Heled and Drummond, 2010 for details).
+This tutorial will guide you through the analysis of three loci sampled from 26 individuals representing nine species of pocket gophers. This is a subset of previous published data \cite{belfiore2008multilocus}. The objective of this tutorial is to estimate the species tree that is most probable given the multi-individual multi-locus sequence data. The species tree has 9 taxa, whereas each gene tree has 26 taxa. *BEAST will co-estimate three gene trees embedded in a shared species tree (see Heled and Drummond, 2010 for details).
 
 The first step will be to convert a NEXUS file with a DATA or CHARACTERS block into a BEAST XML input file. This is done using the program BEAUti (Bayesian Evolutionary Analysis Utility). This is a user-friendly program for setting the evolutionary model and options for the MCMC analysis. The second step is to actually run BEAST using the input file that contains the data, model and settings. The final step is to explore the output of BEAST in order to diagnose problems and to summarize the results.
 
@@ -147,7 +147,7 @@ For multi-locus analyses, BEAST can link or unlink substitutions models across t
 
 The advantage of using the {\bf Traits} panel is that we can extract species names from the taxa names if they already contain that information. Let's go to {\bf Data Partitions} panel and unselect the check box labelled \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010}. As we can see in the status bar on the bottom, the analysis has been reverted to a standard BEAST analysis.
 
-To enable *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second from last} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
+To enable *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Traits} panel and click on the \textbf{Guess trait values} at the top to pop out {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second from last} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
 
 \medskip{}
 
@@ -198,7 +198,7 @@ The \textbf{Estimate} check box is unchecked for the first clock model and check
 
 The {\bf Trees} panel allows priors to be specified for each parameter in the model, which can be defined on the top of the panel. *BEAST has a different tree prior panel where users can only configure the species tree prior not gene tree priors (which are automatically specified by the multispecies coalescent). Currently, we have two species tree priors: \textbf{Yule Process} and \textbf{Birth-Death Process}; and three population size models: \textbf{Piecewise linear and constant root}, \textbf{Piecewise linear}, and \textbf{Piecewise constant}. In this analysis, we use the default options.
 
-The bottom right panel is used to configure the corresponding starting trees. The \textbf{Ploidy Type} menu determines the type of sequence (mitochondrial, nuclear, X, Y). This matters since different modes of inheritance gives rise to different effective population sizes. The \textbf{Starting Tree} menu provides three options, where the \textbf{user-specified} starting tree has to be loaded from the data file (e.g. NEXUS file) in advance. In this analysis, we simply use a random starting tree. 
+The bottom right panel is used to configure the corresponding starting trees. The \textbf{Ploidy Type} menu determines the type of sequence (mitochondrial, nuclear, X, Y). This matters since different modes of inheritance give rise to different effective population sizes. The \textbf{Starting Tree} menu provides three options, where the \textbf{user-specified} starting tree has to be loaded from the data file (e.g. NEXUS file) in advance. In this analysis, we simply use a random starting tree. 
 
 \medskip{}
 

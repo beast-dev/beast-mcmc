@@ -97,16 +97,10 @@ public abstract class AbstractPartitionData {
 
     public int getTaxonCount() {
         if (getTaxonList() != null) {
-            int n = getTaxonList().getTaxonCount();
-
-            if (n > 0) {
-                return n;
-            } else {
-                return 0;
-            }
+            return getTaxonList().getTaxonCount();
         } else {
             // is a trait
-            return 0;
+            return -1;
         }
     }
 

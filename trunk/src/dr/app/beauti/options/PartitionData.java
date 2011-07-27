@@ -113,7 +113,7 @@ public class PartitionData extends AbstractPartitionData {
             return (to - from + 1) / every;
         } else {
             // must be a trait
-            return 1;
+            return -1;
         }
     }
 

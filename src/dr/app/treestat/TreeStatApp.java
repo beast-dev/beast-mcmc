@@ -33,6 +33,7 @@ import jam.mac.Utils;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Locale;
 
 public class TreeStatApp extends SingleDocApplication {
 
@@ -45,7 +46,9 @@ public class TreeStatApp extends SingleDocApplication {
     // Main entry point
     static public void main(String[] args) {
 
-
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         if (OSType.isMac()) {
             if (Utils.getMacOSXVersion().startsWith("10.5")) {

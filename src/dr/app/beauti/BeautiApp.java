@@ -35,6 +35,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Method;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 
 /**
@@ -66,6 +67,9 @@ public class BeautiApp extends MultiDocApplication {
     // Main entry point
     static public void main(String[] args) {
 
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         if (args.length > 1) {
 

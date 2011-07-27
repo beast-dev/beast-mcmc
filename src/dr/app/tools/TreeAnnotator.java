@@ -1197,6 +1197,10 @@ public class TreeAnnotator {
     //Main method
     public static void main(String[] args) throws IOException {
 
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
+
         String targetTreeFileName = null;
         String inputFileName = null;
         String outputFileName = null;

@@ -37,6 +37,7 @@ import dr.util.Version;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Alexei Drummond
@@ -187,6 +188,10 @@ public class TreeLogAnalyser {
 
     //Main method
     public static void main(String[] args) throws java.io.IOException {
+
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         printTitle();
 

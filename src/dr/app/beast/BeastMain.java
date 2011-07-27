@@ -316,6 +316,7 @@ public class BeastMain {
 
         long beagleFlags = 0;
 
+        // if any beagle flag is specified then use beagle...
         boolean useBeagle = arguments.hasOption("beagle") ||
                 arguments.hasOption("beagle_CPU") ||
                 arguments.hasOption("beagle_GPU") ||
@@ -323,6 +324,7 @@ public class BeastMain {
                 arguments.hasOption("beagle_double") ||
                 arguments.hasOption("beagle_single") ||
                 arguments.hasOption("beagle_order") ||
+                arguments.hasOption("beagle_scaling") ||
                 arguments.hasOption("beagle_instances");
 
         if (arguments.hasOption("beagle_scaling")) {

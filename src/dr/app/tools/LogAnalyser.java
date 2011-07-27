@@ -36,6 +36,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.Locale;
 
 public class LogAnalyser {
 
@@ -181,6 +182,10 @@ public class LogAnalyser {
 
     //Main method
     public static void main(String[] args) throws java.io.IOException, TraceException {
+
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         printTitle();
 

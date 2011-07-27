@@ -39,6 +39,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.logging.*;
 
 public class BeastMC3 {
@@ -271,6 +272,9 @@ public class BeastMC3 {
     //Main method
     public static void main(String[] args) throws IOException {
 
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{

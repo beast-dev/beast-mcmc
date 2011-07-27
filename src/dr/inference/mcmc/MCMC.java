@@ -273,13 +273,13 @@ public class MCMC implements Identifiable, Spawnable {
     private void showOperatorAnalysis(PrintStream out) {
         out.println();
         out.println("Operator analysis");
-        out.println(formatter.formatToFieldWidth("Operator", 50) +
-                formatter.formatToFieldWidth("Tuning", 9) +
-                formatter.formatToFieldWidth("Count", 11) +
-                formatter.formatToFieldWidth("Time", 9) +
-                formatter.formatToFieldWidth("Time/Op", 9) +
-                formatter.formatToFieldWidth("Pr(accept)", 11) +
-                " Performance suggestion");
+            out.println(formatter.formatToFieldWidth("Operator", 50) +
+                    formatter.formatToFieldWidth("Tuning", 9) +
+                    formatter.formatToFieldWidth("Count", 11) +
+                    formatter.formatToFieldWidth("Time", 9) +
+                    formatter.formatToFieldWidth("Time/Op", 9) +
+                    formatter.formatToFieldWidth("Pr(accept)", 11) +
+                    (options.useCoercion() ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 
@@ -293,7 +293,8 @@ public class MCMC implements Identifiable, Spawnable {
                             + formattedTimeString(op)
                             + formattedTimePerOpString(op)
                             + formattedProbString(jointOp)
-                            + formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)));
+                            + (options.useCoercion() ? "" : formattedDiagnostics(jointOp, MCMCOperator.Utils.getAcceptanceProbability(jointOp)))
+                    );
                 }
             } else {
                 out.println(formattedOperatorName(op.getOperatorName())
@@ -302,7 +303,8 @@ public class MCMC implements Identifiable, Spawnable {
                         + formattedTimeString(op)
                         + formattedTimePerOpString(op)
                         + formattedProbString(op)
-                        + formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)));
+                        + (options.useCoercion() ? "" : formattedDiagnostics(op, MCMCOperator.Utils.getAcceptanceProbability(op)))
+                );
             }
 
         }

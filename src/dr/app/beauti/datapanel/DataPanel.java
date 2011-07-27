@@ -664,9 +664,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 case 1:
                     return partition.getFileName();
                 case 2:
-                    return "" + partition.getTaxonCount();
+                    return "" + (partition.getTaxonCount() >= 0 ? partition.getTaxonCount() : "-");
                 case 3:
-                    return "" + partition.getSiteCount(); // sequence length
+                    return "" + (partition.getSiteCount() >= 0 ? partition.getSiteCount() : "-");
                 case 4:
                     return partition.getDataDescription();
                 case 5:

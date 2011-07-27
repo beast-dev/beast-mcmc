@@ -28,6 +28,8 @@ package dr.math.distributions;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
+import org.apache.commons.math.MathException;
+import org.apache.commons.math.distribution.GammaDistributionImpl;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -143,9 +145,9 @@ public class GammaDistribution implements Distribution {
         if (shape == 1.0) {
             return Math.exp(-xs) / scale;
         }
-       
+
         final double a = Math.exp((shape - 1.0) * Math.log(xs) - xs
-                        - GammaFunction.lnGamma(shape));
+                - GammaFunction.lnGamma(shape));
 
         return a / scale;
     }
@@ -428,13 +430,13 @@ public class GammaDistribution implements Distribution {
 
         final double e = 0.5e-6, aa = 0.6931471805, p = prob;
         double ch, a, q, p1, p2, t, x, b, s1, s2, s3, s4, s5, s6;
-          double epsi = .01;
+        double epsi = .01;
         if( p < 0.000002 || p > 1 - 0.000002)  {
             epsi = .000001;
         }
-       // if (p < 0.000002 || p > 0.999998 || v <= 0) {
-      //      throw new IllegalArgumentException("Arguments out of range p" + p + " v " + v);
-      //  }
+        // if (p < 0.000002 || p > 0.999998 || v <= 0) {
+        //      throw new IllegalArgumentException("Arguments out of range p" + p + " v " + v);
+        //  }
         double g = GammaFunction.lnGamma(v / 2);
         double xx = v / 2;
         double c = xx - 1;
@@ -499,105 +501,161 @@ public class GammaDistribution implements Distribution {
 
     public static void main(String[] args) {
 
-        System.out
-                .println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");
+        testQuantile(1e-10, 0.878328435043444, 0.0013696236839573005);
+        testQuantile(0.5, 0.878328435043444, 0.0013696236839573005);
+        testQuantile(1.0 - 1e-10, 0.878328435043444, 0.0013696236839573005);
 
-        int iters = 30000;
-        testExpGamma(1.0, 0.01, 7, iters);
-        testExpGamma(1.0, 0.01, 5, iters);
-        testExpGamma(2.0, 0.01, 10000, iters);
-        testExpGamma(1.0, 0.01, 10000, iters);
-        testExpGamma(0.1, 0.01, 10000, iters);
-        testExpGamma(0.01, 0.01, 10000, iters);
+        testQuantileCM(1e-10, 0.878328435043444, 0.0013696236839573005);
+        testQuantileCM(0.5, 0.878328435043444, 0.0013696236839573005);
+        testQuantileCM(1.0 - 1e-10, 0.878328435043444, 0.0013696236839573005);
 
-        testExpGamma(2.0, 0.01, 10, iters);
-        testExpGamma(1.5, 0.01, 10, iters);
-        testExpGamma(1.0, 0.01, 10, iters);
-        testExpGamma(0.9, 0.01, 10, iters);
-        testExpGamma(0.5, 0.01, 10, iters);
-        testExpGamma(0.4, 0.01, 10, iters);
-        testExpGamma(0.3, 0.01, 10, iters);
-        testExpGamma(0.2, 0.01, 10, iters);
-        testExpGamma(0.1, 0.01, 10, iters);
 
-        // test distributions with severe bias, where rejection sampling doesn't
-        // work anymore
-        testExpGamma2(2.0, 0.01, 1, iters, 0.112946);
-        testExpGamma2(2.0, 0.01, 0.1, iters, 0.328874);
-        testExpGamma2(2.0, 0.01, 0.01, iters, 1.01255);
-        testExpGamma2(1.0, 0.01, 0.0003, iters, 5.781);
-        testExpGamma2(4.0, 0.01, 0.0003, iters, 5.79604);
-        testExpGamma2(20.0, 0.01, 0.0003, iters, 5.87687);
-        testExpGamma2(10.0, 0.01, 0.01, iters, 1.05374);
-        testExpGamma2(1.0, 0.01, 0.05, iters, 0.454734);
-        // test the basic Gamma distribution
-        test(1.0, 1.0, iters);
-        test(2.0, 1.0, iters);
-        test(3.0, 1.0, iters);
-        test(4.0, 1.0, iters);
-        test(100.0, 1.0, iters);
-        testAddition(0.5, 1.0, 2, iters);
-        testAddition(0.25, 1.0, 4, iters);
-        testAddition(0.1, 1.0, 10, iters);
-        testAddition(10, 1.0, 10, iters);
-        testAddition(20, 1.0, 10, iters);
-        test(0.001, 1.0, iters);
-        test(1.0, 2.0, iters);
-        test(10.0, 1.0, iters);
-        test(16.0, 1.0, iters);
-        test(16.0, 0.1, iters);
-        test(100.0, 1.0, iters);
-        test(0.5, 1.0, iters);
-        test(0.5, 0.1, iters);
-        test(0.1, 1.0, iters);
-        test(0.9, 1.0, iters);
-        // test distributions with milder biases, and compare with results from
-        // simple rejection sampling
-        testExpGamma(2.0, 0.000001, 1000000, iters);
-        testExpGamma(2.0, 0.000001, 100000, iters);
-        testExpGamma(2.0, 0.000001, 70000, iters);
-        testExpGamma(10.0, 0.01, 7, iters);
-        testExpGamma(10.0, 0.01, 5, iters);
-        testExpGamma(1.0, 0.01, 100, iters);
-        testExpGamma(1.0, 0.01, 10, iters);
-        testExpGamma(1.0, 0.01, 7, iters / 3);
-        testExpGamma(1.0, 0.01, 5, iters / 3);
-        testExpGamma(1.0, 0.00001, 1000000, iters);
-        testExpGamma(1.0, 0.00001, 100000, iters);
-        testExpGamma(1.0, 0.00001, 10000, iters);
-        testExpGamma(1.0, 0.00001, 5000, iters / 3); /*
-														 * this one takes some
-														 * time
-														 */
-        testExpGamma(2.0, 1.0, 0.5, iters);
-        testExpGamma(2.0, 1.0, 1.0, iters);
-        testExpGamma(2.0, 1.0, 2.0, iters);
-        testExpGamma(3.0, 3.0, 2.0, iters);
-        testExpGamma(10.0, 3.0, 5.0, iters);
-        testExpGamma(1.0, 3.0, 5.0, iters);
-        testExpGamma(1.0, 10.0, 5.0, iters);
-        testExpGamma(2.0, 10.0, 5.0, iters);
-        // test the basic Gamma distribution
-        test(1.0, 1.0, iters);
-        test(2.0, 1.0, iters);
-        test(3.0, 1.0, iters);
-        test(4.0, 1.0, iters);
-        test(100.0, 1.0, iters);
-        testAddition(0.5, 1.0, 2, iters);
-        testAddition(0.25, 1.0, 4, iters);
-        testAddition(0.1, 1.0, 10, iters);
-        testAddition(10, 1.0, 10, iters);
-        testAddition(20, 1.0, 10, iters);
-        test(0.001, 1.0, iters);
-        test(1.0, 2.0, iters);
-        test(10.0, 1.0, iters);
-        test(16.0, 1.0, iters);
-        test(16.0, 0.1, iters);
-        test(100.0, 1.0, iters);
-        test(0.5, 1.0, iters);
-        test(0.5, 0.1, iters);
-        test(0.1, 1.0, iters);
-        test(0.9, 1.0, iters);
+for (double i = 0.0125; i < 1.0; i += 0.025) {
+System.out.print(i + ": ");
+try {
+System.out.println(new GammaDistributionImpl(0.878328435043444, 0.0013696236839573005).inverseCumulativeProbability(i));
+} catch (MathException e) {
+System.out.println(e.getMessage());
+}
+}
+
+
+//        System.out
+//                .println("K-S critical values: 1.22(10%), 1.36(5%), 1.63(1%)\n");
+//
+//        int iters = 30000;
+//        testExpGamma(1.0, 0.01, 7, iters);
+//        testExpGamma(1.0, 0.01, 5, iters);
+//        testExpGamma(2.0, 0.01, 10000, iters);
+//        testExpGamma(1.0, 0.01, 10000, iters);
+//        testExpGamma(0.1, 0.01, 10000, iters);
+//        testExpGamma(0.01, 0.01, 10000, iters);
+//
+//        testExpGamma(2.0, 0.01, 10, iters);
+//        testExpGamma(1.5, 0.01, 10, iters);
+//        testExpGamma(1.0, 0.01, 10, iters);
+//        testExpGamma(0.9, 0.01, 10, iters);
+//        testExpGamma(0.5, 0.01, 10, iters);
+//        testExpGamma(0.4, 0.01, 10, iters);
+//        testExpGamma(0.3, 0.01, 10, iters);
+//        testExpGamma(0.2, 0.01, 10, iters);
+//        testExpGamma(0.1, 0.01, 10, iters);
+//
+//        // test distributions with severe bias, where rejection sampling doesn't
+//        // work anymore
+//        testExpGamma2(2.0, 0.01, 1, iters, 0.112946);
+//        testExpGamma2(2.0, 0.01, 0.1, iters, 0.328874);
+//        testExpGamma2(2.0, 0.01, 0.01, iters, 1.01255);
+//        testExpGamma2(1.0, 0.01, 0.0003, iters, 5.781);
+//        testExpGamma2(4.0, 0.01, 0.0003, iters, 5.79604);
+//        testExpGamma2(20.0, 0.01, 0.0003, iters, 5.87687);
+//        testExpGamma2(10.0, 0.01, 0.01, iters, 1.05374);
+//        testExpGamma2(1.0, 0.01, 0.05, iters, 0.454734);
+//        // test the basic Gamma distribution
+//        test(1.0, 1.0, iters);
+//        test(2.0, 1.0, iters);
+//        test(3.0, 1.0, iters);
+//        test(4.0, 1.0, iters);
+//        test(100.0, 1.0, iters);
+//        testAddition(0.5, 1.0, 2, iters);
+//        testAddition(0.25, 1.0, 4, iters);
+//        testAddition(0.1, 1.0, 10, iters);
+//        testAddition(10, 1.0, 10, iters);
+//        testAddition(20, 1.0, 10, iters);
+//        test(0.001, 1.0, iters);
+//        test(1.0, 2.0, iters);
+//        test(10.0, 1.0, iters);
+//        test(16.0, 1.0, iters);
+//        test(16.0, 0.1, iters);
+//        test(100.0, 1.0, iters);
+//        test(0.5, 1.0, iters);
+//        test(0.5, 0.1, iters);
+//        test(0.1, 1.0, iters);
+//        test(0.9, 1.0, iters);
+//        // test distributions with milder biases, and compare with results from
+//        // simple rejection sampling
+//        testExpGamma(2.0, 0.000001, 1000000, iters);
+//        testExpGamma(2.0, 0.000001, 100000, iters);
+//        testExpGamma(2.0, 0.000001, 70000, iters);
+//        testExpGamma(10.0, 0.01, 7, iters);
+//        testExpGamma(10.0, 0.01, 5, iters);
+//        testExpGamma(1.0, 0.01, 100, iters);
+//        testExpGamma(1.0, 0.01, 10, iters);
+//        testExpGamma(1.0, 0.01, 7, iters / 3);
+//        testExpGamma(1.0, 0.01, 5, iters / 3);
+//        testExpGamma(1.0, 0.00001, 1000000, iters);
+//        testExpGamma(1.0, 0.00001, 100000, iters);
+//        testExpGamma(1.0, 0.00001, 10000, iters);
+//        testExpGamma(1.0, 0.00001, 5000, iters / 3); /*
+//														 * this one takes some
+//														 * time
+//														 */
+//        testExpGamma(2.0, 1.0, 0.5, iters);
+//        testExpGamma(2.0, 1.0, 1.0, iters);
+//        testExpGamma(2.0, 1.0, 2.0, iters);
+//        testExpGamma(3.0, 3.0, 2.0, iters);
+//        testExpGamma(10.0, 3.0, 5.0, iters);
+//        testExpGamma(1.0, 3.0, 5.0, iters);
+//        testExpGamma(1.0, 10.0, 5.0, iters);
+//        testExpGamma(2.0, 10.0, 5.0, iters);
+//        // test the basic Gamma distribution
+//        test(1.0, 1.0, iters);
+//        test(2.0, 1.0, iters);
+//        test(3.0, 1.0, iters);
+//        test(4.0, 1.0, iters);
+//        test(100.0, 1.0, iters);
+//        testAddition(0.5, 1.0, 2, iters);
+//        testAddition(0.25, 1.0, 4, iters);
+//        testAddition(0.1, 1.0, 10, iters);
+//        testAddition(10, 1.0, 10, iters);
+//        testAddition(20, 1.0, 10, iters);
+//        test(0.001, 1.0, iters);
+//        test(1.0, 2.0, iters);
+//        test(10.0, 1.0, iters);
+//        test(16.0, 1.0, iters);
+//        test(16.0, 0.1, iters);
+//        test(100.0, 1.0, iters);
+//        test(0.5, 1.0, iters);
+//        test(0.5, 0.1, iters);
+//        test(0.1, 1.0, iters);
+//        test(0.9, 1.0, iters);
+
+    }
+
+    private static void testQuantile(double y, double shape, double scale) {
+
+        long time = System.currentTimeMillis();
+
+        double value = 0;
+        for (int i = 0; i < 1000; i++) {
+            value = quantile(y, shape, scale);
+        }
+        value = quantile(y, shape, scale);
+        long elapsed = System.currentTimeMillis() - time;
+
+
+        System.out.println("Quantile, "+ y +", for shape=" + shape + ", scale=" + scale
+                + " : " + value + ", time=" + elapsed + "ms");
+
+    }
+    private static void testQuantileCM(double y, double shape, double scale) {
+
+        long time = System.currentTimeMillis();
+
+        double value = 0;
+        try {
+            for (int i = 0; i < 1000; i++) {
+                value = (new org.apache.commons.math.distribution.GammaDistributionImpl(shape, scale)).inverseCumulativeProbability(y);
+            }
+            value = (new org.apache.commons.math.distribution.GammaDistributionImpl(shape, scale)).inverseCumulativeProbability(y);
+        } catch (MathException e) {
+            e.printStackTrace();
+        }
+        long elapsed = System.currentTimeMillis() - time;
+
+
+        System.out.println("commons.maths inverseCDF, "+ y +", for shape=" + shape + ", scale=" + scale
+                + " : " + value + ", time=" + elapsed + "ms");
 
     }
 

@@ -113,29 +113,29 @@ public class TraceAnalysis {
             TraceDistribution distribution = traces.getDistributionStatistics(i);
 
             double ess = distribution.getESS();
-            System.out.print(traces.getTraceName(i) + "\t");
-            System.out.print(formattedNumber(distribution.getMean()) + "\t");
+            System.out.print(traces.getTraceName(i));
+            System.out.print("\t" + formattedNumber(distribution.getMean()));
 
             if (withStdError) {
-                System.out.print(formattedNumber(distribution.getStdError()) + "\t");
-                System.out.print(formattedNumber(distribution.getMedian()) + "\t");
+                System.out.print("\t" + formattedNumber(distribution.getStdError()));
+                System.out.print("\t" + formattedNumber(distribution.getMedian()));
             }
 
-            System.out.print(formattedNumber(distribution.getLowerHPD()) + "\t");
-            System.out.print(formattedNumber(distribution.getUpperHPD()) + "\t");
+            System.out.print("\t" + formattedNumber(distribution.getLowerHPD()));
+            System.out.print("\t" + formattedNumber(distribution.getUpperHPD()));
 
-            System.out.print(formattedNumber(ess));
+            System.out.print("\t" + formattedNumber(ess));
             
             if (withStdError) {
-                System.out.print(formattedNumber(distribution.getHpdLowerCustom()) + "\t");
-                System.out.print(formattedNumber(distribution.getHpdUpperCustom()) + "\t");
+                System.out.print("\t" + formattedNumber(distribution.getHpdLowerCustom()));
+                System.out.print("\t" + formattedNumber(distribution.getHpdUpperCustom()));
             }
 
             if (ess < 100) {
                 warning += 1;
-                System.out.println("*");
+                System.out.println("\t" + "*");
             } else {
-                System.out.println();
+                System.out.println("\t");
             }
         }
         System.out.println();

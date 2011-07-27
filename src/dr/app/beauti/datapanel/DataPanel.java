@@ -75,8 +75,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
     UnlinkTreesAction unlinkTreesAction = new UnlinkTreesAction();
     LinkTreesAction linkTreesAction = new LinkTreesAction();
 
-    CreateAction createAction = new CreateAction();
-    JButton createImportTraitButton;
+    CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
+    JButton createTraitPartitionButton;
 //    ShowAction showAction = new ShowAction();
 
     public JCheckBox useStarBEASTCheck = new JCheckBox("Use species tree ancestral reconstruction (*BEAST) Heled & Drummond 2010 ");
@@ -197,11 +197,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
         controlPanel1.setOpaque(false);
         controlPanel1.add(actionPanel1);
 
-        createImportTraitButton = new JButton(createAction);
+        createTraitPartitionButton = new JButton(createTraitPartitionAction);
 
         controlPanel1.add(new JLabel("   "));
-        PanelUtils.setupComponent(createImportTraitButton);
-        controlPanel1.add(createImportTraitButton);
+        PanelUtils.setupComponent(createTraitPartitionButton);
+        controlPanel1.add(createTraitPartitionButton);
 
 //        controlPanel1.add(new JLabel(" or "));
 //
@@ -353,7 +353,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         boolean traitAvailable = options.traits != null && options.traits.size() > 0 && (!options.useStarBEAST);
 
         useStarBEASTCheck.setEnabled(taxaAvailable);
-        createImportTraitButton.setEnabled(traitAvailable);
+        createTraitPartitionButton.setEnabled(traitAvailable);
 
 
         dataTableModel.fireTableDataChanged();
@@ -844,8 +844,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    public class CreateAction extends AbstractAction {
-        public CreateAction() {
+    public class CreateTraitPartitionAction extends AbstractAction {
+        public CreateTraitPartitionAction() {
             super("Create partition from trait ...");
             setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
         }

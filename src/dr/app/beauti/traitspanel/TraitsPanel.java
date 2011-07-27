@@ -433,6 +433,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             // user is overwriting an existing trait
             addTrait(newTrait);
 
+            if (createTraitDialog.createTraitPartition()) {
+                options.createPartitionForTrait(name, newTrait);
+            }
+
             fireTraitsChanged();
 //            traitsTableModel.fireTableDataChanged();
 //            dataTableModel.fireTableDataChanged();

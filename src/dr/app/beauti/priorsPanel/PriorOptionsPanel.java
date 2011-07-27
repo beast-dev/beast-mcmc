@@ -544,7 +544,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
     };
 
-    static final PriorOptionsPanel CTMC_RATE_REFERENCE = new PriorOptionsPanel(true) {
+    static final PriorOptionsPanel CTMC_RATE_REFERENCE = new PriorOptionsPanel(false) {
 
         void setup() {
         }

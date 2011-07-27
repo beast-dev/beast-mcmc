@@ -204,7 +204,7 @@ public class NormalDistribution implements Distribution {
     public static double cdf(double x, double mu, double sigma, boolean log_p) {
         boolean i_tail=false;
         double p, cp = Double.NaN;
-        
+
         if(Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return Double.NaN;
         }
@@ -284,7 +284,7 @@ public class NormalDistribution implements Distribution {
             if(log_p) {
                 p = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
                 if((lower && x > 0.0) || (upper && x <= 0.0)) {
-                  cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
+                    cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
                 }
             }
             else {
@@ -307,7 +307,7 @@ public class NormalDistribution implements Distribution {
          * Note that we do want symmetry(0), lower/upper -> hence use y
          */
         else if(log_p || (lower && -37.5193 < x  &&  x < 8.2924)
-            || (upper && -8.2924  < x  &&  x < 37.5193)) {
+                || (upper && -8.2924  < x  &&  x < 37.5193)) {
 
             /* Evaluate pnorm for x in (-37.5, -5.657) union (5.657, 37.5) */
             xsq = 1.0 / (x * x);
@@ -326,7 +326,7 @@ public class NormalDistribution implements Distribution {
             if(log_p) {
                 p = (-xsq * xsq * 0.5) + (-del * 0.5) + Math.log(temp);
                 if((lower && x > 0.0) || (upper && x <= 0.0)) {
-                  cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
+                    cp = Math.log(1.0-Math.exp(-xsq * xsq * 0.5) * Math.exp(-del * 0.5) * temp);
                 }
             }
             else {
@@ -361,53 +361,53 @@ public class NormalDistribution implements Distribution {
     protected double m, sd;
 
     private static final double[] a = {
-        2.2352520354606839287,
-        161.02823106855587881,
-        1067.6894854603709582,
-        18154.981253343561249,
-        0.065682337918207449113
+            2.2352520354606839287,
+            161.02823106855587881,
+            1067.6894854603709582,
+            18154.981253343561249,
+            0.065682337918207449113
     };
     private static final double[] b = {
-        47.20258190468824187,
-        976.09855173777669322,
-        10260.932208618978205,
-        45507.789335026729956
+            47.20258190468824187,
+            976.09855173777669322,
+            10260.932208618978205,
+            45507.789335026729956
     };
     private static final double[] c = {
-        0.39894151208813466764,
-        8.8831497943883759412,
-        93.506656132177855979,
-        597.27027639480026226,
-        2494.5375852903726711,
-        6848.1904505362823326,
-        11602.651437647350124,
-        9842.7148383839780218,
-        1.0765576773720192317e-8
+            0.39894151208813466764,
+            8.8831497943883759412,
+            93.506656132177855979,
+            597.27027639480026226,
+            2494.5375852903726711,
+            6848.1904505362823326,
+            11602.651437647350124,
+            9842.7148383839780218,
+            1.0765576773720192317e-8
     };
     private static final double[] d = {
-        22.266688044328115691,
-        235.38790178262499861,
-        1519.377599407554805,
-        6485.558298266760755,
-        18615.571640885098091,
-        34900.952721145977266,
-        38912.003286093271411,
-        19685.429676859990727
+            22.266688044328115691,
+            235.38790178262499861,
+            1519.377599407554805,
+            6485.558298266760755,
+            18615.571640885098091,
+            34900.952721145977266,
+            38912.003286093271411,
+            19685.429676859990727
     };
     private static final double[] p_ = {
-        0.21589853405795699,
-        0.1274011611602473639,
-        0.022235277870649807,
-        0.001421619193227893466,
-        2.9112874951168792e-5,
-        0.02307344176494017303
+            0.21589853405795699,
+            0.1274011611602473639,
+            0.022235277870649807,
+            0.001421619193227893466,
+            2.9112874951168792e-5,
+            0.02307344176494017303
     };
     private static final double[] q = {
-        1.28426009614491121,
-        0.468238212480865118,
-        0.0659881378689285515,
-        0.00378239633202758244,
-        7.29751555083966205e-5
+            1.28426009614491121,
+            0.468238212480865118,
+            0.0659881378689285515,
+            0.00378239633202758244,
+            7.29751555083966205e-5
     };
 
     private static final int CUTOFF = 16; /* Cutoff allowing exact "*" and "/" */
@@ -415,4 +415,36 @@ public class NormalDistribution implements Distribution {
     private static final double M_SQRT_32 = 5.656854249492380195206754896838; /* The square root of 32 */
     private static final double M_1_SQRT_2PI =  0.398942280401432677939946059934;
     private static final double DBL_EPSILON = 2.2204460492503131e-016;
+
+    public static double standardTail(double x, boolean isUpper)
+    {
+        if (x < 0.0D) {
+            isUpper = !isUpper;
+            x = -x;
+        }
+        double d1;
+        if ((x <= 8.0D) || ((isUpper) && (x <= 37.0D))) {
+            double d2 = 0.5D * x * x;
+            if (x >= 1.28D) {
+                d1 = 0.398942280385D * Math.exp(-d2) / (x - 3.8052E-08D + 1.00000615302D / (x + 0.000398064794D + 1.98615381364D / (x - 0.151679116635D + 5.29330324926D / (x + 4.8385912808D - 15.150897245099999D / (x + 0.742380924027D + 30.789933034000001D / (x + 3.99019417011D))))));
+            }
+            else
+            {
+                d1 = 0.5D - x * (0.398942280444D - 0.399903438504D * d2 / (d2 + 5.75885480458D - 29.821355780800001D / (d2 + 2.62433121679D + 48.6959930692D / (d2 + 5.92885724438D))));
+            }
+        }
+        else {
+            d1 = 0.0D;
+        }
+        if (!isUpper) {
+            d1 = 1.0D - d1;
+        }
+        return d1;
+    }
+
+    public double tailCDF(double x)
+    {
+        return standardTail((x - this.m) / this.sd, true);
+    }
+
 }

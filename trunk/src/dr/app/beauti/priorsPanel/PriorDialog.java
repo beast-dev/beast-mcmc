@@ -61,6 +61,7 @@ public class PriorDialog {
 
     private JPanel contentPanel;
 
+    private JLabel citationText;
     private JChart chart;
     private JPanel quantilePanel;
     private JTextArea quantileText;
@@ -101,6 +102,13 @@ public class PriorDialog {
         quantilePanel.add(quantileLabels);
         quantilePanel.add(quantileText);
 
+        citationText = new JLabel();
+        citationText.setFont(quantileLabels.getFont().deriveFont(11.0f));
+        citationText.setOpaque(false);
+        citationText.setText(
+              "<html>Approximate continuous time Markov chain rate <br>" +
+                    "reference prior developed in Ferreira & Suchard (2008).<br>" +
+                    "Use when explicit prior information is unavailable</html>");
     }
 
     public int showDialog(final Parameter parameter) {
@@ -252,6 +260,10 @@ public class PriorDialog {
 
         if (panel3 != null) {
             optionsPanel.addSpanningComponent(panel3);
+        }
+
+        if (priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR) {
+            optionsPanel.addSpanningComponent(citationText);
         }
 
         if (priorType.isPlottable()) {

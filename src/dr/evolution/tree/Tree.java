@@ -540,6 +540,8 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                 }
                 if (!ignore.contains(id)) {
                     leafCount[0] = 1;
+                } else {
+                    leafCount[0] = 0;
                 }
                 return false;
             }

@@ -1,6 +1,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionPattern;
@@ -68,6 +69,22 @@ public class PatternListGenerator extends Generator {
 //                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
             } else {
+            	
+        		DnDsComponentOptions component = (DnDsComponentOptions) options
+				.getComponentOptions(DnDsComponentOptions.class);
+        		
+				boolean doRobustCounting = component.doRobustCounting();
+
+				if (doRobustCounting) {
+
+//					System.out.println("HERE");
+					for (int i = 1; i <= 3; i++) {
+						writePatternList(partition, i - 1, 3, model
+								.getPrefix(i), false, writer);
+					}
+					
+				} else {
+            	
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
@@ -80,15 +97,20 @@ public class PatternListGenerator extends Generator {
 
                     writePatternList(partition, i - 1, 3, model.getPrefix(i), writer);
 
-//                    writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-                }
+						// writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
+					}
+				}// END: doRobustCounting
 
-            }
+			}// END: pattern is 123
+            
         } else {
             writePatternList(partition, 0, 1, "", writer);
         }
     }
-
+    
+    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, XMLWriter writer) {
+    	writePatternList(partition, offset, every, codonPrefix, true, writer);
+    }
     /**
      * Write a single pattern list
      *
@@ -97,7 +119,7 @@ public class PatternListGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, XMLWriter writer) {
+    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();
@@ -109,7 +131,6 @@ public class PatternListGenerator extends Generator {
         every = Math.max(partEvery, every);
 
         from += offset;
-
 
         // this object is created solely to calculate the number of patterns in the alignment
         SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
@@ -128,6 +149,10 @@ public class PatternListGenerator extends Generator {
 
         if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
+        }
+        
+        if(!unique) {
+        	attributes.add(new Attribute.Default<String>("unique", "" + false));
         }
 
         // generate <patterns>

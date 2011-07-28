@@ -25,10 +25,15 @@
 
 package dr.app.treestat.statistics;
 
+import dr.evolution.io.Importer;
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxa;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
+import java.io.IOException;
 import java.util.Set;
 
 /**
@@ -66,10 +71,12 @@ public class BetaTreeDiversityStatistic extends AbstractTreeSummaryStatistic {
             double length = 0;
             if (isUnique(taxonList, tree, node)) {
                 length = tree.getBranchLength(node);
+                //System.out.println("length = " + length);
             }
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 length += getUniqueBranches(tree, tree.getChild(node, i));
             }
+            //System.out.println("length of node " + node + " = " + length);
             return length;
         }
     }
@@ -79,9 +86,13 @@ public class BetaTreeDiversityStatistic extends AbstractTreeSummaryStatistic {
         int count = 0;
         for (String taxon : taxa) {
             count += (taxonList.getTaxonIndex(taxon) >= 0 ? 1 : 0);
+            //System.out.print(taxon + "\t");
         }
-        return (count == 0) || (count == taxa.size());
+        boolean unique = (count == 0) || (count == taxa.size());
 
+        //System.out.println(count + "\t" + unique);
+
+        return unique;
     }
 
     public String getSummaryStatisticName() {
@@ -168,5 +179,19 @@ public class BetaTreeDiversityStatistic extends AbstractTreeSummaryStatistic {
     };
 
     private TaxonList taxonList = null;
+
+    public static void main(String[] arg) throws IOException, Importer.ImportException {
+        Tree tree = (new NewickImporter("((A:1,B:1):1,(C:1, D:1):1);")).importNextTree();
+
+        BetaTreeDiversityStatistic statistic = (BetaTreeDiversityStatistic) BetaTreeDiversityStatistic.FACTORY.createStatistic();
+
+        Taxa taxa = new Taxa();
+        taxa.addTaxon(new Taxon("A"));
+        taxa.addTaxon(new Taxon("C"));
+
+        statistic.setTaxonList(taxa);
+
+        System.out.println(statistic.getSummaryStatistic(tree)[0]);
+    }
 }
 

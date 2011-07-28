@@ -431,7 +431,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
             Integer value = ((WholeNumberField) valueField).getValue();
             statistic.setInteger(value);
-        } else {
+        } else if (factory.allowsString()) {
             String value = valueField.getText();
             statistic.setString(value);
         }

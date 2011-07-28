@@ -393,7 +393,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int observationIndex = upperThresholdIndices[i];
             int dist = distanceIndices[observationIndex];
             if (distanceUpdate[dist]) {
-                double cdf = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd);
+                double cdf = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, false);
                 thresholds[j] = Math.log(1.0 - cdf);
             }
             if (Double.isInfinite(thresholds[j])) {
@@ -406,7 +406,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int observationIndex = upperThresholdIndices[i];
             int dist = distanceIndices[observationIndex];
             if (distanceUpdate[dist]) {
-                thresholds[j] = Math.log(NormalDistribution.cdf(observations[observationIndex], distances[dist], sd));
+                thresholds[j] = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, true);
             }
             sum += thresholds[j];
             j++;
@@ -420,7 +420,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double sd = 1.0 / Math.sqrt(precision);
         for (int i = 0; i < observationCount; i++) {
             if (distanceUpdate[i]) {
-                truncations[i] = Math.log(NormalDistribution.cdf(distances[distanceIndices[i]], 0.0, sd));
+                truncations[i] = NormalDistribution.cdf(distances[distanceIndices[i]], 0.0, sd, true);
             }
             sum += truncations[i];
         }

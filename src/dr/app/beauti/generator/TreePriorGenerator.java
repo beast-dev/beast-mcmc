@@ -250,9 +250,9 @@ public class TreePriorGenerator extends Generator {
                 break;
 
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
                 writer.writeComment("A prior on the distribution node heights defined given");
-                writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP ?
+                writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING ?
                         BirthDeathModelParser.getCitationRHO() : BirthDeathModelParser.getCitation());
                 writer.writeOpenTag(
                         BirthDeathModelParser.BIRTH_DEATH_MODEL,
@@ -265,7 +265,7 @@ public class TreePriorGenerator extends Generator {
                 writeParameter(BirthDeathModelParser.BIRTHDIFF_RATE, BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, prior, writer);
                 writeParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE, BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, prior, writer);
 
-                if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
+                if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
                     writeParameter(BirthDeathModelParser.SAMPLE_PROB,
                             BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB, prior, writer);
                 }
@@ -274,9 +274,9 @@ public class TreePriorGenerator extends Generator {
 
                 break;
 
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
-                writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM ?
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+                writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER ?
                         BirthDeathSerialSamplingModelParser.getCitationRT() : BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
 
                 writer.writeOpenTag(
@@ -299,7 +299,7 @@ public class TreePriorGenerator extends Generator {
                 writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
 
-                if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+                if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                     writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
                             BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, prior, writer);
 //                    writeParameter(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE,
@@ -378,9 +378,9 @@ public class TreePriorGenerator extends Generator {
         switch (treePrior) {
             case YULE:
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
 
                 // generate a speciational process
                 writer.writeComment("Generate a speciation likelihood for Yule or Birth Death");
@@ -595,11 +595,11 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(YuleModelParser.YULE_MODEL, priorPrefix + YuleModelParser.YULE);
                 break;
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
                 writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, priorPrefix + BirthDeathModelParser.BIRTH_DEATH);
                 break;
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writer.writeIDref(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
                         priorPrefix + BirthDeathSerialSamplingModelParser.BDSS);
                 break;
@@ -757,15 +757,15 @@ public class TreePriorGenerator extends Generator {
                 writeParameterRef(modelPrefix + "yule.birthRate", writer);
                 break;
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
                 writeParameterRef(modelPrefix + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, writer);
                 writeParameterRef(modelPrefix + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME, writer);
-                if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_INCOM_SAMP)
+                if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
                     writeParameterRef(modelPrefix + BirthDeathModelParser.BIRTH_DEATH + "."
                             + BirthDeathModelParser.SAMPLE_PROB, writer);
                 break;
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -776,7 +776,7 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.PSI, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.ORIGIN, writer);
-                if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+                if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                     writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                             + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, writer);
 //                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -865,9 +865,9 @@ public class TreePriorGenerator extends Generator {
 
             case YULE:
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
                 break;
             case SKYLINE:
@@ -901,9 +901,9 @@ public class TreePriorGenerator extends Generator {
 
             case YULE:
             case BIRTH_DEATH:
-            case BIRTH_DEATH_INCOM_SAMP:
-            case BIRTH_DEATH_SERI_SAMP:
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, modelPrefix + "speciation");
                 break;
             case SKYLINE:

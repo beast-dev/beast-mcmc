@@ -228,13 +228,18 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
                 // Find correct tree for this rate parameter
+
                 PartitionTreeModel treeModel = null;
-                for (int i = 0; i < options.getPartitionClockModels().size(); ++i) {
-                    PartitionClockModel pcm = options.getPartitionClockModels().get(i);
+                for (PartitionClockModel pcm : options.getPartitionClockModels()) {
                     if (pcm.getClockRateParam() == parameter) {
-                        treeModel = options.getPartitionTreeModels().get(i);
-                        break;
+                        for (AbstractPartitionData pd : options.getAllPartitionData(pcm)) {
+                            treeModel = pd.getPartitionTreeModel();
+                            break;
+                        }
                     }
+                }
+                if (treeModel == null) {
+                    throw new IllegalArgumentException("No tree model found for clock model");
                 }
                 writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);

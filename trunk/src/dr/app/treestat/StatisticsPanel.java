@@ -1,7 +1,7 @@
 /*
  * StatisticsPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,6 +26,7 @@
 package dr.app.treestat;
 
 import dr.app.gui.components.RealNumberField;
+import dr.app.gui.components.WholeNumberField;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -33,7 +34,6 @@ import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
 import jam.util.IconUtils;
-import dr.app.gui.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -86,6 +86,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(TMRCASummaryStatistic.FACTORY);
         availableStatistics.add(CladeMRCAAttributeStatistic.FACTORY);
         availableStatistics.add(CladeMeanAttributeStatistic.FACTORY);
+        availableStatistics.add(BetaTreeDiversityStatistic.FACTORY);
 //        availableStatistics.add(MeanRootToTipLength.FACTORY);
 //        availableStatistics.add(MedianRootToTipLength.FACTORY);
 

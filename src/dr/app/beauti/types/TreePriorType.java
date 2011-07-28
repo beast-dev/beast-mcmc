@@ -37,9 +37,9 @@ public enum TreePriorType {
     GMRF_SKYRIDE("Coalescent: GMRF Bayesian Skyride"),
     YULE("Speciation: Yule Process"),
     BIRTH_DEATH("Speciation: Birth-Death Process"),
-    BIRTH_DEATH_INCOM_SAMP("Speciation: Birth-Death Incomplete Sampling"),
-    BIRTH_DEATH_SERI_SAMP("Speciation: Birth-Death Serially Sampled"),
-    BIRTH_DEATH_SERI_SAMP_ESTIM("Speciation: Birth-Death Serially Sampled Estimating Reproductive"),
+    BIRTH_DEATH_INCOMPLETE_SAMPLING("Speciation: Birth-Death Incomplete Sampling"),
+    BIRTH_DEATH_SERIAL_SAMPLING("Speciation: Birth-Death Serially Sampled"),
+    BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER("Epidemiology: Birth-Death Basic Reproductive Number"),
     SPECIES_YULE("Species Tree: Yule Process"),
     SPECIES_BIRTH_DEATH("Species Tree: Birth-Death Process");
 

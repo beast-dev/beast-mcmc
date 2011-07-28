@@ -257,12 +257,12 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(getParameter("skyride.precision"));
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             params.add(getParameter("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             params.add(getParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             params.add(getParameter(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP)
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
                 params.add(getParameter(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP || nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING || nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA));
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -275,7 +275,7 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(psi);
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN));
-            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                 params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS));
 //                params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -329,12 +329,12 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("demographic.scaleActive"));
         } else if (nodeHeightPrior == TreePriorType.YULE) {
             ops.add(getOperator("yule.birthRate"));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             ops.add(getOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
             ops.add(getOperator(BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME));
-            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOM_SAMP)
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING)
                 ops.add(getOperator(BirthDeathModelParser.BIRTH_DEATH + "." + BirthDeathModelParser.SAMPLE_PROB));
-        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP || nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+        } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERIAL_SAMPLING || nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
             ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA));
             ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -345,7 +345,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.PSI));
             ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN));
-            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM) {
+            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                 ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS));
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."

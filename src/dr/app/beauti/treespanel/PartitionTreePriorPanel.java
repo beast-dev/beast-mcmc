@@ -52,8 +52,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 5016996360264782252L;
 
-    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT,
-            TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM).toArray());
+    private JComboBox treePriorCombo = new JComboBox();
 
     private JComboBox parameterizationCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.GROWTH_RATE,
             TreePriorParameterizationType.DOUBLING_TIME).toArray());
@@ -85,6 +84,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;
 
+        setTreePriorChoices(false, false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -174,7 +174,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
                 citation = //citationCoalescent +  "\n" +
-                         "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
+                        "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
 //                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
                 break;
 
@@ -208,18 +208,18 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 break;
             case YULE:
                 citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
-                           "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
+                        "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
                 break;
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();
                 break;
-            case BIRTH_DEATH_INCOM_SAMP:
+            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
                 citation = BirthDeathModelParser.getCitationRHO();
                 break;
-            case BIRTH_DEATH_SERI_SAMP:
+            case BIRTH_DEATH_SERIAL_SAMPLING:
                 citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
                 break;
-            case BIRTH_DEATH_SERI_SAMP_ESTIM:
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 citation = BirthDeathSerialSamplingModelParser.getCitationRT();
                 break;
             default:
@@ -317,22 +317,22 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //        treePriorCombo.addItem(TreePriorType.CONSTANT);
 //    }
 
-    public void removeBayesianSkylineTreePrior() {
-        treePriorCombo.removeItem(TreePriorType.SKYLINE);
-    }
-
-    public void removeCertainPriorFromTreePriorCombo() {
-        treePriorCombo.removeItem(TreePriorType.YULE);
-        treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-        treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOM_SAMP);
-    }
-
-    public void recoveryTreePriorCombo() {
-        if (treePriorCombo.getItemCount() < EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM).size()) {
-            treePriorCombo.removeAllItems();
-            for (TreePriorType tpt : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_SERI_SAMP_ESTIM)) {
-                treePriorCombo.addItem(tpt);
-            }
+    public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
+        treePriorCombo.removeAllItems();
+        for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER)) {
+            treePriorCombo.addItem(treePriorType);
         }
+
+        // would be much better to disable these rather than removing them
+        if (isMultiLocus) {
+            treePriorCombo.removeItem(TreePriorType.SKYLINE);
+        }
+
+        if (isTipCalibrated) {
+            // remove models that require contemporaneous tips...
+            treePriorCombo.removeItem(TreePriorType.YULE);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
+          }
     }
 }

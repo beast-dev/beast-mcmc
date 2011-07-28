@@ -1,16 +1,10 @@
 package dr.app.beauti.components.dnds;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.util.Attribute;
-import dr.evolution.alignment.Alignment;
-import dr.evoxml.AlignmentParser;
 
 /**
  * @author Filip Bielejec
@@ -43,14 +37,14 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 			return false;
 		}
 
-	}
+	}// END: usesInsertionPoint
 
 	protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
 
 		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
 
-//		modifySitePatterns();
+		// writePatternList(writer, component);
 
 		switch (point) {
 		case IN_OPERATORS:
@@ -72,7 +66,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 							+ this.getClass().getName());
 		}
 
-	}
+	}// END: generate
 
 	protected String getCommentLabel() {
 		return "Codon partitioned robust counting";
@@ -164,6 +158,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+
 	}// END: writeLogs()
 
 	private void writeTreeLogs(XMLWriter writer, DnDsComponentOptions component) {
@@ -179,7 +174,6 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		for (PartitionSubstitutionModel model : component.getPartitionList()) {
 			writeDNdSLogger(writer, model);
-			// model.getDataType()
 		}
 	}
 
@@ -221,45 +215,70 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		writer.writeComment("Robust counting for: " + model.getName());
 
 		writer.writeOpenTag("report");
-		// TODO: is there other way to do it?
+
 		writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
 				+ ".log\"/> \n");
+
 		writer.writeCloseTag("report");
 
 	}// END: writeDNdSReport()
 
-	private void modifySitePatterns() {
+	// private void writePatternList(XMLWriter writer,
+	// DnDsComponentOptions component) {
+	//
+	// try {
+	//
+	// for (PartitionSubstitutionModel model : component
+	// .getPartitionList()) {
+	//
+	// writer
+	// .writeComment("unique=\"false\" returns one pattern for each and every site");
+	//
+	// // TODO do we need this loop?
+	// for (AbstractPartitionData partition : options.dataPartitions) {
+	//
+	// for (int i = 1; i <= 3; i++) {
+	//
+	// writePatternList((PartitionData) partition, i, 3,
+	// false, model.getPrefix(i), writer);
+	//
+	// writer.writeBlankLine();
+	//
+	// }// END: codon positions loop
+	// }// END: AbstractPartitionData loop
+	//
+	// }// END: model loop
+	//
+	// } catch (Exception e) {
+	// e.getCause().printStackTrace();
+	// }
+	//
+	// }// END: modifySitePatterns()
 
-		try {
-
-			DnDsComponentOptions component = (DnDsComponentOptions) options
-					.getComponentOptions(DnDsComponentOptions.class);
-
-			Thread thread = Thread.currentThread();
-			ClassLoader classLoader = thread.getContextClassLoader();
-			Class<?> classToModify = Class.forName(
-					"dr.evolution.alignment.SitePatterns", true, classLoader);
-			Constructor<?>[] constructors = classToModify
-					.getDeclaredConstructors();
-			Field[] fields = classToModify.getDeclaredFields();
-
-
-			// TODO: feed it with an instance of Alignment
-			Object classObj = constructors[0].newInstance();
-
-			for (int i = 0; i < fields.length; i++) {
-				if (fields[i].getName() == "unique") {
-
-					fields[i].setAccessible(true);
-					fields[i].set(classObj, false);
-
-				}
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}// END: modifySitePatterns()
+	// @SuppressWarnings("unchecked")
+	// private void writePatternList(PartitionData partition, int from, int
+	// every,
+	// boolean unique, String codonPrefix, XMLWriter writer) {
+	//
+	// Alignment alignment = partition.getAlignment();
+	//
+	// List<Attribute> attributes = new ArrayList<Attribute>();
+	//
+	// attributes.add(new Attribute.Default<String>(XMLParser.ID, codonPrefix
+	// + partition.getPrefix() + SitePatternsParser.PATTERNS));
+	//
+	// attributes.add(new Attribute.Default<String>("from", "" + from));
+	//
+	// attributes.add(new Attribute.Default<String>("every", "" + every));
+	//
+	// attributes.add(new Attribute.Default<String>("unique", "" + unique));
+	//
+	// writer.writeOpenTag(SitePatternsParser.PATTERNS, attributes);
+	//
+	// writer.writeIDref(AlignmentParser.ALIGNMENT, alignment.getId());
+	//
+	// writer.writeCloseTag(SitePatternsParser.PATTERNS);
+	//
+	// }
 
 }// END: class

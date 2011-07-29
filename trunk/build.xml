@@ -133,7 +133,7 @@
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
             <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
-			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
 			<zipgroupfileset dir="${lib}" includes="colt.jar" />
@@ -196,7 +196,7 @@
             <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
-			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 		</jar>
 

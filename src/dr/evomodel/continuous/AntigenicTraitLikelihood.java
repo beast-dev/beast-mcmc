@@ -30,8 +30,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
      * @param mdsDimension dimension of the mds space
      * @param mdsPrecision parameter which gives the precision of the bmds
      * @param tipTraitParameter a parameter of locations for the tips of the tree (mapped to virus locations)
-     * @param virusLocationsParameter a parameter of locations for viruses
-     * @param serumLocationsParameter a parameter of locations for sera
+     * @param locationsParameter a parameter of locations of viruses/sera
      * @param dataTable the assay table (virus in rows, serum assays in columns)
      * @param virusAntiserumMap a map of viruses to corresponding sera
      * @param assayAntiserumMap a map of repeated assays for a given sera
@@ -41,8 +40,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             int mdsDimension,
             Parameter mdsPrecision,
             CompoundParameter tipTraitParameter,
-            MatrixParameter virusLocationsParameter,
-            MatrixParameter serumLocationsParameter,
+            MatrixParameter locationsParameter,
             DataTable<String[]> dataTable,
             Map<String, String> virusAntiserumMap,
             Map<String, String> assayAntiserumMap,
@@ -59,8 +57,13 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         int assayCount = dataTable.getColumnCount();
         int serumCount;
 
-        String[] assayNames = dataTable.getColumnLabels();
-        int[] assayToSerumIndices = new int[assayNames.length];
+        String[] columnNames = dataTable.getColumnLabels();
+        int[] columnToSerumIndices = new int[columnNames.length];
+
+        double[][] observationValueTable = new double[virusCount][assayCount];
+        ObservationType[][] observationTypeTable = new ObservationType[virusCount][assayCount];
+
+        initalizeTable(dataTable, observationValueTable, observationTypeTable, log2Transform);
 
         List<String> aliasNames = null;
 
@@ -69,13 +72,13 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         if (assayAntiserumMap != null) {
             aliasNames = new ArrayList<String>(new TreeSet<String>(assayAntiserumMap.values()));
 
-            for (int i = 0; i < assayNames.length; i++) {
-                String alias = assayAntiserumMap.get(assayNames[i]);
+            for (int i = 0; i < columnNames.length; i++) {
+                String alias = assayAntiserumMap.get(columnNames[i]);
                 if (alias == null) {
-                    throw new IllegalArgumentException("Alias missing for assay, " + assayNames[i]);
+                    throw new IllegalArgumentException("Alias missing for assay, " + columnNames[i]);
                 }
 
-                assayToSerumIndices[i] = aliasNames.indexOf(alias);
+                columnToSerumIndices[i] = aliasNames.indexOf(alias);
             }
 
             // the number of serum locations is the number of aliases
@@ -88,11 +91,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             serumCount = assayCount;
 
             // one alias for one serum
-            for (int i = 0; i < assayToSerumIndices.length; i++) {
-                assayToSerumIndices[i] = i;
+            for (int i = 0; i < columnToSerumIndices.length; i++) {
+                columnToSerumIndices[i] = i;
             }
 
-            serumNames = assayNames;
+            serumNames = columnNames;
         }
 
         int[] virusToSerumIndices = new int[virusNames.length];
@@ -107,12 +110,17 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 } else {
                     virusToSerumIndices[i] = -1;
                 }
-
             }
 
         } else {
+
+            // try and match rows to columns using their names
+            List<String> serumNameList = Arrays.asList(serumNames);
             for (int i = 0; i < virusToSerumIndices.length; i++) {
-                virusToSerumIndices[i] = -1;
+                virusToSerumIndices[i] = serumNameList.indexOf(virusNames[i]);
+                if (virusToSerumIndices[i] == -1) {
+                    throw new IllegalArgumentException("Row, " + virusNames[i] + ", doesn't match any column heading");
+                }
             }
         }
 
@@ -127,16 +135,10 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         int virusSerumPairObservationCounts = 0;
 
-        // the largest measured value for any given column of data
-        // Currently this is the largest across any assay column for a given antisera.
-        // Optionally could normalize by individual assay column
-        double[] maxColumnValue = new double[serumCount];
-        double maxAssayValue = 0.0;
 
         // Build a sparse matrix of non-missing assay values
         int u = 0;
         for (int i = 0; i < virusCount; i++) {
-            String[] dataRow = dataTable.getRow(i);
 
             for (int j = 0; j < serumCount; j++) {
 
@@ -145,30 +147,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 boolean first = true;
 
                 for (int k = 0; k < assayCount; k++) {
-                    if (assayToSerumIndices[k] == j) {
-                        Double value = null;
-                        ObservationType type = null;
+                    if (columnToSerumIndices[k] == j) {
+                        Double value = observationValueTable[i][k];
+                        ObservationType type = observationTypeTable[i][k];
 
-                        if (dataRow[k].startsWith("<")) {
-                            // is a lower bound
-                            value = convertString(dataRow[k].substring(1));
-                            if (Double.isNaN(value)) {
-                                throw new RuntimeException("Illegal value in table as a threshold");
-                            }
-                            type = ObservationType.LOWER_BOUND;
-                        } else if (dataRow[k].startsWith(">")) {
-                            // is a lower bound
-                            value = convertString(dataRow[k].substring(1));
-                            if (Double.isNaN(value)) {
-                                throw new RuntimeException("Illegal value in table as a threshold");
-                            }
-                            type = ObservationType.UPPER_BOUND;
-                        } else {
-                            value = convertString(dataRow[k]);
-                            type = ObservationType.POINT;
-                        }
 
-                        if (!Double.isNaN(value)) {
+                        if (type != ObservationType.MISSING) {
                             observationList.add(value);
                             observationTypeList.add(type);
                             distanceIndexList.add(u);
@@ -177,13 +161,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
                             if(isVirusSerumPair) {
                                 virusSerumPairObservationCounts ++;
-                            }
-
-                            if (value > maxColumnValue[j]) {
-                                maxColumnValue[j] = value;
-                            }
-                            if (value > maxAssayValue) {
-                                maxAssayValue = value;
                             }
 
                             rowIndexList.add(i);
@@ -235,20 +212,18 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             columnIndices[i] = columnIndexList.get(i);
         }
 
+        // **** not finished - need to handle not matched virus/serum
+        int[] rowLocationIndices = new int[rowIndexList.size()];
+        for (int i = 0; i < rowLocationIndices.length; i++) {
+            rowLocationIndices[i] = i;
+        }
+        int[] columnLocationIndices = new int[columnIndexList.size()];
+        for (int i = 0; i < columnLocationIndices.length; i++) {
+            columnLocationIndices[i] = i;
+        }
+
         ObservationType[] observationTypes = new ObservationType[observationTypeList.size()];
         observationTypeList.toArray(observationTypes);
-
-        // transform and normalize the data if required
-        if (log2Transform) {
-            for (int i = 0; i < observations.length; i++) {
-                observations[i] = transform(observations[i], maxColumnValue[columnIndices[i]], 2);
-//                observations[i] = transform(observations[i], maxAssayValue, 10);
-                // the transformation reverses the bounds
-                if (observationTypes[i] != ObservationType.POINT) {
-                    observationTypes[i] = (observationTypes[i] == ObservationType.UPPER_BOUND ? ObservationType.LOWER_BOUND : ObservationType.UPPER_BOUND);
-                }
-            }
-        }
 
         int thresholdCount = 0;
         for (int i = 0; i < observations.length; i++) {
@@ -264,31 +239,84 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
 
         // some random initial locations
         for (int i = 0; i < virusCount; i++) {
-            virusLocationsParameter.getParameter(i).setId(virusNames[i]);
+            locationsParameter.getParameter(i).setId(virusNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
-//                double r = MathUtils.nextGaussian();
-//                virusLocationsParameter.getParameter(i).setParameterValue(j, r);
+                double r = MathUtils.nextGaussian();
+                locationsParameter.getParameter(i).setParameterValue(j, r);
 
-                virusLocationsParameter.getParameter(i).setParameterValue(j, i * 1000);
+//                locationsParameter.getParameter(i).setParameterValue(j, i * 1000);
             }
         }
 
-        // some random initial locations
-        if (serumLocationsParameter != null) {
-            for (int i = 0; i < serumCount; i++) {
-                serumLocationsParameter.getParameter(i).setId(serumNames[i]);
-                for (int j = 0; j < mdsDimension; j++) {
-                    double r = MathUtils.nextGaussian();
-                    serumLocationsParameter.getParameter(i).setParameterValue(j, r);
+
+    }
+
+    private void initalizeTable(DataTable<String[]> dataTable, double[][] observationValueTable, ObservationType[][] observationTypeTable, boolean log2Transform) {
+        // the largest measured value for any given column of data
+        double[] maxColumnValue = new double[dataTable.getColumnCount()];
+        // the largest measured value over all
+        double maxAssayValue = 0.0;
+
+        for (int i = 0; i < dataTable.getRowCount(); i++) {
+            String[] dataRow = dataTable.getRow(i);
+
+            for (int j = 0; j < dataTable.getColumnCount(); j++) {
+                Double value = null;
+                ObservationType type = null;
+
+                if (dataRow[j].startsWith("<")) {
+                    // is a lower bound
+                    value = convertString(dataRow[j].substring(1));
+                    if (Double.isNaN(value)) {
+                        throw new RuntimeException("Illegal value in table as a threshold");
+                    }
+                    type = ObservationType.LOWER_BOUND;
+                } else if (dataRow[j].startsWith(">")) {
+                    // is a lower bound
+                    value = convertString(dataRow[j].substring(1));
+                    if (Double.isNaN(value)) {
+                        throw new RuntimeException("Illegal value in table as a threshold");
+                    }
+                    type = ObservationType.UPPER_BOUND;
+                } else {
+                    value = convertString(dataRow[j]);
+                    type = Double.isNaN(value) ? ObservationType.MISSING : ObservationType.POINT;
+                }
+
+                observationValueTable[i][j] = value;
+                observationTypeTable[i][j] = type;
+
+                if (!Double.isNaN(value)) {
+                    if (value > maxColumnValue[j]) {
+                        maxColumnValue[j] = value;
+                    }
+                    if (value > maxAssayValue) {
+                        maxAssayValue = value;
+                    }
+
+                }
+
+            }
+        }
+
+        if (log2Transform) {
+            // transform and normalize the data...
+            for (int i = 0; i < dataTable.getRowCount(); i++) {
+                for (int j = 0; j < dataTable.getColumnCount(); j++) {
+                    observationValueTable[i][j] = transform(observationValueTable[i][j], maxColumnValue[j], 2);
+                    // the transformation reverses the bounds
+                    if (observationTypeTable[i][j] == ObservationType.UPPER_BOUND) {
+                        observationTypeTable[i][j] = ObservationType.LOWER_BOUND;
+                    } else if (observationTypeTable[i][j] == ObservationType.LOWER_BOUND) {
+                        observationTypeTable[i][j] = ObservationType.UPPER_BOUND;
+                    }
                 }
             }
         }
-
-
     }
 
     private double convertString(String value) {
@@ -314,8 +342,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         public final static String ASSAY_MAP_FILE_NAME = "assayMapFile";
 
         public final static String TIP_TRAIT = "tipTrait";
-        public final static String VIRUS_LOCATIONS = "virusLocations";
-        public final static String SERUM_LOCATIONS = "serumLocations";
+        public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
 
@@ -369,20 +396,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
             }
 
-            MatrixParameter virusLocationsParameter = (MatrixParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
-            MatrixParameter serumLocationsParameter = null;
-
-            if (xo.hasChildNamed(SERUM_LOCATIONS)) {
-                serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
-            }
-
-            if (serumLocationsParameter != null && serumLocationsParameter.getColumnDimension() != virusLocationsParameter.getColumnDimension()) {
-                throw new XMLParseException("Virus Locations parameter and Serum Locations parameter have different column dimensions");
-            }
+            MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, virusLocationsParameter, serumLocationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
         }
 
         private  Map<String, String> readMap(String fileName) throws IOException {
@@ -426,8 +444,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
-                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class),
-                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "An optional set of serum locations", true),
+                new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

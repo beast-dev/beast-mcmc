@@ -20,7 +20,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     public enum ObservationType {
         POINT,
         UPPER_BOUND,
-        LOWER_BOUND
+        LOWER_BOUND,
+        MISSING
     }
 
     public final static String MULTIDIMENSIONAL_SCALING_LIKELIHOOD = "multidimensionalScalingLikelihood";
@@ -56,8 +57,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double[] observations = new double[observationCount];
         ObservationType[] observationTypes = new ObservationType[observationCount];
         int[] distanceIndices = new int[observationCount];
-        int[] rowIndices = new int[observationCount];
-        int[] columnIndices = new int[observationCount];
+        int[] rowLocationIndices = new int[observationCount];
+        int[] columnLocationIndices = new int[observationCount];
 
         int u = 0;
         for (int i = 0; i < rowCount; i++) {
@@ -68,32 +69,42 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 observations[u] = dataRow[j];
                 observationTypes[u] = ObservationType.POINT;
                 distanceIndices[u] = u;
-                rowIndices[u] = i;
-                columnIndices[u] = j;
+                rowLocationIndices[u] = i;
+                columnLocationIndices[u] = j;
                 u++;
             }
 
         }
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, null, rowLabels, columnLabels, observations, observationTypes, distanceIndices, rowIndices, columnIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, rowLabels, columnLabels, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
     }
 
     protected void initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,
             final CompoundParameter tipTraitParameter,
-            final MatrixParameter rowLocationsParameter,
-            final MatrixParameter columnLocationsParameter,
+            final MatrixParameter locationsParameter,
             final String[] rowLabels,
             final String[] columnLabels,
             final double[] observations,
             final ObservationType[] observationTypes,
             final int[] distanceIndices,
-            final int[] rowIndices,
-            final int[] columnIndices) {
+            final int[] rowLocationIndices,
+            final int[] columnLocationIndices) {
 
         rowCount = rowLabels.length;
         columnCount = columnLabels.length;
+        locationCount = 0;
+        for (int index : rowLocationIndices) {
+            if ((index + 1) > locationCount) {
+                locationCount = index + 1;
+            }
+        }
+        for (int index : columnLocationIndices) {
+            if ((index + 1) > locationCount) {
+                locationCount = index + 1;
+            }
+        }
 
         if (tipTraitParameter != null) {
             tipCount = tipTraitParameter.getNumberOfParameters();
@@ -127,10 +138,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.observations = observations;
         this.observationTypes = observationTypes;
         this.distanceIndices = distanceIndices;
-        this.rowIndices = rowIndices;
-        this.columnIndices = columnIndices;
+        this.rowLocationIndices = rowLocationIndices;
+        this.columnLocationIndices = columnLocationIndices;
 
-        this.distancesCount = rowIndices.length;
+        this.distancesCount = rowLocationIndices.length;
         this.observationCount = observations.length;
         this.upperThresholdCount = 0;
         this.lowerThresholdCount = 0;
@@ -181,22 +192,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             addVariable(tipTraitParameter);
         }
 
-        this.rowLocationsParameter = rowLocationsParameter;
-        rowLocationsParameter.setColumnDimension(mdsDimension);
-        rowLocationsParameter.setRowDimension(rowCount);
-        addVariable(rowLocationsParameter);
-        rowLocationUpdated = new boolean[rowCount];
-
-        if (columnLocationsParameter != null) {
-            this.columnLocationsParameter = columnLocationsParameter;
-            columnLocationsParameter.setColumnDimension(mdsDimension);
-            columnLocationsParameter.setRowDimension(columnCount);
-            addVariable(columnLocationsParameter);
-            columnLocationUpdated = new boolean[columnCount];
-        } else {
-            this.columnLocationsParameter = rowLocationsParameter;
-            columnLocationUpdated = rowLocationUpdated;
-        }
+        this.locationsParameter = locationsParameter;
+        locationsParameter.setColumnDimension(mdsDimension);
+        locationsParameter.setRowDimension(locationCount);
+        addVariable(locationsParameter);
+        locationUpdated = new boolean[locationCount];
 
         // a cache of row to column distances (column indices given by array above).
         distances = new double[distancesCount];
@@ -228,23 +228,18 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         // TODO Flag which cachedDistances or mdsPrecision need to be updated
 
-        if (variable == rowLocationsParameter) {
-            int rowIndex = index / mdsDimension;
+        if (variable == locationsParameter) {
+            int location = index / mdsDimension;
             int dim = index % mdsDimension;
 
             if (tipTraitParameter != null) {
-                if (tipIndices[rowIndex] != -1) {
-                    double value = rowLocationsParameter.getParameterValue(index);
-                    tipTraitParameter.setParameterValue((tipIndices[rowIndex] * mdsDimension) + dim, value);
+                if (tipIndices[location] != -1) {
+                    double value = locationsParameter.getParameterValue(index);
+                    tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
                 }
             }
 
-            rowLocationUpdated[index / mdsDimension] = true;
-            distancesKnown = false;
-            thresholdsKnown = false;
-            truncationKnown = false;
-        } else if (variable == columnLocationsParameter) {
-            columnLocationUpdated[index / mdsDimension] = true;
+            locationUpdated[location] = true;
             distancesKnown = false;
             thresholdsKnown = false;
             truncationKnown = false;
@@ -313,11 +308,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         truncationKnown = false;
         thresholdsKnown = false;
 
-        for (int i = 0; i < rowLocationUpdated.length; i++) {
-            rowLocationUpdated[i] = true;
-        }
-        for (int i = 0; i < columnLocationUpdated.length; i++) {
-            columnLocationUpdated[i] = true;
+        for (int i = 0; i < locationUpdated.length; i++) {
+            locationUpdated[i] = true;
         }
         for (int i = 0; i < distanceUpdate.length; i++) {
             distanceUpdate[i] = true;
@@ -340,11 +332,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             likelihoodKnown = true;
         }
 
-        for (int i = 0; i < rowLocationUpdated.length; i++) {
-            rowLocationUpdated[i] = false;
-        }
-        for (int i = 0; i < columnLocationUpdated.length; i++) {
-            columnLocationUpdated[i] = false;
+        for (int i = 0; i < locationUpdated.length; i++) {
+            locationUpdated[i] = false;
         }
         for (int i = 0; i < distanceUpdate.length; i++) {
             distanceUpdate[i] = false;
@@ -441,10 +430,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private void calculateDistances() {
         for (int i = 0; i < distancesCount; i++) {
-            if (rowLocationUpdated[rowIndices[i]] || columnLocationUpdated[columnIndices[i]]) {
+            if (locationUpdated[rowLocationIndices[i]] || locationUpdated[columnLocationIndices[i]]) {
                 distances[i] = calculateDistance(
-                        rowLocationsParameter.getParameter(rowIndices[i]),
-                        columnLocationsParameter.getParameter(columnIndices[i]));
+                        locationsParameter.getParameter(rowLocationIndices[i]),
+                        locationsParameter.getParameter(columnLocationIndices[i]));
                 distanceUpdate[i] = true;
             }
         }
@@ -546,22 +535,22 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int thresholdCount;
 
     private int tipCount;
+    private int locationCount;
     private int rowCount;
     private int columnCount;
 
     private double[] observations;
     private ObservationType[] observationTypes;
     private int[] distanceIndices;
-    private int[] rowIndices;
-    private int[] columnIndices;
+    private int[] rowLocationIndices;
+    private int[] columnLocationIndices;
     private int[] tipIndices;
     private int[] upperThresholdIndices;
     private int[] lowerThresholdIndices;
     private int[] pointObservationIndices;
 
     private CompoundParameter tipTraitParameter;
-    private MatrixParameter rowLocationsParameter;
-    private MatrixParameter columnLocationsParameter;
+    private MatrixParameter locationsParameter;
     private Parameter mdsPrecisionParameter;
 
     private boolean likelihoodKnown = false;
@@ -574,8 +563,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double[] distances;
     private double[] storedDistances;
 
-    private boolean[] rowLocationUpdated;
-    private boolean[] columnLocationUpdated;
+    private boolean[] locationUpdated;
     private boolean[] distanceUpdate;
 
     private boolean truncationKnown = false;

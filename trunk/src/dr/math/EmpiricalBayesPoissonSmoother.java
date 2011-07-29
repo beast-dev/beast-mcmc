@@ -58,6 +58,11 @@ public class EmpiricalBayesPoissonSmoother {
         double shape = returnArray1;
         double scale = (returnArray0 / (1 - returnArray0));
 
+        if (variance <= mean) {
+            shape = 0.0;
+            scale = 0.0;
+        }
+
 //        // Check against Martiz 1969 (beta = shape, alpha = rate in the 1969 paper)
 //        double matrizBeta = mean * mean / (variance - mean);
 //        double matrizAlphaInv = mean / matrizBeta; // scale

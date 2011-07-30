@@ -76,7 +76,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         }
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, rowLabels, columnLabels, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
+        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, rowLabels, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
     }
 
     protected void initialize(
@@ -84,36 +84,23 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             final Parameter mdsPrecision,
             final CompoundParameter tipTraitParameter,
             final MatrixParameter locationsParameter,
-            final String[] rowLabels,
-            final String[] columnLabels,
+            final String[] locationLabels,
             final double[] observations,
             final ObservationType[] observationTypes,
             final int[] distanceIndices,
             final int[] rowLocationIndices,
             final int[] columnLocationIndices) {
 
-        rowCount = rowLabels.length;
-        columnCount = columnLabels.length;
-        locationCount = 0;
-        for (int index : rowLocationIndices) {
-            if ((index + 1) > locationCount) {
-                locationCount = index + 1;
-            }
-        }
-        for (int index : columnLocationIndices) {
-            if ((index + 1) > locationCount) {
-                locationCount = index + 1;
-            }
-        }
+        locationCount = locationLabels.length;
+
+        this.locationLabels = locationLabels;
 
         if (tipTraitParameter != null) {
             tipCount = tipTraitParameter.getNumberOfParameters();
 
-            assert(rowCount == tipCount);
-
-            //  the row -> tip map
-            tipIndices = new int[rowCount];
-            for (int i = 0; i < rowCount; i++) {
+            //  the location -> tip map
+            tipIndices = new int[locationCount];
+            for (int i = 0; i < locationCount; i++) {
                 tipIndices[i] = -1;
             }
 
@@ -122,8 +109,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 if (label.endsWith(".antigenic")) {
                     label = label.substring(0, label.indexOf(".antigenic"));
                 }
-                for (int j = 0; j < rowCount; j++) {
-                    if (label.toUpperCase().startsWith(rowLabels[j].toUpperCase())) {
+                for (int j = 0; j < locationCount; j++) {
+                    if (label.toUpperCase().startsWith(locationLabels[j].toUpperCase())) {
                         tipIndices[j] = i;
                         break;
                     }
@@ -179,9 +166,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         if (tipIndices != null) {
-            for (int i = 0; i < rowCount; i++) {
+            for (int i = 0; i < locationCount; i++) {
                 if (tipIndices[i] == -1) {
-                    System.err.println("Tip, " + rowLabels[i] + ", not found in tree");
+                    System.err.println("Tip, " + locationLabels[i] + ", not found in tree");
                 }
             }
         }
@@ -218,6 +205,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         this.isLeftTruncated = true; // Re-normalize likelihood for strictly positive distances
 
+        // make sure everything is calculated on first evaluation
+        makeDirty();
     }
 
     @Override
@@ -382,11 +371,20 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int observationIndex = upperThresholdIndices[i];
             int dist = distanceIndices[observationIndex];
             if (distanceUpdate[dist]) {
-                double cdf = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, false);
-                thresholds[j] = Math.log(1.0 - cdf);
+//                double cdf = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, false);
+//                double tail = 1.0 - cdf;
+                // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
+                double tail = NormalDistribution.tailCDF(observations[observationIndex], distances[dist], sd);
+                thresholds[j] = Math.log(tail);
             }
             if (Double.isInfinite(thresholds[j])) {
-                System.out.println("err");
+                System.out.println("observationIndex: " + observationIndex);
+                System.out.println("observation: " + observations[observationIndex]);
+                System.out.println("distanceIndex: " + dist);
+                System.out.println("distance: " + distances[dist]);
+                System.out.println("row: " + rowLocationIndices[dist] + " (" + locationLabels[rowLocationIndices[dist]] + ")");
+                System.out.println("col: " + columnLocationIndices[dist] + " (" + locationLabels[columnLocationIndices[dist]] + ")");
+                System.out.println();
             }
             sum += thresholds[j];
             j++;
@@ -408,10 +406,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
         for (int i = 0; i < observationCount; i++) {
-            if (distanceUpdate[i]) {
-                truncations[i] = NormalDistribution.cdf(distances[distanceIndices[i]], 0.0, sd, true);
+            int dist = distanceIndices[i];
+            if (distanceUpdate[dist]) {
+                truncations[dist] = NormalDistribution.cdf(distances[dist], 0.0, sd, true);
             }
-            sum += truncations[i];
+            sum += truncations[dist];
         }
         return sum;
     }
@@ -534,10 +533,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int pointObservationCount;
     private int thresholdCount;
 
+
+    private String[] locationLabels;
+
     private int tipCount;
     private int locationCount;
-    private int rowCount;
-    private int columnCount;
 
     private double[] observations;
     private ObservationType[] observationTypes;

@@ -442,9 +442,43 @@ public class NormalDistribution implements Distribution {
         return d1;
     }
 
+    public static double tailCDF(double x, double mu, double sigma)
+    {
+        return standardTail((x - mu) / sigma, true);
+    }
+
+
     public double tailCDF(double x)
     {
         return standardTail((x - this.m) / this.sd, true);
     }
 
+    static void testTail(double x, double mu, double sigma) {
+        double cdf1 = NormalDistribution.cdf(x, mu, sigma);
+        double tail1 = 1.0 - cdf1;
+        double cdf2 = NormalDistribution.cdf(x, mu, sigma, false);
+        double tail2 = 1.0 - cdf2;
+        double tail3 = NormalDistribution.tailCDF(x, mu, sigma);
+
+        System.out.println(">" + x + " N(" + mu + ", " + sigma + ")");
+        System.out.println("Original CDF: " + tail1);
+        System.out.println("     New CDF: " + tail2);
+        System.out.println("     tailCDF: " + tail3);
+    }
+
+    public static void main(String[] args) {
+        testTail(0.1, 0.0, 1.0);
+        System.out.println();
+        testTail(1, 0.0, 1.0);
+        System.out.println();
+        testTail(5, 0.0, 1.0);
+        System.out.println();
+        testTail(7, 0.0, 1.0);
+        System.out.println();
+        testTail(8, 0.0, 1.0);
+        System.out.println();
+        testTail(8.25, 0.0, 1.0);
+        System.out.println();
+        testTail(10, 0.0, 1.0);
+    }
 }

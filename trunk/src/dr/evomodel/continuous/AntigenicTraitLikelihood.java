@@ -51,131 +51,113 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(this));
 
         String[] virusNames = dataTable.getRowLabels();
+        String[] assayNames = dataTable.getColumnLabels();
 
         // the total number of viruses is the number of rows in the table
         int virusCount = dataTable.getRowCount();
         int assayCount = dataTable.getColumnCount();
-        int serumCount;
 
-        String[] columnNames = dataTable.getColumnLabels();
-        int[] columnToSerumIndices = new int[columnNames.length];
+        int[] assayToSerumIndices = new int[assayNames.length];
 
         double[][] observationValueTable = new double[virusCount][assayCount];
         ObservationType[][] observationTypeTable = new ObservationType[virusCount][assayCount];
 
         initalizeTable(dataTable, observationValueTable, observationTypeTable, log2Transform);
 
-        List<String> aliasNames = null;
+        // locations are either viruses or sera (or both)
+        List<String> locationNamesList = new ArrayList<String>();
+        int[] virusToLocationIndices = new int[virusCount];
+        int count = 0;
+        for (String virusName : virusNames) {
+            String name = null;
 
-        String[] serumNames = null;
-
-        if (assayAntiserumMap != null) {
-            aliasNames = new ArrayList<String>(new TreeSet<String>(assayAntiserumMap.values()));
-
-            for (int i = 0; i < columnNames.length; i++) {
-                String alias = assayAntiserumMap.get(columnNames[i]);
-                if (alias == null) {
-                    throw new IllegalArgumentException("Alias missing for assay, " + columnNames[i]);
-                }
-
-                columnToSerumIndices[i] = aliasNames.indexOf(alias);
+            if (virusAntiserumMap != null) {
+                name = virusAntiserumMap.get(virusName);
             }
 
-            // the number of serum locations is the number of aliases
-            serumCount = aliasNames.size();
-            serumNames = new String[aliasNames.size()];
-            aliasNames.toArray(serumNames);
-
-        } else {
-            // the number of serum locations is the number of columns
-            serumCount = assayCount;
-
-            // one alias for one serum
-            for (int i = 0; i < columnToSerumIndices.length; i++) {
-                columnToSerumIndices[i] = i;
+            if (name == null) {
+                name = virusName;
             }
 
-            serumNames = columnNames;
+            virusToLocationIndices[count] = locationNamesList.size();
+            locationNamesList.add(name);
+            count++;
         }
 
-        int[] virusToSerumIndices = new int[virusNames.length];
+        List<String> serumNamesList = new ArrayList<String>();
+        count = 0;
+        for (String assayName : assayNames) {
+            String name = null;
 
-        if (virusAntiserumMap != null) {
-            aliasNames = new ArrayList<String>(new TreeSet<String>(assayAntiserumMap.values()));
-
-            for (int i = 0; i < virusNames.length; i++) {
-                String alias = virusAntiserumMap.get(virusNames[i]);
-                if (alias != null) {
-                    virusToSerumIndices[i] = aliasNames.indexOf(alias);
-                } else {
-                    virusToSerumIndices[i] = -1;
-                }
+            if (assayAntiserumMap != null) {
+                name = assayAntiserumMap.get(assayName);
             }
 
-        } else {
-
-            // try and match rows to columns using their names
-            List<String> serumNameList = Arrays.asList(serumNames);
-            for (int i = 0; i < virusToSerumIndices.length; i++) {
-                virusToSerumIndices[i] = serumNameList.indexOf(virusNames[i]);
-                if (virusToSerumIndices[i] == -1) {
-                    throw new IllegalArgumentException("Row, " + virusNames[i] + ", doesn't match any column heading");
-                }
+            if (name == null) {
+                name = assayName;
             }
+
+            int index = serumNamesList.indexOf(name);
+            if (index == -1) {
+                index = serumNamesList.size();
+                serumNamesList.add(name);
+            }
+            assayToSerumIndices[count] = index;
+            count++;
         }
+        String[] serumNames = new String[serumNamesList.size()];
+        serumNamesList.toArray(serumNames);
+
+        int serumCount = serumNames.length;
+        int[] serumToLocationIndices = new int[serumCount];
+        count = 0;
+        for (String serumName : serumNames) {
+            int index = locationNamesList.indexOf(serumName);
+            if (index == -1) {
+                index = locationNamesList.size();
+                locationNamesList.add(serumName);
+            }
+            serumToLocationIndices[count] = index;
+            count++;
+        }
+
+        String[] locationNames = new String[locationNamesList.size()];
+        locationNamesList.toArray(locationNames);
+
 
         List<Double> observationList = new ArrayList<Double>();
         List<Integer> distanceIndexList = new ArrayList<Integer>();
-        List<Integer> rowIndexList = new ArrayList<Integer>();
-        List<Integer> columnIndexList = new ArrayList<Integer>();
         List<ObservationType> observationTypeList = new ArrayList<ObservationType>();
 
         int[] virusObservationCounts = new int[virusCount];
         int[] serumObservationCounts = new int[serumCount];
 
-        int virusSerumPairObservationCounts = 0;
-
-
+        List<Pair> locationPairs = new ArrayList<Pair>();
         // Build a sparse matrix of non-missing assay values
-        int u = 0;
         for (int i = 0; i < virusCount; i++) {
 
-            for (int j = 0; j < serumCount; j++) {
+            for (int j = 0; j < assayCount; j++) {
+                int k = assayToSerumIndices[j];
 
-                boolean isVirusSerumPair = (virusToSerumIndices[i] == j);
+                Double value = observationValueTable[i][j];
+                ObservationType type = observationTypeTable[i][j];
 
-                boolean first = true;
+                if (type != ObservationType.MISSING) {
+                    observationList.add(value);
+                    observationTypeList.add(type);
 
-                for (int k = 0; k < assayCount; k++) {
-                    if (columnToSerumIndices[k] == j) {
-                        Double value = observationValueTable[i][k];
-                        ObservationType type = observationTypeTable[i][k];
-
-
-                        if (type != ObservationType.MISSING) {
-                            observationList.add(value);
-                            observationTypeList.add(type);
-                            distanceIndexList.add(u);
-                            virusObservationCounts[i]++;
-                            serumObservationCounts[j]++;
-
-                            if(isVirusSerumPair) {
-                                virusSerumPairObservationCounts ++;
-                            }
-
-                            rowIndexList.add(i);
-                            columnIndexList.add(j);
-                        }
-
-                        if (first) {
-                            // if this is the first time an observation for this virus/serum pair is found:
-                            first = false;
-                            u++;
-                        }
-
+                    Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
+                    int index = locationPairs.indexOf(pair);
+                    if (index == -1) {
+                        index = locationPairs.size();
+                        locationPairs.add(pair);
                     }
-                }
 
+                    distanceIndexList.add(index);
+
+                    virusObservationCounts[i]++;
+                    serumObservationCounts[k]++;
+                }
             }
         }
 
@@ -202,24 +184,14 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             distanceIndices[i] = distanceIndexList.get(i);
         }
 
-        int[] rowIndices = new int[rowIndexList.size()];
-        for (int i = 0; i < rowIndexList.size(); i++) {
-            rowIndices[i] = rowIndexList.get(i);
-        }
-
-        int[] columnIndices = new int[columnIndexList.size()];
-        for (int i = 0; i < columnIndexList.size(); i++) {
-            columnIndices[i] = columnIndexList.get(i);
-        }
-
-        // **** not finished - need to handle not matched virus/serum
-        int[] rowLocationIndices = new int[rowIndexList.size()];
+        int[] rowLocationIndices = new int[locationPairs.size()];
         for (int i = 0; i < rowLocationIndices.length; i++) {
-            rowLocationIndices[i] = i;
+            rowLocationIndices[i] = locationPairs.get(i).location1;
         }
-        int[] columnLocationIndices = new int[columnIndexList.size()];
+
+        int[] columnLocationIndices = new int[locationPairs.size()];
         for (int i = 0; i < columnLocationIndices.length; i++) {
-            columnLocationIndices[i] = i;
+            columnLocationIndices[i] = locationPairs.get(i).location2;
         }
 
         ObservationType[] observationTypes = new ObservationType[observationTypeList.size()];
@@ -233,17 +205,29 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicTraitLikelihood:\n");
         sb.append("\t\t" + virusNames.length + " viruses\n");
+        sb.append("\t\t" + assayNames.length + " assays\n");
         sb.append("\t\t" + serumNames.length + " antisera\n");
+        sb.append("\t\t" + locationNames.length + " locations\n");
+        sb.append("\t\t" + locationPairs.size() + " distances\n");
         sb.append("\t\t" + observations.length + " observations\n");
-        sb.append("\t\t" + virusSerumPairObservationCounts + " observations for virus/serum pairs\n");
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, virusNames, serumNames, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
+        initialize(
+                mdsDimension,
+                mdsPrecision,
+                tipTraitParameter,
+                locationsParameter,
+                locationNames,
+                observations,
+                observationTypes,
+                distanceIndices,
+                rowLocationIndices,
+                columnLocationIndices);
 
         // some random initial locations
-        for (int i = 0; i < virusCount; i++) {
-            locationsParameter.getParameter(i).setId(virusNames[i]);
+        for (int i = 0; i < locationNames.length; i++) {
+            locationsParameter.getParameter(i).setId(locationNames[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValue(j, r);
@@ -331,6 +315,21 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         // log2(maxValue / value)
         return (Math.log(maxValue) - Math.log(value)) / Math.log(base);
     }
+
+    class Pair {
+        Pair(final int location1, final int location2) {
+            this.location1 = location1;
+            this.location2 = location2;
+        }
+
+        int location1;
+        int location2;
+
+        @Override
+        public boolean equals(final Object o) {
+            return ((Pair)o).location1 == location1 && ((Pair)o).location2 == location2;
+        }
+    };
 
     // **************************************************************
     // XMLObjectParser
@@ -423,6 +422,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             return map;
         }
+
+
 
         //************************************************************************
         // AbstractXMLObjectParser implementation

@@ -58,11 +58,6 @@ public class AntigenicPlotter {
     public final static double HPD_VALUE = 0.95;
     public static final int GRIDSIZE = 200;
 
-    private Element rootElement;
-    private Element documentElement;
-    private Element contourFolderElement;
-    private Element traceFolderElement;
-
     public AntigenicPlotter(int burnin,
                             String inputFileName,
                             String outputFileName
@@ -147,25 +142,41 @@ public class AntigenicPlotter {
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Label")
                 .setAttribute("type", "string")
-                .addContent(new Element("displayName").addContent("State")));
+                .addContent(new Element("displayName").addContent("Name")));
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Trace")
                 .setAttribute("type", "double")
-                .addContent(new Element("displayName").addContent("State")));
+                .addContent(new Element("displayName").addContent("Trace")));
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "State")
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("State")));
 
-        contourFolderElement = new Element("Folder");
+        Element centroidSchema = new Element("Schema");
+        centroidSchema.setAttribute("id", "Centroid_Schema");
+        centroidSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Label")
+                .setAttribute("type", "string")
+                .addContent(new Element("displayName").addContent("Name")));
+        centroidSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Trace")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Trace")));
+
+        final Element contourFolderElement = new Element("Folder");
         Element contourFolderNameElement = new Element("name");
         contourFolderNameElement.addContent("HPDs");
         contourFolderElement.addContent(contourFolderNameElement);
 
-        traceFolderElement = new Element("Folder");
+        final Element traceFolderElement = new Element("Folder");
         Element traceFolderNameElement = new Element("name");
         traceFolderNameElement.addContent("traces");
         traceFolderElement.addContent(traceFolderNameElement);
+
+        final Element centroidFolderElement = new Element("Folder");
+        Element centroidFolderNameElement = new Element("name");
+        centroidFolderNameElement.addContent("centroids");
+        centroidFolderElement.addContent(centroidFolderNameElement);
 
         Element documentNameElement = new Element("name");
         String documentName = fileName;
@@ -173,18 +184,23 @@ public class AntigenicPlotter {
             documentName = documentName.replace(".kml", "");
         documentNameElement.addContent(documentName);
 
-        documentElement = new Element("Document");
+        final Element documentElement = new Element("Document");
         documentElement.addContent(documentNameElement);
-//        documentElement.addContent(hpdSchema);
         documentElement.addContent(traceSchema);
-//        documentElement.addContent(contourFolderElement);
+        documentElement.addContent(centroidSchema);
+//        documentElement.addContent(hpdSchema);
+        documentElement.addContent(centroidFolderElement);
         documentElement.addContent(traceFolderElement);
+//        documentElement.addContent(contourFolderElement);
 
-        rootElement = new Element("kml");
+        final Element rootElement = new Element("kml");
         rootElement.addContent(documentElement);
 
         Element traceElement = generateTraceElement(labels, data);
         traceFolderElement.addContent(traceElement);
+
+        Element centroidElement = generateCentroidElement(labels, data);
+        centroidFolderElement.addContent(centroidElement);
 
         PrintStream resultsStream;
 
@@ -292,6 +308,55 @@ public class AntigenicPlotter {
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "State").addContent(Integer.toString(state)));
+        data.addContent(schemaData);
+        return data;
+    }
+
+    private Element generateCentroidElement(String[] labels, double[][][] points) {
+        Element centroidElement = new Element("Folder");
+        Element nameElement = new Element("name");
+        String name = "centroids";
+
+        nameElement.addContent(name);
+        centroidElement.addContent(nameElement);
+
+        double[][] centroids = new double[points[0].length][points[0][0].length];
+        for (int i = 0; i < points.length; i++)  {
+            for (int j = 0; j < points[i].length; j++)  {
+                for (int k = 0; k < points[i][j].length; k++)  {
+                    centroids[j][k] += points[i][j][k];
+                }
+            }
+        }
+        for (int j = 0; j < points[0].length; j++)  {
+            for (int k = 0; k < points[0][j].length; k++)  {
+                centroids[j][k] /= points.length;
+            }
+        }
+
+        for (int j = 0; j < points[0].length; j++)  {
+            Element placemarkElement = new Element("Placemark");
+
+            placemarkElement.addContent(generateCentroidData(labels[j], j));
+
+
+            Element pointElement = new Element("Point");
+            Element coordinates = new Element("coordinates");
+            coordinates.addContent(centroids[j][1]+","+centroids[j][0]+",0");
+            pointElement.addContent(coordinates);
+            placemarkElement.addContent(pointElement);
+
+            centroidElement.addContent(placemarkElement);
+        }
+        return centroidElement;
+    }
+
+    private Element generateCentroidData(String label, int trace) {
+        Element data = new Element("ExtendedData");
+        Element schemaData = new Element("SchemaData");
+        schemaData.setAttribute("schemaUrl", "Centroid_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         data.addContent(schemaData);
         return data;
     }

@@ -2,7 +2,6 @@ package dr.evomodel.continuous;
 
 import dr.inference.model.*;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -10,7 +9,6 @@ import dr.util.DataTable;
 import dr.xml.*;
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -64,6 +62,21 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         initalizeTable(dataTable, observationValueTable, observationTypeTable, log2Transform);
 
+        // This removes viruses that are not in the tree
+        List<String> tipLabels = null;
+        if (tipTraitParameter != null) {
+            tipLabels = new ArrayList<String>();
+            int tipCount = tipTraitParameter.getNumberOfParameters();
+
+            for (int i = 0; i < tipCount; i++) {
+                String label = tipTraitParameter.getParameter(i).getParameterName();
+                if (label.endsWith(".antigenic")) {
+                    label = label.substring(0, label.indexOf(".antigenic"));
+                }
+                tipLabels.add(label);
+            }
+        }
+
         // locations are either viruses or sera (or both)
         List<String> locationNamesList = new ArrayList<String>();
         int[] virusToLocationIndices = new int[virusCount];
@@ -79,8 +92,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 name = virusName;
             }
 
-            virusToLocationIndices[count] = locationNamesList.size();
-            locationNamesList.add(name);
+            if (tipLabels == null || tipLabels.contains(name)) {
+                virusToLocationIndices[count] = locationNamesList.size();
+                locationNamesList.add(name);
+            } else {
+                virusToLocationIndices[count] = -1;
+            }
             count++;
         }
 
@@ -121,9 +138,9 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             count++;
         }
 
-        String[] locationNames = new String[locationNamesList.size()];
-        locationNamesList.toArray(locationNames);
-
+        String[] locationLabels = new String[locationNamesList.size()];
+        locationNamesList.toArray(locationLabels);
+        int locationCount = locationLabels.length;
 
         List<Double> observationList = new ArrayList<Double>();
         List<Integer> distanceIndexList = new ArrayList<Integer>();
@@ -136,27 +153,31 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         // Build a sparse matrix of non-missing assay values
         for (int i = 0; i < virusCount; i++) {
 
-            for (int j = 0; j < assayCount; j++) {
-                int k = assayToSerumIndices[j];
+            if (virusToLocationIndices[i] != -1) {
+                // viruses with location indices of minus one have been excluded
 
-                Double value = observationValueTable[i][j];
-                ObservationType type = observationTypeTable[i][j];
+                for (int j = 0; j < assayCount; j++) {
+                    int k = assayToSerumIndices[j];
 
-                if (type != ObservationType.MISSING) {
-                    observationList.add(value);
-                    observationTypeList.add(type);
+                    Double value = observationValueTable[i][j];
+                    ObservationType type = observationTypeTable[i][j];
 
-                    Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
-                    int index = locationPairs.indexOf(pair);
-                    if (index == -1) {
-                        index = locationPairs.size();
-                        locationPairs.add(pair);
+                    if (type != ObservationType.MISSING) {
+                        observationList.add(value);
+                        observationTypeList.add(type);
+
+                        Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
+                        int index = locationPairs.indexOf(pair);
+                        if (index == -1) {
+                            index = locationPairs.size();
+                            locationPairs.add(pair);
+                        }
+
+                        distanceIndexList.add(index);
+
+                        virusObservationCounts[i]++;
+                        serumObservationCounts[k]++;
                     }
-
-                    distanceIndexList.add(index);
-
-                    virusObservationCounts[i]++;
-                    serumObservationCounts[k]++;
                 }
             }
         }
@@ -202,23 +223,41 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
         }
 
+        if (tipTraitParameter != null) {
+            //  the location -> tip map
+            tipIndices = new int[locationCount];
+            for (int i = 0; i < locationCount; i++) {
+                tipIndices[i] = tipLabels.indexOf(locationLabels[i]);
+            }
+
+            for (int i = 0; i < locationCount; i++) {
+                if (tipIndices[i] == -1) {
+                    System.err.println("Tip, " + locationLabels[i] + ", not found in tree");
+                }
+            }
+        } else {
+            tipIndices = null;
+        }
+
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicTraitLikelihood:\n");
         sb.append("\t\t" + virusNames.length + " viruses\n");
         sb.append("\t\t" + assayNames.length + " assays\n");
         sb.append("\t\t" + serumNames.length + " antisera\n");
-        sb.append("\t\t" + locationNames.length + " locations\n");
+        sb.append("\t\t" + locationLabels.length + " locations\n");
         sb.append("\t\t" + locationPairs.size() + " distances\n");
         sb.append("\t\t" + observations.length + " observations\n");
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
+        this.tipTraitParameter = tipTraitParameter;
+        this.locationsParameter = locationsParameter;
+
         initialize(
                 mdsDimension,
                 mdsPrecision,
-                tipTraitParameter,
                 locationsParameter,
-                locationNames,
+                locationLabels,
                 observations,
                 observationTypes,
                 distanceIndices,
@@ -226,13 +265,15 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 columnLocationIndices);
 
         // some random initial locations
-        for (int i = 0; i < locationNames.length; i++) {
-            locationsParameter.getParameter(i).setId(locationNames[i]);
+        for (int i = 0; i < locationLabels.length; i++) {
+            locationsParameter.getParameter(i).setId(locationLabels[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValue(j, r);
 
-//                locationsParameter.getParameter(i).setParameterValue(j, i * 1000);
+                if (tipTraitParameter != null) {
+                    tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + j, r);
+                }
             }
         }
 
@@ -330,6 +371,31 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             return ((Pair)o).location1 == location1 && ((Pair)o).location2 == location2;
         }
     };
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        // TODO Flag which cachedDistances or mdsPrecision need to be updated
+
+        if (variable == locationsParameter) {
+            int mdsDimension = getMDSDimension();
+
+            int location = index / mdsDimension;
+            int dim = index % mdsDimension;
+
+            if (tipTraitParameter != null) {
+                if (tipIndices[location] != -1) {
+                    double value = locationsParameter.getParameterValue(index);
+                    tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
+                }
+            }
+        }
+
+        super.handleVariableChangedEvent(variable, index, type);
+    }
+
+    private MatrixParameter locationsParameter;
+    private CompoundParameter tipTraitParameter;
+    private int[] tipIndices;
 
     // **************************************************************
     // XMLObjectParser

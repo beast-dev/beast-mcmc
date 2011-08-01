@@ -44,7 +44,7 @@ import javax.transaction.xa.Xid;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
 import java.io.*;
-import java.util.Calendar;
+import java.util.*;
 
 /*
  * @author Marc Suchard and Andrew Rambaut
@@ -122,16 +122,22 @@ public class AntigenicPlotter {
     }
 
     private void writeKML(String fileName, String[] labels, double[][][] data) {
+        int[] traceOrder = sortTraces(labels);
+
         Element hpdSchema = new Element("Schema");
         hpdSchema.setAttribute("id", "HPD_Schema");
         hpdSchema.addContent(new Element("SimpleField")
-                .setAttribute("name", "Name")
+                .setAttribute("name", "Label")
                 .setAttribute("type", "string")
-                .addContent(new Element("displayName").addContent("Name")));
+                .addContent(new Element("displayName").addContent("Label")));
         hpdSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Point")
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("Point")));
+        hpdSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Year")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Year")));
         hpdSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "HPD")
                 .setAttribute("type", "double")
@@ -142,7 +148,7 @@ public class AntigenicPlotter {
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Label")
                 .setAttribute("type", "string")
-                .addContent(new Element("displayName").addContent("Name")));
+                .addContent(new Element("displayName").addContent("Label")));
         traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Trace")
                 .setAttribute("type", "double")
@@ -157,7 +163,11 @@ public class AntigenicPlotter {
         centroidSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Label")
                 .setAttribute("type", "string")
-                .addContent(new Element("displayName").addContent("Name")));
+                .addContent(new Element("displayName").addContent("Label")));
+        centroidSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Year")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Year")));
         centroidSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "Trace")
                 .setAttribute("type", "double")
@@ -188,19 +198,22 @@ public class AntigenicPlotter {
         documentElement.addContent(documentNameElement);
         documentElement.addContent(traceSchema);
         documentElement.addContent(centroidSchema);
-//        documentElement.addContent(hpdSchema);
+        documentElement.addContent(hpdSchema);
         documentElement.addContent(centroidFolderElement);
         documentElement.addContent(traceFolderElement);
-//        documentElement.addContent(contourFolderElement);
+        documentElement.addContent(contourFolderElement);
 
         final Element rootElement = new Element("kml");
         rootElement.addContent(documentElement);
 
-        Element traceElement = generateTraceElement(labels, data);
+        Element traceElement = generateTraceElement(labels, data, traceOrder);
         traceFolderElement.addContent(traceElement);
 
-        Element centroidElement = generateCentroidElement(labels, data);
+        Element centroidElement = generateCentroidElement(labels, data, traceOrder);
         centroidFolderElement.addContent(centroidElement);
+
+        Element contourElement = generateKDEElement(0.95, labels, data, traceOrder);
+        contourFolderElement.addContent(contourElement);
 
         PrintStream resultsStream;
 
@@ -216,7 +229,52 @@ public class AntigenicPlotter {
 
     }
 
-    private Element generateKDEElement(double hpdValue, String[] labels, double[][][] points) {
+    private int[] sortTraces(final String[] labels) {
+        Map<Label, Integer> orderMap = new HashMap<Label, Integer>();
+
+        List<Label> labelList = new ArrayList<Label>();
+        int i = 0;
+        for (String label : labels) {
+            Label l = new Label(label);
+            labelList.add(l);
+            orderMap.put(l, i);
+            i++;
+        }
+        Collections.sort(labelList);
+
+        int[] order = new int[labels.length];
+        i = 0;
+        for (Label label : labelList) {
+            int index = orderMap.get(label);
+            order[i] = index;
+            i++;
+        }
+
+        return order;
+    }
+
+    class Label implements Comparable<Label> {
+        Label(final String label) {
+            this.label = label;
+            String[] parts = label.split("/");
+            year = Integer.parseInt(parts[parts.length - 1]);
+            if (year < 12) {
+                year += 2000;
+            } else {
+                year += 1900;
+            }
+        }
+
+        public int compareTo(final Label label) {
+            return this.year - label.year;
+        }
+
+        String label;
+        int year;
+
+
+    }
+    private Element generateKDEElement(double hpdValue, String[] labels, double[][][] points, int[] order) {
         Element traceElement = new Element("Folder");
         Element nameElement = new Element("name");
         String name = "intervals";
@@ -224,24 +282,13 @@ public class AntigenicPlotter {
         nameElement.addContent(name);
         traceElement.addContent(nameElement);
 
-        for (int i = 0; i < points.length; i++)  {
-            double x[] = new double[points[i].length];
-            double y[] = new double[points[i].length];
-            for (int j = 0; j < points[i].length; j++)  {
-                x[j] = points[i][j][0];
-                y[j] = points[i][j][1];
+        for (int j = 0; j < points[0].length; j++)  {
+            double x[] = new double[points.length];
+            double y[] = new double[points.length];
+            for (int i = 0; i < points.length; i++)  {
+                x[i] = points[i][order[j]][0];
+                y[i] = points[i][order[j]][1];
             }
-
-//            Element placemarkElement = new Element("Placemark");
-//
-//            placemarkElement.addContent(generateTraceData(labels[j], j, i));
-//
-//
-//            Element pointElement = new Element("Point");
-//            Element coordinates = new Element("coordinates");
-//            coordinates.addContent(points[i][j][1]+","+points[i][j][0]+",0");
-//            pointElement.addContent(coordinates);
-//            placemarkElement.addContent(pointElement);
 
             ContourMaker contourMaker;
             if (CONTOUR_MODE == ContourMode.JAVA)
@@ -272,7 +319,7 @@ public class AntigenicPlotter {
         return traceElement;
     }
 
-    private Element generateTraceElement(String[] labels, double[][][] points) {
+    private Element generateTraceElement(String[] labels, double[][][] points, int[] order) {
         Element traceElement = new Element("Folder");
         Element nameElement = new Element("name");
         String name = "points";
@@ -284,12 +331,12 @@ public class AntigenicPlotter {
             for (int j = 0; j < points[i].length; j++)  {
                 Element placemarkElement = new Element("Placemark");
 
-                placemarkElement.addContent(generateTraceData(labels[j], j, i));
+                placemarkElement.addContent(generateTraceData(labels[order[j]], j, i));
 
 
                 Element pointElement = new Element("Point");
                 Element coordinates = new Element("coordinates");
-                coordinates.addContent(points[i][j][1]+","+points[i][j][0]+",0");
+                coordinates.addContent(points[i][order[j]][1]+","+points[i][order[j]][0]+",0");
                 pointElement.addContent(coordinates);
                 placemarkElement.addContent(pointElement);
 
@@ -312,7 +359,7 @@ public class AntigenicPlotter {
         return data;
     }
 
-    private Element generateCentroidElement(String[] labels, double[][][] points) {
+    private Element generateCentroidElement(String[] labels, double[][][] points, int[] order) {
         Element centroidElement = new Element("Folder");
         Element nameElement = new Element("name");
         String name = "centroids";
@@ -337,12 +384,12 @@ public class AntigenicPlotter {
         for (int j = 0; j < points[0].length; j++)  {
             Element placemarkElement = new Element("Placemark");
 
-            placemarkElement.addContent(generateCentroidData(labels[j], j));
+            placemarkElement.addContent(generateCentroidData(labels[order[j]], j));
 
 
             Element pointElement = new Element("Point");
             Element coordinates = new Element("coordinates");
-            coordinates.addContent(centroids[j][1]+","+centroids[j][0]+",0");
+            coordinates.addContent(centroids[order[j]][1]+","+centroids[order[j]][0]+",0");
             pointElement.addContent(coordinates);
             placemarkElement.addContent(pointElement);
 
@@ -356,6 +403,8 @@ public class AntigenicPlotter {
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "Centroid_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+        Label l = new Label(label);
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Year").addContent(Integer.toString(l.year)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         data.addContent(schemaData);
         return data;
@@ -390,11 +439,13 @@ public class AntigenicPlotter {
         return placemarkElement;
     }
 
-    private Element generateContourData(String name, int point, double hpd) {
+    private Element generateContourData(String label, int point, double hpd) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "HPD_Schema");
-        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Name").addContent(name));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+//        Label l = new Label(label);
+//        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Year").addContent(Integer.toString(l.year)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Point").addContent(Integer.toString(point)));
         if (hpd > 0) {
             schemaData.addContent(new Element("SimpleData").setAttribute("name", "HPD").addContent(Double.toString(hpd)));

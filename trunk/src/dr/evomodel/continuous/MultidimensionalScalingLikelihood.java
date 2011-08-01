@@ -35,14 +35,12 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
      * A simple constructor for a fully specified symmetrical data matrix
      * @param mdsDimension
      * @param mdsPrecision
-     * @param tipTraitParameter
      * @param locationsParameter
      * @param dataTable
      */
     public MultidimensionalScalingLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
-            CompoundParameter tipTraitParameter,
             MatrixParameter locationsParameter,
             DataTable<double[]> dataTable) {
 
@@ -76,13 +74,12 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         }
 
-        initialize(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, rowLabels, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
+        initialize(mdsDimension, mdsPrecision, locationsParameter, rowLabels, observations, observationTypes, distanceIndices, rowLocationIndices, columnLocationIndices);
     }
 
     protected void initialize(
             final int mdsDimension,
             final Parameter mdsPrecision,
-            final CompoundParameter tipTraitParameter,
             final MatrixParameter locationsParameter,
             final String[] locationLabels,
             final double[] observations,
@@ -94,33 +91,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         locationCount = locationLabels.length;
 
         this.locationLabels = locationLabels;
-
-        if (tipTraitParameter != null) {
-            tipCount = tipTraitParameter.getNumberOfParameters();
-
-            //  the location -> tip map
-            tipIndices = new int[locationCount];
-            for (int i = 0; i < locationCount; i++) {
-                tipIndices[i] = -1;
-            }
-
-            for (int i = 0; i < tipCount; i++) {
-                String label = tipTraitParameter.getParameter(i).getParameterName();
-                if (label.endsWith(".antigenic")) {
-                    label = label.substring(0, label.indexOf(".antigenic"));
-                }
-                for (int j = 0; j < locationCount; j++) {
-                    if (label.toUpperCase().startsWith(locationLabels[j].toUpperCase())) {
-                        tipIndices[j] = i;
-                        break;
-                    }
-                }
-
-            }
-        } else {
-            tipIndices = null;
-            tipCount = 0;
-        }
 
         this.observations = observations;
         this.observationTypes = observationTypes;
@@ -165,20 +135,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             }
         }
 
-        if (tipIndices != null) {
-            for (int i = 0; i < locationCount; i++) {
-                if (tipIndices[i] == -1) {
-                    System.err.println("Tip, " + locationLabels[i] + ", not found in tree");
-                }
-            }
-        }
-
-        // add tipTraitParameter to enable store / restore
-        this.tipTraitParameter = tipTraitParameter;
-        if (tipTraitParameter != null) {
-            addVariable(tipTraitParameter);
-        }
-
         this.locationsParameter = locationsParameter;
         locationsParameter.setColumnDimension(mdsDimension);
         locationsParameter.setRowDimension(locationCount);
@@ -221,13 +177,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int location = index / mdsDimension;
             int dim = index % mdsDimension;
 
-            if (tipTraitParameter != null) {
-                if (tipIndices[location] != -1) {
-                    double value = locationsParameter.getParameterValue(index);
-                    tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
-                }
-            }
-
             locationUpdated[location] = true;
             distancesKnown = false;
             thresholdsKnown = false;
@@ -238,8 +187,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             }
             thresholdsKnown = false;
             truncationKnown = false;
-        } else if (variable == tipTraitParameter) {
-//            throw new IllegalArgumentException("Only MultidimensionalScalingLikelihood should be changing the tipTraitParameter");
         } else {
             throw new IllegalArgumentException("Unknown parameter");
         }
@@ -378,6 +325,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 thresholds[j] = Math.log(tail);
             }
             if (Double.isInfinite(thresholds[j])) {
+                System.out.println("Error calculation threshold probability");
                 System.out.println("observationIndex: " + observationIndex);
                 System.out.println("observation: " + observations[observationIndex]);
                 System.out.println("distanceIndex: " + dist);
@@ -447,6 +395,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return Math.sqrt(sum);
     }
 
+    public int getMDSDimension() {
+        return mdsDimension;
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -479,25 +431,11 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
 
-            // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
-            // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
-            // updates accordingly.
-            CompoundParameter tipTraitParameter = null;
-            if (xo.hasChildNamed(TIP_TRAIT)) {
-                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
-            }
-
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            if (tipTraitParameter != null) {
-                if (distanceTable.getRowCount() != tipTraitParameter.getNumberOfParameters()) {
-                    throw new XMLParseException("Tree has different number of tips than the number of rows in the distance matrix");
-                }
-            }
-
-            return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, distanceTable);
+            return new MultidimensionalScalingLikelihood(mdsDimension, mdsPrecision, locationsParameter, distanceTable);
         }
 
         //************************************************************************
@@ -516,7 +454,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
@@ -536,7 +473,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private String[] locationLabels;
 
-    private int tipCount;
     private int locationCount;
 
     private double[] observations;
@@ -544,12 +480,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private int[] distanceIndices;
     private int[] rowLocationIndices;
     private int[] columnLocationIndices;
-    private int[] tipIndices;
     private int[] upperThresholdIndices;
     private int[] lowerThresholdIndices;
     private int[] pointObservationIndices;
 
-    private CompoundParameter tipTraitParameter;
     private MatrixParameter locationsParameter;
     private Parameter mdsPrecisionParameter;
 

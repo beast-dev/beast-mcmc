@@ -124,24 +124,24 @@ public class AntigenicPlotter {
     private void writeKML(String fileName, String[] labels, double[][][] data) {
         int[] traceOrder = sortTraces(labels);
 
-        Element hpdSchema = new Element("Schema");
-        hpdSchema.setAttribute("id", "HPD_Schema");
-        hpdSchema.addContent(new Element("SimpleField")
-                .setAttribute("name", "Label")
-                .setAttribute("type", "string")
-                .addContent(new Element("displayName").addContent("Label")));
-        hpdSchema.addContent(new Element("SimpleField")
-                .setAttribute("name", "Point")
-                .setAttribute("type", "double")
-                .addContent(new Element("displayName").addContent("Point")));
-        hpdSchema.addContent(new Element("SimpleField")
-                .setAttribute("name", "Year")
-                .setAttribute("type", "double")
-                .addContent(new Element("displayName").addContent("Year")));
-        hpdSchema.addContent(new Element("SimpleField")
-                .setAttribute("name", "HPD")
-                .setAttribute("type", "double")
-                .addContent(new Element("displayName").addContent("HPD")));
+//        Element hpdSchema = new Element("Schema");
+//        hpdSchema.setAttribute("id", "HPD_Schema");
+//        hpdSchema.addContent(new Element("SimpleField")
+//                .setAttribute("name", "Label")
+//                .setAttribute("type", "string")
+//                .addContent(new Element("displayName").addContent("Label")));
+//        hpdSchema.addContent(new Element("SimpleField")
+//                .setAttribute("name", "Point")
+//                .setAttribute("type", "double")
+//                .addContent(new Element("displayName").addContent("Point")));
+//        hpdSchema.addContent(new Element("SimpleField")
+//                .setAttribute("name", "Year")
+//                .setAttribute("type", "double")
+//                .addContent(new Element("displayName").addContent("Year")));
+//        hpdSchema.addContent(new Element("SimpleField")
+//                .setAttribute("name", "HPD")
+//                .setAttribute("type", "double")
+//                .addContent(new Element("displayName").addContent("HPD")));
 
         Element traceSchema = new Element("Schema");
         traceSchema.setAttribute("id", "Trace_Schema");
@@ -173,10 +173,10 @@ public class AntigenicPlotter {
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("Trace")));
 
-        final Element contourFolderElement = new Element("Folder");
-        Element contourFolderNameElement = new Element("name");
-        contourFolderNameElement.addContent("HPDs");
-        contourFolderElement.addContent(contourFolderNameElement);
+//        final Element contourFolderElement = new Element("Folder");
+//        Element contourFolderNameElement = new Element("name");
+//        contourFolderNameElement.addContent("HPDs");
+//        contourFolderElement.addContent(contourFolderNameElement);
 
         final Element traceFolderElement = new Element("Folder");
         Element traceFolderNameElement = new Element("name");
@@ -198,10 +198,10 @@ public class AntigenicPlotter {
         documentElement.addContent(documentNameElement);
         documentElement.addContent(traceSchema);
         documentElement.addContent(centroidSchema);
-        documentElement.addContent(hpdSchema);
+//        documentElement.addContent(hpdSchema);
         documentElement.addContent(centroidFolderElement);
         documentElement.addContent(traceFolderElement);
-        documentElement.addContent(contourFolderElement);
+//        documentElement.addContent(contourFolderElement);
 
         final Element rootElement = new Element("kml");
         rootElement.addContent(documentElement);
@@ -212,8 +212,8 @@ public class AntigenicPlotter {
         Element centroidElement = generateCentroidElement(labels, data, traceOrder);
         centroidFolderElement.addContent(centroidElement);
 
-        Element contourElement = generateKDEElement(0.95, labels, data, traceOrder);
-        contourFolderElement.addContent(contourElement);
+//        Element contourElement = generateKDEElement(0.95, labels, data, traceOrder);
+//        contourFolderElement.addContent(contourElement);
 
         PrintStream resultsStream;
 

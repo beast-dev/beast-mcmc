@@ -184,7 +184,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
         // check that all the viruses and sera have observations
         for (int i = 0; i < virusCount; i++) {
-            if (virusObservationCounts[i] == 0) {
+            if (virusToLocationIndices[i] != -1 && virusObservationCounts[i] == 0) {
                 System.err.println("WARNING: Virus " + virusNames[i] + " has 0 observations");
             }
         }
@@ -232,7 +232,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             for (int i = 0; i < locationCount; i++) {
                 if (tipIndices[i] == -1) {
-                    System.err.println("Tip, " + locationLabels[i] + ", not found in tree");
+                    System.err.println("Location, " + locationLabels[i] + ", not found in tree");
                 }
             }
         } else {
@@ -272,7 +272,9 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 locationsParameter.getParameter(i).setParameterValue(j, r);
 
                 if (tipTraitParameter != null) {
-                    tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + j, r);
+                    if (tipIndices[i] != -1) {
+                        tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + j, r);
+                    }
                 }
             }
         }

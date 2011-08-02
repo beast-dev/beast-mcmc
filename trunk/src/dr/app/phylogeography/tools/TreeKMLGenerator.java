@@ -172,6 +172,22 @@ public class TreeKMLGenerator {
                 .addContent(new Element("displayName").addContent("Rate")));
         schema.add(branchSchema);
 
+        Element nodeSchema = new Element("Schema");
+        branchSchema.setAttribute("id", "Node_Schema");
+        branchSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Label")
+                .setAttribute("type", "string")
+                .addContent(new Element("displayName").addContent("Label")));
+        branchSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Height")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Height")));
+        branchSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Time")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Time")));
+        schema.add(nodeSchema);
+
         List<Element> styles = new ArrayList<Element>();
         List<Element> trees = new ArrayList<Element>();
         List<Element> projections = new ArrayList<Element>();
@@ -294,7 +310,7 @@ public class TreeKMLGenerator {
 
                 String nodeName = treeSettings.getName() + "_node" + nodeNumber;
                 if (tree.isExternal(node)) {
-                    Element tip = generateTaxonLabel(tree, node, latitude, longitude);
+                    Element tip = generateTaxonLabel(tree, node, tree.getTaxon(node).getName(), tree.getHeight(node), date, latitude, longitude);
                     element.addContent(tip);
                 }
 
@@ -604,10 +620,10 @@ public class TreeKMLGenerator {
     private void annotateTip(final Element placeMark, final String label,  final double height, final double date) {
         Element data = new Element("ExtendedData");
         Element schemaData = new Element("SchemaData");
-        schemaData.setAttribute("schemaUrl", "#Tip_Schema");
+        schemaData.setAttribute("schemaUrl", "#Node_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Height").addContent(Double.toString(height)));
-        schemaData.addContent(new Element("SimpleData").setAttribute("name", "StartTime").addContent(Double.toString(date)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Time").addContent(Double.toString(date)));
         data.addContent(schemaData);
         placeMark.addContent(data);
     }
@@ -698,9 +714,11 @@ public class TreeKMLGenerator {
     }
 
 
-    private Element generateTaxonLabel(RootedTree tree, Node node, double latitude, double longitude) {
+    private Element generateTaxonLabel(RootedTree tree, Node node, String label, double height, double date, double latitude, double longitude) {
 
         Element placeMark = generateContainer("Placemark", tree.getTaxon(node).getName(), null, null);
+
+        annotateTip(placeMark, label, height, date);
 
         Element point = new Element("Point");
         point.addContent(generateElement("altitudeMode", "clampToGround"));
@@ -957,7 +975,7 @@ public class TreeKMLGenerator {
         settings.getGroundTreeSettings().setTreeType(TreeType.SURFACE_TREE);
         settings.getGroundTreeSettings().getBranchStyle().setColorProperty("height");
         settings.setPlotAltitude(0);
-        settings.setMostRecentDate(1997);
+        settings.setMostRecentDate(2003);
         //settings.setAgeCutOff(1995);
         settings.setTimeDivisionCount(0);
 

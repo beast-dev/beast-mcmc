@@ -27,6 +27,10 @@ package dr.app.tools;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.geo.KMLCoordinates;
 import dr.geo.KernelDensityEstimator2D;
 import dr.geo.contouring.*;
@@ -59,9 +63,37 @@ public class AntigenicPlotter {
     public static final int GRIDSIZE = 200;
 
     public AntigenicPlotter(int burnin,
-                            String inputFileName,
-                            String outputFileName
-    ) throws IOException {
+                            final String inputFileName,
+                            final String treeFileName,
+                            final String outputFileName
+                            ) throws IOException {
+
+        double[][] reference = null;
+        List<String> tipLabels = null;
+
+        if (treeFileName != null) {
+            System.out.println("Reading tree file...");
+
+
+            NexusImporter importer = new NexusImporter(new FileReader(treeFileName));
+            try {
+                Tree tree = importer.importNextTree();
+
+                reference = new double[tree.getExternalNodeCount()][2];
+                tipLabels = new ArrayList<String>();
+
+                for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+                    NodeRef tip = tree.getExternalNode(i);
+                    tipLabels.add(tree.getNodeTaxon(tip).getId());
+
+                    reference[i][0] = (Double)tree.getNodeAttribute(tip, "antigenic1");
+                    reference[i][1] = (Double)tree.getNodeAttribute(tip, "antigenic2");
+                }
+            } catch (Importer.ImportException e) {
+                e.printStackTrace();
+                return;
+            }
+        }
 
         System.out.println("Reading log file...");
 
@@ -85,20 +117,47 @@ public class AntigenicPlotter {
             System.out.println();
 
             int traceCount = traces.getTraceCount() / 2;
+
             int stateCount = traces.getStateCount();
-            double[][][] data = new double[stateCount][traceCount][2];
+            double[][][] data;
             String[] labels = new String[traceCount];
+
+            if (tipLabels != null) {
+                data = new double[stateCount][tipLabels.size()][2];
+            } else {
+                data = new double[stateCount][traceCount][2];
+            }
 
             for (int i = 0; i < traceCount; i++) {
                 String name = traces.getTraceName(i * 2);
-                labels[i] = name.substring(0, name.length() - 1);
-                for (int j = 0; j < stateCount; j++) {
-                    data[j][i][0] = traces.getStateValue(i * 2, j);
-                    data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
+                name = name.substring(0, name.length() - 1);
+
+                if (tipLabels != null) {
+                    int index = tipLabels.indexOf(name);
+                    if (index != -1) {
+                        for (int j = 0; j < stateCount; j++) {
+                            data[j][index][0] = traces.getStateValue(i * 2, j);
+                            data[j][index][1] = traces.getStateValue((i * 2) + 1, j);
+                        }
+                    }
+                } else {
+                    for (int j = 0; j < stateCount; j++) {
+                        data[j][i][0] = traces.getStateValue(i * 2, j);
+                        data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
+                    }
                 }
             }
 
-            procrustinate(data);
+            if (tipLabels != null) {
+                labels = new String[tipLabels.size()];
+                tipLabels.toArray(labels);
+            }
+
+            if (reference != null) {
+                procrustinate(data, reference);
+            } else {
+                procrustinate(data);
+            }
 
             writeKML(outputFileName, labels, data);
 
@@ -115,6 +174,15 @@ public class AntigenicPlotter {
     private void procrustinate(final double[][][] data) {
         RealMatrix Xstar = new Array2DRowRealMatrix(data[data.length - 1]);
         for (int i = 0; i < data.length - 1; i++) {
+            RealMatrix X = new Array2DRowRealMatrix(data[i]);
+            RealMatrix Xnew  = Procrustes.procrustinate(X, Xstar, true, true);
+            data[i] = Xnew.getData();
+        }
+    }
+
+    private void procrustinate(final double[][][] data, final double[][] reference) {
+        RealMatrix Xstar = new Array2DRowRealMatrix(reference);
+        for (int i = 0; i < data.length; i++) {
             RealMatrix X = new Array2DRowRealMatrix(data[i]);
             RealMatrix Xnew  = Procrustes.procrustinate(X, Xstar, true, true);
             data[i] = Xnew.getData();
@@ -487,6 +555,7 @@ public class AntigenicPlotter {
 
         String inputFileName = null;
         String outputFileName = null;
+        String treeFileName = null;
 
         printTitle();
 
@@ -516,8 +585,8 @@ public class AntigenicPlotter {
 
         String[] args2 = arguments.getLeftoverArguments();
 
-        if (args2.length > 2) {
-            System.err.println("Unknown option: " + args2[2]);
+        if (args2.length > 3) {
+            System.err.println("Unknown option: " + args2[3]);
             System.err.println();
             printUsage(arguments);
             System.exit(1);
@@ -526,6 +595,10 @@ public class AntigenicPlotter {
         if (args2.length == 2) {
             inputFileName = args2[0];
             outputFileName = args2[1];
+        } else if (args2.length == 3) {
+            inputFileName = args2[0];
+            treeFileName = args2[1];
+            outputFileName = args2[2];
         } else {
             System.err.println("Missing input or output file name");
             printUsage(arguments);
@@ -534,6 +607,7 @@ public class AntigenicPlotter {
 
         new AntigenicPlotter(burnin,
                 inputFileName,
+                treeFileName,
                 outputFileName
         );
 

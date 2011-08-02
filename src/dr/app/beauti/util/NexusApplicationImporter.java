@@ -1,7 +1,7 @@
 /*
  * NexusApplicationImporter.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -29,12 +29,15 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.StartingTreeType;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.CharSetAlignment;
 import dr.evolution.io.NexusImporter;
 import dr.evomodel.substmodel.NucModelType;
 
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -139,33 +142,48 @@ public class NexusApplicationImporter extends NexusImporter {
 
         String name = readToken("=;");
 
-        String[] parts = readToken(";").split("-");
+        CharSet charSet = new CharSet(name);
+
+        System.out.print("Char set " + name);
 
         int from;
         int to;
         int every = 1;
 
-        try {
-            if (parts.length == 2) {
-                from = Integer.parseInt(parts[0]);
+        while (getLastDelimiter() != ';') {
 
-                String[] toParts = parts[1].split("\\\\");
+            String token = readToken(";");
 
-                to = Integer.parseInt(toParts[0]);
+            String[] parts = token.split("-");
+            System.out.print(token + " ");
 
-                every = 1;
-                if (toParts.length > 1) every = Integer.parseInt(toParts[1]);
+            try {
 
-            } else if (parts.length == 1) {
-                from = Integer.parseInt(parts[0]);
-                to = from;
-            } else {
+                if (parts.length == 2) {
+                    from = Integer.parseInt(parts[0]);
+
+                    String[] toParts = parts[1].split("\\\\");
+
+                    to = Integer.parseInt(toParts[0]);
+
+                    every = 1;
+                    if (toParts.length > 1) every = Integer.parseInt(toParts[1]);
+
+                } else if (parts.length == 1) {
+                    from = Integer.parseInt(parts[0]);
+                    to = from;
+                } else {
+                    throw new ImportException("CharSet, " + name + ", unable to be parsed");
+                }
+            } catch (NumberFormatException nfe) {
                 throw new ImportException("CharSet, " + name + ", unable to be parsed");
             }
-        } catch (NumberFormatException nfe) {
-            throw new ImportException("CharSet, " + name + ", unable to be parsed");
+            charSet.addCharSetBlock(new CharSetBlock(from, to, every));
+
         }
-        return new CharSet(name, from, to, every);
+        System.out.println();
+
+        return charSet;
     }
 
     /**
@@ -284,14 +302,14 @@ public class NexusApplicationImporter extends NexusImporter {
                 if (match("USER", token, 1)) {
                     // How do we know what tree to use?
 //                    options.startingTreeType = StartingTreeType.USER;
-                	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                		model.setStartingTreeType(StartingTreeType.USER);
-                 	}
+                    for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                        model.setStartingTreeType(StartingTreeType.USER);
+                    }
                 } else if (match("RANDOM", token, 1)) {
 //                    options.startingTreeType = StartingTreeType.RANDOM;
-                	for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                		model.setStartingTreeType(StartingTreeType.RANDOM);
-                 	}
+                    for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+                        model.setStartingTreeType(StartingTreeType.RANDOM);
+                    }
                 } else {
                     throw new BadFormatException("Unknown value, '" + token + "'");
                 }
@@ -317,19 +335,39 @@ public class NexusApplicationImporter extends NexusImporter {
 
     public class CharSet {
 
-        public CharSet(String name, int fromSite, int toSite) {
-            this(name, fromSite, toSite, 1);
+        String name;
+        List<CharSetBlock> blocks;
+
+        public CharSet(String name) {
+            this.name = name;
+            blocks = new ArrayList<CharSetBlock>();
         }
 
-        public CharSet(String name, int fromSite, int toSite, int every) {
-            this.name = name;
-            this.fromSite = fromSite;
-            this.toSite = toSite;
-            this.every = every;
+        public List<CharSetBlock> getBlocks() {
+            return blocks;
         }
 
         public String getName() {
             return name;
+        }
+
+        public void addCharSetBlock(CharSetBlock b) {
+            blocks.add(b);
+        }
+
+        public Alignment constructCharSetAlignment(Alignment alignment) {
+
+            return new CharSetAlignment(this, alignment);
+        }
+    }
+
+    public class CharSetBlock {
+
+        public CharSetBlock(int fromSite, int toSite, int every) {
+
+            this.fromSite = fromSite;
+            this.toSite = toSite;
+            this.every = every;
         }
 
         public int getFromSite() {
@@ -344,7 +382,6 @@ public class NexusApplicationImporter extends NexusImporter {
             return every;
         }
 
-        private final String name;
         private final int fromSite;
         private final int toSite;
         private final int every;

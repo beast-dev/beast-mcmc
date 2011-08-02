@@ -1,7 +1,7 @@
 /*
- * BeautiTester.java
+ * BeautiTesterConfig.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -31,6 +31,7 @@ import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.util.NexusApplicationImporter;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.CharSetAlignment;
 import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.GeneticCode;
@@ -53,15 +54,15 @@ import java.util.ArrayList;
 public class BeautiTesterConfig {
 
     private PrintWriter scriptWriter;
-	BeastGenerator generator;
-	
-	private String COMMEND = "beast "; 
+    BeastGenerator generator;
+
+    private String COMMEND = "beast ";
 
     public void setCOMMEND(String commend) {
-		COMMEND = commend;
-	}
+        COMMEND = commend;
+    }
 
-	public BeautiTesterConfig() {        
+    public BeautiTesterConfig() {
     }
 
     public BeautiOptions createOptions() {
@@ -97,27 +98,27 @@ public class BeautiTesterConfig {
 
 //        beautiOptions.meanSubstitutionRate = 1.0;
 //        beautiOptions.fixedSubstitutionRate = true;
-        
+
         generator = new BeastGenerator(beautiOptions, null);
-        
+
         return beautiOptions;
     }
-    
-    public void closeScriptWriter() {
-    	scriptWriter.close();
-	}
 
-	public void createScriptWriter(String pathAndFile) {    	
+    public void closeScriptWriter() {
+        scriptWriter.close();
+    }
+
+    public void createScriptWriter(String pathAndFile) {
         try {
             scriptWriter = new PrintWriter(new FileWriter(pathAndFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
-	}
-	
-	public void printlnScriptWriter(String line) { 
-		scriptWriter.println(line);
-	}
+    }
+
+    public void printlnScriptWriter(String line) {
+        scriptWriter.println(line);
+    }
 
 
     public void buildNucModels(String key, BeautiOptions beautiOptions) {
@@ -438,7 +439,7 @@ public class BeautiTesterConfig {
             if (charSets != null && charSets.size() > 0) {
                 for (NexusApplicationImporter.CharSet charSet : charSets) {
                     partitions.add(new PartitionData(options, charSet.getName(), fileName,
-                            alignment, charSet.getFromSite(), charSet.getToSite(), charSet.getEvery()));
+                            new CharSetAlignment(charSet, alignment)));
                 }
             } else {
                 partitions.add(new PartitionData(options, fileNameStem, fileName, alignment));
@@ -493,6 +494,6 @@ public class BeautiTesterConfig {
         }
     }
 
-    
+
 }
 

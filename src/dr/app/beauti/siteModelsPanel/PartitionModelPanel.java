@@ -90,9 +90,11 @@ public class PartitionModelPanel extends OptionsPanel {
 	// ///////////////////
 	// ---dNdS button---//
 	// ///////////////////
+	//TODO
 	public static final boolean ENABLE_ROBUST_COUNTING = false;
 	private JButton setDndsButton;
-
+	private boolean setDndsButtonClicked = false;
+	
 	// ////////////////////////
 	// ---END: dNdS button---//
 	// ////////////////////////
@@ -124,6 +126,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
 	protected final PartitionSubstitutionModel model;
 
+	@SuppressWarnings("serial")
 	public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
 
 		super(12, (OSType.isMac() ? 6 : 24));
@@ -242,12 +245,32 @@ public class PartitionModelPanel extends OptionsPanel {
 		// ///////////////////
 		// ---dNdS button---//
 		// ///////////////////
-		Action setDndsAction = new AbstractAction("Use robust counting for dN/dS estimation") {
-			public void actionPerformed(ActionEvent e) {
-				setDndsCounting();
+		//TODO
+		class ListenSetDndsButton implements ActionListener {
+			public void actionPerformed(ActionEvent ev) {
+
+				if (!setDndsButtonClicked) {
+
+					setDndsCounting();
+					 setDndsButton.setText("Default");
+					setDndsButtonClicked = true;
+
+				} else if (setDndsButtonClicked) {
+
+					removeDnDsCounting();
+					 setDndsButton
+					 .setText("Use robust counting for dN/dS estimation");
+					setDndsButtonClicked = false;
+
+				} else {
+					System.err.println("bad juju");
+				}
+
 			}
-		};
-		setDndsButton = new JButton(setDndsAction);
+		}// END: ListenSetDndsButton
+		
+		setDndsButton = new JButton("Use robust counting for dN/dS estimation");
+		setDndsButton.addActionListener(new ListenSetDndsButton());
 		PanelUtils.setupComponent(setDndsButton);
 		setDndsButton.setToolTipText("<html>TODO</html>");
 
@@ -461,7 +484,7 @@ public class PartitionModelPanel extends OptionsPanel {
 	// ///////////////////
 	// ---dNdS button---//
 	// ///////////////////
-
+	// TODO
 	private void setDndsCounting() {
 		nucSubstCombo.setSelectedIndex(0);
 		frequencyCombo.setSelectedIndex(0);
@@ -471,23 +494,31 @@ public class PartitionModelPanel extends OptionsPanel {
 		substUnlinkCheck.setSelected(true);
 		heteroUnlinkCheck.setSelected(false);
 		freqsUnlinkCheck.setSelected(true);
-                
-        DnDsComponentOptions comp = (DnDsComponentOptions)
-                model.getOptions().getComponentOptions(DnDsComponentOptions.class);
 
-        // Add model to ComponentOptions
-        comp.addPartition(model);
+		DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
+				.getComponentOptions(DnDsComponentOptions.class);
+
+		// Add model to ComponentOptions
+		comp.addPartition(model);
 	}
 
-    // TODO Need some way to remove a partition for this list if user changes the substitution model to something else
-     
-    private void removeDnDsCounting() {
-        DnDsComponentOptions comp = (DnDsComponentOptions)
-                model.getOptions().getComponentOptions(DnDsComponentOptions.class);
+	private void removeDnDsCounting() {
+		DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
+				.getComponentOptions(DnDsComponentOptions.class);
 
-        // Remove model from ComponentOptions
-        comp.removePartition(model);
-    }
+		// Remove model from ComponentOptions
+		comp.removePartition(model);
+
+		nucSubstCombo.setSelectedIndex(0);
+		frequencyCombo.setSelectedIndex(0);
+		heteroCombo.setSelectedIndex(0);
+		gammaCatCombo.setOpaque(true);
+		codingCombo.setSelectedIndex(0);
+		substUnlinkCheck.setSelected(true);
+		heteroUnlinkCheck.setSelected(false);
+		freqsUnlinkCheck.setSelected(true);
+
+	}// END: removeDnDsCounting()
 
 	// ////////////////////////
 	// ---END: dNdS button---//

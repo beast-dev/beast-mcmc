@@ -251,8 +251,8 @@
 	</target>
 
 
-	<property name="version" value="1.6.1" />
-    <property name="version_number" value="1.6.1" />
+	<property name="version" value="1.6.2" />
+    <property name="version_number" value="1.6.2" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />
@@ -443,7 +443,8 @@
 		<copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
 		<copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+		<property name="jarbundler_dir" value="/Applications/eclipse/plugins/org.apache.ant_1.8.2.v20110505-1300/lib" />
+		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler" classpath="${jarbundler_dir}/jarbundler-2.2.0.jar" />
 
 		<!-- create a jar bundle for the mac -->
 		<jarbundler dir="${Mac_package_dir}"

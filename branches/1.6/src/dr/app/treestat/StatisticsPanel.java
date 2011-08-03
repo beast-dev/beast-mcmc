@@ -1,7 +1,7 @@
 /*
  * StatisticsPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -86,6 +86,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(TMRCASummaryStatistic.FACTORY);
         availableStatistics.add(CladeMRCAAttributeStatistic.FACTORY);
         availableStatistics.add(CladeMeanAttributeStatistic.FACTORY);
+        availableStatistics.add(BetaTreeDiversityStatistic.FACTORY);
 //        availableStatistics.add(MeanRootToTipLength.FACTORY);
 //        availableStatistics.add(MedianRootToTipLength.FACTORY);
 
@@ -430,7 +431,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
 
             Integer value = ((WholeNumberField) valueField).getValue();
             statistic.setInteger(value);
-        } else {
+        } else if (factory.allowsString()) {
             String value = valueField.getText();
             statistic.setString(value);
         }

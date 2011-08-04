@@ -78,7 +78,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         }
 
         // locations are either viruses or sera (or both)
-        List<String> locationNamesList = new ArrayList<String>();
+        List<String> locationLabelsList = new ArrayList<String>();
         int[] virusToLocationIndices = new int[virusCount];
         int count = 0;
         for (String virusName : virusNames) {
@@ -93,8 +93,8 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             }
 
             if (tipLabels == null || tipLabels.contains(name)) {
-                virusToLocationIndices[count] = locationNamesList.size();
-                locationNamesList.add(name);
+                virusToLocationIndices[count] = locationLabelsList.size();
+                locationLabelsList.add(name);
             } else {
                 virusToLocationIndices[count] = -1;
             }
@@ -129,17 +129,17 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         int[] serumToLocationIndices = new int[serumCount];
         count = 0;
         for (String serumName : serumNames) {
-            int index = locationNamesList.indexOf(serumName);
+            int index = locationLabelsList.indexOf(serumName);
             if (index == -1) {
-                index = locationNamesList.size();
-                locationNamesList.add(serumName);
+                index = locationLabelsList.size();
+                locationLabelsList.add(serumName);
             }
             serumToLocationIndices[count] = index;
             count++;
         }
 
-        String[] locationLabels = new String[locationNamesList.size()];
-        locationNamesList.toArray(locationLabels);
+        String[] locationLabels = new String[locationLabelsList.size()];
+        locationLabelsList.toArray(locationLabels);
         int locationCount = locationLabels.length;
 
         List<Double> observationList = new ArrayList<Double>();
@@ -233,6 +233,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             for (int i = 0; i < locationCount; i++) {
                 if (tipIndices[i] == -1) {
                     System.err.println("Location, " + locationLabels[i] + ", not found in tree");
+                }
+            }
+
+            for (String tipLabel : tipLabels) {
+                if (!locationLabelsList.contains(tipLabel)) {
+                    System.err.println("Tip, " + tipLabel + ", not found in location list");
                 }
             }
         } else {

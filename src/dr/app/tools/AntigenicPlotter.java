@@ -222,6 +222,10 @@ public class AntigenicPlotter {
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("Trace")));
         traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Year")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Year")));
+        traceSchema.addContent(new Element("SimpleField")
                 .setAttribute("name", "State")
                 .setAttribute("type", "double")
                 .addContent(new Element("displayName").addContent("State")));
@@ -421,6 +425,8 @@ public class AntigenicPlotter {
         Element schemaData = new Element("SchemaData");
         schemaData.setAttribute("schemaUrl", "Trace_Schema");
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+        Label l = new Label(label);
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Year").addContent(Integer.toString(l.year)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
         schemaData.addContent(new Element("SimpleData").setAttribute("name", "State").addContent(Integer.toString(state)));
         data.addContent(schemaData);

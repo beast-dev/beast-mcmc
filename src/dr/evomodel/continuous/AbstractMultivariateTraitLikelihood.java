@@ -272,7 +272,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             if (index == -1) {
                 updateAllNodes();
             } else {
-                if (((Parameter) object).getDimension() == 2 * (treeModel.getNodeCount() - 1))
+                if (object == null || ((Parameter) object).getDimension() == 2 * (treeModel.getNodeCount() - 1))
                     updateNode(treeModel.getNode(index)); // This is a branch specific update
                 else
                     updateAllNodes(); // Probably an epoch model
@@ -671,7 +671,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 }, true),
 //                        true),
                 new ElementRule(ASCERTAINMENT, new XMLSyntaxRule[] {
-                        new ElementRule(Taxon.class)                        
+                        new ElementRule(Taxon.class)
                 }, true),
                 new ElementRule(MultivariateDiffusionModel.class),
                 new ElementRule(TreeModel.class),

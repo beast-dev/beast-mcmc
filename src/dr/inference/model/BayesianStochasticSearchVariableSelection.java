@@ -47,7 +47,7 @@ public interface BayesianStochasticSearchVariableSelection {
                 
         public static boolean connectedAndWellConditioned(double[] probability) {
             for(double prob : probability) {
-                if(prob < tolerance || prob > 1) {                    
+                if(prob < tolerance || prob >= 1.0) {                    
                     return false;
                 }
             }

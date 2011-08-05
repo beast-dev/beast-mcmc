@@ -86,15 +86,16 @@ public class PartitionModelPanel extends OptionsPanel {
 			"Unlink base frequencies across codon positions");
 
 	private JButton setSRD06Button;
+	private boolean setSRD06ButtonClicked = false;
 
 	// ///////////////////
 	// ---dNdS button---//
 	// ///////////////////
-	//TODO
-	public static final boolean ENABLE_ROBUST_COUNTING = false;
-	private JButton setDndsButton;
-	private boolean setDndsButtonClicked = false;
-	
+	// TODO
+	public static final boolean ENABLE_ROBUST_DNDS_COUNTING = true;
+	private JButton setDnDsButton;
+	private boolean setDnDsButtonClicked = false;
+
 	// ////////////////////////
 	// ---END: dNdS button---//
 	// ////////////////////////
@@ -126,7 +127,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
 	protected final PartitionSubstitutionModel model;
 
-	@SuppressWarnings("serial")
 	public PartitionModelPanel(final PartitionSubstitutionModel partitionModel) {
 
 		super(12, (OSType.isMac() ? 6 : 24));
@@ -231,12 +231,30 @@ public class PartitionModelPanel extends OptionsPanel {
 			}
 		});
 
-		Action setSRD06Action = new AbstractAction("Use SRD06 Model") {
-			public void actionPerformed(ActionEvent actionEvent) {
-				setSRD06Model();
+		class ListenSetSRD06Button implements ActionListener {
+			public void actionPerformed(ActionEvent ev) {
+
+				if (!setSRD06ButtonClicked) {
+
+					setSRD06Model();
+					setSRD06Button.setText("Default");
+					setSRD06ButtonClicked = true;
+
+				} else if (setSRD06ButtonClicked) {
+
+					removeDnDsCounting();
+					setSRD06Button.setText("Use SRD06 Model");
+					setSRD06ButtonClicked = false;
+
+				} else {
+					System.err.println("bad juju");
+				}
+
 			}
-		};
-		setSRD06Button = new JButton(setSRD06Action);
+		}
+
+		setSRD06Button = new JButton("Use SRD06 Model");
+		setSRD06Button.addActionListener(new ListenSetSRD06Button());
 		PanelUtils.setupComponent(setSRD06Button);
 		setSRD06Button
 				.setToolTipText("<html>Sets the SRD06 model as described in<br>"
@@ -245,22 +263,22 @@ public class PartitionModelPanel extends OptionsPanel {
 		// ///////////////////
 		// ---dNdS button---//
 		// ///////////////////
-		//TODO
-		class ListenSetDndsButton implements ActionListener {
+		// TODO
+		class ListenSetDnDsButton implements ActionListener {
 			public void actionPerformed(ActionEvent ev) {
 
-				if (!setDndsButtonClicked) {
+				if (!setDnDsButtonClicked) {
 
-					setDndsCounting();
-					 setDndsButton.setText("Default");
-					setDndsButtonClicked = true;
+					setDnDsCounting();
+					setDnDsButton.setText("Default");
+					setDnDsButtonClicked = true;
 
-				} else if (setDndsButtonClicked) {
+				} else if (setDnDsButtonClicked) {
 
-					removeDnDsCounting();
-					 setDndsButton
-					 .setText("Use robust counting for dN/dS estimation");
-					setDndsButtonClicked = false;
+					removeSRD06Model();
+					setDnDsButton
+							.setText("Use robust counting for dN/dS estimation");
+					setDnDsButtonClicked = false;
 
 				} else {
 					System.err.println("bad juju");
@@ -268,11 +286,11 @@ public class PartitionModelPanel extends OptionsPanel {
 
 			}
 		}// END: ListenSetDndsButton
-		
-		setDndsButton = new JButton("Use robust counting for dN/dS estimation");
-		setDndsButton.addActionListener(new ListenSetDndsButton());
-		PanelUtils.setupComponent(setDndsButton);
-		setDndsButton.setToolTipText("<html>TODO</html>");
+
+		setDnDsButton = new JButton("Use robust counting for dN/dS estimation");
+		setDnDsButton.addActionListener(new ListenSetDnDsButton());
+		PanelUtils.setupComponent(setDnDsButton);
+		setDnDsButton.setToolTipText("<html>TODO</html>");
 
 		// ////////////////////////
 		// ---END: dNdS button---//
@@ -485,7 +503,15 @@ public class PartitionModelPanel extends OptionsPanel {
 	// ---dNdS button---//
 	// ///////////////////
 	// TODO
-	private void setDndsCounting() {
+	private void setDnDsCounting() {
+
+		// Add model to ComponentOptions
+		DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
+				.getComponentOptions(DnDsComponentOptions.class);
+
+		comp.addPartition(model);
+
+		// set values
 		nucSubstCombo.setSelectedIndex(0);
 		frequencyCombo.setSelectedIndex(0);
 		heteroCombo.setSelectedIndex(0);
@@ -495,20 +521,17 @@ public class PartitionModelPanel extends OptionsPanel {
 		heteroUnlinkCheck.setSelected(false);
 		freqsUnlinkCheck.setSelected(true);
 
-		DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
-				.getComponentOptions(DnDsComponentOptions.class);
-
-		// Add model to ComponentOptions
-		comp.addPartition(model);
-	}
+	}// END: setDnDsCounting()
 
 	private void removeDnDsCounting() {
+
 		DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
 				.getComponentOptions(DnDsComponentOptions.class);
 
 		// Remove model from ComponentOptions
 		comp.removePartition(model);
 
+		// set default values
 		nucSubstCombo.setSelectedIndex(0);
 		frequencyCombo.setSelectedIndex(0);
 		heteroCombo.setSelectedIndex(0);
@@ -534,6 +557,18 @@ public class PartitionModelPanel extends OptionsPanel {
 		codingCombo.setSelectedIndex(1);
 		substUnlinkCheck.setSelected(true);
 		heteroUnlinkCheck.setSelected(true);
+	}
+
+	private void removeSRD06Model() {
+		// set default values
+		nucSubstCombo.setSelectedIndex(0);
+		frequencyCombo.setSelectedIndex(0);
+		heteroCombo.setSelectedIndex(0);
+		gammaCatCombo.setOpaque(true);
+		codingCombo.setSelectedIndex(0);
+		substUnlinkCheck.setSelected(true);
+		heteroUnlinkCheck.setSelected(false);
+		freqsUnlinkCheck.setSelected(true);
 	}
 
 	/**
@@ -573,8 +608,8 @@ public class PartitionModelPanel extends OptionsPanel {
 			// ///////////////////
 			// ---dNdS button---//
 			// ///////////////////
-			if (ENABLE_ROBUST_COUNTING) {
-				addComponent(setDndsButton);
+			if (ENABLE_ROBUST_DNDS_COUNTING) {
+				addComponent(setDnDsButton);
 			}
 			// ////////////////////////
 			// ---END: dNdS button---//

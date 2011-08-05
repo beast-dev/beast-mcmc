@@ -112,6 +112,13 @@ public class SitePatterns implements SiteList, dr.util.XHTMLable {
         this(alignment, null, from, to, every);
     }
 
+//    /**
+//     * Constructor for dnds
+//     */
+//    public SitePatterns(Alignment alignment, int from, int to, int every, boolean unique) {
+//        this(alignment, null, from, to, every, unique);
+//    }
+    
     /**
      * Constructor
      */

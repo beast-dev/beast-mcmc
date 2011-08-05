@@ -69,6 +69,7 @@ public class DateCellEditor extends DefaultCellEditor {
                                                  boolean isSelected,
                                                  int row,
                                                  int column) {
+        editor.setFont(table.getFont());
         editor.setValue(((Double) value).doubleValue());
         return editor;
     }

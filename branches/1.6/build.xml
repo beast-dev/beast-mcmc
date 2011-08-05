@@ -199,7 +199,56 @@
 			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 		</jar>
-
+		
+<!--		<jar jarfile="${dist}/treestat.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Main-Class" value="dr.app.treestat.TreeStatApp" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/beast/**/*.class" />
+				<include name="dr/app/beauti/**/*.class" />
+                <include name="dr/app/gui/**/*.class" />
+				<include name="dr/app/seqgen/**" />
+				<include name="dr/app/plugin/**" />
+				<include name="dr/app/util/**/*.class" />
+				<include name="dr/app/tools/**/*.class" />
+                <include name="dr/app/treestat/**/*.class" />
+                <include name="dr/app/java16compat/**/*.class"/>
+                <include name="dr/app/beagle/**/*.class" />  
+				<include name="dr/evolution/**/*.class" />
+				<exclude name="dr/evomodel/beagle/**" />
+				<include name="dr/evomodel/**/*.class" />
+				<include name="dr/evoxml/**/*.class" />
+				<include name="dr/evomodelxml/**" />
+				<include name="dr/exporters/**/*.class" />
+				<include name="dr/gui/tree/**/*.class" />
+				<include name="dr/inference/**/*.class" />
+				<include name="dr/inferencexml/**/*.class"/>
+				<include name="dr/math/**/*.class" />
+				<include name="dr/matrix/**/*.class" />
+				<include name="dr/stats/**/*.class" />
+				<include name="dr/util/**/*.class" />
+				<include name="dr/xml/**/*.class" />
+				<include name="dr/geo/**/*.class"/>
+			</fileset>
+			<fileset dir="">
+				<include name="images/*.png" />
+			</fileset>
+			<fileset dir="${src}">
+				<include name="dr/**/*.png" />
+				<include name="org/virion/jam/**/*.png" />
+				<include name="dr/**/*.properties" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
+            <zipgroupfileset dir="${lib}" includes="jam.jar" />
+			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
+			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
+			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
+			<zipgroupfileset dir="${lib}" includes="colt.jar" />
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+		</jar>  -->
 	</target>
 
 	<!-- run beast.jar -->

@@ -47,7 +47,9 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -547,8 +549,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
         modelsChanged();
 
         fireDataChanged();
-        options.taxonSets.clear();
-        options.taxonSetsMono.clear();
         repaint();
     }
 
@@ -592,13 +592,16 @@ public class DataPanel extends BeautiPanel implements Exportable {
             for (PartitionData partition : selectedPartitionData) {
                 partition.setPartitionTreeModel(model);
             }
+
+//            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree
+//                PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
+//                if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
+//            }
         }
 
         modelsChanged();
 
         fireDataChanged();
-        options.taxonSets.clear();
-        options.taxonSetsMono.clear();
         repaint();
     }
 

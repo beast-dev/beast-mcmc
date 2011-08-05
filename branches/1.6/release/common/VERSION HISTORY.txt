@@ -22,11 +22,22 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.2 released 3rd August 2011
+Version 1.6.2 released 8th August 2011
+
+    New Features:
+        adds a "Beta Diversity" statistic to TreeStat program. This statistic
+        takes a tree of two sets of species and computes the percentage of
+        the tree length shared by the two taxa sets.
 
 	Bug Fixes:
-	
-	
+	    Issue 423:	delta exchange operator discription is wrong
+	    Issue 434:	BEAUti: Initial value missing from prior dialog
+	  * Issue 435 : UniformIntegerOperator did not include upper in the value
+	    Issue 454:	BEAUti: all the taxon sets are deleted when link/unlink tree
+	    Issue 478:	TipDates table cell editor large the text font size when
+	                changing the value
+      * Issue 479:	Multi-block charset parsing and handling in BEAUTi
+
 	
 ================================================================================
 

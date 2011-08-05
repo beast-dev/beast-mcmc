@@ -145,6 +145,7 @@ public class AntigenicPlotter {
                         data[j][i][0] = traces.getStateValue(i * 2, j);
                         data[j][i][1] = traces.getStateValue((i * 2) + 1, j);
                     }
+                    labels[i] = name;
                 }
             }
 

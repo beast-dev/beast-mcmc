@@ -228,6 +228,7 @@ public class SubordinatedProcess {
                     System.err.println("Via CDF        = " + new Vector(checkCDF));
                     System.err.println("Check distr    = " + new Vector(check));
                     System.err.println("Q              = " + new Vector(Q));
+                    System.err.println("R              = " + new Vector(getDtmcProbabilities(1)));
 
                     throw new RuntimeException("Likely numerical instability in computing end-conditioned CTMC simulant.");
                 }
@@ -236,15 +237,21 @@ public class SubordinatedProcess {
         return drawnNumber;
     }
 
-    public double[] computePDFDirectly(int startingState, int endingState, double time, double ctmcProbaility,
+    public double[] computePDFDirectly(int startingState, int endingState, double time, double ctmcProbability,
                                        int maxTerm) {
         double[] pdf = new double[maxTerm];
 
+        final double logRateTime = Math.log(getPoissonRate())+ Math.log(time);
+        final double logCtmcProbability = Math.log(ctmcProbability);
+
         for (int n = 0; n < maxTerm; n++) {
             double[] Rn = getDtmcProbabilities(n);
-            pdf[n] = Math.exp(-getPoissonRate() * time) * Math.pow(getPoissonRate() * time, n) /
-                    Math.exp(GammaFunction.lnGamma(n + 1)) * Rn[startingState * stateCount + endingState] /
-                    ctmcProbaility;
+//            pdf[n] = Math.exp(-getPoissonRate() * time) * Math.pow(getPoissonRate() * time, n) /
+//                    Math.exp(GammaFunction.lnGamma(n + 1)) * Rn[startingState * stateCount + endingState] /
+//                    ctmcProbability;
+
+            pdf[n] = Math.exp(-getPoissonRate() * time + n * logRateTime - GammaFunction.lnGamma(n + 1) +
+                    Math.log(Rn[startingState * stateCount + endingState]) - logCtmcProbability);
         }
         return pdf;
     }

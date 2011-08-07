@@ -15,8 +15,6 @@ public interface BayesianStochasticSearchVariableSelection {
 
     public class Utils {
 
-        private static double defaultExpectedMutations = 1.0;
-
         public static boolean connectedAndWellConditioned(double[] probability,
                                                           dr.app.beagle.evomodel.substmodel.SubstitutionModel substModel) {
             if (probability == null) {
@@ -63,6 +61,21 @@ public interface BayesianStochasticSearchVariableSelection {
                     dim, reversible)));
         }
 
+        public static void setTolerance(double newTolerance) {
+            tolerance = newTolerance;
+        }
+
+        public static double getTolerance() {
+            return tolerance;
+        }
+
+        public static void setScalar(double newScalar) {
+            defaultExpectedMutations = newScalar;
+        }
+        public static double getScalar() {
+            return defaultExpectedMutations;
+        }
+
         /* Determines if the graph is strongly connected, such that there exists
         * a directed path from any vertex to any other vertex
         *
@@ -107,6 +120,7 @@ public interface BayesianStochasticSearchVariableSelection {
             }
         }
 
-        private static final double tolerance = 1E-20;
+        private static double defaultExpectedMutations = 1.0;
+        private static double tolerance = 1E-20;
     }
 }

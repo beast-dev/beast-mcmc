@@ -224,6 +224,6 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		writer.writeCloseTag("report");
 
-	}// END: writeDNdSReport()
+	}// END: writeDNdSReport
 
 }// END: class

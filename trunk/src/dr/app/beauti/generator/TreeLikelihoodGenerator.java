@@ -26,6 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -35,6 +36,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
+import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -70,14 +72,80 @@ public class TreeLikelihoodGenerator extends Generator {
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
-            for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-                writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, i, partition, writer);
-            }
+            
+			DnDsComponentOptions component = (DnDsComponentOptions) options
+					.getComponentOptions(DnDsComponentOptions.class);
+
+			boolean doRobustCounting = component.doRobustCounting();
+
+			if (doRobustCounting) {
+				
+				for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+					writeAncestralTreeLikelihood(
+							TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD, i,
+							partition, writer);
+				}
+
+			} else {
+
+				for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
+					writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD,
+							i, partition, writer);
+				}
+				
+			}// END: doRobustCounting
+			
         } else {
             writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
         }
     }
 
+	/**
+	 * Write the ancestral tree likelihood XML block. Needed for robust dN/dS
+	 * counting model
+	 */
+	private void writeAncestralTreeLikelihood(String id, int num,
+			PartitionData partition, XMLWriter writer) {
+
+		PartitionSubstitutionModel substModel = partition
+				.getPartitionSubstitutionModel();
+		PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+		PartitionClockModel clockModel = partition.getPartitionClockModel();
+
+		writer
+				.writeComment("Ancestral likelihood for tree given sequence data");
+
+		writer.writeOpenTag(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD,
+				new Attribute[] {
+						new Attribute.Default<String>(XMLParser.ID, substModel
+								.getPrefix(num)
+								+ partition.getPrefix() + id),
+						new Attribute.Default<Boolean>(
+								TreeLikelihoodParser.USE_AMBIGUITIES,
+								substModel.isUseAmbiguitiesTreeLikelihood()) });
+
+		writeCodonPatternsRef(
+				substModel.getPrefix(num) + partition.getPrefix(), num,
+				substModel.getCodonPartitionCount(), writer);
+
+		writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix()
+				+ TreeModel.TREE_MODEL);
+
+		writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix(num)
+				+ SiteModel.SITE_MODEL);
+
+		writer.writeIDref(
+				StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
+				clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
+
+		writer.writeIDref(NucModelType.HKY.getXMLName(), substModel
+				.getPrefix(num)
+				+ "hky");
+
+		writer.writeCloseTag(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD);
+
+	}// END: writeAncestralTreeLikelihood
+    
     /**
      * Write the tree likelihood XML block.
      *

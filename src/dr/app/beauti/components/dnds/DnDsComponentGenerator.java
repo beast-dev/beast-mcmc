@@ -13,6 +13,8 @@ import dr.util.Attribute;
 
 public class DnDsComponentGenerator extends BaseComponentGenerator {
 
+	private String logSuffix = ".dNdS.log";
+
 	protected DnDsComponentGenerator(BeautiOptions options) {
 		super(options);
 	}
@@ -32,6 +34,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		case IN_FILE_LOG_PARAMETERS:
 		case IN_TREES_LOG:
 		case AFTER_TREES_LOG:
+		case AFTER_MCMC:
 			return true;
 		default:
 			return false;
@@ -43,8 +46,6 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
-
-		// writePatternList(writer, component);
 
 		switch (point) {
 		case IN_OPERATORS:
@@ -58,7 +59,9 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 			break;
 		case AFTER_TREES_LOG:
 			writeDNdSLogger(writer, component);
-			writeDNdSReport(writer, component);
+			break;
+		case AFTER_MCMC:
+			writeDNdSPerSiteAnalysisReport(writer, component);
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -159,7 +162,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
 
-	}// END: writeLogs()
+	}// END: writeLogs
 
 	private void writeTreeLogs(XMLWriter writer, DnDsComponentOptions component) {
 
@@ -186,7 +189,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 				new Attribute.Default<String>("id", "fileLog_dNdS"),
 				new Attribute.Default<String>("logEvery", "10000"),
 				new Attribute.Default<String>("fileName", model.getName()
-						+ ".log") });
+						+ logSuffix) });
 
 		writer
 				.writeOpenTag("dNdSLogger",
@@ -199,17 +202,17 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 
 		writer.writeCloseTag("log");
 
-	}// END: writeLogs()
+	}// END: writeLogs
 
-	private void writeDNdSReport(XMLWriter writer,
+	private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
 			DnDsComponentOptions component) {
 
 		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			writeDNdSReport(writer, model);
+			writeDNdSPerSiteAnalysisReport(writer, model);
 		}
 	}
 
-	private void writeDNdSReport(XMLWriter writer,
+	private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
 			PartitionSubstitutionModel model) {
 
 		writer.writeComment("Robust counting for: " + model.getName());
@@ -217,7 +220,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 		writer.writeOpenTag("report");
 
 		writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
-				+ ".log\"/> \n");
+				+ logSuffix + '\"' + "/> \n");
 
 		writer.writeCloseTag("report");
 

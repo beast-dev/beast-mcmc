@@ -11,6 +11,7 @@ import dr.xml.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.Annotation;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -45,8 +46,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
-
-        Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(this));
 
         String[] virusNames = dataTable.getRowLabels();
         String[] assayNames = dataTable.getColumnLabels();
@@ -257,7 +256,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
         this.tipTraitParameter = tipTraitParameter;
-        this.locationsParameter = locationsParameter;
 
         initialize(
                 mdsDimension,
@@ -275,7 +273,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             locationsParameter.getParameter(i).setId(locationLabels[i]);
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
-                locationsParameter.getParameter(i).setParameterValue(j, r);
+                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
 
                 if (tipTraitParameter != null) {
                     if (tipIndices[i] != -1) {
@@ -284,8 +282,6 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 }
             }
         }
-
-
     }
 
     private void initalizeTable(DataTable<String[]> dataTable, double[][] observationValueTable, ObservationType[][] observationTypeTable, boolean log2Transform) {
@@ -367,8 +363,13 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
     class Pair {
         Pair(final int location1, final int location2) {
-            this.location1 = location1;
-            this.location2 = location2;
+            if (location1 < location2) {
+                this.location1 = location1;
+                this.location2 = location2;
+            } else {
+                this.location1 = location2;
+                this.location2 = location1;
+            }
         }
 
         int location1;
@@ -382,26 +383,29 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        // TODO Flag which cachedDistances or mdsPrecision need to be updated
-
-        if (variable == locationsParameter) {
+        if (tipTraitParameter != null && variable == getLocationsParameter()) {
             int mdsDimension = getMDSDimension();
 
             int location = index / mdsDimension;
             int dim = index % mdsDimension;
 
-            if (tipTraitParameter != null) {
-                if (tipIndices[location] != -1) {
-                    double value = locationsParameter.getParameterValue(index);
-                    tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
-                }
+            if (tipIndices[location] != -1) {
+                double value = getLocationsParameter().getParameterValue(index);
+                tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
             }
         }
 
         super.handleVariableChangedEvent(variable, index, type);
     }
 
-    private MatrixParameter locationsParameter;
+    public CompoundParameter getTipTraitParameter() {
+        return tipTraitParameter;
+    }
+
+    public int[] getTipIndices() {
+        return tipIndices;
+    }
+
     private CompoundParameter tipTraitParameter;
     private int[] tipIndices;
 
@@ -473,7 +477,11 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            return new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+            AntigenicTraitLikelihood AGTL = new AntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+
+            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Citable.Utils.getCitationString(AGTL));
+
+            return AGTL;
         }
 
         private  Map<String, String> readMap(String fileName) throws IOException {

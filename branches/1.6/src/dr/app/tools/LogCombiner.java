@@ -40,8 +40,10 @@ import jam.console.ConsoleApplication;
 import javax.swing.*;
 import java.io.*;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -381,8 +383,8 @@ public class LogCombiner {
         writer.println("End;");
     }
 
-    private static final DecimalFormat decimalFormatter = new DecimalFormat("#.############");
-    private static final DecimalFormat scientificFormatter = new DecimalFormat("#.############E0");
+    private static final DecimalFormat decimalFormatter = new DecimalFormat("#.############", new DecimalFormatSymbols(Locale.US));
+    private static final DecimalFormat scientificFormatter = new DecimalFormat("#.############E0", new DecimalFormatSymbols(Locale.US));
 
     private String reformatNumbers(String line, boolean convertDecimal, boolean useScale, double scale) {
         StringBuffer outLine = new StringBuffer();
@@ -449,6 +451,10 @@ public class LogCombiner {
 
     //Main method
     public static void main(String[] args) throws IOException {
+
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         boolean treeFiles;
         boolean convertToDecimal;

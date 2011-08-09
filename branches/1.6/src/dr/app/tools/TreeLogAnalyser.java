@@ -37,6 +37,7 @@ import dr.util.Version;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * @author Alexei Drummond
@@ -56,14 +57,21 @@ public class TreeLogAnalyser {
 
         if (inputFile.isDirectory()) {
             System.out.println("Analysing all tree files below directory: " + inputFileName);
+
+            collectFiles(inputFile, files);
         } else if (inputFile.isFile()) {
             System.out.println("Analysing tree file: " + inputFileName);
+
+            files.add(inputFile);
         } else {
             System.err.println(inputFileName + " does not exist!");
             System.exit(0);
         }
 
-        collectFiles(inputFile, files);
+        if( files.size() == 0 ) {
+           System.err.println("No valid files");
+           System.exit(0);
+        }
 
         if (outputFileName != null) {
             FileOutputStream outputStream = new FileOutputStream(outputFileName);
@@ -180,6 +188,10 @@ public class TreeLogAnalyser {
 
     //Main method
     public static void main(String[] args) throws java.io.IOException {
+
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         printTitle();
 

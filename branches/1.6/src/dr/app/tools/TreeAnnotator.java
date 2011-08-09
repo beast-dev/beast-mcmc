@@ -42,10 +42,10 @@ import dr.geo.contouring.ContourWithSynder;
 import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
+import jam.console.ConsoleApplication;
 import org.rosuda.JRI.REXP;
 import org.rosuda.JRI.RVector;
 import org.rosuda.JRI.Rengine;
-import jam.console.ConsoleApplication;
 
 import javax.swing.*;
 import java.io.FileOutputStream;
@@ -1168,6 +1168,10 @@ public class TreeAnnotator {
 
     //Main method
     public static void main(String[] args) throws IOException {
+
+        // There is a major issue with languages that use the comma as a decimal separator.
+        // To ensure compatibility between programs in the package, enforce the US locale.
+        Locale.setDefault(Locale.US);
 
         String targetTreeFileName = null;
         String inputFileName = null;

@@ -177,7 +177,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int location = index / mdsDimension;
             int dim = index % mdsDimension;
 
-            locationUpdated[location] = true;
+            locationUpdated[getLocationIndex(location)] = true;
             distancesKnown = false;
             thresholdsKnown = false;
             truncationKnown = false;
@@ -188,7 +188,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             thresholdsKnown = false;
             truncationKnown = false;
         } else {
-            throw new IllegalArgumentException("Unknown parameter");
+            // could be a derived class's parameter
+//            throw new IllegalArgumentException("Unknown parameter");
         }
 
         likelihoodKnown = false;
@@ -310,7 +311,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return logLikelihood;
     }
 
-    private double calculateThresholdObservations(double precision) {
+    protected double calculateThresholdObservations(double precision) {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
         int j = 0;
@@ -330,8 +331,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 System.out.println("observation: " + observations[observationIndex]);
                 System.out.println("distanceIndex: " + dist);
                 System.out.println("distance: " + distances[dist]);
-                System.out.println("row: " + rowLocationIndices[dist] + " (" + locationLabels[rowLocationIndices[dist]] + ")");
-                System.out.println("col: " + columnLocationIndices[dist] + " (" + locationLabels[columnLocationIndices[dist]] + ")");
+                System.out.println("row: " + rowLocationIndices[dist] + " (" + locationLabels[getLocationIndex(rowLocationIndices[dist])] + ")");
+                System.out.println("col: " + columnLocationIndices[dist] + " (" + locationLabels[getLocationIndex(columnLocationIndices[dist])] + ")");
                 System.out.println();
             }
             sum += thresholds[j];
@@ -350,7 +351,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return sum;
     }
 
-    private double calculateTruncation(double precision) {
+    protected double calculateTruncation(double precision) {
         double sum = 0.0;
         double sd = 1.0 / Math.sqrt(precision);
         for (int i = 0; i < observationCount; i++) {
@@ -363,7 +364,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return sum;
     }
 
-    private double calculateSumOfSquaredResiduals() {
+    protected double calculateSumOfSquaredResiduals() {
         double sum = 0.0;
         for (int i = 0; i < observationCount; i++) {
             if (observationTypes[i] == ObservationType.POINT) {
@@ -375,18 +376,30 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         return sum;
     }
 
-    private void calculateDistances() {
+    protected void calculateDistances() {
         for (int i = 0; i < distancesCount; i++) {
-            if (locationUpdated[rowLocationIndices[i]] || locationUpdated[columnLocationIndices[i]]) {
+            int x = getLocationIndex(rowLocationIndices[i]);
+            int y = getLocationIndex(columnLocationIndices[i]);
+            if (locationUpdated[x] || locationUpdated[y]) {
                 distances[i] = calculateDistance(
-                        locationsParameter.getParameter(rowLocationIndices[i]),
-                        locationsParameter.getParameter(columnLocationIndices[i]));
+                        locationsParameter.getParameter(x),
+                        locationsParameter.getParameter(y));
                 distanceUpdate[i] = true;
             }
         }
     }
 
-    private double calculateDistance(Parameter X, Parameter Y) {
+    /**
+     *     Returns the index of the  given by index
+     *     Overriding this allows the clustering of locations
+     * @param index
+     * @return
+     */
+    protected int getLocationIndex(int index) {
+        return index;
+    }
+
+    protected double calculateDistance(Parameter X, Parameter Y) {
         double sum = 0.0;
         for (int i = 0; i < mdsDimension; i++) {
             double difference = X.getParameterValue(i) - Y.getParameterValue(i);
@@ -397,6 +410,14 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     public int getMDSDimension() {
         return mdsDimension;
+    }
+
+    public int getLocationCount() {
+        return locationCount;
+    }
+
+    public MatrixParameter getLocationsParameter() {
+        return locationsParameter;
     }
 
     // **************************************************************
@@ -477,7 +498,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private double[] observations;
     private ObservationType[] observationTypes;
-    private int[] distanceIndices;
+    protected int[] distanceIndices;
     private int[] rowLocationIndices;
     private int[] columnLocationIndices;
     private int[] upperThresholdIndices;
@@ -491,22 +512,22 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     private double logLikelihood;
     private double storedLogLikelihood;
 
-    private boolean distancesKnown = false;
+    protected boolean distancesKnown = false;
     private double sumOfSquaredResiduals;
     private double storedSumOfSquaredResiduals;
     private double[] distances;
     private double[] storedDistances;
 
-    private boolean[] locationUpdated;
-    private boolean[] distanceUpdate;
+    protected boolean[] locationUpdated;
+    protected boolean[] distanceUpdate;
 
-    private boolean truncationKnown = false;
+    protected boolean truncationKnown = false;
     private double truncationSum;
     private double storedTruncationSum;
     private double[] truncations;
     private double[] storedTruncations;
 
-    private boolean thresholdsKnown = false;
+    protected boolean thresholdsKnown = false;
     private double thresholdSum;
     private double storedThresholdSum;
     private double[] thresholds;

@@ -29,8 +29,12 @@ Version 1.6.2 released 8th August 2011
         takes a tree of two sets of species and computes the percentage of
         the tree length shared by the two taxa sets.
 
+        allows BEAUti 'Guess Dates' dialog to parse out calendar dates from
+        the taxon names.
+
 	Bug Fixes:
-	    Issue 423:	delta exchange operator discription is wrong
+	    Issue 423:	delta exchange operator description is wrong
+	    Issue 424:	TraitGuesser not extracting match within brackets (braces)
 	    Issue 434:	BEAUti: Initial value missing from prior dialog
 	  * Issue 435 : UniformIntegerOperator did not include upper in the value
 	    Issue 454:	BEAUti: all the taxon sets are deleted when link/unlink tree

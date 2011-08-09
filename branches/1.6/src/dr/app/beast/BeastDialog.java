@@ -37,8 +37,6 @@ import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 
 
@@ -51,9 +49,9 @@ public class BeastDialog {
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
     private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
-    private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "GPU", "CPU" });
+    private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "CPU", "GPU" });
     private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions");
-    private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Single", "Double" });
+    private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Double", "Single"});
 
     private final JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
@@ -153,21 +151,8 @@ public class BeastDialog {
             }
         });
 
-        beagleResourceCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent e) {
-                if (beagleResourceCombo.getSelectedItem().equals("GPU")) {
-                    beaglePrecisionCombo.setSelectedItem("Single");
-                    label2.setEnabled(false);
-                    beaglePrecisionCombo.setEnabled(false);
-                } else {
-                    label2.setEnabled(true);
-                    beaglePrecisionCombo.setEnabled(true);
-                }
-            }
-        });
-
         beagleCheckBox.setSelected(false);
-        beagleResourceCombo.setSelectedItem("GPU");
+        beagleResourceCombo.setSelectedItem("CPU");
     }
 
     public boolean showDialog(String title, long seed) {

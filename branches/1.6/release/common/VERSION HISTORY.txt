@@ -39,10 +39,14 @@ Version 1.6.2 released 8th August 2011
 	  * Issue 435 : UniformIntegerOperator did not include upper in the value
 	    Issue 454:	BEAUti: all the taxon sets are deleted when link/unlink tree
 	  * Issue 464:	Localized decimal indicator still being used in log files
+	    Issue 472:	Don't report operator suggestions when autooptimize is on
+	  * Issue 473:	BEAGLE default options should be CPU/Double
 	    Issue 474:	Partition table shows 0 taxa for trait partitions
 	    Issue 478:	TipDates table cell editor large the text font size when
 	                changing the value
       * Issue 479:	Multi-block charset parsing and handling in BEAUTi
+        Issue 484:	beagle_scaling command line flag turns on BEAGLE in the
+                    absence of any other flags
 
 	
 ================================================================================

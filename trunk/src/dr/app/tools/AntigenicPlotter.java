@@ -64,6 +64,7 @@ public class AntigenicPlotter {
 
     public AntigenicPlotter(int burnin,
                             boolean tabFormat,
+                            boolean discreteModel,
                             final String inputFileName,
                             final String treeFileName,
                             final String outputFileName
@@ -117,9 +118,17 @@ public class AntigenicPlotter {
             System.out.println("maxState  = " + traces.getMaxState());
             System.out.println();
 
-            int traceCount = traces.getTraceCount() / 2;
+            int traceCount = traces.getTraceCount();
+            if (discreteModel) {
+                // for the discrete model, there are 4 sets of traces, pairs coordinates, cluster allocations, and cluster sizes
+                traceCount /= 4;
+            } else {
+                // for continuous, just pairs of coordinates
+                traceCount /= 2;
+            }
 
             int stateCount = traces.getStateCount();
+
             double[][][] data;
             String[] labels = new String[traceCount];
 
@@ -150,6 +159,21 @@ public class AntigenicPlotter {
                 }
             }
 
+            int[][] clusterIndices = null;
+            int[][] clusterSizes = null;
+
+            if (discreteModel) {
+                clusterIndices = new int[stateCount][traceCount];
+                clusterSizes = new int[stateCount][traceCount];
+
+                for (int i = 0; i < traceCount; i++) {
+                    for (int j = 0; j < stateCount; j++) {
+                        clusterIndices[j][i] = (int)traces.getStateValue((traceCount * 2) + i, j);
+                        clusterSizes[j][i] = (int)traces.getStateValue((traceCount * 3) + i, j);
+                    }
+                }
+            }
+
             if (tipLabels != null) {
                 labels = new String[tipLabels.size()];
                 tipLabels.toArray(labels);
@@ -164,7 +188,11 @@ public class AntigenicPlotter {
             if (tabFormat) {
                 writeTabformat(outputFileName, labels, data);
             } else {
+                if (discreteModel) {
+                    writeKML(outputFileName, labels, data, clusterIndices, clusterSizes);
+                } else {
                 writeKML(outputFileName, labels, data);
+                }
             }
 
         } catch (Exception e) {
@@ -176,6 +204,7 @@ public class AntigenicPlotter {
         fileReader.close();
 
     }
+
 
     private void procrustinate(final double[][][] data) {
         RealMatrix Xstar = new Array2DRowRealMatrix(data[data.length - 1]);
@@ -334,6 +363,17 @@ public class AntigenicPlotter {
             System.exit(-1);
         }
 
+    }
+
+    /**
+     * Discrete KML
+     * @param outputFileName
+     * @param labels
+     * @param data
+     * @param clusterIndices
+     * @param clusterSizes
+     */
+    private void writeKML(String outputFileName, String[] labels, double[][][] data, int[][] clusterIndices, int[][] clusterSizes) {
     }
 
     private int[] sortTraces(final String[] labels) {
@@ -607,6 +647,7 @@ public class AntigenicPlotter {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.Option("discrete", "generated under the discrete antigenic model [default = continuous]"),
                         new Arguments.Option("tab", "generate tab delimited file [default = KML]"),
                         new Arguments.Option("help", "option to print this message")
                 });
@@ -630,6 +671,8 @@ public class AntigenicPlotter {
         }
 
         boolean tabFormat = arguments.hasOption("tab");
+
+        boolean discreteModel = arguments.hasOption("discrete");
 
         String[] args2 = arguments.getLeftoverArguments();
 
@@ -655,6 +698,7 @@ public class AntigenicPlotter {
 
         new AntigenicPlotter(burnin,
                 tabFormat,
+                discreteModel,
                 inputFileName,
                 treeFileName,
                 outputFileName

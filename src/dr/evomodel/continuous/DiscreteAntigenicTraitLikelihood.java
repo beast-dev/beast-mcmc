@@ -2,7 +2,6 @@ package dr.evomodel.continuous;
 
 import dr.inference.model.*;
 import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
 import dr.util.*;
 import dr.xml.*;
 
@@ -53,7 +52,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         this.clusterIndexParameter = clusterIndexParameter;
 
         clusterIndexParameter.setDimension(maxClusterCount);
-        isClusterOccupied = new boolean[maxClusterCount];
+        clusterSizes = new int[maxClusterCount];
 
         //Force the boundaries of rateCategoryParameter to match the category count
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(maxClusterCount - 1, 0, maxClusterCount);
@@ -64,10 +63,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             clusterIndexParameter.setParameterValue(i, r);
         }
 
-        updateClusterMask();
+        updateClusterSizes();
 
         addVariable(clusterIndexParameter);
         addStatistic(new ClusterMask());
+        addStatistic(new ClusterCount());
+        addStatistic(new ClusterSizes());
         addStatistic(new ClusteredLocations());
     }
 
@@ -118,20 +119,27 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         return (int)clusterIndexParameter.getParameterValue(index);
     }
 
-    private void updateClusterMask() {
+    private void updateClusterSizes() {
         for (int i = 0; i < maxClusterCount; i++) {
-            isClusterOccupied[i] = false;
+            clusterSizes[i] = 0;
         }
         for (int i = 0; i < maxClusterCount; i++) {
             int j = (int)clusterIndexParameter.getParameterValue(i);
-            isClusterOccupied[j] = true;
+            clusterSizes[j] ++;
+        }
+        clusterCount = 0;
+        for (int i = 0; i < maxClusterCount; i++) {
+            if (clusterSizes[i] > 0) {
+                clusterCount++;
+            }
         }
         clusterMaskKnown = true;
     }
 
     private int maxClusterCount;
     private final Parameter clusterIndexParameter;
-    private final boolean[] isClusterOccupied;
+    private final int[] clusterSizes;
+    private int clusterCount;
 
     private boolean clusterMaskKnown;
 
@@ -147,9 +155,47 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         public double getStatisticValue(int i) {
             if (!clusterMaskKnown) {
-                updateClusterMask();
+                updateClusterSizes();
             }
-            return isClusterOccupied[i] ? 1.0 : 0.0;
+            return clusterSizes[i] > 0 ? 1.0 : 0.0;
+        }
+
+    }
+
+    public class ClusterCount extends Statistic.Abstract {
+
+        public ClusterCount() {
+            super("clusterCount");
+        }
+
+        public int getDimension() {
+            return 1;
+        }
+
+        public double getStatisticValue(int i) {
+            if (!clusterMaskKnown) {
+                updateClusterSizes();
+            }
+            return clusterCount;
+        }
+
+    }
+
+    public class ClusterSizes extends Statistic.Abstract {
+
+        public ClusterSizes() {
+            super("clusterSizes");
+        }
+
+        public int getDimension() {
+            return maxClusterCount;
+        }
+
+        public double getStatisticValue(int i) {
+            if (!clusterMaskKnown) {
+                updateClusterSizes();
+            }
+            return clusterSizes[i];
         }
 
     }

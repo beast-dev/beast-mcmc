@@ -27,6 +27,7 @@ import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
+import dr.evolution.util.TaxonList;
 
 /**
  * @author Andrew Rambaut
@@ -151,25 +152,33 @@ public class PartitionData {  // extends PartitionOptions {
         return every;
     }
 
+    public TaxonList getTaxonList() {
+        return getAlignment();
+    }
+
     public int getSiteCount() {
-        int from = getFromSite();
-        if (from < 1) {
-            from = 1;
+        if (alignment != null) {
+            int from = getFromSite();
+            if (from < 1) {
+                from = 1;
+            }
+            int to = getToSite();
+            if (to < 1) {
+                to = alignment.getSiteCount();
+            }
+            return (to - from + 1) / every;
+        } else {
+            // must be a trait
+            return -1;
         }
-        int to = getToSite();
-        if (to < 1) {
-            to = alignment.getSiteCount();
-        }
-        return (to - from + 1) / every;
     }
 
     public int getTaxaCount() {
-        int n = alignment.getSequenceCount();
-
-        if (n > 0) {
-            return n;
+        if (getTaxonList() != null) {
+            return getTaxonList().getTaxonCount();
         } else {
-            return 0;
+            // is a trait
+            return -1;
         }
     }
 

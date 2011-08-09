@@ -63,10 +63,11 @@ public class AntigenicPlotter {
     public static final int GRIDSIZE = 200;
 
     public AntigenicPlotter(int burnin,
+                            boolean tabFormat,
                             final String inputFileName,
                             final String treeFileName,
                             final String outputFileName
-                            ) throws IOException {
+    ) throws IOException {
 
         double[][] reference = null;
         List<String> tipLabels = null;
@@ -160,7 +161,11 @@ public class AntigenicPlotter {
                 procrustinate(data);
             }
 
-            writeKML(outputFileName, labels, data);
+            if (tabFormat) {
+                writeTabformat(outputFileName, labels, data);
+            } else {
+                writeKML(outputFileName, labels, data);
+            }
 
         } catch (Exception e) {
             System.err.println("Error Parsing Input File: " + e.getMessage());
@@ -190,6 +195,35 @@ public class AntigenicPlotter {
         }
     }
 
+    private void writeTabformat(String fileName, String[] labels, double[][][] data) {
+        int[] traceOrder = sortTraces(labels);
+
+        try {
+            PrintWriter writer = new PrintWriter(new FileWriter(fileName));
+
+            writer.print("state");
+
+            for (int j = 0; j < data[0].length; j++)  {
+                writer.print("\t"+labels[traceOrder[j]] + "_1");
+                writer.print("\t"+labels[traceOrder[j]] + "_2");
+            }
+            writer.println();
+
+            for (int i = 0; i < data.length; i++)  {
+                writer.print(i);
+                for (int j = 0; j < data[i].length; j++)  {
+                    writer.print("\t" + data[i][traceOrder[j]][0]+"\t"+data[i][traceOrder[j]][1]);
+                }
+                writer.println();
+            }
+
+            writer.close();
+        } catch (IOException e) {
+            System.err.println("Error opening file: " + fileName);
+            System.exit(-1);
+        }
+
+    }
     private void writeKML(String fileName, String[] labels, double[][][] data) {
         int[] traceOrder = sortTraces(labels);
 
@@ -329,8 +363,12 @@ public class AntigenicPlotter {
     class Label implements Comparable<Label> {
         Label(final String label) {
             this.label = label;
-            String[] parts = label.split("/");
-            year = Integer.parseInt(parts[parts.length - 1]);
+            String[] parts = label.split("[/_-]");
+            try {
+                year = Integer.parseInt(parts[parts.length - 1]);
+            } catch (NumberFormatException nfe) {
+                return;
+            }
             if (year < 12) {
                 year += 2000;
             } else {
@@ -569,6 +607,7 @@ public class AntigenicPlotter {
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in' [default = 0]"),
+                        new Arguments.Option("tab", "generate tab delimited file [default = KML]"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -589,6 +628,8 @@ public class AntigenicPlotter {
         if (arguments.hasOption("burnin")) {
             burnin = arguments.getIntegerOption("burnin");
         }
+
+        boolean tabFormat = arguments.hasOption("tab");
 
         String[] args2 = arguments.getLeftoverArguments();
 
@@ -613,6 +654,7 @@ public class AntigenicPlotter {
         }
 
         new AntigenicPlotter(burnin,
+                tabFormat,
                 inputFileName,
                 treeFileName,
                 outputFileName

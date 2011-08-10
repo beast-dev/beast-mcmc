@@ -18,7 +18,7 @@ public class VectorSliceParameter extends CompoundParameter {
     }
 
     public int getDimension() {
-        return getNumberOfParameters();
+        return getParameterCount();
     }
 
     public double getParameterValue(int dim) {

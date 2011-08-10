@@ -11,7 +11,6 @@ import dr.xml.*;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.text.Annotation;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -65,7 +64,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
         List<String> tipLabels = null;
         if (tipTraitParameter != null) {
             tipLabels = new ArrayList<String>();
-            int tipCount = tipTraitParameter.getNumberOfParameters();
+            int tipCount = tipTraitParameter.getParameterCount();
 
             for (int i = 0; i < tipCount; i++) {
                 String label = tipTraitParameter.getParameter(i).getParameterName();

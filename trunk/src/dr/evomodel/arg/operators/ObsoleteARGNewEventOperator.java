@@ -8,7 +8,6 @@
  */
 package dr.evomodel.arg.operators;
 
-import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
@@ -294,7 +293,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
     private void checkAllHeights() {
         int len = arg.getInternalNodeCount();
         System.err.println("# internal nodes = " + len);
-        int n = internalNodeParameters.getNumberOfParameters();
+        int n = internalNodeParameters.getParameterCount();
         System.err.println("VSCP (" + n + ")");
         for (int i = 0; i < n; i++) {
             System.err.println(internalNodeParameters.getParameterValue(i));

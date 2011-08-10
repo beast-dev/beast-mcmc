@@ -74,8 +74,10 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     }
 
     public final void addVariable(Variable variable) {
-        variables.add(variable);
-        variable.addVariableListener(this);
+        if (!variables.contains(variable)) {
+            variables.add(variable);
+            variable.addVariableListener(this);
+        }
 
         // parameters are also statistics
         if (variable instanceof Statistic) addStatistic((Statistic) variable);
@@ -320,8 +322,9 @@ public abstract class AbstractModel implements Model, ModelListener, VariableLis
     // **************************************************************
 
     public final void addStatistic(Statistic statistic) {
-
-        statistics.add(statistic);
+        if (!statistics.contains(statistic)) {
+            statistics.add(statistic);
+        }
     }
 
     public final void removeStatistic(Statistic statistic) {

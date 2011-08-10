@@ -67,6 +67,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         addVariable(clusterIndexParameter);
         addStatistic(new ClusterMask());
+        addStatistic(new ClusterIndices());
         addStatistic(new ClusterCount());
         addStatistic(new ClusterSizes());
         addStatistic(new ClusteredLocations());
@@ -162,6 +163,29 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
     }
 
+    public class ClusterIndices extends Statistic.Abstract {
+
+        public ClusterIndices() {
+            super("clusterIndices");
+        }
+
+        public int getDimension() {
+            return clusterIndexParameter.getDimension();
+        }
+
+        @Override
+        public String getDimensionName(final int i) {
+            int location = i / getMDSDimension();
+            Parameter loc = getLocationsParameter().getParameter(location);
+            return loc.getParameterName();
+        }
+
+        public double getStatisticValue(int i) {
+            return clusterIndexParameter.getParameterValue(i);
+        }
+
+    }
+
     public class ClusterCount extends Statistic.Abstract {
 
         public ClusterCount() {
@@ -203,16 +227,20 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
     public class ClusteredLocations extends Statistic.Abstract {
 
         public ClusteredLocations() {
-            super("clusteredLocations");
+            super("clusterLocations");
         }
 
         @Override
         public String getDimensionName(final int i) {
-            int location = i / getMDSDimension();
+            int cluster = i / getMDSDimension();
             int dim = i % getMDSDimension();
 
-            Parameter loc = getLocationsParameter().getParameter(location);
-            return loc.getParameterName() + (dim + 1);
+            Parameter loc = getLocationsParameter().getParameter(cluster);
+            if (getMDSDimension() == 2) {
+                return "cluster_" + cluster + "_" + (dim == 0 ? "X" : "Y");
+            } else {
+                return "cluster_" + cluster + "_" + (dim + 1);
+            }
         }
 
         public int getDimension() {

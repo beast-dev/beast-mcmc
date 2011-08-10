@@ -68,7 +68,7 @@ public class MatrixParameter extends CompoundParameter {
     }
 
     public int getColumnDimension() {
-        return getNumberOfParameters();
+        return getParameterCount();
     }
 
     public int getRowDimension() {

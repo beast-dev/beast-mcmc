@@ -367,13 +367,102 @@ public class AntigenicPlotter {
 
     /**
      * Discrete KML
-     * @param outputFileName
+     * @param fileName
      * @param labels
      * @param data
      * @param clusterIndices
      * @param clusterSizes
      */
-    private void writeKML(String outputFileName, String[] labels, double[][][] data, int[][] clusterIndices, int[][] clusterSizes) {
+    private void writeKML(String fileName, String[] labels, double[][][] data, int[][] clusterIndices, int[][] clusterSizes) {
+        int[] traceOrder = sortTraces(labels);
+
+        Element traceSchema = new Element("Schema");
+        traceSchema.setAttribute("id", "Cluster_Schema");
+        traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Label")
+                .setAttribute("type", "string")
+                .addContent(new Element("displayName").addContent("Label")));
+        traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Number")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Number")));
+        traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Year")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Year")));
+        traceSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "State")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("State")));
+
+        Element virusSchema = new Element("Schema");
+        virusSchema.setAttribute("id", "Virus_Schema");
+        virusSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Label")
+                .setAttribute("type", "string")
+                .addContent(new Element("displayName").addContent("Label")));
+        virusSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Year")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Year")));
+        virusSchema.addContent(new Element("SimpleField")
+                .setAttribute("name", "Trace")
+                .setAttribute("type", "double")
+                .addContent(new Element("displayName").addContent("Trace")));
+
+//        final Element contourFolderElement = new Element("Folder");
+//        Element contourFolderNameElement = new Element("name");
+//        contourFolderNameElement.addContent("HPDs");
+//        contourFolderElement.addContent(contourFolderNameElement);
+
+        final Element traceFolderElement = new Element("Folder");
+        Element traceFolderNameElement = new Element("name");
+        traceFolderNameElement.addContent("traces");
+        traceFolderElement.addContent(traceFolderNameElement);
+
+        final Element clustersFolderElement = new Element("Folder");
+        Element clustersFolderNameElement = new Element("name");
+        clustersFolderNameElement.addContent("clusters");
+        clustersFolderElement.addContent(clustersFolderNameElement);
+
+        Element documentNameElement = new Element("name");
+        String documentName = fileName;
+        if (documentName.endsWith(".kml"))
+            documentName = documentName.replace(".kml", "");
+        documentNameElement.addContent(documentName);
+
+        final Element documentElement = new Element("Document");
+        documentElement.addContent(documentNameElement);
+        documentElement.addContent(traceSchema);
+        documentElement.addContent(virusSchema);
+//        documentElement.addContent(hpdSchema);
+        documentElement.addContent(clustersFolderElement);
+        documentElement.addContent(traceFolderElement);
+//        documentElement.addContent(contourFolderElement);
+
+        final Element rootElement = new Element("kml");
+        rootElement.addContent(documentElement);
+
+        Element traceElement = generateTraceElement(labels, data, traceOrder);
+        traceFolderElement.addContent(traceElement);
+
+        Element clustersElement = generateClusterElement(labels, data, clusterIndices, clusterSizes, traceOrder);
+        clustersFolderElement.addContent(clustersElement);
+
+//        Element contourElement = generateKDEElement(0.95, labels, data, traceOrder);
+//        contourFolderElement.addContent(contourElement);
+
+        PrintStream resultsStream;
+
+        try {
+            resultsStream = new PrintStream(new File(fileName));
+            XMLOutputter xmlOutputter = new XMLOutputter(Format.getPrettyFormat().setTextMode(Format.TextMode.PRESERVE));
+            xmlOutputter.output(rootElement, resultsStream);
+
+        } catch (IOException e) {
+            System.err.println("Error opening file: " + fileName);
+            System.exit(-1);
+        }
     }
 
     private int[] sortTraces(final String[] labels) {
@@ -562,6 +651,58 @@ public class AntigenicPlotter {
         data.addContent(schemaData);
         return data;
     }
+
+    private Element generateClusterElement(String[] labels, double[][][] points, int[][] clusterIndices, int[][] clusterSizes, int[] traceOrder) {
+        Element element = new Element("Folder");
+        Element nameElement = new Element("name");
+        String name = "clusters";
+
+        nameElement.addContent(name);
+        element.addContent(nameElement);
+
+        double[][] centroids = new double[points[0].length][points[0][0].length];
+        for (int i = 0; i < points.length; i++)  {
+            for (int j = 0; j < points[i].length; j++)  {
+                for (int k = 0; k < points[i][j].length; k++)  {
+                    centroids[j][k] += points[i][j][k];
+                }
+            }
+        }
+        for (int j = 0; j < points[0].length; j++)  {
+            for (int k = 0; k < points[0][j].length; k++)  {
+                centroids[j][k] /= points.length;
+            }
+        }
+
+        for (int j = 0; j < points[0].length; j++)  {
+            Element placemarkElement = new Element("Placemark");
+
+            placemarkElement.addContent(generateCentroidData(labels[traceOrder[j]], j));
+
+
+            Element pointElement = new Element("Point");
+            Element coordinates = new Element("coordinates");
+            coordinates.addContent(centroids[traceOrder[j]][1]+","+centroids[traceOrder[j]][0]+",0");
+            pointElement.addContent(coordinates);
+            placemarkElement.addContent(pointElement);
+
+            element.addContent(placemarkElement);
+        }
+        return element;
+    }
+
+    private Element generateClusterData(String label, int trace) {
+        Element data = new Element("ExtendedData");
+        Element schemaData = new Element("SchemaData");
+        schemaData.setAttribute("schemaUrl", "Centroid_Schema");
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Label").addContent(label));
+        Label l = new Label(label);
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Year").addContent(Integer.toString(l.year)));
+        schemaData.addContent(new Element("SimpleData").setAttribute("name", "Trace").addContent(Integer.toString(trace)));
+        data.addContent(schemaData);
+        return data;
+    }
+
 
     private Element generatePlacemarkElementWithPolygon(double hpdValue, KMLCoordinates coords, int pointNumber, int pathCounter) {
         Element placemarkElement = new Element("Placemark");

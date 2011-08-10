@@ -323,7 +323,7 @@ public class TreeTraitParserUtilities {
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
             if (integrateOutInternalStates) {
-                int numTraits = traitParameter.getNumberOfParameters();
+                int numTraits = traitParameter.getParameterCount();
                 if (numTraits != treeModel.getExternalNodeCount()) {
                     throw new XMLParseException(
                             "Dimensionality of '" + traitParameter.getId() + "' (" + numTraits + ") is not equal to the number" +
@@ -345,7 +345,7 @@ public class TreeTraitParserUtilities {
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 
-        for (int i = 0; i < traits.getNumberOfParameters(); i++) {
+        for (int i = 0; i < traits.getParameterCount(); i++) {
             Parameter found = traits.getParameter(i);
             if (found.getStatisticName().compareTo(name) == 0)
                 return found;

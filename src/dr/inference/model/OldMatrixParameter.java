@@ -38,7 +38,7 @@ public class OldMatrixParameter extends CompoundParameter {
     }
 
     public int getColumnDimension() {
-        return getNumberOfParameters();
+        return getParameterCount();
     }
 
     public int getRowDimension() {

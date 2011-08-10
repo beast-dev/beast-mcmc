@@ -17,6 +17,7 @@ import java.util.StringTokenizer;
  */
 public class DnDsPerSiteAnalysis implements Citable {
     public static final String DNDS_PER_SITE_ANALYSIS = "dNdSPerSiteAnalysis";
+    public static final String BURN_IN = "burnin";
     public static final String CUTOFF = "cutoff";
     public static final String PROPORTION = "proportion";
     public static final String INCLUDE_SIGNIFICANT_SYMBOL = "includeSymbol";
@@ -94,42 +95,47 @@ public class DnDsPerSiteAnalysis implements Citable {
         traceList.analyseTrace(index);
         TraceDistribution distribution = traceList.getDistributionStatistics(index);
         sb.append(numberFormatter.formatToFieldWidth(Integer.toString(index + 1), firstField));
+
+        double[] hpd = new double[2];
+        if (format.proportion == 0.95){
+            hpd[0] = distribution.getLowerHPD();
+            hpd[1] = distribution.getUpperHPD();
+        // this is weird, yes. But we used these 'HPD's to obtain the ROC curves for different cut-offs
+        }  else if (format.proportion >= 1.0) {
+            hpd[0] = distribution.getMinimum() - (distribution.getMinimum()*(format.proportion - 1.0));
+            hpd[1] = distribution.getMaximum() + (distribution.getMaximum()*(format.proportion - 1.0));
+            System.out.println("hpd = "+hpd[0]+" - "+hpd[1]);
+        } else {
+//                distribution does not allow to specify proportion
+            hpd = getHPDInterval(format.proportion,traceList.getValues(index));
+//                    System.out.println("HPD proportion is "+format.proportion);
+        }
+
         if (format.includeMean) {
             sb.append(format.separator);
             sb.append(numberFormatter.format(distribution.getMean()));
         }
         if (format.includeHPD) {
             sb.append(format.separator);
-            sb.append(numberFormatter.format(distribution.getLowerHPD()));
+            sb.append(numberFormatter.format(hpd[0]));
             sb.append(format.separator);
-            sb.append(numberFormatter.format(distribution.getUpperHPD()));
+            sb.append(numberFormatter.format(hpd[1]));
         }
         if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification || format.includeSimulationOutcome) {
             boolean isSignificant = false;
             String classification = "0";
             String level;
             if (format.test == SignificanceTest.NOT_EQUAL) {
-                double[] hpd = new double[2];
-                if (format.proportion == 0.95){
-                    hpd[0] = distribution.getLowerHPD();
-                    hpd[1] = distribution.getUpperHPD();
-                }  else if (format.proportion >= 1.0) {
-                    hpd[0] = distribution.getMinimum()*format.proportion;
-                    hpd[1] = distribution.getMaximum()*format.proportion;
-                } else {
-//                distribution does not allow to specify proportion
-                    hpd = getHPDInterval(format.proportion,traceList.getValues(index));
-                }
                 if (hpd[0] < format.cutoff && hpd[1] < format.cutoff) {
-                    level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "-";
                 } else if (hpd[0] > format.cutoff && hpd[1] > format.cutoff) {
-                    level = numberFormatter.formatToFieldWidth(">0.95", fieldWidth);
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "+";
                 } else {
-                    level = numberFormatter.formatToFieldWidth("<=0.95", fieldWidth);
+                    level = numberFormatter.formatToFieldWidth("<="+format.proportion, fieldWidth);
                 }
             } else {
                 List values = traceList.getValues(index);
@@ -426,12 +432,12 @@ public class DnDsPerSiteAnalysis implements Citable {
                 int maxState = traces.getMaxState();
 
                 // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(MarginalLikelihoodAnalysisParser.BURN_IN, maxState / 10);
+                int burnin = xo.getAttribute(BURN_IN, maxState / 10);
                 //TODO: implement custom burn-in
 
                 if (burnin < 0 || burnin >= maxState) {
                     burnin = maxState / 5;
-                    System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
+                    System.out.println("WARNING: Burn-in larger than total number of states - using 20%");
                 }
 
                 traces.setBurnIn(burnin);
@@ -492,8 +498,9 @@ public class DnDsPerSiteAnalysis implements Citable {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleArrayRule(CUTOFF, true),
-                AttributeRule.newDoubleArrayRule(PROPORTION, true),
+                AttributeRule.newDoubleRule(CUTOFF, true),
+                AttributeRule.newDoubleRule(PROPORTION, true),
+                AttributeRule.newIntegerRule(BURN_IN,true),
                 AttributeRule.newBooleanRule(INCLUDE_HPD, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANT_SYMBOL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANCE_LEVEL, true),

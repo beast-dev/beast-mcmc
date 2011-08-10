@@ -22,7 +22,7 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.2 released 8th August 2011
+Version 1.6.2 released 11th August 2011
 
     New Features:
         adds a "Beta Diversity" statistic to TreeStat program. This statistic

@@ -678,7 +678,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // partitions.");
         final int length = getNumberOfPartitions();
         // System.err.println("Expected length = "+length);
-        while (partitionLength > partitioningParameters.getNumberOfParameters()) {
+        while (partitionLength > partitioningParameters.getParameterCount()) {
             Parameter newPartition = new Parameter.Default(length);
             partitioningParameters.addParameter(newPartition);
         }
@@ -2164,7 +2164,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void sanityNodeCheck(CompoundParameter inodes) {
-        int len = inodes.getNumberOfParameters();
+        int len = inodes.getParameterCount();
         for (int i = 0; i < len; i++) {
             Parameter p = inodes.getParameter(i);
             for (int j = 0; j < internalNodeCount; j++) {

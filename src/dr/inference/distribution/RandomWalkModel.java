@@ -28,7 +28,7 @@ public class RandomWalkModel extends AbstractModelLikelihood {
         addVariable(data);
         if (data instanceof CompoundParameter) {
             CompoundParameter cp = (CompoundParameter) data;
-            for (int i = 0; i < cp.getNumberOfParameters(); i++) {
+            for (int i = 0; i < cp.getParameterCount(); i++) {
                 Parameter p = cp.getParameter(i);
                 p.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, lower, p.getDimension()));
             }

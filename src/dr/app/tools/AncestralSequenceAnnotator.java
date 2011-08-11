@@ -1,13 +1,9 @@
 package dr.app.tools;
 
-
-import dr.app.beagle.evomodel.parsers.GammaSiteModelParser;
-import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.alignment.ConvertAlignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.SimpleAlignment;
 //import dr.evolution.datatype.AminoAcids;
@@ -23,11 +19,9 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
-//import dr.evomodel.sitemodel.GammaSiteModel;
-//import dr.evomodel.sitemodel.SiteModel;
-//import dr.evomodel.substmodel.*;
-import dr.evomodel.substmodel.JTT;
-import dr.evomodel.substmodel.WAG;
+import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.substmodel.*;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
@@ -36,12 +30,6 @@ import dr.stats.DiscreteStatistics;
 import dr.util.HeapSort;
 import dr.util.Version;
 
-
-import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.*;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
-import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 
 import java.io.*;
 import java.util.*;
@@ -66,9 +54,9 @@ public class AncestralSequenceAnnotator {
 
     public final String[] GENERAL_MODELS_LIST = {"EQU"};
     public final String[] NUCLEOTIDE_MODELS_LIST = {"HKY", "TN", "GTR"};
-    public final String[] AMINO_ACID_MODELS_LIST = {"JTT1992", "WAG2001", "LG2008", "Empirical\\(.+\\)"};
+    public final String[] AMINO_ACID_MODELS_LIST = {"JTT", "WAG", "LG", "Empirical\\(.+\\)"};
     public final String[] TRIPLET_MODELS_LIST = {"HKYx3", "TNx3", "GTRx3"};
-    public final String[] CODON_MODELS_LIST = {"M0HKY", "M0TN", "M0GTR"};//"M0", "M0\\[.+\\]", ""};
+    public final String[] CODON_MODELS_LIST = {"M0", "M0\\[.+\\]", ""};
 
     public AncestralSequenceAnnotator(int burnin,
                                       int heightsOption,
@@ -104,8 +92,8 @@ public class AncestralSequenceAnnotator {
         TreeExporter simulationResults = new NexusExporter(new PrintStream(new FileOutputStream(inputFileName + ".out")));
         List<Tree> simulatedTree = new ArrayList<Tree>();
 
-//		burnin = 0;
-        //	java.util.logging.Logger.getLogger("dr.evomodel").
+//        burnin = 0;
+        //    java.util.logging.Logger.getLogger("dr.evomodel").
 
         try {
             while (importer.hasTree()) {
@@ -122,12 +110,12 @@ public class AncestralSequenceAnnotator {
 
                 if (totalTrees >= burnin) {
                     addTreeAttributes(tree);
-//					Tree savedTree = tree;
+//                    Tree savedTree = tree;
                     tree = processTree(tree);
-//					System.err.println(Tree.Utils.newick(tree));
+//                    System.err.println(Tree.Utils.newick(tree));
                     exporter.exportTree(tree);
-//					simulationResults.exportTree(tree);
-//					System.exit(-1);
+//                    simulationResults.exportTree(tree);
+//                    System.exit(-1);
                     simulatedTree.add(tree);
                     cladeSystem.add(tree);
 
@@ -180,15 +168,15 @@ public class AncestralSequenceAnnotator {
 
         System.out.println("Annotating target tree... (this may take a long time)");
 
-//	 	System.out.println("Starting processing....");
+//         System.out.println("Starting processing....");
 
-//		System.out.println("calling annotateTree");
-//		System.out.println("targetTree has "+targetTree.getNodeCount()+" nodes.");
+//        System.out.println("calling annotateTree");
+//        System.out.println("targetTree has "+targetTree.getNodeCount()+" nodes.");
         cladeSystem.annotateTree(targetTree, targetTree.getRoot(), null, heightsOption);
 
         System.out.println("Processing ended.");
 
-//		System.exit(-1);
+//        System.exit(-1);
         System.out.println("Writing annotated tree....");
         if (outputFileName != null) {
             exporter = new NexusExporter(new PrintStream(new FileOutputStream(outputFileName)));
@@ -216,17 +204,10 @@ public class AncestralSequenceAnnotator {
         private String modelType;
         protected String substModelName;
         protected String[] charList;
-        protected DataType dataType;
 
-        SubstitutionModelLoader(Tree tree, String modelType, DataType dataType) {
-            this.dataType = dataType;
+        SubstitutionModelLoader(Tree tree, String modelType) {
             this.modelType = modelType;
             load(tree, modelType);
-        }
-
-        /* An artifact of old code? */
-        SubstitutionModelLoader(String name) {
-            this.substModelName = name;
         }
 
         public SubstitutionModel getSubstitutionModel() {
@@ -261,44 +242,26 @@ public class AncestralSequenceAnnotator {
 
             substModelName = modelType.replaceFirst("\\*.+","").replaceFirst("\\+.+","").trim();
 
-            loadFrequencyModel(tree);
-            //System.out.println("Frequency model datatype: " + getDataType());  //dd
+            loadFrequencyModel(tree, getDataType());
+            System.out.println("Frequency model datatype: " + getDataType());
 
             modelSpecifics(tree, modelType);
             printLogLikelihood(tree);
         }
 
-
-        private void loadFrequencyModel(Tree tree) {
+        private void loadFrequencyModel(Tree tree, DataType datatype) {
             final String[] AA_ORDER = {"A","C","D","E","F","G","H","I","K","L","M","N","P","Q","R",
                     "S","T","V","W","Y"}; //"ACDEFGHIKLMNPQRSTVWY".split("");//AminoAcids.AMINOACID_CHARS;
             final String[] DNA_NUCLEOTIDE_ORDER = {"A", "C", "G", "T"};//"ACGT".split(""); //Nucleotides.NUCLEOTIDE_CHARS;
             final String[] RNA_NUCLEOTIDE_ORDER = {"A", "C", "G", "U"};//"ACGU".split(""); //Nucleotides.NUCLEOTIDE_CHARS;
-//            final String[] CODON_ORDER = {"AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT",
-//                    "AGA", "AGC", "AGG", "AGT", "ATA", "ATC", "ATG", "ATT",
-//                    "CAA", "CAC", "CAG", "CAT", "CCA", "CCC", "CCG", "CCT",
-//                    "CGA", "CGC", "CGG", "CGT", "CTA", "CTC", "CTG", "CTT",
-//                    "GAA", "GAC", "GAG", "GAT", "GCA", "GCC", "GCG", "GCT",
-//                    "GGA", "GGC", "GGG", "GGT", "GTA", "GTC", "GTG", "GTT",
-//                    "TAA", "TAC", "TAG", "TAT", "TCA", "TCC", "TCG", "TCT",
-//                    "TGA", "TGC", "TGG", "TGT", "TTA", "TTC", "TTG", "TTT"};// Codons.CODON_TRIPLETS;
-            final String[] DNA_CODON_ORDER = {"AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT",
-                "AGA", "AGC", "AGG", "AGT", "ATA", "ATC", "ATG", "ATT",
-                "CAA", "CAC", "CAG", "CAT", "CCA", "CCC", "CCG", "CCT",
-                "CGA", "CGC", "CGG", "CGT", "CTA", "CTC", "CTG", "CTT",
-                "GAA", "GAC", "GAG", "GAT", "GCA", "GCC", "GCG", "GCT",
-                "GGA", "GGC", "GGG", "GGT", "GTA", "GTC", "GTG", "GTT",
-                /*"TAA",*/ "TAC", /*"TAG",*/ "TAT", "TCA", "TCC", "TCG", "TCT", /* Minus the stop and start codons */
-                /*"TGA",*/ "TGC", "TGG", "TGT", "TTA", "TTC", "TTG", "TTT"};// Codons.CODON_TRIPLETS;
-
-            final String[] RNA_CODON_ORDER = {"AAA", "AAC", "AAG", "AAU", "ACA", "ACC", "ACG", "ACU",
-                "AGA", "AGC", "AGG", "AGU", "AUA", "AUC", "AUG", "AUU",
-                "CAA", "CAC", "CAG", "CAU", "CCA", "CCC", "CCG", "CCU",
-                "CGA", "CGC", "CGG", "CGU", "CUA", "CUC", "CUG", "CUU",
-                "GAA", "GAC", "GAG", "GAU", "GCA", "GCC", "GCG", "GCU",
-                "GGA", "GGC", "GGG", "GGU", "GUA", "GUC", "GUG", "GUU",
-                /*"UAA",*/ "UAC", /*"UAG",*/ "UAU", "UCA", "UCC", "UCG", "UCU", /* Minus the stop and start codons */
-                /*"UGA",*/ "UGC", "UGG", "UGU", "UUA", "UUC", "UUG", "UUU"};// Codons.CODON_TRIPLETS;
+            final String[] CODON_ORDER = {"AAA", "AAC", "AAG", "AAT", "ACA", "ACC", "ACG", "ACT",
+                    "AGA", "AGC", "AGG", "AGT", "ATA", "ATC", "ATG", "ATT",
+                    "CAA", "CAC", "CAG", "CAT", "CCA", "CCC", "CCG", "CCT",
+                    "CGA", "CGC", "CGG", "CGT", "CTA", "CTC", "CTG", "CTT",
+                    "GAA", "GAC", "GAG", "GAT", "GCA", "GCC", "GCG", "GCT",
+                    "GGA", "GGC", "GGG", "GGT", "GTA", "GTC", "GTG", "GTT",
+                    "TAA", "TAC", "TAG", "TAT", "TCA", "TCC", "TCG", "TCT",
+                    "TGA", "TGC", "TGG", "TGT", "TTA", "TTC", "TTG", "TTT"};// Codons.CODON_TRIPLETS;
 
             /* For BAli-Phy, even if F=constant, you can still extract the frequencies this way. */
 
@@ -306,7 +269,7 @@ public class AncestralSequenceAnnotator {
             double[] freq = new double[0];
             String[] charOrder = new String[0];
 
-            if(getDataType().getClass().equals(GeneralDataType.class)) {
+            if(getDataType().getClass().getName().equals(GeneralSubstitutionModel.class.getName())) {
                 ArrayList<String> tempCharOrder = new ArrayList<String>(freq.length);
                 for (Iterator<String> i = tree.getAttributeNames(); i.hasNext();) {
                     String name = i.next();
@@ -316,53 +279,35 @@ public class AncestralSequenceAnnotator {
                     }
                 }
                 charOrder = tempCharOrder.toArray(new String[tempCharOrder.size()]);
-                //this.charList = tempCharOrder.toArray(new String[tempCharOrder.size()]);
                 freq = new double[charOrder.length];
 
             }
-            else if(getDataType().getClass().equals(Nucleotides.class)) {
+            else if(getDataType().getClass().getName().equals(Nucleotides.class.getName())) {
                 if(tree.getAttribute("piT") != null) {
                     charOrder = DNA_NUCLEOTIDE_ORDER;
                     freq = new double[charOrder.length];
                 }
-                else if(tree.getAttribute("piU") != null) {
+                else {
                     charOrder = RNA_NUCLEOTIDE_ORDER;
                     freq = new double[charOrder.length];
                 }
-                else {
-                    throw new RuntimeException("Not proper nucleotide data");
-                }
             }
-            else if(getDataType().getClass().equals(AminoAcids.class)) {
+            else if(getDataType().getClass().getName().equals(AminoAcids.class.getName())) {
 
                 charOrder = AA_ORDER;
                 freq = new double[charOrder.length];
             }
 
-            else if(getDataType().getClass().equals(Codons.class)) {
-                if(tree.getAttribute("piAAT") != null) {
-                    charOrder = DNA_CODON_ORDER;
-                    freq = new double[charOrder.length];
-                }
-                else if(tree.getAttribute("piAAU") != null) {
-                    charOrder = RNA_CODON_ORDER;
-                    freq = new double[charOrder.length];
-                }
-                else{
-                    throw new RuntimeException("Base frequencies do not fit those for a codon model or not proper nucleotide data for codons\n" +
-                        "If you are using F=nucleotides models for codon models, they are currently not supported in BEAST");
-                }
-
+            else if(getDataType().getClass().getName().equals(Codons.UNIVERSAL.getClass().getName())) {
+                charOrder = CODON_ORDER;
+                freq = new double[charOrder.length];
             }
-            else {
-                throw new RuntimeException("Datatype unknown! (This error message should never be seen, contact Sibon)");
-            }
-    //            // This if statement is reserved for triplet data
-    //            else if(getDataType().getClass().equals(Nucleotides.class)) {
-    //                // This is wrong because for triplets
-    //                freq = new double[Nucleotides.NUCLEOTIDE_CHARS.length];
-    //
-    //            }
+//            // This if statement is reserved for triplet data
+//            else if(getDataType().getClass().getName().equals(Nucleotides.class.getName())) {
+//                // This is wrong because for triplets
+//                freq = new double[Nucleotides.NUCLEOTIDE_CHARS.length];
+//
+//            }
 
             int cnt = 0;
             double sum = 0;
@@ -381,10 +326,6 @@ public class AncestralSequenceAnnotator {
             }
             charList = tempCharList.toArray(new String[tempCharList.size()]);
 
-//            for(int j=0; j<charList.length; j++) {
-//                System.out.println("charizard lists " + charList[j]);
-//            }
-
             /* Order the frequencies correctly */
             double[] freqOrdered = new double[freq.length];
             for (int i = 0; i < freqOrdered.length; i++) {
@@ -395,20 +336,17 @@ public class AncestralSequenceAnnotator {
                         break search;
                     }
                 }
-
                 freqOrdered[i] = freq[index] / sum;
-                //System.out.println(" no fried " + freqOrdered.length + "\t" + freq.length + "\t" + charOrder[i] + "\t" + freqOrdered[i]); //ddd
             }
-            this.freqModel = new FrequencyModel(getDataType(), new Parameter.Default(freqOrdered));
 
+            System.out.println("List of characters: " + charList.toString());
+            freqModel = new FrequencyModel(getDataType(), new Parameter.Default(freqOrdered));
         }
-
-
 
         protected boolean doPrint = false;
         private void printLogLikelihood(Tree tree) {
             if (doPrint) {
-                Double logLikelihood = Double.parseDouble(tree.getAttribute(LIKELIHOOD).toString());
+                Double logLikelihood = (Double) tree.getAttribute(LIKELIHOOD);
                 if (logLikelihood != null)
                     System.err.printf("%5.1f", logLikelihood);
             }
@@ -419,44 +357,18 @@ public class AncestralSequenceAnnotator {
 
         private final String EQU_TEXT = "EQU";
 
-
         private GeneralSubstitutionModelLoader(Tree tree, String modelType) {
-            super(tree, modelType, new GeneralDataType(new String[0]));
-            setGeneralDataType();
-            throw new RuntimeException("General substitution model is currently not stable and should not be used");
+            super(tree, modelType);
         }
         protected void modelSpecifics(Tree tree, String modelType) {
             if(substModelName.equals(EQU_TEXT)) {
-                if(freqModel.getFrequencyCount() != charList.length) {
-                    System.err.println("Frequency model length does not match character list length, " +
-                            "GeneralSubstitutionModelLoader");
-                    System.exit(-1);
-                }
-
                 /* Equivalent to a JC model but for all states */
-                //TODO CHECK IF THIS IS CORRECT
-                double[] rates = new double[(charList.length * (charList.length - 1)) / 2];
-                for(int i=0; i<rates.length; i++) {
-                    rates[i] = 1.0;
-                }
-                System.out.println("Number of site transition rate categories (debuggin): " + rates.length);
-                //substModel = new GeneralSubstitutionModel(freqModel.getDataType(), freqModel, new Parameter.Default(rates), 1);
-                substModel = new GeneralSubstitutionModel(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, freqModel.getDataType(), freqModel, new Parameter.Default(rates), 1, null);
+                substModel = new GeneralSubstitutionModel(new GeneralDataType(charList), freqModel, null, 0);
             }
         }
         public DataType getDataType() {
-            setGeneralDataType();
-            return dataType;
-        }
-
-        public void setGeneralDataType() {
-            if(charList!=null && dataType.getStateCount()!=charList.length) {
-                GeneralDataType gdt = new GeneralDataType(charList);
-                gdt.addAmbiguity("-", charList);
-                gdt.addAmbiguity("X", charList);
-                gdt.addAmbiguity("?", charList);
-                dataType = gdt;
-            }
+            //return GeneralDataType.INSTANCE;
+            return new GeneralDataType(charList);
         }
     }
 
@@ -466,45 +378,32 @@ public class AncestralSequenceAnnotator {
         protected static final String GTR_TEXT = "GTR";
 
         private NucleotideSubstitutionModelLoader(Tree tree, String modelType) {
-            super(tree, modelType, Nucleotides.INSTANCE);
+            super(tree, modelType);
         }
         protected void modelSpecifics(Tree tree, String modelType) {
             if(substModelName.equals(HKY_TEXT)) {
-                double kappa = Double.parseDouble(tree.getAttribute("HKY_kappa").toString());
-                //double kappa = (Double) tree.getAttribute("HKY_kappa");
-                //double kappa = (Double) tree.getAttribute("HKY\\:\\:kappa");
+                double kappa = (Double) tree.getAttribute("HKY\\:\\:kappa");
                 //double kappa = (Double) tree.getAttribute("HKY::kappa");
                 //double kappa = (Double) tree.getAttribute("kappa");
+
                 substModel = new HKY(new Parameter.Default(kappa), freqModel);
 
             }
             if(substModelName.equals(TN_TEXT)) {
 
-                double kappa1 = Double.parseDouble(tree.getAttribute("TN_kappa(pur)").toString());
-                double kappa2 = Double.parseDouble(tree.getAttribute("TN_kappa(pyr)").toString());
-                //double kappa1 = (Double) tree.getAttribute("TN_kappa(pur)");
-                //double kappa2 = (Double) tree.getAttribute("TN_kappa(pyr)");
-                System.err.println("Sorry, TN substitution model is not yet implemented in BEAST-Beagle");
-                System.exit(0);
+                double kappa1 = (Double) tree.getAttribute("TN::kappa(pur)");
+                double kappa2 = (Double) tree.getAttribute("TN::kappa(pyr)");
 
-                //TODO Tamura-Nei model
-                //substModel = new TN93(new Parameter.Default(kappa1), new Parameter.Default(kappa2), freqModel);
+                substModel = new TN93(new Parameter.Default(kappa1), new Parameter.Default(kappa2), freqModel);
             }
             if(substModelName.equals(GTR_TEXT)) {
                 /* It should be noted that BAli-Phy uses TC instead of CT and GC instead of CG */
-                //double rateACValue = (Double) tree.getAttribute("GTR_AC");
-                //double rateAGValue = (Double) tree.getAttribute("GTR_AG");
-                //double rateATValue = (Double) tree.getAttribute("GTR_AT");
-                //double rateCGValue = (Double) tree.getAttribute("GTR_GC");
-                //double rateCTValue = (Double) tree.getAttribute("GTR_TC");
-                //double rateGTValue = (Double) tree.getAttribute("GTR_GT");
-                double rateACValue = Double.parseDouble(tree.getAttribute("GTR_AC").toString());
-                double rateAGValue = Double.parseDouble(tree.getAttribute("GTR_AG").toString());
-                double rateATValue = Double.parseDouble(tree.getAttribute("GTR_AT").toString());
-                double rateCGValue = Double.parseDouble(tree.getAttribute("GTR_GC").toString());
-                double rateCTValue = Double.parseDouble(tree.getAttribute("GTR_TC").toString());
-                double rateGTValue = Double.parseDouble(tree.getAttribute("GTR_GT").toString());
-
+                double rateACValue = (Double) tree.getAttribute("GTR::AC");
+                double rateAGValue = (Double) tree.getAttribute("GTR::AG");
+                double rateATValue = (Double) tree.getAttribute("GTR::AT");
+                double rateCGValue = (Double) tree.getAttribute("GTR::GC");
+                double rateCTValue = (Double) tree.getAttribute("GTR::TC");
+                double rateGTValue = (Double) tree.getAttribute("GTR::GT");
 
                 substModel = new GTR(new Parameter.Default(rateACValue), new Parameter.Default(rateAGValue),
                         new Parameter.Default(rateATValue), new Parameter.Default(rateCGValue),
@@ -512,19 +411,19 @@ public class AncestralSequenceAnnotator {
             }
         }
         public DataType getDataType() {
-            return dataType;
+            return Nucleotides.INSTANCE;
         }
     }
 
     private class AminoAcidSubstitutionModelLoader extends SubstitutionModelLoader {
 
-        protected final String JTT_TEXT = "JTT1992";
-        protected final String WAG_TEXT = "WAG2001";
-        protected final String LG_TEXT = "LG2008";
-        protected final String Empirical_TEXT = "Empirical(.+).+";
+        private final String JTT_TEXT = "JTT";
+        private final String WAG_TEXT = "WAG";
+        private final String LG_TEXT = "LG";
+        private final String Empirical_TEXT = "Empirical(.+).+";
 
         private AminoAcidSubstitutionModelLoader(Tree tree, String modelType) {
-            super(tree, modelType, AminoAcids.INSTANCE);
+            super(tree, modelType);
         }
         protected void modelSpecifics(Tree tree, String modelType) {
             if(substModelName.equals(JTT_TEXT)) {
@@ -546,9 +445,7 @@ public class AncestralSequenceAnnotator {
                 if(empiricalModelFileName.equals("wag.dat")) {
                     substModel = new EmpiricalAminoAcidModel(WAG.INSTANCE, freqModel);
                 }
-                else if(empiricalModelFileName.equals("jtt.dat")) {
-                    substModel = new EmpiricalAminoAcidModel(JTT.INSTANCE, freqModel);
-                }
+
                 else {
                     System.err.println("Sorry, AncestralSequenceAnnotator does not currently support other files");
                     System.err.println("Soon, we will allow users to enter a file");
@@ -557,18 +454,18 @@ public class AncestralSequenceAnnotator {
             }
         }
         public DataType getDataType() {
-            return dataType;
+            return AminoAcids.INSTANCE;
         }
     }
 
     private class TripletSubstitutionModelLoader extends SubstitutionModelLoader {
 
-        protected final String HKYx3_TEXT = "HKYx3";
-        protected final String TNx3_TEXT = "TNx3";
-        protected final String GTRx3_TEXT = "GTRx3";
+        private final String HKYx3_TEXT = "HKYx3";
+        private final String TNx3_TEXT = "TNx3";
+        private final String GTRx3_TEXT = "GTRx3";
 
         private TripletSubstitutionModelLoader(Tree tree, String modelType) {
-            super(tree, modelType, Nucleotides.INSTANCE);
+            super(tree, modelType);
         }
         protected void modelSpecifics(Tree tree, String modelType) {
             if(substModelName.equals(HKYx3_TEXT)) {
@@ -588,80 +485,113 @@ public class AncestralSequenceAnnotator {
             }
         }
         public DataType getDataType() {
-            return dataType; // Is this right?
+            return Nucleotides.INSTANCE; // Is this right?
         }
     }
     private class CodonSubstitutionModelLoader extends SubstitutionModelLoader {
 
-//        private final String M0_TEXT = "M0"; // Not necessary since this never actually shows up in BAli-Phy output
-        protected final String M0_NUC_TEXT = "M0\\w+";
+        private final String M0_TEXT = "M0";
+        private final String M0_NUC_TEXT = "M0\\\\[.+\\\\]";
         //private final String HKY_TEXT = "HKY";
         //private final String TN_TEXT = "TN";
         //private final String GTR_TEXT = "GTR";
 
         private CodonSubstitutionModelLoader(Tree tree, String modelType) {
-            super(tree, modelType, Codons.UNIVERSAL);
+            super(tree, modelType);
         }
         protected void modelSpecifics(Tree tree, String modelType) {
-            //String codonNucleotideModel = substModelName.substring(substModelName.indexOf("\\\\[")+1, substModelName.indexOf("\\\\]"));
-            String codonNucleotideModel = substModelName.substring(substModelName.indexOf("M0")+2, substModelName.length());
+            String codonNucleotideModel = substModelName.substring(substModelName.indexOf("[")+1, substModelName.indexOf("]"));
+            if(substModelName.equals(M0_TEXT)) {
+                /* HKY is default */
+                codonNucleotideModel = NucleotideSubstitutionModelLoader.HKY_TEXT;
 
 
-//            if(substModelName.equals(M0_TEXT)) {
-//                /* HKY is default */
-//                codonNucleotideModel = NucleotideSubstitutionModelLoader.HKY_TEXT;
-//
-//
-//            }
+            }
             if(substModelName.matches(M0_NUC_TEXT)) {
-                /* M0_omega may be *M0_omega, depending on whether M2 etc. are used */
-                double omega = Double.parseDouble(tree.getAttribute("M0_omega").toString());
-                //omega = (Double) tree.getAttribute("\\M0_omega");
+                /* M0::omega may be *M0::omega, depending on whether M2 etc. are used */
+                double omega = (Double) tree.getAttribute("M0::omega");
                 if(codonNucleotideModel.equals(NucleotideSubstitutionModelLoader.HKY_TEXT)) {
-                    //double kappa = (Double) tree.getAttribute("HKY_kappa");
-                    double kappa = Double.parseDouble(tree.getAttribute("HKY_kappa").toString());
-                    //substModel = new YangCodonModel(Codons.UNIVERSAL, new Parameter.Default(omega),
-                            //new Parameter.Default(kappa), freqModel);
-                    substModel = new GY94CodonModel(Codons.UNIVERSAL, new Parameter.Default(omega),
+                    double kappa = (Double) tree.getAttribute("HKY::kappa");
+                    substModel = new YangCodonModel(Codons.UNIVERSAL, new Parameter.Default(omega),
                             new Parameter.Default(kappa), freqModel);
                 }
                 if(codonNucleotideModel.equals(NucleotideSubstitutionModelLoader.TN_TEXT)) {
-                    //double kappa1 = (Double) tree.getAttribute("TN_kappa(pur)");
-                    //double kappa2 = (Double) tree.getAttribute("TN_kappa(pyr)");
-                    double kappa1 = Double.parseDouble(tree.getAttribute("TN_kappa(pur)").toString());
-                    double kappa2 = Double.parseDouble(tree.getAttribute("TN_kappa(pyr)").toString());
+                    double kappa1 = (Double) tree.getAttribute("TN::kappa(pur)");
+                    double kappa2 = (Double) tree.getAttribute("TN::kappa(pyr)");
                     System.err.println("Sorry, M0[TN] substitution model is not yet implemented in BEAST");
                     System.exit(0);
                 }
                 if(codonNucleotideModel.equals(NucleotideSubstitutionModelLoader.GTR_TEXT)) {
-                    double rateACValue = Double.parseDouble(tree.getAttribute("GTR_AC").toString());
-                    double rateAGValue = Double.parseDouble(tree.getAttribute("GTR_AG").toString());
-                    double rateATValue = Double.parseDouble(tree.getAttribute("GTR_AT").toString());
-                    double rateCGValue = Double.parseDouble(tree.getAttribute("GTR_GC").toString());
-                    double rateCTValue = Double.parseDouble(tree.getAttribute("GTR_TC").toString());
-                    double rateGTValue = Double.parseDouble(tree.getAttribute("GTR_GT").toString());
-                    //double rateACValue = (Double) tree.getAttribute("GTR_AC");
-                    //double rateAGValue = (Double) tree.getAttribute("GTR_AG");
-                    //double rateATValue = (Double) tree.getAttribute("GTR_AT");
-                    //double rateCGValue = (Double) tree.getAttribute("GTR_GC");
-                    //double rateCTValue = (Double) tree.getAttribute("GTR_TC");
-                    //double rateGTValue = (Double) tree.getAttribute("GTR_GT");
+                    double rateACValue = (Double) tree.getAttribute("GTR::AC");
+                    double rateAGValue = (Double) tree.getAttribute("GTR::AG");
+                    double rateATValue = (Double) tree.getAttribute("GTR::AT");
+                    double rateCGValue = (Double) tree.getAttribute("GTR::GC");
+                    double rateCTValue = (Double) tree.getAttribute("GTR::TC");
+                    double rateGTValue = (Double) tree.getAttribute("GTR::GT");
                     System.err.println("Sorry, M0[GTR] substitution model is not yet implemented in BEAST");
                     System.exit(0);
                 }
+
+
                 // If +m2 then *M0
+
             }
+
         }
         public DataType getDataType() {
-            return dataType; // Is this right too? Just use the universal codon table?
+            return Codons.UNIVERSAL; // Is this right too? Just use the universal codon table?
         }
+    }
+
+
+    public static final String KAPPA_STRING = "kappa";
+    public static final String SEQ_STRING = "seq";
+    public static final String NEW_SEQ = "newSeq";
+    public static final String TAG = "tag";
+    public static final String LIKELIHOOD = "lnL";
+    public static final String SUBST_MODEL = "subst";
+
+
+    //    public static final String WAG_STRING = "Empirical(Data/wag.dat)*pi";
+    private final int die = 0;
+
+    private Tree processTree(Tree tree) {
+
+        // Remake tree to fix node ordering - Marc
+
+        SiteModel siteModel = loadSiteModel(tree);
+
+        SimpleAlignment alignment = new SimpleAlignment();
+        alignment.setDataType(siteModel.getSubstitutionModel().getDataType());
+
+
+        // Get sequences
+        String[] sequence = new String[tree.getNodeCount()];
+        for (int i = 0; i < tree.getNodeCount(); i++) {
+            NodeRef node = tree.getNode(i);
+            sequence[i] = (String) tree.getNodeAttribute(node, SEQ_STRING);
+            if (tree.isExternal(node)) {
+                Taxon taxon = tree.getNodeTaxon(node);
+                alignment.addSequence(new Sequence(taxon, sequence[i]));
+            }
+        }
+
+        // Make evolutionary model
+
+        BranchRateModel rateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
+
+        FlexibleTree flexTree = sampleTree(tree, alignment, siteModel, rateModel);
+        introduceGaps(flexTree, tree);
+
+        return flexTree;
     }
 
     /*
      * This method is equivalent to the SubstitutionModelLoader without having to
      * be object orientated and can be much more flexible.
      */
-    private GammaSiteRateModel loadSiteModel(Tree tree) {
+    private SiteModel loadSiteModel(Tree tree) {
+
 
         String modelType = (String) tree.getAttribute(SUBST_MODEL);
 
@@ -695,176 +625,31 @@ public class AncestralSequenceAnnotator {
             }
         }
 
+        FrequencyModel freqModel = sml.getFrequencyModel();
+
         if (sml.getSubstitutionModel() == null) {
-            System.err.println("Substitution model type '" + modelType + "' not implemented");
+            System.err.println("Substitution model type '" + tree.getAttribute(SUBST_MODEL) + "' not implemented");
             System.exit(-1);
         }
 
-        //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), null, 0, null);
-        //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), null, null, 0, null);
-
+        //Do gamma/lognormal + inv or m2,m3,m7.
         String siteRatesModels = modelType.substring(modelType.indexOf("+")+1, modelType.length());
-        //String[] siteRatesModels = siteRatesParameters.split(" + ");
-        System.out.println("Site rate models: " + siteRatesModels);
-        if(sml.getSubstitutionModel().getDataType().getClass().equals(Codons.class) &&
-                siteRatesModels.length() > 0) { /* For codon site models */
-
-            if(siteRatesModels.indexOf("+M2") >= 0) { /* M2 */
-                System.out.println("Site model - M2 Codon site model used");
-                Parameter m2FrequencyAAInv = new Parameter.Default(Double.parseDouble(tree.getAttribute("M2_f[AA INV]").toString()));
-                Parameter m2FrequencyNeutral = new Parameter.Default(Double.parseDouble(tree.getAttribute("M2_f[Neutral]").toString()));
-                Parameter m2FrequencySelected = new Parameter.Default(Double.parseDouble(tree.getAttribute("M2_f[Selected]").toString()));
-                Parameter m2Omega = new Parameter.Default(Double.parseDouble(tree.getAttribute("M2_omega").toString()));
-                //Parameter m2FrequencyAAInv = new Parameter.Default((Double) tree.getAttribute("M2_f[AA INV]"));
-                //Parameter m2FrequencyNeutral = new Parameter.Default((Double) tree.getAttribute("M2_f[Neutral]"));
-                //Parameter m2FrequencySelected = new Parameter.Default((Double) tree.getAttribute("M2_f[Selected]"));
-                //Parameter m2Omega = new Parameter.Default((Double) tree.getAttribute("M2_omega"));
-                System.err.println("Sorry, M2 substitution model is not yet implemented in BEAST");
-                System.exit(0);
-            }
-            else if(siteRatesModels.indexOf("+M3") >= 0) { /* M3 */
-                System.out.println("Site model - M3 Codon site model used");
-                int numberOfBins = Integer.parseInt(siteRatesModels.replaceFirst(".+M3\\[","").replaceFirst("\\].+", ""));
-                System.out.println(" + M3 n value: " + numberOfBins);
-                Parameter[] m3Frequencies = new Parameter[numberOfBins];
-                Parameter[] m3Omegas = new Parameter[numberOfBins];
-                for(int i=1; i<=numberOfBins; i++) {
-                    m3Frequencies[i-1] = new Parameter.Default(Double.parseDouble(tree.getAttribute("M3_f"+i).toString()));
-                    m3Omegas[i-1] = new Parameter.Default(Double.parseDouble(tree.getAttribute("M3_omega"+i).toString()));
-                    //m3Frequencies[i-1] = new Parameter.Default((Double) tree.getAttribute("M3_f"+i));
-                    //m3Omegas[i-1] = new Parameter.Default((Double) tree.getAttribute("M3_omega"+i));
-                }
-                System.err.println("Sorry, M3 substitution model is not yet implemented in BEAST");
-                System.exit(0);
-            }
-            else if(siteRatesModels.indexOf("+M0_omega~Beta(") >= 0) { /* M7 */
-                System.out.println("Site model - M7 Codon site model used");
-                int numberOfBins = Integer.parseInt(siteRatesModels.replaceFirst("M0_omega~Beta\\(","").replaceFirst("\\)", ""));
-                System.out.println(" + M7 n value: " + numberOfBins);
-                Parameter m7BetaMu = new Parameter.Default(Double.parseDouble(tree.getAttribute("beta_mu").toString()));
-                Parameter m7BetaVarMu = new Parameter.Default(Double.parseDouble(tree.getAttribute("beta_Var/mu").toString()));
-                //Parameter m7BetaMu = new Parameter.Default((Double) tree.getAttribute("beta_mu"));
-                //Parameter m7BetaVarMu = new Parameter.Default((Double) tree.getAttribute("beta_Var/mu"));
-                System.err.println("Sorry, M7 substitution model is not yet implemented in BEAST");
-                System.exit(0);
-            }
+        if(sml.getSubstitutionModel().getDataType().getClass().getName().equals("Codons") &&
+                siteRatesModels.length() > 0) {
+            // Do m2, m3, m7
         }
         else if(siteRatesModels.length() > 0) { /* i.e. for other data types. */
-            /* Do gamma/lognormal + pinv */
-            Parameter pInvParameter = null;
-            int categories = -1;
-            Parameter alphaParameter = null;
+            // Do gamma/lognormal + pinv
 
-            //System.out.println("Greatest story ever told! " + siteRatesModels);
-
-            if(siteRatesModels.indexOf("+INV") >= 0) {
-                System.out.println("Site model -  proportion of invariable sites used");
-                //pInvParameter = new Parameter.Default(((Double) tree.getAttribute("INV_p")).doubleValue());
-                pInvParameter = new Parameter.Default(Double.parseDouble(tree.getAttribute("INV_p").toString()));
-            }
-            if(siteRatesModels.indexOf("+rate~Gamma(") >= 0) {
-                System.out.println("Site model - gamma site rate heterogeneity used");
-                categories = Integer.parseInt(siteRatesModels.replaceFirst(".+rate~Gamma\\(", "").replaceFirst("\\).*",""));
-                //double sigmaMu = (Double) tree.getAttribute("gamma_sigma/mu");
-                double sigmaMu = Double.parseDouble(tree.getAttribute("gamma_sigma/mu").toString());
-                sigmaMu = (1.0/sigmaMu) * (1.0/sigmaMu); /* BAli-Phy is parameterised by sigma/mu instead of alpha */
-                alphaParameter = new Parameter.Default(sigmaMu);
-            }
-            else if(siteRatesModels.indexOf("+rate~LogNormal(") >= 0) {
-                // TODO implement lognormal site model
-                System.out.println("Site model - lognormal site rate heterogeneity used");
-                System.err.println("Sorry, lognormal site rates are not yet implemented in BEAST");
-                System.exit(0);
-
-                categories = Integer.parseInt(siteRatesModels.replaceFirst(".+rate~LogNormal\\(", "").replaceFirst("\\).*",""));
-                //double sigmaMu = (Double) tree.getAttribute("log-normal_sigma/mu");
-                double sigmaMu = Double.parseDouble(tree.getAttribute("log-normal_sigma/mu").toString());
-                sigmaMu = (1.0/sigmaMu) * (1.0/sigmaMu); /* BAli-Phy is parameterised by sigma/mu instead of alpha */
-                alphaParameter = new Parameter.Default(sigmaMu);
-            }
-            else if(siteRatesModels.indexOf("+GAMMA(") >= 0) { /* For BEAST output */
-                System.out.println("Site model - gamma site rate heterogeneity used");
-                categories = Integer.parseInt(siteRatesModels.replaceFirst(".+GAMMA\\(", "").replaceFirst("\\).*",""));
-                //double sigmaMu = (Double) tree.getAttribute("gamma_sigma/mu");
-                double alpha = Double.parseDouble(tree.getAttribute("alpha").toString());
-                alphaParameter = new Parameter.Default(alpha);
-            }
-
-            //System.out.println("alpha and pinv parameters: " + alphaParameter.getParameterValue(0) + "\t" + pInvParameter.getParameterValue(0));
-            //GammaSiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
-            GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL, new Parameter.Default(1.0), alphaParameter, categories, pInvParameter);
-            siteModel.setSubstitutionModel(sml.getSubstitutionModel());
-            //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), new Parameter.Default(1.0), 1, new Parameter.Default(0.5));
-            //SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), null, null, 0, null);
-            return siteModel;
         }
 
-        /* Default with no gamma or pinv */
-        //SiteRateModel siteModel = new GammaSiteRateModel(sml.getSubstitutionModel());
-        GammaSiteRateModel siteModel = new GammaSiteRateModel(GammaSiteModelParser.SITE_MODEL);
-        siteModel.setSubstitutionModel(sml.getSubstitutionModel());
+
+
+        /* If alpha = 1, then no gamma right?  */
+        SiteModel siteModel = new GammaSiteModel(sml.getSubstitutionModel(), new Parameter.Default(1.0), null, 0, null);
         return siteModel;
 
     }
-
-
-    public static final String KAPPA_STRING = "kappa";
-    public static final String SEQ_STRING = "states";
-    public static final String NEW_SEQ = "newSeq";
-    public static final String TAG = "tag";
-    public static final String LIKELIHOOD = "lnL";
-    public static final String SUBST_MODEL = "subst";
-
-
-    //	public static final String WAG_STRING = "Empirical(Data/wag.dat)*pi";
-    private final int die = 0;
-
-    private Tree processTree(Tree tree) {
-
-        // Remake tree to fix node ordering - Marc
-
-        GammaSiteRateModel siteModel = loadSiteModel(tree);
-
-        SimpleAlignment alignment = new SimpleAlignment();
-        alignment.setDataType(siteModel.getSubstitutionModel().getDataType());
-        if(siteModel.getSubstitutionModel().getDataType().getClass().equals(Codons.class)) {
-            //System.out.println("trololo");
-            alignment.setDataType(Nucleotides.INSTANCE);
-        }
-        //System.out.println("BOO BOO " + siteModel.getSubstitutionModel().getDataType().getClass().getName()+"\t" + Codons.UNIVERSAL.getClass().getName() + "\t" + alignment.getDataType().getClass().getName());
-
-
-        // Get sequences
-        String[] sequence = new String[tree.getNodeCount()];
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-            NodeRef node = tree.getNode(i);
-            sequence[i] = (String) tree.getNodeAttribute(node, SEQ_STRING);
-            if (tree.isExternal(node)) {
-                Taxon taxon = tree.getNodeTaxon(node);
-                alignment.addSequence(new Sequence(taxon, sequence[i]));
-            }
-        }
-
-        // Make evolutionary model
-
-        BranchRateModel rateModel = new StrictClockBranchRates(new Parameter.Default(1.0));
-        FlexibleTree flexTree;
-        if(siteModel.getSubstitutionModel().getDataType().getClass().equals(Codons.class)) {
-            ConvertAlignment convertAlignment  = new ConvertAlignment(siteModel.getSubstitutionModel().getDataType(), ((Codons) siteModel.getSubstitutionModel().getDataType()).getGeneticCode(), alignment);
-            flexTree = sampleTree(tree, convertAlignment, siteModel, rateModel);
-            //flexTree = sampleTree(tree, alignment, siteModel, rateModel);
-        }
-        else {
-            flexTree = sampleTree(tree, alignment, siteModel, rateModel);
-        }
-        introduceGaps(flexTree, tree);
-
-        return flexTree;
-    }
-
-
-
-
 
     private void introduceGaps(FlexibleTree flexTree, Tree gapTree) {
         // I forget what this function was supposed to do. - Marc
@@ -875,7 +660,7 @@ public class AncestralSequenceAnnotator {
 
     boolean[] bit = null;
 
-    private FlexibleTree sampleTree(Tree tree, PatternList alignment, GammaSiteRateModel siteModel, BranchRateModel rateModel) {
+    private FlexibleTree sampleTree(Tree tree, PatternList alignment, SiteModel siteModel, BranchRateModel rateModel) {
         FlexibleTree flexTree = new FlexibleTree(tree, true);
         flexTree.adoptTreeModelOrdering();
         FlexibleTree finalTree = new FlexibleTree(tree);
@@ -887,52 +672,15 @@ public class AncestralSequenceAnnotator {
         boolean useParentHandlers = logger.getUseParentHandlers();
         logger.setUseParentHandlers(false);
 
-//        AncestralStateTreeLikelihood likelihood = new AncestralStateTreeLikelihood(
-//                alignment,
-//                treeModel,
-//                siteModel,
-//                rateModel,
-//                false, true,
-//                alignment.getDataType(),
-//                TAG,
-//                false);
-        AncestralStateBeagleTreeLikelihood likelihood = new AncestralStateBeagleTreeLikelihood(
+        AncestralStateTreeLikelihood likelihood = new AncestralStateTreeLikelihood(
                 alignment,
                 treeModel,
-                new HomogenousBranchSubstitutionModel(siteModel.getSubstitutionModel(), siteModel.getSubstitutionModel().getFrequencyModel()),
                 siteModel,
                 rateModel,
-                false,
-                PartialsRescalingScheme.DEFAULT,
-                null,
+                false, true,
                 alignment.getDataType(),
                 TAG,
-                siteModel.getSubstitutionModel(),
-                false, true
-                );
-
-//        PatternList patternList, TreeModel treeModel,
-//                                              BranchSiteModel branchSiteModel,
-// SiteRateModel siteRateModel,
-//                                              BranchRateModel branchRateModel,
-// boolean useAmbiguities,
-//                                              PartialsRescalingScheme scalingScheme,
-//                                              Map<Set<String>, Parameter> partialsRestrictions,
-//                                              final DataType dataType,
-//                                              final String tag,
-//                                              SubstitutionModel substModel,
-//                                              boolean useMAP,
-//                                              boolean returnML) {
-
-//        PatternList patternList, TreeModel treeModel,
-//                                        SiteModel siteModel, BranchRateModel branchRateModel,
-//                                        boolean useAmbiguities, boolean storePartials,
-//                                        final DataType dataType,
-//                                        final String tag,
-//                                        boolean forceRescaling,
-//                                        boolean useMAP,
-//                                        boolean returnML) {
-
+                false);
 
         logger.setUseParentHandlers(useParentHandlers);
 
@@ -940,22 +688,15 @@ public class AncestralSequenceAnnotator {
         likelihood.makeDirty();
         double logLikelihood = likelihood.getLogLikelihood();
 
-        System.out.println("The new and old Likelihood (this value should be roughly the game, debug?): " + logLikelihood + ", " + Double.parseDouble(tree.getAttribute(LIKELIHOOD).toString()));
-        if(Double.parseDouble(tree.getAttribute(LIKELIHOOD).toString()) != logLikelihood) {
-            /* Newly written check, not sure if this is correct. May need to round values at least */
-            //throw new RuntimeException("The values of likelihood are not identical");
-        }
-//		System.err.printf("New logLikelihood = %4.1f\n", logLikelihood);
+//        System.err.printf("New logLikelihood = %4.1f\n", logLikelihood);
 
         flexTree.setAttribute(LIKELIHOOD, logLikelihood);
 
-        TreeTrait ancestralStates = likelihood.getTreeTrait(TAG);
+        TreeTrait ancestralStates = likelihood.getTreeTrait(AncestralStateTreeLikelihood.STATES_KEY);
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
-            //System.out.println(treeModel.toString() + " booyaka " + node.toString()); //dd
             String sample = ancestralStates.getTraitString(treeModel, node);
-            //System.out.println("ittebayo " + sample); //dd
 
             String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
 
@@ -972,18 +713,18 @@ public class AncestralSequenceAnnotator {
 
                 String newSeq = new String(seq);
 
-//				if( newSeq.contains("MMMMMMM") ) {
-//					System.err.println("bad = "+newSeq);
-//					System.exit(-1);
-//				}
+//                if( newSeq.contains("MMMMMMM") ) {
+//                    System.err.println("bad = "+newSeq);
+//                    System.exit(-1);
+//                }
 
                 finalTree.setNodeAttribute(finalTree.getNode(i), NEW_SEQ, newSeq);
 
             }
 
-//			Taxon taxon = finalTree.getNodeTaxon(finalTree.getNode(i));
-//			System.err.println("node: "+(taxon == null ? "null" : taxon.getId())+" "+
-//					finalTree.getNodeAttribute(finalTree.getNode(i),NEW_SEQ));
+//            Taxon taxon = finalTree.getNodeTaxon(finalTree.getNode(i));
+//            System.err.println("node: "+(taxon == null ? "null" : taxon.getId())+" "+
+//                    finalTree.getNodeAttribute(finalTree.getNode(i),NEW_SEQ));
 
         }
         return finalTree;
@@ -1041,9 +782,9 @@ public class AncestralSequenceAnnotator {
         Tree bestTree = null;
         double bestScore = Double.NEGATIVE_INFINITY;
 
-//		System.out.println("Analyzing " + totalTreesUsed + " trees...");
-//		System.out.println("0              25             50             75            100");
-//		System.out.println("|--------------|--------------|--------------|--------------|");
+//        System.out.println("Analyzing " + totalTreesUsed + " trees...");
+//        System.out.println("0              25             50             75            100");
+//        System.out.println("|--------------|--------------|--------------|--------------|");
 
         int stepSize = totalTrees / 60;
         if (stepSize < 1) stepSize = 1;
@@ -1063,8 +804,8 @@ public class AncestralSequenceAnnotator {
                     }
                 }
                 if (counter > 0 && counter % stepSize == 0) {
-//					System.out.print("*");
-//					System.out.flush();
+//                    System.out.print("*");
+//                    System.out.flush();
                 }
                 counter++;
             }
@@ -1072,8 +813,8 @@ public class AncestralSequenceAnnotator {
             System.err.println("Error Parsing Input Tree: " + e.getMessage());
             return null;
         }
-//		System.out.println();
-//		System.out.println();
+//        System.out.println();
+//        System.out.println();
         if (useSumCladeCredibility) {
             System.out.println("\tHighest Sum Clade Credibility: " + bestScore);
         } else {
@@ -1169,7 +910,7 @@ public class AncestralSequenceAnnotator {
 
                 for (int i = 0; i < attributeNames.size(); i++) {
                     String attributeName = attributeNames.get(i);
-//					System.err.println("attr = "+attributeName);
+//                    System.err.println("attr = "+attributeName);
                     Object value;
                     if (attributeName.equals("height")) {
                         value = tree.getNodeHeight(node);
@@ -1177,7 +918,7 @@ public class AncestralSequenceAnnotator {
                         value = tree.getBranchLength(node);
                     } else {
                         value = tree.getNodeAttribute(node, attributeName);
-//						System.err.println(attributeName+" : "+(String)value);
+//                        System.err.println(attributeName+" : "+(String)value);
                     }
 
                     //if (value == null) {
@@ -1294,11 +1035,11 @@ public class AncestralSequenceAnnotator {
                 throw new RuntimeException("Clade missing");
             }
 
-//			System.err.println("annotateNode new: "+bits.toString()+" size = "+attributeNames.size());
-//			for(String string : attributeNames) {
-//				System.err.println(string);
-//			}
-//			System.exit(-1);
+//            System.err.println("annotateNode new: "+bits.toString()+" size = "+attributeNames.size());
+//            for(String string : attributeNames) {
+//                System.err.println(string);
+//            }
+//            System.exit(-1);
 
 
             boolean filter = false;
@@ -1312,11 +1053,11 @@ public class AncestralSequenceAnnotator {
 
             for (int i = 0; i < attributeNames.size(); i++) {
                 String attributeName = attributeNames.get(i);
-//				System.err.println(attributeName);
+//                System.err.println(attributeName);
 
                 double[] values = new double[clade.attributeLists[i].size()];
                 HashMap<String, Integer> hashMap = new HashMap<String, Integer>(clade.attributeLists[i].size());
-//				Hashtable hashMap = new Hashtable(clade.attributeLists[i].size());
+//                Hashtable hashMap = new Hashtable(clade.attributeLists[i].size());
 
 
                 if (values.length > 0) {
@@ -1342,15 +1083,15 @@ public class AncestralSequenceAnnotator {
                             if (hashMap.containsKey(value)) {
                                 int count = hashMap.get(value);
                                 hashMap.put(value, count + 1);
-//								System.err.println("good");
+//                                System.err.println("good");
                             } else {
                                 hashMap.put(value, 1);
 
                             }
-//							if( tree.getNodeTaxon(node) != null &&
-//									tree.getNodeTaxon(node).getId().compareTo("Calanus") == 0) {
-//									System.err.println(value);
-//								}
+//                            if( tree.getNodeTaxon(node) != null &&
+//                                    tree.getNodeTaxon(node).getId().compareTo("Calanus") == 0) {
+//                                    System.err.println(value);
+//                                }
                         } else if (isBoolean) {
                             values[j] = (((Boolean) clade.attributeLists[i].get(j)) ? 1.0 : 0.0);
                         } else {
@@ -1376,13 +1117,13 @@ public class AncestralSequenceAnnotator {
                             annotateMeanAttribute(tree, node, attributeName, values);
                         else
                             annotateModeAttribute(tree, node, attributeName, hashMap);
-//						if( tree.getNodeTaxon(node) != null &&
-//									tree.getNodeTaxon(node).getId().compareTo("Calanus") == 0) {
-//									System.err.println("size = "+hashMap.keySet().size());
-//							System.err.println("count = "+hashMap.get(hashMap.keySet().toArray()[0]));
-//								}
-//							System.err.println();
-//						;
+//                        if( tree.getNodeTaxon(node) != null &&
+//                                    tree.getNodeTaxon(node).getId().compareTo("Calanus") == 0) {
+//                                    System.err.println("size = "+hashMap.keySet().size());
+//                            System.err.println("count = "+hashMap.get(hashMap.keySet().toArray()[0]));
+//                                }
+//                            System.err.println();
+//                        ;
                         if (!isBoolean && minValue < maxValue && !isDiscrete) {
                             // Basically, if it is a boolean (0, 1) then we don't need the distribution information
                             // Likewise if it doesn't vary.
@@ -1408,22 +1149,22 @@ public class AncestralSequenceAnnotator {
 
 
         public static final String fileName = "junk";
-//		public static final String execName = "/sw/bin/clustalw";
+//        public static final String execName = "/sw/bin/clustalw";
 
         private int externalCalls = 0;
 
         private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
             if (label.equals(NEW_SEQ)) {
-//				if( tree.isExternal(node) ) {
+//                if( tree.isExternal(node) ) {
 //
-//					return;
-//				}
+//                    return;
+//                }
                 String consensusSeq = null;
                 double[] support = null;
                 int numElements = values.keySet().size();
-//				System.err.println("size = "+numElements);
+//                System.err.println("size = "+numElements);
                 if (numElements > 1) {
-//					System.err.println("More than one!");
+//                    System.err.println("More than one!");
                     try {
 
                         PrintWriter pw = new PrintWriter(new PrintStream(new FileOutputStream(fileName)));
@@ -1431,7 +1172,7 @@ public class AncestralSequenceAnnotator {
 
                         int[] weight = new int[numElements];
 
-//						Iterator iter = values.keySet().iterator();
+//                        Iterator iter = values.keySet().iterator();
 
                         for (String key : values.keySet()) {
                             int thisCount = values.get(key);
@@ -1450,13 +1191,13 @@ public class AncestralSequenceAnnotator {
                             //String line;
 
                             while ((/*line = */input.readLine()) != null) {
-//							System.out.println(line);
+//                            System.out.println(line);
                             }
                         }
 
                         input.close();
                         externalCalls++;
-//						System.err.println("clustal call #" + externalCalls);
+//                        System.err.println("clustal call #" + externalCalls);
 
                         NexusImporter importer = new NexusImporter(new FileReader(fileName + ".nxs"));
 
@@ -1469,12 +1210,12 @@ public class AncestralSequenceAnnotator {
                         StringBuffer sb = new StringBuffer();
                         support = new double[alignment.getPatternCount()];
 
-//						System.err.println(new dr.math.matrixAlgebra.Vector(weight));
+//                        System.err.println(new dr.math.matrixAlgebra.Vector(weight));
 
                         for (int j = 0; j < alignment.getPatternCount(); j++) {
                             int[] pattern = alignment.getPattern(j);
-//							support[j] = appendNextConsensusCharacter(alignment,j,sb);
-//							System.err.println(new dr.math.matrixAlgebra.Vector(pattern));
+//                            support[j] = appendNextConsensusCharacter(alignment,j,sb);
+//                            System.err.println(new dr.math.matrixAlgebra.Vector(pattern));
 
                             int[] siteWeight = new int[30]; // + 2 to handle ambiguous and gap
                             int maxWeight = -1;
@@ -1486,10 +1227,10 @@ public class AncestralSequenceAnnotator {
                                     int addWeight = weight[index[k]];
                                     siteWeight[whichChar] += addWeight;
                                     totalWeight += addWeight;
-//									if( k >= alignment.getDataType().getStateCount()+2 ) {
-//										System.err.println("k = "+k);
-//										System.err.println("pattern = "+new dr.math.matrixAlgebra.Vector(pattern));
-//									}
+//                                    if( k >= alignment.getDataType().getStateCount()+2 ) {
+//                                        System.err.println("k = "+k);
+//                                        System.err.println("pattern = "+new dr.math.matrixAlgebra.Vector(pattern));
+//                                    }
                                     if (siteWeight[whichChar] > maxWeight) {
                                         maxWeight = siteWeight[whichChar];
                                         maxChar = whichChar;
@@ -1505,10 +1246,10 @@ public class AncestralSequenceAnnotator {
                             support[j] = (double) maxWeight / (double) totalWeight;
                         }
 
-//						System.err.println("cSeq = " + sb.toString());
+//                        System.err.println("cSeq = " + sb.toString());
                         consensusSeq = sb.toString();
 
-//						System.exit(-1);
+//                        System.exit(-1);
                     } catch (FileNotFoundException e) {
                         System.err.println(e.getMessage());
                         System.exit(-1);
@@ -1527,7 +1268,7 @@ public class AncestralSequenceAnnotator {
                 }
 
                 // Trim out gaps from consensus and support
-//				ArrayList<Double> newSupport = new ArrayList<Double>(support.length);
+//                ArrayList<Double> newSupport = new ArrayList<Double>(support.length);
                 boolean noComma = true;
                 StringBuffer newSupport = new StringBuffer("{");
                 StringBuffer newSeq = new StringBuffer();
@@ -1549,7 +1290,7 @@ public class AncestralSequenceAnnotator {
                 newSupport.append("}");
 
                 tree.setNodeAttribute(node, label, newSeq);
-//				String num = Str
+//                String num = Str
                 tree.setNodeAttribute(node, label + ".prob", newSupport);
             } else {
                 String mode = null;
@@ -1572,29 +1313,29 @@ public class AncestralSequenceAnnotator {
             }
         }
 
-//		private double appendNextConsensusCharacter(Alignment alignment, int j, StringBuffer sb, int[] weight) {
-//			int[] pattern = alignment.getPattern(j);
-//			int[] siteWeight = new int[alignment.getDataType().getStateCount()];
-//			int maxWeight = -1;
-//			int totalWeight = 0;
-//			int maxChar = -1;
-//			for (int k = 0; k < pattern.length; k++) {
-//				int whichChar = pattern[k];
-//				if (whichChar < alignment.getDataType().getStateCount()) {
+//        private double appendNextConsensusCharacter(Alignment alignment, int j, StringBuffer sb, int[] weight) {
+//            int[] pattern = alignment.getPattern(j);
+//            int[] siteWeight = new int[alignment.getDataType().getStateCount()];
+//            int maxWeight = -1;
+//            int totalWeight = 0;
+//            int maxChar = -1;
+//            for (int k = 0; k < pattern.length; k++) {
+//                int whichChar = pattern[k];
+//                if (whichChar < alignment.getDataType().getStateCount()) {
 //
-//					int addWeight = weight[index[k]];
-//					siteWeight[whichChar] += addWeight;
-//					totalWeight += addWeight;
-//					if (siteWeight[k] > maxWeight) {
-//						maxWeight = siteWeight[k];
-//						maxChar = k;
-//					}
-//				}
-//			}
-//			sb.append(alignment.getDataType().getChar(maxChar));
-//			return (double) maxWeight / (double) totalWeight;
+//                    int addWeight = weight[index[k]];
+//                    siteWeight[whichChar] += addWeight;
+//                    totalWeight += addWeight;
+//                    if (siteWeight[k] > maxWeight) {
+//                        maxWeight = siteWeight[k];
+//                        maxChar = k;
+//                    }
+//                }
+//            }
+//            sb.append(alignment.getDataType().getChar(maxChar));
+//            return (double) maxWeight / (double) totalWeight;
 //
-//		}
+//        }
 
         private void annotateRangeAttribute(MutableTree tree, NodeRef node, String label, double[] values) {
             double min = DiscreteStatistics.min(values);
@@ -1687,12 +1428,12 @@ public class AncestralSequenceAnnotator {
     public static void printTitle() {
         System.out.println();
         centreLine("Ancestral Sequence Annotator " + "v0.1" + ", " + "2008", 60);
-//				version.getVersionString() + ", " + version.getDateString(), 60);
+//                version.getVersionString() + ", " + version.getDateString(), 60);
 
         System.out.println();
         centreLine("by", 60);
         System.out.println();
-        centreLine("Marc A. Suchard, Wai Lok Sibon Li", 60);
+        centreLine("Marc A. Suchard", 60);
         System.out.println();
         centreLine("Departments of Biomathematics,", 60);
         centreLine("Biostatistics and Human Genetics", 60);
@@ -1738,7 +1479,7 @@ public class AncestralSequenceAnnotator {
                         //new Arguments.StringOption("target", new String[] { "maxclade", "maxtree" }, false, "an option of 'maxclade' or 'maxtree'"),
                         new Arguments.StringOption("heights", new String[]{"keep", "median", "mean"}, false, "an option of 'keep', 'median' or 'mean'"),
                         new Arguments.IntegerOption("burnin", "the number of states to be considered as 'burn-in'"),
-                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
+                        new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annoated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
                         new Arguments.StringOption("clustal", "full_path_to_clustal", "specifies full path to the clustal executable file")
@@ -1805,7 +1546,7 @@ public class AncestralSequenceAnnotator {
 
             if (inputFileName == null) {
                // No input file name was given so throw up a dialog box...
-                inputFileName = Utils.getLoadFileName("AncestralSequenceAnnotator " + version.getVersionString() + " - Select input file file to analyse");
+                inputFileName = Utils.getLoadFileName("AncestralSequenceAnnotator " + version.getVersionString() + " - Select inputfile file to analyse");
             }
             if (outputFileName == null) {
                 outputFileName = Utils.getSaveFileName("AncestralSequenceAnnotator " + version.getVersionString() + " - Select output file");

@@ -36,10 +36,10 @@ import java.awt.event.ActionListener;
 public class DateCellEditor extends DefaultCellEditor {
 
     /**
-	 *
-	 */
-	private static final long serialVersionUID = 5067833373685886590L;
-	private RealNumberField editor;
+     *
+     */
+    private static final long serialVersionUID = 5067833373685886590L;
+    private RealNumberField editor;
 
     public DateCellEditor() {
         super(new RealNumberField(0.0, Double.MAX_VALUE));
@@ -69,6 +69,10 @@ public class DateCellEditor extends DefaultCellEditor {
                                                  boolean isSelected,
                                                  int row,
                                                  int column) {
+        FontMetrics metrics = table.getFontMetrics(table.getFont());
+        int fontHeight = metrics.getHeight();
+        table.setRowHeight(row, fontHeight + fontHeight / 2);
+//      System.out.println(editor.getPreferredSize() + "\t" + table.getRowHeight(row) + "\t" + table.getHeight());
         editor.setFont(table.getFont());
         editor.setValue(((Double) value).doubleValue());
         return editor;

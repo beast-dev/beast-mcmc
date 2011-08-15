@@ -105,7 +105,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     }
 
     public static String getCitationRT() {
-        return "Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, Submitted.";
+        return "Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, " +
+                "Mol.Biol.Evol., revision submitted, July 2011.";
     }
 
     public String getParserDescription() {

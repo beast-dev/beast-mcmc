@@ -138,7 +138,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.LAMBDA,
                 "Birth-Death speciation process rate", PriorScaleType.BIRTH_RATE_SCALE,
-                0.01, 0.0, 100000.0);
+                2.0, 0.0, 100000.0);
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
                 "Birth-Death relative death rate", 0.5);
@@ -157,7 +157,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
                 "Birth-Death the probabilty that a sampled individual continues being infectious after sample event",
-                0.01); // 0 <= r <= 1
+                1.0); // 0 <= r <= 1
 //        createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE,
 //                "Birth-Death the time in the past when the process starts with the first individual", PriorScaleType.NONE,

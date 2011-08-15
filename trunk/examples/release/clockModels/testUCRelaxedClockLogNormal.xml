@@ -201,7 +201,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true">
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -225,7 +225,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="10000">
+		<log id="screenLog" logEvery="100000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -242,7 +242,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="testUCRelaxedClockLogNormal.log" overwrite="false">
+		<log id="fileLog" logEvery="10000" fileName="testUCRelaxedClockLogNormal.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<treeLikelihood idref="treeLikelihood"/>
@@ -259,12 +259,12 @@
 			<parameter idref="branchRates.categories"/> 
 		</log>
 
-		<!-- write tree log to file -->
-		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testUCRelaxedClockLogNormal.trees" sortTranslationTable="true">
+		<!-- write tree log to file
+		<logTree id="treeFileLog" logEvery="10000" nexusFormat="true" fileName="testUCRelaxedClockLogNormal.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<discretizedBranchRates idref="branchRates"/> 
 			<posterior idref="posterior"/>
-		</logTree>         
+		</logTree>  -->
 	</mcmc>
 	<report>
 		<property name="timer">

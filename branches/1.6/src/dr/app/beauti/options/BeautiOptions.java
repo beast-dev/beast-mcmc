@@ -24,7 +24,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.util.BeautiTemplate;
@@ -72,6 +71,7 @@ public class BeautiOptions extends ModelOptions {
         taxonSets.clear();
         taxonSetsMono.clear();
         taxonSetsIncludeStem.clear();
+        taxonSetsTreeModel.clear();
 
 //        meanDistance = 1.0;
         datesUnits = DateUnitsType.YEARS;
@@ -144,9 +144,11 @@ public class BeautiOptions extends ModelOptions {
             for (Taxa taxa : taxonSets) {
                 Parameter statistic = statistics.get(taxa);
                 if (statistic == null) {
-                    statistic = new Parameter.Builder(taxa.getId(), "").taxa(taxa)
-                            .isStatistic(true).isNodeHeight(true).scaleType(PriorScaleType.NONE)
-                            .initial(Double.NaN).lower(0.0).upper(Double.POSITIVE_INFINITY).build();
+                    PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
+                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
+                    statistic = new Parameter.Builder(taxa.getId(), "")
+                            .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true).partitionOptions(treeModel)
+                            .initial(Double.NaN).build();
                     statistics.put(taxa, statistic);
                 }
                 params.add(statistic);
@@ -165,7 +167,7 @@ public class BeautiOptions extends ModelOptions {
 
         ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
-        selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);       
+        selectTaxonSetsStatistics(parameters); // have to be before clockModelOptions.selectParameters(parameters);
 
         for (PartitionSubstitutionModel model : getPartitionSubstitutionModels()) {
 //          parameters.addAll(model.getParameters(multiplePartitions));
@@ -266,6 +268,15 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasData() {
         return dataPartitions.size() > 0;
+    }
+
+    public boolean hasPartitionData(String name) {
+        for (PartitionData pd : dataPartitions) {
+            if (name.equalsIgnoreCase(pd.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public PartitionData getPartitionData(Alignment alignment) {
@@ -778,11 +789,12 @@ public class BeautiOptions extends ModelOptions {
     public boolean allowDifferentTaxa = false;
     public DataType dataType = null;
 
-    public Taxa taxonList = null;
+    public Taxa taxonList = null; // union set of all taxa in all partitions. todo change to List<Taxa> regarding data type?
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
     public Map<Taxa, Boolean> taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
+    public Map<Taxa, PartitionTreeModel> taxonSetsTreeModel = new HashMap<Taxa, PartitionTreeModel>();
 
     public DateUnitsType datesUnits = DateUnitsType.YEARS;
     public DateUnitsType datesDirection = DateUnitsType.FORWARDS;
@@ -850,4 +862,5 @@ public class BeautiOptions extends ModelOptions {
 //    public static ArrayList<TraitData> getDiscreteTraitsExcludeSpecies() {
 //        return new ArrayList<TraitData>();  //Todo remove after
 //    }
+
 }

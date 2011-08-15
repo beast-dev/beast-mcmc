@@ -2,6 +2,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
@@ -59,16 +60,17 @@ public class TMRCAStatisticsGenerator extends Generator {
 
         writer.writeText("");
         for (Taxa taxa : options.taxonSets) {
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
             writer.writeOpenTag(TMRCAStatisticParser.TMRCA_STATISTIC,
                 new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")"),
+                    new Attribute.Default<String>(XMLParser.ID, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")"),
                     new Attribute.Default<Boolean>(TMRCAStatisticParser.STEM, options.taxonSetsIncludeStem.get(taxa)),
                 }
             ); // make tmrca(tree.name) eay to read in log for Tracer
             writer.writeOpenTag(TMRCAStatisticParser.MRCA);
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
             writer.writeCloseTag(TMRCAStatisticParser.MRCA);
-            writer.writeIDref(TreeModel.TREE_MODEL, taxa.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
+            writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
             writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
 
             if (options.taxonSetsMono.get(taxa)) {
@@ -80,7 +82,7 @@ public class TMRCAStatisticsGenerator extends Generator {
                 writer.writeOpenTag(MonophylyStatisticParser.MRCA);
                 writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                 writer.writeCloseTag(MonophylyStatisticParser.MRCA);
-                writer.writeIDref(TreeModel.TREE_MODEL, taxa.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(MonophylyStatisticParser.MONOPHYLY_STATISTIC);
             }
         }

@@ -114,6 +114,19 @@ public class BEAUTiImporter {
             for (Alignment alignment : alignments) {
                 setData(taxa, alignment, null, null, null, null, file.getName());
             }
+
+
+            // assume that any additional taxon lists are taxon sets...
+            for (int i = 1; i < taxonLists.size(); i++) {
+                Taxa taxonSet = (Taxa) taxonLists.get(i);
+
+                options.taxonSets.add(taxonSet);
+                options.taxonSetsMono.put(taxonSet, false);
+                options.taxonSetsIncludeStem.put(taxonSet, false);
+                options.taxonSetsTreeModel.put(taxonSet, options.getPartitionTreeModels().get(0));
+            }
+
+            reader.close();
         } catch (JDOMException e) {
             throw new JDOMException(e.getMessage());
         } catch (ImportException e) {

@@ -338,7 +338,7 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     public boolean isNodeCalibrated(Parameter para) {
-        return (para.taxa != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
+        return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
                 || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
     }
     

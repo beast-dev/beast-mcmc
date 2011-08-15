@@ -29,7 +29,8 @@ import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
 import dr.app.gui.table.TableEditorStopper;
 import dr.util.NumberFormatter;
 import jam.framework.Exportable;
@@ -40,7 +41,8 @@ import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 /**
@@ -218,7 +220,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             setParametersList(options);
         }
 
-        if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxa != null) { // param.taxa != null is TMRCA
+            if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
             if (options.clockModelOptions.isNodeCalibrated(param)) {
                 options.clockModelOptions.nodeCalibration();
                 frame.setAllOptions();

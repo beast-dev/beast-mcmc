@@ -36,6 +36,7 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
+import dr.evolution.util.Taxa;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.HeaderRenderer;
@@ -443,7 +444,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                             "of the same data type (e.g., nucleotides)",
                             "Unable to link models",
                             JOptionPane.ERROR_MESSAGE);
-
+                    return;
                 }
             }
 
@@ -566,7 +567,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    JOptionPane.showMessageDialog(this, "To accommodate different taxa for each partition trees cannot be linked.",
+                    JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
                             "Illegal Configuration",
                             JOptionPane.ERROR_MESSAGE);
                     return;
@@ -593,10 +594,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 partition.setPartitionTreeModel(model);
             }
 
-//            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree
-//                PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
-//                if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
-//            }
+            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree
+                PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
+                if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
+            }
         }
 
         modelsChanged();
@@ -662,6 +663,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
+                    if (options.hasPartitionData(name)) {
+                        JOptionPane.showMessageDialog(frame, "Partitions cannot have the same name :\n"
+                                + name + "\nRenaming is failed.",
+                                "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+                        return;
+                    }
                     if (name.length() > 0) {
                         partition.setName(name);
                     }

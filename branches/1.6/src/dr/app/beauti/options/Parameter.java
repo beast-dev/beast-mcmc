@@ -25,7 +25,6 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.enumTypes.PriorScaleType;
 import dr.app.beauti.enumTypes.PriorType;
-import dr.evolution.util.Taxa;
 import dr.math.distributions.Distribution;
 
 import java.util.Map;
@@ -46,7 +45,7 @@ public class Parameter {
     private final String description;
 
     // final Builder para
-    public final Taxa taxa;
+    public final String taxaId;
     public final boolean isNodeHeight;
     public final boolean isStatistic;
     public final boolean isCached;
@@ -80,9 +79,8 @@ public class Parameter {
         // Optional para - initialized to default values
         private PriorScaleType scaleType = PriorScaleType.NONE;
         private double initial = Double.NaN;
-        private int dimension = -1;
 
-        private Taxa taxa = null;
+        private String taxaId = null;
         private boolean isNodeHeight = false;
         private boolean isStatistic = false;
         private boolean isCached = false;
@@ -118,13 +116,8 @@ public class Parameter {
             return this;
         }
 
-        public Builder dimension(int dimension) {
-            this.dimension = dimension;
-            return this;
-        }
-
-        public Builder taxa(Taxa taxa) {
-            this.taxa = taxa;
+        public Builder taxaId(String taxaId) {
+            this.taxaId = taxaId;
             return this;
         }
 
@@ -219,7 +212,7 @@ public class Parameter {
         description = builder.description;
         scaleType = builder.scaleType;
         initial = builder.initial;
-        taxa = builder.taxa;
+        taxaId = builder.taxaId;
         isNodeHeight = builder.isNodeHeight;
         isStatistic = builder.isStatistic;
         isCached = builder.isCached;
@@ -256,27 +249,26 @@ public class Parameter {
     }
 
     public String getName() {
-        if (taxa != null) {
-            return "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")";
+        if (taxaId != null) {
+            return "tmrca(" + taxaId + ")";
         } else {
             return getFullName();
         }
     }
 
     public String getXMLName() { // only for BeautiTemplate
-        if (taxa != null) {
-            return "tmrca_" + taxa.getId();
+        if (taxaId != null) {
+            return "tmrca_" + taxaId;
         } else {
             return getFullName();
         }
     }
 
     public String getDescription() {
-        if (taxa != null) {
-            return "tmrca statistic for taxon set " + taxa.getId()
-                    + " referring to tree " + taxa.getTreeModel().getName();
-        } else if (prefix != null) {
-            return description + " of partition " + prefix;
+        if (taxaId != null) {
+            return "tmrca statistic for taxon set " + taxaId;
+//        } else if (prefix != null) {
+//            return description + " of partition " + prefix;
         }
         return description;
     }

@@ -1,5 +1,5 @@
 /*
- * TaxaPanel.java
+ * TaxonSetPanel.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -31,9 +31,9 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.evolution.alignment.Alignment;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
 import jam.table.TableRenderer;
@@ -500,13 +500,14 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
         public void actionPerformed(ActionEvent ae) {
             taxonSetCount++;
             // initialize currentTaxonSet with 1st PartitionTreeModel
-            currentTaxonSet = new Taxa("untitled" + taxonSetCount, options.getPartitionTreeModels().get(0));
+            currentTaxonSet = new Taxa("untitled" + taxonSetCount);
 
             options.taxonSets.add(currentTaxonSet);
             Collections.sort(options.taxonSets);
 
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
             options.taxonSetsIncludeStem.put(currentTaxonSet, Boolean.FALSE);
+            options.taxonSetsTreeModel.put(currentTaxonSet, options.getPartitionTreeModels().get(0));
 
             taxonSetsTableModel.fireTableDataChanged();
 
@@ -557,7 +558,8 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
             Collections.sort(includedTaxa);
 
             // get taxa associated to each tree
-            Alignment alignment = options.getAllPartitionData(currentTaxonSet.getTreeModel()).get(0).getAlignment();
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(currentTaxonSet);
+            TaxonList alignment = options.getAllPartitionData(treeModel).get(0).getTaxonList();
             Taxa taxa = new Taxa(alignment);
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 excludedTaxa.add(taxa.getTaxon(i));
@@ -675,7 +677,7 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                 case 2:
                     return options.taxonSetsIncludeStem.get(taxonSet);
                 case 3:
-                    return taxonSet.getTreeModel();
+                    return options.taxonSetsTreeModel.get(taxonSet);
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);
             }
@@ -704,7 +706,9 @@ public class TaxaPanel extends BeautiPanel implements Exportable {
                     options.taxonSetsIncludeStem.put(taxonSet, (Boolean) aValue);
                     break;
                 case 3:
-                    taxonSet.setTreeModel((PartitionTreeModel) aValue);
+                    options.taxonSetsTreeModel.put(taxonSet, (PartitionTreeModel) aValue);
+                    this.fireTableDataChanged();
+                    taxonSetsTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
                     break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);

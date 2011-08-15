@@ -251,7 +251,8 @@ public class LogGenerator extends Generator {
 
         for (Taxa taxa : options.taxonSets) {
             // make tmrca(tree.name) eay to read in log for Tracer
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getTreeModel().getPrefix() + taxa.getId() + ")");
+            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior

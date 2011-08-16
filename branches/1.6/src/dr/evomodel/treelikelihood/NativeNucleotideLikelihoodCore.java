@@ -160,17 +160,17 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
         String currentDir = null;
         try {
             currentDir = new File(NativeNucleotideLikelihoodCore.class.getProtectionDomain().getCodeSource().
-                        getLocation().toURI()).getParent() + System.getProperty("file.separator");
+                 getLocation().toURI()).getParent() + System.getProperty("file.separator")
+                 + "lib" + System.getProperty("file.separator"); // get path to find lib http://code.google.com/p/beast-mcmc/issues/detail?id=203
 //            System.out.println("currentDir = " + currentDir);
         } catch (URISyntaxException e) {
             e.printStackTrace();
-        }          
+        }
         try {
             if (OSType.isWindows()) {
-                // get path to find lib http://code.google.com/p/beast-mcmc/issues/detail?id=203
-                currentDir = currentDir + "lib" + System.getProperty("file.separator");
                 System.load(currentDir + "NucleotideLikelihoodCore.dll");
             } else {
+                currentDir = System.getProperty("user.dir");
                 System.loadLibrary("NucleotideLikelihoodCore");
             }
 			isNativeAvailable = true;

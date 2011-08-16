@@ -457,8 +457,9 @@
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
         <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files." />
 		<!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
-        <!-- cksum BEASTv1.x.x.tgz -->
         <!-- tar -xvzf BEASTv1.x.x.tgz -->
+        <!--http://ocdevel.com/blog/snow-leopard-tarball-uploading-issues-->
+        <!--cd /usr/bin; sudo ln -fs gnutar tar-->
         <echo message="Linux/Unix version release is finished." />
 	</target>
 

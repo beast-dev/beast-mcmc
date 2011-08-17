@@ -57,7 +57,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             range_checked = true;
             try {
                 double value = getValue();
-                if (value < min || value > max) {
+                if (min >= max) {
+                    errorMsg2();
+                } else if (value < min || value > max) {
                     errorMsg();
                 }
             } catch (NumberFormatException e) {
@@ -98,6 +100,12 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 max + " inclusive", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
+    protected void errorMsg2() {
+        JOptionPane.showMessageDialog(this,
+                "Illegal entry\nInvalid boundary [" + min + ", " +
+                        max + "]", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
     public void setRange(double min, double max) {
         this.min = min;
         this.max = max;
@@ -106,7 +114,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public void setValue(double value) {
         if (range_check) {
-            if (value < min || value > max) {
+            if (min >= max) {
+                errorMsg2();
+                return;
+            } else if (value < min || value > max) {
                 errorMsg();
                 return;
             }

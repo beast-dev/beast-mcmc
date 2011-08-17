@@ -489,8 +489,14 @@ public class PriorDialog {
         }
 
         public void setParameterPrior(Parameter parameter) {
-            parameter.lower = getValue(0);
-            parameter.upper = getValue(1);
+            if (getValue(0) < getValue(1)) {
+                parameter.lower = getValue(0);
+                parameter.upper = getValue(1);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid boundary [" + getValue(0) + ", " +
+                                getValue(1) + "]", "Illegal entry", JOptionPane.ERROR_MESSAGE);
+            }
         }
 
     }
@@ -622,8 +628,14 @@ public class PriorDialog {
         public void setParameterPrior(Parameter parameter) {
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
-            parameter.lower = getValue(2);
-            parameter.upper = getValue(3);
+            if (getValue(2) < getValue(3)) {
+                parameter.lower = getValue(2);
+                parameter.upper = getValue(3);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid boundary [" + getValue(2) + ", " +
+                                getValue(3) + "]", "Illegal entry", JOptionPane.ERROR_MESSAGE);
+            }
         }
     }
 

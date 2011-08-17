@@ -48,6 +48,8 @@ Version 1.6.2 released 11th August 2011
       * Issue 479:	Multi-block charset parsing and handling in BEAUTi
         Issue 484:	beagle_scaling command line flag turns on BEAGLE in the
                     absence of any other flags
+        Issue 486:	BEAST cannot find NucleotideLikelihoodCore.dll in Windows
+        Issue 487:	BEAUti: Wrong error message with poorly constructed priors
 
 	
 ================================================================================

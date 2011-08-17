@@ -82,7 +82,7 @@ public class TreeLikelihoodGenerator extends Generator {
 				
 				for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
 					writeAncestralTreeLikelihood(
-							TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD, i,
+							TreeLikelihoodParser.TREE_LIKELIHOOD, i,
 							partition, writer);
 				}
 

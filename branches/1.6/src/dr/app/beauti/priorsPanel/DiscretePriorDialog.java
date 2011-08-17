@@ -146,7 +146,7 @@ public class DiscretePriorDialog {
     private void getArguments() {
         parameter.priorType = priorCombo.getSelectedIndex() == 0 ? PriorType.UNIFORM_PRIOR : PriorType.POISSON_PRIOR;
 
-        if (initialField.getValue() != null) parameter.initial = initialField.getValue();
+        if ((!parameter.isStatistic) && initialField.getValue() != null) parameter.initial = initialField.getValue();
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:

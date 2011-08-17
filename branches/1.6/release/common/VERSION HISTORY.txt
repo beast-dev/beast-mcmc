@@ -50,6 +50,7 @@ Version 1.6.2 released 11th August 2011
                     absence of any other flags
         Issue 486:	BEAST cannot find NucleotideLikelihoodCore.dll in Windows
         Issue 487:	BEAUti: Wrong error message with poorly constructed priors
+        Issue 488:	BEAUti: Poor parsing of Poisson rate and offset in Priors
 
 	
 ================================================================================

@@ -7,9 +7,9 @@ package dr.app.beauti.types;
 public enum SequenceErrorType {
 
     NO_ERROR("Off"),
-    AGE_TRANSITIONS("Age-dependent: Transistions only"),
+    AGE_TRANSITIONS("Age-dependent: Transitions only"),
     AGE_ALL("Age-dependent: All substitutions"),
-    BASE_TRANSITIONS("Age-independent: Transistions only"),
+    BASE_TRANSITIONS("Age-independent: Transitions only"),
     BASE_ALL("Age-independent: All substitutions"),
     HYPERMUTATION_HA3G("RT Hypermutation: hA3G"),
     HYPERMUTATION_HA3F("RT Hypermutation: hA3F"),

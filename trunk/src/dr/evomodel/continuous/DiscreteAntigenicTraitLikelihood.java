@@ -104,14 +104,19 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterMaskKnown = false;
     }
 
+    Double[] values;
+
     @Override
     protected void storeState() {
         super.storeState();
+
+        values = clusterIndexParameter.getValues();
     }
 
     @Override
     protected void restoreState() {
         super.restoreState();
+
         clusterMaskKnown = false;
     }
 
@@ -175,8 +180,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         @Override
         public String getDimensionName(final int i) {
-            int location = i / getMDSDimension();
-            Parameter loc = getLocationsParameter().getParameter(location);
+            Parameter loc = getLocationsParameter().getParameter(i);
             return loc.getParameterName();
         }
 
@@ -232,14 +236,14 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         @Override
         public String getDimensionName(final int i) {
-            int cluster = i / getMDSDimension();
+            int location = i / getMDSDimension();
             int dim = i % getMDSDimension();
 
-            Parameter loc = getLocationsParameter().getParameter(cluster);
+            Parameter loc = getLocationsParameter().getParameter(location);
             if (getMDSDimension() == 2) {
-                return "cluster_" + cluster + "_" + (dim == 0 ? "X" : "Y");
+                return loc.getParameterName() + "_" + (dim == 0 ? "X" : "Y");
             } else {
-                return "cluster_" + cluster + "_" + (dim + 1);
+                return loc.getParameterName() + "_" + (dim + 1);
             }
         }
 

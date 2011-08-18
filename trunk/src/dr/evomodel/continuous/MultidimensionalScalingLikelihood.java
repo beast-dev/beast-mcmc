@@ -177,7 +177,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             int location = index / mdsDimension;
             int dim = index % mdsDimension;
 
-            locationUpdated[getLocationIndex(location)] = true;
+            locationUpdated[location] = true;
             distancesKnown = false;
             thresholdsKnown = false;
             truncationKnown = false;

@@ -84,9 +84,12 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected abstract void taxaChanged();
 
     public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex, String taxonId) {
-        if (patternCount == 0) {
+        if (this.patternList == null)  {
+            this.patternList = patternList;
             patternCount = patternList.getPatternCount();
             stateCount = patternList.getDataType().getStateCount();
+        } else if (patternList != this.patternList) {
+            throw new IllegalArgumentException("A TipsPartialsModel can only be used with one PatternList");
         }
         if (this.states[nodeIndex] == null) {
             this.states[nodeIndex] = new int[patternCount];
@@ -136,7 +139,13 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected void acceptState() {
     }
 
+    public PatternList getPatternList() {
+        return patternList;
+    }
+
     public abstract void getTipPartials(int nodeIndex, double[] tipPartials);
+
+    protected PatternList patternList = null;
 
     protected int[][] states;
     protected boolean[] excluded;

@@ -68,7 +68,7 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
             } break;
             case IN_MCMC_PRIOR:
                 if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
-                    // nothing to do - indivual parameter priors are written automatically
+                    // nothing to do - individual parameter priors are written automatically
                 } else if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
 
                 }

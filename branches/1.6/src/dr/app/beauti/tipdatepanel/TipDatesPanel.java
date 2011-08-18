@@ -74,7 +74,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
     JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
-    JComboBox tipDateSamplingCombo = new JComboBox(TipDateSamplingType.values());
+    JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] { TipDateSamplingType.NO_SAMPLING, TipDateSamplingType.SAMPLE_INDIVIDUALLY});
     JComboBox tipDateTaxonSetCombo = new JComboBox();
 
     BeautiFrame frame = null;

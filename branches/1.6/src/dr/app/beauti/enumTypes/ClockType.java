@@ -29,8 +29,8 @@ package dr.app.beauti.enumTypes;
 public enum ClockType {
 
     STRICT_CLOCK("Strict Clock"),
-    UNCORRELATED_EXPONENTIAL("Relaxed Clock: Uncorrelated Exp"),
     UNCORRELATED_LOGNORMAL("Relaxed Clock: Uncorrelated Lognormal"),
+    UNCORRELATED_EXPONENTIAL("Relaxed Clock: Uncorrelated Exp"),
     RANDOM_LOCAL_CLOCK("Random local clock model"),
     AUTOCORRELATED_LOGNORMAL("Relaxed Clock: Autocorrelated Lognormal");
 

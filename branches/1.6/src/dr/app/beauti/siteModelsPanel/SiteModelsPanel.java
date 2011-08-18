@@ -82,7 +82,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean settingOptions = false;
     boolean hasAlignment = false;
 
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
+    JComboBox errorModelCombo = new JComboBox(new SequenceErrorType[]
+            {SequenceErrorType.NO_ERROR, SequenceErrorType.AGE_TRANSITIONS, SequenceErrorType.AGE_ALL, SequenceErrorType.BASE_TRANSITIONS, SequenceErrorType.BASE_ALL}
+    );
     SequenceErrorModelComponentOptions comp;
 
 

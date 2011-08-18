@@ -106,7 +106,6 @@ public class AntigenicPlotter {
             LogFileTraces traces = new LogFileTraces(inputFileName, file);
             traces.loadTraces();
 
-
             if (burnin == -1) {
                 burnin = traces.getMaxState() / 10;
             }
@@ -172,6 +171,50 @@ public class AntigenicPlotter {
                         clusterSizes[j][i] = (int)traces.getStateValue((traceCount * 3) + i, j);
                     }
                 }
+
+                Map<BitSet, Integer> clusterMap = new HashMap<BitSet, Integer>();
+
+                for (int i = 0; i < stateCount; i++) {
+                    BitSet[] clusters = new BitSet[clusterIndices[i].length];
+                    for (int j = 0; j < clusterIndices[i].length; j++) {
+                        BitSet bits = clusters[clusterIndices[i][j]];
+
+                        if (bits == null) {
+                            bits = new BitSet();
+                            clusters[clusterIndices[i][j]] = bits;
+                        }
+                        bits.set(j);
+
+                        Integer count = clusterMap.get(bits);
+                        if (count == null) {
+                            count = 0;
+                        }
+                        clusterMap.put(bits, count+1);
+                    }
+
+                    Arrays.sort(clusters, new Comparator<BitSet>() {
+                        public int compare(BitSet bitSet1, BitSet bitSet2) {
+                            if (bitSet1 == null) {
+                                return -1;
+                            }
+                            if (bitSet2 == null) {
+                                return 1;
+                            }
+                            return bitSet2.cardinality() - bitSet1.cardinality();
+                        }
+                    });
+                }
+
+                for (BitSet bits : clusterMap.keySet()) {
+                    int count = clusterMap.get(bits);
+                    if (count > 1) {
+                        System.out.print(count);
+                        for (int i = bits.nextSetBit(0); i >= 0; i = bits.nextSetBit(i+1)) {
+                            System.out.print("\t" + labels[i]);
+                        }
+                        System.out.println();
+                    }
+                }
             }
 
             if (tipLabels != null) {
@@ -191,7 +234,7 @@ public class AntigenicPlotter {
                 if (discreteModel) {
                     writeKML(outputFileName, labels, data, clusterIndices, clusterSizes);
                 } else {
-                writeKML(outputFileName, labels, data);
+                    writeKML(outputFileName, labels, data);
                 }
             }
 

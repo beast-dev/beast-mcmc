@@ -134,8 +134,10 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         for (int i = 0; i < instanceCount; i++) {
+            if (!(patternList instanceof SitePatterns)) {
+                throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
+            }
             Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
-
             BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
                     subPatterns,
                     treeModel,

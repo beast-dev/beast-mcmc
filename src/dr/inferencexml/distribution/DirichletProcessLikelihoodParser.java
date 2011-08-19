@@ -26,8 +26,7 @@
 package dr.inferencexml.distribution;
 
 import dr.inference.distribution.DirichletProcessLikelihood;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Parameter;
+import dr.inference.model.*;
 import dr.xml.*;
 
 /**
@@ -45,7 +44,7 @@ public class DirichletProcessLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         XMLObject cxo = xo.getChild(ETA);
-        Parameter etaParam = (Parameter) cxo.getChild(Parameter.class);
+        Statistic etaParam = (Statistic) cxo.getChild(Statistic.class);
 
         cxo = xo.getChild(CHI);
         Parameter chiParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -64,7 +63,7 @@ public class DirichletProcessLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new ElementRule(ETA,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Counts of N items distributed amongst K classes"),
+                    new XMLSyntaxRule[]{new ElementRule(Statistic.class)}, "Counts of N items distributed amongst K classes"),
             new ElementRule(CHI,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, "Aggregation parameter"),
     };

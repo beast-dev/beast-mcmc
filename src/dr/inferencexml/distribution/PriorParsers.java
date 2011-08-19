@@ -111,10 +111,16 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            final double mean = xo.getDoubleAttribute(MEAN);
+            double scale;
+
+            if (xo.hasAttribute(SCALE)) {
+                scale = xo.getDoubleAttribute(SCALE);
+            } else {
+                scale = xo.getDoubleAttribute(MEAN);
+            }
             final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / mean), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -131,7 +137,10 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(MEAN),
+                new XORRule(
+                        AttributeRule.newDoubleRule(SCALE),
+                        AttributeRule.newDoubleRule(MEAN)
+                ),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
@@ -271,7 +280,7 @@ public class PriorParsers {
             }
 
             final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
-            
+
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -340,7 +349,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET, true),
-               // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
+                // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 

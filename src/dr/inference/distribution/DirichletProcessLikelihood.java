@@ -25,10 +25,7 @@
 
 package dr.inference.distribution;
 
-import dr.inference.model.AbstractModelLikelihood;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 import dr.math.Binomial;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,19 +43,18 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
 
     public static final String DIRICHLET_PROCESS_LIKELIHOOD = "dirichletProcessLikelihood";
 
-    public DirichletProcessLikelihood(Parameter etaParameter, Parameter chiParameter) {
+    public DirichletProcessLikelihood(Statistic etaParameter, Parameter chiParameter) {
 
         super(DIRICHLET_PROCESS_LIKELIHOOD);
 
         this.etaParameter = etaParameter;
         this.chiParameter = chiParameter;
-        addVariable(etaParameter);
         addVariable(chiParameter);
 
         K = etaParameter.getDimension();
         int count = 0;
         for (int i = 0; i < K; i++) {
-            count += (int)etaParameter.getParameterValue(i);
+            count += (int)etaParameter.getStatisticValue(i);
         }
         N = count;
 
@@ -93,7 +89,7 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
 
         double logEtaj = 0;
         for (int j = 0; j < K; j++) {
-            int eta = (int)etaParameter.getParameterValue(j) - 1;
+            int eta = (int)etaParameter.getStatisticValue(j) - 1;
 //            double logFactorial = 0;
 //            for (int k = 1; k <= eta; k++) {
 //                logFactorial += Math.log(k);
@@ -133,7 +129,7 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
         // DO NOTHING
     }
 
-    private final Parameter etaParameter;
+    private final Statistic etaParameter;
     private final Parameter chiParameter;
     private final int N, K;
     private final double[] logFactorials;

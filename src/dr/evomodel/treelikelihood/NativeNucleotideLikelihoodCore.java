@@ -159,27 +159,28 @@ public class NativeNucleotideLikelihoodCore extends AbstractLikelihoodCore {
 	static {
         String currentDir = null;
         try {
-            // get path to find lib http://code.google.com/p/beast-mcmc/issues/detail?id=203
             currentDir = new File(NativeNucleotideLikelihoodCore.class.getProtectionDomain().getCodeSource().
-                        getLocation().toURI()).getParent() + System.getProperty("file.separator") + "lib"
-                    + System.getProperty("file.separator");
+                 getLocation().toURI()).getParent() + System.getProperty("file.separator")
+                 + "lib" + System.getProperty("file.separator"); // get path to find lib http://code.google.com/p/beast-mcmc/issues/detail?id=203
 //            System.out.println("currentDir = " + currentDir);
         } catch (URISyntaxException e) {
             e.printStackTrace();
-        }          
+        }
         try {
             if (OSType.isWindows()) {
                 System.load(currentDir + "NucleotideLikelihoodCore.dll");
-                System.out.println("Load NucleotideLikelihoodCore.dll successfully ...");
             } else {
+                currentDir = System.getProperty("user.dir");
                 System.loadLibrary("NucleotideLikelihoodCore");
             }
 			isNativeAvailable = true;
+            System.out.println("Loading native NucleotideLikelihoodCore successfully from " + currentDir);
 		} catch (UnsatisfiedLinkError e) {
-			System.err.println("Using Java nucleotide likelihood core " + e.toString());
+			System.err.println("Failed to load native NucleotideLikelihoodCore in : " + currentDir);
+            System.err.println("Using Java nucleotide likelihood core because " + e.toString());
 //            System.err.println("Looking for NucleotideLikelihoodCore in java.library.path : " + System.getProperty("java.library.path"));
 //            System.err.println("Looking for NucleotideLikelihoodCore in user.dir : " + System.getProperty("user.dir"));
-              System.err.println("Looking for NucleotideLikelihoodCore in : " + currentDir);
+
 		}
 
 	}

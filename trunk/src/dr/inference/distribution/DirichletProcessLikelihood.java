@@ -34,19 +34,19 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 /**
- * A class that returns the log likelihood of a set of data (statistics)
- * being distributed according to a binomial distribution.
+ * A class that returns the log likelihood of a set of discrete entities
+ * being distributed in k classes according to a Dirichlet process.
  *
  * @author Andrew Rambaut
  * @author Trevor Bedford
  * @version $Id: BinomialLikelihood.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
  */
 
-public class DirechletProcessLikelihood extends AbstractModelLikelihood {
+public class DirichletProcessLikelihood extends AbstractModelLikelihood {
 
     public static final String DIRICHLET_PROCESS_LIKELIHOOD = "dirichletProcessLikelihood";
 
-    public DirechletProcessLikelihood(Parameter etaParameter, Parameter chiParameter) {
+    public DirichletProcessLikelihood(Parameter etaParameter, Parameter chiParameter) {
 
         super(DIRICHLET_PROCESS_LIKELIHOOD);
 
@@ -94,7 +94,7 @@ public class DirechletProcessLikelihood extends AbstractModelLikelihood {
             logDenominator += Math.log(chi + i - 1);
         }
 
-        double logP = chi * Math.log(K) + logEtaj - logDenominator;
+        double logP = K * Math.log(chi) + logEtaj - logDenominator;
 
         return logP;
     }

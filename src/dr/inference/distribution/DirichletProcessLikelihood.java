@@ -61,6 +61,17 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
             count += (int)etaParameter.getParameterValue(i);
         }
         N = count;
+
+        // create a look up table for all log factorials up to N
+        logFactorials = new double[N];
+
+        for (int j = 0; j < N; j++) {
+            double logFactorial = 0;
+            for (int k = 1; k <= j; k++) {
+                logFactorial += Math.log(k);
+            }
+            logFactorials[j] += logFactorial;
+        }
     }
 
     // **************************************************************
@@ -83,11 +94,11 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
         double logEtaj = 0;
         for (int j = 0; j < K; j++) {
             int eta = (int)etaParameter.getParameterValue(j) - 1;
-            double logFactorial = 0;
-            for (int k = 1; k <= eta; k++) {
-                logFactorial += Math.log(k);
-            }
-            logEtaj += logFactorial;
+//            double logFactorial = 0;
+//            for (int k = 1; k <= eta; k++) {
+//                logFactorial += Math.log(k);
+//            }
+            logEtaj += logFactorials[eta];
         }
         double logDenominator = 0;
         for (int i = 1; i <= N; i++) {
@@ -125,5 +136,6 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
     private final Parameter etaParameter;
     private final Parameter chiParameter;
     private final int N, K;
+    private final double[] logFactorials;
 }
 

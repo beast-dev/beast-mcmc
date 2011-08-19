@@ -48,10 +48,13 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 log2Transform);
 
         // Start off with a 1-to-1 correspondence between location and cluster
-        maxClusterCount = getLocationCount();
+//        maxClusterCount = getLocationCount();
+
+        maxClusterCount = 40;
+
         this.clusterIndexParameter = clusterIndexParameter;
 
-        clusterIndexParameter.setDimension(maxClusterCount);
+        clusterIndexParameter.setDimension(getLocationCount());
         clusterSizes = new int[maxClusterCount];
 
         //Force the boundaries of rateCategoryParameter to match the category count
@@ -59,7 +62,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterIndexParameter.addBounds(bound);
 
         for (int i = 0; i < maxClusterCount; i++) {
-            int r = MathUtils.nextInt(15);
+            int r = MathUtils.nextInt(maxClusterCount);
             clusterIndexParameter.setParameterValue(i, r);
         }
 

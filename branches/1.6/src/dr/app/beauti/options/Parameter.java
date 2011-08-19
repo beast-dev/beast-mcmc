@@ -70,6 +70,8 @@ public class Parameter {
     public double shape;
     public double scale;
     public double offset;
+    public double uniformUpper;
+    public double uniformLower;
 
     public static class Builder {
         // Required para
@@ -94,6 +96,8 @@ public class Parameter {
         public double shape = 1.0;
         public double scale = 1.0;
         public double offset = 0.0;
+        public double uniformUpper = 0.0;
+        public double uniformLower = 0.0;
 
         private boolean isDiscrete = false;
         private boolean isFixed = false;
@@ -171,6 +175,16 @@ public class Parameter {
             return this;
         }
 
+        public Builder uniformUpper(double uniformUpper) {
+            this.uniformUpper = uniformUpper;
+            return this;
+        }
+
+        public Builder uniformLower(double uniformLower) {
+            this.uniformLower = uniformLower;
+            return this;
+        }
+
         public Builder mean(double mean) {
             this.mean = mean;
             return this;
@@ -228,6 +242,8 @@ public class Parameter {
         shape = builder.shape;
         scale = builder.scale;
         offset = builder.offset;
+        uniformUpper = builder.uniformUpper;
+        uniformLower = builder.uniformLower;
 
         // ExponentialDistribution(1.0 / mean)
         if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1;
@@ -305,11 +321,11 @@ public class Parameter {
 
     public boolean isPriorImproper() {
         if (
-                // 1/x is an improper prior but we probably don't want to flag it as
-                // such (or we want to make a more explicit distinction about when it
-                // might be appropriate:
-                /* priorType == PriorType.ONE_OVER_X_PRIOR || */
-                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(upper) || Double.isInfinite(lower)))) {
+            // 1/x is an improper prior but we probably don't want to flag it as
+            // such (or we want to make a more explicit distinction about when it
+            // might be appropriate:
+            /* priorType == PriorType.ONE_OVER_X_PRIOR || */
+                (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(uniformUpper) || Double.isInfinite(uniformLower)))) {
             return true;
         }
         return false;

@@ -68,8 +68,10 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 //        }
         createParameterGammaPrior("treeModel.rootRate", "autocorrelated lognormal relaxed clock root rate",
                 PriorScaleType.ROOT_RATE_SCALE, 1.0, 1, 0.0001, 0.0, Double.POSITIVE_INFINITY, false); 
-        createParameterUniformPrior("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameterUniformPrior("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates", PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("treeModel.nodeRates", "autocorrelated lognormal relaxed clock non-root rates",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("treeModel.allRates", "autocorrelated lognormal relaxed clock all rates",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
 
         
         createScaleOperator("branchRates.var", demoTuning, rateWeights);

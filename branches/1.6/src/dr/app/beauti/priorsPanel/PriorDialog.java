@@ -260,9 +260,9 @@ public class PriorDialog {
             case UNIFORM_PRIOR:
                 panel = optionsPanels.get(priorType);
 //                panel.getField(0).setRange(parameter.lower, parameter.upper);
-                panel.getField(0).setValue(parameter.lower);
+                panel.getField(0).setValue(parameter.uniformLower);
 //                panel.getField(1).setRange(parameter.lower, parameter.upper);
-                panel.getField(1).setValue(parameter.upper);
+                panel.getField(1).setValue(parameter.uniformUpper);
                 break;
 
             case EXPONENTIAL_PRIOR:
@@ -319,8 +319,8 @@ public class PriorDialog {
                 panel = optionsPanels.get(priorType);
                 panel.getField(0).setValue(parameter.mean);
                 panel.getField(1).setValue(parameter.stdev);
-                panel.getField(2).setValue(parameter.lower);
-                panel.getField(3).setValue(parameter.upper);
+                panel.getField(2).setValue(parameter.uniformLower);
+                panel.getField(3).setValue(parameter.uniformUpper);
                 break;
         }
 
@@ -490,8 +490,8 @@ public class PriorDialog {
 
         public void setParameterPrior(Parameter parameter) {
             if (getValue(0) < getValue(1)) {
-                parameter.lower = getValue(0);
-                parameter.upper = getValue(1);
+                parameter.uniformLower = getValue(0);
+                parameter.uniformUpper = getValue(1);
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Invalid boundary [" + getValue(0) + ", " +
@@ -629,8 +629,8 @@ public class PriorDialog {
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
             if (getValue(2) < getValue(3)) {
-                parameter.lower = getValue(2);
-                parameter.upper = getValue(3);
+                parameter.uniformLower = getValue(2);
+                parameter.uniformUpper = getValue(3);
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Invalid boundary [" + getValue(2) + ", " +

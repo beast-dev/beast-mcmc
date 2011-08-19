@@ -62,7 +62,7 @@ public enum PriorType {
         Distribution dist = null;
         switch (this) {
             case UNIFORM_PRIOR:
-                dist = new UniformDistribution(param.lower, param.upper);
+                dist = new UniformDistribution(param.uniformLower, param.uniformUpper);
                 break;
             case EXPONENTIAL_PRIOR:
                 if (param.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
@@ -89,7 +89,7 @@ public enum PriorType {
                 dist = new OffsetPositiveDistribution(new PoissonDistribution(param.mean), param.offset);
                 break;
             case TRUNC_NORMAL_PRIOR:
-                dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.lower, param.upper);
+                dist = new TruncatedNormalDistribution(param.mean, param.stdev, param.uniformLower, param.uniformUpper);
                 break;
 //            default: // wrong Exception for other priors without distribution implementation  
 //                throw new IllegalArgumentException("Distribution class not available for this prior");
@@ -125,9 +125,9 @@ public enum PriorType {
             case UNIFORM_PRIOR:
                 if (!param.isDiscrete) { // && !param.isStatistic) {
                     buffer.append("Uniform [");
-                    buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
+                    buffer.append(NumberUtil.formatDecimal(param.uniformLower, 10, 6));
                     buffer.append(", ");
-                    buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
+                    buffer.append(NumberUtil.formatDecimal(param.uniformUpper, 10, 6));
                     buffer.append("]");
                 } else {
                     buffer.append("Uniform");
@@ -189,9 +189,9 @@ public enum PriorType {
                 buffer.append(NumberUtil.formatDecimal(param.stdev, 10, 6));
                 buffer.append("]");
                 buffer.append(" in [");
-                buffer.append(NumberUtil.formatDecimal(param.lower, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(param.uniformLower, 10, 6));
                 buffer.append(", ");
-                buffer.append(NumberUtil.formatDecimal(param.upper, 10, 6));
+                buffer.append(NumberUtil.formatDecimal(param.uniformUpper, 10, 6));
                 buffer.append("]");
 
                 break;

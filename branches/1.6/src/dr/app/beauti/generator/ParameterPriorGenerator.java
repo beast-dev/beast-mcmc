@@ -105,8 +105,8 @@ public class ParameterPriorGenerator extends Generator {
             case UNIFORM_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
@@ -186,8 +186,8 @@ public class ParameterPriorGenerator extends Generator {
             case TRUNC_NORMAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.lower),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.upper)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);

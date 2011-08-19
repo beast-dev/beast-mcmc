@@ -90,7 +90,7 @@ public class STARBEASTOptions extends ModelOptions {
         createParameterJeffreysPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME,
                 "Speices tree: Birth Death model mean growth rate", PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterUniformPrior(TraitData.TRAIT_SPECIES + "." + BirthDeathModelParser.RELATIVE_DEATH_RATE_PARAM_NAME,
-                "Speices tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0);
+                "Speices tree: Birth Death model relative death rate", PriorScaleType.BIRTH_RATE_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
 
         createParameterJeffreysPrior(SpeciesTreeModelParser.SPECIES_TREE + "." + Generator.SPLIT_POPS, "Species tree: population size operator",
         		PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);

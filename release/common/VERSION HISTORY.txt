@@ -29,9 +29,9 @@ Version 1.7.0 released 1st April 2011
              Stadler, T; Sampling-through-time in birth-death trees
              JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404.
              and
-             T. Stadler, R. Kouyos , V. von Wyl , S. Yerly , J. Böni ,
-             P. Bürgisser , T. Klimkait , B. Joos , P. Rieder , D. Xie ,
-             H. Günthard , A. Drummond , S. Bonhoeffer;
+             T. Stadler, R. Kouyos , V. von Wyl , S. Yerly , J. Bï¿½ni ,
+             P. Bï¿½rgisser , T. Klimkait , B. Joos , P. Rieder , D. Xie ,
+             H. Gï¿½nthard , A. Drummond , S. Bonhoeffer;
              Estimating the basic reproductive number from viral
              sequence data; Submitted.
              
@@ -99,6 +99,77 @@ Version 1.7.0 released 1st April 2011
 
 
 ================================================================================
+
+
+Version 1.6.2 released 22nd August 2011
+
+    New Features:
+        adds a "Beta Diversity" statistic to TreeStat program. This statistic
+        takes a tree of two sets of species and computes the percentage of
+        the tree length shared by the two taxa sets.
+
+        allows BEAUti 'Guess Dates' dialog to parse out calendar dates from
+        the taxon names.
+
+        Updates all native nucleotide likelihood core files into 64 bit.
+        For 32 bit machines, the user needs to rename the 32 bit files
+        (e.g. for Windows, rename NucleotideLikelihoodCore32.dll into
+        NucleotideLikelihoodCore.dll) to replace the current 64 bit files.
+
+	Bug Fixes:
+	    Issue 423:	delta exchange operator description is wrong
+	    Issue 424:	TraitGuesser not extracting match within brackets (braces)
+	    Issue 434:	BEAUti: Initial value missing from prior dialog
+	  * Issue 435 : UniformIntegerOperator did not include upper in the value
+	    Issue 454:	BEAUti: all the taxon sets are deleted when link/unlink tree
+	    Issue 460:	LogCombiner uses localized decimal point when writing trees
+	  * Issue 464:	Localized decimal indicator still being used in log files
+	    Issue 472:	Don't report operator suggestions when autooptimize is on
+	  * Issue 473:	BEAGLE default options should be CPU/Double
+	    Issue 474:	Partition table shows 0 taxa for trait partitions
+	    Issue 478:	TipDates table cell editor large the text font size when
+	                changing the value
+      * Issue 479:	Multi-block charset parsing and handling in BEAUTi
+        Issue 484:	beagle_scaling command line flag turns on BEAGLE in the
+                    absence of any other flags
+        Issue 486:	BEAST cannot find NucleotideLikelihoodCore.dll in Windows
+        Issue 487:	BEAUti: Wrong error message with poorly constructed priors
+        Issue 488:	BEAUti: Poor parsing of Poisson rate and offset in Priors
+        Issue 489:	Default Laplace prior mean is 0.01
+      * Issue 491:	BEAUti parameter should keep uniform upper and lower
+
+
+
+Version 1.6.1 released 15th October 2010
+
+	Bug Fixes:
+        Issue 398: BEAUti text message overlaps with button
+        Issue 399: Binary for TreeStat packaged with BEAST v1.6 has wrong version
+                   number and icon
+        Issue 403: Starting tree generated with constraints by BEAUti is not correct
+                   XML for BEAST
+        Issue 404: Make "Median heights" as the default of nodeHeightsCombo
+        Issue 405: RandomWalkOperator with reflecting boundary can grind to a halt
+      * Issue 407: *BEAST needs to log species tree in { }, otherwise TreeAnnotator
+                   keeps coming up with null exception on species tree
+        Issue 408: TreeAnnotator crashes with Null Pointer Exception on malformed
+                   metacomment
+      * Issue 410: "Improper priors" on posterior statistics
+        Issue 411: Incorrect validation and error message for random local clock
+                   in BEAUti
+      * Issue 412: BEAUti generates randomWalkOperator instead of randomWalkIntegerOperator
+                   for branchRates.categories
+        Issue 413: BEAUti: duplicate class PartitionModelOptions causes model link conflict
+        Issue 414: BEAUti: incorrect xml for multi-alignment when given complex
+                   combination of clock model and tree model
+        Issue 416: Laplace prior parser should use scale same as BEAUti
+        Issue 417: BEAUti growthRate related XML causes -INF likelihood
+        Issue 418: Set maximun fraction digits for numbers displayed in BEAUti prior panel
+        Issue 419: BEAUti RealNumberField should not throw Exception all the time
+        Issue 422: BEAUti: add validation to check whether modified prior initial value
+                   is between the boundary
+
+
 
 Version 1.6.0 released 15th September 2010
 

@@ -18,6 +18,8 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
     public final static String DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD = "discreteAntigenicTraitLikelihood";
 
+    private static final int CLUSTER_COUNT = 40;
+
     /**
      * Constructor
      * @param mdsDimension dimension of the mds space
@@ -48,9 +50,11 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 log2Transform);
 
         // Start off with a 1-to-1 correspondence between location and cluster
-//        maxClusterCount = getLocationCount();
-
-        maxClusterCount = 40;
+        if (CLUSTER_COUNT > 0) {
+            maxClusterCount = CLUSTER_COUNT;
+        } else {
+            maxClusterCount = getLocationCount();
+        }
 
         this.clusterIndexParameter = clusterIndexParameter;
 
@@ -61,7 +65,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         Parameter.DefaultBounds bound = new Parameter.DefaultBounds(maxClusterCount - 1, 0, maxClusterCount);
         clusterIndexParameter.addBounds(bound);
 
-        for (int i = 0; i < maxClusterCount; i++) {
+        for (int i = 0; i < getLocationCount(); i++) {
             int r = MathUtils.nextInt(maxClusterCount);
             clusterIndexParameter.setParameterValue(i, r);
         }
@@ -77,6 +81,19 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
     }
 
     @Override
+    protected void setupLocationsParameter(MatrixParameter locationsParameter) {
+        locationsParameter.setColumnDimension(getMDSDimension());
+        int n = CLUSTER_COUNT;
+        if (n < 1) {
+            n = getLocationCount();
+        }
+        locationsParameter.setRowDimension(n);
+        for (int i = 0; i < n; i++) {
+            locationsParameter.getParameter(i).setId("cluster_" + (i+1));
+        }
+    }
+
+    @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == clusterIndexParameter) {
             if (index != -1) {
@@ -86,7 +103,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
             } else {
                 // all have changed
-                for (int i = 0; i < maxClusterCount; i++) {
+                for (int i = 0; i < getLocationCount(); i++) {
                     int j = (int)clusterIndexParameter.getParameterValue(i);
                     locationUpdated[j] = true;
                 }
@@ -132,7 +149,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         for (int i = 0; i < maxClusterCount; i++) {
             clusterSizes[i] = 0;
         }
-        for (int i = 0; i < maxClusterCount; i++) {
+        for (int i = 0; i < getLocationCount(); i++) {
             int j = (int)clusterIndexParameter.getParameterValue(i);
             clusterSizes[j] ++;
         }
@@ -183,8 +200,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         @Override
         public String getDimensionName(final int i) {
-            Parameter loc = getLocationsParameter().getParameter(i);
-            return loc.getParameterName();
+            return getLocationLabels()[i];
         }
 
         public double getStatisticValue(int i) {
@@ -234,7 +250,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
     public class ClusteredLocations extends Statistic.Abstract {
 
         public ClusteredLocations() {
-            super("clusterLocations");
+            super("clusteredLocations");
         }
 
         @Override
@@ -242,16 +258,16 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             int location = i / getMDSDimension();
             int dim = i % getMDSDimension();
 
-            Parameter loc = getLocationsParameter().getParameter(location);
+            String label = getLocationLabels()[location];
             if (getMDSDimension() == 2) {
-                return loc.getParameterName() + "_" + (dim == 0 ? "X" : "Y");
+                return label + "_" + (dim == 0 ? "X" : "Y");
             } else {
-                return loc.getParameterName() + "_" + (dim + 1);
+                return label + "_" + (dim + 1);
             }
         }
 
         public int getDimension() {
-            return maxClusterCount * getMDSDimension();
+            return getLocationCount() * getMDSDimension();
         }
 
         public double getStatisticValue(final int i) {

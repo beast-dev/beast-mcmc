@@ -15,6 +15,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipPartialsModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Parameter;
@@ -116,6 +117,10 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
+        if (xo.getChild(TipPartialsModel.class) != null) {
+            throw new XMLParseException("Sequence Error Models are not supported under BEAGLE yet. Please use Native BEAST Likelihood.");
+        }
+
         if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
             return createTreeLikelihood(
                     patternList,
@@ -180,6 +185,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 new ElementRule(Parameter.class),
             }, true),
             new ElementRule(FrequencyModel.class, true),
+                new ElementRule(TipPartialsModel.class, true)
         };
     }
 }

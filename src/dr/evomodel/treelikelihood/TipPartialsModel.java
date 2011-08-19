@@ -84,14 +84,12 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected abstract void taxaChanged();
 
     public final void setStates(PatternList patternList, int sequenceIndex, int nodeIndex, String taxonId) {
-        if (patternCount == 0) {
-            if (patternList != null) {
-                throw new RuntimeException("The TipPartialsModel with id, " + getId() + ", has already been associated with a patternList.");
-            }
-
+        if (this.patternList == null) {
             this.patternList = patternList;
             patternCount = patternList.getPatternCount();
             stateCount = patternList.getDataType().getStateCount();
+        } else if (patternList != this.patternList) {
+            throw new RuntimeException("The TipPartialsModel with id, " + getId() + ", has already been associated with a patternList.");
         }
         if (this.states[nodeIndex] == null) {
             this.states[nodeIndex] = new int[patternCount];
@@ -139,6 +137,10 @@ public abstract class TipPartialsModel extends AbstractModel {
      * Sub-models are handled automatically and do not need to be considered in this method.
      */
     protected void acceptState() {
+    }
+
+    public PatternList getPatternList() {
+        return patternList;
     }
 
     public abstract void getTipPartials(int nodeIndex, double[] tipPartials);

@@ -70,7 +70,7 @@ public class Parameter {
     public double shape;
     public double scale;
     public double offset;
-    public double uniformUpper;
+    public double uniformUpper; // http://code.google.com/p/beast-mcmc/issues/detail?id=491
     public double uniformLower;
 
     public static class Builder {

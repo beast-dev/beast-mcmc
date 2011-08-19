@@ -94,14 +94,14 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterJeffreysPrior("exponential.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterLaplacePrior("exponential.growthRate", "coalescent growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("exponential.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
 
         createParameterJeffreysPrior("logistic.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterLaplacePrior("logistic.growthRate", "coalescent logistic growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("logistic.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
         createParameterGammaPrior("logistic.t50", "logistic shape parameter",
@@ -110,7 +110,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createParameterJeffreysPrior("expansion.popSize", "coalescent population size parameter",
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
         createParameterLaplacePrior("expansion.growthRate", "coalescent expansion growth rate parameter",
-                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.001, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                PriorScaleType.GROWTH_RATE_SCALE, 0.0, 0.0, 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         createParameterGammaPrior("expansion.doublingTime", "coalescent doubling time parameter",
                 PriorScaleType.NONE, 100.0, 0.001, 1000, 0.0, Double.POSITIVE_INFINITY, true);
         createParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion",

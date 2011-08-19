@@ -268,8 +268,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                 columnLocationIndices);
 
         // some random initial locations
-        for (int i = 0; i < locationLabels.length; i++) {
-            locationsParameter.getParameter(i).setId(locationLabels[i]);
+        for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);

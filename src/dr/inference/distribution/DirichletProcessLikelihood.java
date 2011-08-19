@@ -60,13 +60,11 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
 
         // create a look up table for all log factorials up to N
         logFactorials = new double[N];
-
         for (int j = 0; j < N; j++) {
-            double logFactorial = 0;
+            logFactorials[j] = 0; // the log factorial for 0
             for (int k = 1; k <= j; k++) {
-                logFactorial += Math.log(k);
+                logFactorials[j] += Math.log(k);
             }
-            logFactorials[j] += logFactorial;
         }
     }
 
@@ -88,20 +86,28 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
         double chi = chiParameter.getParameterValue(0);
 
         double logEtaj = 0;
+        int K1 = 0;
         for (int j = 0; j < K; j++) {
-            int eta = (int)etaParameter.getStatisticValue(j) - 1;
+            int eta = (int)etaParameter.getStatisticValue(j);
 //            double logFactorial = 0;
-//            for (int k = 1; k <= eta; k++) {
+//            for (int k = 1; k < eta; k++) {
 //                logFactorial += Math.log(k);
 //            }
-            logEtaj += logFactorials[eta];
+            if (eta > N) {
+                throw new RuntimeException("Illegal eta value");
+            }
+            if (eta > 0) {
+                logEtaj += logFactorials[eta - 1];
+                // count the number of actually occupied classes
+                K1++;
+            }
         }
         double logDenominator = 0;
         for (int i = 1; i <= N; i++) {
             logDenominator += Math.log(chi + i - 1);
         }
 
-        double logP = K * Math.log(chi) + logEtaj - logDenominator;
+        double logP = K1 * Math.log(chi) + logEtaj - logDenominator;
 
         return logP;
     }

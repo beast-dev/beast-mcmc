@@ -88,6 +88,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             final int[] rowLocationIndices,
             final int[] columnLocationIndices) {
 
+        this.mdsDimension = mdsDimension;
+
         locationCount = locationLabels.length;
 
         this.locationLabels = locationLabels;
@@ -136,10 +138,9 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         }
 
         this.locationsParameter = locationsParameter;
-        locationsParameter.setColumnDimension(mdsDimension);
-        locationsParameter.setRowDimension(locationCount);
+        setupLocationsParameter(this.locationsParameter);
         addVariable(locationsParameter);
-        locationUpdated = new boolean[locationCount];
+        locationUpdated = new boolean[locationsParameter.getParameterCount()];
 
         // a cache of row to column distances (column indices given by array above).
         distances = new double[distancesCount];
@@ -154,8 +155,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         thresholds = new double[thresholdCount];
         storedThresholds = new double[thresholdCount];
 
-        this.mdsDimension = mdsDimension;
-
         this.mdsPrecisionParameter = mdsPrecision;
         addVariable(mdsPrecision);
 
@@ -163,6 +162,14 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         // make sure everything is calculated on first evaluation
         makeDirty();
+    }
+
+    protected void setupLocationsParameter(MatrixParameter locationsParameter) {
+        locationsParameter.setColumnDimension(mdsDimension);
+        locationsParameter.setRowDimension(locationCount);
+        for (int i = 0; i < locationLabels.length; i++) {
+            locationsParameter.getParameter(i).setId(locationLabels[i]);
+        }
     }
 
     @Override
@@ -397,6 +404,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
      */
     protected int getLocationIndex(int index) {
         return index;
+    }
+
+    public String[] getLocationLabels() {
+        return locationLabels;
     }
 
     protected double calculateDistance(Parameter X, Parameter Y) {

@@ -142,7 +142,16 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         sb.append(extraInfo());
         sb.append("\tPlease cite:\n");
         sb.append(Citable.Utils.getCitationString(this));
+                    
+        dimTrait = diffusionModel.getPrecisionmatrix().length;
+        dim = traitParameter.getParameter(0).getDimension();
+        numData = dim / dimTrait;
 
+        if (dim % dimTrait != 0)
+             throw new RuntimeException("dim is not divisible by dimTrait");
+
+        sb.append("\n\tDiffusion dimension   : ").append(dimTrait).append("\n");
+        sb.append(  "\tNumber of observations: ").append(numData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
         recalculateTreeLength();
@@ -491,6 +500,14 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         return null;
     }
 
+    public final int getNumData() {
+        return numData;
+    }
+
+    public final int getDimTrait() {
+        return dimTrait;
+    }
+
     protected double[] getRootNodeTrait() {
         return treeModel.getMultivariateNodeTrait(treeModel.getRoot(), traitName);
     }
@@ -731,6 +748,10 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
 
     private boolean doAscertainmentCorrect = false;
     private int ascertainedTaxonIndex;
+
+    protected int numData;
+    protected int dimTrait;
+    protected int dim;
 
 }
 

@@ -86,7 +86,8 @@ public class AlignmentGenerator extends Generator {
 //                System.out.println(taxon.getId() + ": \n" + alignment.getAlignedSequenceString(i));
 //                System.out.println("len = " + alignment.getAlignedSequenceString(i).length() + "\n");
             } else {
-                writer.writeText("N");
+                // generate a codon in case there is codon partitioning
+                writer.writeText("NNN");
             }
             writer.writeCloseTag(SequenceParser.SEQUENCE);
         }

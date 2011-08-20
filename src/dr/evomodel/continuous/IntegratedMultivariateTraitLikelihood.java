@@ -59,13 +59,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
-        dimTrait = diffusionModel.getPrecisionmatrix().length;
-        dim = traitParameter.getParameter(0).getDimension();
-
-        if (dim % dimTrait != 0)
-            throw new RuntimeException("dim is not divisible by dimTrait");
-
-        numData = dim / dimTrait;
 
         meanCache = new double[dim * treeModel.getNodeCount()];
         drawnStates = new double[dim * treeModel.getNodeCount()];
@@ -92,10 +85,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         setTipDataValuesForAllNodes(missingIndices);
 
-        StringBuffer sb = new StringBuffer();
-        sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
-        sb.append("\tNumber of observations: ").append(numData).append("\n");
-        Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
     private void setTipDataValuesForAllNodes(List<Integer> missingIndices) {
@@ -687,10 +676,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     private double[] storedLogRemainderDensityCache;
 
     private double[] drawnStates;
-
-    protected int numData;
-    protected int dimTrait;
-    protected int dim;
 
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;

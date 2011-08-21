@@ -44,7 +44,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         TipPartialsModel tipPartialsModel = (TipPartialsModel) xo.getChild(TipPartialsModel.class);
-        if (tipPartialsModel.getPatternList() != null) {
+        if (tipPartialsModel != null && tipPartialsModel.getPatternList() != null) {
             throw new XMLParseException("A sequence error model cannot be used with multiple partitions");
         }
 

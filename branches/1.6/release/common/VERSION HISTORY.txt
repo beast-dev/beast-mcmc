@@ -22,7 +22,7 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.6.2 released 11th August 2011
+Version 1.6.2 released 22nd August 2011
 
     New Features:
         adds a "Beta Diversity" statistic to TreeStat program. This statistic
@@ -58,6 +58,10 @@ Version 1.6.2 released 11th August 2011
         Issue 488:	BEAUti: Poor parsing of Poisson rate and offset in Priors
         Issue 489:	Default Laplace prior mean is 0.01
       * Issue 491:	BEAUti parameter should keep uniform upper and lower
+        Issue 492:	Should BEAUti use 'NNN' rather than 'N' for empty alignment,
+                    to allow for codon-partitioned models
+        Issue 494:	BEAUti *BEAST does not need link tree prior option
+
 
 	
 ================================================================================

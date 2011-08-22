@@ -354,11 +354,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             if (options.useStarBEAST) {
+                linkTreePriorCheck.setEnabled(false);
                 SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
                 if (ptpp != null) {
                     ptpp.setOptions();
                 }
             } else {
+                linkTreePriorCheck.setEnabled(true);
                 PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
                 if (ptpp != null) {
                     ptpp.setOptions();

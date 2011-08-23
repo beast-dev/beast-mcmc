@@ -1,7 +1,6 @@
-package dr.evomodel.continuous;
+package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
-import dr.math.MathUtils;
 import dr.util.*;
 import dr.xml.*;
 
@@ -18,7 +17,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
     public final static String DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD = "discreteAntigenicTraitLikelihood";
 
-    private static final int CLUSTER_COUNT = 40;
+    private static final int CLUSTER_COUNT = -1;
 
     /**
      * Constructor
@@ -62,11 +61,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterSizes = new int[maxClusterCount];
 
         //Force the boundaries of rateCategoryParameter to match the category count
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(maxClusterCount - 1, 0, maxClusterCount);
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(maxClusterCount - 1, 0, getLocationCount());
         clusterIndexParameter.addBounds(bound);
 
         for (int i = 0; i < getLocationCount(); i++) {
-            int r = MathUtils.nextInt(maxClusterCount);
+//            int r = MathUtils.nextInt(maxClusterCount);
+            int r = 0;
             clusterIndexParameter.setParameterValue(i, r);
         }
 
@@ -124,13 +124,9 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterMaskKnown = false;
     }
 
-    Double[] values;
-
     @Override
     protected void storeState() {
         super.storeState();
-
-        values = clusterIndexParameter.getValues();
     }
 
     @Override

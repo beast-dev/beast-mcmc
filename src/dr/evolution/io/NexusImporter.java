@@ -672,7 +672,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     /**
      * Reads a 'TAXA' block.
      */
-    private TaxonList readTaxaBlock() throws ImportException, IOException {
+    private TaxonList readTaxaBlock() throws ImportException, IOException, IllegalArgumentException {
 
         taxonCount = 0;
 
@@ -697,6 +697,11 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         }
 
         findEndBlock();
+
+        int duplicateTaxon = TaxonList.Utils.findDuplicateTaxon(taxa);
+        if (duplicateTaxon >= 0)
+            throw new IllegalArgumentException("Find duplicate taxon name: " + taxa.getTaxon(duplicateTaxon).getId() +
+                      "!\nAll taxon names should be unique.");
 
         return taxa;
     }

@@ -50,10 +50,12 @@ public class DirichletProcessTest extends TestCase {
     }
 
     public void testDirichletProcess() {
+        // these are expected results calculated manually...
         testDirichletProcess(new double[] {1, 1, 1}, 1.0, -Math.log(6.0));  // log 1/6
         testDirichletProcess(new double[] {2, 1}, 1.0, -Math.log(6.0));  // log 1/6
-        testDirichletProcess(new double[] {3}, 1.0, -1.0986122886681096);   // log 1/3
+        testDirichletProcess(new double[] {3}, 1.0, -Math.log(3.0));   // log 1/3
 
+        // these are results calculated by the method but confirmed against an independent implementation...
         testDirichletProcess(new double[] {1, 1, 1, 1, 1}, 0.5, -6.851184927493743);
         testDirichletProcess(new double[] {2, 1, 1, 1, 0}, 0.5, -6.158037746933798);
         testDirichletProcess(new double[] {3, 1, 1, 0, 0}, 0.5, -4.771743385813907);
@@ -85,7 +87,7 @@ public class DirichletProcessTest extends TestCase {
 
         DirichletProcessLikelihood dirichlet = new DirichletProcessLikelihood(etaParameter, chiParameter);
 
-        assertEquals(expectedLogL, dirichlet.getLogLikelihood());
+        assertEquals(expectedLogL, dirichlet.getLogLikelihood(), 1E-10);
     }
 
 

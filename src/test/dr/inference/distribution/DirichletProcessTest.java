@@ -55,6 +55,10 @@ public class DirichletProcessTest extends TestCase {
         testDirichletProcess(new double[] {2, 1}, 1.0, -Math.log(6.0));  // log 1/6
         testDirichletProcess(new double[] {3}, 1.0, -Math.log(3.0));   // log 1/3
 
+        // check the unoccupied groups are not counted
+        testDirichletProcess(new double[] {2, 1, 0}, 1.0, -Math.log(6.0));  // log 1/6
+        testDirichletProcess(new double[] {3, 0, 0}, 1.0, -Math.log(3.0));   // log 1/3
+
         // these are results calculated by the method but confirmed against an independent implementation...
         testDirichletProcess(new double[] {1, 1, 1, 1, 1}, 0.5, -6.851184927493743);
         testDirichletProcess(new double[] {2, 1, 1, 1, 0}, 0.5, -6.158037746933798);

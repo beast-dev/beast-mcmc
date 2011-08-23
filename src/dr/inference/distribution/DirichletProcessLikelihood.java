@@ -89,15 +89,16 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
         int K1 = 0;
         for (int j = 0; j < K; j++) {
             int eta = (int)etaParameter.getStatisticValue(j);
-//            double logFactorial = 0;
-//            for (int k = 1; k < eta; k++) {
-//                logFactorial += Math.log(k);
-//            }
             if (eta > N) {
                 throw new RuntimeException("Illegal eta value");
             }
             if (eta > 0) {
-                logEtaj += logFactorials[eta - 1];
+//                double logFactorial = 0;
+//                for (int k = 1; k <= (eta - 1); k++) {
+//                    logFactorial += Math.log(k);
+//                }
+                double logFactorial = logFactorials[eta - 1];
+                logEtaj += logFactorial;
                 // count the number of actually occupied classes
                 K1++;
             }

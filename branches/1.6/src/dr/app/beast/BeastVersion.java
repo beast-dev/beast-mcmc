@@ -53,7 +53,7 @@ public class BeastVersion implements Version {
      * this used to parse the CVS ID string but there is no equivalent
      * for SVN. We must increment this manually.
      */
-    private static final String BUILD_ID = "Build r4178";
+    private static final String BUILD_ID = "Build r4230";
 
     public String getVersion() {
         return VERSION;
@@ -94,7 +94,8 @@ public class BeastVersion implements Version {
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
                 "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, ",
-                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, ",
+                "\tWalter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};

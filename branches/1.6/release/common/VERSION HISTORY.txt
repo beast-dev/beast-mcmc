@@ -61,7 +61,7 @@ Version 1.6.2 released 22nd August 2011
         Issue 492:	Should BEAUti use 'NNN' rather than 'N' for empty alignment,
                     to allow for codon-partitioned models
         Issue 494:	BEAUti *BEAST does not need link tree prior option
-
+        Issue 495:	Tree annotator needs to validate the duplicate taxon name
 
 	
 ================================================================================

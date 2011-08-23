@@ -27,7 +27,9 @@ package dr.evolution.util;
 
 import dr.util.Identifiable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Interface for a list of taxa.
@@ -90,6 +92,18 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
 			}
 			return taxaSet;
 		}
+
+        public static int findDuplicateTaxon(TaxonList taxonList) {
+            Set<String> taxaSet = new HashSet<String>();
+                        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                if (taxaSet.contains(taxon.getId())) {
+                    return i;
+                }
+                taxaSet.add(taxon.getId());
+            }
+            return -1;
+        }
 	}
 
 	class MissingTaxonException extends Exception {

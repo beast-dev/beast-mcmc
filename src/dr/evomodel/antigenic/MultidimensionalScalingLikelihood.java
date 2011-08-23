@@ -1,4 +1,4 @@
-package dr.evomodel.continuous;
+package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
@@ -7,7 +7,6 @@ import dr.xml.*;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -91,6 +90,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.mdsDimension = mdsDimension;
 
         locationCount = locationLabels.length;
+        this.distancesCount = (locationCount * (locationCount - 1)) / 2;
 
         this.locationLabels = locationLabels;
 
@@ -100,7 +100,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         this.rowLocationIndices = rowLocationIndices;
         this.columnLocationIndices = columnLocationIndices;
 
-        this.distancesCount = rowLocationIndices.length;
         this.observationCount = observations.length;
         this.upperThresholdCount = 0;
         this.lowerThresholdCount = 0;
@@ -162,6 +161,8 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         // make sure everything is calculated on first evaluation
         makeDirty();
+
+        addStatistic(new Distances());
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter) {
@@ -268,8 +269,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         if (!likelihoodKnown) {
             if (!distancesKnown) {
                 calculateDistances();
-                sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-                distancesKnown = true;
             }
 
             logLikelihood = computeLogLikelihood();
@@ -384,16 +383,30 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
     }
 
     protected void calculateDistances() {
-        for (int i = 0; i < distancesCount; i++) {
-            int x = getLocationIndex(rowLocationIndices[i]);
-            int y = getLocationIndex(columnLocationIndices[i]);
-            if (locationUpdated[x] || locationUpdated[y]) {
-                distances[i] = calculateDistance(
-                        locationsParameter.getParameter(x),
-                        locationsParameter.getParameter(y));
-                distanceUpdate[i] = true;
+//        for (int i = 0; i < distancesCount; i++) {
+//            int x = getLocationIndex(rowLocationIndices[i]);
+//            int y = getLocationIndex(columnLocationIndices[i]);
+//            if (locationUpdated[x] || locationUpdated[y]) {
+//                distances[i] = calculateDistance(
+//                        locationsParameter.getParameter(x),
+//                        locationsParameter.getParameter(y));
+//                distanceUpdate[i] = true;
+//            }
+//        }
+        int k = 0;
+        for (int x = 0; x < locationCount; x++) {
+            for (int y = x + 1; y < locationCount; y++) {
+                if (locationUpdated[x] || locationUpdated[y]) {
+                    distances[k] = calculateDistance(
+                            locationsParameter.getParameter(x),
+                            locationsParameter.getParameter(y));
+                    distanceUpdate[k] = true;
+                }
+                k++;
             }
         }
+        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+        distancesKnown = true;
     }
 
     /**
@@ -429,6 +442,25 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     public MatrixParameter getLocationsParameter() {
         return locationsParameter;
+    }
+
+    public class Distances extends Statistic.Abstract {
+
+        public Distances() {
+            super("distances");
+        }
+
+        public int getDimension() {
+            return distancesCount;
+        }
+
+        public double getStatisticValue(int i) {
+            if (!distancesKnown) {
+                calculateDistances();
+            }
+            return distances[i];
+        }
+
     }
 
     // **************************************************************

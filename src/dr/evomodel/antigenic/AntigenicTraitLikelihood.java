@@ -1,4 +1,4 @@
-package dr.evomodel.continuous;
+package dr.evomodel.antigenic;
 
 import dr.inference.model.*;
 import dr.math.MathUtils;
@@ -164,13 +164,21 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                         observationList.add(value);
                         observationTypeList.add(type);
 
-                        Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
-                        int index = locationPairs.indexOf(pair);
-                        if (index == -1) {
-                            index = locationPairs.size();
-                            locationPairs.add(pair);
-                        }
+//                        Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
+//                        int index = locationPairs.indexOf(pair);
+//                        if (index == -1) {
+//                            index = locationPairs.size();
+//                            locationPairs.add(pair);
+//                        }
 
+                        // the distanceIndices now refer to the full (upper-triangular) pairwise matrix
+                        // of distances between locations
+                        int index = 0;
+                        for (int x = 0; x < virusToLocationIndices[i]; x++) {
+                            for (int y = x + 1; y < serumToLocationIndices[k]; y++) {
+                                index++;
+                            }
+                        }
                         distanceIndexList.add(index);
 
                         virusObservationCounts[i]++;

@@ -111,8 +111,8 @@
 	<multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
 			<matrixParameter id="precisionMatrix">
-				<parameter id="col1" value="0.5 0.02"/>
-				<parameter id="col2" value="0.02 0.5"/>
+				<parameter id="col1" value="+2.00 -1.25"/>
+				<parameter id="col2" value="-1.25 +2.00"/>
 			</matrixParameter>
 		</precisionMatrix>
 	</multivariateDiffusionModel>
@@ -135,13 +135,10 @@
 		   </meanParameter>
 	   	 <precisionParameter>
 	 		<matrixParameter>
-	   			<parameter value="100.50 0.02"/>
-	   			<parameter value="0.02 100.50"/>
+				<parameter value="+2.00 -1.25"/>
+				<parameter value="-1.25 +2.00"/>
 	 		</matrixParameter>
 	   	</precisionParameter>
-	  	<!--<data>-->
-	 		<!--<parameter idref="rootTrait"/>-->
-	  	<!--</data>-->
 	 </multivariateNormalPrior>    
 
 	<multivariateTraitLikelihood id="traitLikelihood" traitName="latent"
@@ -153,15 +150,15 @@
 		<traitParameter>
 			<parameter idref="leafTraits"/>
 		</traitParameter>
-        <conjugateRootPrior>
-            <meanParameter>
-                <parameter value="0.0 0.0"/>
-            </meanParameter>
-            <priorSampleSize>
-                <parameter value="1.0"/> <!-- 1 is probably a good number -->
-            </priorSampleSize>
-        </conjugateRootPrior>
-         <!--<multivariateNormalPrior idref="rootPrior"/>-->
+        <!--<conjugateRootPrior>-->
+            <!--<meanParameter>-->
+                <!--<parameter value="0.0 0.0"/>-->
+            <!--</meanParameter>-->
+            <!--<priorSampleSize>-->
+                <!--<parameter value="1.0"/> &lt;!&ndash; 1 is probably a good number &ndash;&gt;-->
+            <!--</priorSampleSize>-->
+        <!--</conjugateRootPrior>-->
+         <multivariateNormalPrior idref="rootPrior"/>   <!-- Semi-conjugate prior -->
     </multivariateTraitLikelihood>
 
     <latentLiabilityLikelihood id="liabilityLikelihood">
@@ -178,13 +175,12 @@
         <randomWalkOperator windowSize="1.0" weight="10">
 		    <parameter idref="leafTraits"/>
 		</randomWalkOperator>
-
 <!--
-        <precisionGibbsOperator weight="5">
+        <precisionGibbsOperator weight="1">
             <multivariateTraitLikelihood idref="traitLikelihood"/>
             <multivariateWishartPrior idref="precisionPrior"/>
         </precisionGibbsOperator>
--->
+-->        
         
     </operators>
 

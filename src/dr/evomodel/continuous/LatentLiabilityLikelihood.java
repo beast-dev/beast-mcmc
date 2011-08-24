@@ -1,13 +1,16 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.alignment.PatternList;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.TwoStates;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.*;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 import dr.xml.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -20,19 +23,25 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
+public class LatentLiabilityLikelihood extends AbstractModelLikelihood implements Citable {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "latentLiabilityLikelihood";
 
     public LatentLiabilityLikelihood(TreeModel treeModel, PatternList patternList, CompoundParameter tipTraitParameter) {
         super(LATENT_LIABILITY_LIKELIHOOD);
-        this.treeModel = treeModel; // TODO Do we really need the tree?
+        this.treeModel = treeModel;
         this.patternList = patternList;
         this.tipTraitParameter = tipTraitParameter;
 
         addVariable(tipTraitParameter);
 
         setTipDataValuesForAllNodes();
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("Constructing a latent liability likelihood model:\n");
+        sb.append("\tBinary patterns: ").append(patternList.getId()).append("\n");
+        sb.append("\tPlease cite:\n").append(Citable.Utils.getCitationString(this));
+        Logger.getLogger("dr.evomodel.continous").info(sb.toString());
     }
 
     private void setTipDataValuesForAllNodes() {
@@ -55,22 +64,14 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
             throw new RuntimeException("Need to figure out the indexing");
         }
 
-//        Parameter oneTipTraitParameter = tipTraitParameter.getParameter(index);
-
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {
             tipData[index][datum] = patternList.getPattern(datum)[index]  == 1;
-//            System.err.println("Data = " + tipData[index][datum] + " : " + oneTipTraitParameter.getParameterValue(datum));
+            if (DEBUG) {
+                Parameter oneTipTraitParameter = tipTraitParameter.getParameter(index);
+                System.err.println("Data = " + tipData[index][datum] + " : " + oneTipTraitParameter.getParameterValue(datum));
+            }
         }
-//        double[] traitValue = traitParameter.getParameter(index).getParameterValues();
-//        if (traitValue.length < dim) {
-//            throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
-//        }
-//        System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
     }
-
-//    private void ensureTipTraitsAreDataCompatible() {
-//        patternList.getPattern()
-//    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -117,21 +118,10 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
     }    
 
-    // This function can be overwritten to implement other sampling densities, i.e. discrete ranks
     protected double computeLogLikelihood() {
         boolean valid = true;
         for (int tip = 0; tip < tipData.length && valid; ++tip) {
-            Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
-            boolean[] data = tipData[tip];
-            for (int index = 0; index < data.length && valid; ++index) {
-                boolean datum = data[index];
-                double trait = oneTipTraitParameter.getParameterValue(index);
-                boolean positive = trait > 0.0;
-                valid =  datum == positive;
-//                if (!valid) {
-//                    System.err.println("Invalid: " + data[index] + " and " + trait + " at tip " + tip + " entry " + datum);
-//                }
-            }
+            valid = validTraitForTip(tip);
         }
         if (valid) {
             return 0.0;
@@ -140,16 +130,26 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
         }
     }
 
+    public boolean validTraitForTip(int tip) {
+        boolean valid = true;
+        Parameter oneTipTraitParameter = tipTraitParameter.getParameter(tip);
+        boolean[] data = tipData[tip];
+        for (int index = 0; index < data.length && valid; ++index) {
+            boolean datum = data[index];
+            double trait = oneTipTraitParameter.getParameterValue(index);
+            boolean positive = trait > 0.0;
+            valid = datum == positive;
+        }
+        return valid;
+    }
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-//        public final static String FILE_NAME = "fileName";
+
         public final static String TIP_TRAIT = "tipTrait";
-//        public final static String LOCATIONS = "locations";
-//        public static final String MDS_DIMENSION = "mdsDimension";
-//        public static final String MDS_PRECISION = "mdsPrecision";
 
         public String getParserName() {
             return LATENT_LIABILITY_LIKELIHOOD;
@@ -206,6 +206,13 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
         }
     };
 
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(
+                CommonCitations.SUCHARD_2012_LATENT
+        );
+        return citations;
+    }
 
     private TreeModel treeModel;
     private PatternList patternList;
@@ -213,10 +220,10 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood {
 
     private boolean[][] tipData;
 
-    private int numTaxa;
-    
     private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
+
+    private static final boolean DEBUG = false;
 
 }

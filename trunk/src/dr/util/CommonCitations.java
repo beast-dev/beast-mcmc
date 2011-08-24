@@ -85,4 +85,12 @@ public class CommonCitations {
             },
             Citation.Status.IN_PREPARATION
     );
+
+    public static Citation SUCHARD_2012_LATENT = new Citation(
+            new Author[] {
+                    new Author("MA", "Suchard"),
+                    new Author("J", "Felsenstein"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
 }

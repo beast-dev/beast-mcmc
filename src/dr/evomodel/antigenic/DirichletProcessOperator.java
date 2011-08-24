@@ -1,6 +1,7 @@
 package dr.evomodel.antigenic;
 
 import dr.inference.distribution.DirichletProcessLikelihood;
+import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.inference.operators.GibbsOperator;
@@ -10,21 +11,27 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
- * An integer uniform operator for allocation of items to clusters.
+ * A Gibbs operator for allocation of items to clusters under a Dirichlet process.
  *
  * @author Andrew Rambaut
- * @version $Id: UniformOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
+ * @author Marc Suchard
+ * @version $Id: DirichletProcessOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class DirichletProcessOperator extends SimpleMCMCOperator implements GibbsOperator {
     public final static String DIRICHLET_PROCESS_OPERATOR = "dirichletProcessOperator";
 
     private final int N;
+    private final int K;
     private final DirichletProcessLikelihood dirichletProcess;
+
+    private final Likelihood modelLikelihood;
 
     public DirichletProcessOperator(Parameter clusteringParameter, DirichletProcessLikelihood dirichletProcess, double weight) {
         this.clusteringParameter = clusteringParameter;
         this.N = clusteringParameter.getDimension();
         this.dirichletProcess = dirichletProcess;
+        modelLikelihood = null;
+        this.K = this.N; // TODO number of potential clusters should be much less than N 
 
         setWeight(weight);
     }
@@ -56,7 +63,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         // construct cluster occupancy vector excluding the selected item and count
         // the unoccupied clusters.
 
-        int X = N;
+        int X = K;
         for (int i = 0; i < clusteringParameter.getDimension(); i++) {
             int j = (int) clusteringParameter.getParameterValue(i);
             if (i != index) {
@@ -70,9 +77,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         double chi = dirichletProcess.getChiParameter().getParameterValue(0);
 
         double p1 = chi / ((N - 1 + chi) * X);
-        double[] P = new double[N];
-        double sum = 0.0;
-        for (int i = 0; i < N; i++) {
+        double[] P = new double[K];
+//        double sum = 0.0;
+        for (int i = 0; i < K; i++) {
             double p;
             if (occupancy[i] == 0) {
                 p = p1;
@@ -80,25 +87,61 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
                 p = occupancy[i] / (N - 1 + chi);
             }
 
-            sum += p;
-            P[i] = sum;
+//            sum += p;
+            P[i] = Math.log(p); // Store in log-scale for addition with conditionalLogLikelihood
         }
 
 //        if (sum != 1.0) {
 //            throw new RuntimeException("doesn't sum to 1");
 //        }
         // correct for rounding error...
-        P[N - 1] = 1.0;
+//        P[N - 1] = 1.0;
 
-        double r = MathUtils.nextDouble();
-        int k = 0;
-        while (r > P[k]) {
-            k++;
+        if (modelLikelihood != null) {
+            for (int k = 0; k < K; ++k) {
+                clusteringParameter.setParameterValue(index, k);
+                P[k] += modelLikelihood.getLogLikelihood();
+            }
         }
+
+        this.rescale(P); // Improve numerical stability
+        this.exp(P); // Transform back to probability-scale
+
+//        double r = MathUtils.nextDouble();
+//        int k = 0;
+//        while (r > P[k]) {
+//            k++;
+//        }
+
+        int k = MathUtils.randomChoicePDF(P);
 
         ((Parameter) clusteringParameter).setParameterValue(index, k);
 
         return 0.0;
+    }
+
+
+    private void exp(double[] logX) {
+        for (int i = 0; i < logX.length; ++i) {
+            logX[i] = Math.exp(logX[i]);
+        }
+    }
+
+    private void rescale(double[] logX) {
+        double max = this.max(logX);
+        for (int i = 0; i < logX.length; ++i) {
+            logX[i] -= max;
+        }
+    }
+
+    private double max(double[] x) {
+        double max = x[0];
+        for (int i = 1; i < x.length; ++i) {
+            if (x[i] > max) {
+                max = x[i];
+            }
+        }
+        return max;
     }
 
     //MCMCOperator INTERFACE

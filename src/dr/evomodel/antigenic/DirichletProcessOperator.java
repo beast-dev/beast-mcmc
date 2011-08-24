@@ -23,7 +23,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     public DirichletProcessOperator(Parameter clusteringParameter, DirichletProcessLikelihood dirichletProcess, double weight) {
         this.clusteringParameter = clusteringParameter;
-        this.N = dirichletProcess.getN();
+        this.N = clusteringParameter.getDimension();
         this.dirichletProcess = dirichletProcess;
 
         setWeight(weight);
@@ -87,10 +87,12 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 //        if (sum != 1.0) {
 //            throw new RuntimeException("doesn't sum to 1");
 //        }
+        // correct for rounding error...
+        P[N - 1] = 1.0;
 
         double r = MathUtils.nextDouble();
         int k = 0;
-        while (k < (N - 1) && r > P[k]) {
+        while (r > P[k]) {
             k++;
         }
 
@@ -195,4 +197,5 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
     public int getStepCount() {
         return 1;
     }
+
 }

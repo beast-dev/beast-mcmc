@@ -102,9 +102,37 @@ public class PathLikelihood implements Likelihood {
     public dr.inference.loggers.LogColumn[] getColumns() {
         return new dr.inference.loggers.LogColumn[]{
                 new DeltaLogLikelihoodColumn(getId() + "." + DIFFERENCE),
+                new PosteriorColumn(getId() + "." + SOURCE),
+                new PriorColumn(getId() + "." + DESTINATION),
                 new ThetaColumn(getId() + "." + PATH_PARAMETER),
                 new PathLikelihoodColumn(getId() + "." + PATH_LIKELIHOOD)
         };
+    }
+    
+    private class PriorColumn extends dr.inference.loggers.NumberColumn {
+    	
+    	public PriorColumn(String label) {
+    		super(label);
+    	}
+    	
+    	public double getDoubleValue() {
+    		//assume that the prior is the destination in the BEAST xml
+    		return destination.getLogLikelihood();
+    	}
+    	
+    }
+    
+    private class PosteriorColumn extends dr.inference.loggers.NumberColumn {
+    	
+    	public PosteriorColumn(String label) {
+    		super(label);
+    	}
+    	
+    	public double getDoubleValue() {
+    		//assume that the posterior is the source in the BEAST xml
+    		return source.getLogLikelihood();
+    	}
+    	
     }
 
     private class DeltaLogLikelihoodColumn extends dr.inference.loggers.NumberColumn {
@@ -186,10 +214,10 @@ public class PathLikelihood implements Likelihood {
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
+        	
             Likelihood source = (Likelihood) xo.getElementFirstChild(SOURCE);
             Likelihood destination = (Likelihood) xo.getElementFirstChild(DESTINATION);
-
+            
             Likelihood pseudoSource = null;
             if (xo.hasChildNamed(PSUEDO_SOURCE)) {
                 pseudoSource = (Likelihood) xo.getElementFirstChild(PSUEDO_SOURCE);

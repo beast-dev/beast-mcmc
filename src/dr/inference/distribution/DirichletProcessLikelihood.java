@@ -1,7 +1,7 @@
 /*
- * BinomialLikelihood.java
+ * DirichletProcessLikelihood.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,9 +26,6 @@
 package dr.inference.distribution;
 
 import dr.inference.model.*;
-import dr.math.Binomial;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 /**
  * A class that returns the log likelihood of a set of discrete entities
@@ -36,7 +33,8 @@ import org.w3c.dom.Element;
  *
  * @author Andrew Rambaut
  * @author Trevor Bedford
- * @version $Id: BinomialLikelihood.java,v 1.5 2005/05/24 20:25:59 rambaut Exp $
+ * @author Marc Suchard
+ * @version $Id: DirichletProcessLikelihood.java,v 1.7 2005/05/24 20:25:59 rambaut Exp $
  */
 
 public class DirichletProcessLikelihood extends AbstractModelLikelihood {
@@ -60,11 +58,13 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
 
         // create a look up table for all log factorials up to N
         logFactorials = new double[N];
-        for (int j = 0; j < N; j++) {
-            logFactorials[j] = 0; // the log factorial for 0
-            for (int k = 1; k <= j; k++) {
-                logFactorials[j] += Math.log(k);
-            }
+        logFactorials[0] = 0.0;
+        for (int j = 1; j < N; j++) {
+//            logFactorials[j] = 0; // the log factorial for 0
+//            for (int k = 1; k <= j; k++) {
+//                logFactorials[j] += Math.log(k);
+//            }
+            logFactorials[j] = logFactorials[j - 1] + Math.log(j);
         }
     }
 

@@ -136,6 +136,18 @@ public class DirichletProcessLikelihood extends AbstractModelLikelihood {
         // DO NOTHING
     }
 
+    public Statistic getEtaParameter() {
+        return etaParameter;
+    }
+
+    public Parameter getChiParameter() {
+        return chiParameter;
+    }
+
+    public int getN() {
+        return N;
+    }
+
     private final Statistic etaParameter;
     private final Parameter chiParameter;
     private final int N, K;

@@ -10,37 +10,37 @@ import java.util.*;
 import java.util.logging.Logger;
 
 /**
+ * Antigenic evolution assuming each virus's antigenic property diffuses independently.
  * @author Andrew Rambaut
  * @author Marc Suchard
  * @version $Id$
  */
-public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {
+public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {
 
-    public final static String DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD = "discreteAntigenicTraitLikelihood";
-
-    private static final int CLUSTER_COUNT = -1;
+    public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";
 
     /**
      * Constructor
      * @param mdsDimension dimension of the mds space
      * @param mdsPrecision parameter which gives the precision of the bmds
+     * @param tipTraitParameter a parameter of locations for the tips of the tree (mapped to virus locations)
      * @param locationsParameter a parameter of locations of viruses/sera
      * @param dataTable the assay table (virus in rows, serum assays in columns)
      * @param virusAntiserumMap a map of viruses to corresponding sera
      * @param assayAntiserumMap a map of repeated assays for a given sera
      * @param log2Transform transform the data into log 2 space
      */
-    public DiscreteAntigenicTraitLikelihood(
+    public ContinuousAntigenicTraitLikelihood(
             int mdsDimension,
             Parameter mdsPrecision,
-            Parameter clusterIndexParameter,
+            CompoundParameter tipTraitParameter,
             MatrixParameter locationsParameter,
             DataTable<String[]> dataTable,
             Map<String, String> virusAntiserumMap,
             Map<String, String> assayAntiserumMap,
             final boolean log2Transform) {
 
-        super(DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD);
+        super(ANTIGENIC_TRAIT_LIKELIHOOD);
 
         String[] virusNames = dataTable.getRowLabels();
         String[] assayNames = dataTable.getColumnLabels();
@@ -55,6 +55,21 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         ObservationType[][] observationTypeTable = new ObservationType[virusCount][assayCount];
 
         initalizeTable(dataTable, observationValueTable, observationTypeTable, log2Transform);
+
+        // This removes viruses that are not in the tree
+        List<String> tipLabels = null;
+        if (tipTraitParameter != null) {
+            tipLabels = new ArrayList<String>();
+            int tipCount = tipTraitParameter.getParameterCount();
+
+            for (int i = 0; i < tipCount; i++) {
+                String label = tipTraitParameter.getParameter(i).getParameterName();
+                if (label.endsWith(".antigenic")) {
+                    label = label.substring(0, label.indexOf(".antigenic"));
+                }
+                tipLabels.add(label);
+            }
+        }
 
         // locations are either viruses or sera (or both)
         List<String> locationLabelsList = new ArrayList<String>();
@@ -71,8 +86,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 name = virusName;
             }
 
-            virusToLocationIndices[count] = locationLabelsList.size();
-            locationLabelsList.add(name);
+            if (tipLabels == null || tipLabels.contains(name)) {
+                virusToLocationIndices[count] = locationLabelsList.size();
+                locationLabelsList.add(name);
+            } else {
+                virusToLocationIndices[count] = -1;
+            }
             count++;
         }
 
@@ -186,8 +205,30 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
         }
 
+        if (tipTraitParameter != null) {
+            //  the location -> tip map
+            tipIndices = new int[locationCount];
+            for (int i = 0; i < locationCount; i++) {
+                tipIndices[i] = tipLabels.indexOf(locationLabels[i]);
+            }
+
+            for (int i = 0; i < locationCount; i++) {
+                if (tipIndices[i] == -1) {
+                    System.err.println("Location, " + locationLabels[i] + ", not found in tree");
+                }
+            }
+
+            for (String tipLabel : tipLabels) {
+                if (!locationLabelsList.contains(tipLabel)) {
+                    System.err.println("Tip, " + tipLabel + ", not found in location list");
+                }
+            }
+        } else {
+            tipIndices = null;
+        }
+
         StringBuilder sb = new StringBuilder();
-        sb.append("\tDiscreteAntigenicTraitLikelihood:\n");
+        sb.append("\tAntigenicTraitLikelihood:\n");
         sb.append("\t\t" + virusNames.length + " viruses\n");
         sb.append("\t\t" + assayNames.length + " assays\n");
         sb.append("\t\t" + serumNames.length + " antisera\n");
@@ -196,6 +237,8 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         sb.append("\t\t" + observations.length + " observations\n");
         sb.append("\t\t" + thresholdCount + " threshold observations\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
+
+        this.tipTraitParameter = tipTraitParameter;
 
         initialize(
                 mdsDimension,
@@ -212,257 +255,43 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+
+                if (tipTraitParameter != null) {
+                    if (tipIndices[i] != -1) {
+                        tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + j, r);
+                    }
+                }
             }
-        }
-
-        // Start off with a 1-to-1 correspondence between location and cluster
-        if (CLUSTER_COUNT > 0) {
-            maxClusterCount = CLUSTER_COUNT;
-        } else {
-            maxClusterCount = getLocationCount();
-        }
-
-        this.clusterIndexParameter = clusterIndexParameter;
-
-        clusterIndexParameter.setDimension(getLocationCount());
-        clusterSizes = new int[maxClusterCount];
-
-        //Force the boundaries of rateCategoryParameter to match the category count
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(maxClusterCount - 1, 0, getLocationCount());
-        clusterIndexParameter.addBounds(bound);
-
-        for (int i = 0; i < getLocationCount(); i++) {
-            int r = i % 8;
-//            int r = MathUtils.nextInt(maxClusterCount);
-//            int r = 0;
-//            int r = i;
-            clusterIndexParameter.setParameterValue(i, r);
-        }
-
-        updateClusterSizes();
-
-        addVariable(clusterIndexParameter);
-        addStatistic(new ClusterMask());
-        addStatistic(new ClusterIndices());
-        addStatistic(new ClusterCount());
-        addStatistic(new ClusterSizes());
-        addStatistic(new ClusteredLocations());
-    }
-
-    @Override
-    protected void setupLocationsParameter(MatrixParameter locationsParameter) {
-        locationsParameter.setColumnDimension(getMDSDimension());
-        int n = CLUSTER_COUNT;
-        if (n < 1) {
-            n = getLocationCount();
-        }
-        locationsParameter.setRowDimension(n);
-        for (int i = 0; i < n; i++) {
-            locationsParameter.getParameter(i).setId("cluster_" + (i+1));
         }
     }
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == clusterIndexParameter) {
-//            if (index != -1) {
-//                for (int i = 0; i < distanceUpdated.length; i++) {
-//                    distanceUpdated[i] = true;
-//                }
-//
-////                // one dimension has changed
-////                int index = (int)clusterIndexParameter.getParameterValue(index);
-////
-////                int k = 0;
-////                for (int i = 0; i < getLocationCount(); i++) {
-////                    for (int j = i + 1; j < getLocationCount(); j++) {
-//////                    int row = i / getLocationCount();
-//////                    int column = i % getLocationCount();
-//////                    if (row == j || column == j) {
-////                        distanceUpdated[i] = true;
-//////                    }
-////                    }
-////                }
-//
-//            } else {
-//                // all have changed
-//                for (int i = 0; i < distanceUpdated.length; i++) {
-//                    distanceUpdated[i] = true;
-//                }
-//            }
-            for (int i = 0; i < distanceUpdated.length; i++) {
-                distanceUpdated[i] = true;
+        if (tipTraitParameter != null && variable == getLocationsParameter()) {
+            int mdsDimension = getMDSDimension();
+
+            int location = index / mdsDimension;
+            int dim = index % mdsDimension;
+
+            if (tipIndices[location] != -1) {
+                double value = getLocationsParameter().getParameterValue(index);
+                tipTraitParameter.setParameterValue((tipIndices[location] * mdsDimension) + dim, value);
             }
-            residualsKnown = false;
-            thresholdsKnown = false;
-            truncationKnown = false;
-
-            clusterMaskKnown = false;
-
         }
 
         super.handleVariableChangedEvent(variable, index, type);
     }
 
-    @Override
-    public void makeDirty() {
-        super.makeDirty();
-        clusterMaskKnown = false;
+    public CompoundParameter getTipTraitParameter() {
+        return tipTraitParameter;
     }
 
-    @Override
-    protected void storeState() {
-        super.storeState();
+    public int[] getTipIndices() {
+        return tipIndices;
     }
 
-    @Override
-    protected void restoreState() {
-        super.restoreState();
-
-        clusterMaskKnown = false;
-    }
-
-    @Override
-    protected int getLocationIndex(final int index) {
-        return (int)clusterIndexParameter.getParameterValue(index);
-    }
-
-    private void updateClusterSizes() {
-        for (int i = 0; i < maxClusterCount; i++) {
-            clusterSizes[i] = 0;
-        }
-        for (int i = 0; i < getLocationCount(); i++) {
-            int j = (int)clusterIndexParameter.getParameterValue(i);
-            clusterSizes[j] ++;
-        }
-        clusterCount = 0;
-        for (int i = 0; i < maxClusterCount; i++) {
-            if (clusterSizes[i] > 0) {
-                clusterCount++;
-            }
-        }
-        clusterMaskKnown = true;
-    }
-
-    private int maxClusterCount;
-    private final Parameter clusterIndexParameter;
-    private final int[] clusterSizes;
-    private int clusterCount;
-
-    private boolean clusterMaskKnown;
-
-    public class ClusterMask extends Statistic.Abstract {
-
-        public ClusterMask() {
-            super("clusterMask");
-        }
-
-        public int getDimension() {
-            return maxClusterCount;
-        }
-
-        public double getStatisticValue(int i) {
-            if (!clusterMaskKnown) {
-                updateClusterSizes();
-            }
-            return clusterSizes[i] > 0 ? 1.0 : 0.0;
-        }
-
-    }
-
-    public class ClusterIndices extends Statistic.Abstract {
-
-        public ClusterIndices() {
-            super("clusterIndices");
-        }
-
-        public int getDimension() {
-            return clusterIndexParameter.getDimension();
-        }
-
-        @Override
-        public String getDimensionName(final int i) {
-            return getLocationLabels()[i];
-        }
-
-        public double getStatisticValue(int i) {
-            return clusterIndexParameter.getParameterValue(i);
-        }
-
-    }
-
-    public class ClusterCount extends Statistic.Abstract {
-
-        public ClusterCount() {
-            super("clusterCount");
-        }
-
-        public int getDimension() {
-            return 1;
-        }
-
-        public double getStatisticValue(int i) {
-            if (!clusterMaskKnown) {
-                updateClusterSizes();
-            }
-            return clusterCount;
-        }
-
-    }
-
-    public class ClusterSizes extends Statistic.Abstract {
-
-        public ClusterSizes() {
-            super("clusterSizes");
-        }
-
-        public int getDimension() {
-            return maxClusterCount;
-        }
-
-        public double getStatisticValue(int i) {
-            if (!clusterMaskKnown) {
-                updateClusterSizes();
-            }
-            return clusterSizes[i];
-        }
-
-    }
-
-    public class ClusteredLocations extends Statistic.Abstract {
-
-        public ClusteredLocations() {
-            super("clusteredLocations");
-        }
-
-        @Override
-        public String getDimensionName(final int i) {
-            int location = i / getMDSDimension();
-            int dim = i % getMDSDimension();
-
-            String label = getLocationLabels()[location];
-            if (getMDSDimension() == 2) {
-                return label + "_" + (dim == 0 ? "X" : "Y");
-            } else {
-                return label + "_" + (dim + 1);
-            }
-        }
-
-        public int getDimension() {
-            return getLocationCount() * getMDSDimension();
-        }
-
-        public double getStatisticValue(final int i) {
-            int location = i / getMDSDimension();
-            int dim = i % getMDSDimension();
-
-            int j = (int)clusterIndexParameter.getParameterValue(location);
-            Parameter loc = getLocationsParameter().getParameter(j);
-
-            return loc.getParameterValue(dim);
-        }
-
-    }
+    private CompoundParameter tipTraitParameter;
+    private int[] tipIndices;
 
     private class Pair {
         Pair(final int location1, final int location2) {
@@ -482,11 +311,6 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         public boolean equals(final Object o) {
             return ((Pair)o).location1 == location1 && ((Pair)o).location2 == location2;
         }
-
-        @Override
-        public String toString() {
-            return "" + location1 + ", " + location2;
-        }
     };
     // **************************************************************
     // XMLObjectParser
@@ -497,7 +321,6 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         public final static String VIRUS_MAP_FILE_NAME = "virusMapFile";
         public final static String ASSAY_MAP_FILE_NAME = "assayMapFile";
 
-        public static final String CLUSTER_INDICES = "clusterIndices";
         public final static String TIP_TRAIT = "tipTrait";
         public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
@@ -507,7 +330,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         public static final String TITRATION_THRESHOLD = "titrationThreshold";
 
         public String getParserName() {
-            return DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD;
+            return ANTIGENIC_TRAIT_LIKELIHOOD;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -545,8 +368,6 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 log2Transform = xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
-            Parameter clusterIndicesParameter = (Parameter) xo.getElementFirstChild(CLUSTER_INDICES);
-
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -559,9 +380,9 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            AntigenicTraitLikelihood AGTL = new DiscreteAntigenicTraitLikelihood(mdsDimension, mdsPrecision, clusterIndicesParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+            ContinuousAntigenicTraitLikelihood AGTL = new ContinuousAntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
 
-            Logger.getLogger("dr.evomodel").info("Using Discrete Evolutionary Cartography model. Please cite:\n" + Utils.getCitationString(AGTL));
+            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGTL));
 
             return AGTL;
         }
@@ -595,8 +416,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         public String getParserDescription() {
             return "Provides the likelihood of immunological assay data such as Hemagglutinin inhibition (HI) given vectors of coordinates" +
-                    "for viruses and sera/antisera in some multidimensional 'antigenic' space. This is a discrete classifier form of the model" +
-                    "which assigns viruses to discrete antigenic classes.";
+                    "for viruses and sera/antisera in some multidimensional 'antigenic' space.";
         }
 
         public XMLSyntaxRule[] getSyntaxRules() {
@@ -609,14 +429,13 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, true, "The name of the file containing the assay to serum map"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
-                new ElementRule(CLUSTER_INDICES, Parameter.class, "The parameter of cluster indices for each virus/serum"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 
         public Class getReturnType() {
-            return DiscreteAntigenicTraitLikelihood.class;
+            return ContinuousAntigenicTraitLikelihood.class;
         }
     };
 

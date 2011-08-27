@@ -22,17 +22,17 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     private final int N;
     private final int K;
-    private final DirichletProcessLikelihood dirichletProcess;
+    private final Parameter chiParameter;
 
     private final Likelihood modelLikelihood;
 
     public DirichletProcessOperator(Parameter clusteringParameter,
-                                    DirichletProcessLikelihood dirichletProcess,
+                                    Parameter chiParameter,
                                     Likelihood modelLikelihood,
                                     double weight) {
         this.clusteringParameter = clusteringParameter;
         this.N = clusteringParameter.getDimension();
-        this.dirichletProcess = dirichletProcess;
+        this.chiParameter = chiParameter;
         this.modelLikelihood = modelLikelihood;
         this.K = this.N; // TODO number of potential clusters should be much less than N
 
@@ -66,18 +66,18 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         // construct cluster occupancy vector excluding the selected item and count
         // the unoccupied clusters.
 
-        int X = K;
+        int X = K; // X = number of unoccupied clusters
         for (int i = 0; i < clusteringParameter.getDimension(); i++) {
             int j = (int) clusteringParameter.getParameterValue(i);
             if (i != index) {
                 occupancy[j] += 1;
                 if (occupancy[j] == 1) { // first item in cluster
-                    X -= 1;
+                    X -= 1; // one fewer unoccupied
                 }
             }
         }
 
-        double chi = dirichletProcess.getChiParameter().getParameterValue(0);
+        double chi = chiParameter.getParameterValue(0);
 
         double p1 = chi / ((N - 1 + chi) * X);
         double[] P = new double[K];
@@ -102,12 +102,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         this.rescale(P); // Improve numerical stability
         this.exp(P); // Transform back to probability-scale
 
-//        double r = MathUtils.nextDouble();
-//        int k = 0;
-//        while (r > P[k]) {
-//            k++;
-//        }
-
         int k = MathUtils.randomChoicePDF(P);
 
         ((Parameter) clusteringParameter).setParameterValue(index, k);
@@ -131,9 +125,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     private double max(double[] x) {
         double max = x[0];
-        for (int i = 1; i < x.length; ++i) {
-            if (x[i] > max) {
-                max = x[i];
+        for (double xi : x) {
+            if (xi > max) {
+                max = xi;
             }
         }
         return max;
@@ -141,7 +135,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     //MCMCOperator INTERFACE
     public final String getOperatorName() {
-        return DIRICHLET_PROCESS_OPERATOR+"(" + clusteringParameter.getId() + "|" + dirichletProcess.getId() + ")";
+        return DIRICHLET_PROCESS_OPERATOR+"(" + clusteringParameter.getId() + "|" + chiParameter.getId() + ")";
     }
 
     public final void optimize(double targetProb) {
@@ -192,6 +186,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
     private Parameter clusteringParameter = null;
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+        public final static String CHI = "chi";
+        public final static String LIKELIHOOD = "likelihood";
 
         public String getParserName() {
             return DIRICHLET_PROCESS_OPERATOR;
@@ -202,11 +198,16 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
             double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 
             Parameter clusteringParameter = (Parameter) xo.getChild(Parameter.class);
-            DirichletProcessLikelihood dirichletProcess = (DirichletProcessLikelihood) xo.getChild(DirichletProcessLikelihood.class);
 
-            Likelihood likelihood = (Likelihood)xo.getElementFirstChild("likelihood");
+            Parameter chiParameter = (Parameter)xo.getElementFirstChild(CHI);
 
-            return new DirichletProcessOperator(clusteringParameter, dirichletProcess, likelihood, weight);
+            Likelihood likelihood = null;
+
+            if (xo.hasChildNamed(LIKELIHOOD)) {
+                likelihood = (Likelihood)xo.getElementFirstChild(LIKELIHOOD);
+            }
+
+            return new DirichletProcessOperator(clusteringParameter, chiParameter, likelihood, weight);
 
         }
 
@@ -229,8 +230,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                new ElementRule(DirichletProcessLikelihood.class),
-                new ElementRule("likelihood", new XMLSyntaxRule[] {
+                new ElementRule(CHI, new XMLSyntaxRule[] {
+                        new ElementRule(Parameter.class),
+                }),
+                new ElementRule(LIKELIHOOD, new XMLSyntaxRule[] {
                         new ElementRule(Likelihood.class),
                 }, true),
                 new ElementRule(Parameter.class)

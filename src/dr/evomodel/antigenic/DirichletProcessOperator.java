@@ -26,11 +26,14 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     private final Likelihood modelLikelihood;
 
-    public DirichletProcessOperator(Parameter clusteringParameter, DirichletProcessLikelihood dirichletProcess, double weight) {
+    public DirichletProcessOperator(Parameter clusteringParameter,
+                                    DirichletProcessLikelihood dirichletProcess,
+                                    Likelihood modelLikelihood,
+                                    double weight) {
         this.clusteringParameter = clusteringParameter;
         this.N = clusteringParameter.getDimension();
         this.dirichletProcess = dirichletProcess;
-        modelLikelihood = null;
+        this.modelLikelihood = modelLikelihood;
         this.K = this.N; // TODO number of potential clusters should be much less than N
 
         setWeight(weight);
@@ -201,7 +204,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
             Parameter clusteringParameter = (Parameter) xo.getChild(Parameter.class);
             DirichletProcessLikelihood dirichletProcess = (DirichletProcessLikelihood) xo.getChild(DirichletProcessLikelihood.class);
 
-            return new DirichletProcessOperator(clusteringParameter, dirichletProcess, weight);
+            Likelihood likelihood = (Likelihood)xo.getElementFirstChild("likelihood");
+
+            return new DirichletProcessOperator(clusteringParameter, dirichletProcess, likelihood, weight);
 
         }
 
@@ -225,6 +230,9 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 new ElementRule(DirichletProcessLikelihood.class),
+                new ElementRule("likelihood", new XMLSyntaxRule[] {
+                        new ElementRule(Likelihood.class),
+                }, true),
                 new ElementRule(Parameter.class)
         };
     };

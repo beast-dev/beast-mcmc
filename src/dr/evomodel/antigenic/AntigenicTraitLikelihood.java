@@ -164,22 +164,7 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
                         observationList.add(value);
                         observationTypeList.add(type);
 
-//                        Pair pair = new Pair(virusToLocationIndices[i], serumToLocationIndices[k]);
-//                        int index = locationPairs.indexOf(pair);
-//                        if (index == -1) {
-//                            index = locationPairs.size();
-//                            locationPairs.add(pair);
-//                        }
-
-                        // the distanceIndices now refer to the full (upper-triangular) pairwise matrix
-                        // of distances between locations
-                        int index = 0;
-                        for (int x = 0; x < virusToLocationIndices[i]; x++) {
-                            for (int y = x + 1; y < serumToLocationIndices[k]; y++) {
-                                index++;
-                            }
-                        }
-                        distanceIndexList.add(index);
+                        locationPairs.add(new Pair(virusToLocationIndices[i], serumToLocationIndices[k]));
 
                         virusObservationCounts[i]++;
                         serumObservationCounts[k]++;
@@ -206,9 +191,12 @@ public class AntigenicTraitLikelihood extends MultidimensionalScalingLikelihood 
             observations[i] = observationList.get(i);
         }
 
-        int[] distanceIndices = new int[distanceIndexList.size()];
+        // the distanceIndices now refer to the full (upper-triangular) pairwise matrix
+        // of distances between locations
+        int[] distanceIndices = new int[locationPairs.size()];
         for (int i = 0; i < distanceIndexList.size(); i++) {
-            distanceIndices[i] = distanceIndexList.get(i);
+            Pair pair = locationPairs.get(i);
+            distanceIndices[i] = (pair.location1 * locationCount) + pair.location2;
         }
 
         int[] rowLocationIndices = new int[locationPairs.size()];

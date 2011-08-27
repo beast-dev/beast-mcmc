@@ -31,7 +31,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         this.N = clusteringParameter.getDimension();
         this.dirichletProcess = dirichletProcess;
         modelLikelihood = null;
-        this.K = this.N; // TODO number of potential clusters should be much less than N 
+        this.K = this.N; // TODO number of potential clusters should be much less than N
 
         setWeight(weight);
     }
@@ -78,7 +78,6 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
         double p1 = chi / ((N - 1 + chi) * X);
         double[] P = new double[K];
-//        double sum = 0.0;
         for (int i = 0; i < K; i++) {
             double p;
             if (occupancy[i] == 0) {
@@ -87,15 +86,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
                 p = occupancy[i] / (N - 1 + chi);
             }
 
-//            sum += p;
             P[i] = Math.log(p); // Store in log-scale for addition with conditionalLogLikelihood
         }
-
-//        if (sum != 1.0) {
-//            throw new RuntimeException("doesn't sum to 1");
-//        }
-        // correct for rounding error...
-//        P[N - 1] = 1.0;
 
         if (modelLikelihood != null) {
             for (int k = 0; k < K; ++k) {

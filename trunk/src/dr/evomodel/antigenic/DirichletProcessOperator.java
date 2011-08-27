@@ -95,7 +95,8 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         if (modelLikelihood != null) {
             for (int k = 0; k < K; ++k) {
                 clusteringParameter.setParameterValue(index, k);
-                P[k] += modelLikelihood.getLogLikelihood();
+                double l = modelLikelihood.getLogLikelihood();
+                P[k] += l;
             }
         }
 

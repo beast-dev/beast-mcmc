@@ -242,6 +242,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         thresholdsKnown = true;
 
         sumOfSquaredResiduals = storedSumOfSquaredResiduals;
+        residualsKnown = true;
     }
 
     @Override
@@ -276,13 +277,13 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
             logLikelihood = computeLogLikelihood();
             likelihoodKnown = true;
-        }
 
-        for (int i = 0; i < locationUpdated.length; i++) {
-            locationUpdated[i] = false;
-        }
-        for (int i = 0; i < distanceUpdated.length; i++) {
-            distanceUpdated[i] = false;
+            for (int i = 0; i < locationUpdated.length; i++) {
+                locationUpdated[i] = false;
+            }
+            for (int i = 0; i < distanceUpdated.length; i++) {
+                distanceUpdated[i] = false;
+            }
         }
 
         // To override all the caching:
@@ -300,6 +301,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         if (!residualsKnown) {
             sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
+            residualsKnown = true;
         }
 
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
@@ -368,7 +370,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 }
                 sum += truncations[dist];
             } else {
-                // do nothing (zero distance, zero truncation)
+                sum += Math.log(0.5);
             }
         }
         return sum;
@@ -390,8 +392,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 sum += residual * residual;
             }
         }
-
-        residualsKnown = true;
         return sum;
     }
 

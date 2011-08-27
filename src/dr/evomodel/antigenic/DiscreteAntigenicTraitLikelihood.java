@@ -265,40 +265,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == clusterIndexParameter) {
-//            if (index != -1) {
-//                for (int i = 0; i < distanceUpdated.length; i++) {
-//                    distanceUpdated[i] = true;
-//                }
-//
-////                // one dimension has changed
-////                int index = (int)clusterIndexParameter.getParameterValue(index);
-////
-////                int k = 0;
-////                for (int i = 0; i < getLocationCount(); i++) {
-////                    for (int j = i + 1; j < getLocationCount(); j++) {
-//////                    int row = i / getLocationCount();
-//////                    int column = i % getLocationCount();
-//////                    if (row == j || column == j) {
-////                        distanceUpdated[i] = true;
-//////                    }
-////                    }
-////                }
-//
-//            } else {
-//                // all have changed
-//                for (int i = 0; i < distanceUpdated.length; i++) {
-//                    distanceUpdated[i] = true;
-//                }
-//            }
             for (int i = 0; i < distanceUpdated.length; i++) {
                 distanceUpdated[i] = true;
             }
             residualsKnown = false;
             thresholdsKnown = false;
-            truncationKnown = false;
-
             clusterMaskKnown = false;
-
         }
 
         super.handleVariableChangedEvent(variable, index, type);

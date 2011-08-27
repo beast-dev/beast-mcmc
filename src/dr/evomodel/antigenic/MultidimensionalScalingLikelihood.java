@@ -185,19 +185,19 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         if (variable == locationsParameter) {
             int location = index / mdsDimension;
-            int dim = index % mdsDimension;
 
             locationUpdated[location] = true;
             distancesKnown = false;
             residualsKnown = false;
             thresholdsKnown = false;
-            truncationKnown = false;
+            truncationsKnown = false;
         } else if (variable == mdsPrecisionParameter) {
             for (int i = 0; i < distanceUpdated.length; i++) {
                 distanceUpdated[i] = true;
             }
+            residualsKnown = false;
             thresholdsKnown = false;
-            truncationKnown = false;
+            truncationsKnown = false;
         } else {
             // could be a derived class's parameter
 //            throw new IllegalArgumentException("Unknown parameter");
@@ -236,7 +236,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         likelihoodKnown = true;
 
         truncationSum = storedTruncationSum;
-        truncationKnown = true;
+        truncationsKnown = true;
 
         thresholdSum = storedThresholdSum;
         thresholdsKnown = true;
@@ -254,7 +254,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         distancesKnown = false;
         likelihoodKnown = false;
         residualsKnown = false;
-        truncationKnown = false;
+        truncationsKnown = false;
         thresholdsKnown = false;
 
         for (int i = 0; i < locationUpdated.length; i++) {
@@ -273,10 +273,10 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         if (!likelihoodKnown) {
             if (!distancesKnown) {
                 calculateDistances();
+                residualsKnown = false;
             }
 
             logLikelihood = computeLogLikelihood();
-            likelihoodKnown = true;
 
             for (int i = 0; i < locationUpdated.length; i++) {
                 locationUpdated[i] = false;
@@ -285,11 +285,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 distanceUpdated[i] = false;
             }
         }
-
-        // To override all the caching:
-//        calculateDistances();
-//        sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-//        logLikelihood = computeLogLikelihood();
 
         return logLikelihood;
     }
@@ -301,7 +296,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
         if (!residualsKnown) {
             sumOfSquaredResiduals = calculateSumOfSquaredResiduals();
-            residualsKnown = true;
         }
 
         // totalNonMissingCount should be totalObservedCount (not > or < threshold)
@@ -310,18 +304,18 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         if (thresholdCount > 0) {
             if (!thresholdsKnown) {
                 thresholdSum = calculateThresholdObservations(precision);
-                thresholdsKnown = true;
             }
             logLikelihood += thresholdSum;
         }
 
         if (isLeftTruncated) {
-            if (!truncationKnown) {
-                truncationSum = calculateTruncation(precision);
-                truncationKnown = true;
+            if (!truncationsKnown) {
+                calculateTruncations(precision);
             }
+            truncationSum = calculateTruncationSum();
             logLikelihood -= truncationSum;
         }
+        likelihoodKnown = true;
 
         return logLikelihood;
     }
@@ -356,18 +350,26 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             j++;
         }
 
+        thresholdsKnown = true;
+
         return sum;
     }
 
-    protected double calculateTruncation(double precision) {
-        double sum = 0.0;
+    protected void calculateTruncations(double precision) {
         double sd = 1.0 / Math.sqrt(precision);
+        for (int i = 0; i < distanceCount; i++) {
+            if (distanceUpdated[i]) {
+                truncations[i] = NormalDistribution.cdf(distances[i], 0.0, sd, true);
+            }
+        }
+        truncationsKnown = true;
+    }
+
+    protected double calculateTruncationSum() {
+        double sum = 0.0;
         for (int i = 0; i < observationCount; i++) {
             int dist = getDistanceIndexForObservation(i);
             if (dist != -1) {
-                if (distanceUpdated[dist]) {
-                    truncations[dist] = NormalDistribution.cdf(distances[dist], 0.0, sd, true);
-                }
                 sum += truncations[dist];
             } else {
                 sum += Math.log(0.5);
@@ -392,6 +394,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 sum += residual * residual;
             }
         }
+        residualsKnown = true;
         return sum;
     }
 
@@ -409,7 +412,6 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                 k++;
             }
         }
-        residualsKnown = false;
         distancesKnown = true;
     }
 
@@ -563,7 +565,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     private double[] observations;
     private ObservationType[] observationTypes;
-//    protected int[] distanceIndices;
+    //    protected int[] distanceIndices;
     private int[] rowLocationIndices;
     private int[] columnLocationIndices;
     private int[] upperThresholdIndices;
@@ -588,7 +590,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
     protected boolean residualsKnown = false;
 
-    protected boolean truncationKnown = false;
+    protected boolean truncationsKnown = false;
     private double truncationSum;
     private double storedTruncationSum;
     private double[] truncations;

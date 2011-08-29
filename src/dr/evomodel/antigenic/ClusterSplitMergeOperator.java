@@ -78,29 +78,29 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         if (MathUtils.nextDouble() < 0.5) {
             // Split operation
 
-            // pick an occupied cluster
-            int cluster1 = MathUtils.nextInt(K);
-            int cluster2 = K; // next available unoccupied cluster
+            int cluster1;
+            int cluster2;
 
-            for (int i = 0; i < allocations.length; i++) {
-                if (allocations[i] == cluster1) {
-                    if (MathUtils.nextDouble() < 0.5) {
-                        allocations[i] = cluster2;
-                        occupancy[cluster1] --;
-                        occupancy[cluster2] ++;
+            do {
+                // pick an occupied cluster
+                cluster1 = MathUtils.nextInt(K);
+                cluster2 = K; // next available unoccupied cluster
+
+                for (int i = 0; i < allocations.length; i++) {
+                    if (allocations[i] == cluster1) {
+                        if (MathUtils.nextDouble() < 0.5) {
+                            allocations[i] = cluster2;
+                            occupancy[cluster1] --;
+                            occupancy[cluster2] ++;
+                        }
                     }
                 }
-            }
 
-            if (occupancy[cluster1] == 0) {
-                // todo should we assume at least one virus moves?
                 // For reversibility, merge step requires that both resulting clusters are occupied,
                 // so we should resample until condition is true
-                // all the viruses moved so can we just throw the move away?
-                return Double.NEGATIVE_INFINITY;
-            }
+            } while (occupancy[cluster1] == 0);
 
-            // set both clusters to a location based on the first cluster with some random jitter...           
+            // set both clusters to a location based on the first cluster with some random jitter...
             Parameter param1 = clusterLocations.getParameter(cluster1);
             Parameter param2 = clusterLocations.getParameter(cluster2);
 
@@ -116,14 +116,13 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
             // pick 2 occupied clusters
             int cluster1 = MathUtils.nextInt(K);
-            int cluster2 = MathUtils.nextInt(K);
+            int cluster2;
 
-            if (cluster1 == cluster2) {
-                // todo should we ensure the clusters aren't the same
-                // should resample until cluster1 != cluster2 to maintain reversibility, because split assumes they are different
-                // all clusters to merge are the same so can we just throw the move away?
-                return Double.NEGATIVE_INFINITY;
-            }
+            do {
+                cluster2 = MathUtils.nextInt(K);
+
+                // resample until cluster1 != cluster2 to maintain reversibility, because split assumes they are different
+            } while (cluster1 == cluster2);
 
             if (cluster1 > cluster2) {
                 // swap the cluster indices to keep the destination cluster lower

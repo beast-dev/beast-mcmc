@@ -18,6 +18,8 @@ import javax.lang.model.element.Element;
  * @version $Id: DirichletProcessGibbsOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
 public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
+    public final static boolean DEBUG = false;
+
     public final static String CLUSTER_SPLIT_MERGE_OPERATOR = "clusterSplitMergeOperator";
 
     private final int N; // the number of items
@@ -64,7 +66,13 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
         int[] occupiedIndices = new int[N];
 
-        int K = 0; // k = number of uoccupied clusters
+        // for testing, set these to -1 to force out of bounds exception if
+        // used but not set
+        for (int i = 0; i < occupiedIndices.length; i++) {
+            occupiedIndices[i] = -1;
+        }
+
+        int K = 0; // k = number of unoccupied clusters
         for (int i = 0; i < allocations.length; i++) {
             allocations[i] = (int) allocationParameter.getParameterValue(i);
             occupancy[allocations[i]] += 1;
@@ -96,13 +104,15 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
             // find the first unoccupied cluster
             int cluster2 = 0;
-            while (allocations[cluster2] > 0) {
+            while (occupancy[cluster2] > 0) {
                 cluster2 ++;
             }
 
+            int count = 0;
             for (int i = 0; i < allocations.length; i++) {
                 if (allocations[i] == cluster1) {
                     if (MathUtils.nextBoolean()) {
+                        count ++;
                         allocations[i] = cluster2;
                         occupancy[cluster1] --;
                         occupancy[cluster2] ++;
@@ -121,6 +131,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 param2.setParameterValue(dim, loc[dim] - (splitDraw[dim] * scale)); // Move in opposite direction
             }
 
+            if (DEBUG) {
+                System.err.println("Split: " + count + " from " + cluster1 + " to " + cluster2);
+            }
         } else {
             // Merge operation
 
@@ -149,6 +162,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 double average = (loc1.getParameterValue(dim) + loc2.getParameterValue(dim)) / 2.0;
                 splitDraw[dim] = (loc1.getParameterValue(dim) - average) / scale; // Record that the reverse step would need to draw
                 loc1.setParameterValue(dim, average);
+            }
+            if (DEBUG) {
+                System.err.println("Merge: " + occupancy[cluster1] + " into " + cluster1 + " and " + cluster2);
             }
 
         }

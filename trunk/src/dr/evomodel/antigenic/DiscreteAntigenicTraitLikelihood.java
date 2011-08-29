@@ -246,7 +246,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterIndexParameter.addBounds(bound);
 
         for (int i = 0; i < getLocationCount(); i++) {
-            int r = 0;
+            int r = i;
             clusterIndexParameter.setParameterValue(i, r);
         }
 

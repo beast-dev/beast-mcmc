@@ -77,7 +77,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         double[] splitDraw = new double[paramDim]; // Need to keep these for computing MHG ratio
         double scale = 1.0; // TODO make tunable
 
-        if (MathUtils.nextDouble() < 0.5) {
+        int moveType = MathUtils.nextInt(2);    // 0 for split, 1 for merge
+
+        if ( (moveType == 0 && K < N) || K == 1) { // always split when K==1
             // Split operation
 
             int cluster1;
@@ -113,7 +115,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 param2.setParameterValue(dim, loc[dim] - (splitDraw[dim] * scale)); // Move in opposite direction
             }
 
-        } else {
+        }
+
+        if ( (moveType == 1 && K > 1 ) || K == N) { // always merge when K==N
             // Merge operation
 
             // pick 2 occupied clusters
@@ -160,7 +164,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         }
 
         // todo the Hastings ratio
-        return 0.0;
+        return 1.0;
     }
 
 

@@ -125,17 +125,28 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         List<Pair> locationPairs = new ArrayList<Pair>();
 
+        System.out.print("virus");
+        for (int j = 0; j < assayCount; j++) {
+            int k = assayToSerumIndices[j];
+            System.out.print("\t" + assayNames[k] + "[" + locationLabels[serumToLocationIndices[k]] + "]");
+        }
+        System.out.println();
+
         // Build a sparse matrix of non-missing assay values
         for (int i = 0; i < virusCount; i++) {
 
             if (virusToLocationIndices[i] != -1) {
                 // viruses with location indices of minus one have been excluded
 
+                System.out.print(virusNames[i] + "[" + locationLabels[virusToLocationIndices[i]] + "]");
+
                 for (int j = 0; j < assayCount; j++) {
                     int k = assayToSerumIndices[j];
 
                     Double value = observationValueTable[i][j];
                     ObservationType type = observationTypeTable[i][j];
+
+                    System.out.print("\t" + value);
 
                     if (type != ObservationType.MISSING) {
                         observationList.add(value);
@@ -147,6 +158,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                         serumObservationCounts[k]++;
                     }
                 }
+                System.out.println();
             }
         }
 
@@ -209,10 +221,13 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         // some random initial locations
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
-            }
+//            for (int j = 0; j < mdsDimension; j++) {
+//                double r = MathUtils.nextGaussian();
+//                double r = 0.0;
+//                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+//            }
+            locationsParameter.getParameter(i).setParameterValueQuietly(0, i * 2);
+            locationsParameter.getParameter(i).setParameterValueQuietly(1, 0.0);
         }
 
         // Start off with a 1-to-1 correspondence between location and cluster
@@ -232,8 +247,8 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterIndexParameter.addBounds(bound);
 
         for (int i = 0; i < getLocationCount(); i++) {
-//            int r = i % 8;
-            int r = MathUtils.nextInt(maxClusterCount);
+//            int r = i / 5;
+            int r = MathUtils.nextInt(8);
 //            int r = 0;
 //            int r = i;
             clusterIndexParameter.setParameterValue(i, r);

@@ -221,13 +221,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         // some random initial locations
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-//            for (int j = 0; j < mdsDimension; j++) {
-//                double r = MathUtils.nextGaussian();
-//                double r = 0.0;
-//                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
-//            }
-            locationsParameter.getParameter(i).setParameterValueQuietly(0, i * 2);
-            locationsParameter.getParameter(i).setParameterValueQuietly(1, 0.0);
+            for (int j = 0; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
+                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+            }
+//            locationsParameter.getParameter(i).setParameterValueQuietly(0, i * 2);
+//            locationsParameter.getParameter(i).setParameterValueQuietly(1, 0.0);
         }
 
         // Start off with a 1-to-1 correspondence between location and cluster
@@ -247,10 +246,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         clusterIndexParameter.addBounds(bound);
 
         for (int i = 0; i < getLocationCount(); i++) {
-//            int r = i / 5;
-            int r = MathUtils.nextInt(8);
-//            int r = 0;
-//            int r = i;
+            int r = 0;
             clusterIndexParameter.setParameterValue(i, r);
         }
 

@@ -1,6 +1,5 @@
 package dr.evomodel.antigenic;
 
-import dr.inference.distribution.DirichletProcessLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -15,9 +14,9 @@ import dr.xml.*;
  *
  * @author Andrew Rambaut
  * @author Marc Suchard
- * @version $Id: DirichletProcessOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
+ * @version $Id: DirichletProcessGibbsOperator.java,v 1.16 2005/06/14 10:40:34 rambaut Exp $
  */
-public class DirichletProcessOperator extends SimpleMCMCOperator implements GibbsOperator {
+public class DirichletProcessGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
     public final static String DIRICHLET_PROCESS_OPERATOR = "dirichletProcessOperator";
 
     private final int N;
@@ -26,10 +25,10 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
 
     private final Likelihood modelLikelihood;
 
-    public DirichletProcessOperator(Parameter clusteringParameter,
-                                    Parameter chiParameter,
-                                    Likelihood modelLikelihood,
-                                    double weight) {
+    public DirichletProcessGibbsOperator(Parameter clusteringParameter,
+                                         Parameter chiParameter,
+                                         Likelihood modelLikelihood,
+                                         double weight) {
         this.clusteringParameter = clusteringParameter;
         this.N = clusteringParameter.getDimension();
         this.chiParameter = chiParameter;
@@ -207,7 +206,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
                 likelihood = (Likelihood)xo.getElementFirstChild(LIKELIHOOD);
             }
 
-            return new DirichletProcessOperator(clusteringParameter, chiParameter, likelihood, weight);
+            return new DirichletProcessGibbsOperator(clusteringParameter, chiParameter, likelihood, weight);
 
         }
 
@@ -220,7 +219,7 @@ public class DirichletProcessOperator extends SimpleMCMCOperator implements Gibb
         }
 
         public Class getReturnType() {
-            return DirichletProcessOperator.class;
+            return DirichletProcessGibbsOperator.class;
         }
 
 

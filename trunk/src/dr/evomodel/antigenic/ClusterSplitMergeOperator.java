@@ -62,15 +62,17 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         // the unoccupied clusters.
         int[] occupancy = new int[N];
 
-        int X = N; // X = number of unoccupied clusters
+        int[] occupiedIndices = new int[N];
+
+        int K = 0; // k = number of uoccupied clusters
         for (int i = 0; i < allocations.length; i++) {
             allocations[i] = (int) allocationParameter.getParameterValue(i);
             occupancy[allocations[i]] += 1;
             if (occupancy[allocations[i]] == 1) { // first item in cluster
-                X -= 1; // one fewer unoccupied
+                occupiedIndices[K] = allocations[i];
+                K++;
             }
         }
-        K = N - X;
 
         // Container for split/merge random variable (only 2 draws in 2D)
         int paramDim = clusterLocations.getParameter(0).getDimension();
@@ -84,26 +86,29 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             // Split operation
 
             int cluster1;
-            int cluster2;
-
             do {
                 // pick an occupied cluster
-                cluster1 = MathUtils.nextInt(K);
-                cluster2 = K; // next available unoccupied cluster
-
-                for (int i = 0; i < allocations.length; i++) {
-                    if (allocations[i] == cluster1) {
-                        if (MathUtils.nextDouble() < 0.5) {
-                            allocations[i] = cluster2;
-                            occupancy[cluster1] --;
-                            occupancy[cluster2] ++;
-                        }
-                    }
-                }
+                cluster1 = occupiedIndices[MathUtils.nextInt(K)];
 
                 // For reversibility, merge step requires that both resulting clusters are occupied,
                 // so we should resample until condition is true
             } while (occupancy[cluster1] == 0);
+
+            // find the first unoccupied cluster
+            int cluster2 = 0;
+            while (allocations[cluster2] > 0) {
+                cluster2 ++;
+            }
+
+            for (int i = 0; i < allocations.length; i++) {
+                if (allocations[i] == cluster1) {
+                    if (MathUtils.nextBoolean()) {
+                        allocations[i] = cluster2;
+                        occupancy[cluster1] --;
+                        occupancy[cluster2] ++;
+                    }
+                }
+            }
 
             // set both clusters to a location based on the first cluster with some random jitter...
             Parameter param1 = clusterLocations.getParameter(cluster1);
@@ -120,21 +125,14 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             // Merge operation
 
             // pick 2 occupied clusters
-            int cluster1 = MathUtils.nextInt(K);
+            int cluster1 = occupiedIndices[MathUtils.nextInt(K)];
             int cluster2;
 
             do {
-                cluster2 = MathUtils.nextInt(K);
+                cluster2 = occupiedIndices[MathUtils.nextInt(K)];
 
                 // resample until cluster1 != cluster2 to maintain reversibility, because split assumes they are different
             } while (cluster1 == cluster2);
-
-            if (cluster1 > cluster2) {
-                // swap the cluster indices to keep the destination cluster lower
-                int tmp = cluster1;
-                cluster1 = cluster2;
-                cluster2 = tmp;
-            }
 
             for (int i = 0; i < allocations.length; i++) {
                 if (allocations[i] == cluster2) {
@@ -152,6 +150,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 splitDraw[dim] = (loc1.getParameterValue(dim) - average) / scale; // Record that the reverse step would need to draw
                 loc1.setParameterValue(dim, average);
             }
+
         }
 
         // set the final allocations (only for those that have changed)

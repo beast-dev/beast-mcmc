@@ -1,6 +1,5 @@
 package dr.evomodel.antigenic;
 
-import dr.inference.model.Likelihood;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -71,6 +70,11 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         }
         K = N - X;
 
+        // Container for split/merge random variable (only 2 draws in 2D)
+        int paramDim = clusterLocations.getParameter(0).getDimension();
+        double[] splitDraw = new double[paramDim]; // Need to keep these for computing MHG ratio
+        double scale = 1.0; // TODO make tunable
+
         if (MathUtils.nextDouble() < 0.5) {
             // Split operation
 
@@ -90,20 +94,21 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
             if (occupancy[cluster1] == 0) {
                 // todo should we assume at least one virus moves?
+                // For reversibility, merge step requires that both resulting clusters are occupied,
+                // so we should resample until condition is true
                 // all the viruses moved so can we just throw the move away?
                 return Double.NEGATIVE_INFINITY;
             }
 
-            // set both clusters to a location based on the first cluster with some random jitter...
-            double scale = 1.0;
-
+            // set both clusters to a location based on the first cluster with some random jitter...           
             Parameter param1 = clusterLocations.getParameter(cluster1);
             Parameter param2 = clusterLocations.getParameter(cluster2);
 
             double[] loc = param1.getParameterValues();
             for (int dim = 0; dim < param1.getDimension(); dim++) {
-                param1.setParameterValue(dim, loc[dim] + (MathUtils.nextGaussian() * scale));
-                param2.setParameterValue(dim, loc[dim] + (MathUtils.nextGaussian() * scale));
+                splitDraw[dim] = MathUtils.nextGaussian();
+                param1.setParameterValue(dim, loc[dim] + (splitDraw[dim] * scale));
+                param2.setParameterValue(dim, loc[dim] - (splitDraw[dim] * scale)); // Move in opposite direction
             }
 
         } else {
@@ -115,6 +120,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
             if (cluster1 == cluster2) {
                 // todo should we ensure the clusters aren't the same
+                // should resample until cluster1 != cluster2 to maintain reversibility, because split assumes they are different
                 // all clusters to merge are the same so can we just throw the move away?
                 return Double.NEGATIVE_INFINITY;
             }
@@ -138,7 +144,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             Parameter loc1 = clusterLocations.getParameter(cluster1);
             Parameter loc2 = clusterLocations.getParameter(cluster2);
             for (int dim = 0; dim < loc1.getDimension(); dim++) {
-            loc1.setParameterValue(dim, (loc1.getParameterValue(dim) + loc2.getParameterValue(dim) / 2.0));
+                double average = (loc1.getParameterValue(dim) + loc2.getParameterValue(dim)) / 2.0;
+                splitDraw[dim] = (loc1.getParameterValue(dim) - average) / scale; // Record that the reverse step would need to draw
+                loc1.setParameterValue(dim, average);
             }
         }
 

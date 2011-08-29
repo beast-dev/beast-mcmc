@@ -8,6 +8,8 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
+import javax.lang.model.element.Element;
+
 /**
  * An operator to split or merge clusters.
  *
@@ -225,7 +227,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
 
             Parameter allocationParameter = (Parameter) xo.getChild(Parameter.class);
 
-            MatrixParameter locationsParameter = (MatrixParameter) xo.getChild(MatrixParameter.class);
+            MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild("locations");
 
             return new ClusterSplitMergeOperator(allocationParameter, locationsParameter, weight);
 
@@ -251,7 +253,9 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 new ElementRule(Parameter.class),
-                new ElementRule(MatrixParameter.class)
+                new ElementRule("locations", new XMLSyntaxRule[] {
+                        new ElementRule(MatrixParameter.class)
+                })
         };
     };
 

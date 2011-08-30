@@ -8,8 +8,6 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import javax.lang.model.element.Element;
-
 /**
  * An operator to split or merge clusters.
  *
@@ -86,6 +84,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         int paramDim = clusterLocations.getParameter(0).getDimension();
         double[] splitDraw = new double[paramDim]; // Need to keep these for computing MHG ratio
         double scale = 1.0; // TODO make tunable
+        double newClusterProb = 0.5;  // TODO Make tunable
 
         // always split when K = 1, always merge when K = N, otherwise 50:50
         boolean doSplit = K == 1 || (K != N && MathUtils.nextBoolean());
@@ -108,24 +107,23 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 cluster2 ++;
             }
 
-            int count = 0;
-            for (int i = 0; i < allocations.length; i++) {
-                if (allocations[i] == cluster1) {
-                    if (MathUtils.nextBoolean()) {
-                        count ++;
-                        allocations[i] = cluster2;
-
-                        // keep occupancy up to date (remove if not need)
-                        occupancy[cluster1] --;
-                        occupancy[cluster2] ++;
+            int oldCount = occupancy[cluster1];
+            do {
+                occupancy[cluster1] = 0;
+                occupancy[cluster2] = 0;
+                for (int i = 0; i < allocations.length; i++) {
+                    if (allocations[i] == cluster1 || allocations[i] == cluster2) {
+                        boolean putInNewCluster = MathUtils.nextDouble() < newClusterProb;
+                        if (putInNewCluster) {
+                            allocations[i] = cluster2;
+                            occupancy[cluster2]++;
+                        } else {
+                            allocations[i] = cluster1;
+                            occupancy[cluster1]++;
+                        }
                     }
                 }
-            }
-            if (occupancy[cluster1] == 0 || occupancy[cluster2] == 0) {
-                // either all the items were moved or none...
-
-                // todo Perhaps we should draw the number to split and then allocate items?
-            }
+            } while (occupancy[cluster1] != 0 && occupancy[cluster2] != 0);
 
             K++;
 
@@ -141,7 +139,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             }
 
             if (DEBUG) {
-                System.err.println("Split: " + count + " items from cluster " + cluster1 + " to create cluster " + cluster2);
+                System.err.println("Split: " + (oldCount - occupancy[cluster1]) + " items from cluster " + cluster1 + " to create cluster " + cluster2);
             }
         } else {
             // Merge operation
@@ -175,6 +173,10 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 double average = (loc1.getParameterValue(dim) + loc2.getParameterValue(dim)) / 2.0;
                 splitDraw[dim] = (loc1.getParameterValue(dim) - average) / scale; // Record that the reverse step would need to draw
                 loc1.setParameterValue(dim, average);
+
+                // Consider loc2 as the extra dimensions for dimension-matching
+                // On second thought, maybe not a good idea
+//                loc2.setParameterValue(dim, splitDraw[dim]);
             }
             if (DEBUG) {
                 System.err.println("Merge: " + occupancy[cluster1] + "items into cluster " + cluster1 + " from " + cluster2);

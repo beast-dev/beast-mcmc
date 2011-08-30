@@ -106,17 +106,17 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
                 // no jitter, just differences in cluster sizes
                 hastings = Math.log(elementClusterSize - 1) - Math.log(targetClusterSize);
             }
-            else {
+    //        else {
                 // cluster sizes cancel, must include jitter
-                Parameter elementParam = clusterLocations.getParameter(elementAssignment);
-                Parameter targetParam = clusterLocations.getParameter(targetAssignment);
-                double[] elementLoc = elementParam.getParameterValues();
-                double[] targetLoc = targetParam.getParameterValues();
-                for (int dim = 0; dim < elementParam.getDimension(); dim++) {
-                    double difference = elementLoc[dim] - targetLoc[dim];
-                    hastings += NormalDistribution.logPdf(difference, 0, scale);
-                }
-            }
+    //            Parameter elementParam = clusterLocations.getParameter(elementAssignment);
+    //            Parameter targetParam = clusterLocations.getParameter(targetAssignment);
+    //            double[] elementLoc = elementParam.getParameterValues();
+    //            double[] targetLoc = targetParam.getParameterValues();
+    //            for (int dim = 0; dim < elementParam.getDimension(); dim++) {
+    //                double difference = elementLoc[dim] - targetLoc[dim];
+    //                hastings += NormalDistribution.logPdf(difference, 0, scale);
+    //            }
+    //        }
 
             if (DEBUG) {
                 System.err.println("Move element " + element + " from cluster " + elementAssignment + " to cluster " + targetAssignment);

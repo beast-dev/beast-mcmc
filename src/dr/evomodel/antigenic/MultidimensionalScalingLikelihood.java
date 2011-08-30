@@ -327,17 +327,22 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
         for (int i = 0; i < upperThresholdCount; i++) {
             int observationIndex = upperThresholdIndices[i];
             int dist = getDistanceIndexForObservation(observationIndex);
-            if (distanceUpdated[dist]) {
+            if (dist != -1) {
+                if (distanceUpdated[dist]) {
 //                double cdf = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, false);
 //                double tail = 1.0 - cdf;
-                // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
-                double tail = NormalDistribution.tailCDF(observations[observationIndex], distances[dist], sd);
-                thresholds[j] = Math.log(tail);
+                    // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
+                    double tail = NormalDistribution.tailCDF(observations[observationIndex], distances[dist], sd);
+                    thresholds[j] = Math.log(tail);
+                }
+                if (Double.isInfinite(thresholds[j])) {
+                    System.out.println("Error calculation threshold probability");
+                }
+                sum += thresholds[j];
+            } else {
+                // -1 denotes a distance to self (i.e., 0)
+                throw new RuntimeException("Homologous observations shouldn't be thresholds.");
             }
-            if (Double.isInfinite(thresholds[j])) {
-                System.out.println("Error calculation threshold probability");
-            }
-            sum += thresholds[j];
             j++;
         }
         for (int i = 0; i < lowerThresholdCount; i++) {

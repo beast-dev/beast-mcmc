@@ -114,11 +114,20 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                     if (MathUtils.nextBoolean()) {
                         count ++;
                         allocations[i] = cluster2;
+
+                        // keep occupancy up to date (remove if not need)
                         occupancy[cluster1] --;
                         occupancy[cluster2] ++;
                     }
                 }
             }
+            if (occupancy[cluster1] == 0 || occupancy[cluster2] == 0) {
+                // either all the items were moved or none...
+
+                // todo Perhaps we should draw the number to split and then allocate items?
+            }
+
+            K++;
 
             // set both clusters to a location based on the first cluster with some random jitter...
             Parameter param1 = clusterLocations.getParameter(cluster1);
@@ -132,7 +141,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             }
 
             if (DEBUG) {
-                System.err.println("Split: " + count + " from " + cluster1 + " to " + cluster2);
+                System.err.println("Split: " + count + " items from cluster " + cluster1 + " to create cluster " + cluster2);
             }
         } else {
             // Merge operation
@@ -150,10 +159,14 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
             for (int i = 0; i < allocations.length; i++) {
                 if (allocations[i] == cluster2) {
                     allocations[i] = cluster1;
+
+                    // keep occupancy up to date (remove if not need)
                     occupancy[cluster1] ++;
                     occupancy[cluster2] --;
                 }
             }
+
+            K--;
 
             // set the merged cluster to the mean location of the two original clusters
             Parameter loc1 = clusterLocations.getParameter(cluster1);
@@ -164,7 +177,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
                 loc1.setParameterValue(dim, average);
             }
             if (DEBUG) {
-                System.err.println("Merge: " + occupancy[cluster1] + " into " + cluster1 + " and " + cluster2);
+                System.err.println("Merge: " + occupancy[cluster1] + "items into cluster " + cluster1 + " from " + cluster2);
             }
 
         }
@@ -178,7 +191,7 @@ public class ClusterSplitMergeOperator extends SimpleMCMCOperator {
         }
 
         // todo the Hastings ratio
-        return 1.0;
+        return 0.0;
     }
 
 

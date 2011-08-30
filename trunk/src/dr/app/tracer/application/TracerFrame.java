@@ -79,6 +79,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
+    private ExtendedBayesianSkylineDialog extendedBayesianSkylineDialog = null;
     private GMRFSkyrideDialog gmrfSkyrideDialog = null;
     private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
@@ -1131,6 +1132,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         createTemporalAnalysisAction.setEnabled(false);
 
+        addExtendedBayesianSkylineAction.setEnabled(true);
         addBayesianSkylineAction.setEnabled(true);
         addDemographicAction.setEnabled(true);
         addTimeDensity.setEnabled(true);
@@ -1202,6 +1204,32 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
+    public void doExtendedBayesianSkyline(boolean add) {
+        if (extendedBayesianSkylineDialog == null) {
+            extendedBayesianSkylineDialog = new ExtendedBayesianSkylineDialog(this);
+        }
+
+        if (currentTraceLists.size() != 1) {
+            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
+                    "this analysis on, (but not the Combined trace).",
+                    "Unable to perform analysis",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+
+        if (add) {
+            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            extendedBayesianSkylineDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
+        } else {
+            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+            extendedBayesianSkylineDialog.createExtendedBayesianSkylineFrame(currentTraceLists.get(0), this);
+        }
+    }
 
     public void doGMRFSkyride(boolean add) {
         if (gmrfSkyrideDialog == null) {
@@ -1536,6 +1564,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
+    public Action getExtendedBayesianSkylineAction() {
+        return extendedBayesianSkylineAction;
+    }
+
     public Action getGMRFSkyrideAction() {
         return gmrfSkyrideAction;
     }
@@ -1560,6 +1592,10 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return addBayesianSkylineAction;
     }
 
+    public Action getAddExtendedBayesianSkylineAction() {
+        return addExtendedBayesianSkylineAction;
+    }
+
     public Action getAddTimeDensityAction() {
         return addTimeDensity;
     }
@@ -1581,6 +1617,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(false);
+        }
+    };
+
+    private final AbstractAction extendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
+        public void actionPerformed(ActionEvent ae) {
+            doExtendedBayesianSkyline(false);
         }
     };
 
@@ -1617,6 +1659,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction addBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(true);
+        }
+    };
+
+    private final AbstractAction addExtendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
+        public void actionPerformed(ActionEvent ae) {
+            doExtendedBayesianSkyline(true);
         }
     };
 

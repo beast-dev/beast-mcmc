@@ -13,6 +13,8 @@ public interface AnalysisMenuHandler {
 
 	Action getBayesianSkylineAction();
 
+    Action getExtendedBayesianSkylineAction();
+
     Action getGMRFSkyrideAction();
 
 	Action getLineagesThroughTimeAction();
@@ -24,6 +26,8 @@ public interface AnalysisMenuHandler {
 	Action getAddDemographicAction();
 
 	Action getAddBayesianSkylineAction();
+
+    Action getAddExtendedBayesianSkylineAction();
 
 	Action getAddTimeDensityAction();
 

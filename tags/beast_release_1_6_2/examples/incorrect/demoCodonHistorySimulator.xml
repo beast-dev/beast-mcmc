@@ -1,0 +1,88 @@
+<?xml version="1.0" standalone="yes"?>
+<!-- $Id:  $ -->
+<!-- Demonstrates simulating the complete codon history -->
+<!-- This *requires* BEAGLE -->
+
+<beast>
+
+    <!-- The list of taxa analyse (can also include dates/ages).                 -->
+    <!-- ntax=6                                                                  -->
+    <taxa id="taxa1">
+        <taxon id="human"/>
+        <taxon id="chimp"/>
+        <taxon id="bonobo"/>
+        <taxon id="gorilla"/>
+        <taxon id="orangutan"/>
+        <taxon id="siamang"/>
+    </taxa>
+
+    <tree id="treeML" units="years" usingDates="false">
+        <node height="0.099582">
+            <node height="0.069125">
+                <node height="0.036038">
+                    <node height="0.024003">
+                        <node height="0.000000">
+                            <taxon idref="human"/>
+                        </node>
+                        <node height="0.010772">
+                            <node height="0.000000">
+                                <taxon idref="chimp"/>
+                            </node>
+                            <node height="0.000000">
+                                <taxon idref="bonobo"/>
+                            </node>
+                        </node>
+                    </node>
+                    <node height="0.000000">
+                        <taxon idref="gorilla"/>
+                    </node>
+                </node>
+                <node height="0.000000">
+                    <taxon idref="orangutan"/>
+                </node>
+            </node>
+            <node height="0.000000">
+                <taxon idref="siamang"/>
+            </node>
+        </node>
+    </tree>
+    
+    <yangCodonModel id="simCodonModel">
+    	<kappa>
+    		<parameter id="kappa" value="2.0"/>
+    	</kappa>
+    	<omega>
+    		<parameter id="omega" value="2.0"/>  <!-- I love positive-selection -->
+    	</omega>
+    	
+        	<frequencyModel dataType="codon-universal" normalize="true">
+        		<frequencies>
+            		<parameter dimension="61"/>
+           		</frequencies>
+      		</frequencyModel>
+        
+   	</yangCodonModel>
+
+    <siteModel id="simSiteModel">
+        <substitutionModel>
+            <hkyModel idref="simCodonModel"/>
+        </substitutionModel>
+        <mutationRate>
+            <parameter id="simSiteModel.mu" value="50.0" lower="0.0"/>
+        </mutationRate>
+        <gammaShape gammaCategories="4">
+            <parameter id="simAlpha" value="0.5" lower="0.0" upper="100.0"/>
+        </gammaShape>
+    </siteModel>
+
+    <report>
+        <completeHistorySimulator id="myAlignment" replications="2"
+        	reportSynonymousMutations="true"
+        	reportNonSynonymousMutations="true">
+            <tree idref="treeML"/>
+            <siteModel idref="simSiteModel"/>
+        </completeHistorySimulator>
+    </report>
+
+</beast>
+	

@@ -26,17 +26,16 @@
 package dr.app.tracer.analysis;
 
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 import jam.panels.OptionsPanel;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.List;
 
 public class TimeDensityDialog {
 
@@ -195,7 +194,8 @@ public class TimeDensityDialog {
 
         public Object doWork() {
 
-            List<Double> times = traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()));
+            Double[] times = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex((String) traceCombo.getSelectedItem()), times);
 
             minTime = frame.getMinTime();
             maxTime = frame.getMaxTime();
@@ -204,12 +204,12 @@ public class TimeDensityDialog {
 
             FrequencyDistribution frequency = new FrequencyDistribution(minTime, binCount, delta);
 
-            for (int i = 0; i < times.size(); i++) {
-                frequency.addValue(getTime(times.get(i)));
+            for (int i = 0; i < times.length; i++) {
+                frequency.addValue(getTime(times[i]));
             }
 
-            Variate.D xData = new Variate.D();
-            Variate.D yData = new Variate.D();
+            Variate.Double xData = new Variate.Double();
+            Variate.Double yData = new Variate.Double();
 
             double x = frequency.getLowerBound() - frequency.getBinSize();
             xData.add(x + (frequency.getBinSize() / 2.0));
@@ -218,7 +218,7 @@ public class TimeDensityDialog {
 
             for (int i = 0; i < frequency.getBinCount(); i++) {
                 xData.add(x + (frequency.getBinSize() / 2.0));
-                double density = frequency.getFrequency(i) / frequency.getBinSize() / times.size();
+                double density = frequency.getFrequency(i) / frequency.getBinSize() / times.length;
                 yData.add(density);
                 x += frequency.getBinSize();
             }

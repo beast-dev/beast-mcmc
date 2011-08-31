@@ -46,8 +46,6 @@ public abstract class DataType
     public static final int TWO_STATES = 3;
     public static final int GENERAL = 4;
     public static final int COVARION = 5;
-    public static final int MICRO_SAT = 6;
-    public static final int P2PTYPE = 7;
 
     public static final char UNKNOWN_CHARACTER = '?';
     public static final char GAP_CHARACTER = '-';
@@ -85,13 +83,9 @@ public abstract class DataType
             registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
             registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
-	  registerDataType(HiddenCodons.DESCRIPTION+"2-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
-	  registerDataType(HiddenCodons.DESCRIPTION+"3-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION+"1", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION+"2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
+	        registerDataType(HiddenCodons.DESCRIPTION+"2-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
+	        registerDataType(HiddenCodons.DESCRIPTION+"3-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
-            registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
-            registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
         }
     }
 

@@ -32,8 +32,8 @@ package dr.stats;
  * @version $Id: Regression.java,v 1.5 2005/05/24 20:26:01 rambaut Exp $
  */
 public class Regression {
-    private Variate.D xData = null;
-    private Variate.D yData = null;
+    private Variate xData = null;
+    private Variate yData = null;
 
     private boolean forceOrigin = false;
     private boolean regressionKnown = false;
@@ -85,8 +85,8 @@ public class Regression {
      * Set data
      */
     public void setData(double[] xData, double[] yData) {
-        Variate.D xd = new Variate.D();
-        Variate.D yd = new Variate.D();
+        Variate.Double xd = new Variate.Double();
+        Variate.Double yd = new Variate.Double();
 
         for (int i = 0; i < xData.length; i++) {
             xd.add(xData[i]);
@@ -103,8 +103,8 @@ public class Regression {
      * Set data
      */
     public void setData(Variate xData, Variate yData) {
-        this.xData = (Variate.D) xData;
-        this.yData = (Variate.D) yData;
+        this.xData = xData;
+        this.yData = yData;
 
         regressionKnown = false;
     }
@@ -148,8 +148,6 @@ public class Regression {
     }
 
     public double getSumResidualsSquared() {
-        if (!regressionKnown)
-            calculateRegression();
         return sumResidualsSquared;
     }
 
@@ -171,24 +169,16 @@ public class Regression {
         return y - ((getGradient() * x) + getIntercept());
     }
 
-    public double getX(final double y) {
-        return (y - getIntercept()) / getGradient();
-    }
-
-    public double getY(final double x) {
-        return x * getGradient() + getIntercept();
-    }
-
-    public Variate.N getXData() {
+    public Variate getXData() {
         return xData;
     }
 
-    public Variate.N getYData() {
+    public Variate getYData() {
         return yData;
     }
 
     public Variate getYResidualData() {
-        Variate.D rd = new Variate.D();
+        Variate.Double rd = new Variate.Double();
 
         for (int i = 0; i < xData.getCount(); i++) {
             rd.add(getResidual(xData.get(i), yData.get(i)));

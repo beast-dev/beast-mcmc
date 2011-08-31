@@ -24,20 +24,21 @@
  */
 package dr.app.beauti.util;
 
+import org.jdom.Document;
+import org.jdom.Element;
+
 import dr.app.beast.BeastVersion;
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ModelOptions;
 import dr.app.beauti.options.Operator;
 import dr.app.beauti.options.Parameter;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Units;
 import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.xml.XMLParser;
-import org.jdom.Document;
-import org.jdom.Element;
 
 
 /**
@@ -47,30 +48,30 @@ import org.jdom.Element;
  * @version $Id: BeautiTemplate.java, rambaut Exp $
  */
 public class BeautiTemplate extends ModelOptions {
-
+    
 	private final BeautiOptions options;
-
-    public BeautiTemplate(BeautiOptions options) {
+	
+    public BeautiTemplate(BeautiOptions options) {    	
     	this.options = options;
-
+       
     }
 
 
     /**
-     * Write options from a file
+     * Read options from a file
      *
      * @param guessDates guess dates?
      * @return the Document
      */
     public Document create(boolean guessDates) {
-
+        
         final BeastVersion version = new BeastVersion();
         Element root = new Element("beauti");
         root.setAttribute("version", version.getVersion());
 
         Element dataElement = new Element("data");
 
-//        dataElement.addContent(createChild("fileNameStem", fileNameStem));
+        //dataElement.addContent(createChild("fileNameStem", fileNameStem));
 
 //        dataElement.addContent(createChild("datesUnits", options.datesUnits));
 //        dataElement.addContent(createChild("datesDirection", options.datesDirection));
@@ -430,5 +431,5 @@ public class BeautiTemplate extends ModelOptions {
             return Date.createTimeSinceOrigin(timeValue, units, origin);
         }
     }
-
+    
 }

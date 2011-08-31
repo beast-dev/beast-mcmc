@@ -52,11 +52,7 @@ public class RPNcalculatorStatisticParser extends AbstractXMLObjectParser {
         final String name = xo.hasAttribute(Statistic.NAME) ? xo.getStringAttribute(Statistic.NAME) : RPN_STATISTIC;
         final String[] e = expressions.toArray(new String[expressions.size()]);
         final String[] enames = expressionNames.toArray(new String[expressionNames.size()]);
-        try {
-            return new RPNcalculatorStatistic(name, e, enames, variables);
-        } catch ( RuntimeException err) {
-            throw new XMLParseException(err.getMessage());
-        }        
+        return new RPNcalculatorStatistic(name, e, enames, variables);
     }
 
     public String getParserDescription() {

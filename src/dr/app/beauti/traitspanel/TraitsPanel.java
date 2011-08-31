@@ -32,12 +32,13 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.gui.table.TableEditorStopper;
-import dr.app.gui.table.TableSorter;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
+import dr.app.gui.table.TableEditorStopper;
+import dr.app.gui.table.TableSorter;
 import jam.framework.Exportable;
 import jam.panels.ActionPanel;
+import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -55,6 +56,9 @@ import java.awt.event.ActionEvent;
  */
 public class TraitsPanel extends BeautiPanel implements Exportable {
 
+    /**
+     *
+     */
     private static final long serialVersionUID = 5283922195494563924L;
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
@@ -64,9 +68,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             "file. Taxa should be in the first column and the trait names<br>" +
             "in the first row</html>";
     private static final String GUESS_TRAIT_VALUES_TOOLTIP = "<html>This attempts to extract values for this trait that are<br>" +
-            "encoded in the names of the selected taxa.</html>";
-    private static final String SET_TRAIT_VALUES_TOOLTIP = "<html>This sets values for this trait for all<br>" +
-            "the selected taxa.</html>";
+            "encoded in the names of the taxa.</html>";
     private static final String CLEAR_TRAIT_VALUES_TOOLTIP = "<html>This clears all the values currently assigned to taxa for<br>" +
             "this trait.</html>";
 
@@ -83,8 +85,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private TraitData currentTrait = null; // current trait
 
     private CreateTraitDialog createTraitDialog = null;
-    private GuessTraitDialog guessTraitDialog = null;
-    private TraitValueDialog traitValueDialog = null;
+//    private GuessTraitDialog guessTraitDialog = null;
 
     AddTraitAction addTraitAction = new AddTraitAction();
 
@@ -100,8 +101,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         traitsTable.getTableHeader().setReorderingAllowed(false);
         traitsTable.getTableHeader().setResizingAllowed(false);
-//        traitsTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        traitsTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         TableColumn col = traitsTable.getColumnModel().getColumn(1);
         ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraitData.TraitType.values());
@@ -129,8 +130,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         sorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
-//        dataTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -162,10 +163,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         JButton button;
 
-        button = new JButton(addTraitAction);
-        PanelUtils.setupComponent(button);
-        button.setToolTipText(ADD_TRAITS_TOOLTIP);
-        toolBar1.add(button);
+        // removed this button as there is already a "+" button at the bottom of the table.
+//        button = new JButton(addTraitAction);
+//        PanelUtils.setupComponent(button);
+//        button.setToolTipText(ADD_TRAITS_TOOLTIP);
+//        toolBar1.add(button);
 
         button = new JButton(importTraitsAction);
         PanelUtils.setupComponent(button);
@@ -178,17 +180,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         PanelUtils.setupComponent(button);
         button.setToolTipText(GUESS_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
-
-        button = new JButton(new SetValueAction());
+        button = new JButton(new ClearTraitAction());
         PanelUtils.setupComponent(button);
-        button.setToolTipText(SET_TRAIT_VALUES_TOOLTIP);
+        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
-
-        // Don't see the need for a clear values button
-//        button = new JButton(new ClearTraitAction());
-//        PanelUtils.setupComponent(button);
-//        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
-//        toolBar1.add(button);
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTraitAction);
@@ -281,7 +276,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private void traitSelectionChanged() {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
-            currentTrait = options.traits.get(selRow);
+            currentTrait = options.getTraitsList().get(selRow);
             traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
 //        } else {
@@ -289,7 +284,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //            removeTraitAction.setEnabled(false);
         }
 
-        if (options.traits.size() <= 0) {
+        if (options.getTraitsList().size() <= 0) {
             currentTrait = null;
             removeTraitAction.setEnabled(false);
         }
@@ -305,108 +300,59 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public void guessTrait() {
-        if (options.taxonList == null) { // validation of check empty taxonList
-            return;
-        }
-
-        if (currentTrait == null) {
-            if (!addTrait()) {
-                return; // if addTrait() cancel then false
-            }
-        }
-        int result;
-        do {
-            TraitGuesser currentTraitGuesser = new TraitGuesser(currentTrait);
-            if (guessTraitDialog == null) {
-                guessTraitDialog = new GuessTraitDialog(frame);
-            }
-            guessTraitDialog.setDescription("Extract values for trait '" + currentTrait + "' from taxa labels");
-            result = guessTraitDialog.showDialog();
-
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            guessTraitDialog.setupGuesserFromDialog(currentTraitGuesser);
-
-            try {
-                int[] selRows = dataTable.getSelectedRows();
-                if (selRows.length > 0) {
-                    Taxa selectedTaxa = new Taxa();
-
-                    for (int row : selRows) {
-                        Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
-                        selectedTaxa.addTaxon(taxon);
-                    }
-                    currentTraitGuesser.guessTrait(selectedTaxa);
-                } else {
-                    currentTraitGuesser.guessTrait(options.taxonList);
+        if (options.taxonList != null) { // validation of check empty taxonList
+//            TraitGuesser guesser = options.traitsOptions.cureentTraitGuesser;
+            if (currentTrait == null) {
+                if (!addTrait()) {
+                    return; // if addTrait() cancel then false
                 }
-
-            } catch (IllegalArgumentException iae) {
-                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
-                result = -1;
             }
+            int result;
+            do {
+                TraitGuesser currentTraitGuesser = new TraitGuesser(currentTrait);
+                GuessTraitDialog guessTraitDialog = new GuessTraitDialog(frame, currentTraitGuesser);
+                result = guessTraitDialog.showDialog();
 
-            dataTableModel.fireTableDataChanged();
-        } while (result < 0);
-    }
-
-    public void setTraitValue() {
-        if (options.taxonList == null) { // validation of check empty taxonList
-            return;
-        }
-
-        int result;
-        do {
-            if (traitValueDialog == null) {
-                traitValueDialog = new TraitValueDialog(frame);
-            }
-
-            int[] selRows = dataTable.getSelectedRows();
-
-            if (selRows.length > 0) {
-                traitValueDialog.setDescription("Set values for trait '" + currentTrait + "' for selected taxa");
-            } else {
-                traitValueDialog.setDescription("Set values for trait '" + currentTrait + "' for all taxa");
-            }
-
-            result = traitValueDialog.showDialog();
-
-            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
 
 //            currentTrait.guessTrait = true; // ?? no use?
-            String value = traitValueDialog.getTraitValue();
+                guessTraitDialog.setupGuesser();
 
-            try {
-                if (selRows.length > 0) {
-                    for (int row : selRows) {
-                        Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
-                        taxon.setAttribute(currentTrait.getName(), value);
+                try {
+                    int[] selRows = dataTable.getSelectedRows();
+                    if (selRows.length > 0) {
+                        Taxa selectedTaxa = new Taxa();
+
+                        for (int row : selRows) {
+                            Taxon taxon = (Taxon) dataTable.getValueAt(row, 0);
+                            selectedTaxa.addTaxon(taxon);
+                        }
+                        currentTraitGuesser.guessTrait(selectedTaxa);
+                    } else {
+                        currentTraitGuesser.guessTrait(options.taxonList);
                     }
-                } else {
-                    for (Taxon taxon : options.taxonList) {
-                        taxon.setAttribute(currentTrait.getName(), value);
-                    }
+
+                } catch (IllegalArgumentException iae) {
+                    JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
+                    result = -1;
                 }
 
-            } catch (IllegalArgumentException iae) {
-                JOptionPane.showMessageDialog(this, iae.getMessage(), "Unable to guess trait value", JOptionPane.ERROR_MESSAGE);
-                result = -1;
-            }
-
-            dataTableModel.fireTableDataChanged();
-        } while (result < 0);
+                dataTableModel.fireTableDataChanged();
+            } while (result < 0);
+        } else {
+            JOptionPane.showMessageDialog(this, "No taxa loaded yet, please import Alignment file.",
+                    "No taxa loaded", JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     public boolean addTrait() {
         boolean isAdd = addTrait("Untitled");
         // http://code.google.com/p/beast-mcmc/issues/detail?id=388
-        if (options.traitExists(TraitData.TRAIT_SPECIES)) {
+        if (options.containTrait(TraitData.TRAIT_SPECIES)) {
             JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
-                    "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+                 "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
             options.removeTrait(TraitData.TRAIT_SPECIES);
 //            options.useStarBEAST = false;
             traitsTableModel.fireTableDataChanged();
@@ -432,10 +378,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 // The createTraitDialog will have already checked if the
             // user is overwriting an existing trait
             addTrait(newTrait);
-
-            if (createTraitDialog.createTraitPartition()) {
-                options.createPartitionForTrait(name, newTrait);
-            }
 
             fireTraitsChanged();
 //            traitsTableModel.fireTableDataChanged();
@@ -485,6 +427,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public class ClearTraitAction extends AbstractAction {
+        /**
+         *
+         */
         private static final long serialVersionUID = -7281309694753868635L;
 
         public ClearTraitAction() {
@@ -498,6 +443,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public class GuessTraitsAction extends AbstractAction {
+        /**
+         *
+         */
         private static final long serialVersionUID = 8514706149822252033L;
 
         public GuessTraitsAction() {
@@ -528,18 +476,6 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
     };
 
-    public class SetValueAction extends AbstractAction {
-
-        public SetValueAction() {
-            super("Set trait values");
-            setToolTipText("Use this button to set the trait values of selected taxa");
-        }
-
-        public void actionPerformed(ActionEvent ae) {
-            setTraitValue();
-        }
-    }
-
 
     class TraitsTableModel extends AbstractTableModel {
 
@@ -555,15 +491,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.traits.size();
+            if (options.getTraitsList() == null) return 0;
+
+            return options.getTraitsList().size();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return options.traits.get(row).getName();
+                    return options.getTraitsList().get(row).getName();
                 case 1:
-                    return options.traits.get(row).getTraitType();
+                    return options.getTraitsList().get(row).getTraitType();
             }
             return null;
         }
@@ -571,18 +509,11 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public void setValueAt(Object aValue, int row, int col) {
             switch (col) {
                 case 0:
-                    String oldName = options.traits.get(row).getName();
-                    options.traits.get(row).setName(aValue.toString());
-                    Object value;
-                    for (Taxon t : options.taxonList) {
-                        value = t.getAttribute(oldName);
-                        t.setAttribute(aValue.toString(), value);
-                        // cannot remvoe attribute in Attributable inteface
-                    }
+                    options.getTraitsList().get(row).setName(aValue.toString());
                     fireTraitsChanged();
                     break;
                 case 1:
-                    options.traits.get(row).setTraitType((TraitData.TraitType) aValue);
+                    options.getTraitsList().get(row).setTraitType((TraitData.TraitType) aValue);
                     break;
             }
         }
@@ -590,8 +521,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
 //            return !(options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())
 //                    || options.getTraitsList().get(row).getName().equalsIgnoreCase(TraitData.Traits.TRAIT_LOCATIONS.toString()));
-//            return col == 0;
-            return true;
+            return col == 0;
         }
 
         public String getColumnName(int column) {
@@ -627,6 +557,9 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     class DataTableModel extends AbstractTableModel {
 
+        /**
+         *
+         */
         private static final long serialVersionUID = -6707994233020715574L;
         String[] columnNames = {"Taxon", "Value"};
 

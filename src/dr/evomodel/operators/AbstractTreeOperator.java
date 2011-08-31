@@ -47,7 +47,11 @@ public abstract class AbstractTreeOperator extends SimpleMCMCOperator {
 	    tree.addChild(jP, i);
 	    tree.addChild(iP, j);
 
-        tree.endTreeEdit();
+	    try {
+	        tree.endTreeEdit();
+	    } catch (MutableTree.InvalidTreeException ite) {
+	        throw new OperatorFailedException(ite.toString());
+	    }
 	}
 
 	public void reset() {

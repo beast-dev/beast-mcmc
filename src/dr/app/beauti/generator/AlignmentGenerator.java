@@ -1,8 +1,9 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.BinaryModelType;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.types.BinaryModelType;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -14,6 +15,7 @@ import dr.evoxml.TaxonParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -32,7 +34,16 @@ public class AlignmentGenerator extends Generator {
      * Write all Alignments
      * @param writer  XMLWriter
      */
-    public void writeAlignments(List<Alignment> alignments, XMLWriter writer) {
+    public void writeAlignments(XMLWriter writer) {
+        List<Alignment> alignments = new ArrayList<Alignment>();
+
+        for (PartitionData partition : options.getNonTraitsDataList()) {
+            Alignment alignment = partition.getAlignment();
+            if (!alignments.contains(alignment)) {
+                alignments.add(alignment);
+            }
+        }
+
         int index = 1;
         for (Alignment alignment : alignments) {
             if (alignments.size() > 1) {
@@ -86,7 +97,7 @@ public class AlignmentGenerator extends Generator {
 //                System.out.println(taxon.getId() + ": \n" + alignment.getAlignedSequenceString(i));
 //                System.out.println("len = " + alignment.getAlignedSequenceString(i).length() + "\n");
             } else {
-                // generate a codon in case there is codon partitioning
+                // generate a full null codon in case codon partitioning is on...
                 writer.writeText("NNN");
             }
             writer.writeCloseTag(SequenceParser.SEQUENCE);

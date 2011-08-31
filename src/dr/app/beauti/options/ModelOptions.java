@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.PriorType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.TaxonList;
 
 import java.util.ArrayList;
@@ -61,69 +61,48 @@ public class ModelOptions {
         new Parameter.Builder(name, description).initial(initial).isFixed(true).build(parameters);
     }
 
-    public void createZeroOneParameterUniformPrior(String name, String description, double initial) {
-        new Parameter.Builder(name, description).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).isZeroOne(true).build(parameters);
-    }
-
-    public void createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double truncationLower, double truncationUpper) {
-        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).isNonNegative(true)
-                  .initial(initial).truncationLower(truncationLower).truncationUpper(truncationUpper).build(parameters);
-    }
-
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double truncationLower, double truncationUpper) {
+                                            double uniformLower, double uniformUpper, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).truncationLower(truncationLower).truncationUpper(truncationUpper).build(parameters);
+                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).lower(lower).upper(upper).build(parameters);
     }
 
-    public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
-                  .initial(initial).shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).build(parameters);
+    public void createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                          double shape, double scale, double lower, double upper, boolean priorFixed) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR)
+                  .initial(initial).shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).build(parameters);
     }
 
     public void createCachedGammaPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                          double shape, double scale, boolean priorFixed) {
+                                          double shape, double scale, double lower, double upper, boolean priorFixed) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.GAMMA_PRIOR).initial(initial)
-                  .shape(shape).scale(scale).isNonNegative(true).isPriorFixed(priorFixed).isCached(true).build(parameters);
+                  .shape(shape).scale(scale).lower(lower).upper(upper).priorFixed(priorFixed).isCached(true).build(parameters);
     }
 
-    public void createParameterOneOverXPrior(String name, String description, PriorScaleType scaleType, double initial) {
+    public void createParameterJeffreysPrior(String name, String description, PriorScaleType scaleType, double initial,
+                                             double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.ONE_OVER_X_PRIOR)
-                .initial(initial).isNonNegative(true).build(parameters);
+                .initial(initial).lower(lower).upper(upper).build(parameters);
     }
 
     public void createParameterExponentialPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double offset) {
+                                                double mean, double offset, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.EXPONENTIAL_PRIOR)
-                .initial(initial).mean(mean).offset(offset).isNonNegative(true).build(parameters);
+                  .initial(initial).mean(mean).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
     public void createParameterLognormalPrior(String name, String description, PriorScaleType scaleType, double initial,
                                                 double mean, double stdev, double offset, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LOGNORMAL_PRIOR)
-                  .initial(initial).mean(mean).stdev(stdev).offset(offset).isNonNegative(true).build(parameters);
-    }
-
-    public Parameter createParameterNormalPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double stdev, double offset) {
-        return new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NORMAL_PRIOR)
-                  .initial(initial).mean(mean).stdev(stdev).offset(offset).build(parameters);
+                  .initial(initial).mean(mean).stdev(stdev).offset(offset).lower(lower).upper(upper).build(parameters);
     }
 
     public void createParameterLaplacePrior(String name, String description, PriorScaleType scaleType, double initial,
-                                                double mean, double scale) {
+                                                double mean, double scale, double lower, double upper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.LAPLACE_PRIOR)
-                  .initial(initial).mean(mean).scale(scale).build(parameters);
+                  .initial(initial).mean(mean).scale(scale).lower(lower).upper(upper).build(parameters);
     }
 
-    public void createParameterBetaDistributionPrior(String name, String description, double initial,
-                                          double shape, double shapeB, double offset) {
-        new Parameter.Builder(name, description).prior(PriorType.BETA_PRIOR).initial(initial)
-                  .isZeroOne(true).shape(shape).shapeB(shapeB).offset(offset).build(parameters);
-    }
 
     //+++++++++++++++++++ Create Statistic ++++++++++++++++++++++++++++++++
     public void createDiscreteStatistic(String name, String description) { // Poisson Prior
@@ -131,13 +110,11 @@ public class ModelOptions {
                  .prior(PriorType.POISSON_PRIOR).mean(Math.log(2)).build(parameters);
     }
 
-    protected void createStatistic(String name, String description) {
-        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).build(parameters);
+    protected void createStatistic(String name, String description, double lower, double upper) {
+        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC)
+                  .lower(lower).upper(upper).build(parameters);
     }
 
-    protected void createNonNegativeStatistic(String name, String description) {
-        new Parameter.Builder(name, description).isStatistic(true).prior(PriorType.NONE_STATISTIC).isNonNegative(true).build(parameters);
-    }
     //+++++++++++++++++++ Create Operator ++++++++++++++++++++++++++++++++
     public void createOperator(String parameterName, OperatorType type, double tuning, double weight) {
         Parameter parameter = getParameter(parameterName);
@@ -179,12 +156,12 @@ public class ModelOptions {
     }
 
     public void createUpDownOperator(String key, String name, String description, Parameter parameter1, Parameter parameter2,
-                                     OperatorType type, boolean isPara1Up, double tuning, double weight) {
+                                     boolean isPara1Up, double tuning, double weight) {
         if (isPara1Up) {
-           operators.put(key, new Operator.Builder(name, description, parameter1, type, tuning, weight)
+           operators.put(key, new Operator.Builder(name, description, parameter1, OperatorType.UP_DOWN, tuning, weight)
                    .parameter2(parameter2).build());
         } else {
-           operators.put(key, new Operator.Builder(name, description, parameter2, type, tuning, weight)
+           operators.put(key, new Operator.Builder(name, description, parameter2, OperatorType.UP_DOWN, tuning, weight)
                    .parameter2(parameter1).build());
         }
     }
@@ -212,11 +189,6 @@ public class ModelOptions {
             throw new IllegalArgumentException("Parameter with name, " + name + ", is unknown");
         }
         return parameter;
-    }
-
-    public boolean parameterExists(String name) {
-        Parameter parameter = parameters.get(name);
-        return parameter != null;
     }
 
     public Parameter getStatistic(TaxonList taxonList) {

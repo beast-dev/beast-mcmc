@@ -124,9 +124,9 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         chartPanel.setYAxisTitle("");
     }
 
-    public void addDemographicPlot(String title, Variate.D xData,
-                                   Variate.D yDataMean, Variate.D yDataMedian,
-                                   Variate.D yDataUpper, Variate.D yDataLower,
+    public void addDemographicPlot(String title, Variate xData,
+                                   Variate yDataMean, Variate yDataMedian,
+                                   Variate yDataUpper, Variate yDataLower,
                                    double timeMean, double timeMedian,
                                    double timeUpper, double timeLower) {
 
@@ -140,7 +140,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         setVisible(true);
     }
 
-    public void addDensityPlot(String title, Variate.D xData, Variate.D yData) {
+    public void addDensityPlot(String title, Variate xData, Variate yData) {
 
         analysisData.add(new AnalysisData(title, xData, yData));
 
@@ -195,12 +195,12 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
         demoChart.addPlot(linePlot);
 
-        Variate.D y1 = new Variate.D();
+        Variate y1 = new Variate.Double();
         y1.add(demoChart.getYAxis().getMinAxis());
         y1.add(demoChart.getYAxis().getMaxAxis());
 
         if (analysis.timeMean > 0.0 && analysis.timeMedian > 0.0) {
-            Variate.D x1 = new Variate.D();
+            Variate x1 = new Variate.Double();
             if (meanMedianComboBox.getSelectedItem().equals("Median")) {
                 x1.add(analysis.timeMedian);
                 x1.add(analysis.timeMedian);
@@ -216,7 +216,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         }
 
         if (analysis.timeLower > 0.0) {
-            Variate.D x2 = new Variate.D();
+            Variate x2 = new Variate.Double();
             x2.add(analysis.timeLower);
             x2.add(analysis.timeLower);
 
@@ -227,7 +227,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         }
 
         if (analysis.timeUpper > 0.0) {
-            Variate.D x3 = new Variate.D();
+            Variate x3 = new Variate.Double();
             x3.add(analysis.timeUpper);
             x3.add(analysis.timeUpper);
 
@@ -245,7 +245,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
     java.util.List<AnalysisData> analysisData = new ArrayList<AnalysisData>();
 
     class AnalysisData {
-        public AnalysisData(String title, Variate.D xData, Variate.D yDataMean, Variate.D yDataMedian, Variate.D yDataUpper, Variate.D yDataLower,
+        public AnalysisData(String title, Variate xData, Variate yDataMean, Variate yDataMedian, Variate yDataUpper, Variate yDataLower,
                             double timeMedian, double timeMean, double timeUpper, double timeLower) {
 
             this.title = title;
@@ -262,7 +262,7 @@ public class TemporalAnalysisPlotPanel extends JPanel {
             this.timeLower = timeLower;
         }
 
-        public AnalysisData(String title, Variate.D xData, Variate.D yData) {
+        public AnalysisData(String title, Variate xData, Variate yData) {
             this.title = title;
             this.isDemographic = false;
             this.xData = xData;
@@ -272,11 +272,11 @@ public class TemporalAnalysisPlotPanel extends JPanel {
         String title;
         boolean isDemographic;
 
-        Variate.D xData = null;
-        Variate.D yDataMean = null;
-        Variate.D yDataMedian = null;
-        Variate.D yDataUpper = null;
-        Variate.D yDataLower = null;
+        Variate xData = null;
+        Variate yDataMean = null;
+        Variate yDataMedian = null;
+        Variate yDataUpper = null;
+        Variate yDataLower = null;
 
         double timeMedian = -1;
         double timeMean = -1;

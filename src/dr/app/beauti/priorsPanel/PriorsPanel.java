@@ -27,29 +27,23 @@ package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.hpm.HierarchicalModelComponentOptions;
-import dr.app.beauti.components.hpm.HierarchicalPhylogeneticModel;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.util.NumberFormatter;
 import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -62,7 +56,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     JTable priorTable = null;
     PriorTableModel priorTableModel = null;
     JLabel messageLabel = new JLabel();
-    JButton linkButton = null;
 
     public ArrayList<Parameter> parameters = new ArrayList<Parameter>();
 
@@ -75,8 +68,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
     private final boolean isDefaultOnly;
 
-    private final static boolean HIERARCHICAL_ENABLED = true; // Change to false to disable
-
     public PriorsPanel(BeautiFrame parent, boolean isDefaultOnly) {
         this.frame = parent;
         this.isDefaultOnly = isDefaultOnly;
@@ -84,10 +75,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         priorTableModel = new PriorTableModel(this);
         priorTable = new JTable(priorTableModel);
 
-        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_LAST_COLUMN);
+        priorTable.setAutoResizeMode(javax.swing.JTable.AUTO_RESIZE_OFF);
         priorTable.getTableHeader().setReorderingAllowed(false);
-//        priorTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        priorTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         priorTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -116,19 +107,6 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         scrollPane.setOpaque(false);
 
-        Action setHierarchicalAction = new AbstractAction("Link parameters into a phylogenetic hierarchical model") {
-            public void actionPerformed(ActionEvent actionEvent) {
-                // Make list of selected parameters;
-                int[] rows = priorTable.getSelectedRows();
-                hierarchicalButtonPressed(rows);
-            }
-        };
-
-        linkButton = new JButton(setHierarchicalAction);
-        linkButton.setVisible(true);
-        linkButton.setEnabled(false);
-        linkButton.setToolTipText(HierarchicalPhylogeneticModel.TIP_TOOL);
-
         messageLabel.setText(getMessage());
 
         setOpaque(false);
@@ -140,38 +118,8 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         add(scrollPane, BorderLayout.CENTER);
-
-        if (HIERARCHICAL_ENABLED) {
-            JPanel southPanel = new JPanel();
-            southPanel.setLayout(new BorderLayout(0, 0));
-            JToolBar toolBar1 = new JToolBar();
-            toolBar1.setFloatable(false);
-            toolBar1.setOpaque(false);
-            toolBar1.setLayout(new BoxLayout(toolBar1, BoxLayout.X_AXIS));
-
-            PanelUtils.setupComponent(linkButton);
-            toolBar1.add(linkButton);
-            southPanel.add(toolBar1, BorderLayout.NORTH);
-            southPanel.add(messageLabel, BorderLayout.SOUTH);
-            add(southPanel, BorderLayout.SOUTH);
-        } else {
-            add(messageLabel, BorderLayout.SOUTH);
-        }
-
-        priorTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                selectionChanged();
-            }
-        });
-
+        add(messageLabel, BorderLayout.SOUTH);
     }
-
-    public void selectionChanged() {
-        int[] selRows = priorTable.getSelectedRows();
-        boolean hasSelection = (selRows != null && selRows.length != 0);
-        linkButton.setEnabled(hasSelection);
-    }
-
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
@@ -244,197 +192,44 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private PriorDialog priorDialog = null;
-//    private DiscretePriorDialog discretePriorDialog = null;
-    private HierarchicalPriorDialog hierarchicalPriorDialog = null;
-
-    private void hierarchicalButtonPressed(int[] rows) {
-
-        if (rows.length < 2) {
-            JOptionPane.showMessageDialog(frame,
-                    "Less than two parameters selected.",
-                    "Parameter linking error",
-                    JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        Double lowerBound = null;
-        Double upperBound = null;
-
-        List<Parameter> paramList = new ArrayList<Parameter>();
-        for (int i = 0; i < rows.length; ++i) {
-            Parameter parameter = parameters.get(rows[i]);
-            if (parameter.isStatistic) {
-                JOptionPane.showMessageDialog(frame,
-                        "Statistics are not currently allowed.",
-                        "HPM parameter linking error",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-            boolean sameBounds = true;
-            if (lowerBound == null) {
-                lowerBound = parameter.truncationLower;
-            } else {
-                if (lowerBound != parameter.truncationLower) {
-                    sameBounds = false;
-                }
-            }
-            if (upperBound == null) {
-                upperBound = parameter.truncationUpper;
-            } else {
-                if (upperBound != parameter.truncationUpper) {
-                    sameBounds = false;
-                }
-            }
-
-            if (!sameBounds) {
-                JOptionPane.showMessageDialog(frame,
-                        "Only parameters that share the same bounds\n" +
-                        "should be included in a HPM.",
-                        "HPM parameter link error",
-                        JOptionPane.WARNING_MESSAGE);
-                return; // Bail out
-            }
-
-            paramList.add(parameter);
-        }
-
-        if (hierarchicalPriorDialog != null) { // Already called
-            // Check to see if selected parameters are already in a HPM
-            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-            boolean anyConflicts = false;
-            for (Parameter parameter : paramList) {
-                if (comp.isHierarchicalParameter(parameter)) {
-                    anyConflicts = true;
-                    break;
-                }
-            }
-            if (anyConflicts) {
-                 int option = JOptionPane.showConfirmDialog(this,
-                    "At one selected parameter already exists in a HPM.\n" +
-                    "Constructing a new prior will remove these parameter\n" +
-                    "from the original model. Continue?",
-                    "HPM warning",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
-                if (option == JOptionPane.NO_OPTION) {
-                    return;
-                }
-            }
-        }
-
-        if (hierarchicalPriorDialog == null) {
-            hierarchicalPriorDialog = new HierarchicalPriorDialog(frame, options);
-        }
-
-        boolean done = false;
-
-        while (!done) {
-            int result = hierarchicalPriorDialog.showDialog(paramList);
-            if (result == JOptionPane.OK_OPTION && hierarchicalPriorDialog.validateModelName()) {
-                hierarchicalPriorDialog.getArguments();
-                done = true;
-            }
-            if (result == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-        }
-
-        // Remove parameters from old list
-        for (Parameter parameter : paramList) {
-            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-            if (comp.isHierarchicalParameter(parameter)) {
-                comp.removeParameter(this, parameter, false);
-            }
-
-        }
-
-        // Add HPM to component manager
-        hierarchicalPriorDialog.addHPM(paramList);
-
-        for (Parameter parameter : paramList) {
-            parameter.setPriorEdited(true);
-        }
-        priorTableModel.fireTableDataChanged();
-    }
+    private DiscretePriorDialog discretePriorDialog = null;
 
     private void priorButtonPressed(int row) {
         Parameter param = parameters.get(row);
 
-        if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
-            // Check that parameter is not already in a HPM
-            HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
-            if (comp.isHierarchicalParameter(param)) {
-                int option = JOptionPane.showConfirmDialog(this,
-                        "Parameter already exists in a HPM. Selecting a\n" +
-                                "new prior will remove the parameter. Continue?",
-                        "HPM warning",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-                if (option == JOptionPane.NO_OPTION) {
-                    return;
-                }
+        if (param.isDiscrete) {
+            if (discretePriorDialog == null) {
+                discretePriorDialog = new DiscretePriorDialog(frame);
             }
-        }
 
-        int result;
-//        if (param.isDiscrete) {
-//            if (discretePriorDialog == null) {
-//                discretePriorDialog = new DiscretePriorDialog(frame);
-//            }
-//            result = discretePriorDialog.showDialog(param);
-//        } else {
+            if (discretePriorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+        } else {
             if (priorDialog == null) {
                 priorDialog = new PriorDialog(frame);
             }
-            result = priorDialog.showDialog(param);
-//        }
 
-//        if (result == JOptionPane.CANCEL_OPTION) {
-//            return;
-//        }
-
-        if (result == JOptionPane.OK_OPTION) {
-            // Only do this if OK button is pressed (not cancel):
-
-            if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {
-                // Possibly remove parameter from its HPM
-                HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                        options.getComponentOptions(HierarchicalModelComponentOptions.class);
-                if (comp.isHierarchicalParameter(param)) {
-                    if (comp.removeParameter(this, param, true) == JOptionPane.NO_OPTION) {
-                        // Bail out
-                        System.err.println("Bailing out of modification");
-                        return;
-                    }
-                    System.err.println("Parameter removed from an HPM");
-                }
+            if (priorDialog.showDialog(param) == JOptionPane.CANCEL_OPTION) {
+                return;
             }
+        }
+        param.setPriorEdited(true);
 
-            param.setPriorEdited(true);
-
-            if (isDefaultOnly) {
-                setParametersList(options);
-            }
-
-            if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
-                if (options.clockModelOptions.isNodeCalibrated(param)) {
-                    List<ClockModelGroup> groupList = options.clockModelOptions.
-                            getClockModelGroups(options.getAllPartitionData(param.getOptions()));
-                    for (ClockModelGroup clockModelGroup : groupList) {
-                        options.clockModelOptions.nodeCalibration(clockModelGroup);
-                    }
-                    frame.setAllOptions();
-//        	} else {
-//        		options.clockModelOptions.fixRateOfFirstClockPartition();
-                }
-            }
-
-            priorTableModel.fireTableDataChanged();
+        if (isDefaultOnly) {
+            setParametersList(options);
         }
 
+            if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
+            if (options.clockModelOptions.isNodeCalibrated(param)) {
+                options.clockModelOptions.nodeCalibration();
+                frame.setAllOptions();
+//        	} else {
+//        		options.clockModelOptions.fixRateOfFirstClockPartition();
+            }
+        }
+
+        priorTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {

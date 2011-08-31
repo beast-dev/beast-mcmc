@@ -280,13 +280,12 @@ public class BeastMC3 {
                 new Arguments.Option[]{
                         new Arguments.IntegerOption("chains", 2, Integer.MAX_VALUE, "number of chains"),
                         new Arguments.RealOption("delta", 0.0, Double.MAX_VALUE, "temperature increment parameter"),
-                        new Arguments.RealArrayOption("temperatures", -1, "a comma-separated list of the hot chain temperatures"),
+                        new Arguments.RealArrayOption("temperatures", HOT_CHAIN_COUNT, "a comma-separated list of the hot chain temperatures"),
                         new Arguments.IntegerOption("swap", 1, Integer.MAX_VALUE, "frequency at which chains temperatures will be swapped"),
                         new Arguments.Option("verbose", "verbose XML parsing messages"),
                         new Arguments.Option("strict", "Fail on non conforming BEAST XML file"),
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
-                        new Arguments.Option("overwrite", "Allow overwriting of log files"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -307,18 +306,9 @@ public class BeastMC3 {
             System.exit(0);
         }
 
-        {
-            boolean allowOverwrite = arguments.hasOption("overwrite");
-            if (allowOverwrite) {
-                System.setProperty("log.allow.overwrite", "true");
-            }
-        }
-
         int chainCount = HOT_CHAIN_COUNT + 1;
         if (arguments.hasOption("chains")) {
             chainCount = arguments.getIntegerOption("chains");
-        } else if( arguments.hasOption("temperatures") ) {
-           chainCount = 1 + arguments.getRealArrayOption("temperatures").length;
         }
 
         double delta = 1.0;
@@ -336,8 +326,6 @@ public class BeastMC3 {
         chainTemperatures[0] = 1.0;
         if (arguments.hasOption("temperatures")) {
             double[] hotChainTemperatures = arguments.getRealArrayOption("temperatures");
-            assert  hotChainTemperatures.length == chainCount - 1;
-            
             System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
         } else {
             for (int i = 1; i < chainCount; i++) {

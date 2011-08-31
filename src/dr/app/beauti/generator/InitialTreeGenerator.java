@@ -1,10 +1,13 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -30,8 +33,8 @@ public class InitialTreeGenerator extends Generator {
 
     /**
      * Generate XML for the starting tree
-     * @param model  PartitionTreeModel
      *
+     * @param model  PartitionTreeModel
      * @param writer the writer
      */
     public void writeStartingTree(PartitionTreeModel model, XMLWriter writer) {
@@ -77,7 +80,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
                         + "which may be 1 of many aligments using this tree.");
-                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getTaxonList().getId());
+                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getAlignment().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
@@ -88,11 +91,8 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
 
-                ClockModelGroup group = options.getAllPartitionData(model).get(0).
-                        getPartitionClockModel().getClockModelGroup();
-
-                if (group.getRateTypeOption() == FixRateType.FIX_MEAN
-                        || group.getRateTypeOption() == FixRateType.RELATIVE_TO) {
+                if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+                        || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 
 //            		writer.writeComment("No calibration");
                     writer.writeOpenTag(
@@ -165,10 +165,10 @@ public class InitialTreeGenerator extends Generator {
 
                     writer.writeIDref(TaxaParser.TAXA, taxa.getId());
                     if (statistic.isNodeHeight) {
-                        if (statistic.isTruncated /*|| statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR*/) {
+                        if (statistic.priorType == PriorType.UNIFORM_PRIOR || statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR) {
                             writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
-                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);
+                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.uniformLower, true);
+                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.uniformUpper, true);
                             writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                         }
                     }
@@ -195,7 +195,7 @@ public class InitialTreeGenerator extends Generator {
 
     }
 
-    private void writeNewickTree (Tree tree, XMLWriter writer) {
+    private void writeNewickTree(Tree tree, XMLWriter writer) {
 
         writer.writeComment("The user-specified starting tree in a newick tree format.");
         writer.writeOpenTag(

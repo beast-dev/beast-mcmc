@@ -26,7 +26,6 @@
 package dr.app.treestat;
 
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.treestat.statistics.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -34,6 +33,7 @@ import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
 import jam.util.IconUtils;
+import dr.app.gui.components.WholeNumberField;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

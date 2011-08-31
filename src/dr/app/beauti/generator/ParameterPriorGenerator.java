@@ -26,13 +26,11 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.Parameter;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodelxml.MSSD.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
@@ -80,23 +78,8 @@ public class ParameterPriorGenerator extends Generator {
             if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                 if (parameter.isCached) {
                     writeCachedParameterPrior(parameter, writer);
-                } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    if (options.clockModelOptions.isNodeCalibrated(parameter) // not treeModel.rootHeight
-                            && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.YULE) {
-                        if (parameter.taxaId != null) {
-                            for (Taxa taxa : options.taxonSets) {
-                                if (taxa.getId().equalsIgnoreCase(parameter.getBaseName())) {
-                                    PartitionTreeModel model = options.taxonSetsTreeModel.get(taxa);
-                                    if (!(options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
-                                            && options.taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0)))) {
-                                        writeParameterPrior(parameter, writer);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
-                        writeParameterPrior(parameter, writer);
-                    }
+                } else if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                    writeParameterPrior(parameter, writer);
                 }
             }
         }
@@ -107,7 +90,7 @@ public class ParameterPriorGenerator extends Generator {
 
         writeParameterPrior(parameter, writer);
         writeParameterIdref(writer, parameter);
-
+        
         writer.writeCloseTag(CachedDistributionLikelihoodParser.CACHED_PRIOR);
     }
 
@@ -117,28 +100,16 @@ public class ParameterPriorGenerator extends Generator {
      * @param parameter the parameter
      * @param writer    the writer
      */
-    public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        // if there is a truncation then put it at the top so it short-circuits any other prior
-        // calculations
-        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-        }
+    private void writeParameterPrior(Parameter parameter, XMLWriter writer) {
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                // already handled, above
-//                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
-//                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
-//                        });
-//                writeParameterIdref(writer, parameter);
-//                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
                 break;
             case EXPONENTIAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,
@@ -212,52 +183,33 @@ public class ParameterPriorGenerator extends Generator {
                 writeParameterIdref(writer, parameter);
                 writer.writeCloseTag(PriorParsers.POISSON_PRIOR);
                 break;
-            case BETA_PRIOR:
-                writer.writeOpenTag(PriorParsers.BETA_PRIOR,
+            case TRUNC_NORMAL_PRIOR:
+                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
                         new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.SHAPE, "" + parameter.shape),
-                                new Attribute.Default<String>(PriorParsers.SHAPEB, "" + parameter.shapeB),
-                                new Attribute.Default<String>(PriorParsers.OFFSET, "" + parameter.offset)
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.uniformLower),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.uniformUpper)
                         });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.BETA_PRIOR);
-                break;
-            case CMTC_RATE_REFERENCE_PRIOR:
-                writer.writeOpenTag(CTMCScalePriorParser.MODEL_NAME);
-                writer.writeOpenTag(CTMCScalePriorParser.SCALEPARAMETER);
+                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+                writer.writeOpenTag(PriorParsers.NORMAL_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.MEAN, "" + parameter.mean),
+                                new Attribute.Default<String>(PriorParsers.STDEV, "" + parameter.stdev)
+                        });
                 writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(CTMCScalePriorParser.SCALEPARAMETER);
-                // Find correct tree for this rate parameter
-
-                PartitionTreeModel treeModel = null;
-                for (PartitionClockModel pcm : options.getPartitionClockModels()) {
-                    if (pcm.getClockRateParam() == parameter) {
-                        for (AbstractPartitionData pd : options.getAllPartitionData(pcm)) {
-                            treeModel = pd.getPartitionTreeModel();
-                            break;
-                        }
-                    }
-                }
-                if (treeModel == null) {
-                    throw new IllegalArgumentException("No tree model found for clock model");
-                }
-                writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
-                writer.writeCloseTag(CTMCScalePriorParser.MODEL_NAME);
-                break;
-            case NORMAL_HPM_PRIOR:
-            case LOGNORMAL_HPM_PRIOR:
-                // Do nothing, densities are already in a distributionLikelihood
+                writer.writeCloseTag(PriorParsers.NORMAL_PRIOR);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown priorType");
         }
     }
 
-    private void writeParameterIdref(XMLWriter writer, Parameter parameter) {
+    private void writeParameterIdref(XMLWriter writer, dr.app.beauti.options.Parameter parameter) {
         if (parameter.isStatistic) {
             writer.writeIDref("statistic", parameter.getName());
         } else {
             writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
         }
     }
+
 }

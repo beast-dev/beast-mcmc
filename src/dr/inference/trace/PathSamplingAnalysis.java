@@ -20,7 +20,7 @@ public class PathSamplingAnalysis {
     public static final String THETA_COLUMN = "thetaColumn";
     public static final String FORMAT = "%5.5g";
 
-    PathSamplingAnalysis(String logLikelihoodName, List<Double> logLikelihoodSample, List<Double> thetaSample) {
+    PathSamplingAnalysis(double[] logLikelihoodSample, String logLikelihoodName, double[] thetaSample) {
         this.logLikelihoodSample = logLikelihoodSample;
         this.logLikelihoodName = logLikelihoodName;
         this.thetaSample = thetaSample;
@@ -49,12 +49,12 @@ public class PathSamplingAnalysis {
         Map<Double, List<Double>> map = new HashMap<Double, List<Double>>();
         orderedTheta = new ArrayList<Double>();
 
-        for (int i = 0; i < logLikelihoodSample.size(); i++) {
-            if (!map.containsKey(thetaSample.get(i))) {
-                map.put(thetaSample.get(i), new ArrayList<Double>());
-                orderedTheta.add(thetaSample.get(i));
+        for (int i = 0; i < logLikelihoodSample.length; i++) {
+            if (!map.containsKey(thetaSample[i])) {
+                map.put(thetaSample[i], new ArrayList<Double>());
+                orderedTheta.add(thetaSample[i]);
             }
-            map.get(thetaSample.get(i)).add(logLikelihoodSample.get(i));
+            map.get(thetaSample[i]).add(logLikelihoodSample[i]);
         }
 
         Collections.sort(orderedTheta);
@@ -99,7 +99,7 @@ public class PathSamplingAnalysis {
         sb.append("\nlog Bayes factor from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
-        sb.append(String.format(FORMAT, bf) + " (" + bf + ")");
+        sb.append(String.format(FORMAT, bf));
         sb.append("\nInner area for path parameter in ("
                 + String.format(FORMAT, orderedTheta.get(1)) + ","
                 + String.format(FORMAT, orderedTheta.get(orderedTheta.size() - 2)) + ") = "
@@ -148,7 +148,7 @@ public class PathSamplingAnalysis {
                     System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
                 }
 
-                burnin = 0;
+                //burnin = 0;   // TODO Double-check with Alex that burnin is ignored.
 
                 traces.setBurnIn(burnin);
 
@@ -172,10 +172,14 @@ public class PathSamplingAnalysis {
                     throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
                 }
 
-                List sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
-                List sampleTheta = traces.getValues(traceIndexTheta);
+                Double sampleLogLikelihood[] = new Double[traces.getStateCount()];
+                Double sampleTheta[] = new Double[traces.getStateCount()];
+                traces.getValues(traceIndexLikelihood, sampleLogLikelihood);
+                traces.getValues(traceIndexTheta, sampleTheta);
 
-                PathSamplingAnalysis analysis = new PathSamplingAnalysis(likelihoodName, sampleLogLikelihood, sampleTheta);
+                PathSamplingAnalysis analysis = new PathSamplingAnalysis(
+                        Trace.arrayConvert(sampleLogLikelihood), likelihoodName,
+                        Trace.arrayConvert(sampleTheta));
 
                 System.out.println(analysis.toString());
 
@@ -219,8 +223,8 @@ public class PathSamplingAnalysis {
     private boolean logBayesFactorCalculated = false;
     private double logBayesFactor;
     private double innerArea;
-    private final List<Double> logLikelihoodSample;
-    private final List<Double> thetaSample;
+    private final double[] logLikelihoodSample;
+    private final double[] thetaSample;
     private List<Double> meanLogLikelihood;
     private final String logLikelihoodName;
     List<Double> orderedTheta;

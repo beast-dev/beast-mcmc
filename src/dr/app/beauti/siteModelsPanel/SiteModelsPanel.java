@@ -27,18 +27,17 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.SequenceErrorModelComponentFactory;
-import dr.app.beauti.components.SequenceErrorModelComponentGenerator;
 import dr.app.beauti.components.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -83,8 +82,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     boolean settingOptions = false;
     boolean hasAlignment = false;
 
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
-    JLabel errorModelLabel;
+    JComboBox errorModelCombo = new JComboBox(new SequenceErrorType[]
+            {SequenceErrorType.NO_ERROR, SequenceErrorType.AGE_TRANSITIONS, SequenceErrorType.AGE_ALL, SequenceErrorType.BASE_TRANSITIONS, SequenceErrorType.BASE_ALL}
+    );
     SequenceErrorModelComponentOptions comp;
 
 
@@ -99,8 +99,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         modelTable.getTableHeader().setReorderingAllowed(false);
         modelTable.getTableHeader().setResizingAllowed(false);
-//        modelTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        modelTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = modelTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
@@ -152,7 +152,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setOpaque(false);
 
 		PanelUtils.setupComponent(errorModelCombo);
-
+		errorModelCombo.setToolTipText("<html>Select how to model sequence error or<br>"
+						+ "post-mortem DNA damage.</html>");
 		errorModelCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 fireModelsChanged();
@@ -162,7 +163,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 		comp = new SequenceErrorModelComponentOptions();
 
         OptionsPanel panel1 = new OptionsPanel(12, 12);
-        errorModelLabel = panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+        panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
 
 
         // The bottom panel is now small enough that this is not necessary
@@ -206,27 +207,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         settingOptions = true;
 
         comp = (SequenceErrorModelComponentOptions) options.getComponentOptions(SequenceErrorModelComponentOptions.class);
-
-        boolean enabled;
-        String tip;
-        if (options.dataPartitions.size() == 1) {
-            errorModelCombo.setSelectedItem(comp.errorModelType);
-            enabled = true;
-            tip = "<html>Select how to model sequence error or<br>"
-                            + "post-mortem DNA damage.</html>";
-        } else {
-            errorModelCombo.setSelectedItem(SequenceErrorType.NO_ERROR);
-            enabled = false;
-            tip = "<html>" +
-                     "Select how to model sequence error or<br>" +
-                     "post-mortem DNA damage.<br>" +
-                     "This option is not available for multiple<br>" +
-                     "partition analyses.</html>";
-        }
-        errorModelLabel.setEnabled(enabled);
-        errorModelCombo.setEnabled(enabled);
-        errorModelLabel.setToolTipText(tip);
-        errorModelCombo.setToolTipText(tip);
+        errorModelCombo.setSelectedItem(comp.errorModelType);
 
         int selRow = modelTable.getSelectedRow();
         modelTableModel.fireTableDataChanged();
@@ -295,16 +276,11 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    }
 
     private void selectionChanged() {
+
         int selRow = modelTable.getSelectedRow();
-
-        if (selRow >= options.getPartitionSubstitutionModels().size()) {
-            selRow = 0;
-            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
-
         if (selRow >= 0) {
             setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
-//            frame.modelSelectionChanged(!isUsed(selRow));
+            frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
 
@@ -314,6 +290,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
      * @param model the new model to display
      */
     private void setCurrentModel(PartitionSubstitutionModel model) {
+
         if (model != null) {
             if (currentModel != null) modelPanelParent.removeAll();
 
@@ -324,7 +301,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             }
 
             currentModel = model;
-            panel.setOptions();
             modelPanelParent.add(panel);
 
             updateBorder();
@@ -348,9 +324,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             case DataType.GENERAL:
                 title = "Discrete Traits";
                 break;
-            case DataType.MICRO_SAT:
-                title = "Microsatellite";
-                break;
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 
@@ -361,7 +334,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (AbstractPartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             if (partition.getPartitionSubstitutionModel() == model) {
                 return true;
             }

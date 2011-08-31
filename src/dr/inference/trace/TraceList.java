@@ -25,8 +25,6 @@
 
 package dr.inference.trace;
 
-import java.util.List;
-
 /**
  * An interface and default class that stores a set of traces from a single chain
  *
@@ -88,26 +86,53 @@ public interface TraceList {
 
     /**
      * get the values of trace with the given index (without burnin)
+     *
      * @param index       the index of trace
-     * @param fromIndex   low endpoint (inclusive) of the subList.
-     * @param toIndex     high endpoint (exclusive) of the subList.
-     * @return The list of values (which are selected values if filter applied)
+     * @param destination the array to copy values into
      */
-    List getValues(int index, int fromIndex, int toIndex);
+    <T> void getValues(int index, T[] destination);
 
     /**
      * get the values of trace with the given index (without burnin)
+     *
      * @param index       the index of trace
-     * @return The list of values (which are selected values if filter applied)
+     * @param destination the array to copy values into
+     * @param offset      the start position for copying into the destination array
      */
-    List getValues(int index);
+    <T> void getValues(int index, T[] destination, int offset);
 
     /**
      * get the values of the burnin of the trace
+     *
      * @param index       the index of trace
-     * @return The list of values (which are selected values if filter applied)
+     * @param destination the array to copy values into
      */
-    List getBurninValues(int index);
+    <T> void getBurninValues(int index, T[] destination);
+
+    /**
+     * get the boolean[] of trace with the given index (without burnin)
+     *
+     * @param index       the index of trace
+     * @param destination the array to copy boolean[] selected into
+     */
+    void getSelected(int index, boolean[] destination);
+
+    /**
+     * get the boolean[] of trace with the given index (without burnin)
+     *
+     * @param index       the index of trace
+     * @param destination the array to copy boolean[] selected into
+     * @param offset      the start position for copying into the destination array
+     */
+    void getSelected(int index, boolean[] destination, int offset);
+
+    /**
+     * get the boolean[] of the burnin of the trace
+     *
+     * @param index       the index of trace
+     * @param destination the array to copy boolean[] selected into
+     */
+    void getBurningSelected(int index, boolean[] destination);
 
     /**
      * @param traceIndex the index of the trace
@@ -126,9 +151,4 @@ public interface TraceList {
 
     Trace getTrace(int index);
 
-//    public interface D extends TraceList {
-//        Double[] getValues(int index, int length);
-//        Double[] getValues(int index, int length, int offset);
-//        Double[] getBurninValues(int index, int length);
-//    }
 }

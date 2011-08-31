@@ -1,18 +1,13 @@
 package dr.app.tracer.traces;
 
 import dr.app.gui.chart.*;
-import dr.inference.trace.Trace;
-import dr.inference.trace.TraceCorrelation;
-import dr.inference.trace.TraceFactory;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import jam.framework.Exportable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -25,20 +20,15 @@ import java.util.Map;
  */
 public class FrequencyPanel extends JPanel implements Exportable {
 
+    private ChartSetupDialog chartSetupDialog = null;
+
     private TraceList traceList = null;
     private String traceName = null;
 
-    private class Settings {
-        ChartSetupDialog chartSetupDialog = null;
-        int minimumBins = 50;
-    }
-
-    private Settings currentSettings = new Settings();
-    private Map<String, Settings> settingsMap = new HashMap<String, Settings>();
-
-    JComboBox binsCombo = new JComboBox(
-           new Integer[]{10, 20, 50, 100, 200, 500, 1000});
-    JLabel labelBins;
+    private int minimumBins = 50;
+    private JComboBox binsCombo = new JComboBox(
+            new Integer[]{10, 20, 50, 100, 200, 500, 1000});
+    private JLabel labelBins;
 
     private JCheckBox showValuesCheckBox = new JCheckBox("Show values on above chart");
 //    private JChart densityChart = new JChart(new LinearAxis(Axis.AT_MAJOR_TICK_PLUS, Axis.AT_MAJOR_TICK_PLUS), new LinearAxis());
@@ -69,7 +59,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
 
         binsCombo.setOpaque(false);
         binsCombo.setFont(UIManager.getFont("SmallSystemFont"));
-        binsCombo.setSelectedItem(currentSettings.minimumBins);
+        binsCombo.setSelectedItem(minimumBins);
         labelBins = new JLabel("Bins:");
         labelBins.setFont(UIManager.getFont("SmallSystemFont"));
         labelBins.setLabelFor(binsCombo);
@@ -92,12 +82,12 @@ public class FrequencyPanel extends JPanel implements Exportable {
         chartSetupButton.addActionListener(
                 new java.awt.event.ActionListener() {
                     public void actionPerformed(ActionEvent actionEvent) {
-                        if (currentSettings.chartSetupDialog == null) {
-                            currentSettings.chartSetupDialog = new ChartSetupDialog(frame, true, false,
+                        if (chartSetupDialog == null) {
+                            chartSetupDialog = new ChartSetupDialog(frame, true, false,
                                     Axis.AT_MAJOR_TICK, Axis.AT_MAJOR_TICK, Axis.AT_ZERO, Axis.AT_MAJOR_TICK);
                         }
 
-                        currentSettings.chartSetupDialog.showDialog(traceChart);
+                        chartSetupDialog.showDialog(traceChart);
                         validate();
                         repaint();
                     }
@@ -107,7 +97,7 @@ public class FrequencyPanel extends JPanel implements Exportable {
         binsCombo.addItemListener(
                 new java.awt.event.ItemListener() {
                     public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        currentSettings.minimumBins = (Integer) binsCombo.getSelectedItem();
+                        minimumBins = (Integer) binsCombo.getSelectedItem();
                         setupTrace();
                     }
                 }
@@ -117,15 +107,6 @@ public class FrequencyPanel extends JPanel implements Exportable {
     public void setTrace(TraceList traceList, String traceName) {
         this.traceList = traceList;
         this.traceName = traceName;
-
-        Settings settings = settingsMap.get(traceName);
-        if (settings == null) {
-            settings = new Settings();
-            settingsMap.put(traceName, settings);
-        }
-        currentSettings = settings;
-        binsCombo.setSelectedItem(currentSettings.minimumBins);
-
         setupTrace();
     }
 
@@ -147,9 +128,13 @@ public class FrequencyPanel extends JPanel implements Exportable {
 
         if (trace != null) {
             Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-            List values = traceList.getValues(traceIndex);
-            if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                plot = new FrequencyPlot(values, currentSettings.minimumBins, td);
+            if (trace.getTraceType() == Double.class) {
+                Double values[] = new Double[traceList.getStateCount()];
+                traceList.getValues(traceIndex, values);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
+
+                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), minimumBins, td);
 
                 if (td != null) {
                     plot.setIntervals(td.getUpperHPD(), td.getLowerHPD());
@@ -161,11 +146,16 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(true);
                 showValuesCheckBox.setVisible(false);
 
-            } else if (trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
-                plot = new FrequencyPlot(values, -1, td);
+            } else if (trace.getTraceType() == Integer.class) {
+                Integer values[] = new Integer[traceList.getStateCount()];
+                traceList.getValues(traceIndex, values);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
+
+                plot = new FrequencyPlot(Trace.arrayConvert(values, selected), -1, td);
 
                 if (td != null) {
-                    plot.setInCredibleSet(td);
+                    plot.setInCredibleSet(td.credSet);
                 }
 
                 traceChart.setXAxis(true, categoryDataMap);
@@ -174,24 +164,23 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 binsCombo.setVisible(false);
                 showValuesCheckBox.setVisible(true);
 
-            } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
-                List<Double> intData = new ArrayList<Double>();
-                for (int v = 0; v < values.size(); v++) {
-                    int index = td.getIndex(values.get(v).toString());
-                    intData.add(v, (double) index);
-                    categoryDataMap.put(index, values.get(v).toString());
-                }
+            } else if (trace.getTraceType() == String.class) {
+                String[] initValues = new String[traceList.getStateCount()];
+                traceList.getValues(traceIndex, initValues);
+                boolean[] selected = new boolean[traceList.getStateCount()];
+                traceList.getSelected(traceIndex, selected);
+                String[] values = Trace.arrayConvert(initValues, selected);
 
-//                System.out.println(trace.getName() + "     " + trace.getTraceType());
-//                System.out.println(td.printCredibleSet() + "      " + td.printInCredibleSet() + "   " + td.getTraceType());
-//                for (Integer i : new TreeSet<Integer>(categoryDataMap.keySet())) {
-//                    System.out.println("i = " + i + "; v = " + categoryDataMap.get(i));
-//                }
+                int[] intData = new int[values.length];
+                for (int v = 0; v < values.length; v++) {
+                    intData[v] = td.credSet.getIndex(values[v]);
+                    categoryDataMap.put(intData[v], values[v]);
+                }
 
                 plot = new FrequencyPlot(intData, -1, td);
 
                 if (td != null) {
-                    plot.setInCredibleSet(td);
+                    plot.setInCredibleSet(td.credSet);
                 }
                 traceChart.setXAxis(false, categoryDataMap);
                 chartPanel.setYAxisTitle("Count");
@@ -203,9 +192,6 @@ public class FrequencyPanel extends JPanel implements Exportable {
                 throw new RuntimeException("Trace type is not recognized: " + trace.getTraceType());
             }
 
-            if (currentSettings.chartSetupDialog != null) {
-                currentSettings.chartSetupDialog.applySettings(traceChart);
-            }
 
             traceChart.addPlot(plot);
         }

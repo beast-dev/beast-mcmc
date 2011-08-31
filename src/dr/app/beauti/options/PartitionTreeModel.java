@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.StartingTreeType;
-import dr.evolution.datatype.DataType;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
 
@@ -38,14 +38,19 @@ import java.util.List;
  */
 public class PartitionTreeModel extends PartitionOptions {
 
+    // Instance variables
+
+    private final BeautiOptions options;
     private PartitionTreePrior treePrior;
 
     private StartingTreeType startingTreeType = StartingTreeType.RANDOM;
     private Tree userStartingTree = null;
 
     private boolean isNewick = true;
-    private boolean fixedTree = false;
-//    private double initialRootHeight = 1.0;
+    
+    private double initialRootHeight = 1.0;
+
+	private boolean fixedTree = false;
 
     //TODO if use EBSP and *BEAST, validate Ploidy of every PD is same for each tree that the PD(s) belongs to
     // BeastGenerator.checkOptions()
@@ -57,8 +62,11 @@ public class PartitionTreeModel extends PartitionOptions {
             "((((((((A,F),(T,P)),((C,D),S)), ... ..., (P,C))),(A,D));<br> end;<br>" +
             "Note: BEAST only allows <font color=red>bifurcating</font> tree.</html>";
 
-    public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {
-        super(options, partition.getName());
+    public PartitionTreeModel(BeautiOptions options, PartitionData partition) {
+        this.options = options;
+        this.partitionName = partition.getName();
+
+        initTreeModelParaAndOpers();
     }
 
     /**
@@ -69,24 +77,21 @@ public class PartitionTreeModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionTreeModel(BeautiOptions options, String name, PartitionTreeModel source) {
-        super(options, name);
+        this.options = options;
+        this.partitionName = name;
 
-        treePrior = source.treePrior;
-        startingTreeType = source.startingTreeType;
-        userStartingTree = source.userStartingTree;
+        this.startingTreeType = source.startingTreeType;
+        this.userStartingTree = source.userStartingTree;
 
-        isNewick = source.isNewick;
-        fixedTree = source.fixedTree;
-//        initialRootHeight = source.initialRootHeight;
-        ploidyType = source.ploidyType;
+        initTreeModelParaAndOpers();
     }
 
-    protected void initModelParametersAndOpererators() {
-
+    private void initTreeModelParaAndOpers() {
+        
         createParameter("tree", "The tree");
         createParameter("treeModel.internalNodeHeights", "internal node heights of the tree (except the root)");
         createParameter("treeModel.allInternalNodeHeights", "internal node heights of the tree");
-        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0);
+        createParameterTree(this, "treeModel.rootHeight", "root height of the tree", true, 1.0, 0.0, Double.POSITIVE_INFINITY);
 
         //TODO treeBitMove should move to PartitionClockModelTreeModelLink, after Alexei finish
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree",
@@ -104,71 +109,66 @@ public class PartitionTreeModel extends PartitionOptions {
                 OperatorType.WIDE_EXCHANGE, -1, demoWeights);
         createOperator("wilsonBalding", "Tree", "Performs the Wilson-Balding rearrangement of the tree", "tree",
                 OperatorType.WILSON_BALDING, -1, demoWeights);
-
-        //=============== microsat ======================
-        createParameter("treeModel.microsatellite.internalNodesParameter", "Microsatellite sampler tree internal node parameter");
-        createOperator("microsatInternalNodesParameter", "Microsat tree internal node",
-                "Random integer walk on microsatellite sampler tree internal node parameter",
-                "treeModel.microsatellite.internalNodesParameter", OperatorType.RANDOM_WALK_INT, 1.0, branchWeights);
     }
 
     /**
      * return a list of parameters that are required
      *
-     * @param parameters the parameter list
+     * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> parameters) {
-        setAvgRootAndRate();
-
-        getParameter("tree");
-        getParameter("treeModel.internalNodeHeights");
-        getParameter("treeModel.allInternalNodeHeights");
-
-        Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
-    	rootHeightParameter.initial = getInitialRootHeight();
-        rootHeightParameter.truncationLower = options.maximumTipHeight;
-        rootHeightParameter.isTruncated = true;
-//        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
-
-        if (!options.useStarBEAST) {
-            parameters.add(rootHeightParameter);
-        }
-
-        if (getDataType().getType() == DataType.MICRO_SAT) {
-             getParameter("treeModel.microsatellite.internalNodesParameter");
-        }
+    public void selectParameters(List<Parameter> params) {
+    	calculateInitialRootHeightPerTree();
+    	
+    	getParameter("tree");
+    	getParameter("treeModel.internalNodeHeights");
+    	getParameter("treeModel.allInternalNodeHeights");    	
+    	
+    	Parameter rootHeightPara = getParameter("treeModel.rootHeight");
+//    	rootHeightPara.initial = initialRootHeight; 
+//    	rootHeightPara.priorEdited = true;
+    	if (!options.useStarBEAST) {
+    		params.add(rootHeightPara);
+    	}
+    	     
     }
 
     /**
      * return a list of operators that are required
      *
-     * @param operators the operator list
+     * @param ops the operator list
      */
-    public void selectOperators(List<Operator> operators) {
-        setAvgRootAndRate();
+    public void selectOperators(List<Operator> ops) {
+    	calculateInitialRootHeightPerTree();
 
         // if not a fixed tree then sample tree space
         if (!fixedTree) {
-            Operator subtreeSlideOp = getOperator("subtreeSlide");
+        	Operator subtreeSlideOp = getOperator("subtreeSlide");
             if (!subtreeSlideOp.tuningEdited) {
-                subtreeSlideOp.tuning = getInitialRootHeight() / 10.0;
+            	subtreeSlideOp.tuning = initialRootHeight / 10.0;
             }
-
-            operators.add(subtreeSlideOp);
-            operators.add(getOperator("narrowExchange"));
-            operators.add(getOperator("wideExchange"));
-            operators.add(getOperator("wilsonBalding"));
+        	
+        	ops.add(subtreeSlideOp);
+            ops.add(getOperator("narrowExchange"));
+            ops.add(getOperator("wideExchange"));
+            ops.add(getOperator("wilsonBalding"));
         }
-
-        operators.add(getOperator("treeModel.rootHeight"));
-        operators.add(getOperator("uniformHeights"));
-
-        if (getDataType().getType() == DataType.MICRO_SAT) {
-             operators.add(getOperator("microsatInternalNodesParameter"));
-        }
+        
+        ops.add(getOperator("treeModel.rootHeight"));
+        ops.add(getOperator("uniformHeights"));
     }
 
     /////////////////////////////////////////////////////////////
+    
+    public boolean containsUncorrelatedRelaxClock() {
+        for (PartitionData partition: options.getAllPartitionData(this)) {
+            PartitionClockModel clockModel = partition.getPartitionClockModel();
+            if (clockModel.getClockType() == ClockType.UNCORRELATED_EXPONENTIAL 
+                    || clockModel.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public PartitionTreePrior getPartitionTreePrior() {
         return treePrior;
@@ -201,7 +201,7 @@ public class PartitionTreeModel extends PartitionOptions {
     public void setNewick(boolean newick) {
         isNewick = newick;
     }
-
+    
     public void setPloidyType(PloidyType ploidyType) {
         this.ploidyType = ploidyType;
     }
@@ -209,20 +209,19 @@ public class PartitionTreeModel extends PartitionOptions {
     public PloidyType getPloidyType() {
         return ploidyType;
     }
-
+    
     public double getInitialRootHeight() {
-        return getAvgRootAndRate()[0];
-    }
+		return initialRootHeight;
+	}
 
-//    public void setInitialRootHeight(double initialRootHeight) {
-//        this.initialRootHeight = initialRootHeight;
-//    }
-
-//    private void calculateInitialRootHeightPerTree() {
-//		initialRootHeight = options.clockModelOptions
-//                .calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
-//    }
-
+	public void setInitialRootHeight(double initialRootHeight) {
+		this.initialRootHeight = initialRootHeight;
+	}
+	
+	private void calculateInitialRootHeightPerTree() {			
+		initialRootHeight = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
+	}
+    
     public String getPrefix() {
         String prefix = "";
         if (options.getPartitionTreeModels().size() > 1) { //|| options.isSpeciesAnalysis()
@@ -232,7 +231,4 @@ public class PartitionTreeModel extends PartitionOptions {
         return prefix;
     }
 
-    public int getDeminsion() { // n-1
-       return options.getNumTaxon(options.getAllPartitionData(this)) - 1;
-    }
 }

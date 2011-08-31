@@ -1,6 +1,6 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -12,12 +12,12 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.NumberColumn;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
-import dr.inference.markovjumps.MarkovJumpsType;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
+import dr.inference.markovjumps.MarkovJumpsType;
 
 import java.util.*;
 
@@ -35,7 +35,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         implements MarkovJumpsRegisterAcceptor {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                           BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+                                           BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel, boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme,
                                            Map<Set<String>, Parameter> partialsRestrictions,
@@ -47,7 +47,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities,
+        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities,
                 scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;
@@ -55,11 +55,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         this.nSimulants = nSimulants;
 
         markovjumps = new ArrayList<MarkovJumpsSubstitutionModel>();
-        branchModelNumber = new ArrayList<Integer>();
         registerParameter = new ArrayList<Parameter>();
         jumpTag = new ArrayList<String>();
         expectedJumps = new ArrayList<double[][]>();
-//        storedExpectedJumps = new ArrayList<double[][]>();
+        storedExpectedJumps = new ArrayList<double[][]>();
 
         tmpProbabilities = new double[stateCount * stateCount * categoryCount];
         condJumps = new double[categoryCount][stateCount * stateCount];
@@ -77,131 +76,49 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             throw new RuntimeException("Register parameter of wrong dimension");
         }
         addVariable(addRegisterParameter);
+        registerParameter.add(addRegisterParameter);
+        MarkovJumpsSubstitutionModel mjModel;
+        if (useUniformization) {
+            mjModel = new UniformizedSubstitutionModel(substitutionModel, type, nSimulants);
+        } else {
+           mjModel = new MarkovJumpsSubstitutionModel(substitutionModel, type);
+        }
+        markovjumps.add(mjModel);
+        addModel(mjModel);
+        setupRegistration(numRegisters);
+
         final String tag = addRegisterParameter.getId();
 
-        for (int i = 0; i < branchSubstitutionModel.getEigenCount(); ++i) {
+        jumpTag.add(tag);
+        expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
+        storedExpectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
 
-            registerParameter.add(addRegisterParameter);
-            MarkovJumpsSubstitutionModel mjModel;
-            SubstitutionModel substitutionModel = branchSubstitutionModel.getSubstitutionModel(i, 0);
+        boolean[] oldScaleByTime = this.scaleByTime;
+        int oldScaleByTimeLength = (oldScaleByTime == null ? 0 : oldScaleByTime.length);
+        this.scaleByTime = new boolean[oldScaleByTimeLength + 1];
+        if (oldScaleByTimeLength > 0) {
+            System.arraycopy(oldScaleByTime, 0, this.scaleByTime, 0, oldScaleByTimeLength);
+        }
+        this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
 
-            if (useUniformization) {
-                mjModel = new UniformizedSubstitutionModel(substitutionModel, type, nSimulants);
-            } else {
-                if (type == MarkovJumpsType.HISTORY) {
-                    throw new RuntimeException("Can only report complete history using uniformization");
-                }
-                mjModel = new MarkovJumpsSubstitutionModel(substitutionModel, type);
-            }
-            markovjumps.add(mjModel);
-            branchModelNumber.add(i);
-            addModel(mjModel);
-            setupRegistration(numRegisters);
+        treeTraits.addTrait(addRegisterParameter.getId(), new TreeTrait.DA() {
 
-            String traitName;
+            final int registerNumber = numRegisters;
 
-            if (branchSubstitutionModel.getEigenCount() == 1) {
-                traitName = tag;
-            } else {
-                traitName = tag + i;
+            public String getTraitName() {
+                return tag;
             }
 
-            jumpTag.add(traitName);
-            
-            expectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
-//        storedExpectedJumps.add(new double[treeModel.getNodeCount()][patternCount]);
-
-            boolean[] oldScaleByTime = this.scaleByTime;
-            int oldScaleByTimeLength = (oldScaleByTime == null ? 0 : oldScaleByTime.length);
-            this.scaleByTime = new boolean[oldScaleByTimeLength + 1];
-            if (oldScaleByTimeLength > 0) {
-                System.arraycopy(oldScaleByTime, 0, this.scaleByTime, 0, oldScaleByTimeLength);
-            }
-            this.scaleByTime[oldScaleByTimeLength] = scaleByTime;
-
-            if (type != MarkovJumpsType.HISTORY) {
-                treeTraits.addTrait(traitName, new TreeTrait.DA() {
-
-                    final int registerNumber = numRegisters;
-
-                    public String getTraitName() {
-                        return tag;
-                    }
-
-                    public Intent getIntent() {
-                        return Intent.BRANCH;
-                    }
-
-                    public double[] getTrait(Tree tree, NodeRef node) {
-                        return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
-                    }
-                });
-            } else {
-                if (histories == null) {
-                    histories = new String[treeModel.getNodeCount()][patternCount];
-                } else {
-                    throw new RuntimeException("Only one complete history per markovJumpTreeLikelihood is allowed");
-                }
-                if (nSimulants > 1) {
-                    throw new RuntimeException("Only one simulant allowed when saving complete history");
-                }
-
-                // Add total number of changes over tree trait
-                TreeTrait da = new TreeTrait.DA() {
-
-                    final int registerNumber = numRegisters;
-
-                    public String getTraitName() {
-                        return tag;
-                    }
-
-                    public Intent getIntent() {
-                        return Intent.BRANCH;
-                    }
-
-                    public double[] getTrait(Tree tree, NodeRef node) {
-                        return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
-                    }
-                };
-
-                treeTraits.addTrait(addRegisterParameter.getId(), new TreeTrait.SumOverTreeDA(da));
-
-                historyRegisterNumber = numRegisters; // Record the complete history for this register
-                ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
-
-                for (int site = 0; site < patternCount; ++site) {
-
-                    final String anonName = (patternCount == 1) ? HISTORY : HISTORY + "_" + (site + 1);
-                    final int anonSite = site;
-
-                    treeTraits.addTrait(anonName, new TreeTrait.S() {
-
-                        public String getTraitName() {
-                            return anonName;
-                        }
-
-                        public Intent getIntent() {
-                            return Intent.BRANCH;
-                        }
-
-                        public String getTrait(Tree tree, NodeRef node) {
-                            return getHistoryForNode(tree, node, anonSite);
-                        }
-
-                        public boolean getLoggable() {
-                            return logHistory;
-                        }
-                    });
-                }
+            public Intent getIntent() {
+                return Intent.BRANCH;
             }
 
-            numRegisters++;
+            public double[] getTrait(Tree tree, NodeRef node) {
+                return getMarkovJumpsForNodeAndRegister(tree, node, registerNumber);
+            }
+        });
 
-        } // End of loop over branch models
-    }
-
-    public void setLogHistories(boolean in) {
-        logHistory = in;
+        numRegisters++;
     }
 
 //    public double[] getRewardsForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
@@ -218,41 +135,22 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         return getMarkovJumpsForRegister(tree, whichRegister)[node.getNumber()];
     }
 
-//    public double[][] getMarkovJumpsForNode(Tree tree, NodeRef node) {
-//        double[][] rtn = new double[numRegisters][];
-//        for (int r = 0; r < numRegisters; r++) {
-//            rtn[r] = getMarkovJumpsForNodeAndRegister(tree, node, r);
-//        }
-//        return rtn;
-//    }
-
-    private void refresh(Tree tree) {
-        if (tree != treeModel) {
-            throw new RuntimeException("Must call with internal tree");
+    public double[][] getMarkovJumpsForNode(Tree tree, NodeRef node) {
+        double[][] rtn = new double[numRegisters][];
+        for (int r = 0; r < numRegisters; r++) {
+            rtn[r] = getMarkovJumpsForNodeAndRegister(tree, node, r);
         }
-
-        if (!likelihoodKnown) {
-            calculateLogLikelihood();
-            likelihoodKnown = true;
-        }
-        
-        if (!areStatesRedrawn) {
-            redrawAncestralStates();
-        }
+        return rtn;
     }
 
     public double[][] getMarkovJumpsForRegister(Tree tree, int whichRegister) {
-        refresh(tree);
+        if (tree != treeModel) {
+            throw new RuntimeException("Must call with internal tree");
+        }
+        if (!areStatesRedrawn) {
+            redrawAncestralStates();
+        }
         return expectedJumps.get(whichRegister);
-    }
-
-    public String getHistoryForNode(Tree tree, NodeRef node, int site) {
-        return getHistory(tree)[node.getNumber()][site];
-    }
-
-    public String[][] getHistory(Tree tree) {
-        refresh(tree);
-        return histories;
     }
 
 //    private static String formattedValue(double[] values) {
@@ -293,29 +191,17 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
 
         final double branchRate = branchRateModel.getBranchRate(tree, childNode);
-        final double parentTime = tree.getNodeHeight(parentNode);
-        final double childTime = tree.getNodeHeight(childNode);
-        final double substTime = parentTime - childTime;
+        final double substTime = (tree.getNodeHeight(parentNode) - tree.getNodeHeight(childNode));
 
         for (int r = 0; r < markovjumps.size(); r++) {
             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
-
-            final int modelNumberFromrRegistry = branchModelNumber.get(r);
-            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode);
-
-            if (modelNumberFromrRegistry == modelNumberFromTree) {
-                if (useUniformization) {
-                    computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
-                            branchRate, childNum, parentStates, childStates, parentTime, childTime,probabilities, scaleByTime[r],
-                            expectedJumps.get(r), rateCategory, r == historyRegisterNumber);
-                } else {
-                    computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
-                            childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r), rateCategory);
-                }
+            if (useUniformization) {
+                computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
+                        branchRate, childNum, parentStates, childStates, probabilities, scaleByTime[r],
+                        expectedJumps.get(r), rateCategory);
             } else {
-                // Fill with zeros
-                double[] result = expectedJumps.get(r)[childNum];
-                Arrays.fill(result, 0.0);
+                computeIntegratedMarkovJumpsForBranch(thisMarkovJumps, substTime, branchRate, childNum, parentStates,
+                        childStates, probabilities, condJumps, scaleByTime[r], expectedJumps.get(r), rateCategory);
             }
         }
     }
@@ -326,13 +212,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                                     int childNum,
                                                     int[] parentStates,
                                                     int[] childStates,
-                                                    double parentTime,
-                                                    double childTime,
                                                     double[] probabilities,
                                                     boolean scaleByTime,
                                                     double[][] thisExpectedJumps,
-                                                    int[] rateCategory,
-                                                    boolean saveHistory) {
+                                                    int[] rateCategory) {
 
 
         // Fill condJumps with sampled values for this branch for each site
@@ -350,9 +233,6 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 value /= branchRate * categoryRate;
             }
             thisExpectedJumps[childNum][j] = value;
-            if (saveHistory) {
-                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(parentTime, childTime);
-            }
         }
     }
 
@@ -532,22 +412,15 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
     }
 
-    public static final String HISTORY = "history";
-    public static final String TOTAL_COUNTS = "allTransitions";
-
     private List<MarkovJumpsSubstitutionModel> markovjumps;
-    private List<Integer> branchModelNumber;
     private List<Parameter> registerParameter;
     private List<String> jumpTag;
     private List<double[][]> expectedJumps;
-//    private List<double[][]> storedExpectedJumps;
-    private boolean logHistory = false;
-    private String[][] histories = null;
+    private List<double[][]> storedExpectedJumps;
     private boolean[] scaleByTime;
     private double[] tmpProbabilities;
     private double[][] condJumps;
     private int numRegisters;
-    private int historyRegisterNumber = -1;
     private final boolean useUniformization;
     private final int nSimulants;
     private final boolean reportUnconditionedColumns;

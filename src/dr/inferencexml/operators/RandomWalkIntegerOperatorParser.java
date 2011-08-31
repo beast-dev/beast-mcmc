@@ -1,7 +1,6 @@
 package dr.inferencexml.operators;
 
 import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.RandomWalkIntegerOperator;
 import dr.xml.*;
@@ -10,13 +9,13 @@ import dr.xml.*;
  */
 public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
 
-    public static final String RANDOM_WALK_INTEGER_OPERATOR = "randomWalkIntegerOperator";
+    public static final String RANDOM_WALK_INT_OP = "randomWalkIntegerOperator";
 
     public static final String WINDOW_SIZE = "windowSize";
     public static final String UPDATE_INDEX = "updateIndex";
 
     public String getParserName() {
-        return RANDOM_WALK_INTEGER_OPERATOR;
+        return RANDOM_WALK_INT_OP;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -25,11 +24,17 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
 
         double d = xo.getDoubleAttribute(WINDOW_SIZE);
         if (d != Math.floor(d)) {
-            throw new XMLParseException("The window size of a " + RANDOM_WALK_INTEGER_OPERATOR + " should be an integer");
+            throw new XMLParseException("The window size of a " + RANDOM_WALK_INT_OP + " should be an integer");
         }
 
         int windowSize = (int)d;
-        Variable parameter = (Variable) xo.getChild(Variable.class);
+        Parameter parameter = (Parameter) xo.getChild(Parameter.class);
+
+        if (xo.hasChildNamed(UPDATE_INDEX)) {
+            XMLObject cxo = xo.getChild(UPDATE_INDEX);
+            Parameter updateIndex = (Parameter) cxo.getChild(Parameter.class);
+            return new RandomWalkIntegerOperator(parameter, updateIndex, windowSize, weight);
+        }
 
         return new RandomWalkIntegerOperator(parameter, windowSize, weight);
     }
@@ -53,7 +58,7 @@ public class RandomWalkIntegerOperatorParser extends AbstractXMLObjectParser {
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newDoubleRule(WINDOW_SIZE),
             AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-            new ElementRule(Variable.class)
+            new ElementRule(Parameter.class)
     };
 
 }

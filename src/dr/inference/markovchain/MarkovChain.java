@@ -300,16 +300,18 @@ public final class MarkovChain {
 
                 if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
 
-                    final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
-
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"
                             + "Likelihood before: " + oldScore
                             + " Likelihood after: " + testScore
                             + "\n" + "Operator: " + mcmcOperator
-                            + " " + mcmcOperator.getOperatorName()
-                            + ( d1.length() > 0 ? "\n\nDetails\nBefore: " + d1 + "\nAfter: " + d2 : "")
-                    );
+                            + " " + mcmcOperator.getOperatorName());
+                    if( d1.length() > 0 ) {
+                        logger.severe(d1);
+                        final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
+                        logger.severe(d1);
+                        logger.severe(d2);
+                    }
                     fullEvaluationError = true;
                 }
             }

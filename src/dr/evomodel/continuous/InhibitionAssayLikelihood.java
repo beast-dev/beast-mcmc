@@ -486,7 +486,7 @@ Parameter precision) {
         private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 //			Parameter found = null;
 //			System.err.println("LOOKING FOR: "+name);
-            for (int i = 0; i < traits.getParameterCount(); i++) {
+            for (int i = 0; i < traits.getNumberOfParameters(); i++) {
                 Parameter found = traits.getParameter(i);
 //				System.err.println("COMPARE TO: "+found.getStatisticName());
                 if (found.getStatisticName().compareTo(name) == 0)

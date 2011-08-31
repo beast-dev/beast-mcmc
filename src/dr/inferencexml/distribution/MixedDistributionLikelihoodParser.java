@@ -3,7 +3,10 @@ package dr.inferencexml.distribution;
 import dr.inference.distribution.MixedDistributionLikelihood;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Statistic;
-import dr.xml.*;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLSyntaxRule;
 
 /**
  * Reads a distribution likelihood from a DOM Document element.
@@ -20,7 +23,7 @@ public class MixedDistributionLikelihoodParser extends AbstractXMLObjectParser {
         return DISTRIBUTION_LIKELIHOOD;
     }
 
-    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+    public Object parseXMLObject(XMLObject xo) {
 
         XMLObject cxo0 = xo.getChild(DISTRIBUTION0);
         ParametricDistributionModel model0 = (ParametricDistributionModel) cxo0.getChild(ParametricDistributionModel.class);
@@ -32,11 +35,8 @@ public class MixedDistributionLikelihoodParser extends AbstractXMLObjectParser {
         Statistic indicators = (Statistic) ((XMLObject) xo.getChild(INDICATORS)).getChild(Statistic.class);
 
         ParametricDistributionModel[] models = {model0, model1};
-        try {
-          return new MixedDistributionLikelihood(models, data, indicators);
-        } catch( Exception e) {
-            throw new XMLParseException(e.getMessage());
-        }
+
+        return new MixedDistributionLikelihood(models, data, indicators);
     }
 
     //************************************************************************

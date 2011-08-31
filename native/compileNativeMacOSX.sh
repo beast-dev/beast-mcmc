@@ -3,13 +3,13 @@
 
 
 # This now creates a 'fat' dylib which runs on intel & PPC macs:
-cc -c -arch ppc -O3 -fast -funroll-loops -I/Library/Java/Home/include -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -o NucleotideLikelihoodCore.PPC.o NucleotideLikelihoodCore.c
+cc -c -arch ppc -O3 -fast -funroll-loops -I/Library/Java/Home/include -o NucleotideLikelihoodCore.PPC.o NucleotideLikelihoodCore.c
 cc -o libNucleotideLikelihoodCore.PPC.jnilib -framework JavaVM -arch ppc -dynamiclib NucleotideLikelihoodCore.PPC.o
 
-cc -c -arch i386 -O3 -fast -funroll-loops -I/Library/Java/Home/include -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -o NucleotideLikelihoodCore.i386.o NucleotideLikelihoodCore.c
+cc -c -arch i386 -O3 -fast -funroll-loops -I/Library/Java/Home/include -o NucleotideLikelihoodCore.i386.o NucleotideLikelihoodCore.c
 cc -o libNucleotideLikelihoodCore.i386.jnilib -framework JavaVM -arch i386 -dynamiclib NucleotideLikelihoodCore.i386.o
 
-cc -c -arch x86_64 -O3 -fast -funroll-loops -I/Library/Java/Home/include -I/System/Library/Frameworks/JavaVM.framework/Versions/Current/Headers -o NucleotideLikelihoodCore.x86_64.o NucleotideLikelihoodCore.c
+cc -c -arch x86_64 -O3 -fast -funroll-loops -I/Library/Java/Home/include -o NucleotideLikelihoodCore.x86_64.o NucleotideLikelihoodCore.c
 cc -o libNucleotideLikelihoodCore.x86_64.jnilib -framework JavaVM -arch x86_64 -dynamiclib NucleotideLikelihoodCore.x86_64.o
 
 lipo -create libNucleotideLikelihoodCore.PPC.jnilib libNucleotideLikelihoodCore.i386.jnilib libNucleotideLikelihoodCore.x86_64.jnilib -output libNucleotideLikelihoodCore.jnilib

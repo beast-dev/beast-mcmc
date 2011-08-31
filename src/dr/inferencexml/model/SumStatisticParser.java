@@ -64,7 +64,6 @@ public class SumStatisticParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newBooleanRule(ELEMENTWISE, true),
-            AttributeRule.newStringRule(Statistic.NAME, true),
             new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
     };
 }

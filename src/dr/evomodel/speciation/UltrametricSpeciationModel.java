@@ -62,14 +62,6 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      */
     public abstract double logNodeProbability(Tree tree, NodeRef node);
 
-    public boolean analyticalMarginalOK() {
-       return false;
-    }
-
-    public double getMarginal(Tree tree, CalibrationPoints calibration) {
-       return calibration.getCorrection(tree, -1);
-    }
-
     /**
      * @return true if calls to logNodeProbability for terminal nodes (tips) are required
      */
@@ -121,7 +113,6 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
      * a list of taxa to exclude
      *
      * @param tree    the tree
-     * @param node
      * @param exclude a list of taxa to exclude
      * @param lnL     a reference to the lnL sum
      * @return the number of included daughter nodes
@@ -154,13 +145,5 @@ public abstract class UltrametricSpeciationModel extends SpeciationModel impleme
             // if at least one of the children has included tips then return 1 otherwise 0
             return count > 0 ? 1 : 0;
         }
-    }
-
-    @Override
-    public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
-        double logL = calculateTreeLogLikelihood(tree);
-        double mar = getMarginal(tree, calibration);
-        logL += mar;
-        return logL;
     }
 }

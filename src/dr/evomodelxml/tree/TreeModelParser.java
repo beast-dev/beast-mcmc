@@ -224,8 +224,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
             }
         }
 
-        // AR this is doubling up the number of bounds on each node.
-//        treeModel.setupHeightBounds();
+        treeModel.setupHeightBounds();
         //System.err.println("done constructing treeModel");
 
         Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));

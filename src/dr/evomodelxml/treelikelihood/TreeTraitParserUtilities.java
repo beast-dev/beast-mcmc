@@ -7,7 +7,10 @@ import dr.inference.model.ParameterParser;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 /**
@@ -62,7 +65,7 @@ public class TreeTraitParserUtilities {
                       Parameter traits = (Parameter) cxo.getChild(Parameter.class);
                       double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
                       boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
-                      jitter(traits, length, missingIndices, window, duplicates, true);
+                      jitter(traits, length, missingIndices, window, duplicates, true);                   
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {
@@ -186,7 +189,7 @@ public class TreeTraitParserUtilities {
     public TraitsAndMissingIndices parseTraitsFromTaxonAttributes(
             XMLObject xo,
             String inTraitName,
-            TreeModel treeModel,
+            TreeModel treeModel,           
             boolean integrateOutInternalStates) throws XMLParseException {
 
         XMLObject xoc = xo.getChild(TRAIT_PARAMETER);
@@ -213,22 +216,19 @@ public class TreeTraitParserUtilities {
 
         if (xo.hasAttribute(TRAIT_NAME)) {
 
-            Map<Integer, Integer> randomSample = null;
+            List<Integer> randomSample = null;
             traitName = xo.getStringAttribute(TRAIT_NAME);
 
             // Fill in attributeValues
             int taxonCount = treeModel.getTaxonCount();
             for (int i = 0; i < taxonCount; i++) {
                 String taxonName = treeModel.getTaxonId(i);
-
-                // changed to just label the rows by the taxonName so it can be picked up elsewhere
-                String paramName = taxonName;
-                String altParamName = taxonName + "." + traitName;
+                String paramName = taxonName + "." + traitName;
 
                 String object = (String) treeModel.getTaxonAttribute(i, traitName);
-                if (object == null) {
+                if (object == null)
                     throw new RuntimeException("Trait \"" + traitName + "\" not found for taxa \"" + taxonName + "\"");
-                } else {
+                else {
                     StringTokenizer st = new StringTokenizer(object);
                     int count = st.countTokens();
 
@@ -236,11 +236,7 @@ public class TreeTraitParserUtilities {
                     if (existingTraitParameter) {
                         traitParam = getTraitParameterByName(traitParameter, paramName);
                         if (traitParam == null) {
-                            // try the alternative param name
-                            traitParam = getTraitParameterByName(traitParameter, altParamName);
-                            if (traitParam == null) {
-                                throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
-                            }
+                            throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
                         }
                     } else {
                         // Make multidimensional, in earlier revisions only first dimension was stored
@@ -258,8 +254,7 @@ public class TreeTraitParserUtilities {
                     }
                     if (sampleSize != traitParam.getDimension()) {
                         if (existingTraitParameter) {
-                            throw new RuntimeException("Trait length must match trait parameter dimension: " +
-                            sampleSize + " != " + traitParam.getDimension());
+                            throw new RuntimeException("Trait length must match trait parameter dimension");
                         } else {
                             traitParam.setDimension(sampleSize);
                         }
@@ -267,9 +262,9 @@ public class TreeTraitParserUtilities {
                     int index = 0;
                     for (int j = 0; j < count; j++) {
                         String oneValue = st.nextToken();
-                        if (randomSampleSizeFlag == -1 || randomSample.containsKey(j)) {
+                        if (randomSampleSizeFlag == -1 || randomSample.contains(j)) {
                             double value = Double.NaN;
-                            if (oneValue.equals("NA") || oneValue.equals("?") ) {
+                            if (oneValue.compareTo("NA") == 0) {
                                 Logger.getLogger("dr.evomodel.continuous").info(
                                         "Warning: Missing value in tip for taxon " + taxonName +
                                                 " (filling with 0 as starting value when sampling only)"   // See comment below
@@ -277,25 +272,12 @@ public class TreeTraitParserUtilities {
                             } else {
                                 try {
                                     value = new Double(oneValue);
-                                    if (Double.isNaN(value)) {
-                                        Logger.getLogger("dr.evomodel.continuous").info(
-                                                "Warning: Unrecognizable number " + oneValue + " for taxon " + taxonName
-                                        );
-                                    }
                                 } catch (NumberFormatException e) {
                                     throw new RuntimeException(e.getMessage());
                                 }
                             }
-
-                            int replicates = 1;
-                            if (randomSampleSizeFlag != -1) {
-                                // Count how many times to add this datum
-                                replicates = randomSample.get(j);
-                            }
-                            for (int k = 0; k < replicates; k++) {
-                                traitParam.setParameterValue(index, value);
-                                index++;
-                            }
+                            traitParam.setParameterValue(index, value);
+                            index++;
                         }
                     }
                 }
@@ -323,7 +305,7 @@ public class TreeTraitParserUtilities {
 
             // Give warnings if trait exist for internal and root nodes when integrating them out
             if (integrateOutInternalStates) {
-                int numTraits = traitParameter.getParameterCount();
+                int numTraits = traitParameter.getNumberOfParameters();
                 if (numTraits != treeModel.getExternalNodeCount()) {
                     throw new XMLParseException(
                             "Dimensionality of '" + traitParameter.getId() + "' (" + numTraits + ") is not equal to the number" +
@@ -345,7 +327,7 @@ public class TreeTraitParserUtilities {
 
     private Parameter getTraitParameterByName(CompoundParameter traits, String name) {
 
-        for (int i = 0; i < traits.getParameterCount(); i++) {
+        for (int i = 0; i < traits.getNumberOfParameters(); i++) {
             Parameter found = traits.getParameter(i);
             if (found.getStatisticName().compareTo(name) == 0)
                 return found;
@@ -353,16 +335,11 @@ public class TreeTraitParserUtilities {
         return null;
     }
 
-    private Map<Integer, Integer> drawRandomSample(int total, int length) {
-        Map<Integer, Integer> thisMap = new HashMap<Integer, Integer>(total);
+    private List<Integer> drawRandomSample(int total, int length) {
+        List<Integer> thisList = new ArrayList<Integer>(total);
         for (int i = 0; i < total; i++) {
-            int item = MathUtils.nextInt(length);
-            if (thisMap.containsKey(item)) {
-                thisMap.put(item, thisMap.get(item) + 1);
-            } else {
-                thisMap.put(item, 1);
-            }
+            thisList.add(MathUtils.nextInt(length));
         }
-        return thisMap;
+        return thisList;
     }
 }

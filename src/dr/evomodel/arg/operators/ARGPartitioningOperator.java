@@ -46,7 +46,7 @@ public class ARGPartitioningOperator extends SimpleMCMCOperator {
     public final double doOperation() throws OperatorFailedException {
         double logq = 0;
 
-        final int len = partitioningParameters.getParameterCount();
+        final int len = partitioningParameters.getNumberOfParameters();
 
         if (len == 0) {
             return 0;

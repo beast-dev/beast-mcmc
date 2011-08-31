@@ -25,7 +25,6 @@
 
 package dr.app.beauti.treespanel;
 
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import jam.panels.OptionsPanel;
@@ -82,7 +81,7 @@ public class GenerateTreeDialog {
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
         partitionCombo.removeAllItems();
-        for (AbstractPartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             partitionCombo.addItem(partition);
         }
         final JDialog dialog = optionPane.createDialog(frame, "Construct New Tree");

@@ -6,6 +6,9 @@ import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
+import java.awt.*;
+import java.awt.geom.GeneralPath;
+
 /**
  * @author Marc A. Suchard
  * @author Andrew Rambaut
@@ -13,11 +16,11 @@ import dr.util.FrequencyDistribution;
  */
 public class KernelDensityEstimate extends DensityEstimate {
 
-    public KernelDensityEstimate(Double[] samples, int minimumBinCount) {
+    public KernelDensityEstimate(double[] samples, int minimumBinCount) {
         this(KernelDensityEstimatorDistribution.Type.GAUSSIAN, samples, minimumBinCount);
     }
 
-    public KernelDensityEstimate(KernelDensityEstimatorDistribution.Type type, Double[] samples, int minimumBinCount) {
+    public KernelDensityEstimate(KernelDensityEstimatorDistribution.Type type, double[] samples, int minimumBinCount) {
         super(samples, minimumBinCount);
         
         switch (type) {
@@ -32,8 +35,8 @@ public class KernelDensityEstimate extends DensityEstimate {
 
         FrequencyDistribution frequency = calculateFrequencies(data, minimumBinCount);
 
-        xCoordinates = new Variate.D();
-        yCoordinates = new Variate.D();
+        xCoordinates = new Variate.Double();
+        yCoordinates = new Variate.Double();
 
         double x = frequency.getLowerBound() - (frequency.getBinSize() / 2.0);
         int extraEdgeCount = 0;

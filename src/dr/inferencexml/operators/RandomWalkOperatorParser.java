@@ -77,10 +77,6 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
-                new ElementRule(UPDATE_INDEX,
-                        new XMLSyntaxRule[] {
-                                new ElementRule(Parameter.class),
-                        },true),
                 new StringAttributeRule(BOUNDARY_CONDITION, null, RandomWalkOperator.BoundaryCondition.values(), true),
                 new ElementRule(Parameter.class)
         };

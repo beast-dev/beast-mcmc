@@ -65,16 +65,11 @@
                 <parameter id="xx" value="10" lower="0.0" upper="100.0"/>
             </scaleOperator>
         </operators>
-
         <log logEvery="1000">
             <column label="Posterior" dp="4" width="12">
                 <posterior idref="posterior"/>
             </column>
         </log>
     </mcmc>
-
-    <report>
-        <treeModel idref="treeModel"/>
-    </report>
 
 </beast>

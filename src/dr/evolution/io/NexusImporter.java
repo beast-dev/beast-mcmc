@@ -329,8 +329,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 NexusImporter.NexusBlock block = findNextBlock();
 
-                if (block == NexusImporter.TAXA_BLOCK && taxonList[0] == null) {
-                    // only read the taxon list if one hasn't been set already...
+                if (block == NexusImporter.TAXA_BLOCK) {
+
                     taxonList[0] = readTaxaBlock();
 
                 } else if (block == NexusImporter.TREES_BLOCK) {
@@ -700,7 +700,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
         int duplicateTaxon = TaxonList.Utils.findDuplicateTaxon(taxa);
         if (duplicateTaxon >= 0)
-            throw new IllegalArgumentException("Tree contains duplicate taxon name: " + taxa.getTaxon(duplicateTaxon).getId() +
+            throw new IllegalArgumentException("Find duplicate taxon name: " + taxa.getTaxon(duplicateTaxon).getId() +
                       "!\nAll taxon names should be unique.");
 
         return taxa;

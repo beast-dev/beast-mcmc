@@ -8,10 +8,8 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
+import dr.app.beauti.clockModelsPanel.ClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.dnds.DnDsComponentFactory;
-import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
@@ -26,13 +24,15 @@ import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
-import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
+import dr.app.beauti.taxonsetspanel.TaxaPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
+import dr.app.beauti.treespanel.OldTreesPanel;
 import dr.app.beauti.treespanel.TreesPanel;
 import dr.app.beauti.util.BEAUTiImporter;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.FileDrop;
+import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
@@ -45,7 +45,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -73,9 +72,11 @@ public class BeautiFrame extends DocumentFrame {
     private DataPanel dataPanel;
     private TipDatesPanel tipDatesPanel;
     private TraitsPanel traitsPanel;
-    private TaxonSetPanel taxonSetPanel;
+    private TaxaPanel taxaPanel;
     private SiteModelsPanel siteModelsPanel;
-    private OldClockModelsPanel clockModelsPanel;
+    private ClockModelsPanel clockModelsPanel;
+    private OldTreesPanel oldTreesPanel;
+//    private SpeciesTreesPanel speciesTreesPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
     private OperatorsPanel operatorsPanel;
@@ -107,22 +108,18 @@ public class BeautiFrame extends DocumentFrame {
         ComponentFactory[] components = {
                 SequenceErrorModelComponentFactory.INSTANCE,
                 TipDateSamplingComponentFactory.INSTANCE,
-                HierarchicalModelComponentFactory.INSTANCE,
-                DnDsComponentFactory.INSTANCE,
 //                DiscreteTraitsComponentFactory.INSTANCE
         };
 
         options = new BeautiOptions(components);
         generator = new BeastGenerator(options, components);
 
-        this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener() {
-            public void ancestorMoved(HierarchyEvent e) {
-            }
-
-            public void ancestorResized(HierarchyEvent e) {
-                setStatusMessage();
-            }
-        });
+        this.getContentPane().addHierarchyBoundsListener(new HierarchyBoundsListener(){
+			public void ancestorMoved(HierarchyEvent e) {}
+			public void ancestorResized(HierarchyEvent e) {
+				setStatusMessage();
+			}
+		});
     }
 
     public void initializeComponents() {
@@ -130,9 +127,9 @@ public class BeautiFrame extends DocumentFrame {
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, getImportTraitsAction());
-        taxonSetPanel = new TaxonSetPanel(this);
+        taxaPanel = new TaxaPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
-        clockModelsPanel = new OldClockModelsPanel(this);
+        clockModelsPanel = new ClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
 //        speciesTreesPanel = new SpeciesTreesPanel(this);
@@ -141,7 +138,7 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel = new MCMCPanel(this);
 
         tabbedPane.addTab("Data Partitions", dataPanel);
-        tabbedPane.addTab("Taxon Sets", taxonSetPanel);
+        tabbedPane.addTab("Taxon Sets", taxaPanel);
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
@@ -182,6 +179,15 @@ public class BeautiFrame extends DocumentFrame {
         basePanel.add(tabbedPane, BorderLayout.CENTER);
         basePanel.add(panel2, BorderLayout.SOUTH);
 
+//        if (OSType.isMac()) {
+//            getContentPane().add(panel, BorderLayout.CENTER);
+////            setMinimumSize(new java.awt.Dimension(800, 600));
+//        } else {
+////            JScrollPane scrollPane = new JScrollPane(panel);
+////            getContentPane().add(scrollPane, BorderLayout.CENTER);
+//            getContentPane().add(panel, BorderLayout.CENTER);
+//        }
+
         add(basePanel, BorderLayout.CENTER);
 
         Toolkit tk = Toolkit.getDefaultToolkit();
@@ -215,8 +221,6 @@ public class BeautiFrame extends DocumentFrame {
 
         importChooser.setMultiSelectionEnabled(true);
         importChooser.setFileFilter(new FileNameExtensionFilter(
-                        "Microsatellite (tab-delimited *.txt) Files", "txt"));
-        importChooser.setFileFilter(new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
         importChooser.setDialogTitle("Import Aligment...");
 
@@ -230,6 +234,7 @@ public class BeautiFrame extends DocumentFrame {
         }); // end FileDrop.Listener
 
 
+
     }
 
     /**
@@ -240,7 +245,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.setOptions(options);
             tipDatesPanel.setOptions(options);
             traitsPanel.setOptions(options);
-            taxonSetPanel.setOptions(options);
+            taxaPanel.setOptions(options);
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
@@ -251,7 +256,8 @@ public class BeautiFrame extends DocumentFrame {
             setStatusMessage();
         } catch (IllegalArgumentException illegEx) {
             JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-                    "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+                    "Illegal Argument Exception",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -259,21 +265,16 @@ public class BeautiFrame extends DocumentFrame {
      * get all the options for all panels
      */
     private void getAllOptions() {
-        try {
-            dataPanel.getOptions(options);
-            tipDatesPanel.getOptions(options);
-            traitsPanel.getOptions(options);
-            taxonSetPanel.getOptions(options);
-            siteModelsPanel.getOptions(options);
-            clockModelsPanel.getOptions(options);
-            treesPanel.getOptions(options);
-            priorsPanel.getOptions(options);
-            operatorsPanel.getOptions(options);
-            mcmcPanel.getOptions(options);
-        } catch (IllegalArgumentException illegEx) {
-            JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-                    "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-        }
+        dataPanel.getOptions(options);
+        tipDatesPanel.getOptions(options);
+        traitsPanel.getOptions(options);
+        taxaPanel.getOptions(options);
+        siteModelsPanel.getOptions(options);
+        clockModelsPanel.getOptions(options);
+        treesPanel.getOptions(options);
+        priorsPanel.getOptions(options);
+        operatorsPanel.getOptions(options);
+        mcmcPanel.getOptions(options);
     }
 
     public void doSelectAll() {
@@ -315,7 +316,7 @@ public class BeautiFrame extends DocumentFrame {
                     JOptionPane.WARNING_MESSAGE);
 
             if (option == JOptionPane.YES_OPTION) {
-                return doGenerate();
+                return !doGenerate();
             } else if (option == JOptionPane.CANCEL_OPTION || option == JOptionPane.DEFAULT_OPTION) {
                 return false;
             }
@@ -399,10 +400,6 @@ public class BeautiFrame extends DocumentFrame {
                     ime.printStackTrace();
                     // there may be other files in the list so don't return
 //                    return;
-                } catch (IllegalArgumentException illegEx) {
-                    JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-                            "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-
                 } catch (Exception ex) {
                     JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
                             "Error reading file",
@@ -425,6 +422,22 @@ public class BeautiFrame extends DocumentFrame {
 ////        getOpenAction().setEnabled(true);
 ////        getSaveAction().setEnabled(true);
         getExportAction().setEnabled(true);
+    }
+
+//    public int allowDifferentTaxaJOptionPane() {
+//        // AR - Yes and No are perfectly good answers to this question
+//        return JOptionPane.showOptionDialog(this, "This file contains different taxa from the previously loaded\n"
+//                + "data partitions. This may be because the taxa are mislabelled\n" + "and need correcting before reloading.\n\n"
+//                + "Would you like to allow different taxa for each partition?\n", "Validation of Non-matching Taxon Name(s)",
+//                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new String[]{"Yes", "No"}, "No");
+//    }
+
+    public boolean createImportTraits() {
+        return traitsPanel.addTrait();
+    }
+
+    public boolean createImportTraits(String traitName) {
+        return traitsPanel.addTrait(traitName);
     }
 
     public final boolean doImportTraits() {
@@ -491,7 +504,7 @@ public class BeautiFrame extends DocumentFrame {
         }
 
         // check that the trait name doesn't exist
-        if (options.traitExists(traitName)) {
+        if (options.containTrait(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,
                     "A trait of this name already exists. Do you wish to replace\n" +
                             "it with this new trait? This may result in the loss or change\n" +
@@ -511,21 +524,24 @@ public class BeautiFrame extends DocumentFrame {
     public void setupStarBEAST(boolean useStarBEAST) {
         if (useStarBEAST) {
             dataPanel.selectAll();
+
             dataPanel.unlinkAll();
+
+//        if (options.getPartitionClockModels().size() > 1) {
+//        	dataPanel.linkClocks();
+//        }
+
+//            treesPanel.updatePriorPanelForSpeciesAnalysis();
 
             options.starBEASTOptions = new STARBEASTOptions(options);
             options.fileNameStem = "StarBEASTLog";
 
-            if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                if (!traitsPanel.addTrait(TraitData.TRAIT_SPECIES)) {
-                    dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
-                    useStarBEAST = false;
-                }
-
-                // why delete this? The user may want to use it again
-//        } else { // remove species
-//            options.removeTrait(TraitData.TRAIT_SPECIES);
+            if (!createImportTraits(TraitData.TRAIT_SPECIES)) {
+                dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
+                useStarBEAST = false;
             }
+        } else { // remove species
+            options.removeTrait(TraitData.TRAIT_SPECIES);
         }
 
         options.useStarBEAST = useStarBEAST;
@@ -549,6 +565,11 @@ public class BeautiFrame extends DocumentFrame {
 
     public PartitionTreePrior getCurrentPartitionTreePrior() {
         return treesPanel.currentTreeModel.getPartitionTreePrior();
+    }
+
+    public void removeSpecifiedTreePrior(boolean isChecked) { // TipDatesPanel usingTipDates
+        //TODO: wait for new implementation in BEAST
+        treesPanel.setCheckedTipDate(isChecked);
     }
 
     public void setStatusMessage() {

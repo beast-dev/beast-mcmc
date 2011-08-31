@@ -7,21 +7,15 @@ import dr.math.UnivariateFunction;
  */
 public abstract class KernelDensityEstimatorDistribution implements Distribution {
 
-    public KernelDensityEstimatorDistribution(Double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
-
-        this.sample = new double[sample.length];
-        for (int i = 0; i < sample.length; i++) {
-            this.sample[i] = sample[i];
-        }
+    public KernelDensityEstimatorDistribution(double[] sample, Double lowerBound, Double upperBound, Double bandWidth) {
+        this.sample = sample;
         this.N = sample.length;
         processBounds(lowerBound, upperBound);
         setBandWidth(bandWidth);
     }
 
     abstract protected double evaluateKernel(double x);
-
     abstract protected void processBounds(Double lowerBound, Double upperBound);
-
     abstract protected void setBandWidth(Double bandWidth);
 
     /**
@@ -61,7 +55,7 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
      * @return icdf value
      */
     public double quantile(double y) {
-        throw new RuntimeException("Not Implemented.");
+       throw new RuntimeException("Not Implemented.");
     }
 
     /**
@@ -113,7 +107,6 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
             }
             return null;
         }
-
         private final String text;
     }
 

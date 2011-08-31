@@ -1,30 +1,21 @@
 package dr.app.seqgen;
 
-import dr.evolution.io.Importer;
-import dr.evolution.io.NexusImporter;
-import dr.evolution.io.TreeImporter;
-import dr.evolution.tree.NodeRef;
+import dr.evolution.io.*;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.NodeRef;
+import dr.evomodel.substmodel.*;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.HKY;
-import dr.evomodel.substmodel.SubstitutionModel;
+
+import java.io.*;
+import java.util.*;
+
+import jebl.evolution.io.NexusExporter;
 import jebl.evolution.alignments.Alignment;
 import jebl.evolution.alignments.BasicAlignment;
-import jebl.evolution.io.NexusExporter;
 import jebl.evolution.sequences.*;
 import jebl.evolution.taxa.Taxon;
 import jebl.math.Random;
-
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -62,17 +53,16 @@ public class SeqGen {
         }
 
         Map<State, State[]> damageMap = new HashMap<State, State[]>();
-        damageMap.put(Nucleotides.A_STATE, new State[]{Nucleotides.G_STATE});
-        damageMap.put(Nucleotides.C_STATE, new State[]{Nucleotides.T_STATE});
-        damageMap.put(Nucleotides.G_STATE, new State[]{Nucleotides.A_STATE});
-        damageMap.put(Nucleotides.T_STATE, new State[]{Nucleotides.C_STATE});
+        damageMap.put(Nucleotides.A_STATE, new State[] {Nucleotides.G_STATE});
+        damageMap.put(Nucleotides.C_STATE, new State[] {Nucleotides.T_STATE});
+        damageMap.put(Nucleotides.G_STATE, new State[] {Nucleotides.A_STATE});
+        damageMap.put(Nucleotides.T_STATE, new State[] {Nucleotides.C_STATE});
 
         BasicAlignment alignment = new BasicAlignment();
-
         List<NucleotideState> nucs = jebl.evolution.sequences.Nucleotides.getCanonicalStates();
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
-            int[] seq = (int[]) tree.getNodeTaxon(node).getAttribute("seq");
+            int[] seq = (int[])tree.getNodeTaxon(node).getAttribute("seq");
             State[] states = new State[seq.length];
             for (int j = 0; j < states.length; j++) {
                 states[j] = nucs.get(seq[j]);
@@ -91,7 +81,7 @@ public class SeqGen {
         return alignment;
     }
 
-    void drawSiteCategories(SiteModel siteModel, int[] siteCategories) {
+    private void drawSiteCategories(SiteModel siteModel, int[] siteCategories) {
         double[] categoryProportions = siteModel.getCategoryProportions();
         double[] cumulativeProportions = new double[categoryProportions.length];
         cumulativeProportions[0] = categoryProportions[0];
@@ -104,18 +94,18 @@ public class SeqGen {
         }
     }
 
-    public void drawSequence(int[] initialSequence, FrequencyModel freqModel) {
+    private void drawSequence(int[] initialSequence, FrequencyModel freqModel) {
         double[] freqs = freqModel.getCumulativeFrequencies();
         for (int i = 0; i < initialSequence.length; i++) {
             initialSequence[i] = draw(freqs);
         }
     }
 
-    void evolveSequences(int[] sequence0,
-                         Tree tree, NodeRef node,
-                         SubstitutionModel substModel,
-                         int[] siteCategories,
-                         double[] categoryRates) {
+    private void evolveSequences(int[] sequence0,
+                                 Tree tree, NodeRef node,
+                                 SubstitutionModel substModel,
+                                 int[] siteCategories,
+                                 double[] categoryRates) {
         int stateCount = substModel.getDataType().getStateCount();
 
         int[] sequence1 = new int[sequence0.length];
@@ -128,10 +118,10 @@ public class SeqGen {
             substModel.getTransitionProbabilities(branchLength, tmp);
 
             int l = 0;
-            for (int j = 0; j < stateCount; j++) {
+            for (int j = 0; j < stateCount; j ++) {
                 transitionProbabilities[i][j][0] = tmp[l];
                 l++;
-                for (int k = 1; k < stateCount; k++) {
+                for (int k = 1; k < stateCount; k ++) {
                     transitionProbabilities[i][j][k] = transitionProbabilities[i][j][k - 1] + tmp[l];
                     l++;
                 }
@@ -180,7 +170,6 @@ public class SeqGen {
 
     /**
      * draws a state from using a set of cumulative frequencies (last value should be 1.0)
-     *
      * @param cumulativeFrequencies
      * @return
      */
@@ -197,17 +186,17 @@ public class SeqGen {
             }
         }
 
-        assert (state != -1);
+        assert(state != -1);
 
         return state;
     }
 
-    final int length;
-    final double substitutionRate;
-    final FrequencyModel freqModel;
-    final SubstitutionModel substModel;
-    final SiteModel siteModel;
-    final double damageRate;
+    private final int length;
+    private final double substitutionRate;
+    private final FrequencyModel freqModel;
+    private final SubstitutionModel substModel;
+    private final SiteModel siteModel;
+    private final double damageRate;
 
     public static void main(String[] argv) {
 
@@ -216,7 +205,7 @@ public class SeqGen {
 
         int length = 470;
 
-        double[] frequencies = new double[]{0.25, 0.25, 0.25, 0.25};
+        double[] frequencies = new double[] { 0.25, 0.25, 0.25, 0.25 };
         double kappa = 10.0;
         double alpha = 0.5;
         double substitutionRate = 1.0E-9;
@@ -243,7 +232,7 @@ public class SeqGen {
             TreeImporter importer = new NexusImporter(reader);
 
             while (importer.hasTree()) {
-                Tree tree = importer.importNextTree();
+                Tree tree =  importer.importNextTree();
                 trees.add(tree);
             }
 
@@ -267,7 +256,7 @@ public class SeqGen {
 
             FileWriter writer = null;
             try {
-                writer = new FileWriter(outputFileStem + (i < 10 ? "00" : (i < 100 ? "0" : "")) + i + ".nex");
+                writer = new FileWriter(outputFileStem + (i < 10? "00" : (i < 100? "0" : "")) + i + ".nex");
                 NexusExporter exporter = new NexusExporter(writer);
 
                 exporter.exportAlignment(alignment);

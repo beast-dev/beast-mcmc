@@ -1,6 +1,5 @@
 package dr.app.tracer.traces;
 
-import dr.inference.trace.TraceAnalysis;
 import dr.inference.trace.TraceCorrelation;
 import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
@@ -13,6 +12,7 @@ import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.text.DecimalFormat;
 
 
 public class SummaryStatisticsPanel extends JPanel implements Exportable {
@@ -21,7 +21,6 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
     static final String MEAN_ROW = "mean";
     static final String MODE_ROW = "mode";
     static final String STDEV_ROW = "stderr of mean";
-    static final String STDEV = "stdev";
     static final String FREQ_MODE_ROW = "frequency of mode";
     static final String VARIANCE_ROW = "variance";
     //    static final String STDEV_VAR_ROW = "stderr of variance";
@@ -117,6 +116,15 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
         }
     }
 
+    public static String formattedNumber(double value) {
+        DecimalFormat formatter = new DecimalFormat("0.####E0");
+        DecimalFormat formatter2 = new DecimalFormat("####0.####");
+
+        if (value > 0 && (Math.abs(value) < 0.01 || Math.abs(value) >= 100000.0)) {
+            return formatter.format(value);
+        } else return formatter2.format(value);
+    }
+
     public void setTraces(TraceList[] traceLists, java.util.List<String> traceNames) {
 
         this.traceLists = traceLists;
@@ -179,7 +187,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
     class StatisticsModel extends AbstractTableModel {
 
-        String[] rowNames = {MEAN_ROW, STDEV_ROW, STDEV, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
+        String[] rowNames = {MEAN_ROW, STDEV_ROW, VARIANCE_ROW, MEDIAN_ROW, MODE_ROW, GEOMETRIC_MEAN_ROW,
                 LOWER_UPPER_ROW, ACT_ROW, ESS_ROW};
 
         public StatisticsModel() {
@@ -216,9 +224,9 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
             }
 
             if (col == 0) {
-                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
+                if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
                     return CRED_SET_ROW;
-//                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.DOUBLE && row == 6) {
+//                } else if (tc != null && tc.getTraceType() != TraceFactory.TraceType.CONTINUOUS && row == 6) {
 //                    return INCRED_SET_ROW;
                 } else {
                     return rowNames[row];
@@ -232,67 +240,60 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
 
                 switch (row) {
                     case 0:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                             return "n/a";
                         } else {
                             value = tc.getMean();
                         }
                         break;
                     case 1:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                             return "n/a";
                         } else {
                             value = tc.getStdErrorOfMean();
                         }
                         break;
                     case 2:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
-                            return "n/a";
-                        } else {
-                            value = tc.getStdError();
-                        }
-                        break;
-                    case 3:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                             return "n/a";
                         } else {
                             value = tc.getVariance();
                         }
                         break;
-                    case 4:
-                        if (tc.getTraceType() == TraceFactory.TraceType.STRING) {
+                    case 3:
+                        if (tc.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                             return "n/a";
                         } else {
                             value = tc.getMedian();
                         }
                         break;
-                    case 5:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                    case 4:
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
                             return "n/a";
                         } else {
-                            return tc.getMode();
+                            return tc.credSet.getMode();
                         }
-                    case 6:
+                    case 5:
                         if (!tc.hasGeometricMean()) return "n/a";
                         value = tc.getGeometricMean();
                         break;
-                    case 7:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                            return "[" + TraceAnalysis.formattedNumber(tc.getLowerHPD()) + ", " + TraceAnalysis.formattedNumber(tc.getUpperHPD()) + "]";
+                    case 6:
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
+                            return "[" + formattedNumber(tc.getLowerHPD()) + ", " + formattedNumber(tc.getUpperHPD()) + "]";
                         } else {
-                            return tc.printCredibleSet();
+                            return tc.credSet.printCredibleSet();
                         }
-                    case 8:
+                    case 7:
                         value = tc.getACT();
                         break;
-                    case 9:
+                    case 8:
                         value = tc.getESS();
                         break;
-                    case 10:
-                        if (tc.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                    case 9:
+                        if (tc.getTraceType() == TraceFactory.TraceType.CONTINUOUS) {
                             return "-";
                         } else {
-                            return tc.printInCredibleSet();
+                            return tc.credSet.printInCredibleSet();
                         }
 
                 }
@@ -300,7 +301,7 @@ public class SummaryStatisticsPanel extends JPanel implements Exportable {
                 return "-";
             }
 
-            return TraceAnalysis.formattedNumber(value);
+            return formattedNumber(value);
         }
 
         public String getColumnName(int column) {

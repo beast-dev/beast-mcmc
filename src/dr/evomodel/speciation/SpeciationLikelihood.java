@@ -60,6 +60,7 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
     }
 
     public SpeciationLikelihood(Tree tree, SpeciationModel speciationModel, String id) {
+
         this(tree, speciationModel, null, id);
     }
 
@@ -77,11 +78,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         if (speciationModel != null) {
             addModel(speciationModel);
         }
-    }
-
-    public SpeciationLikelihood(Tree tree, SpeciationModel specModel, String id, CalibrationPoints calib) {
-        this(tree, specModel, id);
-        this.calibration = calib;
     }
 
     // **************************************************************
@@ -153,10 +149,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
             return speciationModel.calculateTreeLogLikelihood(tree, exclude);
         }
 
-        if ( calibration != null ) {
-            return speciationModel.calculateTreeLogLikelihood(tree, calibration);
-        }
-
         return speciationModel.calculateTreeLogLikelihood(tree);
     }
 
@@ -221,8 +213,6 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
      */
     Tree tree = null;
     private final Set<Taxon> exclude;
-
-    private CalibrationPoints calibration;
 
     private double logLikelihood;
     private double storedLogLikelihood;

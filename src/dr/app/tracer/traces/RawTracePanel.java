@@ -3,20 +3,14 @@ package dr.app.tracer.traces;
 import dr.app.gui.chart.*;
 import dr.inference.trace.Trace;
 import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceFactory;
 import dr.inference.trace.TraceList;
 import jam.framework.Exportable;
 
-import javax.sound.sampled.AudioFormat;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.LineUnavailableException;
-import javax.sound.sampled.SourceDataLine;
+import javax.sound.sampled.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -231,13 +225,13 @@ public class RawTracePanel extends JPanel implements Exportable {
 
                                 Trace trace = tl.getTrace(traceIndex);
                                 if (trace != null) {
-                                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
+                                    if (trace.getTraceType() == Double.class) {
                                         n++;
                                     }
                                 }
                             }
                         }
-                        Double[][] valueArrays = new Double[n][];
+                        double[][] valueArrays = new double[n][];
                         int k = 0;
                         for (TraceList tl : traceLists) {
                             for (String traceName : traceNames) {
@@ -245,11 +239,13 @@ public class RawTracePanel extends JPanel implements Exportable {
 
                                 Trace trace = tl.getTrace(traceIndex);
                                 if (trace != null) {
-                                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE) {
-                                        List values = tl.getValues(traceIndex);
-                                        Double[] ar = new Double[values.size()];
-                                        values.toArray(ar);
-                                        valueArrays[k] = ar;
+                                    if (trace.getTraceType() == Double.class) {
+                                        Double values[] = new Double[tl.getStateCount()];
+                                        tl.getValues(traceIndex, values);
+                                        boolean[] selected = new boolean[tl.getStateCount()];
+                                        tl.getSelected(traceIndex, selected);
+
+                                        valueArrays[k] = Trace.arrayConvert(values, selected);
                                         k++;
                                     }
                                 }
@@ -305,34 +301,70 @@ public class RawTracePanel extends JPanel implements Exportable {
                 TraceDistribution td = tl.getDistributionStatistics(traceIndex);
 
                 if (trace != null) {
+                    boolean[] selectedBurnin = null;
                     Map<Integer, String> categoryDataMap = new HashMap<Integer, String>();
-                    List values = tl.getValues(traceIndex);
-                    List burninValues = null;
-                    if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                        burninValues = tl.getBurninValues(traceIndex);
-                    }
-                    if (trace.getTraceType() == TraceFactory.TraceType.DOUBLE || trace.getTraceType() == TraceFactory.TraceType.INTEGER) {
+                    if (trace.getTraceType() == Double.class) {
+                        Double values[] = new Double[tl.getStateCount()];
+                        tl.getValues(traceIndex, values);
+                        boolean[] selected = new boolean[tl.getStateCount()];
+                        tl.getSelected(traceIndex, selected);
 
-                        traceChart.setYAxis(trace.getTraceType() == TraceFactory.TraceType.INTEGER, new HashMap<Integer, String>());
-                        traceChart.addTrace(name, stateStart, stateStep, values, burninValues, paints[i]);
-
-                    } else if (trace.getTraceType() == TraceFactory.TraceType.STRING) {
-
-                        List<Double> doubleData = new ArrayList<Double>();
-                        for (int v = 0; v < values.size(); v++) {
-                            Integer index = td.getIndex(values.get(v).toString());
-                            doubleData.add(v, index.doubleValue());
-                            categoryDataMap.put(index, values.get(v).toString());
+                        Double[] burninValues = null;
+                        if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                            burninValues = new Double[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, burninValues);
+                            selectedBurnin = new boolean[tl.getBurninStateCount()];
+                            tl.getBurningSelected(traceIndex, selectedBurnin);
                         }
 
-                        List<Double> doubleBurninData = null;
+                        traceChart.setYAxis(false, new HashMap<Integer, String>());
+                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayConvert(values, selected),
+                                Trace.arrayConvert(burninValues, selectedBurnin), paints[i]);
+
+                    } else if (trace.getTraceType() == Integer.class) {
+                        Integer values[] = new Integer[tl.getStateCount()];
+                        tl.getValues(traceIndex, values);
+                        boolean[] selected = new boolean[tl.getStateCount()];
+                        tl.getSelected(traceIndex, selected);
+
+                        Integer[] burninValues = null;
                         if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
-                            doubleBurninData = new ArrayList<Double>();
+                            burninValues = new Integer[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, burninValues);
+                            selectedBurnin = new boolean[tl.getBurninStateCount()];
+                            tl.getBurningSelected(traceIndex, selectedBurnin);
+                        }
+
+                        traceChart.setYAxis(true, new HashMap<Integer, String>());
+                        traceChart.addTrace(name, stateStart, stateStep, Trace.arrayIntToDouble(values, selected),
+                                Trace.arrayIntToDouble(burninValues, selectedBurnin), paints[i]);
+
+                    } else if (trace.getTraceType() == String.class) {
+                        String initValues[] = new String[tl.getStateCount()];
+                        tl.getValues(traceIndex, initValues);
+                        boolean[] selected = new boolean[tl.getStateCount()];
+                        tl.getSelected(traceIndex, selected);
+                        String[] values = Trace.arrayConvert(initValues, selected);
+
+                        double[] doubleData = new double[values.length];
+                        for (int v = 0; v < values.length; v++) {
+                            doubleData[v] = td.credSet.getIndex(values[v]);
+                            categoryDataMap.put((int) doubleData[v], values[v]);
+                        }
+
+                        double[] doubleBurninData = null;
+                        if (burninCheckBox.isSelected() && tl.getBurninStateCount() > 0) {
+                            String[] initBurninValues = new String[tl.getBurninStateCount()];
+                            tl.getBurninValues(traceIndex, initBurninValues);
+                            selectedBurnin = new boolean[tl.getBurninStateCount()];
+                            tl.getBurningSelected(traceIndex, selectedBurnin);
+                            String[] burninValues = Trace.arrayConvert(initBurninValues, selectedBurnin);
+
+                            doubleBurninData = new double[burninValues.length];
                             categoryDataMap.clear();
-                            for (int v = 0; v < burninValues.size(); v++) {
-                                Integer index = td.getIndex(burninValues.get(v).toString());
-                                doubleBurninData.add(v, index.doubleValue());
-                                categoryDataMap.put(index, burninValues.get(v).toString());
+                            for (int v = 0; v < burninValues.length; v++) {
+                                doubleBurninData[v] = td.credSet.getIndex(burninValues[v]);
+                                categoryDataMap.put((int) doubleBurninData[v], burninValues[v]);
                             }
                         }
 
@@ -375,7 +407,7 @@ public class RawTracePanel extends JPanel implements Exportable {
         return chartPanel;
     }
 
-    public void toAudio(Double[][] values) {
+    public void toAudio(double[][] values) {
         int volume = 128;
 
         int count = values[0].length;
@@ -385,10 +417,10 @@ public class RawTracePanel extends JPanel implements Exportable {
         byte[] buf;
         AudioFormat af;
 
-        int repeats = (int) (audioLength * frequency / count);
+        int repeats = (int)(audioLength * frequency / count);
 
         buf = new byte[values.length];
-        af = new AudioFormat(frequency, 8, values.length, true, false);
+        af = new AudioFormat(frequency,8,values.length,true,false);
 
         double[] minValues = new double[values.length];
         double[] ranges = new double[values.length];
@@ -397,7 +429,7 @@ public class RawTracePanel extends JPanel implements Exportable {
             double maxValue = -Double.MAX_VALUE;
             double minValue = Double.MAX_VALUE;
 
-            for (int i = 0; i < values.length; i++) {
+            for(int i=0; i < values.length; i++){
                 if (values[k][i] > maxValue) {
                     maxValue = values[k][i];
                 }
@@ -416,11 +448,11 @@ public class RawTracePanel extends JPanel implements Exportable {
             sdl.open(af);
             sdl.start();
 //            for(int i=0; i < msecs*frequency/1000; i++){
-            for (int i = 0; i < values[0].length; i++) {
+            for(int i=0; i < values[0].length; i++){
 
                 for (int k = 0; k < values.length; k++) {
                     double x = (values[k][i] - minValues[k]) / ranges[k];
-                    buf[k] = (byte) (x * volume);
+                    buf[k]=(byte)(x * volume);
                 }
 //                if(addHarmonic) {
 //                    double angle2 = (i)/(frequency/hz)*2.0*Math.PI;
@@ -428,7 +460,7 @@ public class RawTracePanel extends JPanel implements Exportable {
 //                    sdl.write(buf,0,2);
 //                } else {
                 for (int j = 0; j < repeats; j++) {
-                    sdl.write(buf, 0, values.length);
+                    sdl.write(buf,0,values.length);
                 }
 //                }
             }
@@ -449,8 +481,8 @@ public class RawTracePanel extends JPanel implements Exportable {
 
         //Plot plot = densityChart.getPlot(0);
 
-        ArrayList<ArrayList> traceStates = new ArrayList<ArrayList>();
-        ArrayList<ArrayList> traceValues = new ArrayList<ArrayList>();
+        double[][] traceStates = new double[traceChart.getPlotCount()][];
+        double[][] traceValues = new double[traceChart.getPlotCount()][];
         int maxLength = 0;
 
         for (int i = 0; i < traceChart.getPlotCount(); i++) {
@@ -462,28 +494,28 @@ public class RawTracePanel extends JPanel implements Exportable {
             buffer.append("\t");
             buffer.append(plot.getName());
 
-            traceStates.add(i, new ArrayList(traceChart.getTraceStates(i)));
-            traceValues.add(i, new ArrayList(traceChart.getTraceValues(i)));
-            if (traceStates.get(i).size() > maxLength) {
-                maxLength = traceStates.get(i).size();
+            traceStates[i] = traceChart.getTraceStates(i);
+            traceValues[i] = traceChart.getTraceValues(i);
+            if (traceStates[i].length > maxLength) {
+                maxLength = traceStates[i].length;
             }
         }
         buffer.append("\n");
 
         for (int i = 0; i < maxLength; i++) {
-            if (traceStates.get(0).size() > i) {
-                buffer.append(traceStates.get(0).get(i));
+            if (traceStates[0].length > i) {
+                buffer.append(Integer.toString((int) traceStates[0][i]));
                 buffer.append("\t");
-                buffer.append(String.valueOf(traceValues.get(0).get(i)));
+                buffer.append(String.valueOf(traceValues[0][i]));
             } else {
                 buffer.append("\t");
             }
-            for (int j = 1; j < traceStates.size(); j++) {
-                if (traceStates.get(j).size() > i) {
+            for (int j = 1; j < traceStates.length; j++) {
+                if (traceStates[j].length > i) {
                     buffer.append("\t");
-                    buffer.append(traceStates.get(j).get(i));
+                    buffer.append(Integer.toString((int) traceStates[j][i]));
                     buffer.append("\t");
-                    buffer.append(String.valueOf(traceValues.get(j).get(i)));
+                    buffer.append(String.valueOf(traceValues[j][i]));
                 } else {
                     buffer.append("\t\t");
                 }

@@ -13,7 +13,6 @@ import dr.xml.*;
 public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String TREE_LIKELIHOOD = "treeLikelihood";
-    public static final String ANCESTRAL_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String ALLOW_MISSING_TAXA = "allowMissingTaxa";
     public static final String STORE_PARTIALS = "storePartials";

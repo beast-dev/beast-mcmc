@@ -32,6 +32,7 @@ import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.TraceException;
+import dr.util.FileHelpers;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 
@@ -156,7 +157,7 @@ public class CoalGenFrame extends DocumentFrame {
                     try {
                         final File file1 = new File(fileName);
                         final LogFileTraces traces = new LogFileTraces(fileName, file1);
-                        traces.loadTraces(reader);
+                        traces.loadTraces(reader, FileHelpers.numberOfLines(file1), -1, null);
 
                         EventQueue.invokeLater(
                                 new Runnable() {

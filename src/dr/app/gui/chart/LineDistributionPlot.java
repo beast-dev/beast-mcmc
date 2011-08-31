@@ -70,8 +70,8 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
             y2 = new double[lineCount];
 
             for (int i = 0; i < lineCount; i++) {
-                y1[i] = ( (Double) gradients.get(i) * x1) + (Double) intercepts.get(i);
-                y2[i] = ( (Double) gradients.get(i) * x2) + (Double) intercepts.get(i);
+                y1[i] = (gradients.get(i) * x1) + intercepts.get(i);
+                y2[i] = (gradients.get(i) * x2) + intercepts.get(i);
             }
 
             isCalibrated = true;
@@ -91,7 +91,7 @@ public class LineDistributionPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
         // do nothing because paintPlot is overridden
 	}
 }

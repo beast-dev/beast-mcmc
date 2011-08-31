@@ -2,7 +2,6 @@ package dr.geo;
 
 import dr.geo.cartogram.CartogramMapping;
 import dr.xml.*;
-import dr.util.HeapSort;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -306,43 +305,6 @@ public class Polygon2D {
         convertPointsToArrays();
     }
 
-    public void rescaleToPositiveCoordinates() {
-
-        double[][] xyMinMax = getXYMinMax();
-        double shiftX = 0;
-        double shiftY = 0;
-
-        if (xyMinMax[0][0] < 0){
-            shiftX = -xyMinMax[0][0];
-        }
-        if (xyMinMax[1][0] < 0){
-            shiftY = -xyMinMax[1][0];
-        }
-
-        if ((shiftX < 0) || (shiftY < 0)) {
-            for (int i = 0; i < length + 1; i++) {
-                point2Ds.set(i, new Point2D.Double(point2Ds.get(i).getX()+shiftX, point2Ds.get(i).getY()+shiftY));
-            }
-            convertPointsToArrays();
-        }
-    }
-
-    public double[][] getXYMinMax(){
-
-        int[] indicesX = new int[x.length];
-        int[] indicesY = new int[y.length];
-        HeapSort.sort(x, indicesX);
-        HeapSort.sort(y, indicesY);
-
-        double[][] returnArray = new double[2][2];
-        returnArray[0][0] = x[indicesX[0]];
-        returnArray[0][1] = x[indicesX[indicesX.length - 1]];
-        returnArray[1][0] = y[indicesY[0]];
-        returnArray[1][1] = y[indicesY[indicesY.length - 1]];
-
-        return returnArray;
-    }
-
 
     // Here is a formula for the area of a polygon with vertices {(xk,yk): k = 1,...,n}:
     //   Area = 1/2 [(x1*y2 - x2*y1) + (x2*y3 - x3*y2) + ... + (xn*y1 - x1*yn)].
@@ -352,8 +314,6 @@ public class Polygon2D {
     //   including an article by Bart Braden of Northern Kentucky U., a known Mathematica enthusiast.
     public double calculateArea() {
 
-//        rescaleToPositiveCoordinates();
-
         double area = 0;
         //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
         for (int i = 0; i < length; i++) {
@@ -361,30 +321,6 @@ public class Polygon2D {
         }
 
         return (Math.abs(area / 2));
-    }
-
-    public Point2D getCentroid() {
-
-//        rescaleToPositiveCoordinates();
-
-        Point2D centroid = new Point2D.Double();
-        double area = calculateArea();
-        double cx=0,cy=0;
-        
-        double factor;
-
-        //we can implement it like this because the polygon is closed (point2D.get(0) = point2D.get(length + 1)
-        for (int i = 0; i < length; i++) {
-            factor = (x[i] * y[i + 1] - x[i + 1] * y[i]);
-            cx += (x[i] * x[i + 1])*factor;
-            cy += (y[i] * y[i + 1])*factor;
-        }
-        double constant = 1/(area*6);
-        cx*=constant;
-        cy*=constant;
-        centroid.setLocation(cx,cy);
-        System.out.println("centroid = "+cx+","+cy);
-        return centroid;
     }
 
     private static LinkedList<Point2D> getCirclePoints(double centerLat, double centerLong, int numberOfPoints, double radius) {

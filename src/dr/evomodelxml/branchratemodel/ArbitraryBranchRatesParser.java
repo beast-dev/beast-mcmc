@@ -29,16 +29,9 @@ public class ArbitraryBranchRatesParser extends AbstractXMLObjectParser {
 
         boolean reciprocal = xo.getAttribute(RECIPROCAL, false);
 
-        final int numBranches = tree.getNodeCount() - 1;
-        if (rateCategoryParameter.getDimension() != numBranches) {
-            rateCategoryParameter.setDimension(numBranches);
-//            throw new XMLParseException("Invalid length for '" + rateCategoryParameter.getId() + "'\n" +
-//            "Should have length = " + numBranches);
-        }
-
         Logger.getLogger("dr.evomodel").info("Using an scaled mixture of normals model.");
         Logger.getLogger("dr.evomodel").info("  rates = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood for sequence data");
+        Logger.getLogger("dr.evomodel").info("  NB: Make sure you have a prior on " + rateCategoryParameter.getId() + " and do not use this model in a treeLikelihood");
         Logger.getLogger("dr.evomodel").info("  reciprocal = " + reciprocal);
 
         return new ArbitraryBranchRates(tree, rateCategoryParameter, reciprocal);

@@ -23,8 +23,8 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.PriorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
 import dr.evolution.util.TaxonList;
 import dr.math.distributions.ExponentialDistribution;
 import dr.math.distributions.LogNormalDistribution;
@@ -35,8 +35,8 @@ import dr.math.distributions.NormalDistribution;
  * @author Alexei Drummond
  */
 public class Parameter_Backup {
-    private final PartitionOptions options;
-
+    private final PartitionOptions options; 
+    
     private final String baseName;
 
     private String prefix = null;
@@ -106,7 +106,7 @@ public class Parameter_Backup {
 
         this.taxa = null;
         this.options = null;
-
+        
         this.priorType = PriorType.UNIFORM_PRIOR;
         this.scale = scale;
         this.priorEdited = false;
@@ -123,7 +123,7 @@ public class Parameter_Backup {
         this.description = description;
 
         this.options = null;
-
+        
         this.isNodeHeight = true;
         this.isStatistic = true;
         this.priorType = PriorType.NONE_TREE_PRIOR;
@@ -174,7 +174,7 @@ public class Parameter_Backup {
         uniformLower = lower;
         uniformUpper = upper;
     }
-
+    
     public Parameter_Backup(PartitionOptions options, String name, String description, PriorScaleType scale, double initial,
             double lower, double upper) {
         this.baseName = name;
@@ -202,7 +202,7 @@ public class Parameter_Backup {
         this.description = description;
         this.initial = initial;
 
-        this.taxa = null;
+        this.taxa = null;        
         this.options = options;
 
         this.isNodeHeight = isNodeHeight;

@@ -29,10 +29,7 @@ import dr.inference.parallel.MPIServices;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Represents a multi-dimensional continuous parameter.
@@ -332,7 +329,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         /**
          * @return the size of this variable - i.e. the length of the vector
          */
-        public int getSize() {
+        public final int getSize() {
             return getDimension();
         }
 
@@ -486,16 +483,9 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public void addBounds(Bounds<Double> boundary) {
             if (bounds == null) {
-                bounds = boundary;
-            } else {
-                if (!(bounds instanceof IntersectionBounds)) {
-                    IntersectionBounds newBounds = new IntersectionBounds(getDimension());
-                    newBounds.addBounds(bounds);
-                    bounds = newBounds;
-                }
-
-                ((IntersectionBounds)bounds).addBounds(boundary);
+                bounds = new IntersectionBounds(getDimension());
             }
+            bounds.addBounds(boundary);
 
             // can't change dimension after bounds are added!
             //hasBeenStored = true;
@@ -507,10 +497,6 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public final int getDimension() {
             return values.length;
-        }
-
-        public final int getSize() {
-            return getDimension();
         }
 
         public final double getParameterValue(int i) {
@@ -702,7 +688,7 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         // same as !storedValues && !bounds
         //private boolean hasBeenStored = false;
-        private Bounds<Double> bounds = null;
+        private IntersectionBounds bounds = null;
 
         public void addBounds(double lower, double upper) {
             addBounds(new DefaultBounds(upper, lower, getDimension()));
@@ -754,10 +740,6 @@ public interface Parameter extends Statistic, Variable<Double> {
 
         public int getBoundsDimension() {
             return uppers.length;
-        }
-
-        public boolean isConstant() {
-            return true;
         }
 
         private final double[] uppers, lowers;

@@ -23,16 +23,14 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.*;
+import dr.app.beauti.enumTypes.*;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.operators.RateBitExchangeOperator;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Alexei Drummond
@@ -46,12 +44,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public static final String[] GTR_RATE_NAMES = {"ac", "ag", "at", "cg", "gt"};
     private static final String[] GTR_TRANSITIONS = {"A-C", "A-G", "A-T", "C-G", "G-T"};
 
+    private final BeautiOptions options;
+    private DataType dataType;
+
     private NucModelType nucSubstitutionModel = NucModelType.HKY;
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
-    private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
-
+    private LocationSubstModelType locationSubstType = LocationSubstModelType.SYM_SUBST;
     private boolean activateBSSVS = false;
+
     public boolean useAmbiguitiesTreeLikelihood = false;
 
     private FrequencyPolicyType frequencyPolicy = FrequencyPolicyType.ESTIMATED;
@@ -65,15 +66,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     private boolean dolloModel = false;
 
-    private MicroSatModelType.RateProportionality ratePorportion = MicroSatModelType.RateProportionality.EQUAL_RATE;
-    private MicroSatModelType.MutationalBias mutationBias = MicroSatModelType.MutationalBias.UNBIASED;
-    private MicroSatModelType.Phase phase = MicroSatModelType.Phase.ONE_PHASE;
-    private Microsatellite microsatellite = null;
+    public PartitionSubstitutionModel(BeautiOptions options, PartitionData partition) {
 
-    public PartitionSubstitutionModel(BeautiOptions options, AbstractPartitionData partition) {
-//        this(options, partition.getName(),(partition.getTrait() == null)
-//                ? partition.getDataType() : GeneralDataType.INSTANCE);
-        super(options, partition.getName());
+        this(options, partition.getName(),(partition.getTraitType() == null)
+                ? partition.getAlignment().getDataType() : new GeneralDataType());
+
     }
 
     /**
@@ -84,15 +81,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      * @param source  the source model
      */
     public PartitionSubstitutionModel(BeautiOptions options, String name, PartitionSubstitutionModel source) {
-        super(options, name);
+        this(options, name, source.dataType);
 
         nucSubstitutionModel = source.nucSubstitutionModel;
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
-        discreteSubstType = source.discreteSubstType;
-
-        activateBSSVS = source.activateBSSVS;
-        useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
 
         frequencyPolicy = source.frequencyPolicy;
         gammaHetero = source.gammaHetero;
@@ -102,32 +95,35 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         unlinkedSubstitutionModel = source.unlinkedSubstitutionModel;
         unlinkedHeterogeneityModel = source.unlinkedHeterogeneityModel;
         unlinkedFrequencyModel = source.unlinkedFrequencyModel;
-
-        dolloModel = source.dolloModel;
-
-        ratePorportion = source.ratePorportion;
-        mutationBias = source.mutationBias;
-        phase = source.phase;
-
-        microsatellite = source.microsatellite;
     }
 
-    public PartitionSubstitutionModel(BeautiOptions options, String name) {
-        super(options, name);
+    public PartitionSubstitutionModel(BeautiOptions options, String name, DataType dataType) {
+
+        this.options = options;
+        this.partitionName = name;
+        this.dataType = dataType;
+
+        initSubstModelParaAndOpers();
     }
+
 
     // only init in PartitionSubstitutionModel
-    protected void initModelParametersAndOpererators() {
+
+    protected void initSubstModelParaAndOpers() {
         double substWeights = 0.1;
 
         //Substitution model parameters
-        createZeroOneParameterUniformPrior("frequencies", "base frequencies", 0.25);
-        createZeroOneParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1", 0.25);
-        createZeroOneParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2", 0.25);
-        createZeroOneParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2", 0.25);
-        createZeroOneParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3", 0.25);
+        createParameterUniformPrior("frequencies", "base frequencies", PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP1.frequencies", "base frequencies for codon position 1",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP2.frequencies", "base frequencies for codon position 2",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP1+2.frequencies", "base frequencies for codon positions 1 & 2",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP3.frequencies", "base frequencies for codon position 3",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
 
-        //This prior is moderately diffuse with a median of 2.718
+        //This prior is moderately diffuse with a median of 2.718 
         createParameterLognormalPrior("kappa", "HKY transition-transversion parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1.kappa", "HKY transition-transversion parameter for codon position 1",
@@ -153,7 +149,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createParameterLognormalPrior("kappa2", "TN93 2nd transition-transversion parameter",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1.kappa2", "TN93 2nd transition-transversion parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
+               PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP2.kappa2", "TN93 2nd transition-transversion parameter for codon position 2",
                 PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 2.0, 1.0, 1.25, 0.0, 0, Double.POSITIVE_INFINITY);
         createParameterLognormalPrior("CP1+2.kappa2", "TN93 2nd transition-transversion parameter for codon positions 1 & 2",
@@ -171,66 +167,72 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         for (int j = 0; j < 5; j++) {
             if (j == 1) { // ag
                 createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
             } else {
                 createParameterGammaPrior(GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
             }
 
             for (int i = 1; i <= 3; i++) {
                 if (j == 1) { // ag
                     createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
                 } else {
                     createParameterGammaPrior("CP" + i + "." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon position " + i,
-                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
+                            PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
                 }
             }
 
             if (j == 1) { // ag
                 createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 20, 0, Double.POSITIVE_INFINITY, false);
             } else {
                 createParameterGammaPrior("CP1+2." + GTR_RATE_NAMES[j], "GTR " + GTR_TRANSITIONS[j] + " substitution parameter for codon positions 1 & 2",
-                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, false);
+                        PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
             }
         }
 
 //        createParameter("frequencies", "Binary Simple frequencies", UNITY_SCALE, 0.5, 0.0, 1.0);
 //
 //        createParameter("frequencies", "Binary Covarion frequencies of the visible states", UNITY_SCALE, 0.5, 0.0, 1.0);
-        createZeroOneParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates", 0.5);
-        createZeroOneParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode", 0.5);
+        createParameterUniformPrior("hfrequencies", "Binary Covarion frequencies of the hidden rates",
+                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("bcov.alpha", "Binary Covarion rate of evolution in slow mode",
+                PriorScaleType.UNITY_SCALE, 0.5, 0.0, 1.0, 0.0, 1.0);
         createParameterGammaPrior("bcov.s", "Binary Covarion rate of flipping between slow and fast modes",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, false);
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.05, 10, 0, Double.POSITIVE_INFINITY, false);
 
-        createParameterExponentialPrior("alpha", "gamma shape parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
-        createParameterExponentialPrior("CP1.alpha", "gamma shape parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
-        createParameterExponentialPrior("CP2.alpha", "gamma shape parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
-        createParameterExponentialPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
-        createParameterExponentialPrior("CP3.alpha", "gamma shape parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.5, 0.0);
+        createParameterUniformPrior("alpha", "gamma shape parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
+        createParameterUniformPrior("CP1.alpha", "gamma shape parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
+        createParameterUniformPrior("CP2.alpha", "gamma shape parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
+        createParameterUniformPrior("CP1+2.alpha", "gamma shape parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
+        createParameterUniformPrior("CP3.alpha", "gamma shape parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.5, 0.0, 1000.0, 0.0, 1000.0);
 
-        createZeroOneParameterUniformPrior("pInv", "proportion of invariant sites parameter", 0.5);
-        createZeroOneParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1", 0.5);
-        createZeroOneParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2", 0.5);
-        createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5);
-        createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5);
+        createParameterUniformPrior("pInv", "proportion of invariant sites parameter", PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP1.pInv", "proportion of invariant sites parameter for codon position 1",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP2.pInv", "proportion of invariant sites parameter for codon position 2",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
+        createParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3",
+                PriorScaleType.NONE, 0.5, 0.0, 1.0, 0.0, 1.0);
 
-        createNonNegativeParameterUniformPrior("mu", "relative rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createParameterUniformPrior("mu", "relative rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
+        createParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
 
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");
@@ -292,57 +294,35 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         //***************************************************
-        createZeroOneParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" : " ") + "base frequencies", 0.25);
+        createParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" :  " ") + "base frequencies",
+                PriorScaleType.UNITY_SCALE, 0.25, 0.0, 1.0, 0.0, 1.0);
         createCachedGammaPrior("trait.rates", "location substitution model rates",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, false);
-        createParameter("trait.indicators", "location substitution model rate indicators", 1.0);// used if BSSVS was selected
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, 0, Double.POSITIVE_INFINITY, false);
+        createParameter("trait.indicators", "location substitution model rate indicators (if BSSVS was selected)", 1.0);// BSSVS was selected
 
         // = strick clock TODO trait.mu belongs Clock Model?
-        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" : " ") + "CTMC rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0);
-
+        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" :  " ") + "mutation rate parameter",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0, 0.0, 10.0);
         // Poisson Prior
-        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // used if BSSVS was selected
+        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // BSSVS was selected
 
         createOperator("trait.rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
         createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);// BSSVS was selected
         createScaleOperator("trait.mu", demoTuning, 10);
         //bit Flip on clock.rate in PartitionClockModelSubstModelLink
         createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
-                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
+                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"),this, demoTuning, 30);
         createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(trait.indicators, trait.rates)",
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                 "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
-
-        //=============== microsat ======================
-        createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.0, 1.0, 1.0, false);
-        createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0);
-        createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
-                0.0, 0.0, 10.0, 0.0);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  1.0);
-        createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0);
-
-        createScaleOperator("propLinear", demoTuning, substWeights);
-//        createOperator("deltaBiasConst", "deltaBiasConst", "Delta exchange on constant bias", "biasConst",
-//                OperatorType.DELTA_EXCHANGE, 0.001, 1.6);
-        createOperator("randomWalkBiasConst", "randomWalkBiasConst", "Random walk on constant bias", "biasConst",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-        createOperator("randomWalkBiasLinear", "randomWalkBiasLinear", "Random walk on linear bias", "biasLinear",
-                OperatorType.RANDOM_WALK, 0.001, 2.0);
-        createOperator("randomWalkGeom", "randomWalkGeom", "Random walk on geomDist", "geomDist",
-                OperatorType.RANDOM_WALK, 0.01, 2.0);
-
     }
 
     ////////////////////////////////////////////////////////////////
 
     public void selectParameters(List<Parameter> params) {
-        setAvgRootAndRate();
         boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
 
-        switch (getDataType().getType()) {
+        switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
                     if (codonHeteroPattern.equals("123")) {
@@ -478,49 +458,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 if (activateBSSVS) {
                     getParameter("trait.indicators");
                     Parameter nonZeroRates = getParameter("trait.nonZeroRates");
-
-                    // AR - we can't use the average number of states across all defined traits!
-//                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
-//                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
-//                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
-//                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
-//                    }
-
-                    Set<String> states = getDiscreteStateSet();
-                    int K = states.size();
-                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
-                        nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
-                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
-                        nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+                    if (locationSubstType == LocationSubstModelType.SYM_SUBST) {
+                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
+                    } else if (locationSubstType == LocationSubstModelType.ASYM_SUBST) {
+                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
                     }
-
                     params.add(nonZeroRates);
-                }
-                break;
-
-            case DataType.MICRO_SAT:
-                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-                    params.add(getParameter("propLinear"));
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-                }
-                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
-
-                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
-                    params.add(getParameter("biasConst"));
-                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-                    params.add(getParameter("biasConst"));
-                    params.add(getParameter("biasLinear"));
-                }
-                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
-
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                    params.add(getParameter("geomDist"));
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-                    params.add(getParameter("geomDist"));
-                    params.add(getParameter("onePhaseProb"));
                 }
                 break;
 
@@ -587,9 +530,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public void selectOperators(List<Operator> ops) {
-        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check
+        boolean includeRelativeRates = getCodonPartitionCount() > 1;//TODO check 
 
-        switch (getDataType().getType()) {
+        switch (dataType.getType()) {
             case DataType.NUCLEOTIDES:
 
                 if (includeRelativeRates && unlinkedSubstitutionModel) {
@@ -710,34 +653,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     ops.add(getOperator("trait.indicators"));
 //                    ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()+ "mu"));
 
-                    if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST)
+                    if (locationSubstType == LocationSubstModelType.ASYM_SUBST)
                         ops.add(getOperator(RateBitExchangeOperator.OPERATOR_NAME));
-                }
-                break;
-
-            case DataType.MICRO_SAT:
-                if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
-
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
-                    ops.add(getOperator("propLinear"));
-                } else if (ratePorportion == MicroSatModelType.RateProportionality.ASYM_QUAD) {
-
-                }
-                if (mutationBias == MicroSatModelType.MutationalBias.UNBIASED) {
-
-                } else if (mutationBias == MicroSatModelType.MutationalBias.CONSTANT_BIAS) {
-                    ops.add(getOperator("randomWalkBiasConst"));
-                } else if (mutationBias == MicroSatModelType.MutationalBias.LINEAR_BIAS) {
-                    ops.add(getOperator("randomWalkBiasConst"));
-                    ops.add(getOperator("randomWalkBiasLinear"));
-                }
-                if (phase == MicroSatModelType.Phase.ONE_PHASE) {
-
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE) {
-                      ops.add(getOperator("randomWalkGeom"));
-                } else if (phase == MicroSatModelType.Phase.TWO_PHASE_STAR) {
-//                    ops.add(getOperator("randomWalkGeom"));
-//                    ops.add(getOperator("onePhaseProb"));
                 }
                 break;
 
@@ -833,7 +750,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         throw new IllegalArgumentException("codonHeteroPattern must be one of '111', '112' or '123'");
     }
 
-    public void addWeightsForPartition(AbstractPartitionData partition, int[] weights, int offset) {
+    public void addWeightsForPartition(PartitionData partition, int[] weights, int offset) {
         int n = partition.getSiteCount();
         int codonCount = n / 3;
         int remainder = n % 3;
@@ -865,7 +782,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = new int[getCodonPartitionCount()];
 
         int k = 0;
-        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
+        for (PartitionData partition : options.getAllPartitionData(this)) {
             if (partition.getPartitionSubstitutionModel() == this) {
                 addWeightsForPartition(partition, weights, k);
             }
@@ -903,44 +820,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.binarySubstitutionModel = binarySubstitutionModel;
     }
 
-    public DiscreteSubstModelType getDiscreteSubstType() {
-        return discreteSubstType;
+    public LocationSubstModelType getLocationSubstType() {
+        return locationSubstType;
     }
 
-    public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
-        this.discreteSubstType = discreteSubstType;
-    }
-
-    public MicroSatModelType.RateProportionality getRatePorportion() {
-        return ratePorportion;
-    }
-
-    public void setRatePorportion(MicroSatModelType.RateProportionality ratePorportion) {
-        this.ratePorportion = ratePorportion;
-    }
-
-    public MicroSatModelType.MutationalBias getMutationBias() {
-        return mutationBias;
-    }
-
-    public void setMutationBias(MicroSatModelType.MutationalBias mutationBias) {
-        this.mutationBias = mutationBias;
-    }
-
-    public MicroSatModelType.Phase getPhase() {
-        return phase;
-    }
-
-    public void setPhase(MicroSatModelType.Phase phase) {
-        this.phase = phase;
-    }
-
-    public Microsatellite getMicrosatellite() {
-        return microsatellite;
-    }
-
-    public void setMicrosatellite(Microsatellite microsatellite) {
-        this.microsatellite = microsatellite;
+    public void setLocationSubstType(LocationSubstModelType locationSubstType) {
+        this.locationSubstType = locationSubstType;
     }
 
     public boolean isActivateBSSVS() {
@@ -1018,6 +903,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.unlinkedFrequencyModel = unlinkedFrequencyModel;
     }
 
+    public DataType getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(DataType dataType) {
+        this.dataType = dataType;
+    }
+
     public boolean isDolloModel() {
         return dolloModel;
     }
@@ -1036,7 +929,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1) {
+        if (options.getPartitionSubstitutionModels().size() > 1) { // || options.isSpeciesAnalysis()) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }
@@ -1051,7 +944,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     }
 
     public String getPrefixCodon(int codonPartitionNumber) {
-        String prefix = "";
+        String prefix = "";        
         if (getCodonPartitionCount() > 1 && codonPartitionNumber > 0) {
             if (getCodonHeteroPattern().equals("123")) {
                 prefix += "CP" + codonPartitionNumber + ".";
@@ -1069,19 +962,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         return prefix;
     }
 
-    /**
-     * returns the union of the set of states for all traits using this discrete CTMC model
-     *
-     * @return
-     */
-    public Set<String> getDiscreteStateSet() {
-        Set<String> states = new HashSet<String>();
-        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
-            if (partition.getTrait() != null) {
-                states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
-            }
+    public int getAveStates() {
+        int aveStates = 0;
+        int num = 0;
+        for (PartitionData partition : options.getAllPartitionData(this)) {
+             if (partition instanceof TraitData) {
+                 aveStates = aveStates + ((TraitData) partition).getStatesListOfTrait(options.taxonList).size();
+                 num++;
+             }
         }
-        return states;
+        if (num != 0) aveStates = aveStates / num;
+        return aveStates;
     }
 
 }

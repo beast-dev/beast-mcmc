@@ -25,12 +25,12 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.parsers.FrequencyModelParser;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.app.beagle.evomodel.parsers.FrequencyModelParser;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -131,7 +131,7 @@ public class FrequencyModel extends AbstractModel {
         // no intermediates need recalculating....
     }
 
-    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+    protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // no intermediates need recalculating....
     }
 

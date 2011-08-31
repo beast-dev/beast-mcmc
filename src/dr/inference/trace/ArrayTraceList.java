@@ -57,7 +57,7 @@ public class ArrayTraceList extends AbstractTraceList {
      * @return the number of states in the traces (after burnin removed)
      */
     public int getStateCount() {
-        return traces.get(0).getValuesSize();
+        return traces.get(0).getCount();
     }
 
     /**
@@ -79,19 +79,42 @@ public class ArrayTraceList extends AbstractTraceList {
         return false;
     }
 
-    public List getValues(int index, int fromIndex, int toIndex) {
-        throw new UnsupportedOperationException("not available");
+    /**
+     * get the values of trace with the given index (without burnin)
+     *
+     * @param index       the index of trace
+     * @param destination the array to copy values into
+     */
+    public <T> void getValues(int index, T[] destination) {
+        getTrace(index).getValues(0, destination, burnin);
     }
 
-    public List getValues(int index) {
-        throw new UnsupportedOperationException("not available");
+    public <T> void getValues(int index, T[] destination, int offset) {
+        getTrace(index).getValues(0, destination, offset);
     }
 
-    public List getBurninValues(int index) {
-        throw new UnsupportedOperationException("not available");
+    public <T> void getBurninValues(int index, T[] destination) {
+        getTrace(index).getValues(0, (burnin / stepSize), destination, 0);
     }
 
     public Trace getTrace(int index) {
         return traces.get(index);
+    }
+
+    @Override
+    public void createTraceFilter(Filter filter) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void getSelected(int index, boolean[] destination) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void getSelected(int index, boolean[] destination, int offset) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    public void getBurningSelected(int index, boolean[] destination) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 }

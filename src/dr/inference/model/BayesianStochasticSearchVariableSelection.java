@@ -15,6 +15,8 @@ public interface BayesianStochasticSearchVariableSelection {
 
     public class Utils {
 
+        private static double defaultExpectedMutations = 1.0;
+
         public static boolean connectedAndWellConditioned(double[] probability,
                                                           dr.app.beagle.evomodel.substmodel.SubstitutionModel substModel) {
             if (probability == null) {
@@ -45,9 +47,8 @@ public interface BayesianStochasticSearchVariableSelection {
                 
         public static boolean connectedAndWellConditioned(double[] probability) {
             for(double prob : probability) {
-                if(prob < tolerance || prob >= 1.0) {                    
+                if(prob < tolerance || prob > 1)
                     return false;
-                }
             }
             return true;
         }
@@ -59,21 +60,6 @@ public interface BayesianStochasticSearchVariableSelection {
                             (MathUtils.nextDouble() < 0.5) ? 0.0 : 1.0);
             } while (!(isStronglyConnected(indicators.getParameterValues(),
                     dim, reversible)));
-        }
-
-        public static void setTolerance(double newTolerance) {
-            tolerance = newTolerance;
-        }
-
-        public static double getTolerance() {
-            return tolerance;
-        }
-
-        public static void setScalar(double newScalar) {
-            defaultExpectedMutations = newScalar;
-        }
-        public static double getScalar() {
-            return defaultExpectedMutations;
         }
 
         /* Determines if the graph is strongly connected, such that there exists
@@ -97,13 +83,8 @@ public interface BayesianStochasticSearchVariableSelection {
         }
 
         private static int getEntry(int i, int j, int dim, boolean reversible) {
-            if (reversible) {
-                if (j < i) {
-                    return getEntry(j,i,dim,reversible);
-                }
-                int entry = i * dim - i * (i + 1) / 2 + j - 1 -i;
-                return entry;
-            }
+            if (reversible && j > i)
+                return getEntry(j,i,dim,false);            
 
             int entry = i * (dim - 1) + j;
             if (j > i)
@@ -120,7 +101,6 @@ public interface BayesianStochasticSearchVariableSelection {
             }
         }
 
-        private static double defaultExpectedMutations = 1.0;
-        private static double tolerance = 1E-20;
+        private static final double tolerance = 1E-15;
     }
 }

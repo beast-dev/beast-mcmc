@@ -346,7 +346,7 @@ public class XMLObject {
         }
     }
 
-    public final static String ID = "id";
+    final static String ID = "id";
 
     public boolean hasId() {
         return hasAttribute(ID);

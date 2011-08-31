@@ -90,9 +90,9 @@ public class TemporalAnalysisFrame extends AuxilaryFrame implements TracerFileMe
         setSize(new java.awt.Dimension(640, 480));
     }
 
-    public void addDemographic(String title, Variate.D xData,
-                               Variate.D yDataMean, Variate.D yDataMedian,
-                               Variate.D yDataUpper, Variate.D yDataLower,
+    public void addDemographic(String title, Variate xData,
+                               Variate yDataMean, Variate yDataMedian,
+                               Variate yDataUpper, Variate yDataLower,
                                double timeMean, double timeMedian,
                                double timeUpper, double timeLower) {
 
@@ -109,7 +109,7 @@ public class TemporalAnalysisFrame extends AuxilaryFrame implements TracerFileMe
         setVisible(true);
     }
 
-    public void addDensity(String title, Variate.D xData, Variate.D yData) {
+    public void addDensity(String title, Variate xData, Variate yData) {
 
         if (!rangeSet) {
             throw new RuntimeException("Range not set");

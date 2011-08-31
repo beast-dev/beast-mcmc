@@ -9,10 +9,10 @@ import dr.xml.*;
 public class MicrosatUpDownOperatorParser extends AbstractXMLObjectParser {
 
     public static final String MICROSAT_UP_DOWN_OPERATOR = "microsatUpDownOperator";
-    public static final String UP = UpDownOperatorParser.UP;
-    public static final String DOWN = UpDownOperatorParser.DOWN;
+    public static final String UP = "up";
+    public static final String DOWN = "down";
 
-    public static final String SCALE_FACTOR = ScaleOperatorParser.SCALE_FACTOR;
+    public static final String SCALE_FACTOR = "scaleFactor";
 
     public String getParserName() {
         return MICROSAT_UP_DOWN_OPERATOR;

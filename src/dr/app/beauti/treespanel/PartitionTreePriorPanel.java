@@ -25,16 +25,14 @@
 
 package dr.app.beauti.treespanel;
 
+import dr.app.beauti.enumTypes.TreePriorParameterizationType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.types.TreePriorParameterizationType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodelxml.speciation.BirthDeathModelParser;
-import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
+import dr.app.gui.components.WholeNumberField;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -52,11 +50,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private static final long serialVersionUID = 5016996360264782252L;
 
-    private JComboBox treePriorCombo = new JComboBox();
+    private JComboBox treePriorCombo = new JComboBox(EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).toArray());
 
     private JComboBox parameterizationCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.GROWTH_RATE,
             TreePriorParameterizationType.DOUBLING_TIME).toArray());
-    //    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
+//    private JComboBox parameterizationCombo1 = new JComboBox(EnumSet.of(TreePriorParameterizationType.DOUBLING_TIME).toArray());
     private JComboBox bayesianSkylineCombo = new JComboBox(EnumSet.range(TreePriorParameterizationType.CONSTANT_SKYLINE,
             TreePriorParameterizationType.LINEAR_SKYLINE).toArray());
     private WholeNumberField groupCountField = new WholeNumberField(2, Integer.MAX_VALUE);
@@ -79,26 +77,23 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 
     public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {
-        super(12, (OSType.isMac() ? 6 : 24));
+    	super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreePrior = parTreePrior;
         this.treesPanel = parent;
 
-        setTreePriorChoices(false, false);
         PanelUtils.setupComponent(treePriorCombo);
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                if (treePriorCombo.getSelectedItem() != null) {
-                    partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
-                    setupPanel();
-                }
+            	partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
+                setupPanel();
             }
         });
 
         PanelUtils.setupComponent(parameterizationCombo);
         parameterizationCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+            	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
             }
         });
 
@@ -111,33 +106,34 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         PanelUtils.setupComponent(groupCountField);
         groupCountField.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent ev) {
-                // move to here?
-            }
-        });
+			public void keyTyped(java.awt.event.KeyEvent ev) {
+				// move to here?
+			}
+		});
 
 
         PanelUtils.setupComponent(bayesianSkylineCombo);
         bayesianSkylineCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setSkylineModel((TreePriorParameterizationType) bayesianSkylineCombo.getSelectedItem());
+            	partitionTreePrior.setSkylineModel((TreePriorParameterizationType) bayesianSkylineCombo.getSelectedItem());
             }
         });
 
         PanelUtils.setupComponent(extendedBayesianSkylineCombo);
         extendedBayesianSkylineCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type)
-                        extendedBayesianSkylineCombo.getSelectedItem()));
+            	partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type)
+            			extendedBayesianSkylineCombo.getSelectedItem()));
             }
         });
 
         PanelUtils.setupComponent(gmrfBayesianSkyrideCombo);
         gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+            	partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
             }
         });
+
 
 
 //	        samplingProportionField.addKeyListener(keyListener);
@@ -149,101 +145,64 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         removeAll();
 
-        JTextArea citationText = new JTextArea(1, 200);
-        citationText.setLineWrap(true);
-        citationText.setEditable(false);
-        citationText.setFont(this.getFont());
-//        JScrollPane scrollPane = new JScrollPane(citation, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
-//                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-//        scrollPane.setOpaque(true);
-
-        String citation;
-        String citationCoalescent = "Kingman JFC (1982) Stoch Proc Appl 13, 235-248 [Constant Coalescent].";
-
         addComponentWithLabel("Tree Prior:", treePriorCombo);
 
-        switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
-            case CONSTANT:
-                citation = citationCoalescent;
-                break;
+        if (treePriorCombo.getSelectedItem() == TreePriorType.EXPONENTIAL
+                || treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC
+                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) {
+            addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
+        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
 
-            case EXPONENTIAL:
-            case LOGISTIC:
-            case EXPANSION:
-                addComponentWithLabel("Parameterization for growth:", parameterizationCombo);
-                partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+//        } else if (treePriorCombo.getSelectedItem() == TreePriorType.LOGISTIC //) {//TODO Issue 93
+//                || treePriorCombo.getSelectedItem() == TreePriorType.EXPANSION) { //TODO Issue 266
+//        	addComponentWithLabel("Parameterization for growth:", parameterizationCombo1);
+//        	partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo1.getSelectedItem());
+//
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.SKYLINE) {
+            groupCountField.setColumns(6);
+            addComponentWithLabel("Number of groups:", groupCountField);
+            addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
 
-                citation = //citationCoalescent +  "\n" +
-                        "Griffiths RC, Tavare S (1994) Phil Trans R Soc Lond B Biol Sci 344, 403-410 [Parametric Coalescent].";
-//                        + "\nDrummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192.";
-                break;
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.BIRTH_DEATH) {
 
-            case SKYLINE:
-                groupCountField.setColumns(6);
-                addComponentWithLabel("Number of groups:", groupCountField);
-                addComponentWithLabel("Skyline Model:", bayesianSkylineCombo);
+//            samplingProportionField.setColumns(8);
+//            treePriorPanel.addComponentWithLabel("Proportion of taxa sampled:", samplingProportionField);
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.EXTENDED_SKYLINE) {
+            addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
+            treesPanel.linkTreePriorCheck.setSelected(true);
+            treesPanel.updateShareSameTreePriorChanged();
 
-                citation = //citationCoalescent + "\n" +
-                        "Drummond AJ, Rambaut A, Shapiro B, Pybus OG (2005) Mol Biol Evol 22, 1185-1192 [Skyline Coalescent].";
-                break;
+//            treesPanel.getFrame().setupEBSP(); TODO
 
-            case EXTENDED_SKYLINE:
-                addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
-                treesPanel.linkTreePriorCheck.setSelected(true);
-                treesPanel.updateShareSameTreePriorChanged();
+        } else if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
+            addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
 
-                citation = //citationCoalescent + "\n" +
-                        "Heled J, Drummond AJ (2008) BMC Evol Biol 8, 289 [Extended Skyline Coalescent].";
-                break;
-
-            case GMRF_SKYRIDE:
-                addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
-                //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
-                addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
-                        + "It is only available for single tree model partition for this release.<br>"
-                        + "Please go to Data Partition panel to link all tree models." + "</html>");
-
-                citation = //citationCoalescent + "\n" +
-                        "Minin VN, Bloomquist EW, Suchard MA (2008) Mol Biol Evol 25, 1459-1471 [Skyride Coalescent].";
-                break;
-            case YULE:
-                citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
-                        "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
-                break;
-            case BIRTH_DEATH:
-                citation = BirthDeathModelParser.getCitation();
-                break;
-            case BIRTH_DEATH_INCOMPLETE_SAMPLING:
-                citation = BirthDeathModelParser.getCitationRHO();
-                break;
-            case BIRTH_DEATH_SERIAL_SAMPLING:
-                citation = BirthDeathSerialSamplingModelParser.getCitationPsiOrg();
-                break;
-            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-                citation = BirthDeathSerialSamplingModelParser.getCitationRT();
-                break;
-            default:
-                throw new RuntimeException("No tree prior has been specified so cannot refer to it");
         }
 
-        if (treesPanel.options.maximumTipHeight > 0)
-            citation = citation
-//                    + "\n" +
-//                    "Rodrigo AG, Felsenstein J (1999) in Molecular Evolution of HIV (Crandall K), pp. 233-272 [Serially Sampled Data]."
-                    + "\n" +
-                    "Drummond AJ, Nicholls GK, Rodrigo AG, Solomon W (2002) Genetics 161, 1307-1320 [Serially Sampled Data].";
-
-        addComponentWithLabel("Citation:", citationText);
-        citationText.setText(citation);
+        if (treePriorCombo.getSelectedItem() == TreePriorType.GMRF_SKYRIDE) {
+            //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
+            addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet.<br>"
+						+ "It is only available for single tree model partition for this release.<br>"
+						+ "Please go to Data Partition panel to link all tree models." + "</html>");
+            //TODO link tree model
+//            treesPanel.linkTreePriorCheck.setSelected(false);
+//            treesPanel.linkTreePriorCheck.setEnabled(false);
+//            treesPanel.linkTreeModel();
+//            treesPanel.updateShareSameTreePriorChanged();
+//        } else {
+//            treesPanel.linkTreePriorCheck.setEnabled(true);
+//            treesPanel.linkTreePriorCheck.setSelected(true);
+//            treesPanel.updateShareSameTreePriorChanged();
+        }
 
 //        getOptions();
 //
 //        treesPanel.treeModelPanels.get(treesPanel.currentTreeModel).setOptions();
         for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
-            if (model != null) {
-                treesPanel.treeModelPanels.get(model).setOptions();
-            }
-        }
+        	if (model != null) {
+        		treesPanel.treeModelPanels.get(model).setOptions();
+        	}
+     	}
 
 //        createTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
@@ -273,7 +232,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         gmrfBayesianSkyrideCombo.setSelectedItem(partitionTreePrior.getSkyrideSmoothing());
 
-        setupPanel();
+//        setupPanel();
 
         settingOptions = false;
 
@@ -312,27 +271,15 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     }
 
-//    public void setMicrosatelliteTreePrior() {
-//        treePriorCombo.removeAllItems();
-//        treePriorCombo.addItem(TreePriorType.CONSTANT);
-//    }
+    public void removeCertainPriorFromTreePriorCombo() {
+        treePriorCombo.removeItem(TreePriorType.YULE);
+        treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
+    }
 
-    public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
-        treePriorCombo.removeAllItems();
-        for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER)) {
-            treePriorCombo.addItem(treePriorType);
+    public void recoveryTreePriorCombo() {
+        if (treePriorCombo.getItemCount() < EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH).size()) {
+            treePriorCombo.addItem(TreePriorType.YULE);
+            treePriorCombo.addItem(TreePriorType.BIRTH_DEATH);
         }
-
-        // would be much better to disable these rather than removing them
-        if (isMultiLocus) {
-            treePriorCombo.removeItem(TreePriorType.SKYLINE);
-        }
-
-        if (isTipCalibrated) {
-            // remove models that require contemporaneous tips...
-            treePriorCombo.removeItem(TreePriorType.YULE);
-            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
-            treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
-          }
     }
 }

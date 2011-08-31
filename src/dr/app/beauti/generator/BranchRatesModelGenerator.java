@@ -24,8 +24,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.ClockType;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.clock.RateEvolutionLikelihood;
@@ -85,8 +85,9 @@ public class BranchRatesModelGenerator extends Generator {
 
                 break;
 
-            case UNCORRELATED:
-                writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )");
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
+                writer.writeComment("The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut, 2006)");
 
                 for (PartitionTreeModel tree : activeTrees) {
                     treePrefix = tree.getPrefix();
@@ -112,48 +113,45 @@ public class BranchRatesModelGenerator extends Generator {
 
                     writer.writeOpenTag("distribution");
 
-                    switch (model.getClockDistributionType()) {
+                    if (model.getClockType() == ClockType.UNCORRELATED_EXPONENTIAL) {
 
-                        case LOGNORMAL:
-                            writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
-                                    new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+                        writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
-                            if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("mean", ClockType.UCLD_MEAN, model, writer);
-                                writeParameter("stdev", ClockType.UCLD_STDEV, model, writer);
-                            } else {
-                                writeParameterRef("mean", modelPrefix + ClockType.UCLD_MEAN, writer);
-                                writeParameterRef("stdev", modelPrefix + ClockType.UCLD_STDEV, writer);
-                            }
+                        if (activeTrees.indexOf(tree) < 1) {
+                            writeParameter("mean", ClockType.UCED_MEAN, model, writer);
+                        } else {
+                            writeParameterRef("mean", modelPrefix + ClockType.UCED_MEAN, writer);
+                        }
 
-                            writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma model not implemented yet");
-//                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy model not implemented yet");
-//                            break;
-                        case EXPONENTIAL:
-                            writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                        writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
 
-                            if (activeTrees.indexOf(tree) < 1) {
-                                writeParameter("mean", ClockType.UCED_MEAN, model, writer);
-                            } else {
-                                writeParameterRef("mean", modelPrefix + ClockType.UCED_MEAN, writer);
-                            }
+                    } else if (model.getClockType() == ClockType.UNCORRELATED_LOGNORMAL) {
 
-                            writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-                            break;
+                        writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                                new Attribute.Default<String>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, "true"));
+
+                        if (activeTrees.indexOf(tree) < 1) {
+                            writeParameter("mean", ClockType.UCLD_MEAN, model, writer);
+                            writeParameter("stdev", ClockType.UCLD_STDEV, model, writer);
+                        } else {
+                            writeParameterRef("mean", modelPrefix + ClockType.UCLD_MEAN, writer);
+                            writeParameterRef("stdev", modelPrefix + ClockType.UCLD_STDEV, writer);
+                        }
+
+                        writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+
+                    } else {
+                        throw new RuntimeException(
+                                "Unrecognised relaxed clock model");
                     }
 
                     writer.writeCloseTag("distribution");
 
                     writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                     if (options.allowDifferentTaxa) { // http://code.google.com/p/beast-mcmc/issues/detail?id=235
-                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
+                        for (PartitionData dataPartition : options.getNonTraitsDataList()) {
                             if (dataPartition.getPartitionClockModel().equals(model)) {
-                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;
+                                categoryCount = (dataPartition.getTaxaCount() - 1) * 2;
                             }
                         }
                     } else {
@@ -210,7 +208,7 @@ public class BranchRatesModelGenerator extends Generator {
 
                 break;
 
-            case AUTOCORRELATED:
+            case AUTOCORRELATED_LOGNORMAL:
                 writer.writeComment("The autocorrelated relaxed clock (Rannala & Yang, 2007)");
 
                 for (PartitionTreeModel tree : activeTrees) {
@@ -430,22 +428,13 @@ public class BranchRatesModelGenerator extends Generator {
             case RANDOM_LOCAL_CLOCK:
                 return modelPrefix + "clock.rate";
 
-            case UNCORRELATED:
-                switch (model.getClockDistributionType()) {
+            case UNCORRELATED_EXPONENTIAL:
+                return modelPrefix + ClockType.UCED_MEAN;
 
-                    case LOGNORMAL:
-                        return modelPrefix + ClockType.UCLD_MEAN;
-                    case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-//                        return modelPrefix + ClockType.UCGD_SCALE;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Cauchy model not supported yet");
-//                        return modelPrefix + ClockType.UCCD_MEAN;
-                    case EXPONENTIAL:
-                        return modelPrefix + ClockType.UCED_MEAN;
-                }
+            case UNCORRELATED_LOGNORMAL:
+                return modelPrefix + ClockType.UCLD_MEAN;
 
-            case AUTOCORRELATED:
+            case AUTOCORRELATED_LOGNORMAL:
                 //TODO
                 throw new IllegalArgumentException("Autocorrelated Relaxed Clock, writeAllClockRateRefs(PartitionClockModel model, XMLWriter writer)");
 //	        	break;
@@ -464,23 +453,17 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
                 break;
 
-            case UNCORRELATED:
-                switch (model.getClockDistributionType()) {
-                    case LOGNORMAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
-                        break;
-                    case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated gamma model not supported yet");
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Couchy model not supported yet");
-                    case EXPONENTIAL:
-                        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                        break;
-                }
+            case UNCORRELATED_EXPONENTIAL:
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
+                break;
 
-            case AUTOCORRELATED:
-// TODO
+            case UNCORRELATED_LOGNORMAL:
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_STDEV);
+                break;
+
+            case AUTOCORRELATED_LOGNORMAL:
+// TODO                
                 break;
 
             default:
@@ -496,7 +479,8 @@ public class BranchRatesModelGenerator extends Generator {
             case STRICT_CLOCK:
                 break;
 
-            case UNCORRELATED:
+            case UNCORRELATED_EXPONENTIAL:
+            case UNCORRELATED_LOGNORMAL:
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getAllPartitionData(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
@@ -504,7 +488,7 @@ public class BranchRatesModelGenerator extends Generator {
                 }
                 break;
 
-            case AUTOCORRELATED:
+            case AUTOCORRELATED_LOGNORMAL:
 // TODO
                 for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getAllPartitionData(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
@@ -530,15 +514,5 @@ public class BranchRatesModelGenerator extends Generator {
 
     }
 
-    public void writeClockLikelihoodReferences(XMLWriter writer) {
-        for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
-            PartitionClockModel clockModel = partition.getPartitionClockModel();
-
-            if (clockModel.getClockType() == ClockType.AUTOCORRELATED) {
-                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
-            }
-        }
-    }
 
 }

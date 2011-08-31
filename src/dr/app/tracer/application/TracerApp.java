@@ -7,7 +7,6 @@ import jam.framework.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
-import java.util.Locale;
 
 public class TracerApp extends MultiDocApplication {
 
@@ -20,10 +19,6 @@ public class TracerApp extends MultiDocApplication {
 
     // Main entry point
     static public void main(String[] args) {
-        // There is a major issue with languages that use the comma as a decimal separator.
-        // To ensure compatibility between programs in the package, enforce the US locale.
-        Locale.setDefault(Locale.US);
-
         boolean lafLoaded = false;
 
         if (OSType.isMac()) {
@@ -70,7 +65,7 @@ public class TracerApp extends MultiDocApplication {
             final String nameString = "Tracer";
             final String versionString = "v1.6.0pre";
             String aboutString = "<html><center><p>MCMC Trace Analysis Tool<br>" +
-                    "Version " + versionString + ", 2003-2011</p>" +
+                    "Version " + versionString + ", 2003-2010</p>" +
                     "<p>by<br>" +
 
                     "Andrew Rambaut, Marc A. Suchard, Walter Xie and Alexei J. Drummond</p>" +

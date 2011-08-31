@@ -23,11 +23,10 @@
 
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.RelativeRatesType;
-import dr.evolution.datatype.DataType;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.RelativeRatesType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
@@ -35,9 +34,9 @@ import dr.evolution.util.Taxa;
 import dr.math.MathUtils;
 import dr.stats.DiscreteStatistics;
 
-import java.util.ArrayList;
+import javax.swing.*;
 import java.util.List;
-import java.util.Vector;
+
 
 
 /**
@@ -51,42 +50,37 @@ public class ClockModelOptions extends ModelOptions {
     // Instance variables
     private final BeautiOptions options;
 
-//    private FixRateType rateOptionClockModel = FixRateType.RELATIVE_TO;
-//    private double meanRelativeRate = 1.0;
-
-//    public List<ClockModelGroup> clockModelGroupList = new ArrayList<ClockModelGroup>();
+    private FixRateType rateOptionClockModel = FixRateType.RELATIVE_TO;
+    private double meanRelativeRate = 1.0;
 
     public ClockModelOptions(BeautiOptions options) {
         this.options = options;
 
         initGlobalClockModelParaAndOpers();
 
-//        fixRateOfFirstClockPartition();
+        fixRateOfFirstClockPartition();
     }
 
     private void initGlobalClockModelParaAndOpers() {
 
-//        createParameter("allClockRates", "All the relative rates regarding clock models");
-//
-//        createOperator("deltaAllClockRates", RelativeRatesType.CLOCK_RELATIVE_RATES.toString(),
-//                "Delta exchange operator for all the relative rates regarding clock models", "allClockRates",
-//                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
-//
-//        // only available for *BEAST and EBSP
-//        createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights",
-//                "Scales all rates inversely to node heights of the tree",
-//                demoTuning, branchWeights);
+        createParameter("allClockRates", "All the relative rates regarding clock models");
+
+        createOperator("deltaAllClockRates", RelativeRatesType.CLOCK_RELATIVE_RATES.toString(),
+                "Delta exchange operator for all the relative rates regarding clock models", "allClockRates",
+                OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+
+        // only available for *BEAST and EBSP
+        createUpDownAllOperator("upDownAllRatesHeights", "Up down all rates and heights", "Scales all rates inversely to node heights of the tree",
+                demoTuning, branchWeights);
 
     }
 
     /**
      * return a list of parameters that are required
+     *
      */
     public void selectParameters() {
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
-            createParameter(clockModelGroup.getName(), // used in BeastGenerator (Branch Rates Model) part
-                    "All relative rates regarding clock models in group " + clockModelGroup.getName());
-        }
+
     }
 
     /**
@@ -95,330 +89,135 @@ public class ClockModelOptions extends ModelOptions {
      * @param ops the operator list
      */
     public void selectOperators(List<Operator> ops) {
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
-            if (clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN) {
-                createOperator("delta_" + clockModelGroup.getName(),
-                        RelativeRatesType.CLOCK_RELATIVE_RATES.toString() + " in " + clockModelGroup.getName(),
-                        "Delta exchange operator for all relative rates regarding clock models",
-                        clockModelGroup.getName(), OperatorType.DELTA_EXCHANGE, 0.75, rateWeights);
+        if (rateOptionClockModel == FixRateType.FIX_MEAN) {
+            Operator deltaOperator = getOperator("deltaAllClockRates");
 
-                Operator deltaOperator = getOperator("delta_" + clockModelGroup.getName());
+            // update delta clock operator weight
+            deltaOperator.weight = options.getPartitionClockModels().size();
 
-                // update delta clock operator weight
-                deltaOperator.weight = options.getPartitionClockModels(clockModelGroup).size();
-
-                ops.add(deltaOperator);
-            }
-
-            //up down all rates and trees operator only available for *BEAST and EBSP
-            if (clockModelGroup.getRateTypeOption() == FixRateType.RELATIVE_TO && //TODO what about Calibration?
-                    (options.useStarBEAST || options.isEBSPSharingSamePrior())) {
-                // only available for *BEAST and EBSP
-                createUpDownAllOperator("upDownAllRatesHeights_" + clockModelGroup.getName(),
-                        "Up down all rates and heights in " + clockModelGroup.getName(),
-                        "Scales all rates inversely to node heights of the tree",
-                        demoTuning, branchWeights);
-                Operator op = getOperator("upDownAllRatesHeights_" + clockModelGroup.getName());
-                op.setClockModelGroup(clockModelGroup);
-
-                ops.add(op);
-            }
-        }
-    }
-
-    //+++++++++++++++++++++++ Clock Model Group ++++++++++++++++++++++++++++++++
-    public void initClockModelGroup() {
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            addClockModelGroup(model);
-        }
-    }
-
-    public void addClockModelGroup(PartitionClockModel model) {
-        if (model.getClockModelGroup() == null) {
-            String groupName = model.getDataType().getDescription().toLowerCase() + "_group";
-            List<ClockModelGroup> groupsList = getClockModelGroups();
-            ClockModelGroup clockModelGroup;
-            if (containsGroup(groupName, groupsList)) {
-                clockModelGroup = getGroup(groupName, groupsList);
-            } else {
-                clockModelGroup = new ClockModelGroup(groupName);
-            }
-            model.setClockModelGroup(clockModelGroup);
-        }
-    }
-
-    public List<ClockModelGroup> getClockModelGroups(DataType dataType) {
-        List<ClockModelGroup> activeClockModelGroups = new ArrayList<ClockModelGroup>();
-        for (PartitionClockModel model : options.getPartitionClockModels(dataType)) {
-            ClockModelGroup group = model.getClockModelGroup();
-            if (group != null && (!activeClockModelGroups.contains(group))) {
-                activeClockModelGroups.add(group);
-            }
-        }
-        return activeClockModelGroups;
-    }
-
-    public List<ClockModelGroup> getClockModelGroups(List<? extends AbstractPartitionData> givenDataPartitions) {
-        List<ClockModelGroup> activeClockModelGroups = new ArrayList<ClockModelGroup>();
-        for (PartitionClockModel model : options.getPartitionClockModels(givenDataPartitions)) {
-            ClockModelGroup group = model.getClockModelGroup();
-            if (group != null && (!activeClockModelGroups.contains(group))) {
-                activeClockModelGroups.add(group);
-            }
-        }
-        return activeClockModelGroups;
-    }
-
-    public List<ClockModelGroup> getClockModelGroups() {
-        return getClockModelGroups(options.dataPartitions);
-    }
-
-    public Vector<String> getClockModelGroupNames(List<ClockModelGroup> group) {
-        Vector<String> activeClockModelGroups = new Vector<String>();
-        for (ClockModelGroup clockModelGroup : group) {
-            String name = clockModelGroup.getName();
-            if (name != null && (!activeClockModelGroups.contains(name))) {
-                activeClockModelGroups.add(name);
-            }
-        }
-        return activeClockModelGroups;
-    }
-
-    public boolean containsGroup(String groupName, List<ClockModelGroup> groupsList) {
-        for (ClockModelGroup clockModelGroup : groupsList) {
-            if (clockModelGroup.getName().equalsIgnoreCase(groupName)) return true;
-        }
-        return false;
-    }
-
-    public ClockModelGroup getGroup(String groupName, List<ClockModelGroup> groupsList) {
-        for (ClockModelGroup clockModelGroup : groupsList) {
-            if (clockModelGroup.getName().equalsIgnoreCase(groupName))
-                return clockModelGroup;
-        }
-        return null;
-    }
-
-    public void fixRateOfFirstClockPartition(ClockModelGroup group) {
-        group.setRateTypeOption(FixRateType.RELATIVE_TO);
-        // fix rate of 1st partition
-        int i = 0;
-        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-            if (i < 1) {
-                model.setEstimatedRate(false);
-            } else {
-                model.setEstimatedRate(true);
-            }
-            i = i + 1;
-        }
-    }
-
-    public void fixMeanRate(ClockModelGroup group) {
-        group.setRateTypeOption(FixRateType.FIX_MEAN);
-
-        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
-            model.setRate(group.getFixMeanRate(), false);
-        }
-    }
-
-    public void tipTimeCalibration(ClockModelGroup group) {
-        group.setRateTypeOption(FixRateType.TIP_CALIBRATED);
-
-        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-
-    public void nodeCalibration(ClockModelGroup group) {
-        group.setRateTypeOption(FixRateType.NODE_CALIBRATED);
-
-        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-
-    public void rateCalibration(ClockModelGroup group) {
-        group.setRateTypeOption(FixRateType.RATE_CALIBRATED);
-
-        for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-            model.setEstimatedRate(true);
-        }
-    }
-
-    public String statusMessageClockModel(ClockModelGroup group) {
-        String t;
-        if (group.getRateTypeOption() == FixRateType.RELATIVE_TO) {
-            if (options.getPartitionClockModels(group).size() == 1) { // single partition clock
-                if (options.getPartitionClockModels(group).get(0).isEstimatedRate()) {
-                    t = "Estimate clock rate";
-                } else {
-                    t = "Fix clock rate to " + options.getPartitionClockModels(group).get(0).getRate();
-                }
-
-            } else {
-                // todo is the following code excuted?
-                t = group.getRateTypeOption().toString() + " ";
-                int c = 0;
-                for (PartitionClockModel model : options.getPartitionClockModels(group)) {
-                    if (!model.isEstimatedRate()) {
-                        if (c > 0) t = t + ", ";
-                        c = c + 1;
-                        t = t + model.getName();
-                    }
-                }
-
-                if (c == 0) t = "Estimate all clock rates";
-                if (c == options.getPartitionClockModels(group).size()) t = "Fix all clock rates";
-            }
-
-        } else {
-            t = group.getRateTypeOption().toString();
+            ops.add(deltaOperator);
         }
 
-        return t + " in " + group.getName();
-    }
-
-    public String statusMessageClockModel() {
-        String t = "";
-        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
-            t += statusMessageClockModel(clockModelGroup) + "; ";
+        //up down all rates and trees operator only available for *BEAST and EBSP
+        if (rateOptionClockModel == FixRateType.RELATIVE_TO && //TODO what about Calibration? 
+                (options.useStarBEAST || options.isEBSPSharingSamePrior())) {
+            ops.add(getOperator("upDownAllRatesHeights"));
         }
-        return t;
+
     }
 
 
     /////////////////////////////////////////////////////////////
-//    public FixRateType getRateOptionClockModel() {
-//        return rateOptionClockModel;
-//    }
+    public FixRateType getRateOptionClockModel() {
+        return rateOptionClockModel;
+    }
 
 //	public void setRateOptionClockModel(FixRateType rateOptionClockModel) {
 //		this.rateOptionClockModel = rateOptionClockModel;
 //	}
 
-//    public void setMeanRelativeRate(double meanRelativeRate) {
-//        this.meanRelativeRate = meanRelativeRate;
-//    }
+    public void setMeanRelativeRate(double meanRelativeRate) {
+        this.meanRelativeRate = meanRelativeRate;
+    }
 
-//    public double calculateAvgBranchLength(List<AbstractPartitionData> partitions) { // todo
-//        double avgBranchLength = 1;
-//
-//        for (PartitionTreeModel tree : options.getPartitionTreeModels(partitions)) {
-//        }
-//        return MathUtils.round(avgBranchLength, 2);
-//    }
-
-
-    public double[] calculateInitialRootHeightAndRate(List<AbstractPartitionData> partitions) {
+    public double[] calculateInitialRootHeightAndRate(List<PartitionData> partitions) {
         double avgInitialRootHeight = 1;
         double avgInitialRate = 1;
         double avgMeanDistance = 1;
 
-//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
-
-        if (partitions.size() > 0) {
+        if (options.hasData()) {
             avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
         }
 
-        if (options.getPartitionClockModels(partitions).size() > 0) {
+        if (options.getPartitionClockModels().size() > 0) {
             avgInitialRate = options.clockModelOptions.getSelectedRate(partitions); // all clock models
-            //todo multi-group?
-            ClockModelGroup clockModelGroup = options.getPartitionClockModels(partitions).get(0).getClockModelGroup();
-
-            switch (clockModelGroup.getRateTypeOption()) {
-                case FIX_MEAN:
-                case RELATIVE_TO:
-                    if (partitions.size() > 0) {
-                        avgInitialRootHeight = avgMeanDistance / avgInitialRate;
-                    }
-                    break;
-
-                case TIP_CALIBRATED:
-                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
-                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case NODE_CALIBRATED:
-                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
-                    avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case RATE_CALIBRATED:
-
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown fix rate type");
-            }
         }
+
+        switch (options.clockModelOptions.getRateOptionClockModel()) {
+            case FIX_MEAN:
+            case RELATIVE_TO:
+                if (options.hasData()) {
+                    avgInitialRootHeight = avgMeanDistance / avgInitialRate;
+                }
+                break;
+
+            case TIP_CALIBRATED:
+                avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
+
+            case NODE_CALIBRATED:
+            	avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
+
+            case RATE_CALIBRATED:
+
+                break;
+
+            default:
+                throw new IllegalArgumentException("Unknown fix rate type");
+        }
+
         avgInitialRootHeight = MathUtils.round(avgInitialRootHeight, 2);
         avgInitialRate = MathUtils.round(avgInitialRate, 2);
 
         return new double[]{avgInitialRootHeight, avgInitialRate};
     }
 
-    public double getSelectedRate(List<AbstractPartitionData> partitions) {
+    public double getSelectedRate(List<PartitionData> partitions) {
         double selectedRate = 1;
         double avgInitialRootHeight;
         double avgMeanDistance = 1;
         // calibration: all isEstimatedRate = true
+        switch (options.clockModelOptions.getRateOptionClockModel()) {
+            case FIX_MEAN:
+                selectedRate = meanRelativeRate;
+                break;
+                
+            case RELATIVE_TO:
+                List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
+                // fix ?th partition
+                if (models.size() == 1) {
+                    selectedRate = models.get(0).getRate();
+                } else {
+                    selectedRate = getAverageRate(models);
+                }
+                break;
 
-//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
+            case TIP_CALIBRATED:
+                if (options.hasData()) {
+                    avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+                }
+                avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
+                selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
 
-        if (partitions.size() > 0 && options.getPartitionClockModels(partitions).size() > 0) {
-            //todo multi-group?
-            ClockModelGroup clockModelGroup = options.getPartitionClockModels(partitions).get(0).getClockModelGroup();
-            switch (clockModelGroup.getRateTypeOption()) {
-                case FIX_MEAN:
-                    selectedRate = clockModelGroup.getFixMeanRate();
-                    break;
+            case NODE_CALIBRATED:
+                if (options.hasData()) {
+                    avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
+                }
+                avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
+                break;
 
-                case RELATIVE_TO:
-                    List<PartitionClockModel> models = options.getPartitionClockModels(partitions);
-                    // fix ?th partition
-                    if (models.size() == 1) {
-                        selectedRate = models.get(0).getRate();
-                    } else {
-                        selectedRate = getAverageRate(models);
-                    }
-                    break;
+            case RATE_CALIBRATED:
+              //TODO
+                break;
 
-                case TIP_CALIBRATED:
-                    if (partitions.size() > 0) {
-                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
-                    }
-                    avgInitialRootHeight = options.maximumTipHeight * 10.0;//TODO
-                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case NODE_CALIBRATED:
-                    if (partitions.size() > 0) {
-                        avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
-                    }
-                    avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
-                    selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
-                    break;
-
-                case RATE_CALIBRATED:
-                    //TODO
-                    break;
-
-                default:
-                    throw new IllegalArgumentException("Unknown fix rate type");
-            }
+            default:
+                throw new IllegalArgumentException("Unknown fix rate type");
         }
+        
         return selectedRate;
     }
-
-//    private List<AbstractPartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
+    
+//    private List<PartitionData> getAllPartitionDataGivenClockModels(List<PartitionClockModel> models) {
 //
-//        List<AbstractPartitionData> allData = new ArrayList<AbstractPartitionData>();
+//        List<PartitionData> allData = new ArrayList<PartitionData>();
 //
 //        for (PartitionClockModel model : models) {
-//            for (AbstractPartitionData partition : model.getAllPartitionData()) {
+//            for (PartitionData partition : model.getAllPartitionData()) {
 //                if (partition != null && (!allData.contains(partition))) {
 //                    allData.add(partition);
 //                }
@@ -428,12 +227,12 @@ public class ClockModelOptions extends ModelOptions {
 //        return allData;
 //    }
 
-    private double getCalibrationEstimateOfRootTime(List<AbstractPartitionData> partitions) {
+    private double getCalibrationEstimateOfRootTime(List<PartitionData> partitions) {
 
         // TODO - shouldn't this method be in the PartitionTreeModel??
 
         List<Taxa> taxonSets = options.taxonSets;
-        if (taxonSets != null && taxonSets.size() > 0) { // tmrca statistic
+        if (taxonSets != null && taxonSets.size() > 0) { // tmrca statistic 
 
             // estimated root times based on each of the taxon sets
             double[] rootTimes = new double[taxonSets.size()];
@@ -455,15 +254,15 @@ public class ClockModelOptions extends ModelOptions {
 
                 int siteCount = 0;
 
-                for (AbstractPartitionData partition : partitions) {
-                    Tree tree = new UPGMATree(partition.getDistances());
+                for (PartitionData partition : partitions) {
+                    Tree tree = new UPGMATree(partition.distances);
 
                     NodeRef node = Tree.Utils.getCommonAncestorNode(tree, Taxa.Utils.getTaxonListIdSet(taxa));
 
                     calibrationDistance += tree.getNodeHeight(node);
                     rootDistance += tree.getNodeHeight(tree.getRoot());
 
-                    siteCount += partition.getSiteCount();
+                    siteCount += partition.getAlignment().getSiteCount();
                 }
 
                 rootDistance /= partitions.size();
@@ -482,7 +281,7 @@ public class ClockModelOptions extends ModelOptions {
 
             // return the mean estimate of the root time for this set of partitions
             return DiscreteStatistics.mean(rootTimes);
-
+        
         } else { // prior on treeModel.rootHight
             double avgInitialRootHeight = 0;
             double count = 0;
@@ -493,16 +292,15 @@ public class ClockModelOptions extends ModelOptions {
             if (count != 0) avgInitialRootHeight = avgInitialRootHeight / count;
             return avgInitialRootHeight;
         }
-
+        
     }
 
     // FixRateType.FIX_MEAN
-//    public double getMeanRelativeRate() {
-//        return meanRelativeRate;
-//    }
+    public double getMeanRelativeRate() {
+        return meanRelativeRate;
+    }
 
     // FixRateType.ESTIMATE
-
     public double getAverageRate(List<PartitionClockModel> models) { //TODO average per tree, but how to control the estimate clock => tree?
         double averageRate = 0;
         double count = 0;
@@ -517,7 +315,7 @@ public class ClockModelOptions extends ModelOptions {
         if (count > 0) {
             averageRate = averageRate / count;
         } else {
-            averageRate = 1; //TODO how to calculate rate when estimate all
+            averageRate = 1; //TODO how to calculate rate when estimate all 
         }
 
         return averageRate;
@@ -543,15 +341,15 @@ public class ClockModelOptions extends ModelOptions {
         return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
                 || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
     }
-
+    
     private boolean hasProperPriorOn(Parameter para) {
         return para.priorType == PriorType.LOGNORMAL_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR
                 || para.priorType == PriorType.LAPLACE_PRIOR
-//                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
+                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.shape > 1)
                 || (para.priorType == PriorType.GAMMA_PRIOR && para.offset > 0)
-                || (para.priorType == PriorType.UNIFORM_PRIOR && para.truncationLower > 0 && para.truncationUpper < Double.POSITIVE_INFINITY)
+                || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
                 || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0);
     }
 
@@ -560,12 +358,12 @@ public class ClockModelOptions extends ModelOptions {
         return false;//TODO
     }
 
-    public int[] getPartitionClockWeights(ClockModelGroup group) {
+    public int[] getPartitionClockWeights() {
         int[] weights = new int[options.getPartitionClockModels().size()]; // use List?
 
         int k = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            for (AbstractPartitionData partition : options.getAllPartitionData(model)) {
+            for (PartitionData partition : options.getAllPartitionData(model)) {
                 int n = partition.getSiteCount();
                 weights[k] += n;
             }
@@ -577,97 +375,97 @@ public class ClockModelOptions extends ModelOptions {
         return weights;
     }
 
-//    public void fixRateOfFirstClockPartition() {
-//        this.rateOptionClockModel = FixRateType.RELATIVE_TO;
-//        // fix rate of 1st partition
-//        int i = 0;
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            if (i < 1) {
-//                model.setEstimatedRate(false);
-//            } else {
-//                model.setEstimatedRate(true);
-//            }
-//            i = i + 1;
-//        }
-//    }
-//
-//    public void fixMeanRate() {
-//        this.rateOptionClockModel = FixRateType.FIX_MEAN;
-//
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
-//        }
-//    }
-//
-//    public void tipTimeCalibration() {
-//        this.rateOptionClockModel = FixRateType.TIP_CALIBRATED;
-//
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            model.setEstimatedRate(true);
-//        }
-//    }
-//
-//
-//    public void nodeCalibration() {
-//        this.rateOptionClockModel = FixRateType.NODE_CALIBRATED;
-//
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            model.setEstimatedRate(true);
-//        }
-//    }
-//
-//
-//    public void rateCalibration() {
-//        this.rateOptionClockModel = FixRateType.RATE_CALIBRATED;
-//
-//        for (PartitionClockModel model : options.getPartitionClockModels()) {
-//            model.setEstimatedRate(true);
-//        }
-//    }
+    public void fixRateOfFirstClockPartition() {
+        this.rateOptionClockModel = FixRateType.RELATIVE_TO;
+        // fix rate of 1st partition
+        int i = 0;
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            if (i < 1) {
+                model.setEstimatedRate(false);
+            } else {
+                model.setEstimatedRate(true);
+            }
+            i = i + 1;
+        }
+    }
 
-//    public String statusMessageClockModel() {
-//        if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
-//            if (options.getPartitionClockModels().size() == 1) { // single partition clock
-//                if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
-//                    return "Estimate clock rate";
-//                } else {
-//                    return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
-//                }
-//
-//            } else {
-//                String t = rateOptionClockModel.toString() + " ";
-//                int c = 0;
-//                for (PartitionClockModel model : options.getPartitionClockModels()) {
-//                    if (!model.isEstimatedRate()) {
-//                        if (c > 0) t = t + ", ";
-//                        c = c + 1;
-//                        t = t + model.getName();
-//                    }
-//                }
-//
-//                if (c == 0) t = "Estimate all clock rates";
-//                if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
-//
-//                return t;
-//            }
-//
-//        } else {
-//            return rateOptionClockModel.toString();
-//        }
-//    }
+    public void fixMeanRate() {
+        this.rateOptionClockModel = FixRateType.FIX_MEAN;
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.setEstimatedRate(true); // all set to NOT fixed, because detla exchange
+        }
+    }
+
+    public void tipTimeCalibration() {
+        this.rateOptionClockModel = FixRateType.TIP_CALIBRATED;
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.setEstimatedRate(true);
+        }
+    }
+
+
+    public void nodeCalibration() {
+        this.rateOptionClockModel = FixRateType.NODE_CALIBRATED;
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.setEstimatedRate(true);
+        }
+    }
+
+
+    public void rateCalibration() {
+        this.rateOptionClockModel = FixRateType.RATE_CALIBRATED;
+
+        for (PartitionClockModel model : options.getPartitionClockModels()) {
+            model.setEstimatedRate(true);
+        }
+    }
+    
+    public String statusMessageClockModel() {
+        if (rateOptionClockModel == FixRateType.RELATIVE_TO) {
+            if (options.getPartitionClockModels().size() == 1) { // single partition clock
+                if (options.getPartitionClockModels().get(0).isEstimatedRate()) {
+                    return "Estimate clock rate";
+                } else {
+                    return "Fix clock rate to " + options.getPartitionClockModels().get(0).getRate();
+                }
+                
+            } else {
+                String t = rateOptionClockModel.toString() + " ";
+                int c = 0;
+                for (PartitionClockModel model : options.getPartitionClockModels()) {
+                    if (!model.isEstimatedRate()) {
+                        if (c > 0) t = t + ", ";
+                        c = c + 1;
+                        t = t + model.getName();                    
+                    }
+                }
+                
+                if (c == 0) t = "Estimate all clock rates";
+                if (c == options.getPartitionClockModels().size()) t = "Fix all clock rates";
+                
+                return t;                
+            }
+            
+        } else {
+            return rateOptionClockModel.toString();
+        }
+    }
 
     //+++++++++++++++++++++++ Validation ++++++++++++++++++++++++++++++++
-    // true => valid, false => warning message
-//    public boolean validateFixMeanRate(boolean fixedMeanRateCheck) {
-//        return !(fixedMeanRateCheck && options.getPartitionClockModels().size() < 2);
-//    }
-
+    // true => valid, false => warning message 
+    public boolean validateFixMeanRate(JCheckBox fixedMeanRateCheck) {
+        return !(fixedMeanRateCheck.isSelected() && options.getPartitionClockModels().size() < 2);
+    }
+    
 //    public boolean validateRelativeTo() {
 //        for (PartitionClockModel model : options.getPartitionClockModels()) {
 //            if (!model.isEstimatedRate()) { // fixed
 //                return true;
 //            }
-//        }
+//        }        
 //        return false;
 //    }
 

@@ -285,7 +285,7 @@ public class Sequences implements SequenceList, Attributable, Identifiable {
     // INSTANCE VARIABLES
     // **************************************************************
 
-    protected final Vector<Sequence> sequences = new Vector<Sequence>();
+    private final Vector<Sequence> sequences = new Vector<Sequence>();
 
     private Attributable.AttributeHelper attributes = null;
 }

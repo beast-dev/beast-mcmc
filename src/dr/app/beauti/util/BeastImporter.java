@@ -63,14 +63,14 @@ public class BeastImporter {
 
         List children = root.getChildren();
         for(Object aChildren : children) {
-            Element child = (Element) aChildren;
-
+            Element child = (Element) aChildren;            
+            
             if( child.getName().equalsIgnoreCase(TaxaParser.TAXA) ) {
                 if( taxa == null ) {
-                    taxa = readTaxa(null, child);
+                    taxa = readTaxa(child);
                     taxonLists.add(taxa);
                 } else {
-                    taxonLists.add(readTaxa(taxa, child));
+                    taxonLists.add(readTaxa(child));
                 }
             } else if( child.getName().equalsIgnoreCase(AlignmentParser.ALIGNMENT) ) {
                 if( taxa == null ) {
@@ -81,60 +81,39 @@ public class BeastImporter {
         }
     }
 
-    private TaxonList readTaxa(TaxonList primaryTaxa, Element e) throws Importer.ImportException {
+    private TaxonList readTaxa(Element e) throws Importer.ImportException {
         Taxa taxa = new Taxa();
-
-        String id = e.getAttributeValue("id");
-        if (id != null) {
-            taxa.setId(id);
-        } else {
-            taxa.setId("taxa");
-        }
 
         List children = e.getChildren();
         for(Object aChildren : children) {
             Element child = (Element) aChildren;
 
             if( child.getName().equalsIgnoreCase(TaxonParser.TAXON) ) {
-                taxa.addTaxon(readTaxon(primaryTaxa, child));
+                taxa.addTaxon(readTaxon(child));
             }
         }
         return taxa;
     }
 
-    private Taxon readTaxon(TaxonList primaryTaxa, Element e) throws Importer.ImportException {
+    private Taxon readTaxon(Element e) throws Importer.ImportException {
 
         String id = e.getAttributeValue(XMLParser.ID);
 
-        Taxon taxon = null;
+        Taxon taxon = new Taxon(id);
 
-        if (id != null) {
-             taxon = new Taxon(id);
+        List children = e.getChildren();
+        for(Object aChildren : children) {
+            Element child = (Element) aChildren;
 
-            List children = e.getChildren();
-            for(Object aChildren : children) {
-                Element child = (Element) aChildren;
-
-                if( child.getName().equalsIgnoreCase(dr.evolution.util.Date.DATE) ) {
-                    Date date = readDate(child);
-                    taxon.setAttribute(dr.evolution.util.Date.DATE, date);
-                } else if( child.getName().equalsIgnoreCase(AttributeParser.ATTRIBUTE) ) {
-                    String name = child.getAttributeValue(AttributeParser.NAME);
-                    String value = child.getAttributeValue(AttributeParser.VALUE);
-                    if (value == null) {
-                        value = child.getTextTrim();
-                    }
-                    taxon.setAttribute(name, value);
-                }
-            }
-        } else {
-            String idref = e.getAttributeValue(XMLParser.IDREF);
-            int index = primaryTaxa.getTaxonIndex(idref);
-            if (index >= 0) {
-                taxon = primaryTaxa.getTaxon(index);
+            if( child.getName().equalsIgnoreCase(dr.evolution.util.Date.DATE) ) {
+                Date date = readDate(child);
+                taxon.setAttribute(dr.evolution.util.Date.DATE, date);
+            } else if( child.getName().equalsIgnoreCase(AttributeParser.ATTRIBUTE) ) {
+                String name = e.getAttributeValue(AttributeParser.NAME);
+                String value = e.getAttributeValue(AttributeParser.VALUE);
+                taxon.setAttribute(name, value);
             }
         }
-
         return taxon;
     }
 

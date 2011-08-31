@@ -26,14 +26,9 @@
 package dr.app.tracer.analysis;
 
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
-import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
-import dr.math.Integral;
 import dr.stats.Variate;
-import jam.framework.DocumentFrame;
-import jam.panels.OptionsPanel;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
 import jebl.evolution.io.ImportException;
@@ -41,6 +36,10 @@ import jebl.evolution.io.NewickImporter;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.io.TreeImporter;
 import jebl.evolution.trees.RootedTree;
+import dr.app.gui.components.WholeNumberField;
+import jam.framework.DocumentFrame;
+import jam.panels.OptionsPanel;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -54,12 +53,8 @@ import java.awt.event.ItemListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class BayesianSkylineDialog {
 
@@ -279,7 +274,7 @@ public class BayesianSkylineDialog {
         optionPanel.removeAll();
 
         JLabel label = new JLabel(
-                "<html>Warning: This analysis should only be run on traces where<br>" +
+                "<html>Warning! This analysis should only be run on traces where<br>" +
                         "the Bayesian Skyline plot was specified as the demographic in BEAST.<br>" +
                         "<em>Any other model will produce meaningless results.</em></html>");
         label.setFont(label.getFont().deriveFont(((float) label.getFont().getSize() - 2)));
@@ -437,7 +432,12 @@ public class BayesianSkylineDialog {
         }
 
         final AnalyseBayesianSkylineTask analyseTask = new AnalyseBayesianSkylineTask(traceList,
-                treeFile, firstPopSize, popSizeCount, firstGroupSize, groupSizeCount, frame);
+                treeFile,
+                firstPopSize,
+                popSizeCount,
+                firstGroupSize,
+                groupSizeCount,
+                frame);
 
         final ProgressMonitor progressMonitor = new ProgressMonitor(frame,
                 "Analysing Bayesian Skyline",
@@ -477,8 +477,8 @@ public class BayesianSkylineDialog {
 
         int stateCount;
 
-        ArrayList<ArrayList> popSizes;
-        ArrayList<ArrayList> groupSizes;
+        Double[][] popSizes;
+        Double[][] groupSizes;
 
         private int lengthOfTask = 0;
         private int current = 0;
@@ -508,13 +508,13 @@ public class BayesianSkylineDialog {
 
             stateCount = traceList.getStateCount();
 
-            popSizes = new ArrayList<ArrayList>();
+            popSizes = new Double[popSizeCount][stateCount];
             for (int i = 0; i < popSizeCount; i++) {
-                popSizes.add(new ArrayList(traceList.getValues(firstPopSize + i)));
+                traceList.getValues(firstPopSize + i, popSizes[i]);
             }
-            groupSizes = new ArrayList<ArrayList>();
+            groupSizes = new Double[groupSizeCount][stateCount];
             for (int i = 0; i < groupSizeCount; i++) {
-                groupSizes.add(new ArrayList(traceList.getValues(firstGroupSize + i)));
+                traceList.getValues(firstGroupSize + i, groupSizes[i]);
             }
 
         }
@@ -537,10 +537,10 @@ public class BayesianSkylineDialog {
 
         public Object doWork() {
 
-            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
+            Double[] heights = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
-            TraceDistribution distribution = new TraceDistribution(heights,
-                    traceList.getTrace(traceList.getTraceIndex(rootHeightTrace)).getTraceType(), traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();
@@ -628,27 +628,21 @@ public class BayesianSkylineDialog {
                     state += 1;
                 }
 
-                // AR - there seems to be lots of uncommented behaviour perhaps to allow different
-                // numbers of trees in tree files than rows in log files? The log file and tree
-                // file have to correspond to exactly the same samples.
+                int treeStateCount = state;
 
-//                int treeStateCount = state;
-
-                // AR - this test was always throwing a warning - even though it was apparently able to make
-                // a skyline. If the log file and the tree file are not in sync then the skyline would be invalid.
-//                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
-//                    JOptionPane.showMessageDialog(frame, "The number of states in the log file and tree file not match",
-//                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
-//                }
+                if ((treeStateCount % stateCount != 0) && (stateCount % treeStateCount != 0)) {
+                    JOptionPane.showMessageDialog(frame, "The number of log state and tree state not match !",
+                            "Number Format Error", JOptionPane.ERROR_MESSAGE);
+                }
 
                 double[][] groupTimes;
-//                if (treeStateCount > stateCount) {
-//                    // the age of the end of this group
-//                    groupTimes = new double[treeStateCount][];
-//                } else {
-                // the age of the end of this group
-                groupTimes = new double[stateCount][];
-//                }
+                if (treeStateCount > stateCount) {
+                    // the age of the end of this group
+                    groupTimes = new double[treeStateCount][];
+                } else {
+                    // the age of the end of this group
+                    groupTimes = new double[stateCount][];
+                }
 
                 //int treeState = 0;
                 //int logState = 0;
@@ -663,19 +657,18 @@ public class BayesianSkylineDialog {
                 try {
                     while (importer.hasTree()) {
                         RootedTree tree = (RootedTree) importer.importNextTree();
-
                         IntervalList intervals = new Intervals(tree);
                         int intervalCount = intervals.getIntervalCount();
                         //tips = tree.getExternalNodes().size();
 
-                        // get the coalescent intervals only
+                        // get the coalescent intervales only
                         groupTimes[state] = new double[groupSizeCount];
                         double totalTime = 0.0;
                         int groupSize = 1;
                         int groupIndex = 0;
                         int subIndex = 0;
                         if (firstGroupSize > 0) {
-                            double g = (Double) groupSizes.get(groupIndex).get(state);
+                            double g = groupSizes[groupIndex][state];
                             if (g != Math.round(g)) {
                                 throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                             } else groupSize = (int) Math.round(g);
@@ -692,7 +685,7 @@ public class BayesianSkylineDialog {
                                     subIndex = 0;
                                     groupIndex += 1;
                                     if (groupIndex < groupSizeCount) {
-                                        double g = (Double) groupSizes.get(groupIndex).get(state);
+                                        double g = groupSizes[groupIndex][state];
                                         if (g != Math.round(g)) {
                                             throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                                         } else groupSize = (int) Math.round(g);
@@ -721,7 +714,7 @@ public class BayesianSkylineDialog {
                     ex.printStackTrace(System.out);
                 }
 
-                Variate.D[] bins = new Variate.D[binCount];
+                Variate[] bins = new Variate[binCount];
                 double height;
                 if (ageOfYoungest > 0.0) {
                     height = ageOfYoungest - maxTime;
@@ -731,7 +724,7 @@ public class BayesianSkylineDialog {
 
 
                 for (int k = 0; k < binCount; k++) {
-                    bins[k] = new Variate.D();
+                    bins[k] = new Variate.Double();
 
                     if (height >= 0.0 && height <= maxHeight) {
                         for (state = 0; state < groupTimes.length;) {
@@ -789,24 +782,22 @@ public class BayesianSkylineDialog {
                                 }
                             }
 
-                            // AR - I don't understand what this is for...
-//                            if (treeStateCount > stateCount) {
-//                                state += treeStateCount / stateCount;
-//                            } else {
-//                                state += stateCount / treeStateCount;
-//                            }
-                            state += 1;
+                            if (treeStateCount > stateCount) {
+                                state += treeStateCount / stateCount;
+                            } else {
+                                state += stateCount / treeStateCount;
+                            }
                         }
                     }
                     height += delta;
                     current += 1;
                 }
 
-                Variate.D xData = new Variate.D();
-                Variate.D yDataMean = new Variate.D();
-                Variate.D yDataMedian = new Variate.D();
-                Variate.D yDataUpper = new Variate.D();
-                Variate.D yDataLower = new Variate.D();
+                Variate xData = new Variate.Double();
+                Variate yDataMean = new Variate.Double();
+                Variate yDataMedian = new Variate.Double();
+                Variate yDataUpper = new Variate.Double();
+                Variate yDataLower = new Variate.Double();
 
                 double t;
                 if (ageOfYoungest > 0.0) {
@@ -814,7 +805,7 @@ public class BayesianSkylineDialog {
                 } else {
                     t = minTime;
                 }
-                for (Variate.D bin : bins) {
+                for (Variate bin : bins) {
                     xData.add(t);
                     if (bin.getCount() > 0) {
                         yDataMean.add(bin.getMean());
@@ -855,24 +846,7 @@ public class BayesianSkylineDialog {
         }
 
         private double getPopSize(int index, int state) {
-            return (Double) popSizes.get(index).get(state);
+            return popSizes[index][state];
         }
-    }
-
-    private final static Pattern pattern = Pattern.compile("STATE_(\\d+)");
-
-    public final static int parseState(String label) {
-        Matcher matcher = pattern.matcher(label);
-
-        try {
-            if (matcher.matches()) {
-                String stateLabel = matcher.group(1);
-                return Integer.parseInt(stateLabel);
-            }
-        } catch (NumberFormatException nfe) {
-            // do nothing
-        }
-
-        return -1;
     }
 }

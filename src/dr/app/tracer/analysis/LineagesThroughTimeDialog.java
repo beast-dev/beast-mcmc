@@ -26,19 +26,19 @@
 package dr.app.tracer.analysis;
 
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.components.WholeNumberField;
-import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
 import dr.stats.Variate;
-import jam.framework.DocumentFrame;
-import jam.panels.OptionsPanel;
 import jebl.evolution.graphs.Node;
 import jebl.evolution.io.ImportException;
 import jebl.evolution.io.NewickImporter;
 import jebl.evolution.io.NexusImporter;
 import jebl.evolution.io.TreeImporter;
 import jebl.evolution.trees.RootedTree;
+import dr.app.gui.components.WholeNumberField;
+import jam.framework.DocumentFrame;
+import jam.panels.OptionsPanel;
+import dr.app.gui.util.LongTask;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,7 +51,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Arrays;
-import java.util.List;
 
 public class LineagesThroughTimeDialog {
 
@@ -352,10 +351,10 @@ public class LineagesThroughTimeDialog {
 
         public Object doWork() {
 
-            List heights = traceList.getValues(traceList.getTraceIndex(rootHeightTrace));
+            Double[] heights = new Double[stateCount];
+            traceList.getValues(traceList.getTraceIndex(rootHeightTrace), heights);
 
-            TraceDistribution distribution = new TraceDistribution(heights,
-                    traceList.getTrace(traceList.getTraceIndex(rootHeightTrace)).getTraceType(), traceList.getStepSize());
+            TraceDistribution distribution = new TraceDistribution(heights, traceList.getStepSize());
 
             double timeMean = distribution.getMean();
             double timeMedian = distribution.getMedian();
@@ -478,7 +477,7 @@ public class LineagesThroughTimeDialog {
                     ex.printStackTrace(System.out);
                 }
 
-                Variate.D[] bins = new Variate.D[binCount];
+                Variate[] bins = new Variate[binCount];
                 double height;
                 if (ageOfYoungest > 0.0) {
                     height = ageOfYoungest - maxTime;
@@ -489,7 +488,7 @@ public class LineagesThroughTimeDialog {
                 double n = branchingTimes[0].length;
 
                 for (int k = 0; k < binCount; k++) {
-                    bins[k] = new Variate.D();
+                    bins[k] = new Variate.Double();
 
                     if (height >= 0.0 && height <= maxHeight) {
                         for (state = 0; state < stateCount; state++) {
@@ -509,11 +508,11 @@ public class LineagesThroughTimeDialog {
                     current += 1;
                 }
 
-                Variate.D xData = new Variate.D();
-                Variate.D yDataMean = new Variate.D();
-                Variate.D yDataMedian = new Variate.D();
-                Variate.D yDataUpper = new Variate.D();
-                Variate.D yDataLower = new Variate.D();
+                Variate xData = new Variate.Double();
+                Variate yDataMean = new Variate.Double();
+                Variate yDataMedian = new Variate.Double();
+                Variate yDataUpper = new Variate.Double();
+                Variate yDataLower = new Variate.Double();
 
                 double t;
                 if (ageOfYoungest > 0.0) {
@@ -521,7 +520,7 @@ public class LineagesThroughTimeDialog {
                 } else {
                     t = minTime;
                 }
-                for (Variate.D bin : bins) {
+                for (Variate bin : bins) {
                     xData.add(t);
                     if (bin.getCount() > 0) {
                         yDataMean.add(bin.getMean());

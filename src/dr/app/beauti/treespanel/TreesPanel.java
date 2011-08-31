@@ -27,12 +27,15 @@ package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.PartitionTreePrior;
 import dr.app.gui.table.TableEditorStopper;
-import dr.evolution.datatype.Microsatellite;
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
+import jam.table.HeaderRenderer;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -47,7 +50,6 @@ import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 
@@ -69,7 +71,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //    private TreeDisplayPanel treeDisplayPanel;
 
     private BeautiFrame frame = null;
-    public BeautiOptions options = null;
+    private BeautiOptions options = null;
 
     private JTable treesTable = null;
     private TreesTableModel treesTableModel = null;
@@ -102,8 +104,8 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         treesTable.getTableHeader().setReorderingAllowed(false);
         treesTable.getTableHeader().setResizingAllowed(false);
-//        treesTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        treesTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         final TableColumnModel model = treesTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
@@ -229,23 +231,16 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (options.getPartitionTreePriors().size() > 0) {
             OptionsPanel p;
             if (options.useStarBEAST) {
-//                linkTreePriorCheck.setEnabled(false);
+                linkTreePriorCheck.setEnabled(false);
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
-                List<ClockModelGroup> groupList = options.clockModelOptions.getClockModelGroups();// all data partitions
-                for (ClockModelGroup clockModelGroup : groupList) { // todo correct?
-                    options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
-                }
+                options.clockModelOptions.fixRateOfFirstClockPartition(); // fix 1st partition
 
                 p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
 
             } else {
-//                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {
-//                    linkTreePriorCheck.setEnabled(false);
-//                } else {
-//                    linkTreePriorCheck.setEnabled(true);
-//                }
+                linkTreePriorCheck.setEnabled(true);
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
 
@@ -254,11 +249,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
             }
 
             treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
-
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                if (model != null && treeModelPanels.get(model) != null) treeModelPanels.get(model).setupPanel();
-
-            }
             updateTreePriorBorder();
             treePriorPanelParent.add(p);
         }
@@ -267,12 +257,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private void selectionChanged() {
         int selRow = treesTable.getSelectedRow();
-
-        if (selRow >= options.getPartitionTreeModels().size()) {
-            selRow = 0;
-            treesTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
-
         if (selRow >= 0) {
             PartitionTreeModel ptm = options.getPartitionTreeModels().get(selRow);
             setCurrentModelAndPrior(ptm);
@@ -321,6 +305,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
+
+    public void setCheckedTipDate(boolean isCheckedTipDate) {
+        this.isCheckedTipDate = isCheckedTipDate;
+    }
+
     private void resetPanel() {
         if (!options.hasData()) {
             currentTreeModel = null;
@@ -344,12 +333,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1
-                && (!options.contains(Microsatellite.INSTANCE)) && (!options.useStarBEAST));
+        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1);
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
-        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            if (model != null && treeModelPanels.get(model) != null) treeModelPanels.get(model).setupPanel();
+        for (PartitionTreeModel model : treeModelPanels.keySet()) {
+            if (model != null) {
+                treeModelPanels.get(model).setOptions();
+            }
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
@@ -365,11 +355,11 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 if (ptpp != null) {
                     ptpp.setOptions();
 
-//                    if (options.contains(Microsatellite.INSTANCE)) {
-//                        ptpp.setMicrosatelliteTreePrior();
-//                    } else
-                    ptpp.setTreePriorChoices(options.getPartitionTreeModels().size() > 1, options.clockModelOptions.isTipCalibrated());
-                    ptpp.repaint();
+                    if (isCheckedTipDate) {
+                        ptpp.removeCertainPriorFromTreePriorCombo();
+                    } else {
+                        ptpp.recoveryTreePriorCombo();
+                    }
                 }
             }
         }
@@ -430,7 +420,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
     private boolean isUsed(int row) {
         PartitionTreeModel model = options.getPartitionTreeModels().get(row);
-        for (AbstractPartitionData partition : options.dataPartitions) {
+        for (PartitionData partition : options.dataPartitions) {
             if (partition.getPartitionTreeModel() == model) {
                 return true;
             }

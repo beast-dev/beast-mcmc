@@ -29,7 +29,6 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.util.List;
 
 /**
  * Description:	An area plot.
@@ -41,27 +40,27 @@ import java.util.List;
 
 public class AreaPlot extends Plot.AbstractPlot {
 
-    protected Variate.N xData2 = null;
-    protected Variate.N yData2 = null;
+    protected Variate xData2 = null;
+    protected Variate yData2 = null;
 
     /**
      * Constructor
      */
-    public AreaPlot(Variate.N xData, Variate.N yData) {
+    public AreaPlot(Variate xData, Variate yData) {
         super(xData, yData);
     }
 
     /**
      * Constructor
      */
-    public AreaPlot(List<Double> xData, List<Double> yData) {
+    public AreaPlot(double[] xData, double[] yData) {
         super(xData, yData);
     }
 
     /**
      * Constructor
      */
-    public AreaPlot(Variate.N xData1, Variate.N yData1, Variate.N xData2, Variate.N yData2) {
+    public AreaPlot(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
         super(xData1, yData1);
         this.xData2 = xData2;
         this.yData2 = yData2;
@@ -70,25 +69,25 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public AreaPlot(List<Double> xData1, List<Double> yData1, List<Double> xData2, List<Double> yData2) {
+    public AreaPlot(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
         super(xData1, yData1);
-        this.xData2 = new Variate.D(xData2);
-        this.yData2 = new Variate.D(yData2);
+        this.xData2 = new Variate.Double(xData2);
+        this.yData2 = new Variate.Double(yData2);
     }
 
     /**
      * Set data
      */
-    public void setData(List<Double> xData1, List<Double> yData1, List<Double> xData2, List<Double> yData2) {
+    public void setData(double[] xData1, double[] yData1, double[] xData2, double[] yData2) {
         setData(xData1, yData1);
-        this.xData2 = new Variate.D(xData2);
-        this.yData2 = new Variate.D(yData2);
+        this.xData2 = new Variate.Double(xData2);
+        this.yData2 = new Variate.Double(yData2);
     }
 
     /**
      * Set data
      */
-    public void setData(Variate.N xData1, Variate.N yData1, Variate.N xData2, Variate.N yData2) {
+    public void setData(Variate xData1, Variate yData1, Variate xData2, Variate yData2) {
         setData(xData1, yData1);
         this.xData2 = xData2;
         this.yData2 = yData2;
@@ -119,10 +118,10 @@ public class AreaPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
-        double x0 = transformX(((Number) xData.get(0)).doubleValue());
-        double y0 = transformY(((Number) yData.get(0)).doubleValue());
+        double x0 = transformX(xData.get(0));
+        double y0 = transformY(yData.get(0));
 
         GeneralPath path = new GeneralPath();
         path.moveTo((float) x0, (float) y0);
@@ -131,15 +130,15 @@ public class AreaPlot extends Plot.AbstractPlot {
         double y = y0;
 
         for (int i = 1, n = xData.getCount(); i < n; i++) {
-            x = transformX(((Number) xData.get(i)).doubleValue());
-            y = transformY(((Number) yData.get(i)).doubleValue());
+            x = transformX(xData.get(i));
+            y = transformY(yData.get(i));
             path.lineTo((float) x, (float) y);
         }
 
         if (xData2 != null & yData2 != null) {
             for (int i = xData2.getCount() - 1; i >= 0; i--) {
-                x = transformX(((Number) xData2.get(i)).doubleValue());
-                y = transformY(((Number) yData2.get(i)).doubleValue());
+                x = transformX(xData2.get(i));
+                y = transformY(yData2.get(i));
                 path.lineTo((float) x, (float) y);
             }
 

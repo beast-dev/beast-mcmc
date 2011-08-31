@@ -1,7 +1,7 @@
 /*
- * BirthDeathSerialSamplingModelParser.java
+ * BirthDeathModelParser.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -45,13 +45,9 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
     public static final String SAMPLE_PROBABILITY = "sampleProbability";
-    public static final String SAMPLE_BECOMES_NON_INFECTIOUS = "sampleBecomesNonInfectiousProb";
-    public static final String R = "r";
-//    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
-    public static final String ORIGIN = "origin";
+    public static final String SAMPLED_REMAIN_INFECTIOUS = "sampledRemainInfectiousRate";
+    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
     public static final String TREE_TYPE = "type";
-    public static final String BDSS = "bdss";
-    public static final String HAS_FINAL_SAMPLE = "hasFinalSample";
 
     public String getParserName() {
         return BIRTH_DEATH_SERIAL_MODEL;
@@ -59,13 +55,11 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        final String modelName = xo.getId();
         final Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
-        
-        boolean hasFinalSample = xo.getAttribute(HAS_FINAL_SAMPLE, false);
+        final Parameter finalTimeInterval = (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL);
 
         final Parameter lambda = (Parameter) xo.getElementFirstChild(LAMBDA);
-
+        
         boolean relativeDeath = xo.hasChildNamed(RELATIVE_MU);
         Parameter mu;
         if (relativeDeath) {
@@ -74,40 +68,24 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
             mu = (Parameter) xo.getElementFirstChild(MU);
         }
 
+        //    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+        //    for r=0, this is sampledIndividualsRemainInfectious=TRUE
+        final Parameter r = (Parameter) xo.getElementFirstChild(SAMPLED_REMAIN_INFECTIOUS);
+
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
         final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
 
-        Parameter origin = null;
-        if (xo.hasChildNamed(ORIGIN)) {
-            origin = (Parameter) xo.getElementFirstChild(ORIGIN);
-        }
+        Logger.getLogger("dr.evomodel").info("Using birth-death serial sampling model: Stadler et al (2010) in prep.");
 
-        final Parameter r = xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ?
-                (Parameter) xo.getElementFirstChild(SAMPLE_BECOMES_NON_INFECTIOUS) : new Parameter.Default(0.0);
-//        r.setParameterValueQuietly(0, 1 - r.getParameterValue(0)); // donot use it, otherwise log is changed improperly
-
-//        final Parameter finalTimeInterval = xo.hasChildNamed(FINAL_TIME_INTERVAL) ?
-//                (Parameter) xo.getElementFirstChild(FINAL_TIME_INTERVAL) : new Parameter.Default(0.0);
-
-        Logger.getLogger("dr.evomodel").info(xo.hasChildNamed(SAMPLE_BECOMES_NON_INFECTIOUS) ? getCitationRT() : getCitationPsiOrg());
+        final String modelName = xo.getId();
 
         return new BirthDeathSerialSamplingModel(modelName, lambda, mu, psi, p, relativeDeath,
-                r, hasFinalSample, origin, units);
+                r, finalTimeInterval, units);
     }
 
     //************************************************************************
     // AbstractXMLObjectParser implementation
     //************************************************************************
-
-    public static String getCitationPsiOrg() {
-//        return "Stadler, T; Sampling-through-time in birth-death trees; JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404";
-        return "Stadler T (2010) J Theor Biol 267, 396-404 [Yule Process with Serial Samples].";
-    }
-
-    public static String getCitationRT() {
-        return "Stadler et al (2011) : Estimating the basic reproductive number from viral sequence data, " +
-                "Mol.Biol.Evol., revision submitted, July 2011.";
-    }
 
     public String getParserDescription() {
         return "Stadler et al (2010; in press) model of speciation.";
@@ -123,15 +101,14 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newStringRule(TREE_TYPE, true),
-            AttributeRule.newBooleanRule(HAS_FINAL_SAMPLE, true),
-//            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
+//            AttributeRule.newDoubleRule(FINAL_TIME_INTERVAL, true),
+            new ElementRule(FINAL_TIME_INTERVAL, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(LAMBDA, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new XORRule(
                     new ElementRule(MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
                     new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SAMPLE_BECOMES_NON_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SAMPLED_REMAIN_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };

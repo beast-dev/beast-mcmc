@@ -23,7 +23,7 @@
 
 package dr.app.beauti.options;
 
-import dr.evolution.datatype.Nucleotides;
+import dr.app.beauti.enumTypes.FixRateType;
 
 import java.util.List;
 
@@ -32,7 +32,7 @@ import java.util.List;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @author Walter Xie
- * @deprecated
+ * @version $Id$
  */
 public class PriorOptions extends ModelOptions {
 
@@ -50,7 +50,7 @@ public class PriorOptions extends ModelOptions {
      *
      * @param params the parameter list
      */
-    public void selectParameters(List<Parameter> params) { // todo this part needs to be reconsidered carefully !
+    public void selectParameters(List<Parameter> params) {
 
         double growthRateMaximum = 1E6;
 //        double birthRateMaximum = 1E6;
@@ -58,25 +58,16 @@ public class PriorOptions extends ModelOptions {
 //        double logStdevMaximum = 10;
 //        double substitutionParameterMaximum = 100;
 
-        double avgInitialRootHeight = 1;
-        double avgInitialRate = 1;
+        double[] rootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getNonTraitsDataList());
+        double avgInitialRootHeight = rootAndRate[0];
+        double avgInitialRate = rootAndRate[1];
 
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
 
-//        List<ClockModelGroup> clockModelGroupList = options.clockModelOptions.getClockModelGroups(Nucleotides.INSTANCE);
-//        if (clockModelGroupList.size() > 0) {
-        //todo assume all Nucleotides data is in one group, it needs to extend to multi-group case
-        double[] rootAndRate = options.clockModelOptions
-                .calculateInitialRootHeightAndRate(options.getAllPartitionData(Nucleotides.INSTANCE));
-        avgInitialRootHeight = rootAndRate[0];
-        avgInitialRate = rootAndRate[1];
-//        }
-
-//        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
-//                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
-//
-//            growthRateMaximum = 1E6 * avgInitialRate;
+            growthRateMaximum = 1E6 * avgInitialRate;
 //            birthRateMaximum = 1E6 * avgInitialRate;
-//        }
+        }
 
 //        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN) {
 //            double rate = options.clockModelOptions.getMeanRelativeRate();
@@ -108,9 +99,9 @@ public class PriorOptions extends ModelOptions {
                     case TIME_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
 //                        param.upper = Math.min(timeScaleMaximum, param.upper);
+
                         if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
-                            param.truncationLower = options.maximumTipHeight;
-                            param.isTruncated = true;
+                            param.lower = options.maximumTipHeight;
 //                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;
                             if (param.getOptions() instanceof PartitionTreeModel) {
@@ -159,6 +150,11 @@ public class PriorOptions extends ModelOptions {
                     case SUBSTITUTION_PARAMETER_SCALE:
 //                        param.lower = Math.max(0.0, param.lower);
                         //param.upper = Math.min(substitutionParameterMaximum, param.upper);
+                        break;
+
+                    case UNITY_SCALE:
+                        param.lower = 0.0;
+                        param.upper = 1.0;
                         break;
 
                     case ROOT_RATE_SCALE:

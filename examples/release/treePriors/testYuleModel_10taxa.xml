@@ -34,7 +34,8 @@
     <!-- a Yule speciation process (a pure birth process).                       -->
     <yuleModel id="yule" units="substitutions">
         <birthRate>
-            <parameter id="yule.birthRate" value="2.0" lower="0.0" upper="100.0"/>
+            <parameter id="yule.birthRate" value="2.0" lower="0.0"
+                       upper="100.0"/>
         </birthRate>
     </yuleModel>
 

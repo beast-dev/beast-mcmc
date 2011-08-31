@@ -25,16 +25,13 @@
 
 package dr.stats;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * interface for a continuous variate.
  *
  * @author Andrew Rambaut
  * @version $Id: Variate.java,v 1.15 2006/02/20 17:36:23 rambaut Exp $
  */
-public interface Variate<T> {
+public interface Variate {
     /**
      * @return the number of values in this Variate
      */
@@ -43,32 +40,37 @@ public interface Variate<T> {
     /**
      * @return the ith value. Returns NaN if it is missing
      */
-    T get(int index);
+    double get(int index);
+
+    /**
+     * @return if the value for index is missing
+     */
+    boolean isMissing(int index);
 
     /**
      * @return the minimum value.
      */
-    T getMin();
+    double getMin();
 
     /**
      * @return the maximum value.
      */
-    T getMax();
+    double getMax();
 
     /**
      * @return the range.
      */
-    T getRange();
+    double getRange();
 
     /**
      * @return the sum.
      */
-    T getSum();
+    double getSum();
 
     /**
      * @return the mean.
      */
-    T getMean();
+    double getMean();
 
     /**
      * compute the q-th quantile for the distribution
@@ -76,12 +78,12 @@ public interface Variate<T> {
      *
      * @param q quantile (0 <= q <= 1)
      */
-    double getQuantile(T q);
+    double getQuantile(double q);
 
     /**
      * add a value
      */
-    void add(T value);
+    void add(double value);
 
     /**
      * add all the values
@@ -91,7 +93,7 @@ public interface Variate<T> {
     /**
      * add all the values
      */
-    void add(T[] values);
+    void add(double[] values);
 
     /**
      * remove a value
@@ -103,113 +105,148 @@ public interface Variate<T> {
      */
     void removeAll();
 
-
-    public abstract class N<Number> implements Variate<Number> {
-        protected List<Number> values = new ArrayList<Number>();
-
-//        public N() {}
-//        public N(List<Number> values) {
-//            add(values);
-//        }
-
-        public int getCount() {
-            return values.size();
-        }
-
-        public void add(Variate values) {
-            for (int i = 0; i < values.getCount(); i++) {
-                add((Number) values.get(i));
-            }
-        }
-
-        public void add(Number value) {
-            values.add(value);
-        }
-
-        public Number get(int index) {
-            return values.get(index);
-        }
-
-        public void remove(int index) {
-            values.remove(index);
-        }
-
-        public void removeAll() {
-            values.clear();
-        }
-
-        public void add(List<Number> values) {
-            this.values.addAll(values);
-        }
-
-        public void add(Number[] values) {
-            for (Number value : values) {
-                add(value);
-            }
-        }
-    }
-
     /**
      * A double precision concrete implementation of Variate
      */
-    public class D extends N<Double> {
-        public D() {}
+    public class Double implements Variate {
+        private double[] values = null;
+        private int valueCount = 0;
 
-        public D(List<Double> values) {
-//            super(values);
-            add(values);
+        public Double() {
         }
 
-        public D(Double[] values) {
-            add(values);
+        public Double(double[] values) {
+            this.values = values;
+            valueCount = values.length;
+        }
+
+        /**
+         * add a value
+         */
+        public void add(double value) {
+
+            if (values == null || valueCount == values.length) {
+                double[] newValues = new double[valueCount + 100];
+                if (values != null)
+                    System.arraycopy(values, 0, newValues, 0, values.length);
+                values = newValues;
+            }
+
+            values[valueCount] = value;
+            valueCount++;
+        }
+
+        /**
+         * add all the values
+         */
+        public void add(Variate values) {
+            for (int i = 0; i < values.getCount(); i++) {
+                add(values.get(i));
+            }
+        }
+
+        /**
+         * add all the values
+         */
+        public void add(double[] values) {
+            for (double value : values) {
+                add(value);
+            }
+        }
+
+
+        /**
+         * remove a value
+         */
+        public void remove(int index) {
+            if (valueCount > 0) {
+                for (int i = index; i < values.length - 1; i++) {
+                    values[i] = values[i + 1];
+                }
+                valueCount--;
+            }
+        }
+
+        /**
+         * remove all values
+         */
+        public void removeAll() {
+            valueCount = 0;
+        }
+
+        /**
+         * @return the number of values in this Variate
+         */
+        public int getCount() {
+            return valueCount;
+        }
+
+        /**
+         * @return the ith value.
+         */
+        public double get(int index) {
+            return values[index];
+        }
+
+        /**
+         * @return if the value for index is missing
+         */
+        public boolean isMissing(int index) {
+            return (values[index] == java.lang.Double.NaN);
         }
 
         /**
          * @return the minimum value.
          */
-        public Double getMin() {
-            Double minValue = java.lang.Double.POSITIVE_INFINITY;
-            for (Double value : values) {
-                if (value < minValue)
-                    minValue = value;
+        public double getMin() {
+            double minValue = java.lang.Double.POSITIVE_INFINITY;
+
+            for (int i = 0; i < valueCount; i++) {
+                if (values[i] < minValue)
+                    minValue = values[i];
             }
+
             return minValue;
         }
 
         /**
          * @return the maximum value.
          */
-        public Double getMax() {
-            Double maxValue = java.lang.Double.NEGATIVE_INFINITY;
-            for (Double value : values) {
-                if (value > maxValue)
-                    maxValue = value;
+        public double getMax() {
+            double maxValue = java.lang.Double.NEGATIVE_INFINITY;
+
+            for (int i = 0; i < valueCount; i++) {
+                if (values[i] > maxValue)
+                    maxValue = values[i];
             }
+
             return maxValue;
         }
 
         /**
          * @return the range.
          */
-        public Double getRange() {
+        public double getRange() {
             return getMin() - getMax();
         }
 
         /**
          * @return the mean.
          */
-        public Double getMean() {
+        public double getMean() {
             return getSum() / getCount();
         }
 
         /**
          * @return the sum.
          */
-        public Double getSum() {
-            Double sum = 0.0;
-            for (Double value : values) {
-                sum += value;
+        public double getSum() {
+            double sum = 0.0;
+
+            for (int i = 0; i < getCount(); i++) {
+                sum += get(i);
             }
+
             return sum;
         }
 
@@ -219,12 +256,8 @@ public interface Variate<T> {
          *
          * @param q quantile (0 <= q <= 1)
          */
-        public double getQuantile(Double q) {
-            double[] dv = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                dv[i] = values.get(i);
-            }
-            return DiscreteStatistics.quantile(q.doubleValue(), dv);
+        public double getQuantile(double q) {
+            return DiscreteStatistics.quantile(q, values, valueCount);
         }
 
     }
@@ -232,64 +265,139 @@ public interface Variate<T> {
     /**
      * A single precision concrete implementation of Variate
      */
-    public class I extends N<Integer> {
-        public I() {}
+    public class Float implements Variate {
+        private float[] values = null;
+        private int valueCount = 0;
 
-        public I(List<Integer> values) {
-//            super(values);
-            add(values);
+        /**
+         * add a value
+         */
+        public void add(double value) {
+
+            if (values == null || valueCount == values.length) {
+                float[] newValues = new float[valueCount + 100];
+                if (values != null)
+                    System.arraycopy(values, 0, newValues, 0, values.length);
+                values = newValues;
+            }
+
+            values[valueCount] = (float) value;
+            valueCount++;
+
         }
 
-        public I(Integer[] values) {
-            add(values);
+        /**
+         * add all the values
+         */
+        public void add(Variate values) {
+            for (int i = 0; i < values.getCount(); i++) {
+                add(values.get(i));
+            }
+        }
+
+        /**
+         * add all the values
+         */
+        public void add(double[] values) {
+            for (double value : values) {
+                add(value);
+            }
+        }
+
+
+        /**
+         * remove a value
+         */
+        public void remove(int index) {
+            if (valueCount > 0) {
+                for (int i = index; i < values.length - 1; i++) {
+                    values[i] = values[i + 1];
+                }
+                valueCount--;
+            }
+        }
+
+        /**
+         * remove all values
+         */
+        public void removeAll() {
+            valueCount = 0;
+        }
+
+
+        /**
+         * @return the number of values in this Variate
+         */
+        public int getCount() {
+            return valueCount;
+        }
+
+        /**
+         * @return the ith value.
+         */
+        public double get(int index) {
+            return (double) values[index];
+        }
+
+        /**
+         * @return if the value for index is missing
+         */
+        public boolean isMissing(int index) {
+            return (values[index] == java.lang.Float.NaN);
         }
 
         /**
          * @return the minimum value.
          */
-        public Integer getMin() {
-            Integer minValue = java.lang.Integer.MAX_VALUE;
-            for (Integer value : values) {
-                if (value < minValue)
-                    minValue = value;
+        public double getMin() {
+            double minValue = java.lang.Double.MAX_VALUE;
+
+            for (int i = 0; i < valueCount; i++) {
+                if (values[i] < minValue)
+                    minValue = (double) values[i];
             }
+
             return minValue;
         }
 
         /**
          * @return the maximum value.
          */
-        public Integer getMax() {
-            Integer maxValue = java.lang.Integer.MIN_VALUE;
-            for (Integer value : values) {
-                if (value > maxValue)
-                    maxValue = value;
+        public double getMax() {
+            double maxValue = java.lang.Double.MIN_VALUE;
+
+            for (int i = 0; i < valueCount; i++) {
+                if (values[i] > maxValue)
+                    maxValue = (double) values[i];
             }
+
             return maxValue;
         }
 
         /**
          * @return the range.
          */
-        public Integer getRange() {
+        public double getRange() {
             return getMin() - getMax();
         }
 
         /**
          * @return the mean.
          */
-        public Integer getMean() {
+        public double getMean() {
             return getSum() / getCount();
         }
 
         /**
          * @return the sum.
          */
-        public Integer getSum() {
-            Integer sum = 0;
-            for (Integer value : values) {
-                sum += value;
+        public double getSum() {
+            double sum = 0.0;
+
+            for (int i = 0; i < valueCount; i++) {
+                sum += get(i);
             }
+
             return sum;
         }
 
@@ -299,13 +407,13 @@ public interface Variate<T> {
          *
          * @param q quantile (0 <= q <= 1)
          */
-        public double getQuantile(Integer q) {
-            double[] dv = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                dv[i] = values.get(i).doubleValue();
-            }
-            return DiscreteStatistics.quantile(q.doubleValue(), dv);
-        }
+        public double getQuantile(double q) {
+			double[] dv = new double[values.length];
+			for (int i = 0; i < values.length; i++) {
+				dv[i] = (double)values[i];
+			}
+			return DiscreteStatistics.quantile(q, dv);
+		}
 
     }
 }

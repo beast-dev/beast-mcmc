@@ -26,8 +26,8 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.options.PartitionTreePrior;
-import dr.app.beauti.types.TreePriorType;
-import dr.app.beauti.types.PopulationSizeModelType;
+import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.PopulationSizeModelType;
 import dr.app.beauti.util.PanelUtils;
 
 import dr.app.util.OSType;

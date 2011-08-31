@@ -50,7 +50,7 @@ public class UniformizedStateHistory extends StateHistory {
                                                                 int endingState,
                                                                 double transitionProbability,
                                                                 double[] lambda,
-                                                                int stateCount) throws SubordinatedProcess.Exception {
+                                                                int stateCount) {
 
         return simulateConditionalOnEndingState(startingTime, startingState, endingTime, endingState,
                 transitionProbability, stateCount, new SubordinatedProcess(lambda, stateCount));
@@ -62,7 +62,7 @@ public class UniformizedStateHistory extends StateHistory {
                                                                 int endingState,
                                                                 double transitionProbability,
                                                                 int stateCount,
-                                                                SubordinatedProcess subordinator) throws SubordinatedProcess.Exception {
+                                                                SubordinatedProcess subordinator) {
         /**
          *  Algorithm 5
          */

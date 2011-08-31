@@ -1,8 +1,21 @@
 package dr.app.beauti.components;
 
+import dr.app.beauti.util.XMLWriter;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.TipDateSamplingType;
+import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TaxonList;
+import dr.inference.model.ParameterParser;
+import dr.util.Attribute;
+import dr.xml.XMLParser;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut

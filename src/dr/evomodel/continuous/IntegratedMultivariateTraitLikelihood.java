@@ -4,11 +4,8 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.*;
 import dr.inference.loggers.LogColumn;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
 import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.matrixAlgebra.Matrix;
@@ -41,24 +38,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                                                  boolean reportAsMultivariate,
                                                  boolean reciprocalRates) {
 
-        this(traitName, treeModel, diffusionModel, traitParameter, null, missingIndices, cacheBranches, scaleByTime,
-                useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
-    }
-
-    public IntegratedMultivariateTraitLikelihood(String traitName,
-                                                 TreeModel treeModel,
-                                                 MultivariateDiffusionModel diffusionModel,
-                                                 CompoundParameter traitParameter,
-                                                 Parameter deltaParameter,
-                                                 List<Integer> missingIndices,
-                                                 boolean cacheBranches, boolean scaleByTime, boolean useTreeLength,
-                                                 BranchRateModel rateModel, Model samplingDensity,
-                                                 boolean reportAsMultivariate,
-                                                 boolean reciprocalRates) {
-
-        super(traitName, treeModel, diffusionModel, traitParameter, deltaParameter, missingIndices, cacheBranches, scaleByTime,
+        super(traitName, treeModel, diffusionModel, traitParameter, missingIndices, cacheBranches, scaleByTime,
                 useTreeLength, rateModel, samplingDensity, reportAsMultivariate, reciprocalRates);
 
+        dimTrait = diffusionModel.getPrecisionmatrix().length;
+        dim = traitParameter.getParameter(0).getDimension();
+
+        if (dim % dimTrait != 0)
+            throw new RuntimeException("dim is not divisible by dimTrait");
+
+        numData = dim / dimTrait;
 
         meanCache = new double[dim * treeModel.getNodeCount()];
         drawnStates = new double[dim * treeModel.getNodeCount()];
@@ -85,6 +74,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         setTipDataValuesForAllNodes(missingIndices);
 
+        StringBuffer sb = new StringBuffer();
+        sb.append("\tDiffusion dimension: ").append(dimTrait).append("\n");
+        sb.append("\tNumber of observations: ").append(numData).append("\n");
+        Logger.getLogger("dr.evomodel").info(sb.toString());
     }
 
     private void setTipDataValuesForAllNodes(List<Integer> missingIndices) {
@@ -110,9 +103,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         // Set tip data values
         int index = node.getNumber();
         double[] traitValue = traitParameter.getParameter(index).getParameterValues();
-        if (traitValue.length < dim) {
-            throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
-        }
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
         missing[index] = false;
     }
@@ -677,6 +667,10 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     private double[] drawnStates;
 
+    protected int numData;
+    protected int dimTrait;
+    protected int dim;
+
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
@@ -689,5 +683,4 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] Ay;
     protected double[][] tmpM;
     protected double[] tmp2;
-
 }

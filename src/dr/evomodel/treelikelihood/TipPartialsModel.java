@@ -145,6 +145,8 @@ public abstract class TipPartialsModel extends AbstractModel {
 
     public abstract void getTipPartials(int nodeIndex, double[] tipPartials);
 
+    protected PatternList patternList = null;
+
     protected int[][] states;
     protected boolean[] excluded;
 
@@ -155,8 +157,6 @@ public abstract class TipPartialsModel extends AbstractModel {
     protected TaxonList excludeTaxa;
 
     protected Tree tree;
-
-    private PatternList patternList = null;
 
     protected Map<Integer, String> taxonMap = new HashMap<Integer, String>();
 }

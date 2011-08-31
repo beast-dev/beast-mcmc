@@ -25,6 +25,7 @@
 
 package dr.app.oldbeauti;
 
+import dr.app.beauti.enumTypes.ClockType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.AminoAcids;
@@ -59,11 +60,6 @@ import java.util.Map;
  * @author Alexei Drummond
  */
 public class BeautiOptions {
-    final public static String LOCAL_CLOCK = "localClock";
-    final public static String UCLD_MEAN = "ucld.mean";
-    final public static String UCLD_STDEV = "ucld.stdev";
-    final public static String UCED_MEAN = "uced.mean";
-
 
     public BeautiOptions() {
         double demoWeights = 3.0;
@@ -110,12 +106,12 @@ public class BeautiOptions {
         //createParameter("birthDeath.samplingProportion", "Birth-Death speciation process sampling proportion", NONE, 1.0, 0.0, 1.0);
 
         createParameter("clock.rate", "substitution rate", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCED_MEAN, "uncorrelated exponential relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_MEAN, "uncorrelated lognormal relaxed clock mean", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.UCLD_STDEV, "uncorrelated lognormal relaxed clock stdev", LOG_STDEV_SCALE, 0.1, 0.0, Double.POSITIVE_INFINITY);
         createParameter("branchRates.categories", "relaxed clock branch rate categories");
-        createParameter(LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
-        createParameter(LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
+        createParameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", SUBSTITUTION_RATE_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY);
+        createParameter(ClockType.LOCAL_CLOCK + "." + "changes", "random local clock rate change indicator");
 
         //Substitution model parameters
         createParameter("hky.frequencies", "HKY base frequencies", UNITY_SCALE, 0.25, 0.0, 1.0);
@@ -214,15 +210,15 @@ public class BeautiOptions {
         //createOperator("birthDeath.samplingProportion", RANDOM_WALK, 0.75, demoWeights);
 
         createOperator("clock.rate", SCALE, 0.75, rateWeights);
-        createOperator(UCED_MEAN, SCALE, 0.75, rateWeights);
-        createOperator(UCLD_MEAN, SCALE, 0.75, rateWeights);
-        createOperator(UCLD_STDEV, SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCED_MEAN, SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCLD_MEAN, SCALE, 0.75, rateWeights);
+        createOperator(ClockType.UCLD_STDEV, SCALE, 0.75, rateWeights);
 //        createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories", "branchRates.categories", SWAP, 1, branchWeights);
         createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories", "branchRates.categories", INTEGER_RANDOM_WALK, 1, branchWeights);
         createOperator("unformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories", "branchRates.categories", INTEGER_UNIFORM, 1, branchWeights);
 
-        createOperator(LOCAL_CLOCK + "." + "rates", SCALE, 0.75, treeWeights);
-        createOperator(LOCAL_CLOCK + "." + "changes", BITFLIP, 1, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "rates", SCALE, 0.75, treeWeights);
+        createOperator(ClockType.LOCAL_CLOCK + "." + "changes", BITFLIP, 1, treeWeights);
         createOperator("treeBitMove", "Tree", "Swaps the rates and change locations of local clocks", "tree", TREE_BIT_MOVE, -1.0, treeWeights);
 
         createOperator("hky.kappa", SCALE, 0.75, substWeights);
@@ -279,8 +275,8 @@ public class BeautiOptions {
         createOperator("siteModel3.pInv", SCALE, 0.75, substWeights);
 
         createOperator("upDownRateHeights", "Substitution rate and heights", "Scales substitution rates inversely to node heights of the tree", "clock.rate", "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", UCED_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
-        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", UCLD_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCEDMeanHeights", "UCED mean and heights", "Scales UCED mean inversely to node heights of the tree", ClockType.UCED_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
+        createOperator("upDownUCLDMeanHeights", "UCLD mean and heights", "Scales UCLD mean inversely to node heights of the tree", ClockType.UCLD_MEAN, "treeModel.allInternalNodeHeights", UP_DOWN, 0.75, rateWeights);
         createOperator("centeredMu", "Relative rates", "Scales codon position rates relative to each other maintaining mean", "allMus", CENTERED_SCALE, 0.75, substWeights);
         createOperator("deltaMu", "Relative rates", "Changes codon position rates relative to each other maintaining mean", "allMus", DELTA_EXCHANGE, 0.75, substWeights);
 
@@ -586,12 +582,12 @@ public class BeautiOptions {
                     params.add(rateParam);
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        rateParam = getParameter(UCED_MEAN);
+                        rateParam = getParameter(ClockType.UCED_MEAN);
                         params.add(rateParam);
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        rateParam = getParameter(UCLD_MEAN);
+                        rateParam = getParameter(ClockType.UCLD_MEAN);
                         params.add(rateParam);
-                        params.add(getParameter(UCLD_STDEV));
+                        params.add(getParameter(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
@@ -604,10 +600,10 @@ public class BeautiOptions {
                     rateParam = getParameter("clock.rate");
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        rateParam = getParameter(UCED_MEAN);
+                        rateParam = getParameter(ClockType.UCED_MEAN);
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        rateParam = getParameter(UCLD_MEAN);
-                        params.add(getParameter(UCLD_STDEV));
+                        rateParam = getParameter(ClockType.UCLD_MEAN);
+                        params.add(getParameter(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }
@@ -680,7 +676,7 @@ public class BeautiOptions {
                 localClockRateChangesStatistic.poissonOffset = 0.0;
             }
             if (localClockRatesStatistic == null) {
-                localClockRatesStatistic = new Parameter(LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
+                localClockRatesStatistic = new Parameter(ClockType.LOCAL_CLOCK + "." + "rates", "random local clock rates", false);
 
                 localClockRatesStatistic.priorType = PriorType.GAMMA_PRIOR;
                 localClockRatesStatistic.gammaAlpha = 0.5;
@@ -833,16 +829,16 @@ public class BeautiOptions {
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
                     ops.add(getOperator("clock.rate"));
                     ops.add(getOperator("upDownRateHeights"));
-                    ops.add(getOperator(LOCAL_CLOCK + "." + "rates"));
-                    ops.add(getOperator(LOCAL_CLOCK + "." + "changes"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                     ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
-                        ops.add(getOperator(UCED_MEAN));
+                        ops.add(getOperator(ClockType.UCED_MEAN));
                         ops.add(getOperator("upDownUCEDMeanHeights"));
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        ops.add(getOperator(UCLD_MEAN));
-                        ops.add(getOperator(UCLD_STDEV));
+                        ops.add(getOperator(ClockType.UCLD_MEAN));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                         ops.add(getOperator("upDownUCLDMeanHeights"));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
@@ -855,14 +851,14 @@ public class BeautiOptions {
                 if (clockModel == STRICT_CLOCK) {
                     // no parameter to operator on
                 } else if (clockModel == RANDOM_LOCAL_CLOCK) {
-                    ops.add(getOperator(LOCAL_CLOCK + "." + "rates"));
-                    ops.add(getOperator(LOCAL_CLOCK + "." + "changes"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "rates"));
+                    ops.add(getOperator(ClockType.LOCAL_CLOCK + "." + "changes"));
                     ops.add(getOperator("treeBitMove"));
                 } else {
                     if (clockModel == UNCORRELATED_EXPONENTIAL) {
                         // no parameter to operator on
                     } else if (clockModel == UNCORRELATED_LOGNORMAL) {
-                        ops.add(getOperator(UCLD_STDEV));
+                        ops.add(getOperator(ClockType.UCLD_STDEV));
                     } else {
                         throw new IllegalArgumentException("Unknown clock model");
                     }

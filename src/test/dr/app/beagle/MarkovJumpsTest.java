@@ -1,6 +1,5 @@
 package test.dr.app.beagle;
 
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import test.dr.inference.trace.TraceCorrelationAssert;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.alignment.SitePatterns;
@@ -11,7 +10,8 @@ import dr.evomodelxml.sitemodel.GammaSiteModelParser;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSiteModel;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evomodel.branchratemodel.BranchRateModel;
@@ -57,7 +57,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
         //treeLikelihood
         SitePatterns patterns = new SitePatterns(alignment, null, 0, -1, 1, true);
 
-        BranchSubstitutionModel branchSubstitutionModel = new HomogenousBranchSubstitutionModel(
+        BranchSiteModel branchSiteModel = new HomogenousBranchSiteModel(
                 siteRateModel.getSubstitutionModel(),
                 siteRateModel.getSubstitutionModel().getFrequencyModel());
 
@@ -66,7 +66,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
         MarkovJumpsBeagleTreeLikelihood mjTreeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patterns,
                 treeModel,
-                branchSubstitutionModel,
+                branchSiteModel,
                 siteRateModel,
                 branchRateModel,
                 false,

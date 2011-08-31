@@ -15,11 +15,11 @@ import dr.stats.DiscreteStatistics;
 public class GammaKDEDistribution extends KernelDensityEstimatorDistribution {
 
 
-    public GammaKDEDistribution(Double[] sample) {
+    public GammaKDEDistribution(double[] sample) {
         this(sample, null);
     }
 
-    public GammaKDEDistribution(Double[] sample, Double bandWidth) {
+    public GammaKDEDistribution(double[] sample, Double bandWidth) {
         super(sample, 0.0, Double.POSITIVE_INFINITY, bandWidth);
 
     }

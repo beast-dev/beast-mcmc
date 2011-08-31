@@ -30,9 +30,8 @@ import dr.stats.Variate;
 import java.awt.*;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
-import java.util.List;
-import java.util.Set;
 import java.util.Vector;
+import java.util.Set;
 
 /**
  * Description:	A scatter plot.
@@ -53,7 +52,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public ScatterPlot(Variate.N xData, Variate.N yData) {
+    public ScatterPlot(Variate xData, Variate yData) {
         super(xData, yData);
         setMarkStyle(CIRCLE_MARK, 5, new BasicStroke(1),
                 Color.black, Color.yellow);
@@ -64,7 +63,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public ScatterPlot(List<Double> xData, List<Double> yData) {
+    public ScatterPlot(double[] xData, double[] yData) {
         super(xData, yData);
         setMarkStyle(CIRCLE_MARK, 5, new BasicStroke(1),
                 Color.black, Color.yellow);
@@ -143,7 +142,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
         float x, y;
 
@@ -153,8 +152,8 @@ public class ScatterPlot extends Plot.AbstractPlot {
 
         int n = xData.getCount();
         for (int i = 0; i < n; i++) {
-            x = (float) transformX(((Number) xData.get(i)).doubleValue());
-            y = (float) transformY(((Number) yData.get(i)).doubleValue());
+            x = (float) transformX(xData.get(i));
+            y = (float) transformY(yData.get(i));
 
             if (selectedPoints.contains(i)) {
                 drawMarkHilighted(g2, x, y);

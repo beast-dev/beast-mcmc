@@ -51,10 +51,9 @@ public class CreateTraitDialog {
     JTextField nameField;
 //    JComboBox nameCombo;
     JComboBox typeCombo;
-    private final JRadioButton createRadio = new JRadioButton("Create a new trait", true);
+    private final JRadioButton createRadio = new JRadioButton("Create a new trait and then guess trait value from taxa name", true);
     private final JRadioButton importRadio = new JRadioButton("Import trait(s) from a mapping file", false);
     JButton exampleButton = new JButton("Show example of mapping file format");
-    private final JCheckBox createTraitPartitionCheck = new JCheckBox("Create a corresponding data partition", true);
 
     public static final int OK_IMPORT = 10;
 
@@ -101,7 +100,6 @@ public class CreateTraitDialog {
         optionPanel.addComponent(createRadio);
         optionPanel.addComponentWithLabel("Name:", nameField);
         optionPanel.addComponentWithLabel("Type:", typeCombo);
-        optionPanel.addComponent(createTraitPartitionCheck);
 
     }
 
@@ -147,9 +145,4 @@ public class CreateTraitDialog {
     public TraitData.TraitType getType() {
         return (TraitData.TraitType) typeCombo.getSelectedItem();
     }
-
-    public boolean createTraitPartition() {
-        return createTraitPartitionCheck.isSelected();
-    }
-
 }

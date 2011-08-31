@@ -228,7 +228,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
 
         messageLabel.setText("");
 
-        if (td1.getTraceType() != TraceFactory.TraceType.DOUBLE && td2.getTraceType() != TraceFactory.TraceType.DOUBLE) {
+        if (td1.getTraceType() != TraceFactory.TraceType.CONTINUOUS && td2.getTraceType() != TraceFactory.TraceType.CONTINUOUS) {
             chartPanel.remove(correlationChart);
             chartPanel.add(tableScrollPane, "Table");
 
@@ -238,8 +238,8 @@ public class JointDensityPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(true);
             defaultNumberFormatCheckBox.setVisible(true);
 
-            Object[] rowNames = td1.getRange().toArray();
-            Object[] colNames = td2.getRange().toArray();
+            Object[] rowNames = td1.credSet.getRange().toArray();
+            Object[] colNames = td2.credSet.getRange().toArray();
             double[][] data = categoricalPlot(td1, td2);
 
             tableScrollPane.setTable(rowNames, colNames, data, defaultNumberFormatCheckBox.isSelected());
@@ -251,7 +251,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
             cateTableProbTypeCombo.setVisible(false);
             defaultNumberFormatCheckBox.setVisible(false);
 
-            if (td1.getTraceType() == TraceFactory.TraceType.STRING) {
+            if (td1.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                 mixedCategoricalPlot(td1, false); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -259,7 +259,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 translucencyCheckBox.setVisible(false);
 
 
-            } else if (td2.getTraceType() == TraceFactory.TraceType.STRING) {
+            } else if (td2.getTraceType() == TraceFactory.TraceType.CATEGORY) {
                 mixedCategoricalPlot(td2, true); // isFirstTraceListNumerical
 
                 sampleCheckBox.setVisible(false);
@@ -287,7 +287,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
 
     private void mixedCategoricalPlot(TraceDistribution td, boolean isFirstTraceListNumerical) {
         correlationChart.setXAxis(new DiscreteAxis(true, true));
-        List<String> categoryValues = td.getRange();
+        List<String> categoryValues = td.credSet.getRange();
         Map<String, TraceDistribution> categoryTdMap = new HashMap<String, TraceDistribution>();
 
         if (categoryValues == null || categoryValues.size() < 1) return;
@@ -300,30 +300,65 @@ public class JointDensityPanel extends JPanel implements Exportable {
         double samples1[] = new double[sampleSize];
         int k = 0;
 
-        List values;
-        if (isFirstTraceListNumerical) {
-            values = tl1.getValues(traceIndex1);
+        boolean[] selected;
+        if (td.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            selected = new boolean[maxCount];
+            if (isFirstTraceListNumerical) {
+                tl1.getValues(traceIndex1, values);
+                tl1.getSelected(traceIndex1, selected);
+            } else {
+                tl2.getValues(traceIndex2, values);
+                tl2.getSelected(traceIndex2, selected);
+            }
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = (double) values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         } else {
-            values = tl2.getValues(traceIndex2);
+            Double values[] = new Double[maxCount];
+            selected = new boolean[maxCount];
+            if (isFirstTraceListNumerical) {
+                tl1.getValues(traceIndex1, values);
+                tl1.getSelected(traceIndex1, selected);
+            } else {
+                tl2.getValues(traceIndex2, values);
+                tl2.getSelected(traceIndex2, selected);
+            }
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         }
-
-        for (int i = 0; i < sampleSize; i++) {
-            samples1[i] = ((Number) values.get(k)).doubleValue();
-            k += minCount / sampleSize;
-        }
-
 
         String samples2[] = new String[sampleSize];
         k = 0;
 
-        List values2;
+        String values[] = new String[maxCount];
+        selected = new boolean[maxCount];
         if (isFirstTraceListNumerical) {
-            values2 = tl2.getValues(traceIndex2);
+            tl2.getValues(traceIndex2, values);
+            tl2.getSelected(traceIndex2, selected);
         } else {
-            values2 = tl1.getValues(traceIndex1);
+            tl1.getValues(traceIndex1, values);
+            tl1.getSelected(traceIndex1, selected);
         }
         for (int i = 0; i < sampleSize; i++) {
-            samples2[i] = values2.get(k).toString();
+            if (selected[k]) {
+                samples2[i] = values[k];
+            } else {
+                samples2[i] = "";
+            }
+
             k += minCount / sampleSize;
         }
 
@@ -337,7 +372,7 @@ public class JointDensityPanel extends JPanel implements Exportable {
                 }
             }
 
-            TraceDistribution categoryTd = new TraceDistribution(sepValues[i], TraceFactory.TraceType.DOUBLE); // todo ?
+            TraceDistribution categoryTd = new TraceDistribution(sepValues[i].toArray());
             categoryTdMap.put(categoryValues.get(i), categoryTd);
         }
 
@@ -348,8 +383,8 @@ public class JointDensityPanel extends JPanel implements Exportable {
     }
 
     private double[][] categoricalPlot(TraceDistribution td1, TraceDistribution td2) {
-        List<String> rowNames = td1.getRange();
-        List<String> colNames = td2.getRange();
+        List<String> rowNames = td1.credSet.getRange();
+        List<String> colNames = td2.credSet.getRange();
 
         double[][] data = new double[rowNames.size()][colNames.size()];
 
@@ -363,29 +398,70 @@ public class JointDensityPanel extends JPanel implements Exportable {
         String samples1[] = new String[sampleSize];
         int k = 0;
 
-        List values = tl1.getValues(traceIndex1);
-        TraceFactory.TraceType type = tl1.getTrace(traceIndex1).getTraceType();
-        for (int i = 0; i < sampleSize; i++) {
-            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
-                samples1[i] = Integer.toString( ((Number) values.get(k)).intValue() );
-            } else {
-                samples1[i] = values.get(k).toString();
+        boolean[] selected;
+        if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = values[k].toString();
+                } else {
+                    samples1[i] = "";
+                }
+
+                k += minCount / sampleSize; // = 1 for non-continous vs non-continous
             }
-            k += minCount / sampleSize; // = 1 for non-continous vs non-continous
+        } else {
+            String values[] = new String[maxCount];
+            tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = "";
+                }
+
+                k += minCount / sampleSize;
+            }
         }
 
         String samples2[] = new String[sampleSize];
         k = 0;
 
-        values = tl2.getValues(traceIndex2);
-        type = tl2.getTrace(traceIndex2).getTraceType();
-        for (int i = 0; i < sampleSize; i++) {
-            if (type == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
-                samples2[i] = Integer.toString( ((Number) values.get(k)).intValue() );
-            } else {
-                samples2[i] = values.get(k).toString();
+        if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
+            Integer values[] = new Integer[maxCount];
+            tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples2[i] = values[k].toString();
+                } else {
+                    samples2[i] = "";
+                }
+                k += minCount / sampleSize;
             }
-            k += minCount / sampleSize;
+        } else {
+            String values[] = new String[maxCount];
+            tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples2[i] = values[k];
+                } else {
+                    samples2[i] = "";
+                }
+
+                k += minCount / sampleSize;
+            }
         }
 
         // calculate count
@@ -455,35 +531,82 @@ public class JointDensityPanel extends JPanel implements Exportable {
             }
         }
 
+        double samples1[] = new double[sampleSize];
         int k = 0;
+
+        boolean[] selected;
         if (td1.getTraceType() == TraceFactory.TraceType.INTEGER) {
             correlationChart.setXAxis(new DiscreteAxis(true, true));
+
+            Integer values[] = new Integer[maxCount];
+            tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = (double) values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         } else {
             correlationChart.setXAxis(new LinearAxis());
-        }
-        List values = tl1.getValues(traceIndex1);
 
-        List<Double> samples1 = new ArrayList<Double>();
-        for (int i = 0; i < sampleSize; i++) {
-            samples1.add(i, ((Number) values.get(k)).doubleValue());
-            k += minCount / sampleSize;
+            Double values[] = new Double[maxCount];
+            tl1.getValues(traceIndex1, values);
+            selected = new boolean[maxCount];
+            tl1.getSelected(traceIndex1, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples1[i] = values[k];
+                } else {
+                    samples1[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         }
 
+        double samples2[] = new double[sampleSize];
         k = 0;
+
         if (td2.getTraceType() == TraceFactory.TraceType.INTEGER) {
             correlationChart.setYAxis(new DiscreteAxis(true, true));
+
+            Integer values[] = new Integer[maxCount];
+            tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples2[i] = (double) values[k];
+                } else {
+                    samples2[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         } else {
             correlationChart.setYAxis(new LinearAxis());
-        }
-        values = tl2.getValues(traceIndex2);
 
-        List<Double> samples2 = new ArrayList<Double>();
-        for (int i = 0; i < sampleSize; i++) {
-            samples2.add(i, ((Number) values.get(k)).doubleValue());
-            k += minCount / sampleSize;
+            Double values[] = new Double[maxCount];
+            tl2.getValues(traceIndex2, values);
+            selected = new boolean[maxCount];
+            tl2.getSelected(traceIndex2, selected);
+
+            for (int i = 0; i < sampleSize; i++) {
+                if (selected[k]) {
+                    samples2[i] = values[k];
+                } else {
+                    samples2[i] = Double.NaN;
+                }
+                k += minCount / sampleSize;
+            }
         }
 
-        ScatterPlot plot = new ScatterPlot(samples1, samples2);
+        ScatterPlot plot = new ScatterPlot(removeNaN(samples1), removeNaN(samples2));
         plot.setMarkStyle(pointsCheckBox.isSelected() ? Plot.POINT_MARK : Plot.CIRCLE_MARK, pointsCheckBox.isSelected() ? 1.0 : 3.0,
                 new BasicStroke(2.0f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_MITER),
                 new Color(16, 16, 64, translucencyCheckBox.isSelected() ? 32 : 255),
@@ -491,22 +614,22 @@ public class JointDensityPanel extends JPanel implements Exportable {
         correlationChart.addPlot(plot);
     }
 
-//    private double[] removeNaN(double[] sample) {
-//        List<Double> selectedValuesList = new ArrayList<Double>();
-//
-//        for (int i = 0; i < sample.length; i++) {
-//            if (sample[i] != Double.NaN) {
-//                selectedValuesList.add(sample[i]);
-//            }
-//        }
-//
-//        double[] dest = new double[selectedValuesList.size()];
-//        for (int i = 0; i < dest.length; i++) {
-//            dest[i] = selectedValuesList.get(i).doubleValue();
-//        }
-//
-//        return dest;
-//    }
+    private double[] removeNaN(double[] sample) {
+        List<Double> selectedValuesList = new ArrayList<Double>();
+
+        for (int i = 0; i < sample.length; i++) {
+            if (sample[i] != Double.NaN) {
+                selectedValuesList.add(sample[i]);
+            }
+        }
+
+        double[] dest = new double[selectedValuesList.size()];
+        for (int i = 0; i < dest.length; i++) {
+            dest[i] = selectedValuesList.get(i).doubleValue();
+        }
+
+        return dest;
+    }
 
     public JComponent getExportableComponent() {
         return chartPanel;

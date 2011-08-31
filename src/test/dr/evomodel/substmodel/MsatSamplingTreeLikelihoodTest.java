@@ -93,7 +93,7 @@ public class MsatSamplingTreeLikelihoodTest extends TestCase {
                 null,
                 eu1,
                 new Parameter.Default(0.0),
-                new Parameter.Default(0.4),
+                new Parameter.Default(0.6),
                 null,
                 false
         );
@@ -119,7 +119,7 @@ public class MsatSamplingTreeLikelihoodTest extends TestCase {
                 null,
                 ec1,
                 new Parameter.Default(0.0),
-                new Parameter.Default(0.4),
+                new Parameter.Default(0.6),
                 null,
                 false
         );
@@ -159,7 +159,7 @@ public class MsatSamplingTreeLikelihoodTest extends TestCase {
                 null,
                 pu1,
                 new Parameter.Default(0.0),
-                new Parameter.Default(0.4),
+                new Parameter.Default(0.6),
                 null,
                 false
         );

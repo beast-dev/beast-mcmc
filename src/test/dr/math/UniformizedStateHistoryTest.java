@@ -1,13 +1,13 @@
 package test.dr.math;
 
+import dr.inference.markovjumps.*;
+import dr.inference.model.Parameter;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.evolution.datatype.Nucleotides;
-import dr.inference.markovjumps.*;
-import dr.inference.model.Parameter;
-import dr.math.MathUtils;
 import dr.math.matrixAlgebra.Vector;
+import dr.math.MathUtils;
 
 import java.util.Arrays;
 
@@ -90,8 +90,6 @@ public class UniformizedStateHistoryTest extends MathTestCase {
 
     public void testTotalChangesSamplingMethods() {
 
-        try {
-
         int startState = 1;
         int endState = 0;
         double time = 0.5;
@@ -140,15 +138,9 @@ public class UniformizedStateHistoryTest extends MathTestCase {
         System.out.println("Test cutoff = " + cutoff);
         draw = process.drawNumberOfChanges(startState, endState, time, ctmcProbability, cutoff);
         assertEquals(3, draw);
-
-        } catch (SubordinatedProcess.Exception e) {
-            throw new RuntimeException("Subordinated process exception");
-        }
     }
 
     public void testStateHistorySimulationForJumps() {
-
-        try {
 
         double startingTime = 1.0;
         double endingTime = 3.0;
@@ -195,14 +187,8 @@ public class UniformizedStateHistoryTest extends MathTestCase {
 
             assertEquals(mjExpectations[startingState * stateCount + endingState], expectations[j], 1E-2);
         }
-
-        } catch (SubordinatedProcess.Exception e) {
-            throw new RuntimeException("Subordinated process exception");
-        }
     }
     public void testStateHistorySimulationForRewards() {
-
-        try {
 
         double startingTime = 1.0;
         double endingTime = 3.0;
@@ -249,10 +235,6 @@ public class UniformizedStateHistoryTest extends MathTestCase {
             markovjumps.computeCondStatMarkovJumps(endingTime - startingTime, mjExpectations);
 
             assertEquals(mjExpectations[startingState * stateCount + endingState], expectations[j], 1E-2);
-        }
-            
-        } catch (SubordinatedProcess.Exception e) {
-            throw new RuntimeException("Subordinated process exception");
         }
     }    
 }

@@ -99,7 +99,7 @@ public class LineageCountThroughTime {
         double n = branchingTimes.get(0).length;
 
         for (int k = 0; k < binCount; k++) {
-            bins[k] = new Variate.D();
+            bins[k] = new Variate.Double();
 
             if (height >= 0.0 && height <= maxTime) {
                 for (state = 0; state < branchingTimes.size(); state++) {
@@ -118,11 +118,11 @@ public class LineageCountThroughTime {
             height += delta;
         }
 
-        Variate xData = new Variate.D();
-        Variate yDataMean = new Variate.D();
-        Variate yDataMedian = new Variate.D();
-        Variate yDataUpper = new Variate.D();
-        Variate yDataLower = new Variate.D();
+        Variate xData = new Variate.Double();
+        Variate yDataMean = new Variate.Double();
+        Variate yDataMedian = new Variate.Double();
+        Variate yDataUpper = new Variate.Double();
+        Variate yDataLower = new Variate.Double();
 
         double t = minTime;
         for (Variate bin : bins) {

@@ -26,16 +26,12 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.datatype.DataType;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
-import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
-import dr.evoxml.MicrosatellitePatternParser;
 import dr.evoxml.UPGMATreeParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
@@ -70,13 +66,13 @@ public class TreeModelGenerator extends Generator {
 
         switch (model.getStartingTreeType()) {
             case USER:
-                writer.writeIDref("tree", modelPrefix + STARTING_TREE);
+            	writer.writeIDref("tree", modelPrefix + STARTING_TREE);
                 break;
             case UPGMA:
-                writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
+            	writer.writeIDref(UPGMATreeParser.UPGMA_TREE, modelPrefix + STARTING_TREE);
                 break;
             case RANDOM:
-                writer.writeIDref(CoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
+            	writer.writeIDref(CoalescentSimulatorParser.COALESCENT_TREE, modelPrefix + STARTING_TREE);
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -180,29 +176,5 @@ public class TreeModelGenerator extends Generator {
 //            writer.writeIDref(ParameterParser.PARAMETER, treeModelName + "." + RateEvolutionLikelihood.ROOTRATE);
 //            writer.writeCloseTag(CompoundParameter.COMPOUND_PARAMETER);
 //        }
-
-        if (model.getDataType().getType() == DataType.MICRO_SAT) {
-            writer.writeComment("Generate a microsatellite tree model");
-            writer.writeTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
-                    new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite"), false);
-
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.TREE);
-            writer.writeIDref(TreeModel.TREE_MODEL, treeModelName);
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE);
-
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-            writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite.internalNodesParameter"),
-                    new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDeminsion())}, true);
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-            
-            writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-            for (AbstractPartitionData pattern : options.getAllPartitionData(model)) {
-                writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, pattern.getName());
-            }
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-
-            writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL);
-        }
     }
 }

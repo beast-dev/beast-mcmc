@@ -63,6 +63,8 @@ public class TreeAnnotator {
     private final static Version version = new BeastVersion();
 
     private final static boolean USE_R = false;
+    private final static String HPD_2D_STRING = "80";
+    private final static double HPD_2D = 0.80;
 
     private static boolean forceIntegerToDiscrete = false;
 
@@ -98,7 +100,6 @@ public class TreeAnnotator {
         }
     }
 
-
     // Messages to stderr, output to stdout
     private static PrintStream progressStream = System.err;
 
@@ -109,7 +110,6 @@ public class TreeAnnotator {
     public TreeAnnotator(final int burnin,
                          HeightsSummary heightsOption,
                          double posteriorLimit,
-                         double hpd2D,
                          Target targetOption,
                          String targetTreeFileName,
                          String inputFileName,
@@ -117,7 +117,6 @@ public class TreeAnnotator {
     ) throws IOException {
 
         this.posteriorLimit = posteriorLimit;
-        this.hpd2D = hpd2D;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -308,11 +307,6 @@ public class TreeAnnotator {
                 }
             }
         }
-
-        for (TreeAnnotationPlugin plugin : plugins) {
-            Set<String> claimed = plugin.setAttributeNames(attributeNames);
-            attributeNames.removeAll(claimed);
-        }
     }
 
     private Tree summarizeTrees(int burnin, CladeSystem cladeSystem, String inputFileName,
@@ -485,43 +479,38 @@ public class TreeAnnotator {
                 int i = 0;
                 Object[] values = new Object[attributeNames.size()];
                 for (String attributeName : attributeNames) {
-                    boolean processed = false;
+                    Object value;
+                    if (attributeName.equals("height")) {
+                        value = tree.getNodeHeight(node);
+                    } else if (attributeName.equals("length")) {
+                        value = tree.getBranchLength(node);
+                    } else if (attributeName.equals(location1Attribute)) {
+                        // If this is one of the two specified bivariate location names then
+                        // merge this and the other one into a single array.
+                        Object value1 = tree.getNodeAttribute(node, attributeName);
+                        Object value2 = tree.getNodeAttribute(node, location2Attribute);
 
-                    if (!processed) {
-                        Object value;
-                        if (attributeName.equals("height")) {
-                            value = tree.getNodeHeight(node);
-                        } else if (attributeName.equals("length")) {
-                            value = tree.getBranchLength(node);
-// AR - we deal with this once everything                             
-//                        } else if (attributeName.equals(location1Attribute)) {
-//                            // If this is one of the two specified bivariate location names then
-//                            // merge this and the other one into a single array.
-//                            Object value1 = tree.getNodeAttribute(node, attributeName);
-//                            Object value2 = tree.getNodeAttribute(node, location2Attribute);
-//
-//                            value = new Object[]{value1, value2};
-//                        } else if (attributeName.equals(location2Attribute)) {
-//                            // do nothing - already dealt with this...
-//                            value = null;
-                        } else {
-                            value = tree.getNodeAttribute(node, attributeName);
-                            if (value instanceof String && ((String) value).startsWith("\"")) {
-                                value = ((String) value).replaceAll("\"", "");
-                            }
+                        value = new Object[]{value1, value2};
+                    } else if (attributeName.equals(location2Attribute)) {
+                        // do nothing - already dealt with this...
+                        value = null;
+                    } else {
+                        value = tree.getNodeAttribute(node, attributeName);
+                        if (value instanceof String && ((String) value).startsWith("\"")) {
+                            value = ((String) value).replaceAll("\"", "");
                         }
-
-                        //if (value == null) {
-                        //    progressStream.println("attribute " + attributeNames[i] + " is null.");
-                        //}
-
-                        values[i] = value;
                     }
+
+                    //if (value == null) {
+                    //    progressStream.println("attribute " + attributeNames[i] + " is null.");
+                    //}
+
+                    values[i] = value;
                     i++;
                 }
                 clade.attributeValues.add(values);
 
-                //progressStream.println(clade + " " + clade.getValuesSize());
+                //progressStream.println(clade + " " + clade.getCount());
                 clade.setCount(clade.getCount() + 1);
             }
         }
@@ -607,7 +596,7 @@ public class TreeAnnotator {
             return clade.getCredibility();
         }
 
-        public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, HeightsSummary heightsOption) {
+        public void annotateTree(MutableTree tree, NodeRef node, BitSet bits, HeightsSummary heightsOption) throws Exception {
 
             BitSet bits2 = new BitSet();
 
@@ -740,63 +729,52 @@ public class TreeAnnotator {
                         }
 
                         if (!filter) {
-                            boolean processed = false;
-                            for (TreeAnnotationPlugin plugin : plugins) {
-                                if (plugin.handleAttribute(tree, node, attributeName, values)) {
-                                    processed = true;
-                                }
-                            }
-
-                            if (!processed) {
-                                if (!isDiscrete) {
-                                    if (!isDoubleArray)
-                                        annotateMeanAttribute(tree, node, attributeName, values);
-                                    else {
-                                        for (int k = 0; k < lenArray; k++) {
-                                            annotateMeanAttribute(tree, node, attributeName + (k + 1), valuesArray[k]);
-                                        }
-                                    }
-                                } else {
-                                    annotateModeAttribute(tree, node, attributeName, hashMap);
-                                    annotateFrequencyAttribute(tree, node, attributeName, hashMap);
-                                }
-                                if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {
-                                    // Basically, if it is a boolean (0, 1) then we don't need the distribution information
-                                    // Likewise if it doesn't vary.
-                                    annotateMedianAttribute(tree, node, attributeName + "_median", values);
-                                    annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
-                                    annotateRangeAttribute(tree, node, attributeName + "_range", values);
-                                }
-
-                                if (isDoubleArray) {
-                                    String name = attributeName;
-                                    // todo
-//                                    if (name.equals(location1Attribute)) {
-//                                        name = locationOutputAttribute;
-//                                    }
+                            if (!isDiscrete) {
+                                if (!isDoubleArray)
+                                    annotateMeanAttribute(tree, node, attributeName, values);
+                                else {
                                     for (int k = 0; k < lenArray; k++) {
-                                        if (minValueArray[k] < maxValueArray[k]) {
-                                            annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
-                                            annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
-                                            if (!processBivariateAttributes || lenArray != 2)
-                                                annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
-                                        }
+                                        annotateMeanAttribute(tree, node, attributeName + (k + 1), valuesArray[k]);
                                     }
-                                    // 2D contours
-                                    if (processBivariateAttributes && lenArray == 2) {
-
-                                        boolean variationInFirst = (minValueArray[0] < maxValueArray[0]);
-                                        boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);
-
-                                        if (variationInFirst && !variationInSecond)
-                                            annotateHPDAttribute(tree, node, name + "1" + "_95%_HPD", 0.95, valuesArray[0]);
-
-                                        if (variationInSecond && !variationInFirst)
-                                            annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
-
-                                        if (variationInFirst && variationInSecond)
-                                            annotate2DHPDAttribute(tree, node, name, "_" + (int)(100*hpd2D) + "%HPD", hpd2D, valuesArray);
+                                }
+                            } else {
+                                annotateModeAttribute(tree, node, attributeName, hashMap);
+                                annotateFrequencyAttribute(tree, node, attributeName, hashMap);
+                            }
+                            if (!isBoolean && minValue < maxValue && !isDiscrete && !isDoubleArray) {
+                                // Basically, if it is a boolean (0, 1) then we don't need the distribution information
+                                // Likewise if it doesn't vary.
+                                annotateMedianAttribute(tree, node, attributeName + "_median", values);
+                                annotateHPDAttribute(tree, node, attributeName + "_95%_HPD", 0.95, values);
+                                annotateRangeAttribute(tree, node, attributeName + "_range", values);
+                            }
+                            if (isDoubleArray) {
+                                String name = attributeName;
+                                if (name.equals(location1Attribute)) {
+                                    name = locationOutputAttribute;
+                                }
+                                for (int k = 0; k < lenArray; k++) {
+                                    if (minValueArray[k] < maxValueArray[k]) {
+                                        annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
+                                        annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
+                                        if (!processBivariateAttributes || lenArray != 2)
+                                            annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                     }
+                                }
+                                // 2D contours
+                                if (processBivariateAttributes && lenArray == 2) {
+
+                                    boolean variationInFirst = (minValueArray[0] < maxValueArray[0]);
+                                    boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);
+
+                                    if (variationInFirst && !variationInSecond)
+                                        annotateHPDAttribute(tree, node, name + "1" + "_95%_HPD", 0.95, valuesArray[0]);
+
+                                    if (variationInSecond && !variationInFirst)
+                                        annotateHPDAttribute(tree, node, name + "2" + "_95%_HPD", 0.95, valuesArray[1]);
+
+                                    if (variationInFirst && variationInSecond)
+                                        annotate2DHPDAttribute(tree, node, name, "_" + HPD_2D_STRING + "%HPD", HPD_2D, valuesArray);
                                 }
                             }
                         }
@@ -998,10 +976,7 @@ public class TreeAnnotator {
 
 
 //                KernelDensityEstimator2D kde = new KernelDensityEstimator2D(values[0], values[1], N);
-                //ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
-                boolean bandwidthLimit = false;
-
-                ContourMaker kde = new ContourWithSynder(values[0], values[1], bandwidthLimit);
+                ContourMaker kde = new ContourWithSynder(values[0], values[1], N);
 
                 ContourPath[] paths = kde.getContourPaths(hpd);
 
@@ -1131,9 +1106,6 @@ public class TreeAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    double hpd2D = 0.80;
-
-    private final List<TreeAnnotationPlugin> plugins = new ArrayList<TreeAnnotationPlugin>();
 
     Set<String> attributeNames = new HashSet<String>();
     TaxonList taxa = null;
@@ -1246,7 +1218,6 @@ public class TreeAnnotator {
 
             int burnin = dialog.getBurnin();
             double posteriorLimit = dialog.getPosteriorLimit();
-            double hpd2D = 0.80;
             Target targetOption = dialog.getTargetOption();
             HeightsSummary heightsOption = dialog.getHeightsOption();
 
@@ -1272,7 +1243,6 @@ public class TreeAnnotator {
                 new TreeAnnotator(burnin,
                         heightsOption,
                         posteriorLimit,
-                        hpd2D,
                         targetOption,
                         targetTreeFileName,
                         inputFileName,
@@ -1303,8 +1273,7 @@ public class TreeAnnotator {
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
-                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits."),
-                        new Arguments.RealOption("hpd2D", "the HPD interval to be used for the bivariate traits")
+                        new Arguments.Option("forceDiscrete", "forces integer traits to be treated as discrete traits.")
                 });
 
         try {
@@ -1345,11 +1314,6 @@ public class TreeAnnotator {
             posteriorLimit = arguments.getRealOption("limit");
         }
 
-        double hpd2D = 0.80;
-        if (arguments.hasOption("hpd2D")) {
-            hpd2D = arguments.getRealOption("hpd2D");
-        }
-
         Target target = Target.MAX_CLADE_CREDIBILITY;
         if (arguments.hasOption("target")) {
             target = Target.USER_TARGET_TREE;
@@ -1373,19 +1337,9 @@ public class TreeAnnotator {
             }
         }
 
-        new TreeAnnotator(burnin, heights, posteriorLimit, hpd2D, target, targetTreeFileName, inputFileName, outputFileName);
+        new TreeAnnotator(burnin, heights, posteriorLimit, target, targetTreeFileName, inputFileName, outputFileName);
 
         System.exit(0);
-    }
-
-    /**
-     * @author Andrew Rambaut
-     * @version $Id$
-     */
-    public static interface TreeAnnotationPlugin {
-        Set<String> setAttributeNames(Set<String> attributeNames);
-
-        boolean handleAttribute(Tree tree, NodeRef node, String attributeName, double[] values);
     }
 }
 

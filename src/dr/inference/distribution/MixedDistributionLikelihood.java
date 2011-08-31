@@ -38,8 +38,7 @@ public class MixedDistributionLikelihood extends Likelihood.Abstract {
         if (indicators.getDimension() == data.getDimension() - 1) {
             impliedOne = true;
         } else if (indicators.getDimension() != data.getDimension()) {
-            throw new IllegalArgumentException("Indicators length (" + indicators.getDimension() +
-                    ") != data length (" + data.getDimension() + ")");
+            throw new IllegalArgumentException();
         }
     }
 

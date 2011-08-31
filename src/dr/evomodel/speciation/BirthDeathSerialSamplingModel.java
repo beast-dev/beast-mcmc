@@ -1,7 +1,7 @@
 /*
  * BirthDeathSerialSamplingModel.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -38,7 +38,7 @@ import java.util.Set;
  *
  * @author Alexei Drummond
  */
-public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
+public class BirthDeathSerialSamplingModel extends SpeciationModel {
 
     // birth rate
     Variable<Double> lambda;
@@ -58,17 +58,12 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     // boolean stating whether sampled individuals remain infectious, or become non-infectious
 //    boolean sampledIndividualsRemainInfectious = false; // replaced by r
 
-    //    the additional parameter 0 <= r <= 1 has to be estimated.
-    //    for r=1, this is sampledRemainInfectiousProb=0
-    //    for r=0, this is sampledRemainInfectiousProb=1
+//    the additional parameter 0 <= r <= 1 has to be estimated.
+//    for r=1, this is sampledIndividualsRemainInfectious=FALSE
+//    for r=0, this is sampledIndividualsRemainInfectious=TRUE
     Variable<Double> r;
 
-    //Variable<Double> finalTimeInterval;
-
-    boolean hasFinalSample = false;
-
-    // the origin of the infection, x0 > tree.getRoot();
-    Variable<Double> origin;
+    Variable<Double> finalTimeInterval;
 
     public BirthDeathSerialSamplingModel(
             Variable<Double> lambda,
@@ -77,11 +72,10 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> p,
             boolean relativeDeath,
             Variable<Double> r,
-            boolean hasFinalSample,
-            Variable<Double> origin,
+            Variable<Double> finalTimeInterval,
             Type units) {
 
-        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, hasFinalSample, origin, units);
+        this("birthDeathSerialSamplingModel", lambda, mu, psi, p, relativeDeath, r, finalTimeInterval, units);
     }
 
     public BirthDeathSerialSamplingModel(
@@ -92,13 +86,10 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             Variable<Double> p,
             boolean relativeDeath,
             Variable<Double> r,
-            boolean hasFinalSample,
-            Variable<Double> origin,
+            Variable<Double> finalTimeInterval,
             Type units) {
 
         super(modelName, units);
-
-        this.relativeDeath = relativeDeath;
 
         this.lambda = lambda;
         addVariable(lambda);
@@ -108,35 +99,26 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         addVariable(mu);
         mu.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
-        this.psi = psi;
-        addVariable(psi);
-        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-
         this.p = p;
         addVariable(p);
         p.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
-        this.hasFinalSample = hasFinalSample;
+        this.psi = psi;
+        addVariable(psi);
+        psi.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.relativeDeath = relativeDeath;
+
+        this.finalTimeInterval = finalTimeInterval;
+        addVariable(finalTimeInterval);
+        finalTimeInterval.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 1.0, 1));
 
         this.r = r;
         addVariable(r);
         r.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
-        this.origin = origin;
-        if (origin != null) {
-            addVariable(origin);
-            origin.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        }
     }
 
-    /**
-     * @param b   birth rate
-     * @param d   death rate
-     * @param p   proportion sampled at final time point
-     * @param psi rate of sampling per lineage per unit time
-     * @param t   time
-     * @return the probability of no sampled descendants after time, t
-     */
     public static double p0(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
@@ -149,8 +131,16 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public static double q(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
-        double res = 2.0 * (1.0 - c2 * c2) + Math.exp(-c1 * t) * (1.0 - c2) * (1.0 - c2) + Math.exp(c1 * t) * (1.0 + c2) * (1.0 + c2);
+        double res = 2 * (1 - c2 * c2) + Math.exp(-c1 * t) * (1 - c2) * (1 - c2) + Math.exp(c1 * t) * (1 + c2) * (1 + c2);
         return res;
+    }
+
+    public double p0(double t) {
+        return p0(birth(), death(), p(), psi(), t);
+    }
+
+    public double q(double t) {
+        return q(birth(), death(), p(), psi(), t);
     }
 
     private static double c1(double b, double d, double psi) {
@@ -159,15 +149,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     private static double c2(double b, double d, double p, double psi) {
         return -(b - d - 2.0 * b * p - psi) / c1(b, d, psi);
-    }
-
-
-    public double p0(double t) {
-        return p0(birth(), death(), p(), psi(), t);
-    }
-
-    public double q(double t) {
-        return q(birth(), death(), p(), psi(), t);
     }
 
     private double c1() {
@@ -179,45 +160,28 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     }
 
     public double birth() {
-        if (mask != null) return mask.birth();
-
         return lambda.getValue(0);
     }
 
     public double death() {
-        if (mask != null) return mask.death();
         return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
     }
 
     public double psi() {
-        if (mask != null) return mask.psi();
-
         return psi.getValue(0);
     }
 
-    /**
-     * @return the proportion of population sampled at final sample, or zero if there is no final sample
-     */
     public double p() {
-
-        if (mask != null) return mask.p.getValue(0);
-        return hasFinalSample ? p.getValue(0) : 0;
+        if (finalTimeInterval() == 0.0) return p.getValue(0);
+        return 0;
     }
 
     public double r() {
-        if (mask != null) return mask.r();
-
         return r.getValue(0);
     }
 
-    // The mask does not affect the following three methods
-
-    public boolean isSamplingOrigin() {
-        return origin != null;
-    }
-
-    public double x0() {
-        return origin.getValue(0);
+    public double finalTimeInterval() {
+        return finalTimeInterval.getValue(0);
     }
 
     /**
@@ -228,13 +192,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
      */
     public final double calculateTreeLogLikelihood(Tree tree) {
 
-        if (isSamplingOrigin() && x0() < tree.getNodeHeight(tree.getRoot())) {
-            return Double.NEGATIVE_INFINITY;
-//            throw new RuntimeException("Orign value (" + x0() + ") cannot < tree root height (" + tree.getNodeHeight(tree.getRoot()) + ")");
-        }
-
         //System.out.println("calculating tree log likelihood");
-        //double time = finalTimeInterval();
+        double time = finalTimeInterval();
 
         // extant leaves
         int n = 0;
@@ -243,58 +202,40 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
             NodeRef node = tree.getExternalNode(i);
-            if (tree.getNodeHeight(node) == 0.0) {
+            if (tree.getNodeHeight(node) + time == 0.0) {
                 n += 1;
             } else {
                 m += 1;
             }
         }
 
-        if (!hasFinalSample && n != 1) {
-            throw new RuntimeException(
-                    "For sampling-through-time model there must be exactly one tip at time zero.");
-        }
-
-        double x1 = tree.getNodeHeight(tree.getRoot());
+        double x1 = tree.getNodeHeight(tree.getRoot()) + time;
         double c1 = c1();
         double c2 = c2();
         double b = birth();
         double p = p();
 
-        double logL;
-        if (isSamplingOrigin()) {
-            logL = Math.log(1.0 / q(x0()));
-            //System.out.println("originLogL=" + logL + " x0");
-        } else {
-            throw new RuntimeException(
-                    "The origin must be sampled, as integrating it out is not implemented!");
-            // integrating out the time between the origin and the root of the tree
-            //double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
-            //logL = Math.log(1 / bottom);
-        }
-        if (hasFinalSample) {
-            logL += n * Math.log(4.0 * p);
+        double bottom = c1 * (c2 + 1) * (1 - c2 + (1 + c2) * Math.exp(c1 * x1));
+        double logL = Math.log(1 / bottom);
+
+        if (n > 0) {
+            logL += n * Math.log(4 * p);
         }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
-            double x = tree.getNodeHeight(tree.getInternalNode(i));
+            double x = tree.getNodeHeight(tree.getInternalNode(i)) + time;
             logL += Math.log(b / q(x));
-
-            //System.out.println("internalNodeLogL=" + Math.log(b / q(x)));
-
         }
         for (int i = 0; i < tree.getExternalNodeCount(); i++) {
-            double y = tree.getNodeHeight(tree.getExternalNode(i));
+            double y = tree.getNodeHeight(tree.getExternalNode(i)) + time;
 
             if (y > 0.0) {
-                logL += Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y));
-
-                //System.out.println("externalNodeLogL=" + Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y)));
-
-            } else if (!hasFinalSample) {
-                //handle condition ending on final tip in sampling-through-time-only situation
-                logL += Math.log(psi() * q(y));
-//                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
-
+                logL += Math.log( psi() * (r() + (1-r())*p0(y))  * q(y) );
+                
+//                if (sampledIndividualsRemainInfectious) { // i.e. modification (i) or (ii)
+//                    logL += Math.log(psi() * q(y) * p0(y));
+//                } else {
+//                    logL += Math.log(psi() * q(y));
+//                }
             }
         }
 
@@ -305,19 +246,4 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         if (exclude.size() == 0) return calculateTreeLogLikelihood(tree);
         throw new RuntimeException("Not implemented!");
     }
-
-    public void mask(SpeciationModel mask) {
-        if (mask instanceof BirthDeathSerialSamplingModel) {
-            this.mask = (BirthDeathSerialSamplingModel) mask;
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public void unmask() {
-        mask = null;
-    }
-
-    // if a mask exists then use the mask's parameters instead (except for origin and finalTimeInterval)
-    BirthDeathSerialSamplingModel mask = null;
 }

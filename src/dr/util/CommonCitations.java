@@ -16,11 +16,8 @@ public class CommonCitations {
                     new Author("MA", "Suchard")
             },
             "Phylogeography takes a relaxed random walk in continous space and time",
-            2010,
             "Molecular Biology and Evolution",
-            27,
-            1877, 1885,
-            Citation.Status.PUBLISHED
+            Citation.Status.ACCEPTED
     );
 
     public static Citation OBRIEN_2009 = new Citation(
@@ -50,47 +47,5 @@ public class CommonCitations {
             57,
             772, 784,
             Citation.Status.PUBLISHED
-    );
-
-    public static Citation SUCHARD_2012 = new Citation(
-            new Author[] {
-                    new Author("MA", "Suchard"),
-                    new Author("C", "Simon"),
-            },
-            Citation.Status.IN_PREPARATION
-    );
-
-    public static Citation SHAPIRO_2012 = new Citation(
-            new Author[] {
-                    new Author("B", "Shapiro"),
-                    new Author("MA", "Suchard"),
-            },
-            Citation.Status.IN_PREPARATION
-    );
-
-    public static Citation LEMEY_2012 = new Citation(
-            new Author[] {
-                    new Author("P", "Lemey"),
-                    new Author("T", "Bedford"),
-                    new Author("A", "Rambaut"),
-                    new Author("MA", "Suchard"),                   
-            },
-            Citation.Status.IN_PREPARATION
-    );
-
-    public static Citation BLOOM_2012 = new Citation(
-            new Author[] {
-                    new Author("J", "Bloom"),                    
-                    new Author("MA", "Suchard"),
-            },
-            Citation.Status.IN_PREPARATION
-    );
-
-    public static Citation SUCHARD_2012_LATENT = new Citation(
-            new Author[] {
-                    new Author("MA", "Suchard"),
-                    new Author("J", "Felsenstein"),
-            },
-            Citation.Status.IN_PREPARATION
-    );
+    );    
 }

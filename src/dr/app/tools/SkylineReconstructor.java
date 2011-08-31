@@ -25,10 +25,7 @@
 
 package dr.app.tools;
 
-import dr.inference.trace.LogFileTraces;
-import dr.inference.trace.TraceDistribution;
-import dr.inference.trace.TraceException;
-import dr.inference.trace.TraceList;
+import dr.inference.trace.*;
 import dr.stats.Variate;
 import jebl.evolution.coalescent.IntervalList;
 import jebl.evolution.coalescent.Intervals;
@@ -56,11 +53,11 @@ public class SkylineReconstructor {
     private double maxTime;
     private double ageOfYoungest;
 
-    private Variate xData = new Variate.D();
-    private Variate yDataMean = new Variate.D();
-    private Variate yDataMedian = new Variate.D();
-    private Variate yDataUpper = new Variate.D();
-    private Variate yDataLower = new Variate.D();
+    private Variate xData = new Variate.Double();
+    private Variate yDataMean = new Variate.Double();
+    private Variate yDataMedian = new Variate.Double();
+    private Variate yDataUpper = new Variate.Double();
+    private Variate yDataLower = new Variate.Double();
 
     public SkylineReconstructor(File logFile, File treeFile, int burnin,
                                 int binCount, double minTime, double maxTime, double ageOfYoungest)
@@ -92,19 +89,21 @@ public class SkylineReconstructor {
             }
         }
 
-        ArrayList<ArrayList> popSizes = new ArrayList<ArrayList>();
-        ArrayList<ArrayList> groupSizes = new ArrayList<ArrayList>();
+        Double[][] popSizes;
+        Double[][] groupSizes;
 
+        popSizes = new Double[popSizeCount][stateCount];
         for (int i = 0; i < popSizeCount; i++) {
-            popSizes.add(new ArrayList(traces.getValues(firstPopSize + i)));
+            traces.getValues(firstPopSize + i, popSizes[i]);
         }
+        groupSizes = new Double[groupSizeCount][stateCount];
         for (int i = 0; i < groupSizeCount; i++) {
-            groupSizes.add(new ArrayList(traces.getValues(firstGroupSize + i)));
+            traces.getValues(firstGroupSize + i, groupSizes[i]);
         }
 
-        List heights = traces.getValues(traces.getTraceIndex("treeModel.rootHeight"));
-        TraceDistribution distribution = new TraceDistribution(heights,
-                traces.getTrace(traces.getTraceIndex("treeModel.rootHeight")).getTraceType(), traces.getStepSize());
+        Double[] heights = new Double[stateCount];
+        traces.getValues(traces.getTraceIndex("treeModel.rootHeight"), heights);
+        TraceDistribution distribution = new TraceDistribution(heights, traces.getStepSize());
 
         double timeMean = distribution.getMean();
         double timeMedian = distribution.getMedian();
@@ -167,7 +166,7 @@ public class SkylineReconstructor {
             int groupIndex = 0;
             int subIndex = 0;
             if (firstGroupSize > 0) {
-                double g = (Double) groupSizes.get(groupIndex).get(state);
+                double g = groupSizes[groupIndex][state];
                 if (g != Math.round(g)) {
                     throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                 } else groupSize = (int) Math.round(g);
@@ -184,7 +183,7 @@ public class SkylineReconstructor {
                         subIndex = 0;
                         groupIndex += 1;
                         if (groupIndex < groupSizeCount) {
-                            double g = (Double) groupSizes.get(groupIndex).get(state);
+                            double g = groupSizes[groupIndex][state];
                             if (g != Math.round(g)) {
                                 throw new RuntimeException("Group size " + groupIndex + " should be integer but found:" + g);
                             } else groupSize = (int) Math.round(g);
@@ -206,7 +205,7 @@ public class SkylineReconstructor {
         double height = 0.0;
 
         for (int k = 0; k < binCount; k++) {
-            bins[k] = new Variate.D();
+            bins[k] = new Variate.Double();
 
             if (height >= 0.0 && height <= maxHeight) {
                 for (state = 0; state < stateCount; state++) {
@@ -222,8 +221,8 @@ public class SkylineReconstructor {
 
                         if (index < groupTimes[state].length - 1) {
                             double t = (height - lastGroupTime) / (groupTimes[state][index] - lastGroupTime);
-                            double p1 = (Double) groupSizes.get(index).get(state);
-                            double p2 = (Double) groupSizes.get(index + 1).get(state);
+                            double p1 = popSizes[index][state];
+                            double p2 = popSizes[index + 1][state];
                             double popsize = p1 + ((p2 - p1) * t);
                             bins[k].add(popsize);
                         }
@@ -234,7 +233,7 @@ public class SkylineReconstructor {
                         }
 
                         if (index < groupTimes[state].length) {
-                            double popSize = (Double) groupSizes.get(index).get(state);
+                            double popSize = popSizes[index][state];
                             if (popSize == 0.0) {
                                 throw new RuntimeException("Zero pop size");
                             }

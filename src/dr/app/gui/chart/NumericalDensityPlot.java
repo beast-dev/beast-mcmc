@@ -31,12 +31,10 @@ import dr.util.FrequencyDistribution;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
 
 public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean relativeDensity = true;
-    boolean pointsOnly = false;
     int minimumBinCount;
 
     public boolean isSolid() {
@@ -49,7 +47,7 @@ public class NumericalDensityPlot extends FrequencyPlot {
 
     boolean solid = true;
 
-    public NumericalDensityPlot(Variate.D data, int minimumBinCount) {
+    public NumericalDensityPlot(Variate data, int minimumBinCount) {
         super(data, minimumBinCount);
         this.minimumBinCount = minimumBinCount;
     }
@@ -59,35 +57,31 @@ public class NumericalDensityPlot extends FrequencyPlot {
 //        this.minimumBinCount = minimumBinCount;
 //    }
 
-    public NumericalDensityPlot(java.util.List<Double> data, int minimumBinCount, TraceDistribution traceD) {
+    public NumericalDensityPlot(double[] data, int minimumBinCount, TraceDistribution traceD) {
         super(data, minimumBinCount, traceD);
         this.minimumBinCount = minimumBinCount;
     }
 
-//    public NumericalDensityPlot(Integer[] data, int minimumBinCount, TraceDistribution traceD) {
-//        super(data, minimumBinCount, traceD);
-//        this.minimumBinCount = minimumBinCount;
-//    }
+    public NumericalDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD) {
+        super(data, minimumBinCount, traceD);
+        this.minimumBinCount = minimumBinCount;
+    }
 
     public void setRelativeDensity(boolean relative) {
         relativeDensity = relative;
-        setData((Variate.D)getRawData(), minimumBinCount);
-    }
-
-    public void setPointsOnly(boolean pointsOnly) {
-        this.pointsOnly = pointsOnly;
+        setData(getRawData(), minimumBinCount);
     }
 
     /**
      * Set data
      */
-    public void setData(Variate.D data, int minimumBinCount) {
+    public void setData(Variate data, int minimumBinCount) {
 
         setRawData(data);
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
-        Variate.D xData = new Variate.D();
-        Variate.D yData = new Variate.D();
+        Variate.Double xData = new Variate.Double();
+        Variate.Double yData = new Variate.Double();
 
         double x = frequency.getLowerBound() - frequency.getBinSize();
         double maxDensity = 0.0;
@@ -128,64 +122,35 @@ public class NumericalDensityPlot extends FrequencyPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
         int n = xData.getCount();
 
-        if (pointsOnly) {
-            setMarkStyle(Plot.CIRCLE_MARK, 3, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
-            Rectangle2D bounds = mark.getBounds2D();
-            float w = (float) bounds.getWidth();
-            float h = (float) bounds.getHeight();
+        float x = (float) transformX(xData.get(0));
+        float y = (float) transformY(yData.get(0));
 
-            for (int i = 0; i < n; i++) {
-                float x = (float) transformX(((Number)xData.get(i)).doubleValue());
-                float y = (float) transformY(((Number)yData.get(i)).doubleValue());
+        GeneralPath path = new GeneralPath();
+        path.moveTo(x, y);
 
-                x = x - (w / 2);
-                y = y - (h / 2);
+        for (int i = 1; i < n; i++) {
+            x = (float) transformX(xData.get(i));
+            y = (float) transformY(yData.get(i));
 
-                g2.translate(x, y);
-
-                if (markFillPaint != null) {
-                    g2.setPaint(markFillPaint);
-                    g2.fill(mark);
-                }
-
-                g2.setPaint(markPaint);
-                g2.setStroke(markStroke);
-                g2.draw(mark);
-
-                g2.translate(-x, -y);
-            }
-
-        } else {
-            float x = (float) transformX(((Number)xData.get(0)).doubleValue());
-            float y = (float) transformY(((Number)yData.get(0)).doubleValue());
-
-            GeneralPath path = new GeneralPath();
-            path.moveTo(x, y);
-
-            for (int i = 1; i < n; i++) {
-                x = (float) transformX(((Number)xData.get(i)).doubleValue());
-                y = (float) transformY(((Number)yData.get(i)).doubleValue());
-
-                path.lineTo(x, y);
-            }
-
-            if (solid) {
-                path.closePath();
-                Paint fillPaint = new Color(
-                        ((Color) linePaint).getRed(),
-                        ((Color) linePaint).getGreen(),
-                        ((Color) linePaint).getBlue(), 32);
-                g2.setPaint(fillPaint);
-                g2.fill(path);
-            }
-
-            g2.setStroke(lineStroke);
-            g2.setPaint(linePaint);
-            g2.draw(path);
+            path.lineTo(x, y);
         }
-    }
+
+        if (solid) {
+            path.closePath();
+            Paint fillPaint = new Color(
+                    ((Color) linePaint).getRed(),
+                    ((Color) linePaint).getGreen(),
+                    ((Color) linePaint).getBlue(), 32);
+            g2.setPaint(fillPaint);
+            g2.fill(path);
+        }
+
+        g2.setStroke(lineStroke);
+        g2.setPaint(linePaint);
+        g2.draw(path);
+	}
 }

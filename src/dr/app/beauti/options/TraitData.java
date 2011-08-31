@@ -1,44 +1,41 @@
 package dr.app.beauti.options;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * @author Andrew Rambaut
- * @author Alexei Drummond
- * @author Walter Xie
+ *
  */
-public class TraitData {
+public class TraitData extends PartitionData {
     public static final String TRAIT_SPECIES = "species";
 
     public static enum TraitType {
         DISCRETE,
         INTEGER,
-        CONTINUOUS;
-
-        public String toString() {
-            return name().toLowerCase();
-        }
+        CONTINUOUS
     }
 
+//    private String traitName = TraitOptions.Traits.TRAIT_SPECIES.toString();
     private TraitType traitType = TraitType.DISCRETE;
 
-    private final String fileName;
-    private String name;
 
-    protected final BeautiOptions options;
-
-    public TraitData(BeautiOptions options, String name, String fileName, TraitType traitType) {
-        this.options = options;
-        this.name = name;
-        this.fileName = fileName;
+    public TraitData(BeautiOptions options, String traitName, String fileName, TraitType traitType) {
+        super(options, traitName, fileName, null);
         this.traitType = traitType;
-    }
+
+//        createTraitOptions();
+    }   
+
+//    private void createTraitOptions(){
+//        if (traitType == TraitOptions.TraitType.DISCRETE) {
+//            traitOptions = new DiscreteTraitOptions(this);
+//        } else {
+//            traitOptions = null; //TODO integer and continuous
+//        }
+//    }
 
     /////////////////////////////////////////////////////////////////////////
 
@@ -62,64 +59,63 @@ public class TraitData {
         return options.taxonList.getTaxonCount();
     }
 
-    public Taxon getTaxon(int i) {
-        return options.taxonList.getTaxon(i);
+    public String getDataType() {
+        return getTraitType().toString();
     }
 
-    public boolean hasValue(int i) {
-        if (options.taxonList == null || options.taxonList.getTaxon(i) == null
-                || options.taxonList.getTaxon(i).getAttribute(getName()) == null) return false;
-        return options.taxonList.getTaxon(i).getAttribute(getName()).toString().trim().length() > 0;
+
+    public boolean isSpecifiedTraitAnalysis(String traitName) {
+        return  getName().equalsIgnoreCase(traitName);
     }
 
-    public DataType getDataType() {
-        return GeneralDataType.INSTANCE;
+    public List<String> getStatesListOfTrait(Taxa taxonList) {
+        List<String> states = new ArrayList<String>();
+        String attr;
+
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                attr = (String) taxon.getAttribute(getName());
+
+                if (attr == null) {
+                     throw new IllegalArgumentException("Trait (" + getName() + ") has no value in taxon " + taxon.getId() +
+                     ".\nPlease go to Traits panel to import value.");
+                }
+
+                if (!states.contains(attr)) {
+                    states.add(attr);
+                }
+            }
+            return states;
+        } else {
+            return null;
+        }
     }
 
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
-    }
-
-    public Set<String> getStatesOfTrait(Taxa taxonList) {
-        return getStatesListOfTrait(taxonList, getName());
-    }
-
-    // todo this needs to go somewhere else...
     public static String getPhylogeographicDescription() {
         return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
     }
 
+    
+    public static List<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
+        List<String> states = new ArrayList<String>();
+        String attr;
 
-    public static Set<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
-        Set<String> states = new TreeSet<String>();
+        if (taxonList != null) {
+            for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+                Taxon taxon = taxonList.getTaxon(i);
+                attr = (String) taxon.getAttribute(traitName);
 
-        if (taxonList == null) {
-            throw new IllegalArgumentException("taxon list is null");
-        }
+                if (attr == null) return null;
 
-        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
-            Taxon taxon = taxonList.getTaxon(i);
-            String attr = (String) taxon.getAttribute(traitName);
-
-            // ? is used to denote missing data so is not a state...
-            if (attr != null && !attr.equals("?")) {
-                states.add(attr);
+                if (!states.contains(attr)) {
+                    states.add(attr);
+                }
             }
+            return states;
+        } else {
+            return null;
         }
-
-
-        return states;
     }
-
-    public String toString() {
-        return name;
-    }
+    
 }

@@ -88,8 +88,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
 
-        if (!isSampledTraitLikelihood &&
-                !(traitModel instanceof FullyConjugateMultivariateTraitLikelihood)) {
+        if (!isSampledTraitLikelihood && !(traitModel instanceof FullyConjugateMultivariateTraitLikelihood)) {
             throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood and " +
                     "FullyConjugateMultivariateTraitLikelihood");
         }

@@ -43,10 +43,6 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
         return false;  // No need for outer products, as Gibbs sampling of diffusion matrix is not possible
     }
 
-    protected  double calculateAscertainmentCorrection(int taxonIndex) {
-        throw new RuntimeException("Ascertainment correction not yet implemented for semi-conjugate trait likelihoods");
-    }    
-
     protected double integrateLogLikelihoodAtRoot(double[] y,
                                                   double[] Ay,
                                                   double[][] AplusB,

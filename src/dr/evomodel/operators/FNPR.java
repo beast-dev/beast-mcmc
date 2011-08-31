@@ -87,12 +87,16 @@ public class FNPR extends AbstractTreeOperator {
 
               // ****************************************************
 
-              tree.endTreeEdit();
+              try {
+                 tree.endTreeEdit();
+              } catch (MutableTree.InvalidTreeException ite) {
+                 throw new OperatorFailedException(ite.toString());
+              }
 
               tree.pushTreeChangedEvent(i);
 
               assert tree.getExternalNodeCount() == tipCount;
-
+              
               return 0.0;
            }
         }

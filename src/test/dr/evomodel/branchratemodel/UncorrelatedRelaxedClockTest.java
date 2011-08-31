@@ -96,10 +96,10 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(TREE_HEIGHT, treeHeightStats, 69.2953);
 
         TraceCorrelation kappaStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(HKYParser.KAPPA));
-        assertExpectation(HKYParser.KAPPA, kappaStats, 18.06518);
+        assertExpectation(HKYParser.KAPPA, kappaStats, 18.3053);
 
         TraceCorrelation ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.MEAN));
-        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.0591451486E-4);
+        assertExpectation(LogNormalDistributionModelParser.MEAN, ucldStats, 8.18686E-4);
 
         ucldStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(LogNormalDistributionModelParser.STDEV));
         assertExpectation(LogNormalDistributionModelParser.STDEV, ucldStats, 0.16846023066431434);
@@ -111,7 +111,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.15982);
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
-        assertExpectation("covariance", covarianceStats, -0.0260333026);
+        assertExpectation("covariance", covarianceStats, -3.81803E-2);
 
         TraceCorrelation popStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(ConstantPopulationModelParser.POPULATION_SIZE));
         assertExpectation(ConstantPopulationModelParser.POPULATION_SIZE, popStats, 37.3524);
@@ -122,7 +122,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 
     public void testExponential() throws Exception {
         meanParam = new Parameter.Default(1.0);
-        meanParam.setId(DistributionModelParser.MEAN); 
+        meanParam.setId(DistributionModelParser.MEAN);
         stdevParam = null;
         ParametricDistributionModel distributionModel = new ExponentialDistributionModel(meanParam); // offset = 0
 
@@ -151,7 +151,7 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
 //        System.out.println("rateStats = " + rateStats.getMean());
 
         TraceCorrelation coefficientOfVariationStats = traceList.getCorrelationStatistics(traceList.getTraceIndex(RateStatisticParser.COEFFICIENT_OF_VARIATION));
-        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.773609960455);
+        assertExpectation(RateStatisticParser.COEFFICIENT_OF_VARIATION, coefficientOfVariationStats, 0.7462766945263386);
 //        System.out.println("coefficientOfVariationStats = " + coefficientOfVariationStats.getMean());
 
         TraceCorrelation covarianceStats = traceList.getCorrelationStatistics(traceList.getTraceIndex("covariance"));
@@ -174,11 +174,11 @@ public class UncorrelatedRelaxedClockTest extends TraceCorrelationAssert {
         CoalescentLikelihood coalescent = new CoalescentLikelihood(treeModel, null, new ArrayList<TaxonList>(), constantModel);
         coalescent.setId("coalescent");
 
-        // clock model        
+        // clock model
         Parameter rateCategoryParameter = new Parameter.Default(32);
-        rateCategoryParameter.setId(DiscretizedBranchRates.BRANCH_RATES); 
+        rateCategoryParameter.setId(DiscretizedBranchRates.BRANCH_RATES);
 
-        DiscretizedBranchRates branchRateModel = new DiscretizedBranchRates(treeModel, rateCategoryParameter, 
+        DiscretizedBranchRates branchRateModel = new DiscretizedBranchRates(treeModel, rateCategoryParameter,
                 distributionModel, 1, false, Double.NaN);
 
         RateStatistic meanRate = new RateStatistic("meanRate", treeModel, branchRateModel, true, true, RateStatisticParser.MEAN);

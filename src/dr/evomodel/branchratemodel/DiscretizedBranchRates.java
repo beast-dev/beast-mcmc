@@ -31,10 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
-import dr.inference.model.Model;
-import dr.inference.model.ModelListener;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.*;
 
 /**
  * @author Alexei Drummond
@@ -129,7 +126,6 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
     }
 
     // compute scale factor
-
     private void computeFactor() {
 
 
@@ -146,13 +142,13 @@ public class DiscretizedBranchRates extends AbstractBranchRateModel {
                 treeRate += rates[rateCategory] * treeModel.getBranchLength(node);
                 treeTime += treeModel.getBranchLength(node);
 
-                //System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
+//                System.out.println("rates and time\t" + rates[rateCategory] + "\t" + treeModel.getBranchLength(node));
             }
         }
         //treeRate /= treeTime;
 
         scaleFactor = normalizeBranchRateTo / (treeRate / treeTime);
-        //System.out.println("scaleFactor\t\t\t\t\t" + scaleFactor);
+//        System.out.println("scaleFactor\t\t\t\t\t" + scaleFactor);
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {

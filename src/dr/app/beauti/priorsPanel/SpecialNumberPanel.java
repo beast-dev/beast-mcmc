@@ -44,11 +44,12 @@ import java.text.NumberFormat;
 public class SpecialNumberPanel extends JPanel implements ActionListener {
     private final JButton b1, b2, b3, b4, b5;
     private final JLabel label;
+    private final PriorDialog priorDialog;
 
-    private RealNumberField selectedField = null;
-
-    SpecialNumberPanel() {
+    SpecialNumberPanel (PriorDialog pd) {
         super(new BorderLayout());
+
+        this.priorDialog = pd;
 
         label = new JLabel("Set a special value in the text fields above:");
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -101,10 +102,6 @@ public class SpecialNumberPanel extends JPanel implements ActionListener {
         add(panel, BorderLayout.CENTER);
     }
 
-    public void setSelectedField(RealNumberField selectedField) {
-        this.selectedField = selectedField;
-    }
-
     @Override
     public void setEnabled(boolean enabled) {
         super.setEnabled(enabled);
@@ -117,8 +114,12 @@ public class SpecialNumberPanel extends JPanel implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        if (selectedField != null) {
-            selectedField.setText(e.getActionCommand());
+        if (priorDialog.getSelectedField() == null) {
+            JOptionPane.showMessageDialog(this, "Place cursor in a text field above",
+                    "No text field selected",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            priorDialog.getSelectedField().setText(e.getActionCommand());
         }
     }
 }

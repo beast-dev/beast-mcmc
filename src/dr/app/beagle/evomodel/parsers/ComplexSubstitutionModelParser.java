@@ -24,8 +24,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String ROOT_FREQUENCIES = "rootFrequencies";
     public static final String RANDOMIZE = "randomizeIndicator";
     public static final String INDICATOR = "rateIndicator";
-    public static final String BSSVS_TOLERANCE = "bssvsTolerance";
-    public static final String BSSVS_SCALAR = "bssvsScalar";
 
     public String getParserName() {
         return COMPLEX_SUBSTITUTION_MODEL;
@@ -87,25 +85,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
             throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
-        if (xo.hasAttribute(BSSVS_TOLERANCE)) {
-            double tolerance = xo.getAttribute(BSSVS_TOLERANCE,
-                    BayesianStochasticSearchVariableSelection.Utils.getTolerance());
-            if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
-                // Only increase smallest allowed tolerance
-                BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
-                Logger.getLogger("dr.app.beagle.evomodel").info("Increasing BSSVS tolerance to " + tolerance);
-            }
-        }
-
-        if (xo.hasAttribute(BSSVS_SCALAR)) {
-            double scalar = xo.getAttribute(BSSVS_SCALAR,
-                    BayesianStochasticSearchVariableSelection.Utils.getScalar());
-            if (scalar < BayesianStochasticSearchVariableSelection.Utils.getScalar()) {
-                BayesianStochasticSearchVariableSelection.Utils.setScalar(scalar);
-                Logger.getLogger("dr.app.beagle.evomodel").info("Decreasing BSSVS scalar to " + scalar);
-            }
-        }
-
         return new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
 
     }
@@ -139,7 +118,5 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     },true),
-            AttributeRule.newDoubleRule(BSSVS_TOLERANCE, true),
-            AttributeRule.newDoubleRule(BSSVS_SCALAR, true),
     };
 }

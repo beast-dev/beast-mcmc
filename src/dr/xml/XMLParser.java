@@ -341,41 +341,6 @@ public class XMLParser {
         }
     }
 
-    public static FileReader getFileReader(XMLObject xo, String attributeName) throws XMLParseException {
-        if (xo.hasAttribute(attributeName)) {
-            final File inFile = getFileHandle(xo, attributeName);
-            try {
-                return new FileReader(inFile);
-            } catch (FileNotFoundException e) {
-                throw new XMLParseException("Input file " + inFile.getName()
-                        + " was not found in the working directory");
-            }
-        }
-        throw new XMLParseException("Error reading input file in " + xo.getId());
-    }
-
-
-    /**
-     * Get filename and path from BEAST XML object
-     * @param xo
-     * @return
-     */
-    private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
-        final String fileName = xo.getStringAttribute(attributeName);
-
-        // Check to see if a filename prefix has been specified, check it doesn't contain directory
-        // separator characters and then prefix it.
-        final String fileNamePrefix = System.getProperty("file.name.prefix");
-        final String fileSeparator = System.getProperty("file.separator");
-        if (fileNamePrefix != null) {
-            if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
-                throw new XMLParseException("The specified file name prefix is illegal.");
-            }
-        }
-
-        return FileHelpers.getFile(fileName, fileNamePrefix);
-    }
-
     /**
      * Allow a file relative to beast xml file with a prefix of ./
      *
@@ -384,16 +349,24 @@ public class XMLParser {
      * @return Print writer from fileName attribute in the given XMLObject
      * @throws XMLParseException if file can't be created for some reason
      */
-
     public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName) throws XMLParseException {
-        return getFilePrintWriter(xo, parserName, FileHelpers.FILE_NAME);
-    }
 
-    public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName, String attributeName) throws XMLParseException {
+        if (xo.hasAttribute(FileHelpers.FILE_NAME)) {
 
-        if (xo.hasAttribute(attributeName)) {
+            final String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
 
-            final File logFile = getFileHandle(xo, attributeName);
+            // Check to see if a filename prefix has been specified, check it doesn't contain directory
+            // separator characters and then prefix it.
+            final String fileNamePrefix = System.getProperty("file.name.prefix");
+            final String fileSeparator = System.getProperty("file.separator");
+            if (fileNamePrefix != null) {
+                if (fileNamePrefix.trim().length()==0 || fileNamePrefix.contains(fileSeparator)) {
+                    throw new XMLParseException("The specified file name prefix is illegal.");
+                }
+            }
+
+            final File logFile = FileHelpers.getFile(fileName, fileNamePrefix);
+
             boolean allowOverwrite = false;
 
             if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
@@ -406,7 +379,7 @@ public class XMLParser {
             }
 
             if (logFile.exists() && !allowOverwrite) {
-                throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
+                throw new XMLParseException("\nThe log file " + fileName + " already exists in the working directory." +
                         "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
                         "\nBEAST or select the option in the Run Options dialog box as appropriate.");
             }
@@ -422,8 +395,6 @@ public class XMLParser {
         }
         return new PrintWriter(System.out);
     }
-
-
 
 
     public class ArrayParser extends AbstractXMLObjectParser {

@@ -25,12 +25,10 @@
 
 package dr.app.gui.chart;
 
-import com.sun.java.swing.plaf.nimbus.NimbusStyle;
 import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.util.List;
 
 /**
  * Description:	A line plot.
@@ -46,24 +44,24 @@ public class LinePlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public LinePlot(Variate.N xData, Variate.N yData) {
+    public LinePlot(Variate xData, Variate yData) {
         super(xData, yData);
     }
 
     /**
      * Constructor
      */
-    public LinePlot(List<Double> xData, List<Double> yData) {
+    public LinePlot(double[] xData, double[] yData) {
         super(xData, yData);
     }
 
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
-        double x = transformX(((Number) xData.get(0)).doubleValue());
-        double y = transformY(((Number) yData.get(0)).doubleValue());
+        double x = transformX(xData.get(0));
+        double y = transformY(yData.get(0));
 
         GeneralPath path = new GeneralPath();
         path.moveTo((float) x, (float) y);
@@ -71,8 +69,8 @@ public class LinePlot extends Plot.AbstractPlot {
         int n = xData.getCount();
         boolean failed = false;
         for (int i = 1; i < n; i++) {
-            x = transformX(((Number) xData.get(i)).doubleValue());
-            y = transformY(((Number) yData.get(i)).doubleValue());
+            x = transformX(xData.get(i));
+            y = transformY(yData.get(i));
             if (x == Double.NEGATIVE_INFINITY || y == Double.NEGATIVE_INFINITY ||
                     Double.isNaN(x) || Double.isNaN(y)) {
                 failed = true;

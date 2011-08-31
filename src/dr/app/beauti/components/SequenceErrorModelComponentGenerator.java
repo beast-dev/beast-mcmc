@@ -1,6 +1,6 @@
 package dr.app.beauti.components;
 
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.enumTypes.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
@@ -26,7 +26,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
     public boolean usesInsertionPoint(final InsertionPoint point) {
         SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
-        if (comp.errorModelType == SequenceErrorType.NO_ERROR || options.dataPartitions.size() != 1) {
+        if (comp.errorModelType == SequenceErrorType.NO_ERROR) {
             return false;
         }
 

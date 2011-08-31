@@ -38,7 +38,7 @@ public class ArrayLogFormatter implements LogFormatter {
         if (this.labels == null) {
             this.labels = labels;
             for (String label : labels) {
-                traces.add(new Trace<Double>(label, TraceFactory.TraceType.DOUBLE));
+                traces.add(TraceFactory.createTrace(TraceFactory.TraceType.CONTINUOUS, label, -1));
             }
             echo(labels);
         } else throw new RuntimeException("logLabels() method should only be called once!");

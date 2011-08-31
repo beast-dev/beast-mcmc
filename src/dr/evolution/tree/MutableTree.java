@@ -26,7 +26,6 @@
 package dr.evolution.tree;
 
 import dr.evolution.util.MutableTaxonList;
-import dr.math.MathUtils;
 
 /**
  * Interface for a phylogenetic or genealogical tree.
@@ -40,17 +39,17 @@ public interface MutableTree extends Tree, MutableTaxonList {
 
     public class InvalidTreeException extends Exception {
 		/**
-		 *
+		 * 
 		 */
 		private static final long serialVersionUID = 1955744780140327882L;
 
 		public InvalidTreeException(String message) { super(message); }
 	}
 
-    // return true if tree already in edit mode
+    // return true if tree already in edit mode   
     boolean beginTreeEdit();
 
-    void endTreeEdit();
+    void endTreeEdit() throws InvalidTreeException;
 
 	/**
 	 * Add child to the children of parent.
@@ -71,7 +70,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
      * @param newChild replacment child
      */
     void replaceChild(NodeRef node, NodeRef child, NodeRef newChild);
-
+    
     /**
 	 * Will throw an exception if any nodes have this node as their children.
 	 */
@@ -176,7 +175,7 @@ public interface MutableTree extends Tree, MutableTaxonList {
                     // set the parent height to be slightly above this node's height
                     // picks
                     double height = tree.getNodeHeight(node);
-                    height += tree.getNodeHeight(tree.getRoot()) * (MathUtils.nextDouble() * 0.001);                  
+                    height += tree.getNodeHeight(tree.getRoot()) * (Math.random() * 0.001);
                     tree.setNodeHeight(tree.getParent(node), height);
                 }
             }

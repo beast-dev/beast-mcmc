@@ -30,7 +30,7 @@
 	<target name="clean">
 		<delete dir="${build}" />
 	</target>
-                  
+
 	<!-- clean previous build, and then compile Java source code, and Juint test -->
 	<target name="test" depends="clean,compile-all,junit"
         description="Clean and Build all run-time stuff with unit test">
@@ -46,7 +46,7 @@
 		<mkdir dir="${build}" />
 
 		<!-- Compile the java code from ${src} into ${build} /bin -->
-		<javac source="1.6" target="1.6" srcdir="${src}" destdir="${build}" classpathref="classpath"
+		<javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath"
 		       fork="true"
 		       memoryinitialsize="256m"
 		       memorymaximumsize="1024m">
@@ -61,7 +61,7 @@
 			<include name="dr/app/tools/**" />
 			<include name="dr/app/util/**" />
             <include name="dr/app/treestat/**" />
-            <include name="dr/app/java16compat/**"/>			            
+            <include name="dr/app/java16compat/**"/>
 			<include name="dr/evolution/**" />
 			<include name="dr/evomodel/**" />
 			<include name="dr/evomodelxml/**" />
@@ -133,7 +133,7 @@
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
             <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
-			<zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
 			<zipgroupfileset dir="${lib}" includes="colt.jar" />
@@ -196,10 +196,59 @@
             <zipgroupfileset dir="${lib}" includes="jam.jar" />
 			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
 			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
-			<zipgroupfileset dir="${lib}" includes="commons-math-2.2.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
 			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
 		</jar>
-
+		
+<!--		<jar jarfile="${dist}/treestat.jar">
+			<manifest>
+				<attribute name="Built-By" value="${user.name}" />
+				<attribute name="Main-Class" value="dr.app.treestat.TreeStatApp" />
+			</manifest>
+			<fileset dir="${build}">
+				<include name="dr/app/beast/**/*.class" />
+				<include name="dr/app/beauti/**/*.class" />
+                <include name="dr/app/gui/**/*.class" />
+				<include name="dr/app/seqgen/**" />
+				<include name="dr/app/plugin/**" />
+				<include name="dr/app/util/**/*.class" />
+				<include name="dr/app/tools/**/*.class" />
+                <include name="dr/app/treestat/**/*.class" />
+                <include name="dr/app/java16compat/**/*.class"/>
+                <include name="dr/app/beagle/**/*.class" />  
+				<include name="dr/evolution/**/*.class" />
+				<exclude name="dr/evomodel/beagle/**" />
+				<include name="dr/evomodel/**/*.class" />
+				<include name="dr/evoxml/**/*.class" />
+				<include name="dr/evomodelxml/**" />
+				<include name="dr/exporters/**/*.class" />
+				<include name="dr/gui/tree/**/*.class" />
+				<include name="dr/inference/**/*.class" />
+				<include name="dr/inferencexml/**/*.class"/>
+				<include name="dr/math/**/*.class" />
+				<include name="dr/matrix/**/*.class" />
+				<include name="dr/stats/**/*.class" />
+				<include name="dr/util/**/*.class" />
+				<include name="dr/xml/**/*.class" />
+				<include name="dr/geo/**/*.class"/>
+			</fileset>
+			<fileset dir="">
+				<include name="images/*.png" />
+			</fileset>
+			<fileset dir="${src}">
+				<include name="dr/**/*.png" />
+				<include name="org/virion/jam/**/*.png" />
+				<include name="dr/**/*.properties" />
+			</fileset>
+			<zipgroupfileset dir="${lib}" includes="jebl.jar" />
+            <zipgroupfileset dir="${lib}" includes="jam.jar" />
+			<zipgroupfileset dir="${lib}" includes="jdom.jar" />
+			<zipgroupfileset dir="${lib}" includes="commons-math-2.0.jar" />
+			<zipgroupfileset dir="${lib}" includes="mtj.jar" />
+			<zipgroupfileset dir="${lib}" includes="JRI.jar" />
+			<zipgroupfileset dir="${lib}" includes="colt.jar" />
+			<zipgroupfileset dir="${lib}" includes="beagle.jar" />
+		</jar>  -->
 	</target>
 
 	<!-- run beast.jar -->
@@ -210,16 +259,6 @@
 	<!-- run beauti.jar -->
 	<target name="run_BEAUTI">
 		<java jar="${dist}/beauti.jar" fork="true" />
-	</target>
-
-    	<!-- run beast.jar -->
-	<target name="dist_test_jar" depends="dist-all">
-		<jar jarfile="${dist}/beastTest.jar">
-            <fileset dir="${build}">
-				<include name="test/dr/**/*.class" />
-            </fileset>
-            <zipgroupfileset dir="${dist}" includes="beast.jar" />
-        </jar>
 	</target>
 
 	<!-- JUnit test -->
@@ -236,12 +275,11 @@
 			<batchtest fork="yes" todir="${report}">
 				<fileset dir="${src}">
                     <include name="test/dr/distibutions/**/*Test.java"/>
-                    <include name="test/dr/evolution/**/*Test.java" />
 					<!-- <include name="test/dr/evomodel/**/*Test.java" /> -->
 					<!-- <include name="test/dr/evomodel/arg/**/*Test.java" /> -->
                     <include name="test/dr/evomodel/branchratemodel/**/*Test.java" />
 					<include name="test/dr/evomodel/coalescent/**/*Test.java" />
-                    <include name="test/dr/evomodel/operators/**/*Test.java" /> 
+                    <include name="test/dr/evomodel/operators/**/*Test.java" />
 					<include name="test/dr/evomodel/speciation/**/*Test.java" />
 					<include name="test/dr/evomodel/substmodel/**/*Test.java" />
                     <include name="test/dr/evomodel/treelikelihood/**/*Test.java" />
@@ -262,8 +300,8 @@
 	</target>
 
 
-	<property name="version" value="1.7.0pre" />
-    <property name="version_number" value="1.7.0" />
+	<property name="version" value="1.6.2" />
+    <property name="version_number" value="1.6.2" />
 	<property name="release_dir" value="release" />
 	<property name="BEAST_name" value="BEAST" />
 	<property name="BEAUti_name" value="BEAUti" />
@@ -292,7 +330,7 @@
 		<mkdir dir="${Windows_package_dir}" />
 
 		<property name="launch4j.dir" location="${Windows_dir}/launch4j" />
-		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask" 
+		<taskdef name="launch4j" classname="net.sf.launch4j.ant.Launch4jTask"
 			classpath="${launch4j.dir}/launch4j.jar :${launch4j.dir}/lib/xstream.jar" />
 
 		<copy todir="${Windows_package_dir}/doc">
@@ -360,7 +398,7 @@
 				  productVersion="${version_number}.0"
 				  txtProductVersion="${version}"/>
 
-		<!-- LogAnalyser v?.?.?.exe 
+		<!-- LogAnalyser v?.?.?.exe
 		<launch4j configFile="${Windows_dir}/LogAnalyser_launch4j.xml"
 				  jar="${dist}/beast.jar"
 				  outfile="${Windows_package_dir}/${LogAnalyser_name}v${version}.exe"
@@ -400,6 +438,7 @@
 		<copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/beauti.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${common_dir}/icons/utility.png" todir="${Linux_package_dir}/images"/>
+        <copy file="${common_dir}/icons/TreeStat.png" todir="${Linux_package_dir}/images"/>
 		<copy file="${dist}/beauti.jar" todir="${Linux_package_dir}/lib"/>
 		<copy file="${dist}/beast.jar" todir="${Linux_package_dir}/lib"/>
 		<!-- <copy file="${dist}/beast-beagle.jar" todir="${Linux_package_dir}/lib"/> -->
@@ -418,8 +457,9 @@
         <!-- [ANT Bug 550] the tar task change the mode of the executables files, have to tar manaully -->
         <echo message="Have to tar manaully, because [ANT Bug 550] the tar task change the mode of the executables files." />
 		<!-- tar -cvzf BEASTv1.x.x.tgz BEASTv1.x.x/ -->
-        <!-- cksum BEASTv1.x.x.tgz -->
         <!-- tar -xvzf BEASTv1.x.x.tgz -->
+        <!--http://ocdevel.com/blog/snow-leopard-tarball-uploading-issues-->
+        <!--cd /usr/bin; sudo ln -fs gnutar tar-->
         <echo message="Linux/Unix version release is finished." />
 	</target>
 
@@ -453,18 +493,19 @@
 		<copy file="${common_dir}/VERSION HISTORY.txt" todir="${Mac_package_dir}"/>
 		<copy file="${common_dir}/README.txt" todir="${Mac_package_dir}"/>
 
-		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler"/>
+		<property name="jarbundler_dir" value="/Applications/eclipse/plugins/org.apache.ant_1.8.2.v20110505-1300/lib" />
+		<taskdef name="jarbundler" classname="net.sourceforge.jarbundler.JarBundler" classpath="${jarbundler_dir}/jarbundler-2.2.0.jar" />
 
 		<!-- create a jar bundle for the mac -->
 		<jarbundler dir="${Mac_package_dir}"
 		                name="${BEAST_name} v${version}"
-		                mainclass="dr.app.beast.BeastMain" 
+		                mainclass="dr.app.beast.BeastMain"
 		                icon="${common_dir}/icons/beast.icns"
 		                jvmversion="1.5+"
                         vmoptions="-Xmx1024M"
 		    			arguments="-window -working -options"
 		                version="${version}"
-		                infostring="${BEAST_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+		                infostring="${BEAST_name} v${version}, Copyright 2002-2011, Alexei Drummond, Andrew Rambaut and Marc Suchard"
 		                bundleid="dr.app.beast" >
 			<javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
 			<javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
@@ -485,7 +526,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${BEAUti_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Walter Xie"
+                        infostring="${BEAUti_name} v${version}, Copyright 2002-2011, Alexei Drummond, Andrew Rambaut and Walter Xie"
                         bundleid="dr.app.beauti" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beauti.jar"/>
@@ -508,7 +549,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${LogCombiner_name} v${version}, Copyright 2002-2011, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.logcombiner" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -525,7 +566,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${TreeAnnotator_name} v${version}, Copyright 2002-2011, Alexei Drummond, Andrew Rambaut and Marc Suchard"
                         bundleid="dr.app.tools.treeannotator" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -542,7 +583,7 @@
                         vmoptions="-Xmx1024M"
                         arguments=""
                         version="${version}"
-                        infostring="${TreeStat_name} v${version}, Copyright 2002-2010, Alexei Drummond, Andrew Rambaut and Marc Suchard"
+                        infostring="${TreeStat_name} v${version}, Copyright 2002-2011, Andrew Rambaut, Alexei Drummond and Marc Suchard"
                         bundleid="dr.app.treestat" >
             <jarfileset dir="${Mac_package_dir}/lib">
                 <include name="**/beast.jar"/>
@@ -565,7 +606,7 @@
             <arg value="zlib-level=6"/>
             <arg value="${Mac_dir}/${BEAST_name} v${version}.dmg"/>
         </exec>
-        
+
 		<echo message="Mac version release is finished." />
 	</target>
 

@@ -1,6 +1,6 @@
 <launch4jConfig>
   <headerType>gui</headerType>
-  <icon>../common/icons/utility.ico</icon>
+  <icon>../common/icons/TreeStat.ico</icon>
   <classPath>
   	<mainClass>dr.app.treestat.TreeStatApp</mainClass>
   	<cp>./lib/beast.jar</cp>

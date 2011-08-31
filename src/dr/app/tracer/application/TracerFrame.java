@@ -10,10 +10,10 @@ import dr.app.gui.FileDrop;
 import dr.app.gui.chart.ChartRuntimeException;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.util.LongTask;
+import dr.app.java16compat.FileNameExtensionFilter;
 import dr.app.tracer.analysis.*;
 import dr.app.tracer.traces.CombinedTraces;
 import dr.app.tracer.traces.FilterDialog;
-import dr.app.tracer.traces.FilterListPanel;
 import dr.app.tracer.traces.TracePanel;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
@@ -24,7 +24,6 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
@@ -33,16 +32,12 @@ import java.awt.event.*;
 import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler, AnalysisMenuHandler {
-    private final static boolean CONFIRM_BUTTON_PRESSES = false;
-
     private final String[] columnToolTips = {null, null, null,
-            "Trace Type: real(R), integer(I) or categorical(C)"};
+            "Traces Type: real(R) is double, integer(I) is integer, category(C) is string"};
 
     private TracePanel tracePanel = null;
 
@@ -59,27 +54,23 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private JLabel progressLabel;
     private JProgressBar progressBar;
 
-    private final List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private final List<TraceList> currentTraceLists = new ArrayList<TraceList>();
+    private final java.util.List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
+    private final java.util.List<FilteredTraceList> currentTraceLists = new ArrayList<FilteredTraceList>();
     private CombinedTraces combinedTraces = null;
 
-    private final List<String> commonTraceNames = new ArrayList<String>();
+    private final java.util.List<String> commonTraceNames = new ArrayList<String>();
     private boolean homogenousTraceFiles = true;
 
-    private JButton realButton;
-    private JButton integerButton;
-    private JButton categoryButton;
-
-//    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
-
-    //    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
+    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
     private final JLabel filterStatus = new JLabel();
-    String message = "";
+    String message;
+
+    private FilterDialog filterDialog;
+
     private int dividerLocation = -1;
 
     private DemographicDialog demographicDialog = null;
     private BayesianSkylineDialog bayesianSkylineDialog = null;
-    private ExtendedBayesianSkylineDialog extendedBayesianSkylineDialog = null;
     private GMRFSkyrideDialog gmrfSkyrideDialog = null;
     private TimeDensityDialog timeDensityDialog = null;
     private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
@@ -87,8 +78,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
 
     private BayesFactorsDialog bayesFactorsDialog = null;
-
-//    private FilterDialog filterDialog;
 
     public TracerFrame(String title) {
         super();
@@ -121,7 +110,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void initializeComponents() {
 
-        setSize(new java.awt.Dimension(1200, 800));
+        setSize(new java.awt.Dimension(1000, 700));
 
         tracePanel = new TracePanel(this);
         tracePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 6, 12, 12)));
@@ -160,7 +149,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         topPanel.add(controlPanel1, BorderLayout.SOUTH);
 
         statisticTableModel = new StatisticTableModel();
-        statisticTable = new JTable(statisticTableModel) {
+        statisticTable = new JTable(statisticTableModel){
             //Implement table header tool tips.
             protected JTableHeader createDefaultTableHeader() {
                 return new JTableHeader(columnModel) {
@@ -191,62 +180,79 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         });
 
+//        statisticTable.addMouseListener(new MouseAdapter() { // todo bug
+//            private void maybeShowPopup(MouseEvent e) {
+//                if (traceTable.getSelectedRowCount() < 2) { // TODO generic to CombinedTraces ?
+//                    if (e.isPopupTrigger() && statisticTable.isEnabled()) {
+//                        Point p = new Point(e.getX(), e.getY());
+//                        int col = statisticTable.columnAtPoint(p);
+//                        int row = statisticTable.rowAtPoint(p);
+//
+//                        if (row >= 0 && row < statisticTable.getRowCount() && col == 3) {
+//
+//                            // create popup menu...
+//                            JPopupMenu contextMenu = createContextMenu();
+//
+//                            // ... and show it
+//                            if (contextMenu != null && contextMenu.getComponentCount() > 0) {
+//                                contextMenu.show(statisticTable, p.x, p.y);
+//                            }
+//                        }
+//                        statisticTable.setRowSelectionInterval(row, row);
+//                        statisticTableSelectionChanged();
+//                    }
+//                }
+//            }
+//
+//            public void mousePressed(MouseEvent e) {
+//                maybeShowPopup(e);
+//            }
+//
+//            public void mouseReleased(MouseEvent e) {
+//                maybeShowPopup(e);
+//            }
+//        });
+
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
 
         JScrollPane scrollPane2 = new JScrollPane(statisticTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout(0, 0));
-//        bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
+        bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
         bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
         JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         changeTraceTypePanel.add(new JLabel("Change type to:"));
-
-        realButton = new JButton("(R)eal");
-        realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
-        // Only affect Mac OS X - nicer GUI
-        realButton.putClientProperty("Quaqua.Button.style", "placard");
-        realButton.setFont(UIManager.getFont("SmallSystemFont"));
-        realButton.setEnabled(false);
-
-        integerButton = new JButton("(I)nt");
-        integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
-        // Only affect Mac OS X - nicer GUI
-        integerButton.putClientProperty("Quaqua.Button.style", "placard");
-        integerButton.setFont(UIManager.getFont("SmallSystemFont"));
-        integerButton.setEnabled(false);
-
-        categoryButton = new JButton("(C)at");
-        categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
-        // Only affect Mac OS X - nicer GUI
-        categoryButton.putClientProperty("Quaqua.Button.style", "placard");
-        categoryButton.setFont(UIManager.getFont("SmallSystemFont"));
-        categoryButton.setEnabled(false);
-
-        realButton.addActionListener(new ActionListener() {
+        JButton realButton = new JButton("R");
+        realButton.setToolTipText("real");
+        JButton integerButton = new JButton("I");
+        integerButton.setToolTipText("integer");
+        JButton categoryButton = new JButton("C");
+        categoryButton.setToolTipText("category");
+        ActionListener traceTypeButton = new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.DOUBLE);
+                if (((JButton) e.getSource()).getText().equals("I")) {
+                    changeTraceType(TraceFactory.TraceType.INTEGER);
+                } else if (((JButton) e.getSource()).getText().equals("C")) {
+                    changeTraceType(TraceFactory.TraceType.CATEGORY);
+                } else {
+                    changeTraceType(TraceFactory.TraceType.CONTINUOUS);
+                }
             }
-        });
-        integerButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.INTEGER);
-            }
-        });
-        categoryButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.STRING);
-            }
-        });
-
-        changeTraceTypePanel.add(realButton);
+        };
+        realButton.addActionListener(traceTypeButton);
+        integerButton.addActionListener(traceTypeButton);
+        categoryButton.addActionListener(traceTypeButton);
         changeTraceTypePanel.add(integerButton);
         changeTraceTypePanel.add(categoryButton);
-        changeTraceTypePanel.setToolTipText("<html> Alternatively use key word double, integer, string " +
-                "followed by tab delimited column names <br> in the beginning of the log file, " +
-                "to define the trace type. For example: <br> # integer columnName1 columnName2 ... </html>");
-        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);
+        changeTraceTypePanel.add(realButton);
+        changeTraceTypePanel.setToolTipText("<html>Traces Type: real(R) is double, integer(I) is integer, category(C) is string.</html>");
+        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);// todo bug
+
+//        bottomPanel.add(new JLabel("<html>Traces Type: real(R) is double, integer(I) is integer, " +
+//                "category(C) is string. Right click to change trace type in a selected cell.</html>"),
+//                BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
         leftPanel.setPreferredSize(new Dimension(400, 300));
@@ -282,93 +288,132 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        filterPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 8, 12, 12)));
+        JButton filterButton = new JButton("Filtered by :");
+        filterButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int rowIndex = statisticTable.getSelectedRow();
+
+                if (filterCombo.getSelectedItem().toString().equalsIgnoreCase("None")) {
+                    removeAllFilters();
+                } else {
+                    invokeFilter();
+                }
+
+                statisticTableModel.fireTableDataChanged();
+                statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
+            }
+        });
+        filterPanel.add(filterButton);
+        filterCombo.setPreferredSize(new Dimension(230, 20));
+//        filterCombo.addItemListener(new ItemListener () { //todo bug
+//            public void itemStateChanged(ItemEvent e) {
+//                if (filterCombo.getItemCount() > 0) {
+//                String traceName = filterCombo.getSelectedItem().toString();
+//                removeAllFilters(traceName);
+//                }
+//            }
+//        });
+        filterPanel.add(filterCombo);
+        filterPanel.add(filterStatus);
+
+        getContentPane().add(filterPanel, BorderLayout.SOUTH);
+    }
+
+    private void invokeFilter() {
+        if (filterDialog == null) {
+            filterDialog = new FilterDialog(this);
+        }
+
+        if (currentTraceLists == null) {
+            JOptionPane.showMessageDialog(this, "There is no file being selected !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        if (hasDiffValues(currentTraceLists)) {
+            JOptionPane.showMessageDialog(this, "Cannot filter multi-files containing different values !",
+                    "Invalid Action",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+
+        String traceName = filterCombo.getSelectedItem().toString();
+
+        message = "  " + filterDialog.showDialog(traceName, currentTraceLists, filterStatus.getText());
+
+        filterStatus.setText(message);
+
+    }
+
+    private void removeAllFilters() {
+        int n = JOptionPane.showConfirmDialog(this, "Are you removing all filters of selected files?",
+                "Filter Configuration", JOptionPane.YES_NO_OPTION);
+
+        if (n == JOptionPane.YES_OPTION) {
+            for (FilteredTraceList filteredTraceList : currentTraceLists) {
+                filteredTraceList.removeAllFilters();
+            }
+        }
+
+        filterStatus.setText("");
+    }
+
+    private boolean hasDiffValues(List<FilteredTraceList> currentTraceLists) {
+        return false;  //Todo
+    }
+
+    private JPopupMenu createContextMenu() {
+        JPopupMenu contextMenu = new JPopupMenu();
+        JMenuItem menu = new JMenuItem();
+        menu.setText(TraceFactory.TraceType.CONTINUOUS + " (" + TraceFactory.TraceType.CONTINUOUS.getBrief() + ")");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeTraceType(TraceFactory.TraceType.CONTINUOUS);
+            }
+        });
+        contextMenu.add(menu);
+
+        menu = new JMenuItem();
+        menu.setText(TraceFactory.TraceType.INTEGER + " (" + TraceFactory.TraceType.INTEGER.getBrief() + ")");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeTraceType(TraceFactory.TraceType.INTEGER);
+            }
+        });
+        contextMenu.add(menu);
+
+        menu = new JMenuItem();
+        menu.setText(TraceFactory.TraceType.CATEGORY + " (" + TraceFactory.TraceType.CATEGORY.getBrief() + ")");
+        menu.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                changeTraceType(TraceFactory.TraceType.CATEGORY);
+            }
+        });
+        contextMenu.add(menu);
+
+        return contextMenu;
     }
 
     private void changeTraceType(TraceFactory.TraceType newType) {
-        int[] selectedTraces = traceTable.getSelectedRows();
-        int[] selectedStatistics = statisticTable.getSelectedRows();
-        String m = "Are you going to change trace type into " + newType.toString() + " for\n";
+        int rowIndex = statisticTable.getSelectedRow();
+        int selRow = traceTable.getSelectedRow();
+        int id = traceLists.get(selRow).getTraceIndex(commonTraceNames.get(rowIndex));
+//        Trace trace = traceLists.get(selRow).getTrace(id);
 
-        if (combinedTraces != null) {
-            if (selectedTraces[0] > traceLists.size()) selectedTraces[0] = 0; // user may only select combinedTraces
-            for (int row : selectedStatistics) {
-                int id = traceLists.get(selectedTraces[0]).getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + traceLists.get(selectedTraces[0]).getTrace(id).getTraceType().toString() + "), ";
-            }
-
-            int result = JOptionPane.YES_OPTION;
-
-            if (CONFIRM_BUTTON_PRESSES) {
-                result = JOptionPane.showConfirmDialog(this, "Because Combined Traces exists, change type function\n" +
-                        "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
-                        "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
-            }
-
-            if (result == JOptionPane.YES_OPTION) {
-                for (LogFileTraces tl : traceLists) {
-                    for (int row : selectedStatistics) {
-                        int id = tl.getTraceIndex(commonTraceNames.get(row));
-
-                        try {
-                            tl.changeTraceType(id, newType);
-                        } catch (TraceException e) {
-                            JOptionPane.showMessageDialog(this, e,
-                                    "Trace Type Exception in " + tl.getName(), JOptionPane.ERROR_MESSAGE);
-                        }
-                        tl.analyseTrace(id);
-                    }
-                }
-                updateCombinedTraces();
-                statisticTableModel.fireTableDataChanged();
-
-                // selection will be lost by fireTableDataChanged so reselect them
-                for (int row : selectedStatistics) {
-                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
-                }
-            }
-
-        } else if (selectedTraces[selectedTraces.length - 1] >= traceLists.size()) {
-            // I take it this should never happen... why not just throw an exception?
-            JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces.",
-                    "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
-        } else {
-            LogFileTraces selectedTraceList = traceLists.get(selectedTraces[0]);
-            for (int row : selectedStatistics) {
-                int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + selectedTraceList.getTrace(id).getTraceType().toString() + "), ";
-            }
-
-            int result = JOptionPane.YES_OPTION;
-
-            if (CONFIRM_BUTTON_PRESSES) {
-                result = JOptionPane.showConfirmDialog(this, m + "\nin file " + selectedTraceList.getName() + " ?",
-                        "Change Trace Type", JOptionPane.YES_NO_OPTION);
-            }
-
-            if (result == JOptionPane.YES_OPTION) {
-                for (int row : selectedStatistics) {
-                    int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
-
-                    try {
-                        selectedTraceList.changeTraceType(id, newType);
-                    } catch (TraceException e) {
-                        JOptionPane.showMessageDialog(this, e,
-                                "Trace Type Exception in " + selectedTraceList.getName(), JOptionPane.ERROR_MESSAGE);
-//        } catch (IOException e) {
-//            System.err.println("selRow = " + selRow + "; new type = " + newType);
-//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                    }
-                    selectedTraceList.analyseTrace(id);
-                }
-
-                statisticTableModel.fireTableDataChanged();
-
-                // selection will be lost by fireTableDataChanged so reselect them
-                for (int row : selectedStatistics) {
-                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
-                }
-            }
+        try {
+            traceLists.get(selRow).loadTraces(id, newType);
+            traceLists.get(selRow).analyseTrace(id);
+        } catch (TraceException e) {
+            JOptionPane.showMessageDialog(this, e,
+                    "Trace Type Exception",
+                    JOptionPane.ERROR_MESSAGE);
+        } catch (IOException e) {
+            System.err.println("selRow = " + selRow + "; new type = " + newType);
+            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
         }
+        statisticTableModel.fireTableDataChanged();
+        statisticTable.setRowSelectionInterval(rowIndex, rowIndex);
     }
 
     public void setVisible(boolean b) {
@@ -402,7 +447,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
         getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
-        getConditionalPosteriorDistAction().setEnabled(enabled);
 
         getExportAction().setEnabled(enabled);
         getExportDataAction().setEnabled(enabled);
@@ -484,7 +528,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     public void updateCombinedTraces() {
         if (traceLists.size() > 1) {
-            LogFileTraces[] traces = new LogFileTraces[traceLists.size()];
+            FilteredTraceList[] traces = new FilteredTraceList[traceLists.size()];
             try {
                 traceLists.toArray(traces);
             } catch (ArrayStoreException ase) {
@@ -498,7 +542,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
                 analyseTraceList(combinedTraces);
             } catch (TraceException te) {
-                combinedTraces = null; // validations in CombinedTraces()
+                // do nothing
             }
         } else {
             combinedTraces = null;
@@ -557,7 +601,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         boolean isFirst = true;
         for (int row : selRows) {
             if (row < traceLists.size()) {
-                TraceList tl = traceLists.get(row);
+                FilteredTraceList tl = traceLists.get(row);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -581,7 +625,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 currentTraceLists.add(tl);
             } else if (isFirst) {
                 // if the 'Combined' trace is selected but no other trace files, then add all traces
-                TraceList tl = traceLists.get(0);
+                FilteredTraceList tl = traceLists.get(0);
                 Set<String> nameSet = new HashSet<String>();
                 for (int i = 0; i < tl.getTraceCount(); i++) {
                     String traceName = tl.getTraceName(i);
@@ -604,109 +648,108 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             statisticTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
-//        getIntersectionOfSelectedTraceLists();
+        getIntersectionOfSelectedTraceLists();
 
-//        message = "  " + updateStatusMessage(currentTraceLists);
+        message = "  " + updateStatusMessage(currentTraceLists);
 
         filterStatus.setText(message);
     }
 
-//    private String updateStatusMessage(List<TraceList> currentTraceLists) {
-//        String message = "";
-//        List<String> traceNameList = new ArrayList<String>();
-//        List<String> messageList = new ArrayList<String>();
-//
-////        for (int i = 0; i < currentTraceLists.size(); i++) {
-////            FilteredTraceList fTL = (FilteredTraceList) currentTraceLists.get(i);
-////            Filter f = ).getTraceName();
-////
-////            if (f != null) {
-////                String tN = f.getTraceName();
-////                if (!traceNameList.contains(tN)) {
-////                    traceNameList.add(tN);
-////                    message = f.getStatusMessage() + " in file(s) " + "\'" + fTL.getName() + "\'";
-////                    messageList.add(message);
-////                } else {
-////                    int id = traceNameList.indexOf(tN);
-////                    message = messageList.get(id) + " and \'" + fTL.getName() + "\'";
-////                    messageList.set(id, message);
-////                }
-////
-////                filterCombo.setSelectedItem(tN);  // todo
-////            }
-////        }
-//
-//
-//        message = "";
-//
-//        for (String s : messageList) {
-//            message += s + "; ";
-//        }
-//
-//        return message;
-//    }
+    private String updateStatusMessage(List<FilteredTraceList> currentTraceLists) {
+        String message = "";
+        List<String> traceNameList = new ArrayList<String>();
+        List<String> messageList = new ArrayList<String>();
 
-//    private void getIntersectionOfSelectedTraceLists() {
-//        filterCombo.removeAllItems();
-//        filterCombo.addItem("None");
-//
-////        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
-//        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
-//        List<TraceFactory.TraceType> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<TraceFactory.TraceType>());
-//        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
-//        for (TraceList tl : currentTraceLists) {
-//            List<String> currentTrace = new ArrayList<String>();
-//            for (int i = 0; i < tl.getTraceCount(); i++) {
-//                String traceName = tl.getTraceName(i);
-//                currentTrace.add(traceName);
-//                if (!incompatibleTrace.contains(traceName)) {
-//                    TraceFactory.TraceType traceType = tl.getTrace(i).getTraceType();
-//                    if (traceType == null) {
-//                        incompatibleTrace.add(traceName);
-//                        break;
-//                    }
-//
-//                    if (tracesIntersection.contains(traceName)) {
-//                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
-//                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-//                            tracesIntersection.remove(traceName);
-//                            incompatibleTrace.add(traceName);
-//                            break;
-//                        }
-//
-//                    } else if (currentTraceLists.indexOf(tl) == 0) {
-//
-//                        tracesIntersection.add(traceName);
-//                        tracesIntersectionClass.add(traceType);
-//                    }
-//                }
-//            } // end i loop
-//
-//            for (String traceName : tracesIntersection) {
-//                if (!currentTrace.contains(traceName)) {
-//                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-//                    tracesIntersection.remove(traceName);
-//                    incompatibleTrace.add(traceName);
-//                }
-//            }
-//
-//        }
-//
-//        assert (tracesIntersection.size() == tracesIntersectionClass.size());
-//
-//        if (!tracesIntersection.isEmpty()) {
-//            for (String traceName : tracesIntersection) {
-//                filterCombo.addItem(traceName);
-//            }
-//        }
-//    }
+        for (int i = 0; i < currentTraceLists.size(); i++) {
+            Filter f = currentTraceLists.get(i).getFilter();
+
+            if (f != null) {
+                String tN = f.getTraceName();
+                if (!traceNameList.contains(tN)) {
+                    traceNameList.add(tN);
+                    message = f.getStatusMessage() + " in file(s) " + "\'" + currentTraceLists.get(i).getName() + "\'";
+                    messageList.add(message);
+                } else {
+                    int id = traceNameList.indexOf(tN);
+                    message = messageList.get(id) + " and \'" + currentTraceLists.get(i).getName() + "\'";
+                    messageList.set(id, message);
+                }
+
+                filterCombo.setSelectedItem(tN);  // todo
+            }
+        }
+
+
+        message = "";
+
+        for (String s : messageList) {
+            message += s + "; ";
+        }
+
+        return message;
+    }
+
+    private void getIntersectionOfSelectedTraceLists() {
+        filterCombo.removeAllItems();
+        filterCombo.addItem("None");
+
+//        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
+        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
+        List<Class> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<Class>());
+        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
+        for (FilteredTraceList tl : currentTraceLists) {
+            List<String> currentTrace = new ArrayList<String>();
+            for (int i = 0; i < tl.getTraceCount(); i++) {
+                String traceName = tl.getTraceName(i);
+                currentTrace.add(traceName);
+                if (!incompatibleTrace.contains(traceName)) {
+                    Class traceType = tl.getTrace(i).getTraceType();
+                    if (traceType == null) {
+                        incompatibleTrace.add(traceName);
+                        break;
+                    }
+
+                    if (tracesIntersection.contains(traceName)) {
+                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
+                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                            tracesIntersection.remove(traceName);
+                            incompatibleTrace.add(traceName);
+                            break;
+                        }
+
+                    } else if (currentTraceLists.indexOf(tl) == 0) {
+
+                        tracesIntersection.add(traceName);
+                        tracesIntersectionClass.add(traceType);
+                    }
+                }
+            } // end i loop
+
+            for (String traceName : tracesIntersection) {
+                if (!currentTrace.contains(traceName)) {
+                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
+                    tracesIntersection.remove(traceName);
+                    incompatibleTrace.add(traceName);
+                }
+            }
+
+        }
+
+        assert (tracesIntersection.size() == tracesIntersectionClass.size());
+
+        if (!tracesIntersection.isEmpty()) {
+            for (String traceName : tracesIntersection) {
+                filterCombo.addItem(traceName);
+            }
+        }
+    }
 
     public void statisticTableSelectionChanged() {
 
         int[] selRows = statisticTable.getSelectedRows();
 
         boolean isIncomplete = false;
-        for (TraceList tl : currentTraceLists) {
+        for (FilteredTraceList tl : currentTraceLists) {
             if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
                 isIncomplete = true;
         }
@@ -729,13 +772,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                         JOptionPane.ERROR_MESSAGE);
             }
         }
-
-        realButton.setEnabled(selRows.length > 0);
-        integerButton.setEnabled(selRows.length > 0);
-        categoryButton.setEnabled(selRows.length > 0);
     }
 
-    public void analyseTraceList(TraceList job) {
+    public void analyseTraceList(FilteredTraceList job) {
 
         if (analyseTask == null) {
             analyseTask = new AnalyseTraceTask();
@@ -778,12 +817,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             }
         }
 
-        private final AnalysisStack<TraceList> analysisStack = new AnalysisStack<TraceList>();
+        private final AnalysisStack<FilteredTraceList> analysisStack = new AnalysisStack<FilteredTraceList>();
 
         public AnalyseTraceTask() {
         }
 
-        public void add(TraceList job) {
+        public void add(FilteredTraceList job) {
             analysisStack.add(job);
             current = 0;
         }
@@ -823,7 +862,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             do {
                 if (analysisStack.getCount() > 0) {
                     Object job = analysisStack.get(0);
-                    TraceList tl = (TraceList) job;
+                    FilteredTraceList tl = (FilteredTraceList) job;
 
                     try {
                         for (int i = 0; i < tl.getTraceCount(); i++) {
@@ -978,6 +1017,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             try {
                 final LogFileTraces traces = tracesArray[0];
 
+
                 final String fileName = traces.getName();
                 final ProgressMonitorInputStream in = new ProgressMonitorInputStream(
                         this,
@@ -991,7 +1031,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 Thread readThread = new Thread() {
                     public void run() {
                         try {
-                            traces.loadTraces(reader);
+                            traces.loadTraces(reader, -1, -1, null);
 
                             EventQueue.invokeLater(
                                     new Runnable() {
@@ -1056,7 +1096,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                     try {
                         for (final LogFileTraces traces : tracesArray) {
                             final Reader reader = new FileReader(traces.getFile());
-                            traces.loadTraces(reader);
+                            traces.loadTraces(reader, -1, -1, null);
 
                             EventQueue.invokeLater(
                                     new Runnable() {
@@ -1132,7 +1172,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
         createTemporalAnalysisAction.setEnabled(false);
 
-        addExtendedBayesianSkylineAction.setEnabled(true);
         addBayesianSkylineAction.setEnabled(true);
         addDemographicAction.setEnabled(true);
         addTimeDensity.setEnabled(true);
@@ -1204,32 +1243,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     }
 
-    public void doExtendedBayesianSkyline(boolean add) {
-        if (extendedBayesianSkylineDialog == null) {
-            extendedBayesianSkylineDialog = new ExtendedBayesianSkylineDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            extendedBayesianSkylineDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            extendedBayesianSkylineDialog.createExtendedBayesianSkylineFrame(currentTraceLists.get(0), this);
-        }
-    }
 
     public void doGMRFSkyride(boolean add) {
         if (gmrfSkyrideDialog == null) {
@@ -1345,55 +1358,8 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     }
 
-
-    private void doFindConditionalPosteriorDistributions() {
-//        if (filterDialog == null) {
-//        FilterDialog filterDialog = new FilterDialog(this);
-//        }
-
-        if (currentTraceLists == null) {
-            JOptionPane.showMessageDialog(this, "There is no file being selected !",
-                    "Invalid Action",
-                    JOptionPane.ERROR_MESSAGE);
-        } else if (currentTraceLists.size() > 1) {
-            JOptionPane.showMessageDialog(this, "Only one file can be selected each time !",
-                    "Invalid Action",
-                    JOptionPane.ERROR_MESSAGE);
-        } else if (!(currentTraceLists.get(0) instanceof FilteredTraceList)) {
-            JOptionPane.showMessageDialog(this, "Filter cannot be applied to Combined Trace List yet !",
-                    "Invalid Action",
-                    JOptionPane.ERROR_MESSAGE);
-
-        } else {
-            FilterListPanel filterListPanel = null;
-            if (combinedTraces == null) {
-                filterListPanel = new FilterListPanel((FilteredTraceList) currentTraceLists.get(0));
-            } else {
-                int n = JOptionPane.showConfirmDialog(this,
-                        "Because Combined Traces exits, you have to apply filter\n" +
-                                "to all files including Combined Traces.\n" +
-                                "Would you like to continue or not ?",
-                        "Combined Traces Detected", JOptionPane.YES_NO_OPTION);
-
-                if (n == JOptionPane.YES_OPTION) {
-                    filterListPanel = new FilterListPanel(combinedTraces);
-                }
-            }
-
-            if (filterListPanel != null) {
-                try {
-                    FilterDialog filterDialog = new FilterDialog(this);
-                    message = "  " + filterDialog.showDialog(filterListPanel, filterStatus.getText());
-                    filterStatus.setText(message);
-                } catch (RuntimeException e) {
-                    JOptionPane.showMessageDialog(this, "Error : " + e + "\nbecause " + e.getMessage(),
-                            "Filter Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
-    }
-
     public JComponent getExportableComponent() {
+
         return tracePanel.getExportableComponent();
     }
 
@@ -1415,7 +1381,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         public Object getValueAt(int row, int col) {
-            TraceList traceList;
+            FilteredTraceList traceList;
 
             if (traceLists.size() == 0) {
                 switch (col) {
@@ -1508,9 +1474,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
                 case 2:
                     if (!td.isValid()) return "-";
                     value = td.getESS();
-                    if (Double.isNaN(value) || value < 1) {
+                    if( Double.isNaN(value) || value < 1 ) {
                         // assume not applicable; should be tested in the computation
-                        return "-";
+                       return "-";
                     }
                     if (value < 200.0) warning = true;
                     if (value < 100.0) extremeWarning = true;
@@ -1564,10 +1530,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return bayesianSkylineAction;
     }
 
-    public Action getExtendedBayesianSkylineAction() {
-        return extendedBayesianSkylineAction;
-    }
-
     public Action getGMRFSkyrideAction() {
         return gmrfSkyrideAction;
     }
@@ -1592,20 +1554,12 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         return addBayesianSkylineAction;
     }
 
-    public Action getAddExtendedBayesianSkylineAction() {
-        return addExtendedBayesianSkylineAction;
-    }
-
     public Action getAddTimeDensityAction() {
         return addTimeDensity;
     }
 
     public Action getBayesFactorsAction() {
         return bayesFactorsAction;
-    }
-
-    public Action getConditionalPosteriorDistAction() {
-        return getConditionalPostDistAction;
     }
 
     private final AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
@@ -1617,12 +1571,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
         public void actionPerformed(ActionEvent ae) {
             doBayesianSkyline(false);
-        }
-    };
-
-    private final AbstractAction extendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doExtendedBayesianSkyline(false);
         }
     };
 
@@ -1662,12 +1610,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     };
 
-    private final AbstractAction addExtendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doExtendedBayesianSkyline(true);
-        }
-    };
-
     private final AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
         public void actionPerformed(ActionEvent ae) {
             doAddTimeDensity();
@@ -1677,12 +1619,6 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
         public void actionPerformed(ActionEvent ae) {
             doCalculateBayesFactors();
-        }
-    };
-
-    private final AbstractAction getConditionalPostDistAction = new AbstractAction(AnalysisMenuFactory.CONDITIONAL_POST_DIST) {
-        public void actionPerformed(ActionEvent ae) {
-            doFindConditionalPosteriorDistributions();
         }
     };
 

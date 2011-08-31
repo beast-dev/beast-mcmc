@@ -53,10 +53,6 @@ public class SampledMultivariateTraitLikelihood extends AbstractMultivariateTrai
         return logLikelihood;
     }
 
-    protected  double calculateAscertainmentCorrection(int taxonIndex) {
-        throw new RuntimeException("Ascertainment correction not yet implemented for sampled trait likelihoods");
-    }
-
     public final double getLogDataLikelihood() {
         double logLikelihood = 0;
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {

@@ -1,10 +1,10 @@
 package dr.app.beauti.components;
 
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.enumTypes.PriorScaleType;
+import dr.app.beauti.enumTypes.PriorType;
+import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TipDateSamplingType;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 
@@ -25,8 +25,8 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
     }
 
     public void createParameters(final ModelOptions modelOptions) {
-        modelOptions.createNonNegativeParameterUniformPrior("treeModel.tipDates", "date of specified tips",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        modelOptions.createParameterUniformPrior("treeModel.tipDates", "date of specified tips",
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.POSITIVE_INFINITY, 0.0, Double.POSITIVE_INFINITY);
 
         modelOptions.createScaleOperator("treeModel.tipDates", modelOptions.demoTuning, 3.0);
     }
@@ -43,7 +43,8 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                 }
                 if (parameter == null) {
                     parameter = new Parameter.Builder("age(" + taxon.getId() + ")", "sampled age of taxon, " + taxon.getId())
-                            .scaleType(PriorScaleType.TIME_SCALE).prior(PriorType.UNIFORM_PRIOR).initial(height).isNonNegative(true).build();
+                            .scaleType(PriorScaleType.TIME_SCALE).prior(PriorType.UNIFORM_PRIOR).initial(height).lower(0.0)
+                            .upper(Double.POSITIVE_INFINITY).build();
                     parameter.setPriorEdited(true);
                     tipDateParameters.put(taxon, parameter);
                 }

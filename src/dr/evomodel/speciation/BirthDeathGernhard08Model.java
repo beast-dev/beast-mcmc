@@ -60,18 +60,14 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
 
     public static final String BIRTH_DEATH_MODEL = BirthDeathModelParser.BIRTH_DEATH_MODEL;
 
-    /*
-     * mu/lambda
-     *
-     * null means default (0), or pure birth (Yule)
-     */
     private Parameter relativeDeathRateParameter;
-
     /**
-     *    lambda - mu
+     * mu/lambda *
      */
     private Parameter birthDiffRateParameter;
-   
+    /**
+     * lambda - mu *
+     */
     private Parameter sampleProbability;
 
     private TreeType type;
@@ -105,10 +101,8 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         birthDiffRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
 
         this.relativeDeathRateParameter = relativeDeathRateParameter;
-        if( relativeDeathRateParameter != null ) {
-          addVariable(relativeDeathRateParameter);
-          relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
-        }
+        addVariable(relativeDeathRateParameter);
+        relativeDeathRateParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
 
         this.sampleProbability = sampleProbability;
         if (sampleProbability != null) {
@@ -124,24 +118,12 @@ public class BirthDeathGernhard08Model extends UltrametricSpeciationModel {
         this.type = type;
     }
 
-    @Override
-    public boolean isYule() {
-        // Yule only
-        return (relativeDeathRateParameter == null && sampleProbability == null && !conditionalOnRoot);
-    }
-
-    @Override
-    public double getMarginal(Tree tree, CalibrationPoints calibration) {
-       // Yule only
-       return calibration.getCorrection(tree, getR());
-    }
-
     public double getR() {
         return birthDiffRateParameter.getParameterValue(0);
     }
 
     public double getA() {
-        return relativeDeathRateParameter != null ? relativeDeathRateParameter.getParameterValue(0) : 0;
+        return relativeDeathRateParameter.getParameterValue(0);
     }
 
     public double getRho() {

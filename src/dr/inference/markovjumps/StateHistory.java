@@ -1,6 +1,5 @@
 package dr.inference.markovjumps;
 
-import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
 import java.util.ArrayList;
@@ -134,30 +133,7 @@ public class StateHistory {
 
     public double getEndingTime() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getTime();
-    }
-
-    public void rescaleTimesOfEvents(double inStartTime, double inEndTime) {
-
-        final double scale = (inEndTime - inStartTime) / (getEndingTime() - getStartingTime());
-
-        StateChange currentStateChange = stateList.get(0);
-        double oldCurrentTime = currentStateChange.getTime();
-        currentStateChange.setTime(inStartTime);
-        double newCurrentTime = inStartTime;
-
-        for (int i = 1; i < stateList.size(); ++i) {
-            StateChange nextStateChange = stateList.get(i);
-            double oldNextTime = nextStateChange.getTime();
-            double oldTimeDiff = oldNextTime - oldCurrentTime;
-
-            double newNextTime = oldTimeDiff * scale + newCurrentTime;
-            nextStateChange.setTime(newNextTime);
-            
-            oldCurrentTime = oldNextTime;
-            newCurrentTime = newNextTime;
-
-        }
+        return stateList.get(stateList.size()-1).getState();
     }
 
     public String toString() {
@@ -170,48 +146,6 @@ public class StateHistory {
         }
         sb.append("]");
         return sb.toString();
-    }
-
-    public static void main(String[] args) {
-        System.err.println("Testing time rescaling:");
-        StateHistory stateHistory = new StateHistory(1, 1, 4);
-        StateChange stateChange;
-        stateChange = new StateChange(2, 2);
-        stateHistory.addChange(stateChange);
-        stateChange = new StateChange(5, 2);
-        stateHistory.addEndingState(stateChange);
-
-        System.err.println("Initial history: " + stateHistory);
-
-        stateHistory.rescaleTimesOfEvents(8.0, 0.0);
-        System.err.println("Rescale history: " + stateHistory);
-
-        stateHistory.rescaleTimesOfEvents(0.0, 4.0);
-        System.err.println("Rescale history: " + stateHistory);
-    }
-
-    public String toStringChanges(DataType dataType) { //}, double startTime) {
-        StringBuilder sb = new StringBuilder("{");
-        int currentState = stateList.get(0).getState();
-        boolean firstChange = true;
-        for (int i = 1; i < stateList.size(); i++) {
-            int nextState = stateList.get(i).getState();
-            if (nextState != currentState) {
-                if (!firstChange) {
-                    sb.append(",");
-                }
-                double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time);
-                firstChange = false;
-                currentState = nextState;
-            }
-        }
-        sb.append("}");
-        return sb.toString();
-    }
-
-    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
-        sb.append("[").append(source).append(":").append(dest).append(":").append(time).append("]");
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,

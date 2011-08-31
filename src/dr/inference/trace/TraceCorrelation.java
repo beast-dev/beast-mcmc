@@ -25,8 +25,6 @@
 
 package dr.inference.trace;
 
-import java.util.List;
-
 /**
  * A class that stores the correlation statistics for a trace
  *
@@ -37,8 +35,8 @@ import java.util.List;
 public class TraceCorrelation<T> extends TraceDistribution<T> {
     final int stepSize;
 
-    public TraceCorrelation(List<T> values, TraceFactory.TraceType traceType, int stepSize) {
-        super(values, traceType, stepSize);
+    public TraceCorrelation(T[] values, int stepSize) {
+        super(values, stepSize);
         this.stepSize = stepSize;
 
         if (isValid) {
@@ -54,23 +52,29 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
         return ACT;
     }
 
-    private void analyseCorrelation(List<T> values, int stepSize) {
+    private void analyseCorrelation(T[] values, int stepSize) {
 //        this.values = values; // move to TraceDistribution(T[] values)
 
-        if (getTraceType() == TraceFactory.TraceType.DOUBLE
-                || getTraceType() == TraceFactory.TraceType.INTEGER) {
-            double[] doubleValues = new double[values.size()];
-            for (int i = 0; i < values.size(); i++) {
-                doubleValues[i] = ((Number) values.get(i)).doubleValue();
+         if (values[0].getClass() == TraceFactory.TraceType.CONTINUOUS.getType()) {
+             double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Double) values[i]).doubleValue();
             }
-            analyseCorrelationContinuous(doubleValues, stepSize);
+             analyseCorrelationContinuous(doubleValues, stepSize);
 
-        } else if (getTraceType() == TraceFactory.TraceType.STRING) {
+         } else if (values[0].getClass() == TraceFactory.TraceType.INTEGER.getType()) {
+              double[] doubleValues = new double[values.length];
+             for (int i = 0; i < values.length; i++) {
+                doubleValues[i] = ((Integer) values[i]).doubleValue();
+            }
+             analyseCorrelationContinuous(doubleValues, stepSize);
+
+         } else if (values[0].getClass() == TraceFactory.TraceType.CATEGORY.getType()) {
 
 
-        } else {
-            throw new RuntimeException("Trace type is not recognized");
-        }
+         } else {
+             throw new RuntimeException("Trace type is not recognized");
+         }
     }
 
     /**
@@ -145,4 +149,18 @@ public class TraceCorrelation<T> extends TraceDistribution<T> {
     protected double stdErrOfACT;
 
     private static final int MAX_LAG = 2000;
+
+
+    public void setFilter(Filter filter) {
+        this.filter = filter;
+        credSet = new CredibleSet(getValuesArray(), 0.95);
+
+        if (isValid) {
+            analyseCorrelation(getValuesArray(), stepSize);
+        }
+    }
+
+    public Filter getFilter() {
+        return filter;
+    }
 }

@@ -1,11 +1,11 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.enumTypes.ClockType;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.RelativeRatesType;
+import dr.app.beauti.enumTypes.TreePriorType;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.RelativeRatesType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evomodel.operators.BitFlipInSubstitutionModelOperator;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
@@ -18,7 +18,6 @@ import dr.evomodelxml.operators.*;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.SpeciesTreeModelParser;
 import dr.evomodelxml.speciation.YuleModelParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.ParameterParser;
 import dr.inference.operators.RateBitExchangeOperator;
 import dr.inference.operators.SimpleOperatorSchedule;
@@ -76,8 +75,6 @@ public class OperatorsGenerator extends Generator {
             }
         }
 
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_OPERATORS, writer); // Added for special operators
-
         writer.writeCloseTag(SimpleOperatorScheduleParser.OPERATOR_SCHEDULE);
     }
 
@@ -90,12 +87,8 @@ public class OperatorsGenerator extends Generator {
                 break;
             case RANDOM_WALK:
                 writeRandomWalkOperator(operator, writer);
-                break;
             case RANDOM_WALK_ABSORBING:
                 writeRandomWalkOperator(operator, false, writer);
-                break;
-            case RANDOM_WALK_INT:
-                writeRandomWalkIntegerOperator(operator, writer);
                 break;
             case RANDOM_WALK_REFLECTING:
                 writeRandomWalkOperator(operator, true, writer);
@@ -104,10 +97,7 @@ public class OperatorsGenerator extends Generator {
                 writeIntegerRandomWalkOperator(operator, writer);
                 break;
             case UP_DOWN:
-                writeUpDownOperator(UpDownOperatorParser.UP_DOWN_OPERATOR, operator, writer);
-                break;
-            case MICROSAT_UP_DOWN:
-                writeUpDownOperator(MicrosatUpDownOperatorParser.MICROSAT_UP_DOWN_OPERATOR, operator, writer);
+                writeUpDownOperator(operator, writer);
                 break;
             case UP_DOWN_ALL_RATES_HEIGHTS:
             	writeUpDownOperatorAllRatesTrees(operator, writer);
@@ -242,23 +232,11 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(name);
     }
 
-    private void writeRandomWalkIntegerOperator(Operator operator, XMLWriter writer) {
-        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
-        writer.writeOpenTag(
-                name,
-                new Attribute[]{
-                        new Attribute.Default<Double>("windowSize", operator.tuning),
-                        getWeightAttribute(operator.weight)
-                });
-        writeParameter1Ref(writer, operator);
-        writer.writeCloseTag(name);
-    }
-
     private void writeIntegerRandomWalkOperator(Operator operator, XMLWriter writer) {
 
         int windowSize = (int) Math.round(operator.tuning);
         if (windowSize < 1) windowSize = 1;
-        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INTEGER_OPERATOR;
+        final String name = RandomWalkIntegerOperatorParser.RANDOM_WALK_INT_OP;
         writer.writeOpenTag(
                 name,
                 new Attribute[]{
@@ -292,6 +270,33 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(ScaleOperatorParser.SCALE_OPERATOR);
     }
 
+    private void writeUpDownOperator(Operator operator, XMLWriter writer) {
+        writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
+                new Attribute[]{
+                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
+                        getWeightAttribute(operator.weight)
+                }
+        );
+
+        writer.writeOpenTag(UpDownOperatorParser.UP);
+        // for isEstimatedRate() = false, write nothing on up part of upDownOp
+        if (!operator.parameter1.isFixed && !(options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN)) {
+        	writeParameter1Ref(writer, operator);
+        }
+        writer.writeCloseTag(UpDownOperatorParser.UP);
+
+        writer.writeOpenTag(UpDownOperatorParser.DOWN);
+        if (operator.tag == null) {
+//	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
+            writeParameter2Ref(writer, operator);
+        } else {
+        	writer.writeIDref(operator.tag,  operator.idref);
+        }
+        writer.writeCloseTag(UpDownOperatorParser.DOWN);
+
+        writer.writeCloseTag(UpDownOperatorParser.UP_DOWN_OPERATOR);
+    }
+
     private void writeCenteredOperator(Operator operator, XMLWriter writer) {
         writer.writeOpenTag(CenteredScaleOperatorParser.CENTERED_SCALE,
                 new Attribute[]{
@@ -306,7 +311,7 @@ public class OperatorsGenerator extends Generator {
 
     private void writeDeltaOperator(Operator operator, XMLWriter writer) {
 
-        if (operator.getBaseName().startsWith(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
+        if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.MU_RELATIVE_RATES.toString())) {
 
             int[] parameterWeights = ((PartitionSubstitutionModel) operator.parameter1.getOptions()).getPartitionCodonWeights();
 
@@ -324,9 +329,9 @@ public class OperatorsGenerator extends Generator {
                 );
             }
 
-        } else if (operator.getBaseName().startsWith(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
+        } else if (operator.getBaseName().equalsIgnoreCase(RelativeRatesType.CLOCK_RELATIVE_RATES.toString())) {
 
-        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights(operator.getClockModelGroup());
+        	int[] parameterWeights = options.clockModelOptions.getPartitionClockWeights();
 
             if (parameterWeights != null && parameterWeights.length > 1) {
                 String pw = "" + parameterWeights[0];
@@ -397,9 +402,9 @@ public class OperatorsGenerator extends Generator {
         writeParameter1Ref(writer, operator);
 //        writeOperatorRef(writer, operator);
         PartitionSubstitutionModel model = (PartitionSubstitutionModel) operator.getOptions();
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(GeneralTraitGenerator.getLocationSubstModelTag(model), model.getPrefix() + AbstractSubstitutionModel.MODEL);
         // <svsGeneralSubstitutionModel idref="originModel"/>
-        writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);
+        writer.writeCloseTag(BitFlipInSubstitutionModelOperator.BIT_FLIP_OPERATOR);        
     }
 
     private void writeRateBitExchangeOperator(Operator operator, XMLWriter writer) {
@@ -531,32 +536,6 @@ public class OperatorsGenerator extends Generator {
         writer.writeCloseTag(TreeNodeSlideParser.TREE_NODE_REHEIGHT);
     }
 
-    private void writeUpDownOperator(String opTag, Operator operator, XMLWriter writer) {
-        writer.writeOpenTag(opTag,
-                new Attribute[]{
-                        new Attribute.Default<Double>(ScaleOperatorParser.SCALE_FACTOR, operator.tuning),
-                        getWeightAttribute(operator.weight)
-                }
-        );
-
-        writer.writeOpenTag(UpDownOperatorParser.UP);
-        // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed && !(operator.getClockModelGroup().getRateTypeOption() == FixRateType.FIX_MEAN)) {
-        	writeParameter1Ref(writer, operator);
-        }
-        writer.writeCloseTag(UpDownOperatorParser.UP);
-
-        writer.writeOpenTag(UpDownOperatorParser.DOWN);
-        if (operator.tag == null) {
-//	        writer.writeIDref(ParameterParser.PARAMETER,  operator.parameter2.getName());
-            writeParameter2Ref(writer, operator);
-        } else {
-        	writer.writeIDref(operator.tag,  operator.idref);
-        }
-        writer.writeCloseTag(UpDownOperatorParser.DOWN);
-
-        writer.writeCloseTag(opTag);
-    }
 
     private void writeUpDownOperatorAllRatesTrees(Operator operator, XMLWriter writer) {
     	writer.writeOpenTag(UpDownOperatorParser.UP_DOWN_OPERATOR,
@@ -576,26 +555,17 @@ public class OperatorsGenerator extends Generator {
 	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "clock.rate");
 	                break;
 
-	            case UNCORRELATED:
-                    switch (model.getClockDistributionType()) {
-                        case LOGNORMAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
-                            break;
-                        case GAMMA:
-                            throw new UnsupportedOperationException("Uncorrelated gamma relaxed clock model not implemented yet");
-//                            break;
-                        case CAUCHY:
-                            throw new UnsupportedOperationException("Uncorrelated Cauchy relaxed clock model not implemented yet");
-//                            break;
-                        case EXPONENTIAL:
-                            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
-                            break;
-                    }
+	            case UNCORRELATED_EXPONENTIAL:
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCED_MEAN);
 	            	break;
 
-	            case AUTOCORRELATED:
-                    throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
-//	                break;
+	            case UNCORRELATED_LOGNORMAL:
+	            	writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + ClockType.UCLD_MEAN);
+	                break;
+
+	            case AUTOCORRELATED_LOGNORMAL:
+	                //TODO
+	                break;
 
 	            default:
 	                throw new IllegalArgumentException("Unknown clock model");

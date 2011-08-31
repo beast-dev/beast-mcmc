@@ -32,7 +32,6 @@ import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -92,12 +91,7 @@ public class TraceAnalysisParser extends AbstractXMLObjectParser {
                             System.out.print("E[" + statName + "] = " + formatter.format(expectation));
 
                             if (computeMSE) {
-                                List values = traces.getValues(i);
-                                double[] dv = new double[values.size()];
-                                for (int j = 0; j < dv.length; j++) {
-                                    dv[j] = ((Number) values.get(j)).doubleValue();
-                                }
-                                double MSE = distribution.getMeanSquaredError(dv, expectation);
+                                double MSE = distribution.getMeanSquaredError(expectation);
                                 System.out.println(" MSE = " + formatter.format(MSE));
                             } else {
                                 System.out.println("");

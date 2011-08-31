@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.evolution.alignment.AscertainedSitePatterns;
@@ -71,19 +71,19 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     public NewScalingBeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
-                                BranchSubstitutionModel branchSubstitutionModel,
+                                BranchSiteModel branchSiteModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
                                 boolean useAmbiguities,
                                 PartialsRescalingScheme rescalingScheme) {
 
-        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, rescalingScheme,
+        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, rescalingScheme,
                 null);
     }
 
     public NewScalingBeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
-                                BranchSubstitutionModel branchSubstitutionModel,
+                                BranchSiteModel branchSiteModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
                                 boolean useAmbiguities,
@@ -100,8 +100,8 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
             this.siteRateModel = siteRateModel;
             addModel(this.siteRateModel);
 
-            this.branchSubstitutionModel = branchSubstitutionModel;
-            addModel(branchSubstitutionModel);
+            this.branchSiteModel = branchSiteModel;
+            addModel(branchSiteModel);
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -209,7 +209,7 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
                     preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
 
-            if (branchSubstitutionModel.canReturnComplexDiagonalization()) {
+            if (branchSiteModel.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }
 
@@ -478,7 +478,7 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
                 updateNode(treeModel.getNode(index));
             }
 
-        } else if (model == branchSubstitutionModel) {
+        } else if (model == branchSiteModel) {
 
             updateSubstitutionModel = true;
             updateAllNodes();
@@ -624,7 +624,7 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         if (updateSubstitutionModel) {
             // we are currently assuming a homogeneous model...
-            EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(0, 0);
+            EigenDecomposition ed = branchSiteModel.getEigenDecomposition(0, 0);
                                
             eigenBufferHelper.flipOffset(0);
 
@@ -694,7 +694,7 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
             int rootIndex = partialBufferHelper.getOffsetIndex(root.getNumber());
 
             double[] categoryWeights = this.siteRateModel.getCategoryProportions();
-            double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
+            double[] frequencies = branchSiteModel.getStateFrequencies(0);
 
             if (useManualScaling) {
                 if (recomputeScaleFactors) {
@@ -1045,7 +1045,7 @@ public class NewScalingBeagleTreeLikelihood extends AbstractTreeLikelihood {
     /**
      * the branch-site model for these sites
      */
-    protected final BranchSubstitutionModel branchSubstitutionModel;
+    protected final BranchSiteModel branchSiteModel;
 
     /**
      * the site model for these sites

@@ -13,7 +13,6 @@ package dr.inference.markovjumps;
 
 public enum MarkovJumpsType {
 
-    HISTORY("history"),
     COUNTS("counts"),
     REWARDS("rewards");
 

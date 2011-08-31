@@ -50,11 +50,7 @@ public class KernelDensityEstimator2D implements ContourMaker {
      * @param n smoothed grid size
      * @param lims bi-variate min/max for grid
      */
-    public KernelDensityEstimator2D(final double[] x, final double[] y, final double[] h, final int n, final double[] lims) {
-        this(x, y, h, n, lims, false);
-    }
-
-    public KernelDensityEstimator2D(final double[] x, final double[] y, final double[] h, final int n, final double[] lims, boolean bandwdithLimited) {
+    public KernelDensityEstimator2D(double[] x, double[] y, double[] h, int n, double[] lims) {
         this.x = x;
         this.y = y;
         if (x.length != y.length)
@@ -71,7 +67,6 @@ public class KernelDensityEstimator2D implements ContourMaker {
         else
             setupLims();
 
-        this.limitBandwidth = bandwdithLimited;
         if (h != null)
             this.h = h;
         else
@@ -79,17 +74,13 @@ public class KernelDensityEstimator2D implements ContourMaker {
 
         doKDE2D();
     }
-    
-    public KernelDensityEstimator2D(final double[] x, final double[] y, boolean limitBandwidth) {
-        this(x,y,null,50,null,limitBandwidth);
-    }
 
-    public KernelDensityEstimator2D(final double[] x, final double[] y) {
+    public KernelDensityEstimator2D(double[] x, double[] y) {
         this(x,y,null,50,null);
     }
 
-    public KernelDensityEstimator2D(final double[] x, final double[] y, final int n) {
-        this(x,y,null,n,null);
+    public KernelDensityEstimator2D(double[] x, double[] y, int n) {
+        this(x,y,new double[]{1.0,1.0},n,null);
     }
 
     public void doKDE2D() {
@@ -213,15 +204,6 @@ public class KernelDensityEstimator2D implements ContourMaker {
         h = new double[2];
         h[0] = bandwidthNRD(x) / 4;
         h[1] = bandwidthNRD(y) / 4;
-
-        if (limitBandwidth) {
-            if (h[0] >  0.5) {
-                h[0] = 0.5;
-            }
-            if (h[1] > 0.5) {
-                h[1] = 0.5;
-            }
-        }
     }
 
 
@@ -263,16 +245,14 @@ public class KernelDensityEstimator2D implements ContourMaker {
 
     public double[] getLims() { return lims; }
 
-    private final double[] x; // x coordinates
-    private final double[] y; // y coordinates
+    private double[] x; // x coordinates
+    private double[] y; // y coordinates
     private double[] h; // h[0] x-bandwidth, h[1] y-bandwidth
-    private final int n; // grid size
+    private int n; // grid size
     private double[] lims; // x,y limits
     private int nx; // length of vectors
     private double[] gx; // x-grid points
     private double[] gy; // y-grid points
     private double[][] z; // KDE estimate;
-
-    private final boolean limitBandwidth;
 
 }

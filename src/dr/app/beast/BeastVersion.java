@@ -1,7 +1,7 @@
 /*
  * BeastVersion.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -45,20 +45,22 @@ public class BeastVersion implements Version {
     /**
      * Version string: assumed to be in format x.x.x
      */
-    private static final String VERSION = "1.7.0";
+    private static final String VERSION = "1.6.2";
 
     private static final String DATE_STRING = "2002-2011";
 
-    private static final boolean IS_PRERELEASE = true;
-
-    private static final String REVISION = "$Rev$";
+    /**
+     * this used to parse the CVS ID string but there is no equivalent
+     * for SVN. We must increment this manually.
+     */
+    private static final String BUILD_ID = "Build r4230";
 
     public String getVersion() {
         return VERSION;
     }
 
     public String getVersionString() {
-        return "v" + VERSION + (IS_PRERELEASE ? " Prerelease " + getBuildString() : "");
+        return "v" + VERSION;
     }
 
     public String getDateString() {
@@ -92,7 +94,8 @@ public class BeastVersion implements Version {
                 "BEAST developers:",
                 "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
                 "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, ",
-                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, ",
+                "\tWalter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -119,6 +122,6 @@ public class BeastVersion implements Version {
     }
 
     public String getBuildString() {
-        return "r" + REVISION.split(" ")[1];
+        return BUILD_ID;
     }
 }

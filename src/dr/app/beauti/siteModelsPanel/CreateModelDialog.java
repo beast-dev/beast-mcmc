@@ -38,7 +38,6 @@ import javax.swing.border.EmptyBorder;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @version $Id: PriorDialog.java,v 1.4 2006/09/05 13:29:34 rambaut Exp $
- * @deprecated
  */
 public class CreateModelDialog {
 

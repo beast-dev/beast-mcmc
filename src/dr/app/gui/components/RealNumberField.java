@@ -9,6 +9,8 @@
 
 package dr.app.gui.components;
 
+import dr.app.beauti.util.NumberUtil;
+
 import javax.swing.*;
 import javax.swing.event.*;
 import javax.swing.text.AttributeSet;
@@ -55,15 +57,15 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             range_checked = true;
             try {
                 double value = getValue();
-                if (value < min || value > max) {
-                    displayErrorMessage();
-                    // regain focus for this component
-                    this.requestFocus();
+                if (min >= max) {
+                    errorMsg2();
+                } else if (value < min || value > max) {
+                    errorMsg();
                 }
             } catch (NumberFormatException e) {
-                displayErrorMessage();
-                // regain focus for this component
-                this.requestFocus();
+                JOptionPane.showMessageDialog(this, "Unable to parse number correctly:\n" + e.getMessage(),
+                        "Number Format Exception",
+                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -80,7 +82,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         } else if (value == Double.MIN_VALUE) {
             setText(MIN_VALUE);
         } else {
-            setText(Double.toString(value));
+            setText(NumberUtil.formatDecimal(value, 10, 6));
         }
     }
 
@@ -92,24 +94,16 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         setText(obj.toString()); // where used?
     }
 
-    protected void displayErrorMessage() {
-        String message = "";
-        if (min == Double.MIN_VALUE) {
-            message = " greater than 0";
-        } else if (!Double.isInfinite(min) && min != -Double.MAX_VALUE) {
-            message = " greater than " + min;
-        }
-        if (max == -Double.MIN_VALUE) {
-            message = " less than 0";
-        } else if (!Double.isInfinite(max) && max != Double.MAX_VALUE) {
-            if (message.length() > 0) {
-                message += " and";
-            }
-            message = " less than " + max;
-        }
-
+    protected void errorMsg() {
         JOptionPane.showMessageDialog(this,
-                "Value must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
+                "Illegal entry\nValue must be between " + min + " and " +
+                max + " inclusive", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+
+    protected void errorMsg2() {
+        JOptionPane.showMessageDialog(this,
+                "Illegal entry\nInvalid boundary [" + min + ", " +
+                        max + "]", "Error", JOptionPane.ERROR_MESSAGE);
     }
 
     public void setRange(double min, double max) {
@@ -120,8 +114,11 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public void setValue(double value) {
         if (range_check) {
-            if (value < min || value > max) {
-                displayErrorMessage();
+            if (min >= max) {
+                errorMsg2();
+                return;
+            } else if (value < min || value > max) {
+                errorMsg();
                 return;
             }
         }
@@ -148,9 +145,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return new Double(getText());
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Unable to parse number correctly",
-                    "Number Format Exception",
-                    JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Unable to parse number correctly:\n" + e.getMessage(),
+                        "Number Format Exception",
+                        JOptionPane.ERROR_MESSAGE);
             return null;
         }
     }
@@ -177,7 +174,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     static char[] numberSet = {
-            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
+        '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'
     };
 
     class RealNumberFieldDocument extends PlainDocument {

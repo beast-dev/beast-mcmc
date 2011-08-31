@@ -26,9 +26,6 @@
 package dr.app.gui.chart;
 
 import dr.util.NumberFormatter;
-import mpjbuf.*;
-
-import java.lang.IllegalArgumentException;
 
 /**
  * Axis.java
@@ -343,12 +340,9 @@ public interface Axis {
          *	Manually set the axis range. Axis flags must be set to AT_VALUE for this to take effect.
          */
         public void setManualRange(double minValue, double maxValue) {
-            if (!Double.isInfinite(minValue) && !Double.isNaN(minValue)) {
-                this.minValue = minValue;
-            }
-            if (!Double.isInfinite(minValue) && !Double.isNaN(minValue)) {
-                this.maxValue = maxValue;
-            }
+            this.minValue = minValue;
+            this.maxValue = maxValue;
+
             isCalibrated = false;
         }
 
@@ -403,10 +397,10 @@ public interface Axis {
          *	Adds the range to the existing range, widening if neccessary
          */
         public void addRange(double minValue, double maxValue) {
-            if (!Double.isNaN(minValue) && maxValue > maxData) {
+            if (!Double.isNaN(maxValue) && maxValue > maxData) {
                 maxData = maxValue;
             }
-            if (!Double.isNaN(maxValue) && minValue < minData) {
+            if (!Double.isNaN(minValue) && minValue < minData) {
                 minData = minValue;
             }
 
@@ -443,7 +437,7 @@ public interface Axis {
             if( Double.isInfinite(minValue) || Double.isNaN(minValue) ||
                     Double.isInfinite(maxValue) || Double.isNaN(maxValue)) {
                 // I am not sure which exception is appropriate here.
-                throw new ChartRuntimeException("Illegal range values, can't calibrate");
+                throw new ChartRuntimeException("Bad values in trace file, can't calibrate");
             }
 
             if (minAxisFlag==AT_ZERO ) {
@@ -666,7 +660,7 @@ public interface Axis {
             if (minAxisFlag==AT_MAJOR_TICK_PLUS || minAxisFlag==AT_MINOR_TICK_PLUS) {
                 if (minAxis==minData) {
                     majorTickCount++;
-//                    minTick-=majorTick;
+                    minTick-=majorTick;
                     minAxis=minTick;
                 }
             }

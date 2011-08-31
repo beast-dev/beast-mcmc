@@ -50,11 +50,11 @@ public class DemographicPlotPanel extends JPanel {
 
     private ChartSetupDialog chartSetupDialog = null;
 
-    private Variate.D xData = null;
-    private Variate.D yDataMean = null;
-    private Variate.D yDataMedian = null;
-    private Variate.D yDataUpper = null;
-    private Variate.D yDataLower = null;
+    private Variate xData = null;
+    private Variate yDataMean = null;
+    private Variate yDataMedian = null;
+    private Variate yDataUpper = null;
+    private Variate yDataLower = null;
 
     private double timeMedian = -1;
     private double timeMean = -1;
@@ -127,9 +127,9 @@ public class DemographicPlotPanel extends JPanel {
 
     }
 
-    public void setupPlot(String title, Variate.D xData,
-                          Variate.D yDataMean, Variate.D yDataMedian,
-                          Variate.D yDataUpper, Variate.D yDataLower,
+    public void setupPlot(String title, Variate xData,
+                          Variate yDataMean, Variate yDataMedian,
+                          Variate yDataUpper, Variate yDataLower,
                           double timeMean, double timeMedian,
                           double timeUpper, double timeLower) {
 
@@ -189,12 +189,12 @@ public class DemographicPlotPanel extends JPanel {
         linePlot.setLineStyle(new BasicStroke(2.0F), Color.black);
         demoChart.addPlot(linePlot);
 
-        Variate.D y1 = new Variate.D();
+        Variate y1 = new Variate.Double();
         y1.add(demoChart.getYAxis().getMinAxis());
         y1.add(demoChart.getYAxis().getMaxAxis());
 
         if (timeMean > 0.0 && timeMedian > 0.0) {
-            Variate.D x1 = new Variate.D();
+            Variate x1 = new Variate.Double();
             if (meanMedianComboBox.getSelectedItem().equals("Median")) {
                 x1.add(timeMedian);
                 x1.add(timeMedian);
@@ -210,7 +210,7 @@ public class DemographicPlotPanel extends JPanel {
         }
 
         if (timeLower > 0.0) {
-            Variate.D x2 = new Variate.D();
+            Variate x2 = new Variate.Double();
             x2.add(timeLower);
             x2.add(timeLower);
 
@@ -221,7 +221,7 @@ public class DemographicPlotPanel extends JPanel {
         }
 
         if (timeUpper > 0.0) {
-            Variate.D x3 = new Variate.D();
+            Variate x3 = new Variate.Double();
             x3.add(timeUpper);
             x3.add(timeUpper);
 

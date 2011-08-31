@@ -13,10 +13,6 @@ public class Microsatellite extends DataType {
     private int min;
     private int max;
     private int unitLength;
-    private String name;
-    public static final Microsatellite INSTANCE = new Microsatellite();
-
-    public Microsatellite() {}
 
     /**
      * Constructor
@@ -24,12 +20,8 @@ public class Microsatellite extends DataType {
      * @param min   integer representing the minimum length of the microsatellite
      * @param max   integer representing the maximum length of the microsatellite
      */
-    public Microsatellite(String name, int min, int max){
-        this(name, min, max, 1);
-    }
-
     public Microsatellite(int min, int max){
-        this("microsat", min, max, 1);
+        this(min, max, 1);
     }
 
     /**
@@ -39,10 +31,9 @@ public class Microsatellite extends DataType {
      * @param max           integer representing the maximum length of the microsatellite
      * @param unitLength    the length in nucleotide units for one repeat unit.
      */
-    public Microsatellite(String name, int min, int max, int unitLength){
+    public Microsatellite(int min, int max, int unitLength){
         this.min = min;
         this.max = max;
-        this.name = name;
         this.unitLength = unitLength;
         stateCount = (max - min)/unitLength + 1;
         ambiguousStateCount = stateCount + 1;
@@ -193,14 +184,6 @@ public class Microsatellite extends DataType {
         return min;
     }
 
-    public void setMax(int max){
-        this.max = max;
-    }
-
-    public void setMin(int min){
-        this.min = min;
-    }
-
     /**
      * @return true if the provided stateCode = unknownStateCode
      */
@@ -229,13 +212,7 @@ public class Microsatellite extends DataType {
         return unitLength;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
 
-    public String getName() {
-        return name;
-    }    
 
     /**
      * @return the description of the data type
@@ -245,7 +222,7 @@ public class Microsatellite extends DataType {
 	}
 
     public int getType(){
-        return MICRO_SAT;
+        return -1;
     }
 
 }

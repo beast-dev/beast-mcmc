@@ -14,7 +14,6 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "dNdSLogger";
     public static final String USE_SMOOTHING = "smooth";
-    public static final String USE_DNMINUSDS = "dn-ds";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -46,9 +45,8 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
         // Use AttributeRules for options here
 
         boolean useSmoothing = xo.getAttribute(USE_SMOOTHING, true);
-        boolean useDnMinusDs = xo.getAttribute(USE_DNMINUSDS, false);
 
-        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing, useDnMinusDs);
+        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing);
     }
 
     @Override

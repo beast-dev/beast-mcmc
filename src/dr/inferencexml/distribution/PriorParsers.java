@@ -43,14 +43,12 @@ public class PriorParsers {
     public static final String INVGAMMA_PRIOR = "invgammaPrior";
     public static final String INVGAMMA_PRIOR_CORRECT = "inverseGammaPrior";
     public static final String LAPLACE_PRIOR = "laplacePrior";
-    public static final String BETA_PRIOR = "betaPrior";
     public static final String UPPER = "upper";
     public static final String LOWER = "lower";
     public static final String MEAN = "mean";
     public static final String MEAN_IN_REAL_SPACE = "meanInRealSpace";
     public static final String STDEV = "stdev";
     public static final String SHAPE = "shape";
-    public static final String SHAPEB = "shapeB";
     public static final String SCALE = "scale";
     public static final String OFFSET = "offset";
     public static final String UNINFORMATIVE = "uninformative";
@@ -111,16 +109,10 @@ public class PriorParsers {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            double scale;
-
-            if (xo.hasAttribute(SCALE)) {
-                scale = xo.getDoubleAttribute(SCALE);
-            } else {
-                scale = xo.getDoubleAttribute(MEAN);
-            }
+            final double mean = xo.getDoubleAttribute(MEAN);
             final double offset = xo.hasAttribute(OFFSET) ? xo.getDoubleAttribute(OFFSET) : 0.0;
 
-            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / scale), offset);
+            DistributionLikelihood likelihood = new DistributionLikelihood(new ExponentialDistribution(1.0 / mean), offset);
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -137,10 +129,7 @@ public class PriorParsers {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new XORRule(
-                        AttributeRule.newDoubleRule(SCALE),
-                        AttributeRule.newDoubleRule(MEAN)
-                ),
+                AttributeRule.newDoubleRule(MEAN),
                 AttributeRule.newDoubleRule(OFFSET, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
@@ -280,7 +269,7 @@ public class PriorParsers {
             }
 
             final DistributionLikelihood likelihood = new DistributionLikelihood(new LogNormalDistribution(mean, stdev), offset);
-
+            
             for (int j = 0; j < xo.getChildCount(); j++) {
                 if (xo.getChild(j) instanceof Statistic) {
                     likelihood.addData((Statistic) xo.getChild(j));
@@ -349,7 +338,7 @@ public class PriorParsers {
                 AttributeRule.newDoubleRule(SHAPE),
                 AttributeRule.newDoubleRule(SCALE),
                 AttributeRule.newDoubleRule(OFFSET, true),
-                // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
+               // AttributeRule.newBooleanRule(UNINFORMATIVE, true),
                 new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
         };
 
@@ -450,53 +439,6 @@ public class PriorParsers {
 
         public String getParserDescription() {
             return "Calculates the prior probability of some data under a given laplace distribution.";
-        }
-
-        public Class getReturnType() {
-            return Likelihood.class;
-        }
-    };
-
-    /**
-     * A special parser that reads a convenient short form of priors on parameters.
-     */
-    public static XMLObjectParser BETA_PRIOR_PARSER = new AbstractXMLObjectParser() {
-
-        public String getParserName() {
-            return BETA_PRIOR;
-        }
-
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-            final double shape = xo.getDoubleAttribute(SHAPE);
-            final double shapeB = xo.getDoubleAttribute(SHAPEB);
-            final double offset = xo.getAttribute(OFFSET, 0.0);
-
-            DistributionLikelihood likelihood = new DistributionLikelihood(new BetaDistribution(shape, shapeB), offset);
-            for (int j = 0; j < xo.getChildCount(); j++) {
-                if (xo.getChild(j) instanceof Statistic) {
-                    likelihood.addData((Statistic) xo.getChild(j));
-                } else {
-                    throw new XMLParseException("illegal element in " + xo.getName() + " element");
-                }
-            }
-
-            return likelihood;
-        }
-
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
-
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newDoubleRule(SHAPE),
-                AttributeRule.newDoubleRule(SHAPEB),
-                AttributeRule.newDoubleRule(OFFSET, true),
-                new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
-        };
-
-        public String getParserDescription() {
-            return "Calculates the prior probability of some data under a given beta distribution.";
         }
 
         public Class getReturnType() {

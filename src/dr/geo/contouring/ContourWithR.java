@@ -10,18 +10,18 @@ import org.rosuda.JRI.Rengine;
 public class ContourWithR implements ContourMaker {
 
 
-    public ContourWithR(final double[] xValues, final double[] yValues) {
+    public ContourWithR(double[] xValues, double[] yValues) {
         this(xValues, yValues, 50);
     }
 
-    public ContourWithR(final double[] xValues, final double[] yValues, int N) {
+    public ContourWithR(double[] xValues, double[] yValues, int N) {
         this.xValues = xValues;
         this.yValues = yValues;
         this.N = N;
     }
 
-    private final double[] xValues;
-    private final double[] yValues;
+    private double[] xValues;
+    private double[] yValues;
 
     public ContourPath[] getContourPaths(double hpdValue) {
         makeContour(xValues, yValues, hpdValue, N);

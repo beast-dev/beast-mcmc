@@ -678,7 +678,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         // partitions.");
         final int length = getNumberOfPartitions();
         // System.err.println("Expected length = "+length);
-        while (partitionLength > partitioningParameters.getParameterCount()) {
+        while (partitionLength > partitioningParameters.getNumberOfParameters()) {
             Parameter newPartition = new Parameter.Default(length);
             partitioningParameters.addParameter(newPartition);
         }
@@ -1869,7 +1869,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
         return false;
     }
 
-    public void endTreeEdit() {
+    public void endTreeEdit() throws MutableTree.InvalidTreeException {
         if (!inEdit)
             throw new RuntimeException("Not in edit transaction mode!");
 
@@ -1879,6 +1879,13 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             swapParameterObjects(oldRoot, root);
         }
 
+        // for (int i =0; i < nodes.length; i++) {
+        for (Node node : nodes) {
+            if (!node.heightParameter.isWithinBounds()) {
+                throw new MutableTree.InvalidTreeException(
+                        "height parameter out of bounds");
+            }
+        }
         // ystem.err.println("There are "+treeChangedEvents.size()+" events
         // waiting");
         // System.exit(-1);
@@ -1886,14 +1893,6 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
             listenerHelper.fireModelChanged(this, treeChangedEvent);
         }
         treeChangedEvents.clear();
-    }
-
-    public void checkTreeIsValid() throws MutableTree.InvalidTreeException {
-        for (Node node : nodes) {
-            if (!node.heightParameter.isWithinBounds()) {
-                throw new InvalidTreeException("height parameter out of bounds");
-            }
-        }
     }
 
     private void endTreeEditFast() {
@@ -2164,7 +2163,7 @@ public class ARGModel extends AbstractModel implements MutableTree, Loggable {
     }
 
     public void sanityNodeCheck(CompoundParameter inodes) {
-        int len = inodes.getParameterCount();
+        int len = inodes.getNumberOfParameters();
         for (int i = 0; i < len; i++) {
             Parameter p = inodes.getParameter(i);
             for (int j = 0; j < internalNodeCount; j++) {

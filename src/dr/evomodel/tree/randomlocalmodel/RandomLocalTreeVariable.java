@@ -1,7 +1,6 @@
 package dr.evomodel.tree.randomlocalmodel;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 
 /**
@@ -18,7 +17,7 @@ public interface RandomLocalTreeVariable {
      * @param node the node to retrieve the variable of
      * @return the raw real-valued variable at this node
      */
-    double getVariable(Tree tree, NodeRef node);
+    double getVariable(TreeModel tree, NodeRef node);
 
     /**
      * @param tree the tree
@@ -26,5 +25,5 @@ public interface RandomLocalTreeVariable {
      * @return true of the variable at this node is included in function, thus representing a change in the
      *         function looking down the tree.
      */
-    boolean isVariableSelected(Tree tree, NodeRef node);
+    boolean isVariableSelected(TreeModel tree, NodeRef node);
 }

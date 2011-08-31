@@ -1,9 +1,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.inference.markovjumps.MarkovJumpsType;
-import dr.inference.markovjumps.StateHistory;
-import dr.inference.markovjumps.SubordinatedProcess;
-import dr.inference.markovjumps.UniformizedStateHistory;
+import dr.inference.markovjumps.*;
 import dr.inference.model.Model;
 
 /**
@@ -67,10 +64,6 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         super.handleModelChangedEvent(model, object, index);       
     }
 
-    public void setSaveCompleteHistory(boolean in) {
-        saveCompleteHistory = in;
-    }
-
     public void computeCondStatMarkovJumps(double time,
                                            double[] countMatrix) {
 
@@ -99,21 +92,9 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                 tmp[startingState * stateCount + endingState]);
     }
 
-    public String getCompleteHistory() {
-        return getCompleteHistory(null, null);
-    }
-
-    public String getCompleteHistory(Double newStartTime, Double newEndTime) {
-        if (newStartTime != null && newEndTime != null) {
-            // Rescale time of events
-            completeHistory.rescaleTimesOfEvents(newStartTime, newEndTime);
-        }
-        return completeHistory.toStringChanges(dataType); //, 0.0);
-    }
-
     public double computeCondStatMarkovJumps(int startingState,
                                              int endingState,
-                                             double time,                                             
+                                             double time,
                                              double transitionProbability) {
 
         if (updateSubordinator) {
@@ -122,9 +103,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
         double total = 0;
         for (int i = 0; i < numSimulants; i++) {
-            StateHistory history = null;
-            try {
-                history = UniformizedStateHistory.simulateConditionalOnEndingState(
+            StateHistory history = UniformizedStateHistory.simulateConditionalOnEndingState(
                     0.0,
                     startingState,
                     time,
@@ -132,36 +111,8 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     transitionProbability,
                     stateCount,
                     subordinator
-                );
-            } catch (SubordinatedProcess.Exception e) {
-                // Error in uniformization; try rejection sampling
-                System.err.println("Attempting rejection sampling after uniformization failure");
-
-                substModel.getInfinitesimalMatrix(tmp);
-                int attempts = 0;
-                boolean success = false;
-
-                while (!success) {
-                    if (attempts >= maxRejectionAttempts) {
-                        throw new RuntimeException("Rejection sampling failure, after uniformization failure");
-                    }
-
-                    history = StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, time, tmp, stateCount);
-                    if (history.getEndingState() == endingState) {
-                        success = true;
-                    }
-                    
-                    attempts++;
-                }
-            }
+            );
             total += getProcessForSimulant(history);
-            if (saveCompleteHistory) {
-                if (numSimulants == 1) {
-                    completeHistory = history;
-                } else {
-                    throw new RuntimeException("Use single simulant when saving complete histories");
-                }
-            }
         }
         return total / (double) numSimulants;
     }
@@ -171,10 +122,5 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private SubordinatedProcess subordinator;
     private SubordinatedProcess storedSubordinator;
 
-    private boolean saveCompleteHistory = false;
-    private StateHistory completeHistory = null;
-
     private double[] tmp;
-
-    private static int maxRejectionAttempts = 100000;
 }

@@ -29,10 +29,7 @@ import dr.stats.Variate;
 
 import java.awt.*;
 import java.awt.geom.*;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Plot.java
@@ -71,12 +68,12 @@ public interface Plot {
     /**
      * Set data
      */
-    void setData(List<Double> xData, List<Double> yData);
+    void setData(double[] xData, double[] yData);
 
     /**
      * Set data
      */
-    void setData(Variate.N xData, Variate.N yData);
+    void setData(Variate xData, Variate yData);
 
     /**
      * Set line style
@@ -192,8 +189,8 @@ public interface Plot {
     public abstract class AbstractPlot implements Plot {
 
         protected Axis xAxis, yAxis;
-        protected Variate.N xData = null;
-        protected Variate.N yData = null;
+        protected Variate xData = null;
+        protected Variate yData = null;
 
         protected Shape mark;
 
@@ -221,7 +218,7 @@ public interface Plot {
         /**
          * Constructor
          */
-        public AbstractPlot(Variate.N xData, Variate.N yData) {
+        public AbstractPlot(Variate xData, Variate yData) {
             setData(xData, yData);
         }
 
@@ -229,7 +226,7 @@ public interface Plot {
         /**
          * Constructor
          */
-        public AbstractPlot(List<Double> xData, List<Double> yData) {
+        public AbstractPlot(double[] xData, double[] yData) {
             setData(xData, yData);
         }
 
@@ -237,9 +234,9 @@ public interface Plot {
         /**
          * Set data
          */
-        public void setData(List<Double> xData, List<Double> yData) {
-            Variate.D xd = new Variate.D(xData);
-            Variate.D yd = new Variate.D(yData);
+        public void setData(double[] xData, double[] yData) {
+            Variate.Double xd = new Variate.Double(xData);
+            Variate.Double yd = new Variate.Double(yData);
 
             this.xData = xd;
             this.yData = yd;
@@ -248,7 +245,7 @@ public interface Plot {
         /**
          * Set data
          */
-        public void setData(Variate.N xData, Variate.N yData) {
+        public void setData(Variate xData, Variate yData) {
             this.xData = xData;
             this.yData = yData;
         }
@@ -278,14 +275,14 @@ public interface Plot {
                     double minValue = java.lang.Double.POSITIVE_INFINITY;
 
                     for (int i = 0; i < xData.getCount(); i++) {
-                        double value = (Double) xData.get(i);
+                        double value = xData.get(i);
                         if (value > 0.0 && value < minValue)
                             minValue = value;
                     }
 
-                    xAxis.addRange(minValue, (Double) xData.getMax());
+                    xAxis.addRange(minValue, xData.getMax());
                 } else {
-                    xAxis.addRange((Double) xData.getMin(), (Double) xData.getMax());
+                    xAxis.addRange(xData.getMin(), xData.getMax());
                 }
             }
             if (yData != null) {
@@ -293,14 +290,14 @@ public interface Plot {
                     double minValue = java.lang.Double.POSITIVE_INFINITY;
 
                     for (int i = 0; i < yData.getCount(); i++) {
-                        double value = (Double) yData.get(i);
+                        double value = yData.get(i);
                         if (value > 0.0 && value < minValue)
                             minValue = value;
                     }
 
-                    yAxis.addRange(minValue, (Double) yData.getMax());
+                    yAxis.addRange(minValue, yData.getMax());
                 } else {
-                    yAxis.addRange((Double) yData.getMin(), (Double) yData.getMax());
+                    yAxis.addRange(yData.getMin(), yData.getMax());
                 }
             }
         }
@@ -528,7 +525,7 @@ public interface Plot {
         /**
          * Paint data series
          */
-        abstract protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData);
+        abstract protected void paintData(Graphics2D g2, Variate xData, Variate yData);
 
         /**
          * A point on the plot has been clicked
@@ -555,8 +552,8 @@ public interface Plot {
             double y1 = untransformY(dragRectangle.getY());
 
             for (int i = 0; i < xData.getCount(); i ++) {
-                double x = (Double) xData.get(i);
-                double y = (Double) yData.get(i);
+                double x = xData.get(i);
+                double y = yData.get(i);
 
                 if (x >= x0 && x <= x1 && y >= y0 && y <= y1) {
                     selectedPoints.add(i);

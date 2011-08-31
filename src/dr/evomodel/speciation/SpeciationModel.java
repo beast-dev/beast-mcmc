@@ -54,22 +54,6 @@ public abstract class SpeciationModel extends AbstractModel implements Units {
 
     public abstract double calculateTreeLogLikelihood(Tree tree, Set<Taxon> exclude);
 
-    // True if Yule.
-    //
-    // Not abstract - non supporting derived classes do not need to override anything
-    public boolean isYule() {
-        return false;
-    }
-
-    // Likelihood for the speciation model conditional on monophyly and calibration densities in
-    // 'calibration'.
-    //
-    // The likelihood enforces the monophyly, so there is no need to specify it again in the XML.
-    //
-    public double calculateTreeLogLikelihood(Tree tree, CalibrationPoints calibration) {
-        return Double.NEGATIVE_INFINITY;
-    }
-
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         // no intermediates need to be recalculated...
     }

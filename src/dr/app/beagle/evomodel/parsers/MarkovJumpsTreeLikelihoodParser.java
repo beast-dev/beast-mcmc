@@ -1,6 +1,6 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -33,8 +33,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String REWARDS = MarkovJumpsType.REWARDS.getText();
     public static final String SCALE_REWARDS = "scaleRewardsByTime";
     public static final String USE_UNIFORMIZATION = "useUniformization";
-    public static final String SAVE_HISTORY = "saveCompleteHistory";
-    public static final String LOG_HISTORY = "logCompleteHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
 
@@ -44,7 +42,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
+                                                        BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
@@ -69,7 +67,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         MarkovJumpsBeagleTreeLikelihood treeLikelihood = new MarkovJumpsBeagleTreeLikelihood(
                 patternList,
                 treeModel,
-                branchSubstitutionModel,
+                branchSiteModel,
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
@@ -109,23 +107,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 //                                       MarkovJumpsType.COUNTS,
 //                                       false);
             // Do nothing, should run the same as AncestralStateBeagleTreeLikelihood
-        }
-
-        boolean saveCompleteHistory = xo.getAttribute(SAVE_HISTORY, false);
-        if (saveCompleteHistory) {
-            Parameter allCounts = new Parameter.Default(dataType.getStateCount() * dataType.getStateCount());
-            for (int i = 0; i < dataType.getStateCount(); ++i) {
-                for (int j = 0; j < dataType.getStateCount(); ++j) {
-                    if (j == i) {
-                        allCounts.setParameterValue(i * dataType.getStateCount() + j, 0.0);
-                    } else {
-                        allCounts.setParameterValue(i * dataType.getStateCount() + j, 1.0);
-                    }
-                }
-            }
-            allCounts.setId(MarkovJumpsBeagleTreeLikelihood.TOTAL_COUNTS);
-            treeLikelihood.addRegister(allCounts, MarkovJumpsType.HISTORY, false);
-            treeLikelihood.setLogHistories(xo.getAttribute(LOG_HISTORY, false));
         }
 
         return treeLikelihood;
@@ -168,8 +149,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             AttributeRule.newBooleanRule(USE_UNIFORMIZATION,true),
             AttributeRule.newBooleanRule(REPORT_UNCONDITIONED_COLUMNS, true),
             AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
-            AttributeRule.newBooleanRule(SAVE_HISTORY, true),
-            AttributeRule.newBooleanRule(LOG_HISTORY, true),
                  new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                 new ElementRule(TaxonList.class),
                 new ElementRule(Parameter.class),
@@ -177,7 +156,6 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
-            new ElementRule(BranchSubstitutionModel.class, true),                
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class),
             AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),

@@ -25,7 +25,8 @@ package dr.app.beauti.options;
 
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.DataType;
+import dr.evolution.distance.DistanceMatrix;
+import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
 
 /**
@@ -33,13 +34,25 @@ import dr.evolution.util.TaxonList;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class PartitionData extends AbstractPartitionData {
+public class PartitionData {  // extends PartitionOptions {
 
+    private final String fileName;
     private final Alignment alignment;
+    private final double meanDistance;
+    final DistanceMatrix distances;
+
+    private String name;
+    private boolean coding;
 
     private int fromSite;
     private int toSite;
     private int every = 1;
+
+    protected final BeautiOptions options;
+
+    private PartitionSubstitutionModel model;
+    private PartitionClockModel clockModel;
+    private PartitionTreeModel treeModel;
 
 
     public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment) {
@@ -51,37 +64,80 @@ public class PartitionData extends AbstractPartitionData {
         this.name = name;
         this.fileName = fileName;
         this.alignment = alignment;
+        this.coding = false;
 
         this.fromSite = fromSite;
         this.toSite = toSite;
         this.every = every;
 
-        this.trait = null;
-
-        Patterns patterns = null;
         if (alignment != null) {
-            patterns = new Patterns(alignment);
+            Patterns patterns = new Patterns(alignment);
+            distances = new JukesCantorDistanceMatrix(patterns);
+            meanDistance = distances.getMeanDistance();
+        } else {
+            distances = null;
+            meanDistance = 0.0;
         }
-        calculateMeanDistance(patterns);
     }
 
-    public PartitionData(BeautiOptions options, String name, TraitData trait) {
-        this.options = options;
-        this.name = name;
-        this.fileName = null;
-        this.alignment = null;
+    public TraitData.TraitType getTraitType() {
+        return null; // if null, then PartitionData, otherwise TraitData
+    }
 
-        this.fromSite = -1;
-        this.toSite = -1;
-        this.every = 1;
+    public double getMeanDistance() {
+        return meanDistance;
+    }
 
-        this.trait = trait;
-
-        calculateMeanDistance(null);
+    public String getFileName() {
+        return fileName;
     }
 
     public Alignment getAlignment() {
         return alignment;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String toString() {
+        return getName();
+    }
+
+    public void setPartitionSubstitutionModel(PartitionSubstitutionModel model) {
+        this.model = model;
+    }
+
+    public PartitionSubstitutionModel getPartitionSubstitutionModel() {
+        return this.model;
+    }
+
+    public void setPartitionClockModel(PartitionClockModel clockModel) {
+        this.clockModel = clockModel;
+    }
+
+    public PartitionClockModel getPartitionClockModel() {
+        return clockModel;
+    }
+
+    public PartitionTreeModel getPartitionTreeModel() {
+        return treeModel;
+    }
+
+    public void setPartitionTreeModel(PartitionTreeModel treeModel) {
+        this.treeModel = treeModel;
+    }
+
+    public boolean isCoding() {
+        return coding;
+    }
+
+    public void setCoding(boolean coding) {
+        this.coding = coding;
     }
 
     public int getFromSite() {
@@ -97,7 +153,7 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     public TaxonList getTaxonList() {
-        return getAlignment();  
+        return getAlignment();
     }
 
     public int getSiteCount() {
@@ -117,20 +173,26 @@ public class PartitionData extends AbstractPartitionData {
         }
     }
 
-    public DataType getDataType() {
-        if (alignment != null) {
-            return alignment.getDataType();
+    public int getTaxaCount() {
+        if (getTaxonList() != null) {
+            return getTaxonList().getTaxonCount();
         } else {
-            return trait.getDataType();
+            // is a trait
+            return -1;
         }
     }
 
-    public String getDataDescription() {
-        if (alignment != null) {
-            return alignment.getDataType().getDescription();
-        } else {
-            return trait.getTraitType().toString();
+    public String getDataType() {
+        return alignment.getDataType().getDescription();
+    }
+
+    public String getPrefix() {
+        String prefix = "";
+        if (options.dataPartitions != null && options.dataPartitions.size() > 1) {
+            // There is more than one active partition model
+            prefix += getName() + ".";
         }
+        return prefix;
     }
 
 }

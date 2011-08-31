@@ -26,22 +26,20 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.enumTypes.FixRateType;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.StartingTreeType;
+import dr.app.gui.components.RealNumberField;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.beauti.util.TextUtil;
-import dr.app.gui.components.RealNumberField;
-import dr.app.gui.tree.JTreeDisplay;
-import dr.app.gui.tree.JTreePanel;
-import dr.app.gui.tree.SquareTreePainter;
 import dr.app.util.OSType;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.app.gui.tree.JTreeDisplay;
+import dr.app.gui.tree.JTreePanel;
+import dr.app.gui.tree.SquareTreePainter;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
@@ -90,9 +88,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         this.partitionTreeModel = parTreeModel;
         this.options = options;
 
-        PanelUtils.setupComponent(initRootHeightField);        
-            initRootHeightField.setColumns(10);
-            initRootHeightField.setEnabled(false);
+        PanelUtils.setupComponent(initRootHeightField);
 
         PanelUtils.setupComponent(ploidyTypeCombo);
         ploidyTypeCombo.addItemListener(new ItemListener() {
@@ -100,10 +96,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 partitionTreeModel.setPloidyType((PloidyType) ploidyTypeCombo.getSelectedItem());
             }
         });
-        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
-            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
-        }
-        
+
         PanelUtils.setupComponent(startingTreeCombo);
         startingTreeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
@@ -111,19 +104,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
                 setupPanel();
             }
         });
-        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
 
         PanelUtils.setupComponent(userTreeCombo);
-        userTreeCombo.addItem(NO_TREE);
-        if (options.userTrees.size() < 1) {
-            userTreeCombo.setEnabled(false);
-        } else {
-            for (Tree tree : options.userTrees) {
-                userTreeCombo.addItem(tree.getId());
-            }
-            userTreeCombo.setSelectedIndex(1);
-            userTreeCombo.setEnabled(true);
-        }
         userTreeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
@@ -203,29 +185,37 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         setupPanel();
     }
 
-    public void setupPanel() {
+    private void setupPanel() {
 
         removeAll();
 
-        ClockModelGroup group = null;
-        if (options.getAllPartitionData(partitionTreeModel).size() > 0)
-            group = options.getAllPartitionData(partitionTreeModel).get(0).getPartitionClockModel().getClockModelGroup();
-
-        if (group != null && (group.getRateTypeOption() == FixRateType.FIX_MEAN
-                || group.getRateTypeOption() == FixRateType.RELATIVE_TO)) {
+        if (options.clockModelOptions.getRateOptionClockModel() == FixRateType.FIX_MEAN
+                || options.clockModelOptions.getRateOptionClockModel() == FixRateType.RELATIVE_TO) {
+            initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
+            initRootHeightField.setColumns(10);
+            initRootHeightField.setEnabled(false);
             addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
         }
 
         if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+
             addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
         }
 
-        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT)
-            addComponentWithLabel("Starting Tree:", startingTreeCombo);
+        addComponentWithLabel("Starting Tree:", startingTreeCombo);
 
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             addComponentWithLabel("Select User-specified Tree:", userTreeCombo);
-//            userTreeCombo.removeAllItems();
+            userTreeCombo.removeAllItems();
+            userTreeCombo.addItem(NO_TREE);
+            if (options.userTrees.size() == 0) {
+                userTreeCombo.setEnabled(false);
+            } else {
+                for (Tree tree : options.userTrees) {
+                    userTreeCombo.addItem(tree.getId());
+                }
+                userTreeCombo.setEnabled(true);
+            }
 
 //            addComponent(treeDisplayButton);  // todo JTreeDisplay not work properly
             addComponent(newickJRadioButton);
@@ -238,7 +228,6 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
 //		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
-        setOptions();
         validate();
         repaint();
     }
@@ -249,21 +238,22 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             return;
         }
 
-//        setupPanel();
+        setupPanel();
 
         settingOptions = true;
-        initRootHeightField.setValue(partitionTreeModel.getInitialRootHeight());
-//        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
-//            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
-//        }
 
-//        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
-//
-//        if (partitionTreeModel.getUserStartingTree() == null) {
-//            userTreeCombo.setSelectedItem(NO_TREE);
-//        } else {
-//            userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
-//        }
+        if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
+
+            ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
+        }
+
+        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
+
+        if (partitionTreeModel.getUserStartingTree() == null) {
+            userTreeCombo.setSelectedItem(NO_TREE);
+        } else {
+            userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
+        }
 
         settingOptions = false;
 

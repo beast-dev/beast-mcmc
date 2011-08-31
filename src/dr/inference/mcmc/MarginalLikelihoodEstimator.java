@@ -61,9 +61,9 @@ MCLogger logger) {
         this.pathSteps = pathSteps;
         this.scheme = scheme;
         this.schedule = schedule;
-        // deprecated
-        // this.linear = (scheme == PathScheme.LINEAR);
-        // this.lacing = false; // Was not such a good idea
+        // depricated
+//        this.linear = (scheme == PathScheme.LINEAR);
+//        this.lacing = false; // Was not such a good idea
 
         this.burninLength = burninLength;
 
@@ -133,46 +133,6 @@ MCLogger logger) {
             return pathParameter;
         }
     }
-    
-    public class SigmoidIntegrator extends Integrator {
-    	private double alpha;
-    	
-    	public SigmoidIntegrator(double alpha, int pathSteps) {
-    		super(pathSteps);
-    		this.alpha = alpha;
-    	}
-    	
-    	double nextPathParameter() {
-    		if (step == 0) {
-    			step++;
-    			return 1.0;
-    		} else if (step == pathSteps) {
-    			step++;
-    			return 0.0;
-    		} else if (step > pathSteps) {
-    			return -1.0;
-    		} else {
-    			double xvalue = ((pathSteps - step)/((double)pathSteps)) - 0.5;
-    			step++;
-    			return Math.exp(alpha*xvalue)/(Math.exp(alpha*xvalue) + Math.exp(-alpha*xvalue));
-    		}
-    	}
-    }
-    
-    public class BetaQuantileIntegrator extends Integrator {
-    	private double alpha;
-    	
-    	public BetaQuantileIntegrator(double alpha, int pathSteps) {
-    		super(pathSteps);
-    		this.alpha = alpha;
-    	}
-    	
-    	double nextPathParameter() {
-    		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
-    		step++;
-    		return result;
-    	}
-    }
 
     public class BetaIntegrator extends Integrator {
         private BetaDistributionImpl betaDistribution;
@@ -212,7 +172,7 @@ MCLogger logger) {
             if (step > pathSteps) {
                 return -1;
             }
-            if (step == pathSteps) { //pathSteps instead of pathSteps - 1
+            if (step == pathSteps - 1) {
                 step += 1;
                 return 0;
             }
@@ -222,23 +182,23 @@ MCLogger logger) {
         }
     }
 
-    /*public void linearIntegration() {
+    public void linearIntegration() {
         setDefaultBurnin();
         mc.setCurrentLength(0);
         for (int step = 0; step < pathSteps; step++) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            //mc.runChain(chainLength + burnin, false, 0);
-            mc.runChain(chainLength + burnin, false);
+            mc.runChain(chainLength + burnin, false/*, 0*/);
             pathParameter -= pathDelta;
+
         }
+
         pathLikelihood.setPathParameter(0.0);
         reportIteration(pathParameter, chainLength, burnin);
-        //mc.runChain(chainLength + burnin, false, 0);
-        mc.runChain(chainLength + burnin, false);
-    }*/
+        mc.runChain(chainLength + burnin, false/*, 0*/);
+    }
 
-    /*public void betaIntegration(double alpha, double beta) {
+    public void betaIntegration(double alpha, double beta) {
         setDefaultBurnin();
         mc.setCurrentLength(0);
 
@@ -259,12 +219,11 @@ MCLogger logger) {
             }
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            //mc.runChain(chainLength + burnin, false, 0);
-            mc.runChain(chainLength + burnin, false);
+            mc.runChain(chainLength + burnin, false/*, 0*/);
             (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
             ((CombinedOperatorSchedule) schedule).reset();
         }
-    }*/
+    }
 
     private void reportIteration(double pathParameter, int cl, int burn) {
         System.out.println("Attempting theta = " + pathParameter + " for " + cl + " iterations + " + burn + " burnin.");
@@ -274,8 +233,8 @@ MCLogger logger) {
 
         logger.startLogging();
         mc.addMarkovChainListener(chainListener);
-
-        /*switch (scheme) {
+/*
+        switch (scheme) {
             case LINEAR:
                 linearIntegration();
                 break;
@@ -290,7 +249,7 @@ MCLogger logger) {
                 break;
             default:
                 throw new RuntimeException("Illegal path scheme");
-        }*/
+        }    */
 
         switch (scheme) {
             case LINEAR:
@@ -305,12 +264,6 @@ MCLogger logger) {
             case BETA:
                 integrate(new BetaIntegrator(alphaFactor, betaFactor, pathSteps));
                 break;
-            case BETA_QUANTILE:
-            	integrate(new BetaQuantileIntegrator(alphaFactor, pathSteps));
-            	break;
-            case SIGMOID:
-            	integrate(new SigmoidIntegrator(alphaFactor, pathSteps));
-            	break;
             default:
                 throw new RuntimeException("Illegal path scheme");
         }
@@ -411,9 +364,9 @@ MCLogger logger) {
                 prerunLength = xo.getIntegerAttribute(PRERUN);
             }
 
-            // deprecated
+            // deciprated
             boolean linear = xo.getAttribute(LINEAR, true);
-            // boolean lacing = xo.getAttribute(LACING,false);
+//            boolean lacing = xo.getAttribute(LACING,false);
             PathScheme scheme;
             if (linear) {
                 scheme = PathScheme.LINEAR;
@@ -422,7 +375,7 @@ MCLogger logger) {
             }
 
             // new approach
-            if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once deprecated approach removed
+            if (xo.hasAttribute(PATH_SCHEME)) { // change to: getAttribute once depricated approach removed
                 scheme = PathScheme.parseFromString(xo.getAttribute(PATH_SCHEME, PathScheme.LINEAR.getText()));
             }
 
@@ -472,10 +425,6 @@ MCLogger logger) {
                 alphaBetaText += "1," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA) {
                 alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
-            } else if (scheme == PathScheme.BETA_QUANTILE) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
-            } else if (scheme == PathScheme.SIGMOID) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
@@ -534,9 +483,7 @@ MCLogger logger) {
         LINEAR("linear"),
         GEOMETRIC("geometric"),
         BETA("beta"),
-        ONE_SIDED_BETA("oneSidedBeta"),
-        BETA_QUANTILE("betaQuantile"),
-        SIGMOID("sigmoid");
+        ONE_SIDED_BETA("oneSidedBeta");
 
         PathScheme(String text) {
             this.text = text;

@@ -27,8 +27,6 @@ package dr.app.gui.chart;
 
 import dr.math.distributions.Distribution;
 import dr.stats.Variate;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.MathRuntimeException;
 
 import java.awt.*;
 
@@ -58,7 +56,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Variate.N xData, Variate.N yData) {
+    public void setData(Variate xData, Variate yData) {
         throw new UnsupportedOperationException("Not available");
     }
 
@@ -70,25 +68,12 @@ public class PDFPlot extends Plot.AbstractPlot {
             return;
         }
 
-        // if the distribution has a bound then use it, otherwise find a range using a small quantile
-        if (!Double.isInfinite(distribution.getProbabilityDensityFunction().getLowerBound())) {
-            // the actual bound may be undefined so come just inside it...
-            xMin = distribution.getProbabilityDensityFunction().getLowerBound() + 1.0E-20;
-        } else {
-            xMin = distribution.quantile(0.005);
-        }
-        // if the distribution has a bound then use it, otherwise find a range using a small quantile
-        if (!Double.isInfinite(distribution.getProbabilityDensityFunction().getUpperBound())) {
-            // the actual bound may be undefined so come just inside it...
-            xMax = distribution.getProbabilityDensityFunction().getUpperBound() - 1.0E-20;
-        } else {
-            xMax = distribution.quantile(0.995);
-        }
-
-        if (Double.isNaN(xMin) || Double.isInfinite(xMin)) {
+        xMin = distribution.quantile(0.005);
+        xMax = distribution.quantile(0.995);
+        if (Double.isInfinite(xMin)) {
             xMin = 0.0;
         }
-        if (Double.isNaN(xMax) || Double.isInfinite(xMax)) {
+        if (Double.isInfinite(xMax)) {
             xMax = 1.0;
         }
         if (xMin == xMax) xMax += 1;
@@ -96,7 +81,6 @@ public class PDFPlot extends Plot.AbstractPlot {
         double x = xMin + offset;
         yMax = distribution.pdf(x - offset);
         double step = (xMax - xMin) / stepCount;
-
         for (int i = 1; i < stepCount; i++) {
             x += step;
             double y = distribution.pdf(x - offset);
@@ -132,7 +116,6 @@ public class PDFPlot extends Plot.AbstractPlot {
 
         double x1 = xMin + offset;
         double y1 = distribution.pdf(x1 - offset);
-
         double step = (xMax - xMin) / stepCount;
         for (int i = 1; i < stepCount; i++) {
             double x2 = x1 + step;
@@ -146,7 +129,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
         // do nothing because paintPlot is overridden
     }
 }

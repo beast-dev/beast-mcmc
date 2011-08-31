@@ -1,6 +1,8 @@
 package dr.app.beauti.options;
 
-import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.enumTypes.OperatorType;
+import dr.app.beauti.generator.GeneralTraitGenerator;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 
 import java.util.List;
 
@@ -8,19 +10,19 @@ import java.util.List;
  *
  */
 public class PartitionClockModelSubstModelLink extends PartitionOptions {
+    private final BeautiOptions options;
     private final PartitionClockModel clockModel;
     private final PartitionSubstitutionModel substModel;
 
     public PartitionClockModelSubstModelLink(BeautiOptions options, PartitionClockModel clockModel, PartitionSubstitutionModel substModel) {
-//        super(options, clockModel.getName() + "." + substModel.getName());
-        // clockModel and substModel have to be assigned before initModelParametersAndOpererators()
-        super(options);
+        this.options = options;
         this.clockModel = clockModel;
         this.substModel = substModel;
-        initModelParametersAndOpererators();
+
+        initClockModelSubstModelLinkParaAndOpers();
     }
 
-    protected void initModelParametersAndOpererators() {
+    private void initClockModelSubstModelLinkParaAndOpers() {
         // <svsGeneralSubstitutionModel idref="originModel"/>
 //        createParameterAndStringOperator(OperatorType.BITFIP_IN_SUBST.toString(), getPrefix() + "trait.mu",
 //                "bit Flip In Substitution Model Operator",

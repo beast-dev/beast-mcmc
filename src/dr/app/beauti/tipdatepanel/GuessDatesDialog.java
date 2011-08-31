@@ -26,7 +26,6 @@
 package dr.app.beauti.tipdatepanel;
 
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.options.STARBEASTOptions;
 import dr.app.beauti.util.TextUtil;
 import dr.app.gui.components.RealNumberField;
 import jam.mac.Utils;
@@ -35,7 +34,10 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 

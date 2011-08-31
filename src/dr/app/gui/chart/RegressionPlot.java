@@ -29,7 +29,6 @@ import dr.stats.Regression;
 import dr.stats.Variate;
 
 import java.awt.*;
-import java.util.List;
 
 public class RegressionPlot extends Plot.AbstractPlot {
 
@@ -46,7 +45,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public RegressionPlot(Variate.N xData, Variate.N yData, boolean forceOrigin) {
+    public RegressionPlot(Variate xData, Variate yData, boolean forceOrigin) {
         super(xData, yData);
         setForceOrigin(forceOrigin);
     }
@@ -54,7 +53,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Constructor
      */
-    public RegressionPlot(List<Double> xData, List<Double> yData, boolean forceOrigin) {
+    public RegressionPlot(double[] xData, double[] yData, boolean forceOrigin) {
         super(xData, yData);
         setForceOrigin(forceOrigin);
     }
@@ -62,7 +61,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(List<Double> xData, List<Double> yData) {
+    public void setData(double[] xData, double[] yData) {
         super.setData(xData, yData);
         regression = new Regression(this.xData, this.yData);
     }
@@ -70,7 +69,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Set data
      */
-    public void setData(Variate.N xData, Variate.N yData) {
+    public void setData(Variate xData, Variate yData) {
         super.setData(xData, yData);
         regression = new Regression(this.xData, this.yData);
     }
@@ -113,7 +112,7 @@ public class RegressionPlot extends Plot.AbstractPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.N xData, Variate.N yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
 
         g2.setPaint(linePaint);
         g2.setStroke(lineStroke);

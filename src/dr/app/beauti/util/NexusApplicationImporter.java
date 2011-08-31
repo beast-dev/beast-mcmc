@@ -28,9 +28,10 @@ package dr.app.beauti.util;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.options.PartitionTreeModel;
-import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.enumTypes.StartingTreeType;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.CharSetAlignment;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NexusImporter;
 import dr.evomodel.substmodel.NucModelType;
 
@@ -117,7 +118,7 @@ public class NexusApplicationImporter extends NexusImporter {
      * @throws java.io.IOException if I/O fails
      */
     public PartitionSubstitutionModel parsePAUPBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
-        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs");
+        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs", Nucleotides.INSTANCE);
         readTopLevelBlock(options, model, charSets);
         return model;
     }
@@ -133,7 +134,7 @@ public class NexusApplicationImporter extends NexusImporter {
      * @throws java.io.IOException if I/O fails
      */
     public PartitionSubstitutionModel parseMrBayesBlock(BeautiOptions options, List<CharSet> charSets) throws ImportException, IOException {
-        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs");
+        PartitionSubstitutionModel model = new PartitionSubstitutionModel(options, "nucs", Nucleotides.INSTANCE);
         readTopLevelBlock(options, model, charSets);
         return model;
     }

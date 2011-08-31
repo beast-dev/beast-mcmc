@@ -113,9 +113,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         int nodeNumber = getNodeNumberFromParameterIndex(index);
 
-        assert (tree.getNode(nodeNumber).getNumber() == nodeNumber);
+        NodeRef node = tree.getNode(nodeNumber);
+        assert (node.getNumber() == nodeNumber);
 
-        fireModelChanged(variable, nodeNumber);
+        fireModelChanged(this, nodeNumber);
     }
 
     protected void storeState() {

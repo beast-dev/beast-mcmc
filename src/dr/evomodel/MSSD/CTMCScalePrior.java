@@ -8,34 +8,26 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
- * @author Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
- * @author Marc A. Suchard
- * 
+ * Package: CTMCScalePrior
+ * Description:
+ * <p/>
+ * <p/>
+ * Created by
+ * Alexander V. Alekseyenko (alexander.alekseyenko@gmail.com)
  * Date: Aug 22, 2008
  * Time: 3:26:57 PM
  */
 public class CTMCScalePrior extends AbstractModelLikelihood {
-    final private Parameter ctmcScale;
-    final private TreeModel treeModel;
-    private double treeLength;
-    private boolean treeLengthKnown;
+    Parameter ctmcScale;
+    TreeModel treeModel;
 
     public CTMCScalePrior(String name, Parameter ctmcScale, TreeModel treeModel) {
         super(name);
         this.ctmcScale = ctmcScale;
         this.treeModel = treeModel;
-        addModel(treeModel);
-        treeLengthKnown = false;
-    }
-
-    private void updateTreeLength() {
-        treeLength = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
-        if (model == treeModel) {
-            treeLengthKnown = false;
-        }
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -45,7 +37,6 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
     }
 
     protected void restoreState() {
-        treeLengthKnown = false;
     }
 
     protected void acceptState() {
@@ -57,15 +48,10 @@ public class CTMCScalePrior extends AbstractModelLikelihood {
 
     public double getLogLikelihood() {
         double ab = ctmcScale.getParameterValue(0);
-//        if (!treeLengthKnown) {
-//            updateTreeLength();
-//            treeLengthKnown = true;
-//        }
         double totalTreeTime = Tree.Utils.getTreeLength(treeModel, treeModel.getRoot());
-        return -0.5 * Math.log(ab) - ab * totalTreeTime; // TODO Change to treeLength and confirm results
+        return -0.5 * Math.log(ab) - ab * totalTreeTime;
     }
 
     public void makeDirty() {
-        treeLengthKnown = false;
     }
 }

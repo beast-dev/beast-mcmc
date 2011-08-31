@@ -80,16 +80,7 @@ public class TreeModelOptions extends ModelOptions {
 //		
 //    }
     
-    public double getExpectedAvgBranchLength(double rootHeight) {
-    	double sum = 0;
-        int taxonCount = options.taxonList.getTaxonCount();
-
-        for (int i = 2; i <= taxonCount; i++) {
-            sum += (double) 1/i;
-        }
-
-        return rootHeight * sum / (double) (2 * taxonCount - 2);
-    }
+    
 	
 
 }

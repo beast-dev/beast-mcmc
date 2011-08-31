@@ -11,7 +11,6 @@ import dr.xml.*;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @author Philippe Lemey
@@ -356,7 +355,7 @@ public class OldDnDsPerSiteAnalysis {
 
                 traces.setBurnIn(burnin);
 
-                double samples[][][] = new double[NUM_VARIABLES][][];
+                Double samples[][][] = new Double[NUM_VARIABLES][][];
 
                 for (int variable = 0; variable < NUM_VARIABLES; ++variable) {
                     XMLObject cxo = xo.getChild(names[variable]);
@@ -380,21 +379,18 @@ public class OldDnDsPerSiteAnalysis {
                     }
                     int numberOfSites = 1 + (traceEndIndex - traceStartIndex);
 
-                    double[][] countPerSite = new double[numberOfSites][];
+                    Double[][] countPerSite = new Double[numberOfSites][traces.getStateCount()];
                     for (int a = 0; a < numberOfSites; a++) {
-                        List<Double> values = traces.getValues((a + traceStartIndex));
-                        countPerSite[a] = new double[values.size()];
-                        for (int i = 0; i < values.size(); i++) {
-                            countPerSite[a][i] = values.get(i);
-                        }
+                        traces.getValues((a + traceStartIndex), countPerSite[a]);
                     }
 
                     samples[variable] = countPerSite;
 
                 }
 
-                OldDnDsPerSiteAnalysis analysis = new OldDnDsPerSiteAnalysis(samples[COND_S], samples[UNCOND_S],
-                        samples[COND_N], samples[UNCOND_N]);
+                OldDnDsPerSiteAnalysis analysis = new OldDnDsPerSiteAnalysis(
+                        Trace.arrayConvert(samples[COND_S]), Trace.arrayConvert(samples[UNCOND_S]),
+                        Trace.arrayConvert(samples[COND_N]), Trace.arrayConvert(samples[UNCOND_N]));
 
                 System.out.println(analysis.output());
                 //TODO: save to file

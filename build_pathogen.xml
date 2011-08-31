@@ -1,4 +1,4 @@
-<project name="Pathogen" default="build" basedir=".">
+<project name="Pathogen" default="all" basedir=".">
     <description>
         Build file for PATHOGEN release versions, It is also used by Hudson Pathogen project.
         $Id: build_pathogen.xml,v 1.5 2006/09/09 18:16:17 rambaut Exp $
@@ -24,7 +24,16 @@
         <mkdir dir="${dist}"/>
     </target>
 
-    <target name="compile" depends="init">
+    <target name="all"
+            depends="compile-all"
+            description="Build all run-time stuff">
+    </target>
+
+    <target name="compile-all"
+            depends="compile-basic">
+    </target>
+
+    <target name="compile-basic" depends="init">
         <!-- Compile the java code from ${src} into ${build} -->
         <javac source="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath">
             <include name="dr/app/pathogen/**"/>
@@ -37,7 +46,9 @@
             <include name="dr/evolution/alignment/**"/>
             <include name="dr/evolution/tree/**"/>
             <include name="dr/evolution/util/**"/>
-            <include name="dr/app/gui/**"/>
+            <include name="dr/gui/chart/**"/>
+            <include name="dr/gui/tree/**"/>
+            <include name="dr/gui/table/**"/>
             <include name="dr/matrix/**"/>
             <include name="dr/stats/**"/>
             <include name="dr/math/**"/>
@@ -46,7 +57,7 @@
         </javac>
     </target>
 
-    <target name="build" depends="compile" description="generate the jar file">
+    <target name="dist" depends="compile-all" description="generate the jar file">
         <!-- Create the distribution directory -->
         <mkdir dir="${dist}"/>
 
@@ -67,7 +78,9 @@
                 <include name="dr/evolution/alignment/**/*.class"/>
                 <include name="dr/evolution/tree/**/*.class"/>
                 <include name="dr/evolution/util/**/*.class"/>
-                <include name="dr/app/gui/**/*.class"/>
+                <include name="dr/gui/chart/**/*.class"/>
+                <include name="dr/gui/tree/**/*.class"/>
+                <include name="dr/gui/table/**/*.class"/>
                 <include name="dr/matrix/**/*.class"/>
                 <include name="dr/stats/**/*.class"/>
                 <include name="dr/math/**/*.class"/>
@@ -78,7 +91,6 @@
             </fileset>
             <fileset dir="${src}">
                 <include name="dr/app/pathogen/**/*.png"/>
-                <include name="dr/app/gui/**/*.png"/>
                 <include name="org/virion/jam/**/*.png"/>
                 <include name="dr/gui/table/**/*.png"/>
             </fileset>
@@ -88,7 +100,7 @@
         </jar>
     </target>
 
-    <property name="version" value="1.4" />
+    <property name="version" value="1.3" />
     <property name="release_dir" value="release_pathogen" />
     <property name="name" value="Path-O-Gen" />
 
@@ -104,7 +116,8 @@
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                  or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows" depends="build" description="release Windows version of Pathogen">
+    <target name="windows_Release" depends="dist"
+                                   description="release Windows version of Pathogen">
 
         <delete dir="${Windows_package_dir}" />
         <!-- Create the release directory -->
@@ -135,7 +148,7 @@
         <echo message="Windows version release is finished." />
     </target>
 
-    <target name="linux" depends="build" description="release Linux/Unix version of Pathogen">
+    <target name="linux_unix_Release" description="release Linux/Unix version of Pathogen">
         <delete dir="${Linux_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Linux_package_dir}" />
@@ -158,7 +171,8 @@
         <echo message="Linux/Unix version release is finished." />
     </target>
 
-    <target name="mac" depends="build" description="release Mac version of Pathogen">
+    <target name="mac_Release"
+                                   description="release Mac version of Pathogen">
         <delete dir="${Mac_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Mac_package_dir}" />

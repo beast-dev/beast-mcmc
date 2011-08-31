@@ -30,23 +30,22 @@ import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
 
 import java.awt.*;
-import java.util.List;
 
 public class CategoryDensityPlot extends FrequencyPlot {
-    private int barCount = 0;
+    private int numOfBars = 0;
     private int barId;
     // for string[], passing the int[] storing the index of string[]
 
-    public CategoryDensityPlot(List<Double> data, int minimumBinCount, TraceDistribution traceDistribution, int barCount, int barId) {
-        super(traceDistribution);
-        this.barCount = barCount;
+    public CategoryDensityPlot(int[] data, int minimumBinCount, TraceDistribution traceD, int numOfBars, int barId) {
+        super(traceD);
+        this.numOfBars = numOfBars;
         this.barId = barId;
 
-//        Double[] doubleData = new Double[data.length];
-//        for (int i = 0; i < data.length; i++) {
-//            doubleData[i] = data[i].doubleValue();
-//        }
-        setData(data, minimumBinCount);
+        double[] doubleData = new double[data.length];
+        for (int i = 0; i < data.length; i++) {
+            doubleData[i] = (double) data[i];
+        }
+        setData(doubleData, minimumBinCount);
     }
 
     /**
@@ -56,8 +55,8 @@ public class CategoryDensityPlot extends FrequencyPlot {
         raw = data;
         FrequencyDistribution frequency = getFrequencyDistribution(data, minimumBinCount);
 
-        Variate.D xData = new Variate.D();
-        Variate.D yData = new Variate.D();
+        Variate.Double xData = new Variate.Double();
+        Variate.Double yData = new Variate.Double();
 
         double x = frequency.getLowerBound();
 
@@ -80,8 +79,8 @@ public class CategoryDensityPlot extends FrequencyPlot {
      * Get the FrequencyDistribution object
      */
     protected FrequencyDistribution getFrequencyDistribution(Variate data, int minimumBinCount) {
-        double min = (Double) data.getMin();
-        double max = (Double) data.getMax();
+        double min = data.getMin();
+        double max = data.getMax();
 
         if (min == max) {
             if (min == 0) {
@@ -118,7 +117,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
         FrequencyDistribution frequency = new FrequencyDistribution(axis.getMinAxis(), binCount, binSize);
 
         for (int i = 0; i < raw.getCount(); i++) {
-            frequency.addValue((Double) raw.get(i));
+            frequency.addValue(raw.get(i));
         }
 
         return frequency;
@@ -127,7 +126,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
     /**
      * Paint data series
      */
-    protected void paintData(Graphics2D g2, Variate.D xData, Variate.D yData) {
+    protected void paintData(Graphics2D g2, Variate xData, Variate yData) {
         double x1, y1, x2, y2, x;
 
         int n = xData.getCount();
@@ -140,9 +139,9 @@ public class CategoryDensityPlot extends FrequencyPlot {
                x2 = xData.get(i + 1);
                x = x2 - x1;
 
-            if (barCount > 1) {
-                x1 = x1 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
-                x2 = x2 - ((double) (barCount - 1)) * x + 2.0 * ((double) barId) * x;
+            if (numOfBars > 1) {
+                x1 = x1 - ((double) (numOfBars - 1)) * x + 2.0 * ((double) barId) * x;
+                x2 = x2 - ((double) (numOfBars - 1)) * x + 2.0 * ((double) barId) * x;
             }
 
             y1 = yData.get(i);
@@ -169,7 +168,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
     }
 
 //    protected void fillRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS && numOfBars > 0) {
 //            super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
 //        } else {
 //            super.fillRect(g2, x1, y1, x2, y2);
@@ -177,7 +176,7 @@ public class CategoryDensityPlot extends FrequencyPlot {
 //    }
 //
 //    protected void drawRect(Graphics2D g2, double x1, double y1, double x2, double y2) {
-//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.DOUBLE && numOfBars > 0) {
+//        if (traceD != null && traceD.getTraceType() != TraceFactory.TraceType.CONTINUOUS && numOfBars > 0) {
 ////            super.drawRect(g2, x1-(x2-x1), y1, x2, y2);
 //           super.fillRect(g2, x1 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y1, x2 - ((double) (numOfBars - barId)) * 2.0 * (x2-x1), y2);
 //        } else {

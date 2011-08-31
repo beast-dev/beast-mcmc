@@ -27,8 +27,8 @@ package dr.inference.distribution;
 
 import dr.inference.model.*;
 import dr.math.distributions.*;
-import dr.util.Attribute;
 import dr.xml.*;
+import dr.util.Attribute;
 
 
 /**
@@ -63,25 +63,15 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
     public double calculateLogLikelihood() {
         double logL = 0.0;
 
-        for (Attribute<double[]> data : dataList) {
+        for( Attribute<double[]> data : dataList ) {
             logL += distribution.logPdf(data.getAttributeValue());
         }
         return logL;
     }
 
-    @Override
-    public void addData(Attribute<double[]> data) {
-        super.addData(data);
-
-        if (data instanceof Variable) {
-            ((DefaultModel)getModel()).addVariable((Variable)data);
-        }
-    }
-
     public MultivariateDistribution getDistribution() {
         return distribution;
     }
-
 
     public static XMLObjectParser DIRICHLET_PRIOR_PARSER = new AbstractXMLObjectParser() {
 
@@ -123,7 +113,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         };
 
         public String getParserDescription() {
-            return "Calculates the likelihood of some data under a Dirichlet distribution.";
+            return "Calculates the likelihood of some data under an Inverse-Wishart distribution.";
         }
 
         public Class getReturnType() {
@@ -216,6 +206,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
             for (int j = 0; j < cxo.getChildCount(); j++) {
                 if (cxo.getChild(j) instanceof MatrixParameter) {
                     likelihood.addData((MatrixParameter) cxo.getChild(j));
+                    System.err.println("added ");
                 } else {
                     throw new XMLParseException("illegal element in " + xo.getName() + " element " + cxo.getName());
                 }
@@ -277,23 +268,9 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                 for (int j = 0; j < cxo.getChildCount(); j++) {
                     if (cxo.getChild(j) instanceof Parameter) {
                         Parameter data = (Parameter) cxo.getChild(j);
-                        if (data instanceof MatrixParameter) {
-                            MatrixParameter matrix = (MatrixParameter)data;
-                            if (matrix.getParameter(0).getDimension() != mean.getDimension())
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + matrix.getColumnDimension()
-                                        + " is not equal to dim(" + mean.getStatisticName() + ") = " + mean.getDimension()
-                                        + " in " + xo.getName() + "element");
-
-                            for (int i = 0; i < matrix.getParameterCount(); i++) {
-                                likelihood.addData(matrix.getParameter(i));
-                            }
-                        } else {
-                            if (data.getDimension() != mean.getDimension())
-                                throw new XMLParseException("dim(" + data.getStatisticName() + ") = " + data.getDimension()
-                                        + " is not equal to dim(" + mean.getStatisticName() + ") = " + mean.getDimension()
-                                        + " in " + xo.getName() + "element");
-                            likelihood.addData(data);
-                        }
+                        likelihood.addData(data);
+                        if (data.getDimension() != mean.getDimension())
+                            throw new XMLParseException("dim(" + data.getStatisticName() + ") != dim(" + mean.getStatisticName() + ") in " + xo.getName() + "element");
                     } else {
                         throw new XMLParseException("illegal element in " + xo.getName() + " element");
                     }

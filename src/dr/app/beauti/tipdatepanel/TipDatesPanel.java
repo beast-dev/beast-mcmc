@@ -28,17 +28,16 @@ package dr.app.beauti.tipdatepanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.components.TipDateSamplingComponentOptions;
+import dr.app.beauti.enumTypes.TipDateSamplingType;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.DateGuesser;
-import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.gui.table.DateCellEditor;
-import dr.app.gui.table.TableEditorStopper;
-import dr.app.gui.table.TableSorter;
 import dr.evolution.util.*;
 import dr.evoxml.util.DateUnitsType;
+import dr.app.gui.table.*;
 import jam.framework.Exportable;
+import jam.table.HeaderRenderer;
+import dr.app.gui.table.TableEditorStopper;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -75,7 +74,7 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
     JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
-    JComboBox tipDateSamplingCombo = new JComboBox(TipDateSamplingType.values());
+    JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] { TipDateSamplingType.NO_SAMPLING, TipDateSamplingType.SAMPLE_INDIVIDUALLY});
     JComboBox tipDateTaxonSetCombo = new JComboBox();
 
     BeautiFrame frame = null;
@@ -97,8 +96,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         sorter.setTableHeader(dataTable.getTableHeader());
 
         dataTable.getTableHeader().setReorderingAllowed(false);
-//        dataTable.getTableHeader().setDefaultRenderer(
-//                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        dataTable.getTableHeader().setDefaultRenderer(
+                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
         dataTable.getColumnModel().getColumn(0).setCellRenderer(
                 new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -217,6 +216,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
                 tipDateSamplingCombo.setEnabled(enabled);
                 tipDateSamplingLabel.setEnabled(enabled);
 
+                frame.removeSpecifiedTreePrior(usingTipDates.isSelected());
+
                 if (options.taxonList != null) timeScaleChanged();
             }
         });
@@ -257,10 +258,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
         calculateHeights();
 
-        if (options.clockModelOptions.isTipCalibrated()) { // todo correct?
-            for (ClockModelGroup clockModelGroup : options.clockModelOptions.getClockModelGroups()) {
-                options.clockModelOptions.tipTimeCalibration(clockModelGroup);
-            }
+        if (options.clockModelOptions.isTipCalibrated()) {
+            options.clockModelOptions.tipTimeCalibration();
         }
 
         dataTableModel.fireTableDataChanged();

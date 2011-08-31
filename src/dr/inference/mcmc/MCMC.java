@@ -112,9 +112,9 @@ public class MCMC implements Identifiable, Spawnable {
      * Must be called before calling chain.
      *
      * @param chainlength chain length
-     * @param likelihood the likelihood for this MCMC
-     * @param operators  an array of MCMC operators
-     * @param loggers    an array of loggers to record output of this MCMC run
+     * @param likelihood  the likelihood for this MCMC
+     * @param operators   an array of MCMC operators
+     * @param loggers     an array of loggers to record output of this MCMC run
      */
     public void init(int chainlength,
                      Likelihood likelihood,
@@ -273,13 +273,13 @@ public class MCMC implements Identifiable, Spawnable {
     private void showOperatorAnalysis(PrintStream out) {
         out.println();
         out.println("Operator analysis");
-            out.println(formatter.formatToFieldWidth("Operator", 50) +
-                    formatter.formatToFieldWidth("Tuning", 9) +
-                    formatter.formatToFieldWidth("Count", 11) +
-                    formatter.formatToFieldWidth("Time", 9) +
-                    formatter.formatToFieldWidth("Time/Op", 9) +
-                    formatter.formatToFieldWidth("Pr(accept)", 11) +
-                    (options.useCoercion() ? "" : " Performance suggestion"));
+        out.println(formatter.formatToFieldWidth("Operator", 50) +
+                formatter.formatToFieldWidth("Tuning", 9) +
+                formatter.formatToFieldWidth("Count", 11) +
+                formatter.formatToFieldWidth("Time", 9) +
+                formatter.formatToFieldWidth("Time/Op", 9) +
+                formatter.formatToFieldWidth("Pr(accept)", 11) +
+                (options.useCoercion() ? "" : " Performance suggestion"));
 
         for (int i = 0; i < schedule.getOperatorCount(); i++) {
 

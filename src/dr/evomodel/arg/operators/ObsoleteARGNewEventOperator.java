@@ -8,6 +8,7 @@
  */
 package dr.evomodel.arg.operators;
 
+import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.arg.ARGModel;
@@ -256,13 +257,12 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
         }
 
         arg.pushTreeSizeChangedEvent();
-        arg.endTreeEdit();
-//        try {
-//            arg.checkTreeIsValid();
-//        } catch (MutableTree.InvalidTreeException ite) {
-//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-//        }
+        try {
+            arg.endTreeEdit();
+        } catch (MutableTree.InvalidTreeException ite) {
+            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+        }
 
 //	    double d1 = findPotentialAttachmentPoints(reverseBifurcationHeight,null);
 //	    double d2 = findPotentialAttachmentPoints(reverseReassortmentHeight,null);
@@ -293,7 +293,7 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
     private void checkAllHeights() {
         int len = arg.getInternalNodeCount();
         System.err.println("# internal nodes = " + len);
-        int n = internalNodeParameters.getParameterCount();
+        int n = internalNodeParameters.getNumberOfParameters();
         System.err.println("VSCP (" + n + ")");
         for (int i = 0; i < n; i++) {
             System.err.println(internalNodeParameters.getParameterValue(i));
@@ -514,13 +514,12 @@ public class ObsoleteARGNewEventOperator extends AbstractCoercableOperator {
 
         arg.pushTreeSizeChangedEvent();
 
-        arg.endTreeEdit();
-//        try {
-//            arg.checkTreeIsValid();
-//        } catch (MutableTree.InvalidTreeException ite) {
-//            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
-//                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
-//        }
+        try {
+            arg.endTreeEdit();
+        } catch (MutableTree.InvalidTreeException ite) {
+            throw new RuntimeException(ite.toString() + "\n" + arg.toString()
+                    + "\n" + Tree.Utils.uniqueNewick(arg, arg.getRoot()));
+        }
 
 //	    double d1 = findPotentialNodesToRemove(null);
 //	    System.err.printf("d1 = %5.4f\n",d1);

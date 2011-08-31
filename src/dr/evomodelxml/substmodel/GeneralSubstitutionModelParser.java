@@ -1,12 +1,8 @@
 package dr.evomodelxml.substmodel;
 
-import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.GeneralSubstitutionModel;
-import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
-import dr.evomodel.substmodel.SVSGeneralSubstitutionModel;
+import dr.evolution.datatype.*;
+import dr.evomodel.substmodel.*;
 import dr.evoxml.util.DataTypeUtils;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -74,7 +70,7 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
         int states = dataType.getStateCount();
         Logger.getLogger("dr.evomodel").info("  General Substitution Model (stateCount=" + states + ")");
 
-        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO) || (cxo.hasAttribute(RELATIVE_TO) && cxo.getIntegerAttribute(RELATIVE_TO) > 0);     
+        boolean hasRelativeRates = cxo.hasChildNamed(RELATIVE_TO);
 
         int nonReversibleRateCount = ((dataType.getStateCount() - 1) * dataType.getStateCount());
         int reversibleRateCount = (nonReversibleRateCount / 2);
@@ -97,12 +93,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
 
                 if (indicatorParameter.getDimension() != ratesParameter.getDimension()) {
                     throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
-                }
-
-                boolean randomize = xo.getAttribute(ComplexSubstitutionModelParser.RANDOMIZE, false);
-                if (randomize) {
-                    BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
-                        dataType.getStateCount(), !isNonReversible);
                 }
             }
 
@@ -187,7 +177,6 @@ public class GeneralSubstitutionModelParser extends AbstractXMLObjectParser {
             new ElementRule(INDICATOR,
                     new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class),
-                    }, true),
-            AttributeRule.newBooleanRule(ComplexSubstitutionModelParser.RANDOMIZE, true),
+                    }, true)
     };
 }

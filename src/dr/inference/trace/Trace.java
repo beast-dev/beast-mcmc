@@ -26,7 +26,6 @@
 package dr.inference.trace;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -38,258 +37,252 @@ import java.util.List;
  */
 public class Trace<T> {
 
-//    public static final int INITIAL_SIZE = 1000;
-//    public static final int INCREMENT_SIZE = 1000;
+    public static final int INITIAL_SIZE = 1000;
+    public static final int INCREMENT_SIZE = 1000;
 
-    // use <Double> for integer, but traceType must = INTEGER
-    protected TraceFactory.TraceType traceType = TraceFactory.TraceType.DOUBLE;
-    protected List<T> values = new ArrayList<T>();
-    //    protected int valueCount = 0;
-    protected String name;
+    //    private TraceType traceType = TraceType.CONTINUOUS;
+    protected T[] values = (T[]) new Object[INITIAL_SIZE];
+    protected int valueCount = 0;
+    protected final String name;
 
-//    private Object[] range;
-
-    public Trace(String name) { // traceType = TraceFactory.TraceType.DOUBLE; 
-        this.name = name;
-    }
-
-    public Trace(String name, TraceFactory.TraceType traceType) {
-        this.name = name;
-        setTraceType(traceType);
-    }
-
-//    public Trace(String name, T[] valuesArray) {
-//        this(name);
-////        List<T> newVL = Arrays.asList(valuesArray);
-//        Collections.addAll(this.values, valuesArray);
+//    public Trace(String name) {
+//        this.name = name;
 //    }
+
+    public Trace(String name, int initialSize, T initValue) {
+        this.name = name;
+        if (initialSize > 0) {
+            this.values = (T[]) new Object[initialSize];
+        }
+        values[0] = initValue; // make getTraceType() working
+    }
+
+    public Trace(String name, T[] values) {
+        this.name = name;
+        this.values = (T[]) new Object[values.length];
+        valueCount = values.length;
+        System.arraycopy(values, 0, this.values, 0, values.length);
+    }
 
     /**
      * @param value the valued to be added
      */
     public void add(T value) {
-        values.add(value);
+        if (valueCount == values.length) {
+            T[] newValues = (T[]) new Object[valueCount + INCREMENT_SIZE];
+            System.arraycopy(values, 0, newValues, 0, values.length);
+            values = newValues;
+        }
+
+        values[valueCount] = value;
+        valueCount++;
     }
 
     /**
-     * @param valuesArray the values to be added
+     * @param values the values to be added
      */
-    public void add(T[] valuesArray) {
-        Collections.addAll(this.values, valuesArray);
+    public void add(T[] values) {
+        for (T value : values) {
+            this.add(value);
+        }
+        valueCount += values.length;
     }
 
-    public int getValuesSize() {
-        return values.size();
+    public int getCount() {
+        return valueCount;
     }
 
     public T getValue(int index) {
-        return values.get(index); // filter?
+        return values[index];
     }
 
-    public String[] getRange() { // Double => bounds; Integer and String => unique values
-        String[] range;
-        if (getTraceType() == TraceFactory.TraceType.DOUBLE) {
-            range = new String[2];
-            range[0] = Double.toString(Double.MAX_VALUE);
-            range[1] = Double.toString(Double.MIN_VALUE);
-            for (Object t : values) {
-                if (Double.parseDouble(range[0]) < (Double) t) range[0] = t.toString();
-                if (Double.parseDouble(range[1]) > (Double) t) range[1] = t.toString();
-            }
-
-        } else {
-            List<String> r = new ArrayList<String>();
-            for (Object t : values) {
-                if (traceType == TraceFactory.TraceType.INTEGER) { // as Integer is stored as Double in Trace
-                    if (!r.contains(Integer.toString(((Number) t).intValue())))
-                        r.add(Integer.toString(((Number) t).intValue()));
-                } else {
-                    if (!r.contains(t.toString()))
-                        r.add(t.toString());
-                }
-            }
-
-            Collections.sort(r);
-            range = new String[r.size()];
-            range = r.toArray(range);
-
-        }
-
-        return range;
+    public T[] createValues(int start, int length) {
+        T[] destination = (T[]) new Object[length];
+        getValues(start, destination, 0);
+        return destination;
     }
 
-    /**
-     * @param fromIndex low endpoint (inclusive) of the subList.
-     * @param toIndex   high endpoint (exclusive) of the subList.
-     * @param selected  if null then no filter, otherwise selected.length should = getValuesSize()
-     * @return The list of values (which are selected values if filter applied)
-     */
-    public List<T> getValues(int fromIndex, int toIndex, boolean[] selected) {
-        if (toIndex > getValuesSize() || fromIndex > toIndex)
-            throw new RuntimeException("Invalid index : fromIndex = " + fromIndex + "; toIndex = " + toIndex
-                    + "; List size = " + getValuesSize() + "; in Trace " + name);
+    public T[] getValues() {
+        return values;
+    }
 
+    public void getValues(int start, T[] destination, int offset) {
+        System.arraycopy(values, start, destination, offset, valueCount - start);
+    }
+
+    public void getValues(int start, int count, T[] destination, int offset) {
+        System.arraycopy(values, start, destination, offset, count);
+    }
+
+    public void getSelected(int start, boolean[] destination, int offset, boolean[] selected) {
         if (selected != null) {
-            if (selected.length != getValuesSize())
-                throw new RuntimeException("size of values is different with selected[] in Trace " + name);
-
-            List<T> valuesList = new ArrayList<T>();
-            for (int i = fromIndex; i < toIndex; i++) {
-                if (selected[i])
-                    valuesList.add(values.get(i));
-            }
-            if (valuesList.size() < 1) throw new RuntimeException("There is no value sent by getValue() !");
-            return valuesList;
+            System.arraycopy(selected, start, destination, offset, valueCount - start);
         } else {
-            return values.subList(fromIndex, toIndex);
+            for (int i = 0; i < destination.length; i++) {
+                destination[i] = true;
+            }
         }
     }
+
+    public void getSelected(int start, int count, boolean[] destination, int offset, boolean[] selected) {
+        if (selected != null) {
+            System.arraycopy(selected, start, destination, offset, count);
+        } else {
+            for (int i = 0; i < destination.length; i++) {
+                destination[i] = true;
+            }
+        }
+    }
+
 
     public String getName() {
         return name;
     }
 
-//    public Class getTraceType() {
-//        if (values.get(0) == null) {
-//            return null;
+//    public static Double[] arrayCopy(double[] src) {
+//        Double[] dest = new Double[src.length];
+//        for (int i=0; i < src.length; i++) {
+//            dest[i] = Double.valueOf(src[i]);
 //        }
-//        return values.get(0).getClass();
+//        return dest;
 //    }
 
-    public TraceFactory.TraceType getTraceType() {
-        return traceType;
-    }
-
-    public void setTraceType(TraceFactory.TraceType traceType) {
-        this.traceType = traceType;
-    }
-
-    //******************** TraceCorrelation ****************************
-    protected TraceCorrelation<T> traceStatistics;
-
-    public TraceCorrelation getTraceStatistics() {
-        return traceStatistics;
-    }
-
-    public void setTraceStatistics(TraceCorrelation traceStatistics) {
-        this.traceStatistics = traceStatistics;
-    }
-
-    //******************** Filter ****************************
-    protected Filter filter = null;
-
-    public void setFilter(Filter filter) {
-        this.filter = filter;
-    }
-
-    public Filter getFilter() {
-        return filter;
-    }
-
-    public boolean isIn(int i) {
-        return filter.isIn(values.get(i), traceType);
-    }
-
-    //******************** Trace Double ****************************
-/*    public class D extends Trace<Double> {
-
-        public D(String name, int initialSize) {
-            super.name = name;
-            super.values = new Double[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
-
-        public D(String name, Double[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public Double[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public Double[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Double[] destination = new Double[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
+    public static double[] arrayConvert(Double[] src) {
+        double[] dest = null;
+        if (src != null) {
+            dest = new double[src.length];
+            for (int i = 0; i < dest.length; i++) {
+                dest[i] = src[i].doubleValue();
             }
         }
+        return dest;
     }
 
-    //******************** Trace Integer ****************************
-    public class I extends Trace<Integer> {
+    public static double[] arrayConvert(Double[] src, boolean[] selected) {
+        if (src == null) return null;
 
-        public I(String name, int initialSize) {
-            super.name = name;
-            super.values = new Integer[initialSize];
-//            values[0] = initValue; // make getTraceType() working
-        }
+        assert src.length == selected.length;
 
-        public I(String name, Integer[] values) {
-            this(name, values.length);
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
 
-        public Integer[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
+        if (selected != null) {
+            java.util.List<Double> selectedValuesList = new ArrayList<Double>();
 
-        public Integer[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            Integer[] destination = new Integer[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
+            for (int i = 0; i < src.length; i++) {
+                if (selected[i]) {
+                    selectedValuesList.add(src[i]);
+                }
             }
+
+            double[] dest = new double[selectedValuesList.size()];
+            for (int i = 0; i < dest.length; i++) {
+                dest[i] = selectedValuesList.get(i).doubleValue();
+            }
+
+            return dest;
+
+        } else {
+            return arrayConvert(src);
         }
     }
 
-    //******************** Trace String ****************************
-    public class S extends Trace<String> {
-
-        public S(String name, int initialSize, String initValue) {
-            super.name = name;
-            if (initialSize > 0) {
-                super.values = new String[initialSize];
-            }
-            values[0] = initValue; // make getTraceType() working
-        }
-
-        public S(String name, String[] values) {
-            super.name = name;
-            super.values = new String[values.length];
-            valueCount = values.length;
-            System.arraycopy(values, 0, this.values, 0, values.length);
-        }
-
-        public String[] getValues(int length, int start, int offset, boolean[] selected) {
-            return this.getValues(length, start, offset, valueCount - start, selected);
-        }
-
-        public String[] getValues(int length, int start, int offset, int count, boolean[] selected) {
-            String[] destination = new String[length];
-            System.arraycopy(values, start, destination, offset, count);
-
-            if (selected != null) {
-                boolean[] destinationSelected = new boolean[length];
-                System.arraycopy(selected, start, destinationSelected, offset, count);
-                return getSeletedValues(destination, destinationSelected);
-            } else {
-                return destination;
+    public static double[][] arrayConvert(Double[][] src) {
+        double[][] dest = null;
+        if (src != null) {
+            dest = new double[src.length][src[0].length];
+            for (int i = 0; i < dest.length; i++) {
+                for (int j = 0; j < dest[i].length; j++) {
+                    dest[i][j] = src[i][j].doubleValue();
+                }
             }
         }
-    } */
+        return dest;
+    }
 
+    public static int[] arrayConvert(Integer[] src) {
+        int[] dest = null;
+        if (src != null) {
+            dest = new int[src.length];
+            for (int i = 0; i < dest.length; i++) {
+                dest[i] = src[i].intValue();
+            }
+        }
+        return dest;
+    }
+
+    public static int[] arrayConvert(Integer[] src, boolean[] selected) {
+        if (src == null) return null;
+
+        assert src.length == selected.length;
+
+        if (selected != null) {
+            java.util.List<Integer> selectedValuesList = new ArrayList<Integer>();
+
+            for (int i = 0; i < src.length; i++) {
+                if (selected[i]) {
+                    selectedValuesList.add(src[i]);
+                }
+            }
+
+            int[] dest = new int[selectedValuesList.size()];
+            for (int i = 0; i < dest.length; i++) {
+                dest[i] = selectedValuesList.get(i).intValue();
+            }
+
+            return dest;
+
+        } else {
+            return arrayConvert(src);
+        }
+    }
+
+    public static String[] arrayConvert(String[] src) {
+        return src;
+    }
+
+    public static String[] arrayConvert(String[] src, boolean[] selected) {
+        if (src == null) return null;
+
+        assert src.length == selected.length;
+
+        if (selected != null) {
+            java.util.List<String> selectedValuesList = new ArrayList<String>();
+
+            for (int i = 0; i < src.length; i++) {
+                if (selected[i]) {
+                    selectedValuesList.add(src[i]);
+                }
+            }
+
+            String[] dest = new String[selectedValuesList.size()];
+//            for (int i = 0; i < dest.length; i++) {
+//                dest[i] = selectedValuesList.get(i).toString();
+//            }
+            dest = selectedValuesList.toArray(dest);
+            return dest;
+
+        } else {
+            return arrayConvert(src);
+        }
+    }
+
+    public static double[] arrayIntToDouble(Integer[] src, boolean[] selected) {
+        double[] dest = null;
+        if (src != null) {
+            int[] tmp = arrayConvert(src, selected);
+            dest = new double[tmp.length];
+            for (int i = 0; i < tmp.length; i++) {
+                dest[i] = (double) tmp[i];
+            }
+        }
+        return dest;
+    }
+
+
+    public Class getTraceType() {
+        return values[0].getClass();
+    }
+//
+//    public void setTraceType(TraceFactory.TraceType traceType) {
+//        this.traceType = traceType;
+//    }
 }

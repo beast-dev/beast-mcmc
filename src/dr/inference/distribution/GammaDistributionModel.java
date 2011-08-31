@@ -31,8 +31,6 @@ import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 import dr.math.UnivariateFunction;
 import dr.math.distributions.GammaDistribution;
-import org.apache.commons.math.MathException;
-import org.apache.commons.math.distribution.GammaDistributionImpl;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -94,11 +92,7 @@ public class GammaDistributionModel extends AbstractModel implements ParametricD
     }
 
     public double quantile(double y) {
-        try {
-            return (new GammaDistributionImpl(getShape(), getScale())).inverseCumulativeProbability(y);
-        } catch (MathException e) {
-            return Double.NaN;
-        }
+        return GammaDistribution.quantile(y, getShape(), getScale());
     }
 
     public double mean() {

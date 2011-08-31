@@ -1,6 +1,6 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -37,7 +37,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
+                                                        BranchSiteModel branchSiteModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
@@ -56,7 +56,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
                 patternList,
                 treeModel,
-                branchSubstitutionModel,
+                branchSiteModel,
                 siteRateModel,
                 branchRateModel,
                 useAmbiguities,
@@ -77,7 +77,6 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
-            new ElementRule(BranchSubstitutionModel.class, true),     
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(SubstitutionModel.class),
             AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),

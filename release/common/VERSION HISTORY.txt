@@ -1,4 +1,4 @@
-                    BEAST v1.7.0 2002-2011
+                    BEAST v1.6.2 2002-2011
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -17,89 +17,10 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 1st April 2011
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
+* indicates critical issue.
 
 ================================================================================
-
-Version 1.7.0 released 1st April 2011
-
-	New Features:
-        Birth Death Serial Sampling Model, see:
-             Stadler, T; Sampling-through-time in birth-death trees
-             JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404.
-             and
-             T. Stadler, R. Kouyos , V. von Wyl , S. Yerly , J. B�ni ,
-             P. B�rgisser , T. Klimkait , B. Joos , P. Rieder , D. Xie ,
-             H. G�nthard , A. Drummond , S. Bonhoeffer;
-             Estimating the basic reproductive number from viral
-             sequence data; Submitted.
-
-        Added clock model group in BEAUti.
-
-        BEAUti starts to explicitly generate uniform priors in XML.
-
-        A new XML for Calibration with Yule.
-
-	Bug Fixes:
-	    Issue 51: 	log-normal prior in beauti not that usefull presentation
-        Issue 85: 	Add search filter above Included and Excluded taxa in Taxon
-                    Sets panel of BEAUti
-        Issue 397: 	*BEAST in BEAUti is broken
-        Issue 398: 	BEAUti text message overlaps with button
-        Issue 399: 	Binary for TreeStat packaged with BEAST v1.6 has wrong version
-                    number and icon
-        Issue 403: 	Starting tree generated with constraints by BEAUti is not correct
-                    XML for BEAST
-        Issue 404: 	Make "Median heights" as the default of nodeHeightsCombo
-        Issue 405: 	RandomWalkOperator with reflecting boundary can grind to a halt
-        Issue 407: 	*BEAST needs to log species tree in { }, otherwise TreeAnnotator
-                    keeps coming up with null exception on species tree
-        Issue 408: 	TreeAnnotator crashes with Null Pointer Exception on malformed
-                    metacomment
-        Issue 409: 	BEAUti should explicitly generate uniform priors
-        Issue 410: 	"Improper priors" on posterior statistics
-	    Issue 411: 	Incorrect validation and error message for random local clock
-	                in BEAUti
-	    Issue 412: 	BEAUti generates randomWalkOperator instead of
-	                randomWalkIntegerOperator for branchRates.categories
-	    Issue 413: 	BEAUti: duplicate class PartitionModelOptions causes model
-	                link conflict
-	    Issue 414: 	BEAUti: incorrect xml for multi-alignment when given complex
-	                combination of clock model and tree model
-        Issue 416: 	Laplace prior parser should use scale same as BEAUti
-        Issue 417: 	BEAUti growthRate related XML causes -INF likelihood
-        Issue 418: 	Set maximun fraction digits for numbers displayed in BEAUti
-                    prior panel
-        Issue 419: 	BEAUti RealNumberField should not throw Exception all the time
-        Issue 420: 	Add error message : Partitions cannot have the same name
-        Issue 422: 	BEAUti: add validation to check whether modified prior
-                    initial value is between the boundary
-        Issue 423: 	delta exchange operator discription is wrong
-        Issue 425: 	BEAUti can't re-link subst models anymore
-        Issue 426: 	BEAUti does not preserve model settings when re-linking
-        Issue 427: 	BEAUti generates a mergePatterns even when it is enclosing
-                    a single patterns element
-        Issue 432: 	More detail for error message: *BEAST special part
-                    generation has failed.
-        Issue 433: 	Typo in BEAUTi and example files
-        Issue 434: 	BEAUti: Initial value missing from prior dialog
-        Issue 435: 	UniformIntegerOperator did not include upper in the value
-        Issue 438: 	BEAST should tell you what frequencies belong to which
-                    partition
-        Issue 442: 	BEAUti: taxon set table does not refresh after changing
-                    tree model
-        Issue 443: 	BEAUti: change alpha default prior into Exponential
-                    mean=0.5 offset=0.0
-        Issue 444: 	BEAUti: model table select row not update
-        Issue 445: 	BEAUti: clock rate configuration is not consistent
-                    between clock model panel and prior panel
-        Issue 447: 	The Birth-Death models in the Trees Panel show a
-                    citation - other models do not
-
-
-================================================================================
-
 
 Version 1.6.2 released 22nd August 2011
 
@@ -140,9 +61,10 @@ Version 1.6.2 released 22nd August 2011
         Issue 492:	Should BEAUti use 'NNN' rather than 'N' for empty alignment,
                     to allow for codon-partitioned models
         Issue 494:	BEAUti *BEAST does not need link tree prior option
-        Issue 495:	Tree annotator checks the tree for duplicate taxon names
+        Issue 495:	Tree annotator needs to validate the duplicate taxon name
 
-
+	
+================================================================================
 
 Version 1.6.1 released 15th October 2010
 
@@ -172,8 +94,7 @@ Version 1.6.1 released 15th October 2010
         Issue 419: BEAUti RealNumberField should not throw Exception all the time
         Issue 422: BEAUti: add validation to check whether modified prior initial value
                    is between the boundary
-
-
+        
 
 Version 1.6.0 released 15th September 2010
 
@@ -412,7 +333,7 @@ Version 1.5.2 released 9th October 2009
         Issue 77: BEAUti v1.5 produces decimal operator weights that don't work with
                   old BEAST
         Issue 94: Improve the prefix of PartitionClockModelTreeModelLink
-        Issue 123: BEAUti uses a poor choice of name for re-linking partitions
+        Issue 123: BEAUti uses a poor choice of name for re-linking partitions  
         Issue 131: BEAUTi: rewrite Parameter and Operator class by Builder pattern,
                    and all referring methods
         Issue 134: TN93 parser problem
@@ -422,7 +343,7 @@ Version 1.5.2 released 9th October 2009
         Issue 139: ImportnaceNarrowExchange should be ImportanceNarrowExchange
         Issue 140: more options for *beast
         Issue 144: BEAUTi: "In use" in Operators panel cannot be changed for those
-                   operators belonging to PartitionClockModelTreeModelLink
+                   operators belonging to PartitionClockModelTreeModelLink  
         Issue 145: BEAUTi: implement frequencies for binary model in the same way as
                    for DNA data
         Issue 147: BEAUTi: if no leaf nodes selected in Taxon Set panel, the
@@ -453,7 +374,7 @@ Version 1.5.2 released 9th October 2009
         Issue 185: Guess Trait dialog doesn't offer user defined traits
         Issue 188: Suggestion to remove 'pre-burnin'
         Issue 190: Mac app ant build needs several corrections
-        Issue 192: BEAUti: GUI exception when attempting to add a new trait
+        Issue 192: BEAUti: GUI exception when attempting to add a new trait 
         Issue 195: BEAUTi ignores and resets change of prior
         Issue 196: Beast failure with file generated by BEAUTi (ucld)
         Issue 197: meanRate, coefficientOfVariation and covariance should have gene name
@@ -482,8 +403,8 @@ Version 1.5.2 released 9th October 2009
 
 	Bug Fixes
 		Many bugs fixed that were introduced in 1.5.0 including:
-
-		Issue 38: If partitions are unlinked then the base frequencies should be
+		
+		Issue 38: If partitions are unlinked then the base frequencies should be 
 	              calculated from each partition separately;
 		Issue 80: ant build generates a broken beast;
 		Issue 81: ant build release fails after recent changes to beauti;
@@ -493,10 +414,10 @@ Version 1.5.2 released 9th October 2009
 		Issue 99: Suggestion: Clock Models tab;
 		Issue 100: Request to revise UI of "Choose Fix Rate Option";
 		Issue 103: Comments and suggestions for "MCMC Tab";
-		Issue 106: Single locus but multiple codon partitions: Doesn't allow
+		Issue 106: Single locus but multiple codon partitions: Doesn't allow 
 		           'Fixed mean rate';
 		Issue 109: BEAUti: Generating XML - no file overwriting warning?;
-		Issue 110: BEAUTi: excludedTaxonSetsComboBox and includedTaxonSetsComboBox
+		Issue 110: BEAUTi: excludedTaxonSetsComboBox and includedTaxonSetsComboBox 
 		           in Taxon Sets panel not updating
 		Issue 114: Beauti Priors panel for starbeast;
 		Issue 115: Beauti starbeast: missing updown operator for first gene;
@@ -511,116 +432,116 @@ Version 1.5.2 released 9th October 2009
 Version 1.5.0 released 4th August 2009
 	This was a major new version with numerous new features and many bugs -
 	see release 1.5.1 for details.
-
+	
 	Bug Fixes
-		Many new bugs were introduced.
-
-================================================================================
+		Many new bugs were introduced. 
+	
+================================================================================	
 
 Version 1.4.8 released 27th July 2008
 	New Features:
-		A birth-death model of speciation. This is the model of Tanja Gernhard
+		A birth-death model of speciation. This is the model of Tanja Gernhard 
 		(The conditioned reconstructed process, J Theor Biol, 2008).
-
-		There is now an option to dynamically rescale the likelihoods of trees
-		to avoid loss of precision. This can avoid problems with large trees
+		
+		There is now an option to dynamically rescale the likelihoods of trees 
+		to avoid loss of precision. This can avoid problems with large trees 
 		but may affect performance. See on-line documentation for details.
 
 	Bug Fixes:
-		Improvements to how uncorrelated relaxed clocks are sampled. This will
+		Improvements to how uncorrelated relaxed clocks are sampled. This will 
 		be an improvement more for small trees than large.
-
-		Fixed a problem setting the number of groups for the Bayesian Skyline
+		
+		Fixed a problem setting the number of groups for the Bayesian Skyline 
 		Plot in BEAUti.
-
-		A warning message is given if a speciation process is selected for
+		
+		A warning message is given if a speciation process is selected for 
 		serially-sampled sequences.
 
 		LogCombiner ignores lines starting with a '#' as a comment line.
-
-		Trees are written with a standard (alphabetical) ordering of taxa to
+		
+		Trees are written with a standard (alphabetical) ordering of taxa to 
 		allow them to be read by AWTY.
-
-		For writing NEXUS tree files, taxon names with illegal characters (such
+		
+		For writing NEXUS tree files, taxon names with illegal characters (such 
 		as spaces or semicolons) are now quoted.
-
+		
 		LogCombiner now uses the '.' as the decimal separator irrespective of
 		country or language. This is to standardize with other programs.
-
+		
 Version 1.4.7 released 1st February 2008
 	New Features:
-		BEAUti can now set nucleotide frequencies to be sampled or equal as well
+		BEAUti can now set nucleotide frequencies to be sampled or equal as well 
 		as the empirically estimated (the previous default).
-
+		
 		Individual operators can now be turned on and off in BEAUti (for example
 		to sample on a fixed tree topology).
 
 	Bug Fixes:
-		BEAST now generates starting trees with certain taxon constraints that
+		BEAST now generates starting trees with certain taxon constraints that 
 		caused problems before.
-
+		
 		Some numerical problems with the Expansion and Logistic models have been
 		fixed or at least improved for certain situations.
-
+	
 		Fixed a problem in which BEAUti's Prior Distribution dialog was freezing
 		when a very large lognormal mean was set.
-
+		
 		A seed of zero crashed BEAST - seeds must be > 0 now.
-
+		
 		The command-line version of TreeAnnotator wasn't accepting a target tree
 		file name.
-
-		Fixed a problem in LogCombiner where if the Run button was pressed
+		
+		Fixed a problem in LogCombiner where if the Run button was pressed 
 		before the user had finished editing a burnin the value was ignored.
-
-		Fixed an issue with BEAUti running under Mac OS X 10.5 (Leopard) where
+		
+		Fixed an issue with BEAUti running under Mac OS X 10.5 (Leopard) where 
 		the text box for the substitution rate was tiny.
 
 Version 1.4.6 released 26th September 2007
 	Bug Fixes:
 		Fixed a problem in which the lognormal distribution wasn't giving the
 		required distribution as prior.
-
-		Fixed a problem with TreeAnnotator not completing when finding the
+		
+		Fixed a problem with TreeAnnotator not completing when finding the 
 		Maximum Clade Credibility tree.
 
 Version 1.4.5 released 31st July 2007
 	Bug Fixes
 		Some monophyletic constraints defined in BEAUti failed to run in BEAST.
-
+		
 		The priors table didn't update when the tree prior was changed.
 
 Version 1.4.4 released 12th July 2007
 	New Features:
-		Improved speed of relaxed clock by more judicious updating of the
+		Improved speed of relaxed clock by more judicious updating of the 
 		likelihood when rates change on a few branches.
-
+		
 		Slight improvement in speed calculating the coalescent prior.
-
+		
 		The taxa and translate lists in NEXUS trees files can now be sorted
 		alphabetically (and this is the default in BEAUti). This will help
 		comparisons of trees files using certain software that assume taxon
 		orders are the same (namely AWTY).
-
+		
 	Bug Fixes
 		Log normal prior element required meanInRealSpace attribute which
-		prevented older XML file from running without modification. This
+		prevented older XML file from running without modification. This 
 		attribute is now optional.
 
 Version 1.4.3 released 18th June 2007
 	Bug Fixes
 		The Yule tree prior was wrongly implemented.
 
-		BEAUti did not allow some types of compatable monophyly
+		BEAUti did not allow some types of compatable monophyly 
 		constraints.
-
+		
 		BEAST did not always simulate starting trees with enforced
 		monophyly correctly.
-
-		BEAST ignored specified offsets for exponential priors on
+		
+		BEAST ignored specified offsets for exponential priors on 
 		parameters.
-
-		BEAUti ignored user specified offsets for gamma distribution
+		
+		BEAUti ignored user specified offsets for gamma distribution 
 		priors on parameters.
 
 Version 1.4.2 released 25th April 2007
@@ -642,39 +563,39 @@ Version 1.4.2 released 25th April 2007
 Version 1.4.1 released 25th January 2007
 	Bug Fixes:
 		BEAUti did not accept the number of skyline groups properly.
-
+		
 		BEAUti was not able to 'guess dates' using a specified prefix.
-
+		
 		Fixed a problem using exponential distribution as priors.
-
-		LogCombiner could mix up taxon labels when combining multiple
+		
+		LogCombiner could mix up taxon labels when combining multiple 
 		tree files. This problem would not affect the reconstruction of
 		skyline plots.
-
+		
 Version 1.4 released 31th October 2006
 	New Features:
-		Faster likelihood calculations after rejecting a state. Whilst
+		Faster likelihood calculations after rejecting a state. Whilst 
 		the improvement in speed will vary, the indications are that
 		this is a significant overall speed improvement.
-
-		Rates for relaxed clock models can be written embedded in the
+				
+		Rates for relaxed clock models can be written embedded in the 
 		tree for later analysis.
-
-		2 new accessory programs: LogCombiner for combining multiple
+		
+		2 new accessory programs: LogCombiner for combining multiple 
 		runs into single log files and TreeAnnotator which annotates a
 		given target tree with posterior estimates from a BEAST sample
 		of trees.
-
-		BEAUti can now create TaxonSets and apply prior probability
+		
+		BEAUti can now create TaxonSets and apply prior probability 
 		distributions to the tMRCA of these.
-
+		
 		BEAUti can now save and load "Template Files" containing model
 		settings but not data.
-
-		BEAUti can be run non-interactively as a command-line using the
+		
+		BEAUti can be run non-interactively as a command-line using the 
 		template files.
-
-		The order of parameters logged in BEAST files created by BEAUti
+	
+		The order of parameters logged in BEAST files created by BEAUti 
 		has been changed to make it easier to compare files with different
 		models in Tracer.
 
@@ -712,13 +633,13 @@ Version 1.1.2 released 27th August 2004
 
 Version 1.1.1 released 24th August 2004
 	New Features:
-		Can now switch autoOptimize on or off for individual
+		Can now switch autoOptimize on or off for individual 
 		operators. This overrides the setting for the <mcmc>
 		element.
-
-		Default weights for certain operators have been changed
+		
+		Default weights for certain operators have been changed 
 		in BEAUti to improve performance.
-
+		
 	Bug Fixes:
 		Fixed a bug in BEAUti in which unlinked codon analyses
 		produced non-working XML files.
@@ -731,22 +652,22 @@ Version 1.1.1 released 24th August 2004
 
 Version 1.1 released 5th August 2004
 	New Features:
-		An auto-optimize function that removes the need to
+		An auto-optimize function that removes the need to 
 		perform manual tuning of operators.
-
+		
 		Improvement in speed of likelihood calculations for
-		nucleotides.
-
-		Now includes BEAUTi as part of the BEAST package. In
+		nucleotides.  
+		
+		Now includes BEAUTi as part of the BEAST package. In 
 		future these will be distributed together with matching
 		version numbers.
-
+		
 	Bug Fixes:
 		Various minor problems with parsing XML have been fixed
 
 Version 1.0.3 released 12 July 2003
 	New Features:
-		Improved tree log analyser. Now gives mean node heights
+		Improved tree log analyser. Now gives mean node heights 
 		(branch lengths) on trees with a frequency > 100.
 
 	Bug Fixes:
@@ -754,19 +675,19 @@ Version 1.0.3 released 12 July 2003
 
 Version 1.0.2 released 27 June 2003
 	New Features:
-		Improved tree log analyser. Now gives mean node heights
+		Improved tree log analyser. Now gives mean node heights 
 		(branch lengths) on trees with a frequency > 100.
 
 	Bug Fixes:
-		Fixed the wrong coalescent likelihood function introduced
+		Fixed the wrong coalescent likelihood function introduced 
 		in the last version.
 
 		Various minor problems with parsing XML have been fixed
 		(including GTR model, NormalDistribution and others).
 
 Version 1.0.1 released 23 June 2003
-	This version introduced a 'fix' for the coalescent likelihood
-	function which turned out to be erroneous. This version should
+	This version introduced a 'fix' for the coalescent likelihood 
+	function which turned out to be erroneous. This version should 
 	not be used.
 
 Version 1.0 released 10 June 2003

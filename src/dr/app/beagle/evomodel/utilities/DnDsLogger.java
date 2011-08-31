@@ -15,17 +15,17 @@ import dr.math.EmpiricalBayesPoissonSmoother;
  */
 public class DnDsLogger implements Loggable {
 
-    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs) {
+    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing) {
         this.tree = tree;
         this.traits = traits;
         numberSites = getNumberSites();
         this.name = name;
         this.useSmoothing = useSmoothing;
-        this.useDnMinusDs = useDnMinusDs;
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
-                throw new IllegalArgumentException("Only whole tree traits are currently supported in DnDsLogger");
+                System.err.println("BAD");
+                System.exit(-1);
             }
         }
     }
@@ -57,16 +57,8 @@ public class DnDsLogger implements Loggable {
     }
 
     private double doCalculation(int index) {
-        double returnValue;
-        if (!useDnMinusDs) {
-            returnValue = (cachedValues[CN][index] / cachedValues[UN][index]) /
-                    (cachedValues[CS][index] / cachedValues[US][index]);
-
-        } else {
-            returnValue =  (cachedValues[CN][index] / cachedValues[UN][index]) -
-                    (cachedValues[CS][index] / cachedValues[US][index]);
-        }
-        return returnValue;
+        return (cachedValues[CN][index] / cachedValues[UN][index]) /
+                (cachedValues[CS][index] / cachedValues[US][index]);
     }
 
     private int getNumberSites() {
@@ -81,10 +73,9 @@ public class DnDsLogger implements Loggable {
         }
 
         for (int i = 0; i < NUM_TRAITS; i++) {
+            cachedValues[i] = (double[]) traits[i].getTrait(tree, tree.getRoot());
             if (useSmoothing) {
                 cachedValues[i] = EmpiricalBayesPoissonSmoother.smooth((double[]) traits[i].getTrait(tree, tree.getRoot()));
-            } else {
-                cachedValues[i] = (double[]) traits[i].getTrait(tree, tree.getRoot());
             }
         }
     }
@@ -94,7 +85,6 @@ public class DnDsLogger implements Loggable {
     private final int numberSites;
     private final String name;
     private final boolean useSmoothing;
-    private final boolean useDnMinusDs;
 
     private final static int NUM_TRAITS = 4;
     private final static int CS = 0;

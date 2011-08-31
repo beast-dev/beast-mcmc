@@ -1,24 +1,25 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
-import dr.inference.model.Model;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.app.beagle.evomodel.sitemodel.BranchSiteModel;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.inference.model.Model;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 
 /**
  * @author Marc Suchard
@@ -28,18 +29,18 @@ import java.util.Set;
 public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider {
 
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-//                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+//                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
 //                                              BranchRateModel branchRateModel, boolean useAmbiguities,
 //                                              PartialsRescalingScheme scalingScheme,
 //                                              DataType dataType,
 //                                              String tag,
 //                                              SubstitutionModel substModel) {
-//        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+//        this(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
 //                dataType, tag, substModel, false, true);
 //    }
 
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+                                              BranchSiteModel branchSiteModel, SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel, boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
                                               Map<Set<String>, Parameter> partialsRestrictions,
@@ -49,8 +50,14 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchSiteModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
               partialsRestrictions);
+
+        if (useAmbiguities) {
+            Logger.getLogger("dr.app.beagle.evomodel").info("Ancestral reconstruction using ambiguities is currently "+
+            "not support with BEAGLE");
+            System.exit(-1);
+        }
 
         this.dataType = dataType;
 //        this.tag = tag;
@@ -198,10 +205,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return jointLogLikelihood;
     }
 
-    public String formattedState(int[] state) {
-        return formattedState(state, dataType);
-    }
-
     private static String formattedState(int[] state, DataType dataType) {
         StringBuffer sb = new StringBuffer();
         sb.append("\"");
@@ -219,11 +222,14 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
         } else {
             for (int i : state) {
-                if (dataType.getClass().equals(Codons.class)) {
+                if(dataType.getClass().equals(Codons.class)) {
                     sb.append(dataType.getTriplet(i));
-                } else {
+                }
+                else {
                     sb.append(dataType.getChar(i));
                 }
+
+
             }
         }
         sb.append("\"");
@@ -353,7 +359,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
                     System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
 
-                    double[] frequencies = branchSubstitutionModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
+                    double[] frequencies = branchSiteModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
                     for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] *= frequencies[i];
                     }
@@ -383,8 +389,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 // This is an internal node, but not the root
                 double[] partialLikelihood = new double[stateCount * patternCount * categoryCount];
                 getPartials(nodeNum,partialLikelihood);
-                
-                // Sibon says that this actually works now
+
+                // This actually works now
 //                if (categoryCount > 1)
 //                    throw new RuntimeException("Reconstruction not implemented for multiple categories yet.");
 
@@ -441,16 +447,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
                     getMatrix(nodeNum,probabilities);
                     System.arraycopy(probabilities, parentIndex + matrixIndex, conditionalProbabilities, 0, stateCount);
-
-                    if (!dataType.isUnknownState(thisState)) { // Not completely unknown
-                        boolean[] stateSet = dataType.getStateSet(thisState);
-
-                        for (int k = 0; k < stateCount; k++) {
-                            if (!stateSet[k]) {
-                                conditionalProbabilities[k] = 0.0;
-                            }
-                        }
-                    }
                     reconstructedStates[nodeNum][j] = drawChoice(conditionalProbabilities);
                 }
 

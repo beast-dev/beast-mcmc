@@ -71,7 +71,7 @@ public class DateCellEditor extends DefaultCellEditor {
                                                  int column) {
         FontMetrics metrics = table.getFontMetrics(table.getFont());
         int fontHeight = metrics.getHeight();
-        table.setRowHeight(row, fontHeight + fontHeight / 2);
+        table.setRowHeight(row, fontHeight + fontHeight/2);
 //      System.out.println(editor.getPreferredSize() + "\t" + table.getRowHeight(row) + "\t" + table.getHeight());
         editor.setFont(table.getFont());
         editor.setValue(((Double) value).doubleValue());

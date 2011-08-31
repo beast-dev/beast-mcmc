@@ -248,7 +248,7 @@ public class CommandLineBeauti {
             if (alignment != null) {
                 PartitionData partition = new PartitionData(options, options.fileNameStem, file.getName(), alignment);
                 options.dataPartitions.add(partition);
-//                options.dataType = alignment.getDataType();
+                options.dataType = alignment.getDataType();
 
 //                Patterns patterns = new Patterns(alignment);
 //                DistanceMatrix distances = new JukesCantorDistanceMatrix(patterns);

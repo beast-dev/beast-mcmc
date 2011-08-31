@@ -25,9 +25,8 @@
 
 package dr.app.beauti.priorsPanel;
 
+import dr.app.beauti.enumTypes.PriorType;
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.types.PriorType;
 import dr.app.gui.chart.Axis;
 import dr.app.gui.chart.JChart;
 import dr.app.gui.chart.LinearAxis;
@@ -42,6 +41,7 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -53,15 +53,19 @@ import java.util.Map;
  */
 public class PriorDialog {
 
-    private final JFrame frame;
+    private JFrame frame;
 
-    private final Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
+    private Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-    private final JComboBox priorCombo = new JComboBox();
+    private JComboBox priorCombo = new JComboBox(EnumSet.range(PriorType.UNIFORM_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+    private JComboBox nonPriorCombo = new JComboBox(EnumSet.range(PriorType.NONE_TREE_PRIOR, PriorType.TRUNC_NORMAL_PRIOR).toArray());
+    private JCheckBox meanInRealSpaceCheck = new JCheckBox();
+    private RealNumberField initialField = new RealNumberField();
+    private RealNumberField selectedField;
 
-    private JPanel contentPanel;
+    private JPanel panel;
 
-    private JLabel citationText;
+    private final SpecialNumberPanel specialNumberPanel;
     private JChart chart;
     private JPanel quantilePanel;
     private JTextArea quantileText;
@@ -71,17 +75,16 @@ public class PriorDialog {
     public PriorDialog(JFrame frame) {
         this.frame = frame;
 
-        optionsPanels.put(PriorType.UNIFORM_PRIOR, PriorOptionsPanel.UNIFORM);
-        optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, PriorOptionsPanel.EXPONENTIAL);
-        optionsPanels.put(PriorType.LAPLACE_PRIOR, PriorOptionsPanel.LAPLACE);
-        optionsPanels.put(PriorType.NORMAL_PRIOR, PriorOptionsPanel.NORMAL);
-        optionsPanels.put(PriorType.LOGNORMAL_PRIOR, PriorOptionsPanel.LOG_NORMAL);
-        optionsPanels.put(PriorType.GAMMA_PRIOR, PriorOptionsPanel.GAMMA);
-        optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, PriorOptionsPanel.INVERSE_GAMMA);
-        optionsPanels.put(PriorType.BETA_PRIOR, PriorOptionsPanel.BETA);
-        optionsPanels.put(PriorType.CMTC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
-//        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
-//        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
+        initialField.setColumns(10);
+
+        optionsPanels.put(PriorType.UNIFORM_PRIOR, new UniformOptionsPanel());
+        optionsPanels.put(PriorType.LAPLACE_PRIOR, new LaplaceOptionsPanel());
+        optionsPanels.put(PriorType.NORMAL_PRIOR, new NormalOptionsPanel());
+        optionsPanels.put(PriorType.EXPONENTIAL_PRIOR, new ExponentialOptionsPanel());
+        optionsPanels.put(PriorType.LOGNORMAL_PRIOR, new LogNormalOptionsPanel());
+        optionsPanels.put(PriorType.GAMMA_PRIOR, new GammaOptionsPanel());
+        optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, new InverseGammaOptionsPanel());
+        optionsPanels.put(PriorType.TRUNC_NORMAL_PRIOR, new TruncatedNormalOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
 
         chart = new JChart(new LinearAxis(Axis.AT_MINOR_TICK, Axis.AT_MINOR_TICK),
@@ -102,30 +105,32 @@ public class PriorDialog {
         quantilePanel.add(quantileLabels);
         quantilePanel.add(quantileText);
 
-        citationText = new JLabel();
-        citationText.setFont(quantileLabels.getFont().deriveFont(11.0f));
-        citationText.setOpaque(false);
-        citationText.setText(
-              "<html>Approximate continuous time Markov chain rate <br>" +
-                    "reference prior developed in Ferreira & Suchard (2008).<br>" +
-                    "Use when explicit prior information is unavailable</html>");
+        specialNumberPanel = new SpecialNumberPanel(this);
+        specialNumberPanel.setEnabled(false);
     }
 
     public int showDialog(final Parameter parameter) {
 
         this.parameter = parameter;
+        PriorType priorType = parameter.priorType;
 
-        priorCombo.removeAllItems();
-        for (PriorType priorType : PriorType.getPriorTypes(parameter)) {
-            priorCombo.addItem(priorType);
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            nonPriorCombo.setSelectedItem(priorType);
+        } else {
+            priorCombo.setSelectedItem(priorType);
         }
 
-        contentPanel = new JPanel(new GridBagLayout());
+        if (!parameter.isStatistic) {
+            initialField.setRange(parameter.lower, parameter.upper);
+            initialField.setValue(parameter.initial);
+        }
 
-//        setArguments(priorType); // move to inside setupComponents()
+        panel = new JPanel(new GridBagLayout());
+
+        setArguments(priorType);
         setupComponents();
 
-        JScrollPane scrollPane = new JScrollPane(contentPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane = new JScrollPane(panel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
         scrollPane.getViewport().setOpaque(false);
 
@@ -137,7 +142,7 @@ public class PriorDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter " + parameter.getName());
+        final JDialog dialog = optionPane.createDialog(frame, "Prior for Parameter");
 
         priorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent e) {
@@ -148,16 +153,73 @@ public class PriorDialog {
             }
         });
 
-        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
-            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
-                public void optionsPanelChanged() {
-                    setupChart();
-                    dialog.validate();
-                    dialog.repaint();
-                }
-            });
-        }
+        nonPriorCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent e) {
+                setupComponents();
+                dialog.validate();
+                dialog.repaint();
+                dialog.pack();
+            }
+        });
 
+
+        meanInRealSpaceCheck.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
+                PriorOptionsPanel currentPanel = optionsPanels.get(PriorType.LOGNORMAL_PRIOR);
+
+                if (meanInRealSpaceCheck.isSelected()) {
+                    currentPanel.replaceFieldName(0, "Mean");
+                    if (currentPanel.getValue(0) <= 0) {
+                        currentPanel.getField(0).setValue(0.01);
+                    }
+                    currentPanel.getField(0).setRange(0.0, Double.POSITIVE_INFINITY);
+                } else {
+                    currentPanel.replaceFieldName(0, "Log(Mean)");
+                    currentPanel.getField(0).setRange(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+                }
+
+                setupChart();
+                dialog.validate();
+                dialog.repaint();
+                dialog.pack();
+            }
+        });
+
+        KeyListener listener = new KeyAdapter() {
+            public void keyReleased(KeyEvent e) {
+                if (e.getComponent() instanceof RealNumberField) {
+                    String number = ((RealNumberField) e.getComponent()).getText();
+                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E")
+                            || number.startsWith("-") || number.endsWith("-"))) {
+//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
+                        setupChart();
+                        dialog.repaint();
+                    }
+                }
+            }
+        };
+        FocusListener flistener = new FocusAdapter() {
+            public void focusGained(FocusEvent e) {
+                if (e.getComponent() instanceof RealNumberField) {
+                    selectedField = (RealNumberField) e.getComponent();
+                    specialNumberPanel.setEnabled(true);
+                }
+            }
+
+            public void focusLost(FocusEvent e) {
+                selectedField = null;
+                specialNumberPanel.setEnabled(false);
+            }
+        };
+
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            for (JComponent component : optionsPanel.getJComponents()) {
+                if (component instanceof RealNumberField) {
+                    component.addKeyListener(listener);
+                    component.addFocusListener(flistener);
+                }
+            }
+        }
 
         dialog.pack();
         if (OSType.isMac()) {
@@ -165,11 +227,11 @@ public class PriorDialog {
         } else {
             Toolkit tk = Toolkit.getDefaultToolkit();
             Dimension d = tk.getScreenSize();
-            if (d.height < 700 && contentPanel.getHeight() > 450) {
-                dialog.setSize(new java.awt.Dimension(contentPanel.getWidth() + 100, 550));
+            if (d.height < 700 && panel.getHeight() > 450) {
+                dialog.setSize(new java.awt.Dimension(panel.getWidth() + 100, 550));
             } else {
                 // setSize because optionsPanel is shrunk in dialog
-                dialog.setSize(new java.awt.Dimension(contentPanel.getWidth() + 100, contentPanel.getHeight() + 100));
+                dialog.setSize(new java.awt.Dimension(panel.getWidth() + 100, panel.getHeight() + 100));
             }
 
 //            System.out.println("panel width = " + panel.getWidth());
@@ -193,36 +255,96 @@ public class PriorDialog {
     }
 
     private void setArguments(PriorType priorType) {
-        PriorOptionsPanel panel = optionsPanels.get(priorType);
-        panel.setArguments(parameter, priorType);
-    }
+        PriorOptionsPanel panel;
+        switch (priorType) {
+            case UNIFORM_PRIOR:
+                panel = optionsPanels.get(priorType);
+//                panel.getField(0).setRange(parameter.lower, parameter.upper);
+                panel.getField(0).setValue(parameter.uniformLower);
+//                panel.getField(1).setRange(parameter.lower, parameter.upper);
+                panel.getField(1).setValue(parameter.uniformUpper);
+                break;
 
-    private void getArguments() {
-//        if (parameter.isNodeHeight || parameter.isStatistic) {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
-//                parameter.initial = Double.NaN;
-//                return;
-//            }
-//        } else {
-//            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-//        }
-//
-//        if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
-//
-//        if (parameter.priorType != PriorType.ONE_OVER_X_PRIOR)
-//            optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
+            case EXPONENTIAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                if (parameter.mean != 0) {// ExponentialDistribution(1.0 / mean)
+                    panel.getField(0).setValue(parameter.mean);
+                }
+                panel.getField(1).setValue(parameter.offset);
+                break;
 
-        parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-        PriorOptionsPanel panel = optionsPanels.get(parameter.priorType);
-        if (panel != null) {
-            panel.getArguments(parameter, parameter.priorType);
+            case NORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setValue(parameter.stdev);
+                break;
+
+            case LOGNORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                if (parameter.isMeanInRealSpace() && parameter.mean <= 0) {// if LOGNORMAL && meanInRealSpace = true, then mean > 0
+                    panel.getField(0).setValue(0.01);
+                } else {
+                    panel.getField(0).setValue(parameter.mean);
+                }
+                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(2).setValue(parameter.offset);
+                meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
+                break;
+
+            case LAPLACE_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+                panel.getField(1).setValue(parameter.scale);
+                break;
+
+            case GAMMA_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.shape);
+//                panel.getField(0).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(1).setValue(parameter.scale);
+//                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
+                panel.getField(2).setValue(parameter.offset);
+                break;
+
+            case INVERSE_GAMMA_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.shape);
+                panel.getField(1).setValue(parameter.scale);
+                panel.getField(2).setValue(parameter.offset);
+                break;
+
+            case TRUNC_NORMAL_PRIOR:
+                panel = optionsPanels.get(priorType);
+                panel.getField(0).setValue(parameter.mean);
+                panel.getField(1).setValue(parameter.stdev);
+                panel.getField(2).setValue(parameter.uniformLower);
+                panel.getField(3).setValue(parameter.uniformUpper);
+                break;
         }
 
     }
 
+    private void getArguments() {
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            parameter.priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
+                parameter.initial = Double.NaN;
+                return;
+            }
+        } else {
+            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
+        }
+
+        if (!parameter.isStatistic && initialField.getValue() != null) parameter.initial = initialField.getValue();
+
+        if (parameter.priorType != PriorType.ONE_OVER_X_PRIOR)
+            optionsPanels.get(parameter.priorType).setParameterPrior(parameter);
+    }
+
     private void setupComponents() {
-        contentPanel.removeAll();
+        panel.removeAll();
 
         OptionsPanel optionsPanel = new OptionsPanel(12, (OSType.isMac() ? 6 : 24));
 
@@ -239,34 +361,42 @@ public class PriorDialog {
         gbc.anchor = GridBagConstraints.PAGE_START;
         gbc.gridwidth = GridBagConstraints.REMAINDER;
 
-        contentPanel.add(panel1, gbc);
+        panel.add(panel1, gbc);
 
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
         PriorType priorType;
-        priorType = (PriorType) priorCombo.getSelectedItem();
-        if (!parameter.isPriorFixed) {
-            optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            optionsPanel.addComponentWithLabel("Prior Distribution: ", nonPriorCombo);
+            priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE_TREE_PRIOR || priorType == PriorType.NONE_STATISTIC) {
+                return;
+            }
         } else {
-            optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
+            priorType = (PriorType) priorCombo.getSelectedItem();
+            if (!parameter.priorFixed) {
+                optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
+            } else {
+                optionsPanel.addComponentWithLabel("Prior Distribution: ", new JLabel(priorType.toString()));
+            }
         }
 
-//        if (parameter.getOptions() instanceof PartitionClockModel) {
-//            PartitionClockModel pcm = (PartitionClockModel) parameter.getOptions();
-//            initialField.setEnabled(!pcm.getClockModelGroup().isFixMean());
-//        }
-
-        PriorOptionsPanel panel3 = optionsPanels.get(priorType);
-
-        if (panel3 != null) {
-            optionsPanel.addSpanningComponent(panel3);
+        if (!parameter.isStatistic) {
+            optionsPanel.addSeparator();
+            optionsPanel.addComponentWithLabel("Initial Value: ", initialField);
         }
 
-        if (priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR) {
-            optionsPanel.addSpanningComponent(citationText);
+        if (priorType != PriorType.ONE_OVER_X_PRIOR) {
+            optionsPanel.addSpanningComponent(optionsPanels.get(priorType));
         }
 
-        if (priorType.isPlottable()) {
+        if (priorType == PriorType.UNIFORM_PRIOR || priorType == PriorType.TRUNC_NORMAL_PRIOR) {
+            optionsPanel.addSeparator();
+            optionsPanel.addSpanningComponent(specialNumberPanel);
+        }
+
+        // UNIFORM_PRIOR and ONE_OVER_X_PRIOR have no chart
+        if (priorType != PriorType.UNIFORM_PRIOR && priorType != PriorType.ONE_OVER_X_PRIOR) {
             optionsPanel.addSeparator();
 
             setupChart();
@@ -277,32 +407,46 @@ public class PriorDialog {
             gbc.weighty = 1.0;
             gbc.fill = GridBagConstraints.BOTH;
 
-            contentPanel.add(chart, gbc);
+            panel.add(chart, gbc);
 
             gbc.gridy = 2;
             gbc.weighty = 0.0;
             gbc.anchor = GridBagConstraints.PAGE_END;
             gbc.fill = GridBagConstraints.HORIZONTAL;
 
-            contentPanel.add(quantilePanel, gbc);
+            panel.add(quantilePanel, gbc);
 
         }
-        setArguments(priorType);
-        contentPanel.repaint();
+        panel.repaint();
+    }
+
+    public void setSelectedField(RealNumberField selectedField) {
+        this.selectedField = selectedField;
+    }
+
+    public RealNumberField getSelectedField() {
+        return selectedField;
     }
 
     NumberFormatter formatter = new NumberFormatter(4);
 
-    void setupChart() {
+    private void setupChart() {
         chart.removeAllPlots();
 
-        PriorType priorType = (PriorType) priorCombo.getSelectedItem();
-
+        PriorType priorType;
+        if (parameter.isNodeHeight || parameter.isStatistic) {
+            priorType = (PriorType) nonPriorCombo.getSelectedItem();
+            if (priorType == PriorType.NONE_TREE_PRIOR || priorType == PriorType.NONE_STATISTIC) {
+                return;
+            }
+        } else {
+            priorType = (PriorType) priorCombo.getSelectedItem();
+        }
         // ExponentialDistribution(1.0 / mean)
 //        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1;
 
         double offset = 0.0;
-        Distribution distribution = optionsPanels.get(priorType).getDistribution(parameter);
+        Distribution distribution = optionsPanels.get(priorType).getDistribution();
 
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
@@ -312,9 +456,187 @@ public class PriorDialog {
                     "\n" + formatter.format(distribution.quantile(0.95)) +
                     "\n" + formatter.format(distribution.quantile(0.975)));
         }
+    }
+
+    // options panels
+
+    class LaplaceOptionsPanel extends PriorOptionsPanel {
+
+        public LaplaceOptionsPanel() {
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new LaplaceDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.scale = getValue(1);
+        }
+    }
+
+    class UniformOptionsPanel extends PriorOptionsPanel {
+
+        public UniformOptionsPanel() {
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            return new UniformDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            if (getValue(0) < getValue(1)) {
+                parameter.uniformLower = getValue(0);
+                parameter.uniformUpper = getValue(1);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid boundary [" + getValue(0) + ", " +
+                                getValue(1) + "]", "Illegal entry", JOptionPane.ERROR_MESSAGE);
+            }
+        }
 
     }
 
+    class ExponentialOptionsPanel extends PriorOptionsPanel {
 
+        public ExponentialOptionsPanel() {
+            addField("Mean", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new ExponentialDistribution(1.0 / getValue(0)), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.offset = getValue(1);
+        }
+    }
+
+    class NormalOptionsPanel extends PriorOptionsPanel {
+
+        public NormalOptionsPanel() {
+
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new NormalDistribution(getValue(0), getValue(1));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.stdev = getValue(1);
+        }
+    }
+
+    class LogNormalOptionsPanel extends PriorOptionsPanel {
+
+        public LogNormalOptionsPanel() {
+            if (meanInRealSpaceCheck.isSelected()) {
+                addField("Mean", 0.01, 0.0, Double.POSITIVE_INFINITY);
+            } else {
+                addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            }
+            addField("Log(Stdev)", 1.0, 0.0, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addCheckBox("Mean In Real Space", meanInRealSpaceCheck);
+        }
+
+        public Distribution getDistribution() {
+            double mean = getValue(0);
+            if (meanInRealSpaceCheck.isSelected()) {
+                if (mean <= 0) {
+                    throw new IllegalArgumentException("meanInRealSpace works only for a positive mean");
+                }
+                mean = Math.log(getValue(0)) - 0.5 * getValue(1) * getValue(1);
+            }
+            return new OffsetPositiveDistribution(
+                    new LogNormalDistribution(mean, getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.stdev = getValue(1);
+            parameter.offset = getValue(2);
+            parameter.setMeanInRealSpace(meanInRealSpaceCheck.isSelected());
+        }
+
+    }
+
+    class GammaOptionsPanel extends PriorOptionsPanel {
+
+        public GammaOptionsPanel() {
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new GammaDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.shape = getValue(0);
+            parameter.scale = getValue(1);
+            parameter.offset = getValue(2);
+        }
+    }
+
+    class InverseGammaOptionsPanel extends PriorOptionsPanel {
+
+        public InverseGammaOptionsPanel() {
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+        }
+
+        public Distribution getDistribution() {
+            return new OffsetPositiveDistribution(
+                    new InverseGammaDistribution(getValue(0), getValue(1)), getValue(2));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.shape = getValue(0);
+            parameter.scale = getValue(1);
+            parameter.offset = getValue(2);
+        }
+    }
+
+    class TruncatedNormalOptionsPanel extends PriorOptionsPanel {
+
+        public TruncatedNormalOptionsPanel() {
+
+            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        }
+
+        public Distribution getDistribution() {
+            return new TruncatedNormalDistribution(getValue(0), getValue(1), getValue(2), getValue(3));
+        }
+
+        public void setParameterPrior(Parameter parameter) {
+            parameter.mean = getValue(0);
+            parameter.stdev = getValue(1);
+            if (getValue(2) < getValue(3)) {
+                parameter.uniformLower = getValue(2);
+                parameter.uniformUpper = getValue(3);
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Invalid boundary [" + getValue(2) + ", " +
+                                getValue(3) + "]", "Illegal entry", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
 
 }

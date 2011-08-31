@@ -62,7 +62,6 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
 
         NewickImporter importer = new NewickImporter("((1:1.0,2:1.0):1.0,3:2.0);");
         tree = (FlexibleTree) importer.importTree(null);
-
     }
 
     final double birthRate = 1.0;
@@ -80,21 +79,15 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
 
     public void testPureBirthLikelihood() {
 
-//        likelihoodTester(tree, 1, 0, -2.8219461696520542);
+        //likelihoodTester(tree, 1, 0, -2.8219461696520542);
 
     }
 
-//    public void testBirthDeathLikelihood() {
-//        likelihoodTester(tree, birthRate, deathRate, null, -4.633233508436623);
-//    }
-
-    public void testBirthDeathLikelihoodOrigin() {
-        System.out.println("RootHeight = " + tree.getRootHeight());
-        Variable<Double> origin = new Variable.D("origin", 50);
-        likelihoodTester(tree, birthRate, deathRate, origin, -29.529647743897876);
+    public void testBirthDeathLikelihood() {
+        likelihoodTester(tree, birthRate, deathRate, -4.633233508436623);
     }
 
-    private void likelihoodTester(Tree tree, double birthRate, double deathRate, Variable<Double> origin, double logL) {
+    private void likelihoodTester(Tree tree, double birthRate, double deathRate, double logL) {
 
         Variable<Double> b = new Variable.D("b", birthRate);
         Variable<Double> d = new Variable.D("d", deathRate);
@@ -103,7 +96,7 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
         Variable<Double> r = new Variable.D("r", 0.5);
         Variable<Double> fTime = new Variable.D("time", 0.0);
 
-        SpeciationModel speciationModel = new BirthDeathSerialSamplingModel(b, d, psi, p, false, r, true, origin, Units.Type.YEARS);
+        SpeciationModel speciationModel = new BirthDeathSerialSamplingModel(b, d, psi, p, false, r, fTime, Units.Type.YEARS);
         Likelihood likelihood = new SpeciationLikelihood(tree, speciationModel, "bdss.like");
 
         assertEquals(logL, likelihood.getLogLikelihood());

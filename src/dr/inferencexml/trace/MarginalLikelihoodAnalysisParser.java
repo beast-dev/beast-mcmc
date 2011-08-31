@@ -2,13 +2,13 @@ package dr.inferencexml.trace;
 
 import dr.inference.trace.LogFileTraces;
 import dr.inference.trace.MarginalLikelihoodAnalysis;
+import dr.inference.trace.Trace;
 import dr.inference.trace.TraceException;
 import dr.util.Attribute;
 import dr.xml.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.util.List;
 
 /**
  *
@@ -81,10 +81,13 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
 
-            List<Double> sample = traces.getValues(traceIndex);
+            Double sample[] = new Double[traces.getStateCount()];
+            traces.getValues(traceIndex, sample);
 
-            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
+            MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(
+                    Trace.arrayConvert(sample),
+                    traces.getTraceName(traceIndex), burnin,
+                    harmonicOnly, bootstrapLength);
 
             System.out.println(analysis.toString());
 

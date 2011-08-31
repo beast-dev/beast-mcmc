@@ -155,9 +155,8 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 				if (tree.isRoot(newChild)) {
 
 					if (true) {
-                        tree.endTreeEdit();
 						try {
-                            tree.checkTreeIsValid();
+							tree.endTreeEdit();
 						} catch (MutableTree.InvalidTreeException e) {
 							e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
 						}
@@ -212,9 +211,8 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 
 				//               System.err.println("Intermediate slide up:\n"+tree.toGraphString());
 
-                tree.endTreeEdit();
 				try {
-                    tree.checkTreeIsValid();
+					tree.endTreeEdit();
 				} catch (MutableTree.InvalidTreeException ite) {
 					throw new RuntimeException(ite.toString());
 				}
@@ -272,7 +270,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 //                	System.err.println("Grabbing random child.");
 //                	logq -= Math.log(2); // TODO check ratio
 //                }
-//                //NodeRef oops
+//                //NodeRef oops 
 				//newParent =
 
 //                logq += Math.log(possibleDestinations);
@@ -346,9 +344,8 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 //				System.err.println("newHeight = " + newHeight);
 				//              System.err.println("After slide down:\n"+tree.toGraphString());
 
-                tree.endTreeEdit();
 				try {
-					tree.checkTreeIsValid();
+					tree.endTreeEdit();
 				} catch (MutableTree.InvalidTreeException ite) {
 					throw new RuntimeException(ite.toString());
 				}
@@ -390,7 +387,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
                 tree.setNodeTrait(j, tmp);
             }
 
-        }
+        } 
 */
 
 		// todo fix
@@ -473,7 +470,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 //        double thisHeight = tree.getNodeHeight(node);
 //        double height0 = tree.getNodeHeight(parent0);
 //        double height1 = tree.getNodeHeight(parent1);
-//
+//       
 //        if( (height0 < height) && (height1 < height) ) return 0;
 //        int count = 0;
 //        if( (thisHeight < height) && (height0 >= height) ) {
@@ -498,7 +495,7 @@ public class ARGSubtreeSlideOperator extends AbstractCoercableOperator {
 //        }
 //        if( count > 0 )
 //        	return count;
-//
+//        
 //        return intersectingEdges(tree, tree.getChild(node,0), height, directChildren);
 //    }
 

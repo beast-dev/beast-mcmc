@@ -15,13 +15,6 @@ public class MathTestCase extends TestCase {
         super(name);
     }
 
-    protected void assertEquals(double[][] a, double[][] b, double accuracy) {
-        assertEquals(a.length, b.length);
-        for (int i = 0; i < a.length; ++i) {
-            assertEquals(a[i], b[i], accuracy);
-        }
-    }
-
     protected void assertEquals(double[] a, double[] b, double accuracy) {
         assertEquals(a.length, b.length);
         for (int i = 0; i < a.length; i++) {

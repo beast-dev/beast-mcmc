@@ -93,11 +93,11 @@
         </populationTree>
     </generalizedSkyLineLikelihood>
 
- <!--   <exponentialMarkovLikelihood id="eml1" jeffreys="true">
+    <exponentialMarkovLikelihood id="eml1" jeffreys="true">
         <chainParameter>
             <parameter idref="skyline.popSize"/>
         </chainParameter>
-    </exponentialMarkovLikelihood> -->
+    </exponentialMarkovLikelihood> 
 
     <!-- The HKY substitution model (Hasegawa, Kishino & Yano, 1985)             -->
     <HKYModel id="hky">
@@ -179,7 +179,7 @@
                     <parameter idref="frequencies"/>
                 </uniformPrior>
                 <generalizedSkyLineLikelihood idref="skyline"/>
-           <!--        <exponentialMarkovLikelihood idref="eml1"/>  -->
+                <exponentialMarkovLikelihood idref="eml1"/> 
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>
@@ -219,7 +219,7 @@
             <parameter idref="frequencies"/>
             <treeLikelihood idref="treeLikelihood"/>
             <generalizedSkyLineLikelihood idref="skyline"/>
-        <!--       <exponentialMarkovLikelihood idref="eml1"/> -->
+            <exponentialMarkovLikelihood idref="eml1"/>
             <!-- <logNormalPrior idref="hky.kappa.prior"/>
             <uniformPrior idref="hky.frequencies.prior"/>  -->
         </log>

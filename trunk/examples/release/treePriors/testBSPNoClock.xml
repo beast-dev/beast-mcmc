@@ -62,7 +62,7 @@
     </constantSize>
 
     <!-- Generate a random starting tree under the coalescent process            -->
-    <coalescentTree id="startingTree" rootHeight="0.077">
+    <coalescentTree id="startingTree" rootHeight="380.0">
         <taxa idref="taxa"/>
         <constantSize idref="constant"/>
     </coalescentTree>
@@ -83,7 +83,7 @@
 
     <generalizedSkyLineLikelihood id="skyline" linear="false">
         <populationSizes>
-            <parameter id="skyline.popSize" dimension="3" value="0.077" lower="0.0" upper="Infinity"/>
+            <parameter id="skyline.popSize" dimension="3" value="380.0" lower="0.0" upper="38000.0"/>
         </populationSizes>
         <groupSizes>
             <parameter id="skyline.groupSize" dimension="3"/>
@@ -172,10 +172,10 @@
     <mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
         <posterior id="posterior">
             <prior id="prior">
-                <logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
+                <logNormalPrior id="hky.kappa.prior" mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
                     <parameter idref="kappa"/>
                 </logNormalPrior>
-                <uniformPrior lower="0.0" upper="1.0">
+                <uniformPrior id="hky.frequencies.prior" lower="0.0" upper="1.0">
                     <parameter idref="frequencies"/>
                 </uniformPrior>
                 <generalizedSkyLineLikelihood idref="skyline"/>
@@ -204,7 +204,7 @@
             <column label="L(coalecent)" dp="4" width="12">
                 <generalizedSkyLineLikelihood idref="skyline"/>
             </column>
-            <parameter idref="skyline.popSize"/>
+            <parameter idref="skyline.popSize"/>            
         </log>
 
         <!-- write log to file                                                       -->
@@ -220,6 +220,8 @@
             <treeLikelihood idref="treeLikelihood"/>
             <generalizedSkyLineLikelihood idref="skyline"/>
         <!--       <exponentialMarkovLikelihood idref="eml1"/> -->
+            <!-- <logNormalPrior idref="hky.kappa.prior"/>
+            <uniformPrior idref="hky.frequencies.prior"/>  -->
         </log>
 
         <!-- write tree log to file

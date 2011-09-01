@@ -175,17 +175,16 @@
         </populationTree>
     </generalizedSkyLineLikelihood>
 
-<!--
     <exponentialMarkovLikelihood id="eml1" jeffreys="true">
         <chainParameter>
             <parameter idref="skyline.popSize"/>
         </chainParameter>
     </exponentialMarkovLikelihood>
--->
+    
     <!-- The strict clock (Uniform rates across branches)                        -->
     <strictClockBranchRates id="branchRates">
         <rate>
-            <parameter id="clock.rate" value="2.3E-5" lower="0.0" upper="100.0"/>
+            <parameter id="clock.rate" value="8.8579E-4" lower="0.0" upper="100.0"/>
         </rate>
     </strictClockBranchRates>
 
@@ -200,7 +199,7 @@
             </frequencyModel>
         </frequencies>
         <kappa>
-            <parameter id="hky.kappa" value="1.0" lower="0.0" upper="100.0"/>
+            <parameter id="hky.kappa" value="21.5056" lower="0.0" upper="100.0"/>
         </kappa>
     </hkyModel>
 
@@ -210,7 +209,7 @@
             <hkyModel idref="hky"/>
         </substitutionModel>
         <gammaShape gammaCategories="4">
-            <parameter id="siteModel.alpha" value="0.5" lower="0.0" upper="100.0"/>
+            <parameter id="siteModel.alpha" value="5.40372E-2" lower="0.0" upper="100.0"/>
         </gammaShape>
     </siteModel>
 
@@ -269,9 +268,7 @@
         <posterior id="posterior">
             <prior id="prior">
                 <generalizedSkyLineLikelihood idref="skyline"/>
-<!--
                 <exponentialMarkovLikelihood idref="eml1"/>
--->
             </prior>
             <likelihood id="likelihood">
                 <treeLikelihood idref="treeLikelihood"/>
@@ -303,11 +300,12 @@
             <parameter idref="treeModel.rootHeight"/>
             <treeLikelihood idref="treeLikelihood"/>
             <generalizedSkyLineLikelihood idref="skyline"/>
+            <exponentialMarkovLikelihood idref="eml1"/>
         </log>
-        <logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testBSP.trees">
+        <!-- <logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="testBSP.trees">
             <treeModel idref="treeModel"/>
             <posterior idref="posterior"/>
-        </logTree>
+        </logTree> -->
     </mcmc>
 
     <report>
@@ -316,42 +314,4 @@
         </property>
     </report>
 
-    <!--
-     To check that the program is working, the results are compared to previously
-     run results. The following are for a run of 10,000,000 steps:
-
-     28.4338 minutes
-
-     burnIn=1000000
-     maxState=10000000
-
-     statistic                mean          hpdLower      hpdUpper      ESS
-     posterior                -3865.23      -3875.81      -3854.69      4158.23
-     siteModel.alpha          5.45438E-2    1.81819E-4    0.11530       4218.71
-     clock.rate               9.52448E-4    7.01835E-4    1.19652E-3    4053.61
-     skyline.popSize1         70.1769       6.32890       195.000       4389.30
-     skyline.popSize2         25.6170       1.75387       61.5454       4641.22
-     skyline.popSize3         32.5141       2.92449       75.2562       2941.02
-     skyline.popSize4         41.4978       5.18982       90.1183       4578.40
-     skyline.popSize5         32.8841       5.41867E-2    78.5284       5366.33
-     skyline.groupSize1       2.45539       1             7             1565.46
-     skyline.groupSize2       3.46884       1             8             1945.51
-     skyline.groupSize3       3.33674       1             8             1902.54
-     skyline.groupSize4       3.50705       1             8             1563.40
-     skyline.groupSize5       3.23197       1             9             1246.16
-     hky.kappa                21.6425       13.9800       30.1369       6809.28
-     treeModel.rootHeight     70.3332       57.9646       84.6366       4428.33
-     treeLikelihood           -3773.03      -3779.69      -3766.73      7407.18
-     skyline                  -69.7305      -76.1518      -63.1601      3269.28
-     -->
-
-    <traceAnalysis fileName="testBSP.log">
-        <expectation name="posterior" value="-3865.23"/>
-        <expectation name="clock.rate" value="9.52448E-4"/>
-        <expectation name="siteModel.alpha" value="5.45438E-2"/>
-        <expectation name="hky.kappa" value="21.6425"/>
-        <expectation name="treeModel.rootHeight" value="70.3332"/>
-        <expectation name="treeLikelihood" value="-3773.03"/>
-        <expectation name="skyline" value="-69.7305"/>
-    </traceAnalysis>
 </beast>

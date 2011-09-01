@@ -78,7 +78,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
         }
 
         // scale for location moves
-        double scale = 1.0; // TODO make tunable
+        double scale = 0.0; // TODO make tunable
 
         // log hastings ratio
         double hastings = 0.0;
@@ -101,6 +101,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
         if (elementAssignment != targetAssignment) {
 
             allocations[element] = targetAssignment;
+            allocationParameter.setParameterValue(element, targetAssignment);
 
             if (elementClusterSize > 1) {
                 // no jitter, just differences in cluster sizes
@@ -136,6 +137,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
             // move the element to this cluster
             allocations[element] = newCluster;
+            allocationParameter.setParameterValue(element, newCluster);
 
             // new cluster is randomly jittered in location compared to old cluster
             // this allows reversibility
@@ -152,14 +154,6 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
                 System.err.println("Move element " + element + " from cluster " + elementAssignment + " to new cluster " + newCluster);
             }
 
-        }
-
-        // set the final allocations (only for those that have changed)
-        for (int i = 0; i < allocations.length; i++) {
-            int k = (int) allocationParameter.getParameterValue(i);
-            if (allocations[i] != k) {
-                allocationParameter.setParameterValue(i, allocations[i]);
-            }
         }
 
         // return log Hastings' ratio

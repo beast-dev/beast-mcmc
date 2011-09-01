@@ -428,6 +428,13 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             return -1;
         }
 
+        // make sure row index is less than column index
+        if (row > col) {
+            int tmp = row;
+            row = col;
+            col = tmp;
+        }
+
         // get the index of [row, col] in an unrolled upper triangular matrix
         int index = 0;
         for (int x = 0; x < row; x++) {

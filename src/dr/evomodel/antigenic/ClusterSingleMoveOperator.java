@@ -27,13 +27,9 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
     private final int N; // the number of items
     private int K; // the number of occupied clusters
     private final Parameter allocationParameter;
-    private final MatrixParameter clusterLocations;
 
-    public ClusterSingleMoveOperator(Parameter allocationParameter,
-                                     MatrixParameter clusterLocations,
-                                     double weight) {
+    public ClusterSingleMoveOperator(Parameter allocationParameter, double weight) {
         this.allocationParameter = allocationParameter;
-        this.clusterLocations = clusterLocations;
         this.N = allocationParameter.getDimension();
 
         setWeight(weight);
@@ -104,20 +100,9 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
             allocationParameter.setParameterValue(element, targetAssignment);
 
             if (elementClusterSize > 1) {
-                // no jitter, just differences in cluster sizes
+                // adjusting Hastings's ratio for differences in cluster size
                 hastings = Math.log(elementClusterSize - 1) - Math.log(targetClusterSize);
             }
-    //        else {
-                // cluster sizes cancel, must include jitter
-    //            Parameter elementParam = clusterLocations.getParameter(elementAssignment);
-    //            Parameter targetParam = clusterLocations.getParameter(targetAssignment);
-    //            double[] elementLoc = elementParam.getParameterValues();
-    //            double[] targetLoc = targetParam.getParameterValues();
-    //            for (int dim = 0; dim < elementParam.getDimension(); dim++) {
-    //                double difference = elementLoc[dim] - targetLoc[dim];
-    //                hastings += NormalDistribution.logPdf(difference, 0, scale);
-    //            }
-    //        }
 
             if (DEBUG) {
                 System.err.println("Move element " + element + " from cluster " + elementAssignment + " to cluster " + targetAssignment);
@@ -150,17 +135,6 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
             allocations[element] = newCluster;
             allocationParameter.setParameterValue(element, newCluster);
 
-            // new cluster is randomly jittered in location compared to old cluster
-            // this allows reversibility
-        //    Parameter elementParam = clusterLocations.getParameter(elementAssignment);
-         //   Parameter newParam = clusterLocations.getParameter(newCluster);
-         //   double[] elementLoc = elementParam.getParameterValues();
-         //   for (int dim = 0; dim < elementParam.getDimension(); dim++) {
-         //       double move = MathUtils.nextGaussian();
-         //       newParam.setParameterValue(dim, elementLoc[dim] + (move * scale));
-        //        hastings -= NormalDistribution.logPdf(move, 0, scale);
-         //   }
-
             if (DEBUG) {
                 System.err.println("Move element " + element + " from cluster " + elementAssignment + " to new cluster " + newCluster);
             }
@@ -168,7 +142,6 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
         }
 
         // return log Hastings' ratio
-        // TODO fix Hastings' ratio for location jitter
         return hastings;
     }
 
@@ -223,8 +196,6 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        public final static String CHI = "chi";
-        public final static String LIKELIHOOD = "likelihood";
 
         public String getParserName() {
             return CLUSTER_SINGLE_MOVE_OPERATOR;
@@ -236,9 +207,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
             Parameter allocationParameter = (Parameter) xo.getChild(Parameter.class);
 
-            MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild("locations");
-
-            return new ClusterSingleMoveOperator(allocationParameter, locationsParameter, weight);
+            return new ClusterSingleMoveOperator(allocationParameter, weight);
 
         }
 
@@ -261,10 +230,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
-                new ElementRule(Parameter.class),
-                new ElementRule("locations", new XMLSyntaxRule[] {
-                        new ElementRule(MatrixParameter.class)
-                })
+                new ElementRule(Parameter.class)
         };
     };
 

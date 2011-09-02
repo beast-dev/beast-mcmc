@@ -225,8 +225,6 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
             }
-//            locationsParameter.getParameter(i).setParameterValueQuietly(0, i * 2);
-//            locationsParameter.getParameter(i).setParameterValueQuietly(1, 0.0);
         }
 
         // Start off with a 1-to-1 correspondence between location and cluster

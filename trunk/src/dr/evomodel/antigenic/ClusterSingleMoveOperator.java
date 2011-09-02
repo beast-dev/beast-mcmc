@@ -78,7 +78,7 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
         }
 
         // scale for location moves
-        double scale = 0.0; // TODO make tunable
+     //   double scale = 0.0;
 
         // log hastings ratio
         double hastings = 0.0;
@@ -129,8 +129,19 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
         // move element to a new cluster
         else {
 
-            // find the first unoccupied cluster
+            // find random unoccupied cluster
+            int clusterIndex = 0;
+            int targetIndex = MathUtils.nextInt(N-K);
             int newCluster = 0;
+            for (int i = 0; i < N; i++) {
+                if (occupancy[i] == 0){
+                    if (clusterIndex == targetIndex) {
+                        newCluster = i;
+                    }
+                    clusterIndex++;
+                }
+            }
+
             while (occupancy[newCluster] > 0) {
                 newCluster++;
             }
@@ -141,14 +152,14 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
 
             // new cluster is randomly jittered in location compared to old cluster
             // this allows reversibility
-            Parameter elementParam = clusterLocations.getParameter(elementAssignment);
-            Parameter newParam = clusterLocations.getParameter(newCluster);
-            double[] elementLoc = elementParam.getParameterValues();
-            for (int dim = 0; dim < elementParam.getDimension(); dim++) {
-                double move = MathUtils.nextGaussian();
-                newParam.setParameterValue(dim, elementLoc[dim] + (move * scale));
+        //    Parameter elementParam = clusterLocations.getParameter(elementAssignment);
+         //   Parameter newParam = clusterLocations.getParameter(newCluster);
+         //   double[] elementLoc = elementParam.getParameterValues();
+         //   for (int dim = 0; dim < elementParam.getDimension(); dim++) {
+         //       double move = MathUtils.nextGaussian();
+         //       newParam.setParameterValue(dim, elementLoc[dim] + (move * scale));
         //        hastings -= NormalDistribution.logPdf(move, 0, scale);
-            }
+         //   }
 
             if (DEBUG) {
                 System.err.println("Move element " + element + " from cluster " + elementAssignment + " to new cluster " + newCluster);

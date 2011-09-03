@@ -23,7 +23,6 @@ public class AlloppNetworkPriorModelParser extends AbstractXMLObjectParser {
 	public static final String ALLOPPNETWORKPRIORMODEL = "alloppNetworkPriorModel";
 	public static final String EVENTRATE = "eventRate";
 	
-	@Override
 	public String getParserName() {
 		return ALLOPPNETWORKPRIORMODEL;
 	}

@@ -70,8 +70,8 @@ public class AlloppSpeciesBindingsParser extends AbstractXMLObjectParser {
     public static final String POPFACTOR = "popfactor";
     public static final String MIN_GENENODE_HEIGHT = "minGeneNodeHeight";
 
-	@Override
-	public String getParserName() {
+
+    public String getParserName() {
 	    return ALLOPPSPECIES;
 	}
 

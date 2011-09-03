@@ -41,7 +41,6 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		setWeight(weight);
 	}
 
-	@Override
 	public String getPerformanceSuggestion() {
 		return "None";
 	}

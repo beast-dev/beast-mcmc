@@ -29,7 +29,6 @@ public class AlloppSequenceReassignment extends SimpleMCMCOperator {
 	}	
 
 
-	@Override
 	public String getPerformanceSuggestion() {
 		return "None";
 	}

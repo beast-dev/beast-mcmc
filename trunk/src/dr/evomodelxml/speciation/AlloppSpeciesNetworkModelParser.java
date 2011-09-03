@@ -79,7 +79,6 @@ public class AlloppSpeciesNetworkModelParser extends AbstractXMLObjectParser {
 
 	
 	
-	@Override
 	public String getParserName() {
 		return ALLOPPSPECIESNETWORK;
 	}

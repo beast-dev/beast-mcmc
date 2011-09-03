@@ -103,12 +103,10 @@ public class AlloppMSCoalescent extends Likelihood.Abstract implements Units {
 	}
 
     
-	@Override
 	public Type getUnits() {
 		return asnetwork.getUnits();
 	}
 
-	@Override
 	public void setUnits(Type units) {
 		// TODO Auto-generated method stub
 

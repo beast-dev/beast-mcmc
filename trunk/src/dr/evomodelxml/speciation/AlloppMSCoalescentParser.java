@@ -19,8 +19,8 @@ public class AlloppMSCoalescentParser extends AbstractXMLObjectParser {
 
     public static final String ALLOPPMSCOALESCENT = "apspCoalescent";
 
-	@Override
-	public String getParserName() {
+
+    public String getParserName() {
 	    return ALLOPPMSCOALESCENT;
 	}
 

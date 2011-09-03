@@ -71,12 +71,10 @@ public class AlloppNetworkPriorModel extends AbstractModel  implements Units {
 
 	}
 	
-	@Override
 	public Type getUnits() {
 		return units;
 	}
 
-	@Override
 	public void setUnits(Type units) {
 		// TODO Auto-generated method stub
 		

@@ -73,9 +73,6 @@ public class ClusterSingleMoveOperator extends SimpleMCMCOperator {
             }
         }
 
-        // scale for location moves
-     //   double scale = 0.0;
-
         // log hastings ratio
         double hastings = 0.0;
 

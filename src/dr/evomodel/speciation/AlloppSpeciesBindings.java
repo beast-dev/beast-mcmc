@@ -46,7 +46,7 @@ import dr.util.AlloppMisc;
 /*
  * 
  * AlloppSpeciesBindings knows how species are made of individuals
- * and individuals are made of taxa (= diploid genomes within individuals).
+ * and how individuals are made of taxa (= diploid genomes within individuals).
  * 
  * It also contains the list of gene trees - tree topologies and node
  * times, plus popfactors. Given a AlloppSpeciesNetworkModel
@@ -395,8 +395,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
             this.tree = tree;
             this.popFactor = popFactor;
             seqassigns = new SequenceAssignment[taxa.length];
-            oldseqassigns = new SequenceAssignment[taxa.length];
-            
+            oldseqassigns = new SequenceAssignment[taxa.length];      
             
             // This uses taxa list for *all* gene trees, not this gene tree.
             for (int s = 0; s < apspecies.length; s++) {
@@ -583,7 +582,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		
 		// start at root of gutree and recurse. 
 		// A node which has one child which contains some of species spp0
-		// and wehere the other contains some of species spp1, imposes a limit 
+		// and where the other contains some of species spp1, imposes a limit 
 		// on how early a speciation can occur.
 		private double subtreeSpeciationUpperBound(GeneUnionNode node, 
 				              FixedBitSet spp0, FixedBitSet spp1, double bound) {
@@ -969,8 +968,8 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	addModelListener(listener); // for sequence assignments
 	}
 
-
-	@Override
+	
+	
 	public LogColumn[] getColumns() {
 		int ncols = geneTreeInfos.length * taxa.length;
 		LogColumn[] columns = new LogColumn[ncols];

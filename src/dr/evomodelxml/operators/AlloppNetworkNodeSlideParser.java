@@ -32,7 +32,7 @@ import dr.xml.XMLSyntaxRule;
 public class AlloppNetworkNodeSlideParser extends AbstractXMLObjectParser {
 	public static final String NETWORK_NODE_REHEIGHT = "networkNodeReHeight";
 
-	@Override
+
 	public String getParserName() {
 		return NETWORK_NODE_REHEIGHT;
 	}

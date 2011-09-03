@@ -23,7 +23,6 @@ public class AlloppSequenceReassignmentParser extends AbstractXMLObjectParser {
 	public static final String SEQUENCE_REASSIGNMENT = "sequenceReassignment";
 	
 	
-	@Override
 	public String getParserName() {
 		return SEQUENCE_REASSIGNMENT;
 	}

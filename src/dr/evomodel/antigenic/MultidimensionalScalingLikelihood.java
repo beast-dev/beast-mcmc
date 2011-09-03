@@ -335,22 +335,36 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
                     double tail = NormalDistribution.tailCDF(observations[observationIndex], distances[dist], sd);
                     thresholds[j] = Math.log(tail);
                 }
-                if (Double.isInfinite(thresholds[j])) {
-                    System.out.println("Error calculation threshold probability");
-                }
-                sum += thresholds[j];
             } else {
                 // -1 denotes a distance to self (i.e., 0)
-                throw new RuntimeException("Homologous observations shouldn't be thresholds.");
+                double tail = NormalDistribution.tailCDF(observations[observationIndex], 0.0, sd);
+                thresholds[j] = Math.log(tail);
             }
+
+            if (Double.isInfinite(thresholds[j])) {
+                System.out.println("Error calculation threshold probability");
+            }
+
+            sum += thresholds[j];
             j++;
         }
         for (int i = 0; i < lowerThresholdCount; i++) {
-            int observationIndex = upperThresholdIndices[i];
+            int observationIndex = lowerThresholdIndices[i];
             int dist = getDistanceIndexForObservation(observationIndex);
-            if (distanceUpdated[dist]) {
-                thresholds[j] = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, true);
+
+           if (dist != -1) {
+                if (distanceUpdated[dist]) {
+                    thresholds[j] = NormalDistribution.cdf(observations[observationIndex], distances[dist], sd, true);
+                }
+            } else {
+                // -1 denotes a distance to self (i.e., 0)
+                thresholds[j] = NormalDistribution.cdf(observations[observationIndex], 0.0, sd, true);
             }
+
+            if (Double.isInfinite(thresholds[j])) {
+                System.out.println("Error calculation threshold probability");
+            }
+
             sum += thresholds[j];
             j++;
         }

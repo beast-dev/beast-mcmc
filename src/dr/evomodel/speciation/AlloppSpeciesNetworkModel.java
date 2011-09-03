@@ -6,6 +6,8 @@ import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodelxml.speciation.AlloppSpeciesNetworkModelParser;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.Loggable;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -14,8 +16,12 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.Scalable;
 import dr.math.MathUtils;
 import dr.util.AlloppMisc;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
 import jebl.util.FixedBitSet;
 import java.util.*;
+import java.util.logging.Logger;
 
 import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
@@ -48,7 +54,7 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
  * species are made of individuals and individuals are made of taxa,
  * and which contains the list of gene trees.
  * 
- * trees[][] represents the network as a set of single-ploidylevel trees
+ * trees[][] represents the network as a set of homoploid trees
  * 
  * mullabtree represents the network as single tree with tips that
  * can be multiply labelled with species. 
@@ -60,7 +66,7 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 // AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon.
 // Nothing so far does TreeTraitProvider.
 public class AlloppSpeciesNetworkModel extends AbstractModel implements
-		Scalable, Units {
+		Scalable, Units, Citable, Loggable {
 
 	private final AlloppSpeciesBindings apsp;
 	private AlloppLeggedTree[][] trees;
@@ -178,6 +184,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	 * classes LegLink and FootLinks are for gathering and organising
 	 * the links between trees of different ploidy, so that the 
 	 * rootward-pointing legs can become tipward-pointing branches.
+	 * 
+	 * SpSqUnion is used for sorting the nodes in a MulLabTree. It is 
+	 * used by Comparator SPUNION_ORDER, and hence indirectly by
+	 * fillinpopvals().
 	 * 
 	 * class BranchPopulationAndLineages records the information needed
 	 * to calculate the probability of coalescences in a single branch of the
@@ -529,25 +539,6 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 			 return newick;
 		}
 		
-
-		/*
-		private String mullabSubtreeAsTextList(MulLabNode node, String text) {
-			 if (node.child.length == 0) {
-				 int spseq = union2spseqindex(node.union);
-				 int sp = apsp.spseqindex2sp(spseq);
-				 int seq = apsp.spseqindex2seq(spseq);
-				 text += apsp.apspeciesName(sp);
-				 assert seq < 10;
-				 text += "0123456789".charAt(seq);
-			 } else {
-				 String child0 = mullabSubtreeAsTextList(node.child[0], text);
-				 String child1 = mullabSubtreeAsTextList(node.child[1], text);
-				 text = "(" + child0 + "," + child1 + ")";
-				 text += "[" + node.asText() +"]";
-			 }
-			 return text;
-		}		*/
-		
 		
 		
 		private void clearSubtreeCoalescences(MulLabNode node) {
@@ -837,9 +828,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		/*
 		 * Does likelihood calculation for a single node in the case
 		 * of two diploids.
-
 		 */
-
 		private double branchLLInMULtreeTwoDiploids(MulLabNode node) {
 			double loglike = 0.0;
 			
@@ -969,9 +958,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	    /*
 	     * limbLogLike calculates the log-likelihood for 
 	     * the coalescences at t[1],t[2],...t[k] within a limb
-	     * from t[0] to t[k+1] 
-	     * 
-	     * ('limb' means a branch or part of one.)
+	     * from t[0] to t[k+1]. ('limb' means a branch or part of one.)
 	     */
 	    private double limbLogLike(PopulationAndLineages pal) {
 	    	double loglike = 0.0;
@@ -1147,6 +1134,9 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		addVariable(popvalues);
 		
 		mullabtree = new MulLabTree();
+		
+        Logger.getLogger("dr.evomodel.speciation.allopolyploid").info("\tConstructing an allopolyploid network,  please cite:\n"
+                + Citable.Utils.getCitationString(this));
 	}	
 	
 		
@@ -1176,8 +1166,46 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		
 		mullabtree = new MulLabTree();
 	}
+
+	
+	public List<Citation> getCitations() {
+		List<Citation> citations = new ArrayList<Citation>();
+		citations.add(new Citation(
+				new Author[]{
+						new Author("GR", "Jones")
+				},
+				Citation.Status.IN_PREPARATION
+		));
+		return citations;
+	}
 	
 	
+	public String toString() {
+		int ngt = apsp.numberOfGeneTrees();
+		String nl = System.getProperty("line.separator");
+		String s = nl + mullabtree.asText() + nl;
+		for (int g = 0; g < ngt; g++) {
+			s += "Gene tree " + g + nl;
+			s += apsp.genetreeAsText(g) + nl;
+			s += apsp.seqassignsAsText(g) + nl;
+		}
+		s += nl;
+		return s;
+	}
+	
+	
+	
+	public LogColumn[] getColumns() {
+		LogColumn[] columns = new LogColumn[1];
+		columns[0] = new LogColumn.Default("    MUL-tree and gene trees", this);
+		return columns;
+	}
+
+	
+	/*
+	 * Stretches or squashes the whole network. Used by constructors and
+	 * MCMC operators.
+	 */
 	public int scaleAllHeights(double scale) {
 		int count = 0;
 		for (int i = 0; i < trees[DITREES].length; i++) {
@@ -1192,13 +1220,13 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 	/*
 	 * Called from AlloppSpeciesBindings to check if a node in a gene tree
-	 * is compatible with the network.
-	 * 
+	 * is compatible with the network. 
 	 */
 	public boolean coalescenceIsCompatible(double height, FixedBitSet union) {
 		MulLabNode node = mullabtree.nodeOfUnion(union);
 		return (node.height <= height);
 	}
+	
 	
     /*
      * Called from AlloppSpeciesBindings to remove coalescent information
@@ -1237,6 +1265,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		mullabtree.recordLineageCounts();
 	}	
 	
+	
 	/*
 	 * Calculates the log-likelihood for a single gene tree in the network
 	 * 
@@ -1259,7 +1288,11 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		return n;
 	}
 		
-	
+	/*
+	 * Returns an array of heights for the events (speciations
+	 * including those of extinct diploids in some cases). Used
+	 * in calculation of proir for network.
+	 */
 	public double[] getEventHeights() {
 		double heights[];
 		if (trees[DITREES].length == 0  &&  trees[TETRATREES].length == 1) {
@@ -1359,16 +1392,14 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	
 
 	
-	@Override
 	public String getName() {
 		return getModelName();
 	}
 
 	
-    //  grjtodo based on SpeciesTreeModel
+    //  based on SpeciesTreeModel
     //  grjtodo internalTreeOP remaining to do: scaling without enforcing consitency
-    @Override
-	public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
+ 	public int scale(double scaleFactor, int nDims) throws OperatorFailedException {
     	assert scaleFactor > 0;
     	if (nDims <= 0) {
     		beginNetworkEdit();
@@ -1399,10 +1430,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		// 2011-08-31 For now, the new legs are chosen from the same distribution regardless of current state.
 		// I am not clear what this distribution should be. There are always two times,
 		// both between the hybridizaton time and the diploid root. For the two-diploids case,
-		// thet are straightforward. Then there is the topology. There are five distinguishable
+		// they are straightforward. Then there is the topology. There are five distinguishable
 		// topologies in the two-diploids case: both legs left, both legs right, joined then left, 
 		// joined then right, and one leg to each. I think the latter should be regarded as two cases
-		// (most recent to left vs most recent to right).
+		// (most recent to left vs most recent to right) and it is here.
 		assert trees[DITREES].length == 1;
 		assert trees[DITREES][0].getExternalNodeCount() == 2;
 		assert trees[TETRATREES].length == 1;
@@ -1448,10 +1479,13 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     		}
     	}
     	// addVariable(popvalues) deals with popvalues
+    	
 		if (DBUGTUNE)
 			System.err.println("AlloppSpeciesNetworkModel.storeState()");
 	}
 
+	
+	
 	protected void restoreState() {
 		trees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
 		for (int i=0; i<oldtrees.length; i++) {
@@ -1464,6 +1498,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     	}		
     	mullabtree = new MulLabTree();
     	// addVariable(popvalues) deals with popvalues
+    	
 		if (DBUGTUNE)
 			System.err.println("AlloppSpeciesNetworkModel.restoreState()");
 	}
@@ -1815,6 +1850,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		trees[TETRATREES][0] = tettree;
 		
 	}
+
 	
 	
 

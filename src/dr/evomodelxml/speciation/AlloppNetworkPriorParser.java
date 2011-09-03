@@ -33,7 +33,7 @@ public class AlloppNetworkPriorParser extends AbstractXMLObjectParser {
 	public static final String MODEL = "model";
 	public static final String APSPNETWORK = "apspNetwork";
 
-	@Override
+
 	public String getParserName() {
 		return APSPNETWORKPRIOR;
 	}

@@ -44,9 +44,9 @@ import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
  * 2011-05-19 I use this for diploid tree, although only the tree,
  * no legs, is used then. 
  * 
- * tree is a SimpleTree: its nodes contain taxa at tips, and times.
+ * tree is a SimpleTree: its nodes contain times, and taxa at tips.
  * 
- * legs[] has length one or two. If two legs, they specify
+ * For tetraploids, legs[] has length one or two. If two legs, they specify
  * the branches (which may be the same branch twice at different
  * times) where the tree joins a lower ploidy tree.
  * 
@@ -59,7 +59,7 @@ import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
  * 
  * hybridheight is the time of hybridization, `where the legs 
  * join together', which is earlier then the root node of the 
- * tree.
+ * homoploid tree.
  * 
  */
 
@@ -72,13 +72,6 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
     private  Leg[] legs;
     private double splitheight;
     private double hybridheight;
- 
-    /*
-    private  SimpleTree oldtree;
-    private  Leg[] oldlegs;
-    private double oldsplitheight;
-    private double oldhybridheight;
-	*/
 
     
     
@@ -101,13 +94,12 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
     	/**
     	 * clone constructor
     	 */
-    	
     	public Leg(Leg leg) {
     		this.height = leg.height;
     		this.footUnion = new FixedBitSet(leg.footUnion);
     	}
     	
-    	// constructor for small examples. The leg dangles, unattached
+    	// Partial constructor. The leg dangles, unattached
     	public Leg(double height) {
     		this.footUnion = new FixedBitSet(0);
     		this.height = height;
@@ -182,7 +174,10 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
     	tree.setUnits(Units.Type.SUBSTITUTIONS); 
     }
     
-    /** clone constructor */
+   
+    /** 
+     * clone constructor 
+     */
     public AlloppLeggedTree(AlloppLeggedTree tree) {
     	this.tree = new SimpleTree(tree);
     	this.hybridheight = tree.hybridheight;
@@ -193,6 +188,7 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
     	}
     }
      
+    
      /*
       * Constructor for testing. 
       */
@@ -247,7 +243,7 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
      
      
      /*
-      * for testing
+      * Constructor for testing
       */
      public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModel.LegType legtype,
 			LogLhoodGTreeInNetworkTEST llgtnTEST) {
@@ -387,7 +383,7 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
      }
 
 
-     // tetraonly twodiploidsonly
+     // grjtodo tetraonly twodiploidsonly
      public void moveLegTopology(FixedBitSet dip0, FixedBitSet dip1) {
     	 int rnd = MathUtils.nextInt(6);
     	 double t0;
@@ -497,197 +493,197 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 
 //                      Tree   
     
-	@Override
+	
 	public NodeRef getRoot() {
 		return tree.getRoot();
 	}
 
-	@Override
+	
 	public int getNodeCount() {
 		return tree.getNodeCount();    
 	}
 
-	@Override
+	
 	public NodeRef getNode(int i) {
 		return tree.getNode(i);    
 	}
 
-	@Override
+	
 	public NodeRef getInternalNode(int i) {
 		return tree.getInternalNode(i);    
 	}
 
-	@Override
+	
 	public NodeRef getExternalNode(int i) {
 		return tree.getExternalNode(i);    
 	}
 
-	@Override
+	
 	public int getExternalNodeCount() {
 		return tree.getExternalNodeCount();    
 	}
 
-	@Override
+	
 	public int getInternalNodeCount() {
 		return tree.getInternalNodeCount();    
 	}
 
-	@Override
+	
 	public Taxon getNodeTaxon(NodeRef node) {
 		return tree.getNodeTaxon(node);    
 	}
 
-	@Override
+	
 	public boolean hasNodeHeights() {
 		return tree.hasNodeHeights();    
 	}
 
-	@Override
+	
 	public double getNodeHeight(NodeRef node) {
 		return tree.getNodeHeight(node);    
 	}
 
-	@Override
+	
 	public boolean hasBranchLengths() {
 		return tree.hasBranchLengths();    
 	}
 
-	@Override
+	
 	public double getBranchLength(NodeRef node) {
 		return tree.getBranchLength(node);    
 	}
 
-	@Override
+	
 	public double getNodeRate(NodeRef node) {
 		return tree.getNodeRate(node);    
 	}
 
-	@Override
+	
 	public Object getNodeAttribute(NodeRef node, String name) {
 		return tree.getNodeAttribute(node, name);    
 	}
 
-	@Override
+	
 	public Iterator getNodeAttributeNames(NodeRef node) {
 		return tree.getNodeAttributeNames(node);    
 	}
 
-	@Override
+	
 	public boolean isExternal(NodeRef node) {
 		return tree.isExternal(node);    
 	}
 
-	@Override
+	
 	public boolean isRoot(NodeRef node) {
 		return tree.isRoot(node);    
 	}
 
-	@Override
+	
 	public int getChildCount(NodeRef node) {
 		return tree.getChildCount(node);    
 	}
 
-	@Override
+	
 	public NodeRef getChild(NodeRef node, int j) {
 		return tree.getChild(node, j);    
 	}
 
-	@Override
+	
 	public NodeRef getParent(NodeRef node) {
 		return tree.getParent(node);    
 	}
 
-	@Override
+	
 	public Tree getCopy() {
 		return tree.getCopy();    
 	}
 
-	@Override
+	
 	public int getTaxonCount() {
 		return tree.getTaxonCount();    
 	}
 
-	@Override
+	
 	public Taxon getTaxon(int taxonIndex) {
 		return tree.getTaxon(taxonIndex);    
 	}
 
-	@Override
+	
 	public String getTaxonId(int taxonIndex) {
 		return tree.getTaxonId(taxonIndex);    
 	}
 
-	@Override
+	
 	public int getTaxonIndex(String id) {
 		return tree.getTaxonIndex(id);    
 	}
 
-	@Override
+	
 	public int getTaxonIndex(Taxon taxon) {
 		return tree.getTaxonIndex(taxon);    
 	}
 
-	@Override
+	
 	public List<Taxon> asList() {
 		return tree.asList();    
 	}
 
-	@Override
+	
 	public Object getTaxonAttribute(int taxonIndex, String name) {
 		return tree.getTaxonAttribute(taxonIndex, name);    
 	}
 
-	@Override
+	
 	public Iterator<Taxon> iterator() {
 		return tree.iterator();    
 	}
 
-	@Override
+	
 	public Type getUnits() {
 		return tree.getUnits();    
 	}
 
-	@Override
+	
 	public void setUnits(Type units) {
 		tree.setUnits(units);    
 	}
 
-	@Override
+	
 	public void setAttribute(String name, Object value) {
 		tree.setAttribute(name, value);    
 	}
 
-	@Override
+	
 	public Object getAttribute(String name) {
 		return tree.getAttribute(name);    
 	}
 
-	@Override
+	
 	public Iterator<String> getAttributeNames() {
 		return tree.getAttributeNames();    
 	}
 
-	@Override
+	
 	public int addTaxon(Taxon taxon) {
 		return tree.addTaxon(taxon);    
 	}
 
-	@Override
+	
 	public boolean removeTaxon(Taxon taxon) {
 		return tree.removeTaxon(taxon);    
 	}
 
-	@Override
+	
 	public void setTaxonId(int taxonIndex, String id) {
 		tree.setTaxonId(taxonIndex, id);
 	}
 
-	@Override
+	
 	public void setTaxonAttribute(int taxonIndex, String name, Object value) {
 		tree.setTaxonAttribute(taxonIndex, name, value);
 	}
 
-	@Override
+	
 	public void addMutableTaxonListListener(MutableTaxonListListener listener) {
 		tree.addMutableTaxonListListener(listener);
 	}
@@ -698,83 +694,77 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 
 
 		
-	@Override
 	public boolean beginTreeEdit() {
 		return tree.beginTreeEdit();
 	}
 
-	@Override
 	public void endTreeEdit() {
 		tree.endTreeEdit();
 	}
 
 	
-	@Override
 	public void addChild(NodeRef parent, NodeRef child) {
 		tree.addChild(parent, child);
 	}
 
-	@Override
 	public void removeChild(NodeRef parent, NodeRef child) {
 		tree.removeChild(parent, child);
 	}
 
-	@Override
 	public void replaceChild(NodeRef node, NodeRef child, NodeRef newChild) {
 		tree.replaceChild(node, child, newChild);
 	}
 
-	@Override
 	public void setRoot(NodeRef root) {
 		tree.setRoot(root);
 	}
 
-	@Override
+	
 	public void setNodeHeight(NodeRef node, double height) {
 		tree.setNodeHeight(node, height);
 	}
 
-	@Override
+	
 	public void setNodeRate(NodeRef node, double rate) {
 		tree.setNodeRate(node, rate);
 	}
 
-	@Override
+	
 	public void setBranchLength(NodeRef node, double length) {
 		tree.setBranchLength(node, length);
 	}
 
-	@Override
+	
 	public void setNodeAttribute(NodeRef node, String name, Object value) {
 		tree.setNodeAttribute(node, name, value);
 	}
 
-	@Override
+	
 	public void addMutableTreeListener(MutableTreeListener listener) {
 		tree.addMutableTreeListener(listener);
 	}
 
 	
 	// TreeLogger.LogUpon
-
-	@Override
+	
 	public boolean logNow(int state) {
        //		grjtodo 
 
 		return false;
 	}
 
+	
+	
+	
 	// Identifiable
 
-
-	@Override
 	public String getId() {
 		return tree.getId();
 	}
 
 
 
-	@Override
+	
 	public void setId(String id) {
 		tree.setId(id);
 		

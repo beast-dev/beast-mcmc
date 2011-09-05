@@ -32,6 +32,10 @@ public class MatrixInverseStatistic extends Statistic.Abstract implements Variab
         return inverse[x][y];
     }
 
+    public String getDimensionName(int dim) {        
+        return getStatisticName() + "." + matrix.getDimensionName(dim);
+    }
+
     public void variableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         inverseKnown = false;
     }

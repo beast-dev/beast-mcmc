@@ -407,10 +407,10 @@ public class TreePriorGenerator extends Generator {
 
                         parameterPriorGenerator.writeParameterPrior(model.getParameter("treeModel.rootHeight"), writer);
                         String taxaId;
-                        if (options.allowDifferentTaxa) {
-                            taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
-                        } else {
+                        if (options.partitionsHaveIdenticalTaxa()) {
                             taxaId = TaxaParser.TAXA;
+                        } else {
+                            taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
                         }
                         writer.writeIDref(TaxaParser.TAXA, taxaId);
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);

@@ -64,10 +64,6 @@ public class BeautiOptions extends ModelOptions {
      */
     public void reset() {
         // Data options
-        allowDifferentTaxa = false;
-//        dataType = null;
-//        dataReset = true;
-
         taxonList = null;
         taxonSets.clear();
         taxonSetsMono.clear();
@@ -935,6 +931,26 @@ public class BeautiOptions extends ModelOptions {
         return states;
     }
 
+    public boolean partitionsHaveIdenticalTaxa() {
+        TaxonList taxa = null;
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (taxa == null) {
+                taxa = partition.getTaxonList();
+            } else {
+                TaxonList taxa1 = partition.getTaxonList();
+                if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
+                    return false;
+                }
+                for (Taxon taxon : taxa1) {
+                    if (taxa.getTaxonIndex(taxon) == -1) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     public static TraitData.TraitType guessTraitType(TaxonList taxa, String name) {
         TraitData.TraitType type = TraitData.TraitType.DISCRETE;
         return type;
@@ -946,12 +962,7 @@ public class BeautiOptions extends ModelOptions {
 //        String message = "<html><p>";
         String message = "";
         if (hasData()) {
-            if (allowDifferentTaxa) {
-                message += "Data contains different taxa: " + taxonList.getTaxonCount() + " taxa in total, ";
-            } else {
-                message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
-            }
-
+            message += "Data: " + taxonList.getTaxonCount() + " taxa, ";
             message += dataPartitions.size() + (dataPartitions.size() > 1 ? " partitions" : " partition");
 
             if (starBEASTOptions.getSpeciesList() != null && useStarBEAST) {
@@ -999,9 +1010,6 @@ public class BeautiOptions extends ModelOptions {
 
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
-    public boolean allowDifferentTaxa = false;
-//    public DataType dataType = null;
-
     public Taxa taxonList = null; // union set of all taxa in all partitions. todo change to List<Taxa> regarding data type?
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();

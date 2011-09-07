@@ -150,16 +150,18 @@ public class BranchRatesModelGenerator extends Generator {
                     writer.writeCloseTag("distribution");
 
                     writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
-                    if (options.allowDifferentTaxa) { // http://code.google.com/p/beast-mcmc/issues/detail?id=235
-                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
-                            if (dataPartition.getPartitionClockModel().equals(model)) {
-                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;
-                            }
-                        }
-                    } else {
-                        categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
-                    }
-                    writeParameter(clockTree.getParameter("branchRates.categories"), categoryCount, writer);
+                    // AR - this parameter will now set its dimension automatically when BEAST is run
+//                    if (!options.partitionsHaveIdenticalTaxa()) {
+//                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
+//                            if (dataPartition.getPartitionClockModel().equals(model)) {
+//                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;
+//                            }
+//                        }
+//                    } else {
+//                        categoryCount = (options.taxonList.getTaxonCount() - 1) * 2;
+//                    }
+//                    writeParameter(clockTree.getParameter("branchRates.categories"), categoryCount, writer);
+                    writeParameter(clockTree.getParameter("branchRates.categories"), -1, writer);
                     writer.writeCloseTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                     writer.writeCloseTag(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES);
 

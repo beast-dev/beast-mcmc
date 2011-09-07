@@ -413,11 +413,9 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
-        if (options.allowDifferentTaxa) {
             setAllOptions();
             dataPanel.selectAll();
             dataPanel.unlinkTrees();
-        }
 
         setAllOptions();
 

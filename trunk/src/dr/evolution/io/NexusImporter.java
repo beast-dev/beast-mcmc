@@ -556,7 +556,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                         Taxon taxon;
 
                         if (taxonList != null) {
-                            int index = taxonList.getTaxonIndex(token);
+                            int index = taxonList.getTaxonIndex(token.trim());
                             if (index == -1) {
                                 // taxon not found in taxon list...
                                 // ...perhaps it is a numerical taxon reference?
@@ -565,7 +565,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
                                 taxon = taxonList.getTaxon(index);
                             }
                         } else {
-                            taxon = new Taxon(token);
+                            taxon = new Taxon(token.trim());
                         }
 
                         sequence.setTaxon(taxon);
@@ -687,7 +687,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         do {
             String name = readToken(";");
             if (name.trim().length() > 0) {
-                Taxon taxon = new Taxon(name);
+                Taxon taxon = new Taxon(name.trim());
                 taxa.addTaxon(taxon);
             }
         } while (getLastDelimiter() != ';');

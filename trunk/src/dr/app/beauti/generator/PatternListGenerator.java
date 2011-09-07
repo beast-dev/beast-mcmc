@@ -69,10 +69,10 @@ public class PatternListGenerator extends Generator {
 //                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
             } else {
-            	
+
         		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
-        		
+
 				boolean doRobustCounting = component.doRobustCounting();
 
 				if (doRobustCounting) {
@@ -82,9 +82,9 @@ public class PatternListGenerator extends Generator {
 						writePatternList(partition, i - 1, 3, model
 								.getPrefix(i), false, writer);
 					}
-					
+
 				} else {
-            	
+
                 // pattern is 123
                 // write pattern lists for all three codon positions
                 for (int i = 1; i <= 3; i++) {
@@ -102,12 +102,12 @@ public class PatternListGenerator extends Generator {
 				}// END: doRobustCounting
 
 			}// END: pattern is 123
-            
+
         } else {
             writePatternList(partition, 0, 1, "", writer);
         }
     }
-    
+
     private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, XMLWriter writer) {
     	writePatternList(partition, offset, every, codonPrefix, true, writer);
     }
@@ -150,7 +150,7 @@ public class PatternListGenerator extends Generator {
         if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
         }
-        
+
         if(!unique) {
         	attributes.add(new Attribute.Default<String>("unique", "" + false));
         }
@@ -178,10 +178,10 @@ public class PatternListGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, partition.getName()),
                     });
 
-            if (options.allowDifferentTaxa) {
-                writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);
-            } else {
+            if (options.partitionsHaveIdenticalTaxa()) {
                 writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
+            } else {
+                writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);
             }
 
             Microsatellite m = model.getMicrosatellite();

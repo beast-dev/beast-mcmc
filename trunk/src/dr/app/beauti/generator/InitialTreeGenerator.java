@@ -114,29 +114,13 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 String taxaId;
-                if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
-                    // AR - this validation was causing an exception because a discrete trait
-                    // partition doesn't have an alignment. I believe the check about using
-                    // partitions being linked when they have different taxa is done in the
-                    // GUI so this validation isn't required.
-//                    if (model.getAllPartitionData().size() > 1) {
-//                        if (!options.validateDiffTaxa(model.getAllPartitionData())) {
-//                            throw new IllegalArgumentException("To accommodate different taxa for each partition trees cannot be linked");
-//                        }
-//                    }
-
-//                    for (PartitionData partition : model.getAllPartitionData()) {
-//                        taxaId = partition.getPrefix() + TaxaParser.TAXA;
-//                        writeTaxaRef(taxaId, model, writer);
-//                        break; //only need 1 taxa ref
-//                    }
-                    taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
-                    writeTaxaRef(taxaId, model, writer);
-
-                } else {
+                if (options.partitionsHaveIdenticalTaxa()) {
                     taxaId = TaxaParser.TAXA;
-                    writeTaxaRef(taxaId, model, writer);
+                } else {
+                    taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
                 }
+                writeTaxaRef(taxaId, model, writer);
+
 
                 writeInitialDemoModelRef(model, writer);
                 writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);

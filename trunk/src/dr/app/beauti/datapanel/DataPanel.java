@@ -589,7 +589,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selectedPartitionData.add(partition);
         }
 
-        if (options.allowDifferentTaxa) {//BEAST cannot handle multi <taxa> ref for 1 tree
             if (selectedPartitionData.size() > 1) {
                 if (!options.validateDiffTaxa(selectedPartitionData)) {
                     JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
@@ -598,7 +597,6 @@ public class DataPanel extends BeautiPanel implements Exportable {
                     return;
                 }
             }
-        }
 
         Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
@@ -619,7 +617,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 partition.setPartitionTreeModel(model);
             }
 
-            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree 
+            for (Taxa taxa : options.taxonSets) { // Issue 454: all the taxon sets are deleted when link/unlink tree
                 PartitionTreeModel prevModel = options.taxonSetsTreeModel.get(taxa);
                 if (prevModel != model) options.taxonSetsTreeModel.put(taxa, model);
             }

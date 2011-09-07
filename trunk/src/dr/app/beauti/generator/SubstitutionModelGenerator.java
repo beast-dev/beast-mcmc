@@ -446,14 +446,6 @@ public class SubstitutionModelGenerator extends Generator {
 
             //---------------- rates and indicators -----------------
 
-            // AR - we are trying to unify this setup. The only difference between BSSVS and not is the presence of indicators...
-//            if (!model.isActivateBSSVS()) {
-//                writer.writeComment("Rates parameter in " + GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL
-//                        + " element should have (" + (numOfStates * (numOfStates - 1) / 2) + " - 1) dimensions");
-//                writeRatesAndIndicators(model, (numOfStates * (numOfStates - 1) / 2) - 1, null, writer);
-//            } else {
-//                writeRatesAndIndicators(model, numOfStates * (numOfStates - 1) / 2, null, writer);
-//            }
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
@@ -999,7 +991,7 @@ public class SubstitutionModelGenerator extends Generator {
 
 //        if (model.getRatePorportion() == MicroSatModelType.RateProportionality.EQUAL_RATE) {
 //            // no xml
-//        } else 
+//        } else
         if (model.getRatePorportion() == MicroSatModelType.RateProportionality.PROPORTIONAL_RATE) {
             writeParameter(AsymQuadModelParser.EXPANSION_LIN, "propLinear", model, writer);
             writeParameterRef(AsymQuadModelParser.CONTRACTION_LIN, model.getPrefix() + "propLinear", writer);

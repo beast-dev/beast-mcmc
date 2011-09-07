@@ -237,13 +237,13 @@ public class PartitionModelPanel extends OptionsPanel {
 				if (!setSRD06ButtonClicked) {
 
 					setSRD06Model();
-					setSRD06Button.setText("Default");
+					setSRD06Button.setText("Default (turn off SRD06 model)");
 					setSRD06ButtonClicked = true;
 
 				} else if (setSRD06ButtonClicked) {
 
 					removeDnDsCounting();
-					setSRD06Button.setText("Use SRD06 Model");
+					setSRD06Button.setText("Use SRD06 model");
 					setSRD06ButtonClicked = false;
 
 				} else {
@@ -253,7 +253,7 @@ public class PartitionModelPanel extends OptionsPanel {
 			}
 		}
 
-		setSRD06Button = new JButton("Use SRD06 Model");
+		setSRD06Button = new JButton("Use SRD06 model");
 		setSRD06Button.addActionListener(new ListenSetSRD06Button());
 		PanelUtils.setupComponent(setSRD06Button);
 		setSRD06Button
@@ -270,7 +270,7 @@ public class PartitionModelPanel extends OptionsPanel {
 				if (!setDnDsButtonClicked) {
 
 					setDnDsCounting();
-					setDnDsButton.setText("Default");
+					setDnDsButton.setText("Default (turn off robust counting)");
 					setDnDsButtonClicked = true;
 
 				} else if (setDnDsButtonClicked) {
@@ -290,7 +290,9 @@ public class PartitionModelPanel extends OptionsPanel {
 		setDnDsButton = new JButton("Use robust counting for dN/dS estimation");
 		setDnDsButton.addActionListener(new ListenSetDnDsButton());
 		PanelUtils.setupComponent(setDnDsButton);
-		setDnDsButton.setToolTipText("<html>TODO</html>");
+		setDnDsButton.setToolTipText("<html>" +
+                "Enable counting of synonymous and non-synonymous mutations as described in<br> Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation)" +
+                "</html>");
 
 		// ////////////////////////
 		// ---END: dNdS button---//

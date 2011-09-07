@@ -669,10 +669,10 @@ public class PartitionModelPanel extends OptionsPanel {
 
 		}
 
-		if (BeautiApp.advanced) {
+//		if (BeautiApp.advanced) {
 			addSeparator();
 			addComponent(dolloCheck);
-		}
+//		}
 
 		setOptions();
 	}

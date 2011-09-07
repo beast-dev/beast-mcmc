@@ -203,18 +203,16 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ Tree Model ++++++++++++++++++
-        if (options.allowDifferentTaxa) {
-            for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                int numOfTaxa = -1;
-                for (AbstractPartitionData pd : options.getAllPartitionData(model)) {
-                    if (pd.getTaxonCount() > 0) {
-                        if (numOfTaxa > 0) {
-                            if (numOfTaxa != pd.getTaxonCount()) {
-                                throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree");
-                            }
-                        } else {
-                            numOfTaxa = pd.getTaxonCount();
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            int numOfTaxa = -1;
+            for (AbstractPartitionData pd : options.getAllPartitionData(model)) {
+                if (pd.getTaxonCount() > 0) {
+                    if (numOfTaxa > 0) {
+                        if (numOfTaxa != pd.getTaxonCount()) {
+                            throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree");
                         }
+                    } else {
+                        numOfTaxa = pd.getTaxonCount();
                     }
                 }
             }
@@ -276,15 +274,13 @@ public class BeastGenerator extends Generator {
         try {
             writeTaxa(options.taxonList, writer);
 
-            if (options.allowDifferentTaxa) { // allow diff taxa for multi-gene
-                writer.writeText("");
-                writer.writeComment("List all taxons regarding each gene (file) for Multispecies Coalescent function");
-                // write all taxa in each gene tree regarding each data partition,
-                for (AbstractPartitionData partition : options.dataPartitions) {
-                    // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
-                    if (partition.getTaxonList() != null) {
-                        writeDifferentTaxa(partition, writer);
-                    }
+            writer.writeText("");
+            writer.writeComment("List all taxa for each gene (file) for Multispecies Coalescent function");
+            // write all taxa in each gene tree regarding each data partition,
+            for (AbstractPartitionData partition : options.dataPartitions) {
+                // do I need if (!alignments.contains(alignment)) {alignments.add(alignment);} ?
+                if (partition.getTaxonList() != null) {
+                    writeDifferentTaxa(partition, writer);
                 }
             }
         } catch (Exception e) {

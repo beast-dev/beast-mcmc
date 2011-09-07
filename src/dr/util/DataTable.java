@@ -147,8 +147,10 @@ public interface DataTable<T> {
 
             StringTokenizer tokenizer = new StringTokenizer(line, "\t");
 
-            // potentially the first token is the name of the row labels
-            String name = tokenizer.nextToken();
+            if (!line.startsWith("\t")) {
+                // potentially the first token is the name of the row labels
+                String name = tokenizer.nextToken();
+            }
 
             while (tokenizer.hasMoreTokens()) {
                 String label = tokenizer.nextToken();
@@ -174,7 +176,7 @@ public interface DataTable<T> {
 
                 int columnIndex = 0;
                 while (tokenizer.hasMoreTokens()) {
-                    row[columnIndex] = tokenizer.nextToken();
+                    row[columnIndex] = tokenizer.nextToken().trim();
 
                     columnIndex ++;
                 }

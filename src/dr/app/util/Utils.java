@@ -106,7 +106,7 @@ public class Utils {
 
     // detect type of text value - return class of type
 
-    public static Class detectTYpe(final String valueString) {
+    public static Class detectType(final String valueString) {
         if (valueString.equalsIgnoreCase("TRUE") || valueString.equalsIgnoreCase("FALSE")) {
             return Boolean.class;
         }

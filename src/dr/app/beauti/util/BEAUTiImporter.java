@@ -46,6 +46,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.util.DataTable;
 import org.jdom.JDOMException;
 
 import javax.swing.*;
@@ -116,7 +117,7 @@ public class BEAUTiImporter {
             List<Patterns> microsatPatList = importer.importPatterns();
             Taxa unionSetTaxonList = importer.getUnionSetTaxonList();
             Microsatellite microsatellite = importer.getMicrosatellite();
-            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
+//            options.allowDifferentTaxa = importer.isHasDifferentTaxon();
 
             bufferedReader.close();
 
@@ -321,17 +322,68 @@ public class BEAUTiImporter {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
         Taxa taxa = new Taxa();
 
+        DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
+
+        String[] traitNames = dataTable.getColumnLabels();
+        String[] taxonNames = dataTable.getRowLabels();
+
+        for (int i = 0; i < dataTable.getColumnCount(); i++) {
+            boolean warningGiven = false;
+
+            String traitName = traitNames[i];
+
+            String[] values = dataTable.getColumn(i);
+            final Class c = Utils.detectType(values[0]);
+            for (int j = 1; j < values.length; j++) {
+                final Class c1 = Utils.detectType(values[j]);
+                if (c != c1 && !warningGiven) {
+                    JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
+                            "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                    warningGiven = true;
+                }
+            }
+
+            TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+                    (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+            TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
+
+            if (validateTraitName(traitName)) {
+                importedTraits.add(newTrait);
+            }
+
+            int j = 0;
+            for (final String taxonName : taxonNames) {
+
+                final int index = taxa.getTaxonIndex(taxonName);
+                Taxon taxon;
+                if (index >= 0) {
+                    taxon = taxa.getTaxon(index);
+                } else {
+                    taxon = new Taxon(taxonName);
+                    taxa.addTaxon(taxon);
+                }
+                taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                j++;
+            }
+        }
+        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+    }
+
+    public void oldImportTraits(final File file) throws Exception {
+        List<TraitData> importedTraits = new ArrayList<TraitData>();
+        Taxa taxa = new Taxa();
+
         try {
             Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
 
 
             for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
-                final Class c = Utils.detectTYpe(e.getValue().get(0)[1]);
+                final Class c = Utils.detectType(e.getValue().get(0)[1]);
                 final String traitName = e.getKey();
 
                 Boolean warningGiven = false;
                 for (String[] v : e.getValue()) {
-                    final Class c1 = Utils.detectTYpe(v[1]);
+                    final Class c1 = Utils.detectType(v[1]);
                     if (c != c1 && !warningGiven) {
                         JOptionPane.showMessageDialog(frame, "Not all values of same type in column" + traitName,
                                 "Incompatible values", JOptionPane.WARNING_MESSAGE);
@@ -416,51 +468,61 @@ public class BEAUTiImporter {
     }
 
     // for Alignment
-    private void setData(String fileName, TaxonList taxa, Alignment alignment,
+    private void setData(String fileName, TaxonList taxonList, Alignment alignment,
                          List<NexusApplicationImporter.CharSet> charSets, PartitionSubstitutionModel model,
                          List<TraitData> traits, List<Tree> trees) throws ImportException, IllegalArgumentException {
-        String fileNameStem = addTaxonListAndTraits(taxa, traits, fileName);
+        String fileNameStem = Utils.trimExtensions(fileName,
+                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
+        if (options.fileNameStem == null) {
+            options.fileNameStem = fileNameStem;
+        }
+
+        addTaxonList(taxonList);
 
         addAlignment(alignment, charSets, model, fileName, fileNameStem);
 
-        addTraits(traits, fileName, fileNameStem);
+        addTraits(traits);
 
         addTrees(trees);
     }
 
     // for Patterns
-    private void setData(String fileName, Taxa unionSetTaxonList, Patterns patterns,
-                         PartitionSubstitutionModel model, List<TraitData> traits //, List<Tree> trees
+    private void setData(String fileName, Taxa taxonList, Patterns patterns,
+                         PartitionSubstitutionModel model, List<TraitData> traits
     ) throws ImportException, IllegalArgumentException {
-        String fileNameStem = addTaxonListAndTraits(unionSetTaxonList, traits, fileName);
+        String fileNameStem = Utils.trimExtensions(fileName,
+                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
+        if (options.fileNameStem == null) {
+            options.fileNameStem = fileNameStem;
+        }
+
+        addTaxonList(taxonList);
 
         addPatterns(patterns, model, fileName);
 
-        addTraits(traits, fileName, fileNameStem);
-
-//        addTrees(trees);
+        addTraits(traits);
     }
 
-    private String addTaxonListAndTraits(TaxonList unionSetTaxonList, List<TraitData> traits, String fileName) throws ImportException {
-        String fileNameStem = Utils.trimExtensions(fileName,
-                new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
-
+    private void addTaxonList(TaxonList taxonList) throws ImportException {
+        checkTaxonList(taxonList);
         if (options.taxonList == null) {
-            loadFirstPartition(unionSetTaxonList, traits, fileNameStem);
-            options.fileNameStem = fileNameStem;
+            // This is the first partition to be loaded...
+            options.taxonList = new Taxa(taxonList);
         } else {
-            loadRestPartitions(unionSetTaxonList);
+            // otherwise just add the new ones...
+            for (Taxon taxon : taxonList) {
+                if (!options.taxonList.contains(taxon)) {
+                    options.taxonList.addTaxon(taxon);
+                }
+            }
         }
-        return fileNameStem;
     }
 
-    private void loadFirstPartition(TaxonList unionSetTaxonList, List<TraitData> traits, String fileNameStem) throws ImportException {
-        // This is the first partition to be loaded...
-        options.taxonList = new Taxa(unionSetTaxonList);
+    private void checkTaxonList(TaxonList taxonList) throws ImportException {
 
         // check the taxon names for invalid characters
         boolean foundAmp = false;
-        for (Taxon taxon : unionSetTaxonList) {
+        for (Taxon taxon : taxonList) {
             String name = taxon.getId();
             if (name.indexOf('&') >= 0) {
                 foundAmp = true;
@@ -473,85 +535,15 @@ public class BEAUTiImporter {
         }
 
         // make sure they all have dates...
-        for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
-            if (unionSetTaxonList.getTaxonAttribute(i, "date") == null) {
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            if (taxonList.getTaxonAttribute(i, "date") == null) {
                 Date origin = new Date(0);
 
                 dr.evolution.util.Date date = dr.evolution.util.Date.createTimeSinceOrigin(0.0, Units.Type.YEARS, origin);
-                unionSetTaxonList.getTaxon(i).setAttribute("date", date);
+                taxonList.getTaxon(i).setAttribute("date", date);
             }
         }
 
-        if (traits == null) {
-            Set<String> traitNames = new HashSet<String>();
-            for (Taxon taxon : unionSetTaxonList) {
-                Iterator iter = taxon.getAttributeNames();
-                while (iter.hasNext()) {
-                    String name = (String) iter.next();
-                    traitNames.add(name);
-                }
-            }
-
-            traits = new ArrayList<TraitData>();
-
-            for (String name : traitNames) {
-                if (!name.equalsIgnoreCase("date")) {
-                    // todo  - need to work out what type it is...
-                    TraitData.TraitType type = options.guessTraitType(unionSetTaxonList, name);
-                    TraitData trait = new TraitData(options, name, "", type);
-                    traits.add(trait);
-                }
-            }
-        }
-    }
-
-    private void loadRestPartitions(TaxonList unionSetTaxonList) {
-        // AR - removed this distinction. I think we should always allow different taxa
-        // for different partitions but give a warning if they are different
-
-        // This is an additional partition so check it uses the same taxa
-        if (!options.allowDifferentTaxa) { // not allow Different Taxa
-            List<String> oldTaxa = new ArrayList<String>();
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                oldTaxa.add(options.taxonList.getTaxon(i).getId());
-            }
-            List<String> newTaxa = new ArrayList<String>();
-            for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
-                newTaxa.add(unionSetTaxonList.getTaxon(i).getId());
-            }
-
-            if (!(oldTaxa.containsAll(newTaxa) && oldTaxa.size() == newTaxa.size())) {
-                // set to Allow Different Taxa
-                options.allowDifferentTaxa = true;
-                //changeTabs();// can be added, if required in future
-
-                List<String> prevTaxa = new ArrayList<String>();
-                for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                    prevTaxa.add(options.taxonList.getTaxon(i).getId());
-                }
-                for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
-                    if (!prevTaxa.contains(unionSetTaxonList.getTaxon(i).getId())) {
-                        options.taxonList.addTaxon(unionSetTaxonList.getTaxon(i));
-                    }
-                }
-            }
-        } else { // allow Different Taxa
-            // AR - it will be much simpler just to consider options.taxonList
-            // to be the union set of all taxa. Each data partition has an alignment
-            // which is a taxon list containing the taxa specific to that partition
-
-            // add the new diff taxa
-            List<String> prevTaxa = new ArrayList<String>();
-            for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
-                prevTaxa.add(options.taxonList.getTaxon(i).getId());
-            }
-            for (int i = 0; i < unionSetTaxonList.getTaxonCount(); i++) {
-                if (!prevTaxa.contains(unionSetTaxonList.getTaxon(i).getId())) {
-                    options.taxonList.addTaxon(unionSetTaxonList.getTaxon(i));
-                }
-            }
-
-        }
     }
 
     private void addAlignment(Alignment alignment, List<NexusApplicationImporter.CharSet> charSets,
@@ -662,8 +654,7 @@ public class BEAUTiImporter {
                     + "\nwith different data type.");
     }
 
-    private void addTraits(List<TraitData> traits,
-                           String fileName, String fileNameStem) {
+    private void addTraits(List<TraitData> traits) {
         if (traits != null) {
             for (TraitData trait : traits) {
                 options.addTrait(trait);

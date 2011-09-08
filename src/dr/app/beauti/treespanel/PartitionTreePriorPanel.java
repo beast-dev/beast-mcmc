@@ -78,7 +78,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
     private boolean settingOptions = false;
 
 
-    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, TreesPanel parent) {
+    public PartitionTreePriorPanel(PartitionTreePrior parTreePrior, final TreesPanel parent) {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreePrior = parTreePrior;
@@ -91,6 +91,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 if (treePriorCombo.getSelectedItem() != null) {
                     partitionTreePrior.setNodeHeightPrior((TreePriorType) treePriorCombo.getSelectedItem());
                     setupPanel();
+                    parent.fireTreePriorsChanged();
                 }
             }
         });
@@ -99,6 +100,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         parameterizationCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setParameterization((TreePriorParameterizationType) parameterizationCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
             }
         });
 
@@ -121,6 +123,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         bayesianSkylineCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setSkylineModel((TreePriorParameterizationType) bayesianSkylineCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
             }
         });
 
@@ -129,6 +132,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setExtendedSkylineModel(((VariableDemographicModel.Type)
                         extendedBayesianSkylineCombo.getSelectedItem()));
+                parent.fireTreePriorsChanged();
             }
         });
 
@@ -136,6 +140,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         gmrfBayesianSkyrideCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 partitionTreePrior.setSkyrideSmoothing((TreePriorParameterizationType) gmrfBayesianSkyrideCombo.getSelectedItem());
+                parent.fireTreePriorsChanged();
             }
         });
 
@@ -318,6 +323,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 //    }
 
     public void setTreePriorChoices(boolean isMultiLocus, boolean isTipCalibrated) {
+        TreePriorType type = (TreePriorType)treePriorCombo.getSelectedItem();
         treePriorCombo.removeAllItems();
         for (TreePriorType treePriorType : EnumSet.range(TreePriorType.CONSTANT, TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER)) {
             treePriorCombo.addItem(treePriorType);
@@ -333,6 +339,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             treePriorCombo.removeItem(TreePriorType.YULE);
             treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
             treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
-          }
+        }
+        treePriorCombo.setSelectedItem(type);
+        if (treePriorCombo.getSelectedItem() == null) {
+            treePriorCombo.setSelectedIndex(0);
+        }
     }
 }

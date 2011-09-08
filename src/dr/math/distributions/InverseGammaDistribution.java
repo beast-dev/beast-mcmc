@@ -153,7 +153,10 @@ public class InverseGammaDistribution implements Distribution {
      * @param scale scale parameter
      * @return cdf value
      */
-    public static double cdf(double x, double shape, double scale) {
+    public static double cdf(double x, double shape, double scale) {        
+        if (x == 0.0) {
+            return 0.0;
+        }
         return GammaFunction.incompleteGammaQ(shape, scale/x);
     }
 

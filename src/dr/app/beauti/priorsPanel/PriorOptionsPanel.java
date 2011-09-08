@@ -326,7 +326,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         public void setArguments(Parameter parameter) {
             setFieldRange(getField(0), true, parameter.isZeroOne);
-            getField(0).setValue(parameter.mean);
+            getField(0).setValue(parameter.mean != 0.0 ? parameter.mean : 1.0);
             getField(1).setValue(parameter.offset);
         }
 

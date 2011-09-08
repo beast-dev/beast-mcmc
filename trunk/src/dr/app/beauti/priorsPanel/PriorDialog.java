@@ -120,6 +120,10 @@ public class PriorDialog {
             priorCombo.addItem(priorType);
         }
 
+        if (parameter.priorType != null) {
+            priorCombo.setSelectedItem(parameter.priorType);
+        }
+
         contentPanel = new JPanel(new GridBagLayout());
 
 //        setArguments(priorType); // move to inside setupComponents()
@@ -245,6 +249,12 @@ public class PriorDialog {
 
         PriorType priorType;
         priorType = (PriorType) priorCombo.getSelectedItem();
+
+        if (priorType == null) {
+            priorType = parameter.priorType;
+            priorCombo.setSelectedItem(priorType);
+        }
+
         if (!parameter.isPriorFixed) {
             optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
         } else {
@@ -297,6 +307,11 @@ public class PriorDialog {
         chart.removeAllPlots();
 
         PriorType priorType = (PriorType) priorCombo.getSelectedItem();
+
+        if (priorType == null) {
+            priorType = parameter.priorType;
+            priorCombo.setSelectedItem(priorType);
+        }
 
         // ExponentialDistribution(1.0 / mean)
 //        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1;

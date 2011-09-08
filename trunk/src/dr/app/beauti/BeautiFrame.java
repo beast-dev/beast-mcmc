@@ -11,6 +11,7 @@ package dr.app.beauti;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.dnds.DnDsComponentFactory;
+import dr.app.beauti.components.dollo.DolloComponentFactory;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
 import dr.app.beauti.components.SequenceErrorModelComponentFactory;
 import dr.app.beauti.components.TipDateSamplingComponentFactory;
@@ -109,6 +110,7 @@ public class BeautiFrame extends DocumentFrame {
                 TipDateSamplingComponentFactory.INSTANCE,
                 HierarchicalModelComponentFactory.INSTANCE,
                 DnDsComponentFactory.INSTANCE,
+                DolloComponentFactory.INSTANCE,
 //                DiscreteTraitsComponentFactory.INSTANCE
         };
 

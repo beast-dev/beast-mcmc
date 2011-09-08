@@ -34,8 +34,7 @@ import java.util.List;
  * @version $Id$
  */
 public class PartitionClockModel extends PartitionOptions {
-    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = true;
-
+    private static final boolean DEFAULT_CMTC_RATE_REFERENCE_PRIOR = false;
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;

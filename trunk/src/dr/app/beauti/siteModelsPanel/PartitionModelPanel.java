@@ -25,7 +25,27 @@
 
 package dr.app.beauti.siteModelsPanel;
 
-import dr.app.beauti.BeautiApp;
+import jam.panels.OptionsPanel;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.awt.event.KeyEvent;
+import java.util.EnumSet;
+import java.util.logging.Logger;
+
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+
 import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
@@ -39,14 +59,6 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
-import jam.panels.OptionsPanel;
-
-import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-import java.awt.event.*;
-import java.util.EnumSet;
-import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -76,7 +88,8 @@ public class PartitionModelPanel extends OptionsPanel {
 
 	private JComboBox codingCombo = new JComboBox(new String[] { "Off",
 			"2 partitions: positions (1 + 2), 3",
-			"3 partitions: positions 1, 2, 3" });
+			"3 partitions: positions 1, 2, 3",
+			"3 partitions with Robust Counting" });
 
 	private JCheckBox substUnlinkCheck = new JCheckBox(
 			"Unlink substitution rate parameters across codon positions");
@@ -92,7 +105,7 @@ public class PartitionModelPanel extends OptionsPanel {
 	// ---dNdS button---//
 	// ///////////////////
 	// TODO
-	public static final boolean ENABLE_ROBUST_DNDS_COUNTING = true;
+	public static final boolean ENABLE_ROBUST_DNDS_COUNTING = false;
 	private JButton setDnDsButton;
 	private boolean setDnDsButtonClicked = false;
 
@@ -290,9 +303,10 @@ public class PartitionModelPanel extends OptionsPanel {
 		setDnDsButton = new JButton("Use robust counting for dN/dS estimation");
 		setDnDsButton.addActionListener(new ListenSetDnDsButton());
 		PanelUtils.setupComponent(setDnDsButton);
-		setDnDsButton.setToolTipText("<html>" +
-                "Enable counting of synonymous and non-synonymous mutations as described in<br> Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation)" +
-                "</html>");
+		setDnDsButton
+				.setToolTipText("<html>"
+						+ "Enable counting of synonymous and non-synonymous mutations as described in<br> Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation)"
+						+ "</html>");
 
 		// ////////////////////////
 		// ---END: dNdS button---//
@@ -669,10 +683,10 @@ public class PartitionModelPanel extends OptionsPanel {
 
 		}
 
-//		if (BeautiApp.advanced) {
-			addSeparator();
-			addComponent(dolloCheck);
-//		}
+		// if (BeautiApp.advanced) {
+		addSeparator();
+		addComponent(dolloCheck);
+		// }
 
 		setOptions();
 	}
@@ -729,6 +743,28 @@ public class PartitionModelPanel extends OptionsPanel {
 				case 1:
 					model.setCodonHeteroPattern("112");
 					break;
+				case 3:
+					// TODO: Set Robust Counting model
+
+					// Add model to ComponentOptions
+					DnDsComponentOptions comp = (DnDsComponentOptions) model
+							.getOptions().getComponentOptions(
+									DnDsComponentOptions.class);
+
+					// set codon partition positions
+					model.setCodonHeteroPattern("123");
+
+					comp.addPartition(model);
+
+					// set values
+					nucSubstCombo.setSelectedIndex(0);
+					frequencyCombo.setSelectedIndex(0);
+					heteroCombo.setSelectedIndex(0);
+					gammaCatCombo.setOpaque(true);
+					substUnlinkCheck.setSelected(true);
+					heteroUnlinkCheck.setSelected(false);
+					freqsUnlinkCheck.setSelected(true);
+					break;
 				default:
 					model.setCodonHeteroPattern("123");
 					break;
@@ -739,12 +775,22 @@ public class PartitionModelPanel extends OptionsPanel {
 					// partitioning
 					substUnlinkCheck.setEnabled(true);
 					heteroUnlinkCheck
-							.setEnabled(heteroCombo.getSelectedIndex() != 0);
+							.setEnabled(heteroCombo.getSelectedIndex() != 3);
 					freqsUnlinkCheck.setEnabled(true);
 					substUnlinkCheck.setSelected(true);
 					heteroUnlinkCheck.setSelected(heteroCombo
 							.getSelectedIndex() != 0);
 					freqsUnlinkCheck.setSelected(true);
+					
+				} else if (codingCombo.getSelectedIndex() != 3) {
+					// TODO: remove Robust Counting model
+					DnDsComponentOptions comp = (DnDsComponentOptions) model
+							.getOptions().getComponentOptions(
+									DnDsComponentOptions.class);
+
+					// Remove model from ComponentOptions
+					comp.removePartition(model);
+
 				} else {
 					substUnlinkCheck.setEnabled(false);
 					substUnlinkCheck.setSelected(false);

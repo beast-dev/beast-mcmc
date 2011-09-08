@@ -27,7 +27,6 @@ package dr.app.beauti.siteModelsPanel;
 
 import jam.panels.OptionsPanel;
 
-import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -258,7 +257,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
 					if (checkRobustCounting()) {
 						setRobustCountingModel();
-					}// END: checkRobustCounting
+					}
 
 				} else {
 					removeRobustCountingModel();
@@ -283,8 +282,9 @@ public class PartitionModelPanel extends OptionsPanel {
 									+ "Set site heterogeneity model to none \n"
 									+ "and partition into 3 codon position.");
 
-							JOptionPane.showMessageDialog(getActiveFrame(),
-									msg, "Error", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(PanelUtils
+									.getActiveFrame(), msg, "Error",
+									JOptionPane.ERROR_MESSAGE);
 
 							robustCountingCheck.setSelected(false);
 
@@ -294,7 +294,7 @@ public class PartitionModelPanel extends OptionsPanel {
 					return false;
 				}
 
-			}// END:checkRobustCounting
+			}// END: checkRobustCounting
 
 			private void setRobustCountingModel() {
 				DnDsComponentOptions comp = (DnDsComponentOptions) model
@@ -722,19 +722,6 @@ public class PartitionModelPanel extends OptionsPanel {
 				}
 			}
 		});
-	}
-
-	public static Frame getActiveFrame() {
-		Frame result = null;
-		Frame[] frames = Frame.getFrames();
-		for (int i = 0; i < frames.length; i++) {
-			Frame frame = frames[i];
-			if (frame.isVisible()) {
-				result = frame;
-				break;
-			}
-		}
-		return result;
 	}
 
 }

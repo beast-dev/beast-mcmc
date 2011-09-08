@@ -311,10 +311,6 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
             return GIBBS_OPERATOR;
         }
 
-        private final String[] names = { GIBBS_OPERATOR, "internalTraitGibbsOperator" };
-
-        public String[] getParserNames() { return names; }
-
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             double weight = xo.getDoubleAttribute(WEIGHT);

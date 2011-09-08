@@ -27,6 +27,7 @@ package dr.app.beauti.siteModelsPanel;
 
 import jam.panels.OptionsPanel;
 
+import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -41,8 +42,10 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -264,17 +267,42 @@ public class PartitionModelPanel extends OptionsPanel {
 			}// END: actionPerformed
 
 			private boolean checkRobustCounting() {
-				// TODO Auto-generated method stub
-				return false;
-			}
+
+				if (heteroCombo.getSelectedIndex() == 0
+						&& codingCombo.getSelectedIndex() == 2) {
+
+					return true;
+
+				} else {
+
+					SwingUtilities.invokeLater(new Runnable() {
+
+						public void run() {
+
+							String msg = String.format("Wrong settings. \n"
+									+ "Set site heterogeneity model to none \n"
+									+ "and partition into 3 codon position.");
+
+							JOptionPane.showMessageDialog(getActiveFrame(),
+									msg, "Error", JOptionPane.ERROR_MESSAGE);
+
+							robustCountingCheck.setSelected(false);
+
+						}
+					});
+
+					return false;
+				}
+
+			}// END:checkRobustCounting
 
 			private void setRobustCountingModel() {
 				DnDsComponentOptions comp = (DnDsComponentOptions) model
 						.getOptions().getComponentOptions(
 								DnDsComponentOptions.class);
 
+				// Add model to ComponentOptions
 				comp.addPartition(model);
-
 			}
 
 			private void removeRobustCountingModel() {
@@ -284,7 +312,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
 				// Remove model from ComponentOptions
 				comp.removePartition(model);
-
 			}
 
 		});
@@ -548,13 +575,13 @@ public class PartitionModelPanel extends OptionsPanel {
 
 			addComponent(setSRD06Button);
 
-			// ///////////////////
-			// ---dNdS button---//
-			// ///////////////////
+			// ///////////////////////////
+			// ---dNdS robust countin---//
+			// ///////////////////////////
 			addComponent(robustCountingCheck);
-			// ////////////////////////
-			// ---END: dNdS button---//
-			// ////////////////////////
+			// ////////////////////////////////
+			// ---END: dNdS robust countin---//
+			// ////////////////////////////////
 
 			break;
 
@@ -695,6 +722,19 @@ public class PartitionModelPanel extends OptionsPanel {
 				}
 			}
 		});
+	}
+
+	public static Frame getActiveFrame() {
+		Frame result = null;
+		Frame[] frames = Frame.getFrames();
+		for (int i = 0; i < frames.length; i++) {
+			Frame frame = frames[i];
+			if (frame.isVisible()) {
+				result = frame;
+				break;
+			}
+		}
+		return result;
 	}
 
 }

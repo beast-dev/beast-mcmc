@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.dnds.DnDsComponentOptions;
+import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -71,12 +72,17 @@ public class TreeLikelihoodGenerator extends Generator {
 
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
+        DolloComponentOptions stochasticDolloComponent = (DolloComponentOptions) options
+                .getComponentOptions(DolloComponentOptions.class);
+
+        boolean doStochasticDollo =  stochasticDolloComponent.doStochasticDollo(model);
+
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
             
-			DnDsComponentOptions component = (DnDsComponentOptions) options
+			DnDsComponentOptions robustCountingComponent = (DnDsComponentOptions) options
 					.getComponentOptions(DnDsComponentOptions.class);
 
-			boolean doRobustCounting = component.doRobustCounting();
+			boolean doRobustCounting = robustCountingComponent.doRobustCounting();
 
 			if (doRobustCounting) {
 				

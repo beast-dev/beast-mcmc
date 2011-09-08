@@ -268,12 +268,12 @@ public enum PriorType {
             }
         } else if (parameter.isCMTCRate) {
             return new PriorType[] {
-                    CMTC_RATE_REFERENCE_PRIOR,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
                     LOGNORMAL_PRIOR,
                     GAMMA_PRIOR,
+                    CMTC_RATE_REFERENCE_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
         } else if (parameter.isHierarchical) {

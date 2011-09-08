@@ -13,6 +13,7 @@ public class DesignMatrix extends MatrixParameter {
     public static final String FORM = "form";
     public static final String ROW_DIMENSION = "rowDimension";
     public static final String COL_DIMENSION = "colDimension";
+    public static final String CHECK_IDENTIFABILITY = "checkIdentifiability";
 
     public DesignMatrix(String name) {
         super(name);
@@ -91,6 +92,7 @@ public class DesignMatrix extends MatrixParameter {
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newBooleanRule(ADD_INTERCEPT, true),
+                AttributeRule.newBooleanRule(CHECK_IDENTIFABILITY, true),
                 new ElementRule(Parameter.class, 0, Integer.MAX_VALUE), // TODO or have the following                            
                 AttributeRule.newStringRule(FORM,true),     // TODO Should have to include both FORM and DIMENSION at the same time
                 AttributeRule.newIntegerRule(COL_DIMENSION,true),

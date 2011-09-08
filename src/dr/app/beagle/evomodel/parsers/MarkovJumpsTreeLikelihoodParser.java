@@ -159,38 +159,41 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         return registersFound;
     }
 
+    public static XMLSyntaxRule[]  rules =
+            new XMLSyntaxRule[] {
+                    AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                    AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
+                    AttributeRule.newStringRule(JUMP_TAG_NAME, true),
+                    AttributeRule.newBooleanRule(SCALE_REWARDS,true),
+                    AttributeRule.newBooleanRule(USE_UNIFORMIZATION,true),
+                    AttributeRule.newBooleanRule(REPORT_UNCONDITIONED_COLUMNS, true),
+                    AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
+                    AttributeRule.newBooleanRule(SAVE_HISTORY, true),
+                    AttributeRule.newBooleanRule(LOG_HISTORY, true),
+                    new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
+                            new ElementRule(TaxonList.class),
+                            new ElementRule(Parameter.class),
+                    }, true),
+                    new ElementRule(PatternList.class),
+                    new ElementRule(TreeModel.class),
+                    new ElementRule(GammaSiteRateModel.class),
+                    new ElementRule(BranchSubstitutionModel.class, true),
+                    new ElementRule(BranchRateModel.class, true),
+                    new ElementRule(SubstitutionModel.class),
+                    AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
+                    new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
+                    new ElementRule(COUNTS,
+                            new XMLSyntaxRule[] {
+                                    new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
+                            },true),
+                    new ElementRule(REWARDS,
+                            new XMLSyntaxRule[] {
+                                    new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
+                            },true),
+                    new ElementRule(FrequencyModel.class, true),
+            };
+
     public XMLSyntaxRule[] getSyntaxRules() {
-        return new XMLSyntaxRule[] {
-            AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
-            AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
-            AttributeRule.newStringRule(JUMP_TAG_NAME, true),
-            AttributeRule.newBooleanRule(SCALE_REWARDS,true),
-            AttributeRule.newBooleanRule(USE_UNIFORMIZATION,true),
-            AttributeRule.newBooleanRule(REPORT_UNCONDITIONED_COLUMNS, true),
-            AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
-            AttributeRule.newBooleanRule(SAVE_HISTORY, true),
-            AttributeRule.newBooleanRule(LOG_HISTORY, true),
-                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
-                new ElementRule(TaxonList.class),
-                new ElementRule(Parameter.class),
-            }, true),
-            new ElementRule(PatternList.class),
-            new ElementRule(TreeModel.class),
-            new ElementRule(GammaSiteRateModel.class),
-            new ElementRule(BranchSubstitutionModel.class, true),                
-            new ElementRule(BranchRateModel.class, true),
-            new ElementRule(SubstitutionModel.class),
-            AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
-            new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
-            new ElementRule(COUNTS,
-                    new XMLSyntaxRule[] {
-                            new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
-                    },true),
-            new ElementRule(REWARDS,
-                    new XMLSyntaxRule[] {
-                            new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
-                    },true),
-            new ElementRule(FrequencyModel.class, true),
-        };
+        return rules;
     }
 }

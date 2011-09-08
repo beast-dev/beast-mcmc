@@ -88,7 +88,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
 	private JComboBox codingCombo = new JComboBox(new String[] { "Off",
 			"2 partitions: positions (1 + 2), 3",
-			"3 partitions: positions 1, 2, 3"});
+			"3 partitions: positions 1, 2, 3" });
 
 	private JCheckBox substUnlinkCheck = new JCheckBox(
 			"Unlink substitution rate parameters across codon positions");
@@ -97,10 +97,8 @@ public class PartitionModelPanel extends OptionsPanel {
 	private JCheckBox freqsUnlinkCheck = new JCheckBox(
 			"Unlink base frequencies across codon positions");
 
-    private JCheckBox robustCountingCheck = new JCheckBox(
-            "Use robust counting");
+	private JCheckBox robustCountingCheck = new JCheckBox("Use robust counting");
 	private JButton setSRD06Button;
-
 
 	private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
 	// private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical",
@@ -235,7 +233,7 @@ public class PartitionModelPanel extends OptionsPanel {
 
 		class ListenSetSRD06Button implements ActionListener {
 			public void actionPerformed(ActionEvent ev) {
-                setSRD06Model();
+				setSRD06Model();
 			}
 		}
 
@@ -246,28 +244,49 @@ public class PartitionModelPanel extends OptionsPanel {
 				.setToolTipText("<html>Sets the SRD06 model as described in<br>"
 						+ "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
-		// ///////////////////
-		// ---dNdS button---//
-		// ///////////////////
+		// ////////////////////////////
+		// ---dNdS robust counting---//
+		// ////////////////////////////
+		// TODO
 
 		robustCountingCheck.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent ev) {
 				if (robustCountingCheck.isSelected()) {
-//                    if (checkRobustCounting()) {
-                    DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
-                            .getComponentOptions(DnDsComponentOptions.class);
 
-                    comp.addPartition(model);
-//                    }
-                } else {
-                    DnDsComponentOptions comp = (DnDsComponentOptions) model.getOptions()
-                            .getComponentOptions(DnDsComponentOptions.class);
+					if (checkRobustCounting()) {
+						setRobustCountingModel();
+					}// END: checkRobustCounting
 
-                    // Remove model from ComponentOptions
-                    comp.removePartition(model);
+				} else {
+					removeRobustCountingModel();
 				}
 
+			}// END: actionPerformed
+
+			private boolean checkRobustCounting() {
+				// TODO Auto-generated method stub
+				return false;
 			}
+
+			private void setRobustCountingModel() {
+				DnDsComponentOptions comp = (DnDsComponentOptions) model
+						.getOptions().getComponentOptions(
+								DnDsComponentOptions.class);
+
+				comp.addPartition(model);
+
+			}
+
+			private void removeRobustCountingModel() {
+				DnDsComponentOptions comp = (DnDsComponentOptions) model
+						.getOptions().getComponentOptions(
+								DnDsComponentOptions.class);
+
+				// Remove model from ComponentOptions
+				comp.removePartition(model);
+
+			}
+
 		});
 
 		PanelUtils.setupComponent(robustCountingCheck);
@@ -532,7 +551,7 @@ public class PartitionModelPanel extends OptionsPanel {
 			// ///////////////////
 			// ---dNdS button---//
 			// ///////////////////
-            addComponent(robustCountingCheck);
+			addComponent(robustCountingCheck);
 			// ////////////////////////
 			// ---END: dNdS button---//
 			// ////////////////////////
@@ -649,36 +668,14 @@ public class PartitionModelPanel extends OptionsPanel {
 				case 1:
 					model.setCodonHeteroPattern("112");
 					break;
-				case 3:
-					// TODO: Set Robust Counting model
-
-					// Add model to ComponentOptions
-					DnDsComponentOptions comp = (DnDsComponentOptions) model
-							.getOptions().getComponentOptions(
-									DnDsComponentOptions.class);
-
-					// set codon partition positions
-					model.setCodonHeteroPattern("123");
-
-					comp.addPartition(model);
-
-					// set values
-					nucSubstCombo.setSelectedIndex(0);
-					frequencyCombo.setSelectedIndex(0);
-					heteroCombo.setSelectedIndex(0);
-					gammaCatCombo.setOpaque(true);
-					substUnlinkCheck.setSelected(true);
-					heteroUnlinkCheck.setSelected(false);
-					freqsUnlinkCheck.setSelected(true);
-					break;
 				default:
 					model.setCodonHeteroPattern("123");
 					break;
 
 				}
 
-				if (codingCombo.getSelectedIndex() != 0) { // codon position
-					// partitioning
+				if (codingCombo.getSelectedIndex() != 0) {
+					// codon position partitioning
 					substUnlinkCheck.setEnabled(true);
 					heteroUnlinkCheck
 							.setEnabled(heteroCombo.getSelectedIndex() != 3);
@@ -687,15 +684,6 @@ public class PartitionModelPanel extends OptionsPanel {
 					heteroUnlinkCheck.setSelected(heteroCombo
 							.getSelectedIndex() != 0);
 					freqsUnlinkCheck.setSelected(true);
-
-				} else if (codingCombo.getSelectedIndex() != 3) {
-					// TODO: remove Robust Counting model
-					DnDsComponentOptions comp = (DnDsComponentOptions) model
-							.getOptions().getComponentOptions(
-									DnDsComponentOptions.class);
-
-					// Remove model from ComponentOptions
-					comp.removePartition(model);
 
 				} else {
 					substUnlinkCheck.setEnabled(false);

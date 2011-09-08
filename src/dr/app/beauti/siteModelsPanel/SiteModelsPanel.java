@@ -81,7 +81,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     BeautiFrame frame = null;
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
-    boolean hasAlignment = false;
 
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
     JLabel errorModelLabel;

@@ -91,8 +91,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, OptionsPanel> treePriorPanels = new HashMap<PartitionTreePrior, OptionsPanel>();
 
-    private boolean isCheckedTipDate = false;
-
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
         super();
         this.frame = parent;
@@ -155,11 +153,12 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         JPanel panel3 = new JPanel(new FlowLayout(FlowLayout.LEFT));
         panel3.setOpaque(false);
-        linkTreePriorCheck.setEnabled(true);
+        linkTreePriorCheck.setEnabled(false);
         linkTreePriorCheck.setSelected(true);
         linkTreePriorCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 updateShareSameTreePriorChanged();
+                fireTreePriorsChanged();
             }
         });
         linkTreePriorCheck.setToolTipText("Decide whether to use one tree prior for all trees");
@@ -215,7 +214,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    private void fireTreePriorsChanged() {
+    void fireTreePriorsChanged() {
         options.updatePartitionAllLinks();
         frame.setDirty();
     }
@@ -344,8 +343,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        linkTreePriorCheck.setEnabled(options.getPartitionTreeModels().size() > 1
-                && (!options.contains(Microsatellite.INSTANCE)) && (!options.useStarBEAST));
+        boolean selected = !(options.getPartitionTreeModels().size() < 2
+                || options.contains(Microsatellite.INSTANCE) || options.useStarBEAST);
+
+        linkTreePriorCheck.setEnabled(selected);
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {

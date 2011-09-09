@@ -349,14 +349,14 @@ public class BeastGenerator extends Generator {
             for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
                 // first write the general data type for this model
                 AbstractPartitionData partition1 = options.getAllPartitionData(model).get(0);
-                if (partition1.getTrait() != null) {
+                if (partition1.getTraits() != null) {
                     discreteTraitGenerator.writeGeneralDataType(model, writer);
                     writer.writeText("");
                 }
 
                 // now create an attribute pattern for each trait that uses it
                 for (AbstractPartitionData partition : options.getAllPartitionData(model)) {
-                    if (partition.getTrait() != null) {
+                    if (partition.getTraits() != null) {
                         discreteTraitGenerator.writeAttributePatterns(partition, writer);
                         writer.writeText("");
 
@@ -512,9 +512,11 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("Likelihood for tree given discrete trait data");
             }
             for (AbstractPartitionData partition : options.dataPartitions) {
-                TraitData trait = partition.getTrait();
-                if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    discreteTraitGenerator.writeAncestralTreeLikelihood(partition, writer);
+                if (partition.getTraits() != null) {
+                    TraitData trait = partition.getTraits().get(0);
+                    if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                        discreteTraitGenerator.writeAncestralTreeLikelihood(partition, writer);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -529,10 +531,12 @@ public class BeastGenerator extends Generator {
                 writer.writeComment("Likelihood for tree given continuous multivariate trait data");
             }
             for (AbstractPartitionData partition : options.dataPartitions) {
-                TraitData trait = partition.getTrait();
-                if (trait != null && trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
-                    throw new UnsupportedOperationException("Not implemented yet: writeMultivariateTreeLikelihood");
+                if (partition.getTraits() != null) {
+                    TraitData trait = partition.getTraits().get(0);
+                    if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                        throw new UnsupportedOperationException("Not implemented yet: writeMultivariateTreeLikelihood");
 //                    generalTraitGenerator.writeMultivariateTreeLikelihood(trait, writer);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -822,7 +826,7 @@ public class BeastGenerator extends Generator {
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
             AbstractPartitionData partition = options.getAllPartitionData(model).get(0);
-            if (partition.getTrait() != null && partition.getTrait().getTraitType() == TraitData.TraitType.DISCRETE) {
+            if (partition.getTraits() != null && partition.getTraits().get(0).getTraitType() == TraitData.TraitType.DISCRETE) {
                 logGenerator.writeDiscreteTraitLogToFile(writer, model, substitutionModelGenerator);
             }
         }

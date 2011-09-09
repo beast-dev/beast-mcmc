@@ -325,7 +325,7 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> getAllPartitionData(TraitData trait) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getTrait() == trait) {
+            if (pd.getTraits().contains(trait)) {
                 pdList.add(pd);
             }
         }
@@ -813,10 +813,16 @@ public class BeautiOptions extends ModelOptions {
         return selRow; // only for trait panel
     }
 
-    public int createPartitionForTrait(String name, TraitData trait) {
+    public int createPartitionForTraits(String name, TraitData trait) {
+        List<TraitData> traits = new ArrayList<TraitData>();
+        traits.add(trait);
+        return createPartitionForTraits(name, traits);
+    }
+
+    public int createPartitionForTraits(String name, List<TraitData> traits) {
         int selRow = -1;
 
-        PartitionData partition = new PartitionData(this, name, trait);
+        PartitionData partition = new PartitionData(this, name, traits);
         dataPartitions.add(partition);
         selRow = dataPartitions.size() - 1;
 
@@ -885,7 +891,7 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasDiscreteTraitPartition() {
         for (AbstractPartitionData partition : dataPartitions) {
-            if (partition.getTrait() != null && partition.getTrait().getTraitType() == TraitData.TraitType.DISCRETE) {
+            if (partition.getTraits() != null && partition.getTraits().get(0).getTraitType() == TraitData.TraitType.DISCRETE) {
                 return true;
             }
         }
@@ -903,7 +909,7 @@ public class BeautiOptions extends ModelOptions {
 
     public boolean hasContinuousTraitPartition() {
         for (AbstractPartitionData partition : dataPartitions) {
-            if (partition.getTrait() != null && partition.getTrait().getTraitType() == TraitData.TraitType.CONTINUOUS) {
+            if (partition.getTraits() != null && partition.getTraits().get(0).getTraitType() == TraitData.TraitType.CONTINUOUS) {
                 return true;
             }
         }
@@ -913,7 +919,7 @@ public class BeautiOptions extends ModelOptions {
     public Set<String> getStatesForDiscreteModel(PartitionSubstitutionModel model) {
         Set<String> states = new TreeSet<String>();
         for (AbstractPartitionData partition : getAllPartitionData(model)) {
-            Set<String> newStates = partition.getTrait().getStatesOfTrait(taxonList);
+            Set<String> newStates = partition.getTraits().get(0).getStatesOfTrait(taxonList);
 
             if (states.size() > 0) {
                 Set<String> shared = new HashSet<String>(states);

@@ -28,6 +28,8 @@ import dr.evolution.alignment.Patterns;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 
+import java.util.List;
+
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
@@ -56,7 +58,7 @@ public class PartitionData extends AbstractPartitionData {
         this.toSite = toSite;
         this.every = every;
 
-        this.trait = null;
+        this.traits = null;
 
         Patterns patterns = null;
         if (alignment != null) {
@@ -65,7 +67,7 @@ public class PartitionData extends AbstractPartitionData {
         calculateMeanDistance(patterns);
     }
 
-    public PartitionData(BeautiOptions options, String name, TraitData trait) {
+    public PartitionData(BeautiOptions options, String name, List<TraitData> traits) {
         this.options = options;
         this.name = name;
         this.fileName = null;
@@ -75,7 +77,7 @@ public class PartitionData extends AbstractPartitionData {
         this.toSite = -1;
         this.every = 1;
 
-        this.trait = trait;
+        this.traits = traits;
 
         calculateMeanDistance(null);
     }
@@ -97,7 +99,7 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     public TaxonList getTaxonList() {
-        return getAlignment();  
+        return getAlignment();
     }
 
     public int getSiteCount() {
@@ -112,24 +114,27 @@ public class PartitionData extends AbstractPartitionData {
             }
             return (to - from + 1) / every;
         } else {
-            // must be a trait
-            return -1;
+            return traits.size();
         }
     }
 
     public DataType getDataType() {
         if (alignment != null) {
             return alignment.getDataType();
+        } else if (traits != null) {
+            return traits.get(0).getDataType();
         } else {
-            return trait.getDataType();
+            throw new RuntimeException("Trait and alignment are null");
         }
     }
 
     public String getDataDescription() {
         if (alignment != null) {
             return alignment.getDataType().getDescription();
+        } else if (traits != null) {
+            return traits.get(0).getTraitType().toString();
         } else {
-            return trait.getTraitType().toString();
+            throw new RuntimeException("Trait and alignment are null");
         }
     }
 

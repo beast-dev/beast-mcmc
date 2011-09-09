@@ -59,10 +59,6 @@ public class SelectTraitDialog {
         nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
-        optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
-        optionPanel.addSpanningComponent(new JLabel("At present, this is limited to discrete traits:"));
-        optionPanel.addComponentWithLabel("Trait:", traitCombo);
-        optionPanel.addComponents(copyCheck, nameField);
 
         copyCheck.addItemListener(
                 new java.awt.event.ItemListener() {
@@ -76,10 +72,18 @@ public class SelectTraitDialog {
 
     public int showDialog(Collection<TraitData> traits) {
 
-        traitCombo.removeAllItems();
-        for (Object model : traits) {
-            traitCombo.addItem(model);
+        optionPanel.removeAll();
+        if (traits == null) {
+            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
+        } else {
+            traitCombo.removeAllItems();
+            for (Object model : traits) {
+                traitCombo.addItem(model);
+            }
+            optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
+            optionPanel.addComponentWithLabel("Trait:", traitCombo);
         }
+        optionPanel.addComponents(copyCheck, nameField);
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,

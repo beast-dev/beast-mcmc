@@ -28,6 +28,7 @@ package dr.app.beauti.traitspanel;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
+import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.TraitData;
 import dr.app.beauti.options.TraitGuesser;
@@ -48,6 +49,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.*;
 
 /**
  * @author Andrew Rambaut
@@ -69,6 +71,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             "the selected taxa.</html>";
     private static final String CLEAR_TRAIT_VALUES_TOOLTIP = "<html>This clears all the values currently assigned to taxa for<br>" +
             "this trait.</html>";
+    private static final String CREATE_TRAIT_PARTITIONS_TOOLTIP = "<html>Create a data partition for the selected traits.</html>";
 
     public final JTable traitsTable;
     private final TraitsTableModel traitsTableModel;
@@ -77,6 +80,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private final DataTableModel dataTableModel;
 
     private final BeautiFrame frame;
+    private final DataPanel dataPanel;
 
     private BeautiOptions options = null;
 
@@ -87,10 +91,12 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private TraitValueDialog traitValueDialog = null;
 
     AddTraitAction addTraitAction = new AddTraitAction();
+    CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
 
-    public TraitsPanel(BeautiFrame parent, Action importTraitsAction) {
+    public TraitsPanel(BeautiFrame parent, DataPanel dataPanel, Action importTraitsAction) {
 
         this.frame = parent;
+        this.dataPanel = dataPanel;
 
         traitsTableModel = new TraitsTableModel();
 //        TableSorter sorter = new TableSorter(traitsTableModel);
@@ -110,7 +116,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         TableEditorStopper.ensureEditingStopWhenTableLosesFocus(traitsTable);
 
-        traitsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        traitsTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         traitsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 traitSelectionChanged();
@@ -189,6 +195,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        PanelUtils.setupComponent(button);
 //        button.setToolTipText(CLEAR_TRAIT_VALUES_TOOLTIP);
 //        toolBar1.add(button);
+        button = new JButton(createTraitPartitionAction);
+        PanelUtils.setupComponent(button);
+        button.setToolTipText(CREATE_TRAIT_PARTITIONS_TOOLTIP);
+        toolBar1.add(button);
 
         ActionPanel actionPanel1 = new ActionPanel(false);
         actionPanel1.setAddAction(addTraitAction);
@@ -282,7 +292,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         int selRow = traitsTable.getSelectedRow();
         if (selRow >= 0) {
             currentTrait = options.traits.get(selRow);
-            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+//            traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
             removeTraitAction.setEnabled(true);
 //        } else {
 //            currentTrait = null;
@@ -434,7 +444,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             addTrait(newTrait);
 
             if (createTraitDialog.createTraitPartition()) {
-                options.createPartitionForTrait(name, newTrait);
+                options.createPartitionForTraits(name, newTrait);
             }
 
             fireTraitsChanged();
@@ -716,4 +726,23 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             return buffer.toString();
         }
     }
+
+    public class CreateTraitPartitionAction extends AbstractAction {
+        public CreateTraitPartitionAction() {
+            super("Create partition from trait ...");
+            setToolTipText("Create a data partition from a trait. Traits can be defined in the Traits panel.");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            int[] selRows = traitsTable.getSelectedRows();
+            java.util.List<TraitData> traits = new ArrayList<TraitData>();
+            for (int row : selRows) {
+                TraitData trait = options.traits.get(row);
+                traits.add(trait);
+
+            }
+            dataPanel.createFromTraits(traits);
+        }
+    }
+
 }

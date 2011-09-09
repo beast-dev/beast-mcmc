@@ -55,12 +55,12 @@ public class DiscreteTraitGenerator extends Generator {
 //                            + "' in taxon '" + taxon.getId() + "'");
 //                }
 
-                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
+            writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                    new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                // denotes missing data using '?'
-                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
-                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+            // denotes missing data using '?'
+            writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
+            writer.writeCloseTag(AttributeParser.ATTRIBUTE);
 //            }
         }
     }
@@ -99,12 +99,12 @@ public class DiscreteTraitGenerator extends Generator {
      * @param writer    XMLWriter
      */
     public void writeAttributePatterns(AbstractPartitionData partition, XMLWriter writer) {
-        writer.writeComment("Data pattern for discrete trait, '" + partition.getTrait().getName() + "'");
+        writer.writeComment("Data pattern for discrete trait, '" + partition.getTraits().get(0).getName() + "'");
 
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS),
-                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, partition.getTrait().getName())});
+                new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, partition.getTraits().get(0).getName())});
         writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
         writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, partition.getPartitionSubstitutionModel().getPrefix() + DATA_TYPE);
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);
@@ -141,7 +141,7 @@ public class DiscreteTraitGenerator extends Generator {
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
             case RANDOM_LOCAL_CLOCK:
-            	writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
+                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES,
                         clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
                 break;
             case AUTOCORRELATED:
@@ -158,11 +158,13 @@ public class DiscreteTraitGenerator extends Generator {
 
     public void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) {
-            TraitData trait = partition.getTrait();
+            if (partition.getTraits() != null) {
+                TraitData trait = partition.getTraits().get(0);
 
-            if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                        partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+                            partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                }
             }
         }
     }

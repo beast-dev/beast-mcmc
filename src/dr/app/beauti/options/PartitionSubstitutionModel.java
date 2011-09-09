@@ -50,6 +50,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private AminoAcidModelType aaSubstitutionModel = AminoAcidModelType.BLOSUM_62;
     private BinaryModelType binarySubstitutionModel = BinaryModelType.BIN_SIMPLE;
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
+    private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
 
     private boolean activateBSSVS = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
@@ -90,6 +91,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         aaSubstitutionModel = source.aaSubstitutionModel;
         binarySubstitutionModel = source.binarySubstitutionModel;
         discreteSubstType = source.discreteSubstType;
+        continuousSubstModelType = source.continuousSubstModelType;
 
         activateBSSVS = source.activateBSSVS;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
@@ -314,6 +316,9 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
                 "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
 
+        //=============== continuous ======================
+        // no parameters currently required for continuous models
+
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
                 PriorScaleType.NONE, 0.0, 1.0, 1.0, false);
@@ -496,6 +501,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
                     params.add(nonZeroRates);
                 }
+                break;
+
+            case DataType.CONTINUOUS:
+                // no parameters for this model
                 break;
 
             case DataType.MICRO_SAT:
@@ -715,6 +724,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 }
                 break;
 
+            case DataType.CONTINUOUS:
+                new RuntimeException("not implemented yet");
+//                break;
+
             case DataType.MICRO_SAT:
                 if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {
 
@@ -909,6 +922,14 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public void setDiscreteSubstType(DiscreteSubstModelType discreteSubstType) {
         this.discreteSubstType = discreteSubstType;
+    }
+
+    public ContinuousSubstModelType getContinuousSubstModelType() {
+        return continuousSubstModelType;
+    }
+
+    public void setContinuousSubstModelType(final ContinuousSubstModelType continuousSubstModelType) {
+        this.continuousSubstModelType = continuousSubstModelType;
     }
 
     public MicroSatModelType.RateProportionality getRatePorportion() {

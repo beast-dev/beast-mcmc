@@ -1,7 +1,7 @@
 package dr.app.beauti.options;
 
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.continuous.Continuous;
+import dr.evolution.datatype.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
@@ -73,7 +73,15 @@ public class TraitData {
     }
 
     public DataType getDataType() {
-        return GeneralDataType.INSTANCE;
+        switch (traitType) {
+            case DISCRETE:
+                return GeneralDataType.INSTANCE;
+            case INTEGER:
+                return GeneralDataType.INSTANCE;
+            case CONTINUOUS:
+                return ContinuousDataType.INSTANCE;
+        }
+        throw new IllegalArgumentException("Unknown trait type");
     }
 
     public String getFileName() {

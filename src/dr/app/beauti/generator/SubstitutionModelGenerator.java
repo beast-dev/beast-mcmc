@@ -170,6 +170,10 @@ public class SubstitutionModelGenerator extends Generator {
                 writeDiscreteTraitsSiteModel(model, writer);
                 break;
 
+            case DataType.CONTINUOUS:
+                throw new RuntimeException("Not implemented yet");
+//                break;
+
             case DataType.MICRO_SAT:
                 writeMicrosatSubstModel(model, writer);
                 break;
@@ -691,6 +695,10 @@ public class SubstitutionModelGenerator extends Generator {
             case DataType.GENERAL:
                 //TODO
                 break;
+
+            case DataType.CONTINUOUS:
+                throw new RuntimeException("Not implemented yet");
+//                break;
 
             case DataType.MICRO_SAT:
                 writeMicrosatSubstModelParameterRef(model, writer);

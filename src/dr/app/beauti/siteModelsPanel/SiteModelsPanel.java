@@ -347,6 +347,9 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
             case DataType.GENERAL:
                 title = "Discrete Traits";
                 break;
+            case DataType.CONTINUOUS:
+                title = "Continuous Traits";
+                break;
             case DataType.MICRO_SAT:
                 title = "Microsatellite";
                 break;

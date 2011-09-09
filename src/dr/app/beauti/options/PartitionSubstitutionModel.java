@@ -1077,8 +1077,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     public Set<String> getDiscreteStateSet() {
         Set<String> states = new HashSet<String>();
         for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
-            if (partition.getTrait() != null) {
-                states.addAll(partition.getTrait().getStatesOfTrait(options.taxonList));
+            if (partition.getTraits() != null) {
+                states.addAll(partition.getTraits().get(0).getStatesOfTrait(options.taxonList));
             }
         }
         return states;

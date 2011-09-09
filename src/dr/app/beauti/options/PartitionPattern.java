@@ -18,7 +18,7 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
         this.fileName = fileName;
         this.patterns = patterns;
 
-        this.trait = null;
+        this.traits = null;
 
         calculateMeanDistance(patterns);
     }
@@ -28,7 +28,7 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
     }
 
     public TaxonList getTaxonList() {
-        return getPatterns();  
+        return getPatterns();
     }
 
     public int getSiteCount() {
@@ -39,7 +39,7 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
         if (patterns != null) {
             return patterns.getDataType();
         } else {
-            return trait.getDataType();
+            throw new RuntimeException("patterns should not be null");
         }
     }
 
@@ -47,7 +47,7 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
         if (patterns != null) {
             return patterns.getDataType().getDescription();
         } else {
-            return trait.getTraitType().toString();
+            throw new RuntimeException("patterns should not be null");
         }
     }
 }

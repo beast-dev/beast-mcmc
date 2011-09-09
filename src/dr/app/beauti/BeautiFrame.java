@@ -131,7 +131,7 @@ public class BeautiFrame extends DocumentFrame {
 
         dataPanel = new DataPanel(this, getImportAction(), getDeleteAction()/*, getImportTraitsAction()*/);
         tipDatesPanel = new TipDatesPanel(this);
-        traitsPanel = new TraitsPanel(this, getImportTraitsAction());
+        traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         clockModelsPanel = new OldClockModelsPanel(this);

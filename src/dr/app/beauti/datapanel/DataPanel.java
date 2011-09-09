@@ -398,28 +398,37 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public void createFromTraits() {
+    public void createFromTraits(List<TraitData> traits) {
         int selRow = -1;
 
         if (selectTraitDialog == null) {
             selectTraitDialog = new SelectTraitDialog(frame);
         }
 
-        List<TraitData> traits = new ArrayList<TraitData>();
-        for (TraitData trait : options.traits) {
-            if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES) && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                traits.add(trait);
+        if (traits==null || traits.size() == 0) {
+            List<TraitData> allTraits = new ArrayList<TraitData>();
+            for (TraitData trait : options.traits) {
+                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES) /*&& trait.getTraitType() == TraitData.TraitType.DISCRETE*/) {
+                    allTraits.add(trait);
+                }
             }
-        }
-        int result = selectTraitDialog.showDialog(traits);
-        if (result != JOptionPane.CANCEL_OPTION) {
-            TraitData trait = selectTraitDialog.getTrait();
-            String name = trait.getName();
-            if (selectTraitDialog.getMakeCopy()) {
-                name = selectTraitDialog.getName();
-            }
+            int result = selectTraitDialog.showDialog(allTraits);
+            if (result != JOptionPane.CANCEL_OPTION) {
+                TraitData trait = selectTraitDialog.getTrait();
+                String name = trait.getName();
+                if (selectTraitDialog.getMakeCopy()) {
+                    name = selectTraitDialog.getName();
+                }
 
-            selRow = options.createPartitionForTrait(name, trait);
+                selRow = options.createPartitionForTraits(name, trait);
+            }
+        } else {
+            // a set of traits have been passed to the function
+            int result = selectTraitDialog.showDialog(null);
+            if (result != JOptionPane.CANCEL_OPTION) {
+                String name = selectTraitDialog.getName();
+                selRow = options.createPartitionForTraits(name, traits);
+            }
         }
 
         modelsChanged();
@@ -559,7 +568,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             AbstractPartitionData partition = options.dataPartitions.get(row);
 
             PartitionTreeModel model = partition.getPartitionTreeModel();
-            if (!model.getName().equals(partition.getName()) && partition.getTrait() == null) {// not a trait
+            if (!model.getName().equals(partition.getName()) && partition.getTraits() == null) {// not a trait
                 PartitionTreeModel newTree = new PartitionTreeModel(options, partition.getName(), model);
 
                 // this prevents partition not broken, and used for unsharing tree prior only,
@@ -589,14 +598,14 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selectedPartitionData.add(partition);
         }
 
-            if (selectedPartitionData.size() > 1) {
-                if (!options.validateDiffTaxa(selectedPartitionData)) {
-                    JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
-                            "Illegal Configuration",
-                            JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+        if (selectedPartitionData.size() > 1) {
+            if (!options.validateDiffTaxa(selectedPartitionData)) {
+                JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
+                        "Illegal Configuration",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
             }
+        }
 
         Object[] treeArray = options.getPartitionTreeModels(selectedPartitionData).toArray();
 
@@ -849,7 +858,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void actionPerformed(ActionEvent ae) {
-            createFromTraits();
+            createFromTraits(null);
         }
     }
 

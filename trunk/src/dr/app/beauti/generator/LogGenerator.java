@@ -433,11 +433,13 @@ public class LogGenerator extends Generator {
 
             for (AbstractPartitionData partition : options.dataPartitions) {
                 if (partition.getPartitionTreeModel() == tree) {
-                    TraitData trait = partition.getTrait();
+                    if (partition.getTraits() != null) {
+                        TraitData trait = partition.getTraits().get(0);
 
-                    if (trait != null && trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                        writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                                partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                        if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                            writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+                                    partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                        }
                     }
                 }
             }

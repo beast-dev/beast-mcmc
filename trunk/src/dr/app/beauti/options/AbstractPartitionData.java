@@ -6,14 +6,19 @@ import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
 
+import java.util.List;
+
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
  */
 public abstract class AbstractPartitionData {
+
+
     protected String fileName;
     protected String name;
-    protected TraitData trait;
+    protected List<TraitData> traits;
 
     protected BeautiOptions options;
     protected PartitionSubstitutionModel model;
@@ -50,8 +55,8 @@ public abstract class AbstractPartitionData {
         return getName();
     }
 
-    public TraitData getTrait() {
-        return trait;
+    public List<TraitData> getTraits() {
+        return traits;
     }
 
     public double getMeanDistance() {

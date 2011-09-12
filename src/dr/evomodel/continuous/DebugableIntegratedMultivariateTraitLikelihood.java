@@ -117,17 +117,6 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
         return Tree.Utils.getCommonAncestorNode(treeModel, leafNames);
     }
 
-
-    private double getRescaledLengthToRoot(NodeRef node) {
-        double length = 0;
-        final NodeRef root = treeModel.getRoot();
-        while (node != root) {
-            length += getRescaledBranchLength(node);
-            node = treeModel.getParent(node);
-        }
-        return length;
-    }
-
     public int getNumberOfDatum() {
         return numData * countNonMissingTips();
     }

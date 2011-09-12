@@ -50,6 +50,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
     public static final String RANDOM_SAMPLE = "randomSample";
     public static final String IGNORE_PHYLOGENY = "ignorePhylogeny";
     public static final String ASCERTAINMENT = "ascertainedTaxon";
+    public static final String EXCHANGEABLE_TIPS = "exchangeableTips";
 
     public AbstractMultivariateTraitLikelihood(String traitName,
                                                TreeModel treeModel,
@@ -125,6 +126,19 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         this.useTreeLength = useTreeLength;
         this.reciprocalRates = reciprocalRates;
 
+        dimTrait = diffusionModel.getPrecisionmatrix().length;
+        dim = traitParameter != null ? traitParameter.getParameter(0).getDimension() : 0;
+        numData = dim / dimTrait;
+
+        if (dim % dimTrait != 0)
+            throw new RuntimeException("dim is not divisible by dimTrait");
+
+        recalculateTreeLength();                           
+        printInformtion();
+
+    }
+
+    protected void printInformtion() {
         StringBuffer sb = new StringBuffer("Creating multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
@@ -142,19 +156,11 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
         sb.append(extraInfo());
         sb.append("\tPlease cite:\n");
         sb.append(Citable.Utils.getCitationString(this));
-                    
-        dimTrait = diffusionModel.getPrecisionmatrix().length;
-        dim = traitParameter.getParameter(0).getDimension();
-        numData = dim / dimTrait;
 
-        if (dim % dimTrait != 0)
-             throw new RuntimeException("dim is not divisible by dimTrait");
 
         sb.append("\n\tDiffusion dimension   : ").append(dimTrait).append("\n");
         sb.append(  "\tNumber of observations: ").append(numData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
-
-        recalculateTreeLength();
     }
 
     private static Citable TraitAscertainmentCitation = new Citable() {//} implements Citable {
@@ -546,7 +552,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
             boolean useTreeLength = xo.getAttribute(USE_TREE_LENGTH, false);
             boolean scaleByTime = xo.getAttribute(SCALE_BY_TIME, false);
             boolean reciprocalRates = xo.getAttribute(RECIPROCAL_RATES, false);
-            boolean reportAsMultivariate = xo.getAttribute(REPORT_MULTIVARIATE, false);
+            boolean reportAsMultivariate = xo.getAttribute(REPORT_MULTIVARIATE, true);
 
             BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
@@ -610,10 +616,12 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                     double pseudoObservations = sampleSizeParameter.getParameterValue(0);
 
                     if (ignorePhylogeny) {
+                        boolean exchangeableTips = xo.getAttribute(EXCHANGEABLE_TIPS, true);
+
                         like = new NonPhylogeneticMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                 traitParameter, deltaParameter, missingIndices, cacheBranches,
                                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate,
-                                mean, pseudoObservations, reciprocalRates);
+                                mean, pseudoObservations, reciprocalRates, exchangeableTips);
                     } else {
                         like = new FullyConjugateMultivariateTraitLikelihood(traitName, treeModel, diffusionModel,
                                 traitParameter, deltaParameter, missingIndices, cacheBranches,
@@ -701,6 +709,7 @@ public abstract class AbstractMultivariateTraitLikelihood extends AbstractModelL
                 AttributeRule.newBooleanRule(CACHE_BRANCHES, true),
                 AttributeRule.newIntegerRule(RANDOM_SAMPLE, true),
                 AttributeRule.newBooleanRule(IGNORE_PHYLOGENY, true),
+                AttributeRule.newBooleanRule(EXCHANGEABLE_TIPS, true),
                 new ElementRule(Parameter.class, true),
                 TreeTraitParserUtilities.randomizeRules(true),
                 TreeTraitParserUtilities.jitterRules(true),

@@ -650,10 +650,14 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
         }
 
-        if (!treeModel.isExternal(node)) {
+        if (peel() && !treeModel.isExternal(node)) {
             preOrderTraverseSample(treeModel, treeModel.getChild(node, 0), thisIndex, treePrecision, treeVariance);
             preOrderTraverseSample(treeModel, treeModel.getChild(node, 1), thisIndex, treePrecision, treeVariance);
         }
+    }
+
+    protected boolean peel() {
+        return true;
     }
 
     public LogColumn[] getColumns() {
@@ -661,11 +665,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
                 new LikelihoodColumn(getId())};
     }
 
-    private boolean areStatesRedrawn = false;
+    protected boolean areStatesRedrawn = false;
 
     protected double[] meanCache;
     protected double[] upperPrecisionCache;
-    private double[] lowerPrecisionCache;
+    protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
     protected boolean[] missing;

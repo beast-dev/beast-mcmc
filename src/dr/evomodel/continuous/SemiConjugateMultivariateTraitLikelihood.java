@@ -1,5 +1,6 @@
 package dr.evomodel.continuous;
 
+import dr.evolution.tree.NodeRef;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
@@ -45,7 +46,17 @@ public class SemiConjugateMultivariateTraitLikelihood extends IntegratedMultivar
 
     protected  double calculateAscertainmentCorrection(int taxonIndex) {
         throw new RuntimeException("Ascertainment correction not yet implemented for semi-conjugate trait likelihoods");
-    }    
+    }
+
+    protected double getRescaledLengthToRoot(NodeRef node) {
+        double length = 0;
+        final NodeRef root = treeModel.getRoot();
+        while (node != root) {
+            length += getRescaledBranchLength(node);
+            node = treeModel.getParent(node);
+        }
+        return length;
+    }
 
     protected double integrateLogLikelihoodAtRoot(double[] y,
                                                   double[] Ay,

@@ -34,6 +34,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     protected double[] numCoalEvents;
     protected double[] storedNumCoalEvents;
     protected double[] gridPoints;
+    protected double theLastTime;
     
     public GMRFMultilocusSkyrideLikelihood(List<Tree> treeList,
                                                Parameter popParameter,
@@ -59,6 +60,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
         this.cutOff = cutOff;
         this.numGridPoints = numGridPoints;
+        System.out.println("numGridPoints: " + numGridPoints);
         setupGridPoints();
         
         addVariable(popSizeParameter);
@@ -93,7 +95,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         storedSufficientStatistics = new double[fieldLength];
         numCoalEvents = new double[fieldLength];
         storedNumCoalEvents = new double[fieldLength];
-
 
 
 		setupGMRFWeights();
@@ -285,9 +286,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
         //time of last coalescent event in tree
         double lastCoalescentTime;
 
-
-
-
         for(int i = 0; i < numTrees; i++){
             currentTimeIndex = 0;
             currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
@@ -300,7 +298,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
            
             numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
-
             minGridIndex = 0;
             while(gridPoints[minGridIndex] <= currentTime){
                 minGridIndex++;
@@ -309,58 +306,111 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
             lastCoalescentTime = currentTime + intervalsList.get(i).getTotalDuration();
 
+            theLastTime = lastCoalescentTime;
 
-            //Must deal with what happens when minGridIndex == maxGridIndex
-            //What if minGridPoint > lastCoalescentTime? 
             maxGridIndex = numGridPoints-1;
-            while(gridPoints[maxGridIndex] >= lastCoalescentTime){
+            while((maxGridIndex >= 0) && (gridPoints[maxGridIndex] >= lastCoalescentTime)){
                 maxGridIndex = maxGridIndex-1;
             }
 
-            //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
+            if(maxGridIndex >= 0){
 
-            while(nextTime < gridPoints[currentGridIndex]){
+                //from likelihood of interval between first sampling time and gridPoints[minGridIndex]
+
+                while(nextTime < gridPoints[currentGridIndex]){
                 
+                    //check to see if interval ends with coalescent event
+                    if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
+
+                        numCoalEvents[currentGridIndex]++;
+                    }
+                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
+                    currentTime = nextTime;
+                    currentTimeIndex++;
+                    nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+
+                    while(nextTime <= currentTime){
+                        currentTimeIndex++;
+                        currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
+                        nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+                    }
+
+                    numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
+
+                }
+
+                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-currentTime)*numLineages*(numLineages-1)*0.5;
+
+                currentGridIndex++;
+
+
+                //from likelihood of intervals between gridPoints[minGridIndex] and gridPoints[maxGridIndex]
+
+                while(currentGridIndex <= maxGridIndex){
+                    if(nextTime >= gridPoints[currentGridIndex]){
+                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
+
+                        currentGridIndex++;
+                    }else{
+
+                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
+
+                        //check to see if interval ends with coalescent event
+                        if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
+                            numCoalEvents[currentGridIndex]++;
+                        }
+                        currentTime = nextTime;
+                        currentTimeIndex++;
+                        nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+                        while(nextTime <= currentTime){
+                            currentTimeIndex++;
+                            currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
+                            nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+                        }
+
+                        numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
+
+                        while(nextTime < gridPoints[currentGridIndex]){
+                            //check to see if interval is coalescent interval or sampling interval
+                            if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
+                                numCoalEvents[currentGridIndex]++;
+                            }
+                            sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
+
+                            currentTime = nextTime;
+                            currentTimeIndex++;
+                            nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+                            while(nextTime <= currentTime){
+                                currentTimeIndex++;
+                                currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
+                                nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+                            }
+
+                            numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
+
+                        }
+                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-currentTime)*numLineages*(numLineages-1)*0.5;
+
+                        currentGridIndex++;
+                    }
+                }
+
+                //from likelihood of interval between gridPoints[maxGridIndex] and lastCoalescentTime
+
+                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
+
                 //check to see if interval ends with coalescent event
                 if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
-                    numCoalEvents[currentGridIndex]++;
+                     numCoalEvents[currentGridIndex]++;
                 }
-                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
 
                 currentTime = nextTime;
                 currentTimeIndex++;
-                nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
 
-                while(nextTime <= currentTime){
-                    currentTimeIndex++;
-                    currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-                    nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);   
-                }
+                while((currentTimeIndex+1) < intervalsList.get(i).getIntervalCount()){
+                    // currentTime = nextTime;
+                    // currentTimeIndex++;
 
-                numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
-            }
-
-            sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-currentTime)*numLineages*(numLineages-1)*0.5;
-
-            currentGridIndex++;
-
-
-            //from likelihood of intervals between gridPoints[minGridIndex] and gridPoints[maxGridIndex]
-
-            while(currentGridIndex <= maxGridIndex){
-                if(nextTime >= gridPoints[currentGridIndex]){
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
-
-                    currentGridIndex++;
-                }else{
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
-
-                    //check to see if interval ends with coalescent event
-                    if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
-                        numCoalEvents[currentGridIndex]++;
-                    }
-                    currentTime = nextTime;
-                    currentTimeIndex++;
                     nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
                     while(nextTime <= currentTime){
                         currentTimeIndex++;
@@ -370,66 +420,44 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
                     numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
 
-                    while(nextTime < gridPoints[currentGridIndex]){
-                        //check to see if interval is coalescent interval or sampling interval
-                        if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
-                        numCoalEvents[currentGridIndex]++;                            
-                        }
-                        sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
+                    //check to see if interval is coalescent interval or sampling interval
 
-                        currentTime = nextTime;
-                        currentTimeIndex++;
+
+                    if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
+                        numCoalEvents[currentGridIndex]++;
+                    }
+                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
+                    currentTime = nextTime;
+                    currentTimeIndex++;
+                
+                }
+            }else{
+                while((currentTimeIndex+1)< intervalsList.get(i).getIntervalCount()){
+                    //check to see if interval is coalescent interval or sampling interval
+                    if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
+                        numCoalEvents[currentGridIndex]++;
+                    }
+                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5; 
+
+                    currentTime = nextTime;
+                    currentTimeIndex++;
+                    if((currentTimeIndex+1)< intervalsList.get(i).getIntervalCount()){
                         nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
+
                         while(nextTime <= currentTime){
                             currentTimeIndex++;
                             currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-                            nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);    
+                            nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
                         }
 
                         numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
+                        
                     }
-                    sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (gridPoints[currentGridIndex]-currentTime)*numLineages*(numLineages-1)*0.5;
-                    currentGridIndex++;
-                }
-            }
 
-            //from likelihood of interval between gridPoints[maxGridIndex] and lastCoalescentTime
-
-            sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-gridPoints[currentGridIndex-1])*numLineages*(numLineages-1)*0.5;
-
-            //check to see if interval ends with coalescent event
-            if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
-                 numCoalEvents[currentGridIndex]++;
-            }
-
-
-            currentTime = nextTime;
-            currentTimeIndex++;
-
-            while((currentTimeIndex+1) < intervalsList.get(i).getIntervalCount()){
-
-               // currentTime = nextTime;
-               // currentTimeIndex++;
-
-                nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
-                while(nextTime <= currentTime){
-                    currentTimeIndex++;
-                    currentTime = intervalsList.get(i).getIntervalTime(currentTimeIndex);
-                    nextTime = intervalsList.get(i).getIntervalTime(currentTimeIndex+1);
                 }
 
-                numLineages = intervalsList.get(i).getLineageCount(currentTimeIndex+1);
 
-                //check to see if interval is coalescent interval or sampling interval
-                if(intervalsList.get(i).getCoalescentEvents(currentTimeIndex+1) > 0){
-                numCoalEvents[currentGridIndex]++;
-                }
-                sufficientStatistics[currentGridIndex] = sufficientStatistics[currentGridIndex] + (nextTime-currentTime)*numLineages*(numLineages-1)*0.5;
-                currentTime = nextTime;
-                currentTimeIndex++;
-                
             }
-           
         }
 
     }
@@ -442,7 +470,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
 
     protected double calculateLogCoalescentLikelihood() {
-        
+
 		if (!intervalsKnown) {
 			// intervalsKnown -> false when handleModelChanged event occurs in super.
 			wrapSetupIntervals();
@@ -455,11 +483,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 		// Matrix operations taken from block update sampler to calculate data likelihood and field prior
 
 		double currentLike = 0;
-        double[] currentGamma1 = popSizeParameter.getParameterValues();
-       // currentGamma1 = popSizeParameter.getParameterValues();
+        double[] currentGamma = popSizeParameter.getParameterValues();
         
 		for (int i = 0; i < fieldLength; i++) {
-			currentLike += -numCoalEvents[i]*currentGamma1[i] - sufficientStatistics[i] * Math.exp(-currentGamma1[i]);
+            currentLike += -numCoalEvents[i]*currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
 		}
 
 		return currentLike;
@@ -475,7 +502,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             setupSufficientStatistics();
             intervalsKnown = true;
          }
-         */   
+         */
         double currentLike = 0;
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
@@ -506,7 +533,6 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 	}
 
 
-    //need to handle case where gridPoints are user-specified
     protected void setupGMRFWeights() {
 
         //setupSufficientStatistics();
@@ -534,34 +560,23 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 	}
 
 
+    /*
+    protected void setupGMRFWeights() {
 
-    protected double getFieldScalar() {
-        return 1.0;
-    }
+        //setupSufficientStatistics();
 
-
- /*
-   protected void setupGMRFWeights() {
-
-        setupSufficientStatistics();
-
-		//Set up the weight Matrix
+        //Set up the weight Matrix
 		double[] offdiag = new double[fieldLength - 1];
 		double[] diag = new double[fieldLength];
 
 		//First set up the offdiagonal entries;
 
-		if (!timeAwareSmoothing) {
-			for (int i = 0; i < fieldLength - 1; i++) {
-				offdiag[i] = -1.0;
-			}
-
-
-		} else {
-			for (int i = 0; i < fieldLength - 1; i++) {
-                offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
-			}
-		}
+        offdiag[0] = -2.0/gridPoints[1];
+        //might want to modify this
+        offdiag[fieldLength-2] = -1.0 / (gridPoints[fieldLength-2]-gridPoints[fieldLength-3]);
+		for (int i = 1; i < fieldLength - 2; i++) {
+            offdiag[i] = -2.0/(gridPoints[i+1]-gridPoints[i-1]);
+        }
 
 		//Then set up the diagonal entries;
 		for (int i = 1; i < fieldLength - 1; i++)
@@ -572,9 +587,14 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 		diag[fieldLength - 1] = -offdiag[fieldLength - 2];
 
 		weightMatrix = new SymmTridiagMatrix(diag, offdiag);
-	}
 
- */
+	}
+    */
+
+    protected double getFieldScalar() {
+        return 1.0;
+    }
+
 
 
 

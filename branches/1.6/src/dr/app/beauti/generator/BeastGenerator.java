@@ -27,15 +27,13 @@ package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.enumTypes.ClockType;
-import dr.app.beauti.enumTypes.FixRateType;
-import dr.app.beauti.enumTypes.StartingTreeType;
-import dr.app.beauti.enumTypes.TreePriorType;
+import dr.app.beauti.enumTypes.*;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
@@ -620,6 +618,9 @@ public class BeastGenerator extends Generator {
         String codonHeteroPattern = model.getCodonHeteroPattern();
         int partitionCount = model.getCodonPartitionCount();
 
+        boolean isCovarionModel = model.getDataType().getType() == DataType.COVARION
+                && model.getBinarySubstitutionModel() == BinaryModelType.BIN_COVARION;
+
         if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
@@ -629,8 +630,8 @@ public class BeastGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
-                writePatternList(partition, 0, 3, writer);
-                writePatternList(partition, 1, 3, writer);
+                writePatternList(partition, 0, 3, isCovarionModel, writer);
+                writePatternList(partition, 1, 3, isCovarionModel, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
@@ -641,7 +642,7 @@ public class BeastGenerator extends Generator {
                         }
                 );
 
-                writePatternList(partition, 2, 3, writer);
+                writePatternList(partition, 2, 3, isCovarionModel, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
@@ -656,14 +657,14 @@ public class BeastGenerator extends Generator {
                             }
                     );
 
-                    writePatternList(partition, i - 1, 3, writer);
+                    writePatternList(partition, i - 1, 3, isCovarionModel, writer);
 
                     writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
                 }
 
             }
         } else {
-            writePatternList(partition, 0, 1, writer);
+            writePatternList(partition, 0, 1, isCovarionModel, writer);
         }
     }
 
@@ -675,7 +676,7 @@ public class BeastGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(PartitionData partition, int offset, int every, XMLWriter writer) {
+    private void writePatternList(PartitionData partition, int offset, int every, boolean isCovarionModel, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();
@@ -706,6 +707,10 @@ public class BeastGenerator extends Generator {
 
         if (every > 1) {
             attributes.add(new Attribute.Default<String>("every", "" + every));
+        }
+
+        if (isCovarionModel) {
+            attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.STRIP, false)); // default true
         }
 
         // generate <patterns>

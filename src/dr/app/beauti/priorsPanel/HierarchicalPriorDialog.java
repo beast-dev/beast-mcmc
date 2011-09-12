@@ -61,10 +61,12 @@ public class HierarchicalPriorDialog {
 
     final private BeautiOptions options;
 
-    private double hpmMeanMean;
-    private double hpmMeanStDev;
-    private double hpmPrecShape;
-    private double hpmPrecScale;
+    private double hpmMeanMean = 0.0;
+    private double hpmMeanStDev = 100.0;
+    private double hpmMeanInitial = 0.0;
+    private double hpmPrecShape = 0.001;
+    private double hpmPrecScale = 1000.0;
+    private double hpmPrecInitial = 1.0;
 
     public HierarchicalPriorDialog(JFrame frame, BeautiOptions options) {
         this.frame = frame;
@@ -110,9 +112,11 @@ public class HierarchicalPriorDialog {
 
         hpm.getConditionalParameterList().get(0).mean = hpmMeanMean;
         hpm.getConditionalParameterList().get(0).stdev = hpmMeanStDev;
+        hpm.getConditionalParameterList().get(0).initial = hpmMeanInitial;
 
         hpm.getConditionalParameterList().get(1).shape = hpmPrecShape;
         hpm.getConditionalParameterList().get(1).scale = hpmPrecScale;
+        hpm.getConditionalParameterList().get(1).initial = hpmPrecInitial;
 
     }
 
@@ -208,19 +212,15 @@ public class HierarchicalPriorDialog {
             }
         });
 
-        KeyListener listener = new KeyAdapter() {
-            public void keyReleased(KeyEvent e) {
-                if (e.getComponent() instanceof RealNumberField) {
-                    String number = ((RealNumberField) e.getComponent()).getText();
-                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E")
-                            || number.startsWith("-") || number.endsWith("-"))) {
-//                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
-                        setupChart();
-                        dialog.repaint();
-                    }
+        for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.addListener(new PriorOptionsPanel.Listener() {
+                public void optionsPanelChanged() {
+                    setupChart();
+                    dialog.validate();
+                    dialog.repaint();
                 }
-            }
-        };
+            });
+        }
 
         dialog.pack();
         if (OSType.isMac()) {
@@ -256,33 +256,9 @@ public class HierarchicalPriorDialog {
     }
 
     private void setArguments(PriorType priorType) {
-//        PriorOptionsPanel panel;
-//        switch (priorType) {
-//            case NORMAL_HPM_PRIOR:
-//                panel = optionsPanels.get(priorType);
-//                panel.getField(0).setValue(parameter.mean);
-////                panel.getField(1).setRange(0.0, Double.MAX_VALUE);
-//                panel.getField(1).setValue(parameter.stdev);
-//                break;
-//
-//            case LOGNORMAL_HPM_PRIOR:
-//                panel = optionsPanels.get(priorType);
-//                if (parameter.isMeanInRealSpace() && parameter.mean <= 0) {// if LOGNORMAL && meanInRealSpace = true, then mean > 0
-//                    panel.getField(0).setValue(0.01);
-//                } else {
-//                    panel.getField(0).setValue(parameter.mean);
-//                }
-//                panel.getField(1).setValue(parameter.stdev);
-//                panel.getField(2).setValue(parameter.offset);
-//                meanInRealSpaceCheck.setSelected(parameter.isMeanInRealSpace());
-//                break;
-//        }
-//        HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-//                options.getComponentOptions(HierarchicalModelComponentOptions.class);
-//        PriorOptionsPanel panel;
 
-//        panel = optionsPanels.get(PriorType.NORMAL_PRIOR);
-//        Parameter meanParameter = comp.get
+        optionsPanels.get(PriorType.NORMAL_PRIOR).setArguments(parameter);
+        optionsPanels.get(PriorType.GAMMA_PRIOR).setArguments(parameter);
 
     }
 
@@ -420,12 +396,14 @@ public class HierarchicalPriorDialog {
             return new NormalDistribution(getValue(0), getValue(1));
         }
 
-        public void setArguments(Parameter parameter) {
+        public void setArguments(Parameter parameter) {          
+            getInitialField().setValue(hpmMeanInitial);
             getField(0).setValue(hpmMeanMean);
             getField(1).setValue(hpmMeanStDev);
         }
 
         public void getArguments(Parameter parameter) {
+            hpmMeanInitial = getInitialField().getValue();
             hpmMeanMean = getValue(0);
             hpmMeanStDev = getValue(1);
         }
@@ -449,13 +427,15 @@ public class HierarchicalPriorDialog {
         }
 
         public void setArguments(Parameter parameter) {
+            getInitialField().setValue(hpmPrecInitial);
             getField(0).setValue(hpmPrecShape);
             getField(1).setValue(hpmPrecScale);
         }
 
         public void getArguments(Parameter parameter) {
-            hpmPrecShape = getValue(0);
-            hpmPrecScale = getValue(1);
+            hpmPrecInitial = getInitialField().getValue();
+            parameter.shape = hpmPrecShape = getValue(0);
+            parameter.scale = hpmPrecScale = getValue(1);
         }
     }
 }

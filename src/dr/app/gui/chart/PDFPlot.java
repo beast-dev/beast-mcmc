@@ -39,6 +39,7 @@ public class PDFPlot extends Plot.AbstractPlot {
     private double xMax, xMin;
     private double yMax;
     private int stepCount = 100;
+    private static final double headRoom = 0.1;
 
     /**
      * Constructor
@@ -111,7 +112,7 @@ public class PDFPlot extends Plot.AbstractPlot {
         if (yAxis instanceof LogAxis) {
             throw new IllegalArgumentException("Log axis are not compatible to PDFPlot");
         } else {
-            yAxis.setRange(0.0, yMax);
+            yAxis.setRange(0.0, yMax * (1.0 + headRoom));
         }
     }
 

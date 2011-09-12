@@ -33,30 +33,7 @@
 			<parameter id="leafTraits"/>
 		</nodeTraits>
 	</treeModel>
-<!--
-    <multivariateNormalPrior id="rootPrior">
-        <meanParameter>
-            <parameter value="0.0"/>
-        </meanParameter>
-        <precisionParameter>
-            <matrixParameter>
-                <parameter value="0.001"/>
-            </matrixParameter>
-        </precisionParameter>
-    </multivariateNormalPrior>
--->
-	<!--<multivariateNormalPrior id="rootPrior">-->
-	   <!--<meanParameter>-->
-		 <!--<parameter value="0.0 0.0"/>-->
-		   <!--</meanParameter>-->
-	   	<!--<precisionParameter>-->
-	 		<!--<matrixParameter>-->
-	   			<!--<parameter value="0.001 0.0"/>-->
-	   			<!--<parameter value="0.0 0.001"/>-->
-	 		<!--</matrixParameter>-->
-	   	<!--</precisionParameter>-->
-	<!--</multivariateNormalPrior>-->
-            
+
     <multivariateDiffusionModel id="diffusionModel">
 		<precisionMatrix>
 
@@ -77,8 +54,7 @@
 		<treeModel idref="treeModel"/>
 		<traitParameter>
 			<parameter idref="leafTraits"/>
-		</traitParameter>
-		<!--<multivariateNormalPrior idref="rootPrior"/>-->
+		</traitParameter>		
         <conjugateRootPrior>
             <meanParameter>
                 <parameter value="-4.0 2.0"/>

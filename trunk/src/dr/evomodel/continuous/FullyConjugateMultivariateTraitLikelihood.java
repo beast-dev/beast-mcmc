@@ -252,8 +252,8 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
         return outVariance;
     }
 
-    private double[] rootPriorMean;
-    private double rootPriorSampleSize;
+    protected double[] rootPriorMean;
+    protected double rootPriorSampleSize;
 
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution

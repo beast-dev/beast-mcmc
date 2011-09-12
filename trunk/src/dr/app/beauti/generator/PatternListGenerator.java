@@ -6,6 +6,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionPattern;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SitePatterns;
@@ -43,6 +44,9 @@ public class PatternListGenerator extends Generator {
         String codonHeteroPattern = model.getCodonHeteroPattern();
         int partitionCount = model.getCodonPartitionCount();
 
+        boolean isCovarionModel = model.getDataType().getType() == DataType.COVARION
+                && model.getBinarySubstitutionModel() == BinaryModelType.BIN_COVARION;
+
         if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
@@ -52,8 +56,8 @@ public class PatternListGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
-                writePatternList(partition, 0, 3, null, writer);
-                writePatternList(partition, 1, 3, null, writer);
+                writePatternList(partition, 0, 3, null, isCovarionModel, writer);
+                writePatternList(partition, 1, 3, null, isCovarionModel, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
@@ -64,7 +68,7 @@ public class PatternListGenerator extends Generator {
 //                        }
 //                );
 
-                writePatternList(partition, 2, 3, model.getPrefix(2), writer);
+                writePatternList(partition, 2, 3, model.getPrefix(2), isCovarionModel, writer);
 
 //                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
@@ -95,7 +99,7 @@ public class PatternListGenerator extends Generator {
 //                            }
 //                    );
 
-                    writePatternList(partition, i - 1, 3, model.getPrefix(i), writer);
+                    writePatternList(partition, i - 1, 3, model.getPrefix(i), isCovarionModel, writer);
 
 						// writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 					}
@@ -104,12 +108,12 @@ public class PatternListGenerator extends Generator {
 			}// END: pattern is 123
 
         } else {
-            writePatternList(partition, 0, 1, "", writer);
+            writePatternList(partition, 0, 1, "", isCovarionModel, writer);
         }
     }
 
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, XMLWriter writer) {
-    	writePatternList(partition, offset, every, codonPrefix, true, writer);
+    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean isCovarionModel, XMLWriter writer) {
+    	writePatternList(partition, offset, every, codonPrefix, true, isCovarionModel, writer);
     }
     /**
      * Write a single pattern list
@@ -119,7 +123,7 @@ public class PatternListGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, XMLWriter writer) {
+    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, boolean isCovarionModel, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();
@@ -152,7 +156,11 @@ public class PatternListGenerator extends Generator {
         }
 
         if(!unique) {
-        	attributes.add(new Attribute.Default<String>("unique", "" + false));
+        	attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.UNIQUE, false));
+        }
+
+        if (isCovarionModel) {
+            attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.STRIP, false)); // default true
         }
 
         // generate <patterns>

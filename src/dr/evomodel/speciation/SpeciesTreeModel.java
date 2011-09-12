@@ -823,7 +823,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
             int loc = -1;
             for (int nc = 0; nc < startTree.getChildCount(node); ++nc) {
                 final Double p = setInitialSplitPopulations(startTree, startTree.getChild(node, nc), pos);
-                if (nc == 0) {
+                if (!constantPopulation && nc == 0) {
                     loc = pos[0];
                     pos[0] += 1;
                 }
@@ -857,7 +857,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
                 p0 = Double.parseDouble(st.nextToken());
             }
         }
-        return p0;
+        return !constantPopulation ? p0 : null;
     }
 
     private SimpleTree compatibleUninformedSpeciesTree(Tree startTree) {

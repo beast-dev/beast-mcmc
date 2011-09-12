@@ -117,6 +117,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         upperField.addKeyListener(listener);
     }
 
+    protected RealNumberField getInitialField() {
+        return initialField;
+    }
+
     void addListener(Listener listener) {
         listeners.add(listener);
     }
@@ -545,6 +549,22 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     };
 
     static final PriorOptionsPanel CTMC_RATE_REFERENCE = new PriorOptionsPanel(false) {
+
+        void setup() {
+        }
+
+        public Distribution getDistribution() {
+            return null;
+        }
+
+        public void setArguments(Parameter parameter) {
+        }
+
+        public void getArguments(Parameter parameter) {
+        }
+    };
+
+    static final PriorOptionsPanel ONE_OVER_X = new PriorOptionsPanel(false) {
 
         void setup() {
         }

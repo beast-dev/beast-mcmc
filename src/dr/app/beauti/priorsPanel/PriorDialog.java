@@ -62,6 +62,7 @@ public class PriorDialog {
     private JPanel contentPanel;
 
     private JLabel citationText;
+    private JLabel improperCaution;
     private JChart chart;
     private JPanel quantilePanel;
     private JTextArea quantileText;
@@ -80,6 +81,7 @@ public class PriorDialog {
         optionsPanels.put(PriorType.INVERSE_GAMMA_PRIOR, PriorOptionsPanel.INVERSE_GAMMA);
         optionsPanels.put(PriorType.BETA_PRIOR, PriorOptionsPanel.BETA);
         optionsPanels.put(PriorType.CMTC_RATE_REFERENCE_PRIOR, PriorOptionsPanel.CTMC_RATE_REFERENCE);
+        optionsPanels.put(PriorType.ONE_OVER_X_PRIOR, PriorOptionsPanel.ONE_OVER_X);
 //        optionsPanels.put(PriorType.NORMAL_HPM_PRIOR, new NormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.LOGNORMAL_HPM_PRIOR, new LognormalHPMOptionsPanel());
 //        optionsPanels.put(PriorType.GMRF_PRIOR, new GMRFOptionsPanel());
@@ -109,6 +111,14 @@ public class PriorDialog {
               "<html>Approximate continuous time Markov chain rate <br>" +
                     "reference prior developed in Ferreira & Suchard (2008).<br>" +
                     "Use when explicit prior information is unavailable</html>");
+
+        improperCaution = new JLabel();
+        improperCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
+        improperCaution.setOpaque(false);
+        improperCaution.setText(
+                "<html>This improper distribution often leads to an improper posterior. <br>" +
+                      "This distribution is likely appropriate when used for the <br>" +
+                      "constant population size under the Coalescent.</html>");        
     }
 
     public int showDialog(final Parameter parameter) {
@@ -161,7 +171,6 @@ public class PriorDialog {
                 }
             });
         }
-
 
         dialog.pack();
         if (OSType.isMac()) {
@@ -274,6 +283,10 @@ public class PriorDialog {
 
         if (priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR) {
             optionsPanel.addSpanningComponent(citationText);
+        }
+
+        if (priorType == PriorType.ONE_OVER_X_PRIOR) {
+            optionsPanel.addSpanningComponent(improperCaution);
         }
 
         if (priorType.isPlottable()) {

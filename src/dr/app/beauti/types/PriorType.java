@@ -21,7 +21,7 @@ public enum PriorType {
     GAMMA_PRIOR("Gamma", true, true),
     INVERSE_GAMMA_PRIOR("Inverse Gamma", true, true),
     BETA_PRIOR("Beta", true, true),
-    ONE_OVER_X_PRIOR("1/x", true, true),
+    ONE_OVER_X_PRIOR("1/x", true, false),
     CMTC_RATE_REFERENCE_PRIOR("CTMC Rate Reference", false, false),
     LOGNORMAL_HPM_PRIOR("Lognormal HPM", false, false),
     NORMAL_HPM_PRIOR("Normal HPM", false, false),

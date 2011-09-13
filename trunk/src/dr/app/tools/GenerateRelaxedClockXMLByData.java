@@ -5,6 +5,11 @@ import dr.app.beauti.util.XMLWriter;
 import java.io.*;
 
 /**
+ * Given data file format is
+ * 1st line : anything which is ignored
+ * 2nd line : one taxon name    separator (e.g. space or tab)    its sequence data
+ * 3rd line : ...
+ *
  * @author Walter Xie
  */
 public class GenerateRelaxedClockXMLByData {

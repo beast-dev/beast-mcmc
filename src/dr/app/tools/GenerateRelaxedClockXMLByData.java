@@ -7,7 +7,7 @@ import java.io.*;
 /**
  * @author Walter Xie
  */
-public class beatBattiEtAl {
+public class GenerateRelaxedClockXMLByData {
 
     static final String path = "/Users/local/EC/dxie004/Documents/BEAST1Release/RR_Datasets/";
     static final String startingTree = "(((((Ssc:65,Bta:65):16,((Cfa:46,Fca:46):28,Eca:74):7):11," +

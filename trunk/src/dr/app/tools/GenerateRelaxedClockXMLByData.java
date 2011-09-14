@@ -74,24 +74,39 @@ public class GenerateRelaxedClockXMLByData {
 
     private static void writeRestXML(XMLWriter w, String outputFileName) throws IOException {
 
-        w.writeText("\n\t<patterns id=\"patterns\" from=\"1\">\n" +
-                "\t\t<alignment idref=\"alignment\"/>\n" +
-                "\t</patterns>");
+        w.writeText("\n\t<!-- a Birth-Death speciation process (Gernhard 2008).                       -->\n" +
+                "\t<birthDeathModel id=\"birthDeath\" units=\"substitutions\">\n" +
+                "\t\t<birthMinusDeathRate>\n" +
+                "\t\t\t<parameter id=\"birthDiffRate\" value=\"1.0\" lower=\"0.0\" upper=\"1000000.0\"/>\n" +
+                "\t\t</birthMinusDeathRate>\n" +
+                "\t\t<relativeDeathRate>\n" +
+                "\t\t\t<parameter id=\"relativeDeathRate\" value=\"0.5\" lower=\"0.0\" upper=\"1.0\"/>\n" +
+                "\t\t</relativeDeathRate>\n" +
+                "\t</birthDeathModel>\n");
 
-        w.writeText("\n\t<constantSize id=\"constant\" units=\"substitutions\">\n" +
-                "\t\t<populationSize>\n" +
-                "\t\t\t<parameter id=\"popSize\" value=\"0.077\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
-                "\t\t</populationSize>\n" +
-                "\t</constantSize>\n");
+//        w.writeText("\n\t<constantSize id=\"constant\" units=\"substitutions\">\n" +
+//                "\t\t<populationSize>\n" +
+//                "\t\t\t<parameter id=\"popSize\" value=\"0.077\" lower=\"0.0\" upper=\"Infinity\"/>\n" +
+//                "\t\t</populationSize>\n" +
+//                "\t</constantSize>\n");
 
         w.flush();
         w.writeText("\n" +
                 "\t<!-- Generate a random starting tree under the coalescent process      -->\n" +
                 "\t<newick id=\"startingTree\">\n");
-        w.write(startingTree);
+        w.writeText(startingTree);
         w.writeText("\n" + "\t</newick>\n");
-        w.flush();
 
+//        w.writeText("\n<!-- Construct a rough-and-ready UPGMA tree as an starting tree              -->\n" +
+//                "\t<upgmaTree id=\"startingTree\">\n" +
+//                "\t\t<distanceMatrix correction=\"JC\">\n" +
+//                "\t\t\t<patterns>\n"+
+//                "\t\t\t\t<alignment idref=\"alignment\"/>\n" +
+//                "\t\t\t</patterns>\n" +
+//                "\t\t</distanceMatrix>\n" +
+//                "\t</upgmaTree>\n");
+
+        w.flush();
 
         w.writeText("\n" +
                 "\t<!-- Generate a tree model                                                   -->\n" +
@@ -109,16 +124,26 @@ public class GenerateRelaxedClockXMLByData {
                 "\t</treeModel>\n");
 
         w.flush();
+//        w.writeText("\n<!-- Generate a coalescent likelihood                                        -->\n" +
+//                "\t<coalescentLikelihood id=\"coalescent\">\n" +
+//                "\t\t<model>\n" +
+//                "\t\t\t<constantSize idref=\"constant\"/>\n" +
+//                "\t\t</model>\n" +
+//                "\t\t<populationTree>\n" +
+//                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
+//                "\t\t</populationTree>\n" +
+//                "\t</coalescentLikelihood>\n");
 
-        w.writeText("\n<!-- Generate a coalescent likelihood                                        -->\n" +
-                "\t<coalescentLikelihood id=\"coalescent\">\n" +
+        w.writeText("\n" +
+                "\t<!-- Generate a speciation likelihood for Yule or Birth Death                -->\n" +
+                "\t<speciationLikelihood id=\"speciation\">\n" +
                 "\t\t<model>\n" +
-                "\t\t\t<constantSize idref=\"constant\"/>\n" +
+                "\t\t\t<birthDeathModel idref=\"birthDeath\"/>\n" +
                 "\t\t</model>\n" +
-                "\t\t<populationTree>\n" +
+                "\t\t<speciesTree>\n" +
                 "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
-                "\t\t</populationTree>\n" +
-                "\t</coalescentLikelihood>\n");
+                "\t\t</speciesTree>\n" +
+                "\t</speciationLikelihood>\n");
 
         w.writeText("\n<!-- The uncorrelated relaxed clock (Drummond, Ho, Phillips & Rambaut (2006) PLoS Biology 4, e88 )-->\n" +
                 "\t<discretizedBranchRates id=\"branchRates\">\n" +
@@ -138,7 +163,7 @@ public class GenerateRelaxedClockXMLByData {
                 "\t\t</rateCategories>\n" +
                 "\t</discretizedBranchRates>\n");
 
-//        w.write("\n\t<rateStatistic id=\"meanRate\" name=\"meanRate\" mode=\"mean\" internal=\"true\" external=\"true\">\n" +
+//        w.writeText("\n\t<rateStatistic id=\"meanRate\" name=\"meanRate\" mode=\"mean\" internal=\"true\" external=\"true\">\n" +
 //                "\t\t<treeModel idref=\"treeModel\"/>\n" +
 //                "\t\t<discretizedBranchRates idref=\"branchRates\"/>\n" +
 //                "\t</rateStatistic>\n" +
@@ -181,6 +206,7 @@ public class GenerateRelaxedClockXMLByData {
                 "\t\t<discretizedBranchRates idref=\"branchRates\"/> \n" +
                 "\t</treeLikelihood>\n");
 
+        w.flush();
 
         w.writeText("\n" + "\t<!-- Define operators                                                        -->\n" +
                 "\t<operators id=\"operators\">\n");
@@ -188,7 +214,7 @@ public class GenerateRelaxedClockXMLByData {
         w.writeText("\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"0.1\">\n" +
                 "\t\t\t<parameter idref=\"hky.kappa\"/>\n" +
                 "\t\t</scaleOperator>\n" +
-                "\t\t<deltaExchange delta=\"0.01\" weight=\"0.1\">\n" +
+                "\t\t<deltaExchange delta=\"0.01\" weight=\"0.4\">\n" +
                 "\t\t\t<parameter idref=\"hky.frequencies\"/>\n" +
                 "\t\t</deltaExchange>\n" +
 //                "\t\t<subtreeSlide size=\"0.0077\" gaussian=\"true\" weight=\"15\">\n" +
@@ -203,34 +229,38 @@ public class GenerateRelaxedClockXMLByData {
 //                "\t\t<wilsonBalding weight=\"3\">\n" +
 //                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
 //                "\t\t</wilsonBalding>\n" +
-//                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"3\">\n" +
-//                "\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
-//                "\t\t</scaleOperator>\n" +
-//                "\t\t<uniformOperator weight=\"30\">\n" +
-//                "\t\t\t<parameter idref=\"treeModel.internalNodeHeights\"/>\n" +
-//                "\t\t</uniformOperator>\n" +
-                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"3\">\n" +
-                "\t\t\t<parameter idref=\"popSize\"/>\n" +
+                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"1\">\n" +
+                "\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
                 "\t\t</scaleOperator>\n" +
-//                "\t\t<upDownOperator scaleFactor=\"0.75\" weight=\"3\">\n" +
-//                "\t\t\t<up>\n" +
-//                "\t\t\t</up>\n" +
-//                "\t\t\t<down>\n" +
-//                "\t\t\t\t<parameter idref=\"treeModel.allInternalNodeHeights\"/>\n" +
-//                "\t\t\t</down>\n" +
-//                "\t\t</upDownOperator>\n" +
+                "\t\t<uniformOperator weight=\"12\">\n" +
+                "\t\t\t<parameter idref=\"treeModel.internalNodeHeights\"/>\n" +
+                "\t\t</uniformOperator>\n" +
+//                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"3\">\n" +
+//                "\t\t\t<parameter idref=\"popSize\"/>\n" +
+//                "\t\t</scaleOperator>\n" +
+                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"0.1\">\n" +
+                "\t\t\t<parameter idref=\"birthDiffRate\"/>\n" +
+                "\t\t</scaleOperator>\n" +
+                "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"0.1\">\n" +
+                "\t\t\t<parameter idref=\"relativeDeathRate\"/>\n" +
+                "\t\t</scaleOperator>\n" +
+
+                "\t\t<upDownOperator scaleFactor=\"0.75\" weight=\"13\">\n" +
+                "\t\t\t<up>\n" +
+                "\t\t\t</up>\n" +
+                "\t\t\t<down>\n" +
+                "\t\t\t\t<parameter idref=\"treeModel.allInternalNodeHeights\"/>\n" +
+                "\t\t\t</down>\n" +
+                "\t\t</upDownOperator>\n" +
                 "\t\t<scaleOperator scaleFactor=\"0.75\" weight=\"3\">\n" +
                 "\t\t\t<parameter idref=\"ucld.stdev\"/>\n" +
                 "\t\t</scaleOperator> \n" +
-                "\t\t<uniformIntegerOperator weight=\"10\">\n" +
+                "\t\t<uniformIntegerOperator weight=\"13\">\n" +
                 "\t\t\t<parameter idref=\"branchRates.categories\"/>\n" +
                 "\t\t</uniformIntegerOperator>\n" +
-                "\t\t<swapOperator size=\"1\" weight=\"10\" autoOptimize=\"false\">\n" +
+                "\t\t<swapOperator size=\"1\" weight=\"13\" autoOptimize=\"false\">\n" +
                 "\t\t\t<parameter idref=\"branchRates.categories\"/>\n" +
                 "\t\t</swapOperator>\n" +
-                "\t\t<randomWalkIntegerOperator windowSize=\"1.0\" weight=\"10\">\n" +
-                "\t\t\t<parameter idref=\"branchRates.categories\"/>\n" +
-                "\t\t</randomWalkIntegerOperator>\n" +
                 "\n");
 
         w.writeText("\n" + "\t</operators>");
@@ -238,7 +268,8 @@ public class GenerateRelaxedClockXMLByData {
         w.flush();
         w.writeText("\n" +
                 "\t<!-- Define MCMC                                                             -->\n" +
-                "\t<mcmc id=\"mcmc\" chainLength=\"1000000\" autoOptimize=\"true\">\n" +
+                "\t<mcmc id=\"mcmc\" chainLength=\"1000000\" autoOptimize=\"true\" " +
+                "operatorAnalysis=\"" + outputFileName + ".ops\">\n" +
                 "\t\t<posterior id=\"posterior\">\n" +
                 "\t\t\t<prior id=\"prior\">\n" +
                 "\t\t\t\t<logNormalPrior mean=\"1.0\" stdev=\"1.25\" offset=\"0.0\" meanInRealSpace=\"false\">\n" +
@@ -250,10 +281,11 @@ public class GenerateRelaxedClockXMLByData {
                 "\t\t\t\t<exponentialPrior mean=\"0.3333333333333333\" offset=\"0.0\">\n" +
                 "\t\t\t\t\t<parameter idref=\"ucld.stdev\"/>\n" +
                 "\t\t\t\t</exponentialPrior>  \n" +
-                "\t\t\t\t<oneOnXPrior>\n" +
-                "\t\t\t\t\t<parameter idref=\"popSize\"/>\n" +
-                "\t\t\t\t</oneOnXPrior> \n" +
-                "\t\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n");
+//                "\t\t\t\t<oneOnXPrior>\n" +
+//                "\t\t\t\t\t<parameter idref=\"popSize\"/>\n" +
+//                "\t\t\t\t</oneOnXPrior> \n" +
+//                "\t\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n");
+                "\t\t\t<speciationLikelihood idref=\"speciation\"/>\n");
 
         w.writeText("\n" +
                 "\t\t\t</prior>\n" +
@@ -286,12 +318,15 @@ public class GenerateRelaxedClockXMLByData {
 
 
         w.writeText("\t\t<!-- write log to file                                                       -->\n" +
-                "\t\t<log id=\"fileLog\" logEvery=\"1000\" fileName=\"" + outputFileName + ".log\">\n" +
+                "\t\t<log id=\"fileLog\" logEvery=\"100\" fileName=\"" + outputFileName + ".log\">\n" +
                 "\t\t\t<posterior idref=\"posterior\"/>\n" +
                 "\t\t\t<prior idref=\"prior\"/>\n" +
                 "\t\t\t<treeLikelihood idref=\"treeLikelihood\"/>\n" +
-                "\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n" +
-                "\t\t\t<parameter idref=\"popSize\"/>\n" +
+//                "\t\t\t<coalescentLikelihood idref=\"coalescent\"/>\n" +
+                "\t\t\t<speciationLikelihood idref=\"speciation\"/>\n" +
+//                "\t\t\t<parameter idref=\"popSize\"/>\n" +
+                "\t\t\t<parameter idref=\"birthDiffRate\"/>\n" +
+                "\t\t\t<parameter idref=\"relativeDeathRate\"/>\n" +
                 "\t\t\t<parameter idref=\"treeModel.rootHeight\"/>\n" +
                 "\t\t\t<parameter idref=\"hky.kappa\"/>\n" +
                 "\t\t\t<parameter idref=\"hky.frequencies\"/>\n" +
@@ -338,6 +373,11 @@ public class GenerateRelaxedClockXMLByData {
             w.flush();
         }
         w.writeText("\t</alignment>\n");
+
+        w.writeText("\n\t<patterns id=\"patterns\" from=\"1\">\n" +
+                "\t\t<alignment idref=\"alignment\"/>\n" +
+                "\t</patterns>");
+
     }
 
 }

@@ -87,8 +87,8 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
         createOperator("swapBranchRateCategories", "branchRates.categories", "Performs a swap of branch rate categories",
                 "branchRates.categories", OperatorType.SWAP, 1, branchWeights / 3);
-        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories",
-                "branchRates.categories", OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
+//        createOperator("randomWalkBranchRateCategories", "branchRates.categories", "Performs an integer random walk of branch rate categories",
+//                "branchRates.categories", OperatorType.INTEGER_RANDOM_WALK, 1, branchWeights / 3);
         createOperator("uniformBranchRateCategories", "branchRates.categories", "Performs an integer uniform draw of branch rate categories",
                 "branchRates.categories", OperatorType.INTEGER_UNIFORM, 1, branchWeights / 3);
 
@@ -233,7 +233,7 @@ public class PartitionClockModelTreeModelLink extends PartitionOptions {
 
     private void addBranchRateCategories(List<Operator> ops) {
         ops.add(getOperator("swapBranchRateCategories"));
-        ops.add(getOperator("randomWalkBranchRateCategories"));
+//        ops.add(getOperator("randomWalkBranchRateCategories"));
         ops.add(getOperator("uniformBranchRateCategories"));
     }
 //TODO    ops.add(tree.getOperator("treeBitMove"));

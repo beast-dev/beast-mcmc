@@ -56,7 +56,6 @@ public class SelectTraitDialog {
         copyCheck = new JCheckBox("Name trait partition:");
         nameField = new JTextField();
         nameField.setColumns(20);
-        nameField.setEnabled(false);
 
         optionPanel = new OptionsPanel(12, 12);
 
@@ -71,10 +70,13 @@ public class SelectTraitDialog {
     }
 
     public int showDialog(Collection<TraitData> traits) {
-
         optionPanel.removeAll();
         if (traits == null) {
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
+            optionPanel.addComponentWithLabel("Name trait partition:", nameField);
+            nameField.setText("untitled_traits");
+            nameField.setEnabled(true);
+            nameField.selectAll();
         } else {
             traitCombo.removeAllItems();
             for (Object model : traits) {
@@ -82,8 +84,9 @@ public class SelectTraitDialog {
             }
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the following trait."));
             optionPanel.addComponentWithLabel("Trait:", traitCombo);
+            optionPanel.addComponents(copyCheck, nameField);
+            nameField.setEnabled(copyCheck.isSelected());
         }
-        optionPanel.addComponents(copyCheck, nameField);
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -96,13 +99,26 @@ public class SelectTraitDialog {
         final JDialog dialog = optionPane.createDialog(frame, "Create New Partition");
         dialog.pack();
 
-        dialog.setVisible(true);
+        int result;
+        boolean isValid;
 
-        int result = JOptionPane.CANCEL_OPTION;
-        Integer value = (Integer) optionPane.getValue();
-        if (value != null && value != -1) {
-            result = value;
-        }
+        do {
+            dialog.setVisible(true);
+
+            isValid = true;
+            result = JOptionPane.CANCEL_OPTION;
+
+            Integer value = (Integer) optionPane.getValue();
+            if (value != null && value != -1) {
+                result = value;
+            }
+            if (result != JOptionPane.CANCEL_OPTION) {
+                String name = getName().trim();
+                if (name.isEmpty()) {
+                    isValid = false;
+                }
+            }
+        } while (!isValid);
 
         return result;
     }

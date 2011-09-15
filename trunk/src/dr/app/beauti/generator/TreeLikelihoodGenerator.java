@@ -78,14 +78,14 @@ public class TreeLikelihoodGenerator extends Generator {
         boolean doStochasticDollo =  stochasticDolloComponent.doStochasticDollo(model);
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
-            
+
 			DnDsComponentOptions robustCountingComponent = (DnDsComponentOptions) options
 					.getComponentOptions(DnDsComponentOptions.class);
 
 			boolean doRobustCounting = robustCountingComponent.doRobustCounting();
 
 			if (doRobustCounting) {
-				
+
 				for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
 					writeAncestralTreeLikelihood(
 							TreeLikelihoodParser.TREE_LIKELIHOOD, i,
@@ -98,9 +98,9 @@ public class TreeLikelihoodGenerator extends Generator {
 					writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD,
 							i, partition, writer);
 				}
-				
+
 			}// END: doRobustCounting
-			
+
         } else {
             writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
         }
@@ -151,7 +151,7 @@ public class TreeLikelihoodGenerator extends Generator {
 		writer.writeCloseTag(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD);
 
 	}// END: writeAncestralTreeLikelihood
-    
+
     /**
      * Write the tree likelihood XML block.
      *
@@ -239,7 +239,7 @@ public class TreeLikelihoodGenerator extends Generator {
     public void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
             if (partition.getTaxonList() != null) {
-                if (partition instanceof PartitionData) {
+                if (partition instanceof PartitionData && partition.getTraits() == null) {
                     // is an alignment data partition
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
                     if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
@@ -278,7 +278,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeIDref(MicrosatelliteSamplerTreeModelParser.TREE_MICROSATELLITE_SAMPLER_MODEL,
                 treeModel.getPrefix() + TreeModel.TREE_MODEL + ".microsatellite");
-        
+
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()

@@ -60,6 +60,7 @@ public enum OperatorType {
     NARROW_EXCHANGE("narrowExchange"),
     WIDE_EXCHANGE("wideExchange"),
     GMRF_GIBBS_OPERATOR("gmrfGibbsOperator"),
+    PRECISION_GIBBS_OPERATOR("precisionGibbsOperator"),
     WILSON_BALDING("wilsonBalding"),
     NODE_REHIGHT(TreeNodeSlideParser.TREE_NODE_REHEIGHT); // nodeReHeight
 

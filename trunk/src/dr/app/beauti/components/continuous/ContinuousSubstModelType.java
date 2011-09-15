@@ -1,4 +1,4 @@
-package dr.app.beauti.types;
+package dr.app.beauti.components.continuous;
 
 /**
  * @author Andrew Rambaut
@@ -6,7 +6,7 @@ package dr.app.beauti.types;
 public enum ContinuousSubstModelType {
     HOMOGENOUS("Homogenous Brownian model"),
     CAUCHY_RRW("Cauchy RRW model"),
-    GAMMA_RRW("GAMMA RRW model");
+    GAMMA_RRW("Gamma RRW model");
 
     ContinuousSubstModelType(String name) {
         this.name = name;

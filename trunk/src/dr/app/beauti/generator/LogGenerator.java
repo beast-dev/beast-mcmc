@@ -172,7 +172,6 @@ public class LogGenerator extends Generator {
         }
 
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            substitutionModelGenerator.writeStatisticLog(model, writer);
             if (model.getDataType().getType() == DataType.MICRO_SAT)
                 substitutionModelGenerator.writeMicrosatSubstModelParameterRef(model, writer);
         }
@@ -192,14 +191,12 @@ public class LogGenerator extends Generator {
      * @param branchRatesModelGenerator  BranchRatesModelGenerator
      * @param substitutionModelGenerator SubstitutionModelGenerator
      * @param treeLikelihoodGenerator    TreeLikelihoodGenerator
-     * @param discreteTraitGenerator
      */
     public void writeLogToFile(XMLWriter writer,
                                TreePriorGenerator treePriorGenerator,
                                BranchRatesModelGenerator branchRatesModelGenerator,
                                SubstitutionModelGenerator substitutionModelGenerator,
-                               TreeLikelihoodGenerator treeLikelihoodGenerator,
-                               DiscreteTraitGenerator discreteTraitGenerator) {
+                               TreeLikelihoodGenerator treeLikelihoodGenerator) {
         writer.writeComment("write log to file");
 
         if (options.logFileName == null) {
@@ -311,7 +308,6 @@ public class LogGenerator extends Generator {
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_PARAMETERS, writer);
 
         treeLikelihoodGenerator.writeTreeLikelihoodReferences(writer);
-        discreteTraitGenerator.writeAncestralTreeLikelihoodReferences(writer);
         branchRatesModelGenerator.writeClockLikelihoodReferences(writer);
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_FILE_LOG_LIKELIHOODS, writer);
@@ -431,25 +427,10 @@ public class LogGenerator extends Generator {
                 writer.writeIDref("posterior", "posterior");
             }
 
-            for (AbstractPartitionData partition : options.dataPartitions) {
-                if (partition.getPartitionTreeModel() == tree) {
-                    if (partition.getTraits() != null) {
-                        TraitData trait = partition.getTraits().get(0);
-
-                        if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                            writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                                    partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
-                        }
-                    }
-                }
-            }
+            generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, tree, writer);
 
             writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
         } // end For loop
-
-
-        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREES_LOG, writer);
-
 
         if (options.substTreeLog) {
             if (options.useStarBEAST) { // species
@@ -499,27 +480,6 @@ public class LogGenerator extends Generator {
         }
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TREES_LOG, writer);
-    }
-
-//    <parameter idref="locations.trait.rates"/>
-//    <parameter idref="locations.trait.indicators"/>
-//    <parameter idref="locations.clock.rate"/>
-
-    public void writeDiscreteTraitLogToFile(XMLWriter writer,
-                                            PartitionSubstitutionModel model,
-                                            SubstitutionModelGenerator substitutionModelGenerator) {
-
-        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getPrefix();
-        fileName = (fileName.endsWith(".") ? "" : ".") + "rates.log";
-
-        writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "RateMatrixLog"),
-                new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
-                new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
-
-        substitutionModelGenerator.writeRateLog(model, writer);
-
-        writer.writeCloseTag(LoggerParser.LOG);
     }
 
 }

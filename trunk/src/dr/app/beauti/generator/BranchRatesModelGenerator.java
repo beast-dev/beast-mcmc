@@ -536,7 +536,7 @@ public class BranchRatesModelGenerator extends Generator {
         for (AbstractPartitionData partition : options.dataPartitions) { // Each PD has one TreeLikelihood
             PartitionClockModel clockModel = partition.getPartitionClockModel();
 
-            if (clockModel.getClockType() == ClockType.AUTOCORRELATED) {
+            if (clockModel != null && clockModel.getClockType() == ClockType.AUTOCORRELATED) {
                 throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
 //                writer.writeIDref(ACLikelihoodParser.AC_LIKELIHOOD, clockModel.getPrefix() + BranchRateModel.BRANCH_RATES);
             }

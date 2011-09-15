@@ -320,7 +320,7 @@ public class BEAUTiImporter {
 
     public void importTraits(final File file) throws Exception {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
-        Taxa taxa = new Taxa();
+        Taxa taxa = options.taxonList;
 
         DataTable<String[]> dataTable = DataTable.Text.parse(new FileReader(file));
 

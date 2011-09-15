@@ -24,9 +24,10 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.continuous.ContinuousComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.datatype.DataType;
@@ -423,7 +424,7 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> getAllPartitionData(ClockModelGroup clockModelGroup) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
+            if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
                 pdList.add(pd);
             }
         }
@@ -495,7 +496,8 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel model = partition.getPartitionClockModel();
             if (model != null && (!activeModels.contains(model))
                     // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
+                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))
+                    && (!partition.getDataType().equals(DataType.CONTINUOUS))) {
                 activeModels.add(model);
             }
         }
@@ -737,7 +739,7 @@ public class BeautiOptions extends ModelOptions {
         return legal;
     }
 
-    public int getNumTaxon(List<AbstractPartitionData> partitionDataList) {
+    public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList == null) return 0;
 
         List<String> taxonNameList = new ArrayList<String>();
@@ -822,7 +824,7 @@ public class BeautiOptions extends ModelOptions {
     public int createPartitionForTraits(String name, List<TraitData> traits) {
         int selRow = -1;
 
-        PartitionData partition = new PartitionData(this, name, traits);
+        PartitionData partition = new PartitionData(this, name, traits.get(0).getFileName(), traits);
         dataPartitions.add(partition);
         selRow = dataPartitions.size() - 1;
 
@@ -831,7 +833,7 @@ public class BeautiOptions extends ModelOptions {
             partition.setPartitionSubstitutionModel(substModel);
         }
 
-        if (partition.getPartitionClockModel() == null) {
+        if (partition.getPartitionClockModel() == null && partition.getDataType().getType() != DataType.CONTINUOUS) {
             // PartitionClockModel based on PartitionData
             PartitionClockModel pcm = new PartitionClockModel(this, partition);
             partition.setPartitionClockModel(pcm);
@@ -843,6 +845,9 @@ public class BeautiOptions extends ModelOptions {
             partition.setPartitionTreeModel(getPartitionTreeModels().get(0));// always use 1st tree
 //            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }
+
+        ContinuousComponentOptions comp = (ContinuousComponentOptions)getComponentOptions(ContinuousComponentOptions.class);
+        comp.createParameters(this);
 
         return selRow; // only for trait panel
     }

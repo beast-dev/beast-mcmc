@@ -108,7 +108,7 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 		else
 			return attributes.getAttribute(name);
 	}
-	
+
 	/**
 	 * if attributes == null, return false
 	 * @param name attribute name
@@ -150,7 +150,12 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 
 	public String toString() { return getId(); }
 
-	// **************************************************************
+    @Override
+    public boolean equals(final Object o) {
+        return getId().equals(((Taxon)o).getId());
+    }
+
+    // **************************************************************
 	// Comparable IMPLEMENTATION
 	// **************************************************************
 

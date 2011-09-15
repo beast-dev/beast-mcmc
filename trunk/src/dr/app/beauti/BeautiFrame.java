@@ -10,11 +10,12 @@ package dr.app.beauti;
 
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.continuous.ContinuousComponentFactory;
 import dr.app.beauti.components.dnds.DnDsComponentFactory;
 import dr.app.beauti.components.dollo.DolloComponentFactory;
 import dr.app.beauti.components.hpm.HierarchicalModelComponentFactory;
-import dr.app.beauti.components.SequenceErrorModelComponentFactory;
-import dr.app.beauti.components.TipDateSamplingComponentFactory;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentFactory;
+import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentFactory;
 import dr.app.beauti.datapanel.DataPanel;
 import dr.app.beauti.generator.BeastGenerator;
 import dr.app.beauti.generator.Generator;
@@ -111,6 +112,7 @@ public class BeautiFrame extends DocumentFrame {
                 HierarchicalModelComponentFactory.INSTANCE,
                 DnDsComponentFactory.INSTANCE,
                 DolloComponentFactory.INSTANCE,
+                ContinuousComponentFactory.INSTANCE
 //                DiscreteTraitsComponentFactory.INSTANCE
         };
 
@@ -364,6 +366,7 @@ public class BeautiFrame extends DocumentFrame {
         if (returnVal == JFileChooser.APPROVE_OPTION) {
             File[] files = importChooser.getSelectedFiles();
             importFiles(files);
+            tabbedPane.setSelectedComponent(dataPanel);
         }
     }
 
@@ -463,6 +466,8 @@ public class BeautiFrame extends DocumentFrame {
 
             traitsPanel.fireTraitsChanged();
             setAllOptions();
+
+            tabbedPane.setSelectedComponent(traitsPanel);
             return true;
 
         } else {

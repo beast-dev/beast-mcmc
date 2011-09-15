@@ -104,18 +104,18 @@ public class TreeModelGenerator extends Generator {
 
 //        int randomLocalClockCount = 0;
 //        int autocorrelatedClockCount = 0;
-//        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model        
+//        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
 //        	PartitionClockModel clockModel = pd.getPartitionClockModel();
 //        	switch (clockModel.getClockType()) {
 //	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
 //	        	case RANDOM_LOCAL_CLOCK: randomLocalClockCount += 1; break;
 //        	}
 //        }
-//        
+//
 //        if (autocorrelatedClockCount > 1 || randomLocalClockCount > 1 || autocorrelatedClockCount + randomLocalClockCount > 1) {
 //        	//FAIL
 //            throw new IllegalArgumentException("clock model/tree model combination not implemented by BEAST yet!");
-//        } 
+//        }
         // move to validateClockTreeModelCombination(PartitionTreeModel model)
 
 //    	if (autocorrelatedClockCount == 1) {
@@ -141,7 +141,7 @@ public class TreeModelGenerator extends Generator {
 //                                treeModelName + "." + RateEvolutionLikelihood.ROOTRATE), true);
 //                writer.writeCloseTag(TreeModelParser.NODE_RATES);
 ////    	} else if (randomLocalClockCount == 1 ) {
-//        } else 
+//        } else
 
         //+++++++++++++ removed because random local clock XML is changed ++++++++++++++++
 //        int[] count = validateClockTreeModelCombination(model);
@@ -193,9 +193,9 @@ public class TreeModelGenerator extends Generator {
             writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
             writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, treeModelName + ".microsatellite.internalNodesParameter"),
-                    new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDeminsion())}, true);
+                    new Attribute.Default<Integer>(ParameterParser.DIMENSION, model.getDimension())}, true);
             writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
-            
+
             writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
             for (AbstractPartitionData pattern : options.getAllPartitionData(model)) {
                 writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, pattern.getName());

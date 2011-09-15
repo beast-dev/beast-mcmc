@@ -232,7 +232,7 @@ public class PartitionTreeModel extends PartitionOptions {
         return prefix;
     }
 
-    public int getDeminsion() { // n-1
-       return options.getNumTaxon(options.getAllPartitionData(this)) - 1;
+    public int getDimension() { // n-1
+       return options.getTaxonCount(options.getAllPartitionData(this)) - 1;
     }
 }

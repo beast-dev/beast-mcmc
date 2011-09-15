@@ -1,7 +1,7 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.*;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
@@ -93,7 +93,17 @@ public abstract class AbstractPartitionData {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.dataPartitions != null && options.dataPartitions.size() > 1) {
+        if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
+            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+            // There is more than one active partition model
+            prefix += getName() + ".";
+        }
+        return prefix;
+    }
+
+    public String getPrefix(DataType dataType) {
+        String prefix = "";
+        if (options.getAllPartitionData(dataType).size() > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
         }

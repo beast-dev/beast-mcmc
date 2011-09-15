@@ -104,6 +104,20 @@ public interface TaxonList extends Identifiable, Iterable<Taxon> {
             }
             return -1;
         }
+
+        public static boolean areTaxaIdentical(TaxonList taxa1, TaxonList taxa2) {
+            if (taxa1.getTaxonCount() != taxa2.getTaxonCount()) {
+                return false;
+            }
+            for (int i =0; i < taxa1.getTaxonCount(); i++) {
+                if (taxa2.getTaxonIndex(taxa1.getTaxon(i)) == -1) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+
 	}
 
 	class MissingTaxonException extends Exception {

@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
+import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;
 import dr.evolution.datatype.*;
 import dr.evomodel.substmodel.AminoAcidModelType;
@@ -304,32 +305,6 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createScaleOperator("bcov.s", demoTuning, substWeights);
 //        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
-        //***************************************************
-        createZeroOneParameterUniformPrior("trait.frequencies", getName() + ((getName() == "") ? "" : " ") + "base frequencies", 0.25);
-        createCachedGammaPrior("trait.rates", "location substitution model rates",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 1.0, 1.0, false);
-        createParameter("trait.indicators", "location substitution model rate indicators", 1.0);// used if BSSVS was selected
-
-        // = strick clock TODO trait.mu belongs Clock Model?
-        createParameterExponentialPrior("trait.mu", getName() + ((getName() == "") ? "" : " ") + "CTMC rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 0.1, 1.0, 0.0);
-
-        // Poisson Prior
-        createDiscreteStatistic("trait.nonZeroRates", "for mutation rate parameter");  // used if BSSVS was selected
-
-        createOperator("trait.rates", OperatorType.SCALE_INDEPENDENTLY, demoTuning, 30);
-        createOperator("trait.indicators", OperatorType.BITFLIP, -1.0, 30);// BSSVS was selected
-        createScaleOperator("trait.mu", demoTuning, 10);
-        //bit Flip on clock.rate in PartitionClockModelSubstModelLink
-        createBitFlipInSubstitutionModelOperator(OperatorType.BITFIP_IN_SUBST.toString() + "mu", "trait.mu",
-                "bit Flip In Substitution Model Operator on trait.mu", getParameter("trait.mu"), this, demoTuning, 30);
-        createOperatorUsing2Parameters(RateBitExchangeOperator.OPERATOR_NAME, "(trait.indicators, trait.rates)",
-                "rateBitExchangeOperator (If both BSSVS and asymmetric subst selected)",
-                "trait.indicators", "trait.rates", OperatorType.RATE_BIT_EXCHANGE, -1.0, 6.0);
-
-        //=============== continuous ======================
-        // no parameters currently required for continuous models
-
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
                 PriorScaleType.NONE, 0.0, 1.0, 1.0, false);
@@ -487,35 +462,11 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.GENERAL:
-                params.add(getParameter("trait.frequencies"));
-                params.add(getParameter("trait.rates"));
-//               params.add(getParameter("trait.mu"));
-
-                if (activateBSSVS) {
-                    getParameter("trait.indicators");
-                    Parameter nonZeroRates = getParameter("trait.nonZeroRates");
-
-                    // AR - we can't use the average number of states across all defined traits!
-//                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
-//                         nonZeroRates.offset = getAveStates() - 1; // mean = 0.693 and offset = K-1
-//                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
-//                         nonZeroRates.mean = getAveStates() - 1; // mean = K-1 and offset = 0
-//                    }
-
-                    Set<String> states = getDiscreteStateSet();
-                    int K = states.size();
-                    if (discreteSubstType == DiscreteSubstModelType.SYM_SUBST) {
-                        nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
-                    } else if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST) {
-                        nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
-                    }
-
-                    params.add(nonZeroRates);
-                }
+                // This model is controlled by DiscreteTraitComponentOptions
                 break;
 
             case DataType.CONTINUOUS:
-                // no parameters for this model
+                // This model is controlled by ContinuousTraitComponentOptions
                 break;
 
             case DataType.MICRO_SAT:

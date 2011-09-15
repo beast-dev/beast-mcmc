@@ -17,6 +17,7 @@ public class GenerateRelaxedClockXMLByData {
     static final String path = "/Users/local/EC/dxie004/Documents/BEAST1Release/RR_Datasets/";
     static final String startingTree = "(((((Ssc:65,Bta:65):16,((Cfa:46,Fca:46):28,Eca:74):7):11," +
             "(((Rno:20,Mmu:20):65,Ocu:85):5,(((Hsa:5,Ptr:5):5,Ppy:10):13,Mml:23):67):2):81,Tvu1:173):137,Gga:310);";
+    static final double rescaleHeight = 0.5;
 
     static public void main(String[] args) {
         int taxonNum = 14;
@@ -93,7 +94,7 @@ public class GenerateRelaxedClockXMLByData {
         w.flush();
         w.writeText("\n" +
                 "\t<!-- Generate a random starting tree under the coalescent process      -->\n" +
-                "\t<newick id=\"startingTree\">\n");
+                "\t<newick id=\"startingTree\" rescaleHeight=\"" + rescaleHeight + "\">\n");
         w.writeText(startingTree);
         w.writeText("\n" + "\t</newick>\n");
 
@@ -260,10 +261,9 @@ public class GenerateRelaxedClockXMLByData {
                 "\t\t</uniformIntegerOperator>\n" +
                 "\t\t<swapOperator size=\"1\" weight=\"13\" autoOptimize=\"false\">\n" +
                 "\t\t\t<parameter idref=\"branchRates.categories\"/>\n" +
-                "\t\t</swapOperator>\n" +
-                "\n");
+                "\t\t</swapOperator>\n");
 
-        w.writeText("\n" + "\t</operators>");
+        w.writeText("\t</operators>");
 
         w.flush();
         w.writeText("\n" +
@@ -317,7 +317,7 @@ public class GenerateRelaxedClockXMLByData {
         );
 
 
-        w.writeText("\t\t<!-- write log to file                                                       -->\n" +
+        w.writeText("\t\t<!-- write log to file                          -->\n" +
                 "\t\t<log id=\"fileLog\" logEvery=\"100\" fileName=\"" + outputFileName + ".log\">\n" +
                 "\t\t\t<posterior idref=\"posterior\"/>\n" +
                 "\t\t\t<prior idref=\"prior\"/>\n" +
@@ -333,9 +333,16 @@ public class GenerateRelaxedClockXMLByData {
                 "\t\t\t<parameter idref=\"ucld.mean\"/>\n" +
                 "\t\t\t<parameter idref=\"ucld.stdev\"/>\n" +
                 "\t\t\t<parameter idref=\"branchRates.categories\"/> \n");
+        w.writeText("\t\t</log>\n");
 
-        w.writeText("\t\t</log>\n" +
-                "\t</mcmc>\n" +
+        w.writeText("\t\t<logTree id=\"treeFileLog\" logEvery=\"10000\" nexusFormat=\"true\" " +
+                "fileName=\"" + outputFileName + ".trees\" sortTranslationTable=\"true\">\n" +
+                "\t\t\t<treeModel idref=\"treeModel\"/>\n" +
+                "\t\t\t<discretizedBranchRates idref=\"branchRates\"/> \n" +
+                "\t\t\t<posterior idref=\"posterior\"/>\n" +
+                "\t\t</logTree>\n");
+
+        w.writeText("\t</mcmc>\n" +
                 "\t<report>\n" +
                 "\t\t<property name=\"timer\">\n" +
                 "\t\t\t<mcmc idref=\"mcmc\"/>\n" +

@@ -1,13 +1,9 @@
 package dr.app.beauti.components.discrete;
 
-import dr.app.beauti.generator.SubstitutionModelGenerator;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.DiscreteSubstModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
-import dr.evolution.util.Taxon;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
@@ -25,7 +21,6 @@ import dr.inferencexml.loggers.LoggerParser;
 import dr.inferencexml.model.ProductStatisticParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
-import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
 
 import java.util.Set;

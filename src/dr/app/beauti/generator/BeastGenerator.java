@@ -109,6 +109,7 @@ public class BeastGenerator extends Generator {
         parameterPriorGenerator = new ParameterPriorGenerator(options, components);
         logGenerator = new LogGenerator(options, components);
 
+        // this has moved into the component system...
 //        discreteTraitGenerator = new DiscreteTraitGenerator(options, components);
         starBeastGenerator = new STARBEASTGenerator(options, components);
     }
@@ -156,19 +157,20 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ Traits ++++++++++++++++++
-        if (options.useStarBEAST != options.traitExists(TraitData.TRAIT_SPECIES)) {
+        if (options.useStarBEAST && !options.traitExists(TraitData.TRAIT_SPECIES)) {
             throw new IllegalArgumentException("Keyword \"species\" is reserved for *BEAST only !" +
                     "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
         }
 
-        for (TraitData trait : options.traits) {
-            for (int i = 0; i < trait.getTaxaCount(); i++) {
-//                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
-                if (!trait.hasValue(i))
-                    throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
-                            " has no value for Trait " + trait.getName());
-            }
-        }
+        // missing data is not necessarily an issue...
+//        for (TraitData trait : options.traits) {
+//            for (int i = 0; i < trait.getTaxaCount(); i++) {
+////                System.out.println("Taxon " + trait.getTaxon(i).getId() + " : [" + trait.getTaxon(i).getAttribute(trait.getName()) + "]");
+//                if (!trait.hasValue(i))
+//                    throw new IllegalArgumentException("Taxon " + trait.getTaxon(i).getId() +
+//                            " has no value for Trait " + trait.getName());
+//            }
+//        }
 
         //++++++++++++++++ Tree Prior ++++++++++++++++++
 //        if (options.isShareSameTreePrior()) {

@@ -1,4 +1,4 @@
-package dr.app.beauti.types;
+package dr.app.beauti.components.discrete;
 
 /**
  * @author Alexei Drummond

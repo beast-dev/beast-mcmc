@@ -1,4 +1,4 @@
-package dr.app.beauti.components;
+package dr.app.beauti.components.tipdatesampling;
 
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;

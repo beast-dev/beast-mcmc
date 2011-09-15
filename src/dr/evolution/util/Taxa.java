@@ -295,6 +295,10 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
         for (MutableTaxonListListener mutableTaxonListListener : mutableTaxonListListeners) {
             mutableTaxonListListener.taxaChanged(this);
         }
-    }    
+    }
 
+    @Override
+    public boolean equals(final Object o) {
+        return Utils.areTaxaIdentical(this, (TaxonList)o);
+    }
 }

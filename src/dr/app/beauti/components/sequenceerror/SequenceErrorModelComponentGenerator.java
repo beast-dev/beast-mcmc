@@ -1,4 +1,4 @@
-package dr.app.beauti.components;
+package dr.app.beauti.components.sequenceerror;
 
 import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;

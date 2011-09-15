@@ -1,4 +1,4 @@
-package dr.app.beauti.components;
+package dr.app.beauti.components.sequenceerror;
 
 import dr.app.beauti.options.ComponentOptions;
 import dr.app.beauti.options.ModelOptions;

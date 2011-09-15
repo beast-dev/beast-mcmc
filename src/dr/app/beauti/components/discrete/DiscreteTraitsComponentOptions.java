@@ -1,4 +1,4 @@
-package dr.app.beauti.components;
+package dr.app.beauti.components.discrete;
 
 import dr.app.beauti.options.*;
 

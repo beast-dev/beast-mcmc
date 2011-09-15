@@ -1,5 +1,6 @@
-package dr.app.beauti.components;
+package dr.app.beauti.components.discrete;
 
+import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.ComponentOptions;
 import dr.app.beauti.options.BeautiOptions;

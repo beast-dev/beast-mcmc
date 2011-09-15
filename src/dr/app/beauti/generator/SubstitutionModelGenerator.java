@@ -165,14 +165,9 @@ public class SubstitutionModelGenerator extends Generator {
                 break;
 
             case DataType.GENERAL:
-                writeDiscreteTraitsSubstModel(model, writer);
-                //****************** Site Model *****************
-                writeDiscreteTraitsSiteModel(model, writer);
-                break;
-
             case DataType.CONTINUOUS:
-                throw new RuntimeException("Not implemented yet");
-//                break;
+                //handled by component
+                break;
 
             case DataType.MICRO_SAT:
                 writeMicrosatSubstModel(model, writer);
@@ -425,155 +420,6 @@ public class SubstitutionModelGenerator extends Generator {
     }
 
     /**
-     * Discrete Traits Subst Model
-     *
-     * @param model  PartitionSubstitutionModel
-     * @param writer XMLWriter
-     */
-    private void writeDiscreteTraitsSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
-
-        int stateCount = options.getStatesForDiscreteModel(model).size();
-
-        if (model.getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
-            writer.writeComment("symmetric CTMC model for discrete state reconstructions");
-
-            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL)});
-
-            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
-
-            writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
-
-            writeDiscreteFrequencyModel(model, stateCount, true, writer);
-
-            writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
-
-            //---------------- rates and indicators -----------------
-
-            writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
-            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-        } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
-            writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
-
-            writer.writeOpenTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + AbstractSubstitutionModel.MODEL),
-                    new Attribute.Default<Boolean>(ComplexSubstitutionModelParser.RANDOMIZE, false)});
-
-            writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
-
-            writer.writeOpenTag(GeneralSubstitutionModelParser.FREQUENCIES);
-
-            writeDiscreteFrequencyModel(model, stateCount, true, writer);
-
-            writer.writeCloseTag(GeneralSubstitutionModelParser.FREQUENCIES);
-
-            //---------------- rates and indicators -----------------
-            writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
-
-            writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-        } else {
-
-        }
-
-        if (model.isActivateBSSVS()) // If "BSSVS" is not activated, rateIndicator should not be there.
-            writeStatisticModel(model, writer);
-    }
-
-    private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, int stateCount, Boolean normalize, XMLWriter writer) {
-        if (normalize == null) {
-            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + FrequencyModelParser.FREQUENCY_MODEL)});
-        } else {
-            writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + FrequencyModelParser.FREQUENCY_MODEL),
-                    new Attribute.Default<Boolean>(FrequencyModelParser.NORMALIZE, normalize)});
-        }
-
-        writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, model.getPrefix() + DiscreteTraitGenerator.DATA_TYPE);
-
-        writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
-        writeParameter(model.getPrefix() + "trait.frequencies", stateCount, Double.NaN, Double.NaN, Double.NaN, writer);
-        writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
-
-        writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
-    }
-
-    private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
-        writer.writeComment("rates and indicators");
-
-        if (relativeTo == null) {
-            writer.writeOpenTag(GeneralSubstitutionModelParser.RATES);
-        } else {
-            writer.writeOpenTag(GeneralSubstitutionModelParser.RATES, new Attribute[]{
-                    new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
-        }
-
-        model.getParameter("trait.rates").isFixed = true;
-        writeParameter(model.getParameter("trait.rates"), dimension, writer);
-
-        writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
-
-        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-            writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            model.getParameter("trait.indicators").isFixed = true;
-            writeParameter(model.getParameter("trait.indicators"), dimension, writer);
-            writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
-        }
-
-    }
-
-    private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "trait.nonZeroRates"),
-                new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-        writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
-
-        writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "actualRates"),
-                new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
-        writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
-    }
-
-    /**
-     * Write the site model XML block.
-     *
-     * @param model            the partition model to write in BEAST XML
-     * @param writer           the writer
-     */
-//    public void writeSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
-//
-//        switch (model.getDataType().getType()) {
-//            case DataType.NUCLEOTIDES:
-//                if (model.getCodonPartitionCount() > 1) { //model.getCodonHeteroPattern() != null) {
-//                    for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
-//                        writeNucSiteModel(i, writer, model);
-//                    }
-//                    writer.println();
-//                } else {
-//                    writeNucSiteModel(-1, writer, model);
-//                }
-//                break;
-//
-//            case DataType.AMINO_ACIDS:
-//                writeAASiteModel(writer, model);
-//                break;
-//
-//            case DataType.TWO_STATES:
-//            case DataType.COVARION:
-//                writeTwoStateSiteModel(writer, model);
-//                break;
-//
-//            default:
-//                throw new IllegalArgumentException("Unknown data type");
-//        }
-//    }
-
-    /**
      * Write the allMus for each partition model.
      *
      * @param model  PartitionSubstitutionModel
@@ -693,12 +539,9 @@ public class SubstitutionModelGenerator extends Generator {
                 break;//BINARY
 
             case DataType.GENERAL:
-                //TODO
-                break;
-
             case DataType.CONTINUOUS:
-                throw new RuntimeException("Not implemented yet");
-//                break;
+                // these datatypes are handled by components
+                break;
 
             case DataType.MICRO_SAT:
                 writeMicrosatSubstModelParameterRef(model, writer);
@@ -726,31 +569,6 @@ public class SubstitutionModelGenerator extends Generator {
             } else {
                 writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "pInv");
             }
-        }
-    }
-
-    public void writeRateLog(PartitionSubstitutionModel model, XMLWriter writer) {
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
-
-        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
-        }
-    }
-
-    public void writeStatisticLog(PartitionSubstitutionModel model, XMLWriter writer) {
-        if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-            writer.writeOpenTag(ColumnsParser.COLUMN,
-                    new Attribute[]{
-                            new Attribute.Default<String>(ColumnsParser.LABEL, model.getPrefix() + "nonZeroRates"),
-                            new Attribute.Default<String>(ColumnsParser.SIGNIFICANT_FIGURES, "6"),
-                            new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
-                    }
-            );
-
-            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
-
-            writer.writeCloseTag(ColumnsParser.COLUMN);
         }
     }
 
@@ -970,22 +788,6 @@ public class SubstitutionModelGenerator extends Generator {
 
         writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
     }
-
-    private void writeDiscreteTraitsSiteModel(PartitionSubstitutionModel model, XMLWriter writer) {
-        writer.writeOpenTag(SiteModel.SITE_MODEL, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + SiteModel.SITE_MODEL)});
-
-        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
-        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
-
-//        writer.writeOpenTag(GammaSiteModelParser.MUTATION_RATE);
-//        writeParameter(model.getParameter("trait.mu"), -1, writer);
-//        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
-
-        writer.writeCloseTag(SiteModel.SITE_MODEL);
-    }
-
 
     private void writeMicrosatSubstModel(PartitionSubstitutionModel model, XMLWriter writer) {
 

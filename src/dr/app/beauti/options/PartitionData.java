@@ -67,10 +67,10 @@ public class PartitionData extends AbstractPartitionData {
         calculateMeanDistance(patterns);
     }
 
-    public PartitionData(BeautiOptions options, String name, List<TraitData> traits) {
+    public PartitionData(BeautiOptions options, String name, String fileName, List<TraitData> traits) {
         this.options = options;
         this.name = name;
-        this.fileName = null;
+        this.fileName = fileName;
         this.alignment = null;
 
         this.fromSite = -1;
@@ -99,6 +99,11 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     public TaxonList getTaxonList() {
+        if (traits != null) {
+            // if this is a trait then just give the complete taxon list (taxa without specified
+            // traits are treated as missing data.
+            return options.taxonList;
+        }
         return getAlignment();
     }
 

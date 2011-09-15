@@ -681,7 +681,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                case 6:
                     return partition.getPartitionSubstitutionModel().getName();
                 case 6:
-                    return partition.getPartitionClockModel().getName();
+                    return "" + (partition.getPartitionClockModel() != null ? partition.getPartitionClockModel().getName() : "-");
                 case 7:
                     return partition.getPartitionTreeModel().getName();
                 default:
@@ -690,14 +690,12 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         public void setValueAt(Object aValue, int row, int col) {
-//            PartitionData partition = options.getPartitionDataNoSpecies().get(row);
             AbstractPartitionData partition = options.dataPartitions.get(row);
             switch (col) {
                 case 0:
                     String name = ((String) aValue).trim();
                     if (options.hasPartitionData(name)) {
-                        JOptionPane.showMessageDialog(frame, "Partitions cannot have the same name :\n"
-                                + name + "\nRenaming is failed.",
+                        JOptionPane.showMessageDialog(frame, "Duplicate partition name.",
                                 "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
                         return;
                     }
@@ -709,7 +707,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                    partition.setPloidyType((PloidyType) aValue);
 //                    break;
 //                case 6:
-                    partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
+                    if (((PartitionSubstitutionModel) aValue).getDataType().equals(partition.getDataType())) {
+                        partition.setPartitionSubstitutionModel((PartitionSubstitutionModel) aValue);
+                    }
                     break;
                 case 6:
                     partition.setPartitionClockModel((PartitionClockModel) aValue);
@@ -724,6 +724,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
             boolean editable;
 
+            AbstractPartitionData partition = options.dataPartitions.get(row);
+
             switch (col) {
                 case 0:// name
                     editable = true;
@@ -731,11 +733,11 @@ public class DataPanel extends BeautiPanel implements Exportable {
 //                case 5:// ploidy type selection menu
 //                    editable = true;
 //                    break;
-                case 5:// subsitution model selection menu
-                    editable = true;
+                case 5:// substitution model selection menu
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
                     break;
                 case 6:// clock model selection menu
-                    editable = true;
+                    editable = partition.getDataType().getType() != DataType.CONTINUOUS;
                     break;
                 case 7:// tree selection menu
                     editable = true;

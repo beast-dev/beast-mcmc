@@ -23,9 +23,9 @@
 
 package dr.app.beauti.options;
 
+import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.types.*;
-import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.*;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
 import dr.inference.operators.RateBitExchangeOperator;
@@ -52,6 +52,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
     private DiscreteSubstModelType discreteSubstType = DiscreteSubstModelType.SYM_SUBST;
     private ContinuousSubstModelType continuousSubstModelType = ContinuousSubstModelType.HOMOGENOUS;
 
+    private final int continuousTraitCount;
+
     private boolean activateBSSVS = false;
     public boolean useAmbiguitiesTreeLikelihood = false;
 
@@ -75,6 +77,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 //        this(options, partition.getName(),(partition.getTrait() == null)
 //                ? partition.getDataType() : GeneralDataType.INSTANCE);
         super(options, partition.getName());
+
+        if (partition.getTraits() != null && partition.getDataType().getType() == DataType.CONTINUOUS) {
+            continuousTraitCount = partition.getTraits().size();
+        } else {
+            continuousTraitCount = 0;
+        }
     }
 
     /**
@@ -92,6 +100,8 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         binarySubstitutionModel = source.binarySubstitutionModel;
         discreteSubstType = source.discreteSubstType;
         continuousSubstModelType = source.continuousSubstModelType;
+
+        continuousTraitCount = source.continuousTraitCount;
 
         activateBSSVS = source.activateBSSVS;
         useAmbiguitiesTreeLikelihood = source.useAmbiguitiesTreeLikelihood;
@@ -116,6 +126,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public PartitionSubstitutionModel(BeautiOptions options, String name) {
         super(options, name);
+        continuousTraitCount = 0;
     }
 
     // only init in PartitionSubstitutionModel
@@ -932,6 +943,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         this.continuousSubstModelType = continuousSubstModelType;
     }
 
+    public int getContinuousTraitCount() {
+        return continuousTraitCount;
+    }
+
     public MicroSatModelType.RateProportionality getRatePorportion() {
         return ratePorportion;
     }
@@ -1057,7 +1072,17 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
     public String getPrefix() {
         String prefix = "";
-        if (options.getPartitionSubstitutionModels().size() > 1) {
+        if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
+            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
+            // There is more than one active partition model, or doing species analysis
+            prefix += getName() + ".";
+        }
+        return prefix;
+    }
+
+    public String getPrefix(DataType dataType) {
+        String prefix = "";
+        if (options.getPartitionSubstitutionModels(dataType).size() > 1) {
             // There is more than one active partition model, or doing species analysis
             prefix += getName() + ".";
         }

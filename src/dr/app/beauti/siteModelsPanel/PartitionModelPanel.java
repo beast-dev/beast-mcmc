@@ -25,6 +25,7 @@
 
 package dr.app.beauti.siteModelsPanel;
 
+import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.types.*;
 import jam.panels.OptionsPanel;
 

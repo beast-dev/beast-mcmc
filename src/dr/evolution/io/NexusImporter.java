@@ -543,7 +543,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
                 for (i = 0; i < taxonCount; i++) {
 
-                    String token = readToken();
+                    String token = readToken().trim();
 
                     Sequence sequence;
 
@@ -618,7 +618,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         } else {
 
             for (i = 0; i < taxonCount; i++) {
-                String token = readToken();
+                String token = readToken().trim();
 
                 Sequence sequence = new Sequence();
                 sequence.setDataType(dataType);
@@ -685,9 +685,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         Taxa taxa = new Taxa();
 
         do {
-            String name = readToken(";");
-            if (name.trim().length() > 0) {
-                Taxon taxon = new Taxon(name.trim());
+            String name = readToken(";").trim();
+            if (name.length() > 0) {
+                Taxon taxon = new Taxon(name);
                 taxa.addTaxon(taxon);
             }
         } while (getLastDelimiter() != ';');

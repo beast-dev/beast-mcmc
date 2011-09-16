@@ -523,7 +523,11 @@ public class BeautiFrame extends DocumentFrame {
             options.fileNameStem = "StarBEASTLog";
 
             if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
-                if (!traitsPanel.addTrait(TraitData.TRAIT_SPECIES)) {
+                if (!traitsPanel.addTrait(
+                        "StarBEAST requires a trait to give species\n" +
+                        "designations for each taxon. Create or import\n" +
+                                "a descrete trait labelled 'species'.",
+                        TraitData.TRAIT_SPECIES)) {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }

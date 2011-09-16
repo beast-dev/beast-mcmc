@@ -56,15 +56,17 @@ public class CreateTraitDialog {
     JButton exampleButton = new JButton("Show example of mapping file format");
     private final JCheckBox createTraitPartitionCheck = new JCheckBox("Create a corresponding data partition", true);
 
+    private String message = null;
+    private boolean isSpeciesTrait = false;
+
     public static final int OK_IMPORT = 10;
 
     OptionsPanel optionPanel;
 
-    public CreateTraitDialog(final BeautiFrame frame, String traitName) {
+    public CreateTraitDialog(final BeautiFrame frame) {
         this.frame = frame;
 
-        if (traitName == null) traitName = "Untitled";
-        nameField = new JTextField(traitName);
+        nameField = new JTextField("untitled_trait");
         nameField.setColumns(20);
 
 //        nameCombo = new JComboBox(TraitData.Traits.values());
@@ -95,17 +97,24 @@ public class CreateTraitDialog {
                     JOptionPane.PLAIN_MESSAGE);
             }
         });
-
-        optionPanel.addComponent(importRadio);
-        optionPanel.addComponent(exampleButton);
-        optionPanel.addComponent(createRadio);
-        optionPanel.addComponentWithLabel("Name:", nameField);
-        optionPanel.addComponentWithLabel("Type:", typeCombo);
-        optionPanel.addComponent(createTraitPartitionCheck);
-
     }
 
+    public void setTraitName(String traitName) {
+        nameField.setText(traitName);
+    }
+
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setSpeciesTrait(final boolean isSpeciesTrait) {
+        this.isSpeciesTrait = isSpeciesTrait;
+    }
+
+
     public int showDialog() {
+
+        setupPanel();
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -137,6 +146,30 @@ public class CreateTraitDialog {
         if (importRadio.isSelected() && result == JOptionPane.OK_OPTION) result = OK_IMPORT;
 
         return result;
+    }
+
+    private void setupPanel() {
+        optionPanel.removeAll();
+
+        if (message != null && !message.isEmpty()) {
+            optionPanel.addSpanningComponent(new JLabel(message));
+        }
+
+        optionPanel.addComponent(createRadio);
+        JLabel label = optionPanel.addComponentWithLabel("Name:", nameField);
+        if (isSpeciesTrait) {
+            label.setEnabled(false);
+            nameField.setEnabled(false);
+        }
+
+        optionPanel.addComponent(importRadio);
+        optionPanel.addComponent(exampleButton);
+        exampleButton.putClientProperty("Quaqua.Button.style", "help");
+
+        if (!isSpeciesTrait) {
+            optionPanel.addComponentWithLabel("Type:", typeCombo);
+            optionPanel.addComponent(createTraitPartitionCheck);
+        }
     }
 
     public String getName() {

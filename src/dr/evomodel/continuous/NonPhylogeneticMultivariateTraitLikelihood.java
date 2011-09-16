@@ -1,6 +1,7 @@
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
@@ -47,12 +48,25 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                 scaleByTime, useTreeLength, rateModel, samplingDensity, reportAsMultivariate, rootPriorMean,
                 rootPriorSampleSize, reciprocalRates);
         this.exchangeableTips = exchangeableTips;
+        this.zeroHeightTip = findZeroHeightTip(treeModel);
+    }
+
+    private int findZeroHeightTip(Tree tree) {
+        for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
+            NodeRef tip = tree.getExternalNode(i);
+            System.err.println("Height = " + tree.getNodeHeight(tip));
+            if (tree.getNodeHeight(tip) == 0.0) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     protected void printInformtion() {
         StringBuffer sb = new StringBuffer("Creating non-phylogenetic multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
+        sb.append("\tExchangeable tips:").append((exchangeableTips ? "yes" : "no")).append("\n");
         sb.append(extraInfo());
         sb.append("\tPlease cite:\n");
         sb.append(Citable.Utils.getCitationString(this));
@@ -92,6 +106,16 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         }
     }
 
+    protected double getLengthToRoot(NodeRef nodeRef) {
+        final double height;
+        if (exchangeableTips) {
+            height = getRescaledLengthToRoot(treeModel.getExternalNode(zeroHeightTip));
+        } else {
+            height = getRescaledLengthToRoot(nodeRef);
+        }
+        return height;
+    }
+
     private SufficientStatistics computeOuterProductsForTips(double[][] traitPrecision, double[] tmpVector,
                                                              WishartSufficientStatistics wishartStatistics) {
 
@@ -116,11 +140,8 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
 
             double tipWeight = 0.0;
             if (!missing[tipNumber]) {
-                if (exchangeableTips) {
-                    tipWeight = 1.0;
-                } else {
-                    tipWeight = 1.0 / getRescaledLengthToRoot(tipNode);
-                }
+                
+                tipWeight = 1.0 / getLengthToRoot(tipNode);
 
                 int tipOffset = dim * tipNumber;
                 int rootOffset = dim * rootIndex;
@@ -249,6 +270,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     }
 
     private final boolean exchangeableTips;
+    private final int zeroHeightTip;
 
     private static final boolean DEBUG_NO_TREE = false;
 }

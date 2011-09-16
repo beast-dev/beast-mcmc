@@ -412,23 +412,35 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     }
 
     public boolean addTrait() {
-        boolean isAdd = addTrait("Untitled");
-        // http://code.google.com/p/beast-mcmc/issues/detail?id=388
-        if (options.traitExists(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
-                    "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-            options.removeTrait(TraitData.TRAIT_SPECIES);
-//            options.useStarBEAST = false;
-            traitsTableModel.fireTableDataChanged();
-            dataTableModel.fireTableDataChanged();
-            return false;
-        }
+        return addTrait("Untitled");
 
-        return isAdd;
+        // The 'species' trait doesn't need to be a reserved keyword since the StarBEAST button was added
+        // http://code.google.com/p/beast-mcmc/issues/detail?id=388
+//        if (options.traitExists(TraitData.TRAIT_SPECIES)) {
+//            JOptionPane.showMessageDialog(frame, "Keyword \"species\" has been reserved for *BEAST !" +
+//                    "\nPlease use a different trait name.", "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+//            options.removeTrait(TraitData.TRAIT_SPECIES);
+////            options.useStarBEAST = false;
+//            traitsTableModel.fireTableDataChanged();
+//            dataTableModel.fireTableDataChanged();
+//            return false;
+//        }
+//
+//        return isAdd;
     }
 
     public boolean addTrait(String traitName) {
-        createTraitDialog = new CreateTraitDialog(frame, traitName);
+        return addTrait(null, traitName);
+    }
+
+    public boolean addTrait(String message, String traitName) {
+        if (createTraitDialog == null) {
+            createTraitDialog = new CreateTraitDialog(frame);
+        }
+
+        createTraitDialog.setSpeciesTrait(traitName.equals(TraitData.TRAIT_SPECIES));
+        createTraitDialog.setTraitName(traitName);
+        createTraitDialog.setMessage(message);
 
         int result = createTraitDialog.showDialog();
         if (result == JOptionPane.OK_OPTION) {

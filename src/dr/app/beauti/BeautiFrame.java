@@ -524,9 +524,10 @@ public class BeautiFrame extends DocumentFrame {
 
             if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
                 if (!traitsPanel.addTrait(
-                        "StarBEAST requires a trait to give species\n" +
-                        "designations for each taxon. Create or import\n" +
-                                "a descrete trait labelled 'species'.",
+                        "<html><p>" +
+                                "StarBEAST requires a trait to give species designations<br>" +
+                                "for each taxon. Create or import a discrete trait<br>" +
+                                "labelled 'species'.</p></html>",
                         TraitData.TRAIT_SPECIES)) {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;

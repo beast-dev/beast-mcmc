@@ -48,12 +48,12 @@ public class CreateTraitDialog {
 
     private final BeautiFrame frame;
 
-    JTextField nameField;
-//    JComboBox nameCombo;
-    JComboBox typeCombo;
+    private JTextField nameField;
+    private JComboBox typeCombo;
+
     private final JRadioButton createRadio = new JRadioButton("Create a new trait", true);
     private final JRadioButton importRadio = new JRadioButton("Import trait(s) from a mapping file", false);
-    JButton exampleButton = new JButton("Show example of mapping file format");
+    private final JButton exampleButton = new JButton("Show example of mapping file format");
     private final JCheckBox createTraitPartitionCheck = new JCheckBox("Create a corresponding data partition", true);
 
     private String message = null;

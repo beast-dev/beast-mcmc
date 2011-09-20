@@ -254,6 +254,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
         writer.writeComment("rates and indicators");
 
+        String prefix = model.getName() + ".";
+
         if (relativeTo == null) {
             writer.writeOpenTag(GeneralSubstitutionModelParser.RATES);
         } else {
@@ -261,32 +263,34 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                     new Attribute.Default<Integer>(GeneralSubstitutionModelParser.RELATIVE_TO, relativeTo)});
         }
 
-        model.getParameter("trait.rates").isFixed = true;
-        writeParameter(model.getParameter("trait.rates"), dimension, writer);
+        model.getParameter(prefix + "rates").isFixed = true;
+        writeParameter(model.getParameter(prefix + "rates"), dimension, writer);
 
         writer.writeCloseTag(GeneralSubstitutionModelParser.RATES);
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
             writer.writeOpenTag(GeneralSubstitutionModelParser.INDICATOR);
-            model.getParameter("trait.indicators").isFixed = true;
-            writeParameter(model.getParameter("trait.indicators"), dimension, writer);
+            model.getParameter(prefix + "indicators").isFixed = true;
+            writeParameter(model.getParameter(prefix + "indicators"), dimension, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }
 
     }
 
     private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
+        String prefix = model.getName() + ".";
+
         writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "trait.nonZeroRates"),
+                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + prefix + "nonZeroRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
+        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + prefix + "indicators");
         writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
 
         writer.writeOpenTag(ProductStatisticParser.PRODUCT_STATISTIC, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "actualRates"),
+                new Attribute.Default<String>(XMLParser.ID, prefix + "actualRates"),
                 new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, false)});
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+        writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
         writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 
@@ -313,19 +317,21 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
      * @param writer    XMLWriter
      */
     public void writeAncestralTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
+        String prefix = partition.getName() + ".";
+
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
         writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD),
-                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, partition.getPrefix() + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
+                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
         });
 
-        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, partition.getPrefix() + AttributePatternsParser.ATTRIBUTE_PATTERNS);
+        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + AttributePatternsParser.ATTRIBUTE_PATTERNS);
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
-        writer.writeIDref(SiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
-        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getPrefix() + AbstractSubstitutionModel.MODEL);
+        writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
+        writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
@@ -367,6 +373,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     public void writeScreenLogEntries(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            String prefix = model.getName() + ".";
+
             if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
                 writer.writeOpenTag(ColumnsParser.COLUMN,
                         new Attribute[]{
@@ -376,7 +384,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                         }
                 );
 
-                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
 
                 writer.writeCloseTag(ColumnsParser.COLUMN);
             }
@@ -385,11 +393,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
     private void writeFileLogEntries(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
+            String prefix = model.getName() + ".";
+
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
             if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-                writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
+                writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+                writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
             }
         }
 
@@ -404,11 +414,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeDiscreteTraitFileLogger(XMLWriter writer,
                                               PartitionSubstitutionModel model) {
 
-        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getPrefix();
+        String prefix = model.getName() + ".";
+
+        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getName();
         fileName = (fileName.endsWith(".") ? "" : ".") + "rates.log";
 
         writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, model.getPrefix() + "RateMatrixLog"),
+                new Attribute.Default<String>(XMLParser.ID, prefix + "rateMatrixLog"),
                 new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
                 new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
 
@@ -418,11 +430,13 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeLogEntries(PartitionSubstitutionModel model, XMLWriter writer) {
-        writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.rates");
+        String prefix = model.getName() + ".";
+
+           writer.writeIDref(ParameterParser.PARAMETER, prefix + "rates");
 
         if (model.isActivateBSSVS()) { //If "BSSVS" is not activated, rateIndicator should not be there.
-            writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + "trait.indicators");
-            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "trait.nonZeroRates");
+            writer.writeIDref(ParameterParser.PARAMETER, prefix + "indicators");
+            writer.writeIDref(SumStatisticParser.SUM_STATISTIC, prefix + "nonZeroRates");
         }
     }
 

@@ -280,11 +280,13 @@ public class BeastGenerator extends Generator {
             writeTaxa(options.taxonList, writer);
 
             writer.writeText("");
-            // write all taxa in each gene tree regarding each data partition,
-            for (AbstractPartitionData partition : options.dataPartitions) {
-                if (partition.getTaxonList() != null &&
-                        !TaxonList.Utils.areTaxaIdentical(partition.getTaxonList(), options.taxonList)) {
-                    writeDifferentTaxa(partition, writer);
+
+            if (!options.partitionsHaveIdenticalTaxa()) {
+                // write all taxa in each gene tree regarding each data partition,
+                for (AbstractPartitionData partition : options.dataPartitions) {
+                    if (partition.getTaxonList() != null) {
+                        writeDifferentTaxa(partition, writer);
+                    }
                 }
             }
         } catch (Exception e) {

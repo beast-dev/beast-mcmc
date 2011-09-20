@@ -25,10 +25,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
     public void createParameters(final ModelOptions modelOptions) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
-            String prefix = partitionData.getPrefix(GeneralDataType.INSTANCE);
-            if (prefix.isEmpty()) {
-                prefix = "trait.";
-            }
+            String prefix = partitionData.getName() + ".";
 
             if (!modelOptions.parameterExists(prefix + "frequencies")) {
 
@@ -65,10 +62,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
-            String prefix = partitionData.getPrefix(GeneralDataType.INSTANCE);
-            if (prefix.isEmpty()) {
-                prefix = "trait.";
-            }
+            String prefix = partitionData.getName() + ".";
 
             if (partitionData.getPartitionSubstitutionModel().isActivateBSSVS()) {
                 modelOptions.getParameter(prefix + "indicators");
@@ -99,10 +93,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
-            String prefix = partitionData.getPrefix(GeneralDataType.INSTANCE);
-            if (prefix.isEmpty()) {
-                prefix = "trait.";
-            }
+            String prefix = partitionData.getName() + ".";
 
             ops.add(modelOptions.getOperator(prefix + "frequencies"));
             ops.add(modelOptions.getOperator(prefix + "rates"));

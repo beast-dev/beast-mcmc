@@ -25,6 +25,8 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
+import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
+import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.types.*;
@@ -848,6 +850,9 @@ public class BeautiOptions extends ModelOptions {
 
         ContinuousComponentOptions comp = (ContinuousComponentOptions)getComponentOptions(ContinuousComponentOptions.class);
         comp.createParameters(this);
+
+        DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions)getComponentOptions(DiscreteTraitsComponentOptions.class);
+        comp2.createParameters(this);
 
         return selRow; // only for trait panel
     }

@@ -29,7 +29,8 @@ public class ContinuousComponentOptions implements ComponentOptions {
 
 	public void createParameters(ModelOptions modelOptions) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
-            String prefix = partitionData.getPrefix(ContinuousDataType.INSTANCE);
+            String prefix = partitionData.getName() + ".";
+
             if (!modelOptions.parameterExists(prefix + HALF_DF)) {
                 modelOptions.createParameterGammaPrior(prefix + HALF_DF, "half DF of 1 parameter gamma distributed RRW",
                         PriorScaleType.NONE, 0.5, 0.0, Double.POSITIVE_INFINITY, false);
@@ -41,7 +42,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
-                ops.add(modelOptions.getOperator(partitionData.getPrefix(ContinuousDataType.INSTANCE) + HALF_DF));
+                ops.add(modelOptions.getOperator(partitionData.getName() + "." + HALF_DF));
             }
         }
 	}
@@ -49,7 +50,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	public void selectParameters(ModelOptions modelOptions, List<Parameter> params) {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
-                params.add(modelOptions.getParameter(partitionData.getPrefix(ContinuousDataType.INSTANCE) + HALF_DF));
+                params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
             }
         }
 	}

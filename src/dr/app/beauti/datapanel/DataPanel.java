@@ -406,13 +406,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         if (traits==null || traits.size() == 0) {
-            List<TraitData> allTraits = new ArrayList<TraitData>();
-            for (TraitData trait : options.traits) {
-                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES) /*&& trait.getTraitType() == TraitData.TraitType.DISCRETE*/) {
-                    allTraits.add(trait);
-                }
-            }
-            int result = selectTraitDialog.showDialog(allTraits);
+            int result = selectTraitDialog.showDialog(options.traits, null);
             if (result != JOptionPane.CANCEL_OPTION) {
                 TraitData trait = selectTraitDialog.getTrait();
                 String name = trait.getName();
@@ -423,8 +417,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selRow = options.createPartitionForTraits(name, trait);
             }
         } else {
+            String defaultName = (traits.size() == 1 ? traits.get(0).getName() : null);
+
             // a set of traits have been passed to the function
-            int result = selectTraitDialog.showDialog(null);
+            int result = selectTraitDialog.showDialog(null, defaultName);
             if (result != JOptionPane.CANCEL_OPTION) {
                 String name = selectTraitDialog.getName();
                 selRow = options.createPartitionForTraits(name, traits);

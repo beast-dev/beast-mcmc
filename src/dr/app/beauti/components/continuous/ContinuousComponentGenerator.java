@@ -234,7 +234,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                              AbstractPartitionData partitionData,
                                              String treeModelId) {
 
-        String prefix = partitionData.getPrefix(ContinuousDataType.INSTANCE);
+        String prefix = partitionData.getName() + ".";
 
         writer.writeOpenTag("discretizedBranchRates",
                 new Attribute[] {
@@ -324,7 +324,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("multivariateTraitLikelihood",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "traitLikelihood"),
+                        new Attribute.Default<String>("id", partitionData.getName() + ".traitLikelihood"),
                         new Attribute.Default<String>("traitName", partitionData.getName()),
                         new Attribute.Default<String>("useTreeLength", "true"),
                         new Attribute.Default<String>("scaleByTime", "true"),
@@ -377,7 +377,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 //                                    new Attribute.Default<String>("scaleFactor", "0.75"),
 //                                    new Attribute.Default<String>("weight", "1")
 //                            });
-//                    writer.writeIDref("parameter", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "halfDF");
+//                    writer.writeIDref("parameter", partitionData.getName() + ".halfDF");
 //                    writer.writeCloseTag("scaleOperator");
 //                }
 
@@ -387,7 +387,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                 new Attribute.Default<String>("weight", "30"),
                                 new Attribute.Default<String>("autoOptimize", "false")
                         });
-                writer.writeIDref("parameter", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "rrwCategories");
+                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
                 writer.writeCloseTag("swapOperator");
 
                 writer.writeOpenTag("randomWalkIntegerOperator",
@@ -395,14 +395,14 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                 new Attribute.Default<String>("size", "2"),
                                 new Attribute.Default<String>("weight", "10")
                         });
-                writer.writeIDref("parameter", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "rrwCategories");
+                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
                 writer.writeCloseTag("randomWalkIntegerOperator");
 
                 writer.writeOpenTag("uniformIntegerOperator",
                         new Attribute[] {
                                 new Attribute.Default<String>("weight", "10")
                         });
-                writer.writeIDref("parameter", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "rrwCategories");
+                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
                 writer.writeCloseTag("uniformIntegerOperator");
             }
         }
@@ -424,15 +424,15 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 new Attribute[] {
                         new Attribute.Default<String>("weight", "" + partitionData.getTraits().size())
                 });
-        writer.writeIDref("multivariateTraitLikelihood", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "traitLikelihood");
-        writer.writeIDref("multivariateWishartPrior", partitionData.getPartitionSubstitutionModel().getPrefix(ContinuousDataType.INSTANCE) + "precisionPrior");
+        writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
+        writer.writeIDref("multivariateWishartPrior", partitionData.getPartitionSubstitutionModel().getName() + ".precisionPrior");
         writer.writeCloseTag("precisionGibbsOperator");
 
     }
 
     private void writePrecisionMatrixIdRefs(final XMLWriter writer, final ContinuousComponentOptions component) {
         for (PartitionSubstitutionModel model : component.getOptions().getPartitionSubstitutionModels(ContinuousDataType.INSTANCE)) {
-            writer.writeIDref("matrixParameter", model.getPrefix(ContinuousDataType.INSTANCE) + "precision");
+            writer.writeIDref("matrixParameter", model.getName() + ".precision");
         }
     }
 
@@ -440,7 +440,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                        ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getAllPartitionData(ContinuousDataType.INSTANCE)) {
-            writer.writeIDref("multivariateWishartPrior", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "precisionPrior");
+            writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".precisionPrior");
         }
     }
 
@@ -448,7 +448,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                        ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getAllPartitionData(ContinuousDataType.INSTANCE)) {
-            writer.writeIDref("multivariateTraitLikelihood", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "traitLikelihood");
+            writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
         }
     }
 
@@ -456,8 +456,8 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionTreeModel() == treeModel) {
                 PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
-                writer.writeIDref("multivariateDiffusionModel", model.getPrefix(ContinuousDataType.INSTANCE) + "diffusionModel");
-                writer.writeIDref("multivariateTraitLikelihood", partitionData.getPrefix(ContinuousDataType.INSTANCE) + "traitLikelihood");
+                writer.writeIDref("multivariateDiffusionModel", model.getName() + ".diffusionModel");
+                writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
             }
         }
     }

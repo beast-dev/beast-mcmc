@@ -69,12 +69,12 @@ public class SelectTraitDialog {
 
     }
 
-    public int showDialog(Collection<TraitData> traits) {
+    public int showDialog(Collection<TraitData> traits, String defaultName) {
         optionPanel.removeAll();
         if (traits == null) {
             optionPanel.addSpanningComponent(new JLabel("Create a new data partition using the selected trait(s)."));
             optionPanel.addComponentWithLabel("Name trait partition:", nameField);
-            nameField.setText("untitled_traits");
+            nameField.setText(defaultName != null ? defaultName : "untitled_traits");
             nameField.setEnabled(true);
             nameField.selectAll();
         } else {

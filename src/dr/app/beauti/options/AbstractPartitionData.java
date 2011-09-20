@@ -101,15 +101,6 @@ public abstract class AbstractPartitionData {
         return prefix;
     }
 
-    public String getPrefix(DataType dataType) {
-        String prefix = "";
-        if (options.getAllPartitionData(dataType).size() > 1) {
-            // There is more than one active partition model
-            prefix += getName() + ".";
-        }
-        return prefix;
-    }
-
     public int getTaxonCount() {
         if (getTaxonList() != null) {
             return getTaxonList().getTaxonCount();

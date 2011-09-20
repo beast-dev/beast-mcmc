@@ -674,21 +674,10 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 break;
 
             case DataType.GENERAL:
-                ops.add(getOperator("trait.rates"));
-//               ops.add(getOperator("trait.mu"));
-
-                if (activateBSSVS) {
-                    ops.add(getOperator("trait.indicators"));
-//                    ops.add(getOperator(OperatorType.BITFIP_IN_SUBST.toString()+ "mu"));
-
-                    if (discreteSubstType == DiscreteSubstModelType.ASYM_SUBST)
-                        ops.add(getOperator(RateBitExchangeOperator.OPERATOR_NAME));
-                }
                 break;
 
             case DataType.CONTINUOUS:
-                new RuntimeException("not implemented yet");
-//                break;
+                break;
 
             case DataType.MICRO_SAT:
                 if (ratePorportion == MicroSatModelType.RateProportionality.EQUAL_RATE) {

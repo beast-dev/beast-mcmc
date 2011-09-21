@@ -1,6 +1,7 @@
 package dr.inference.model;
 
 import dr.inference.loggers.LogColumn;
+import dr.math.LogTricks;
 import dr.xml.*;
 
 import java.util.ArrayList;
@@ -13,7 +14,7 @@ import java.util.List;
 public class WeightedMixtureModel extends AbstractModelLikelihood {
 
     public static final String MIXTURE_MODEL = "mixtureModel";
-    public static final String MIXTURE_WEIGHTS = "weights";
+//    public static final String MIXTURE_WEIGHTS = "weights";
     public static final String NORMALIZE = "normalize";
 
     public WeightedMixtureModel(List<Likelihood> likelihoodList, Parameter mixtureWeights) {
@@ -43,12 +44,12 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        double sum = 0.0;
-        for (int i = 0; i < likelihoodList.size(); i++) {
-            // todo is there some way to keep everything on the log scale?
-            sum += mixtureWeights.getParameterValue(i) * Math.exp(likelihoodList.get(i).getLogLikelihood());
-        }
-        return Math.log(sum);
+        double logSum = Math.log(mixtureWeights.getParameterValue(0)) + likelihoodList.get(0).getLogLikelihood();
+        for (int i = 1; i < likelihoodList.size(); ++i) {
+            logSum = LogTricks.logSum(logSum,
+                    Math.log(mixtureWeights.getParameterValue(i)) + likelihoodList.get(i).getLogLikelihood());
+        }   
+        return logSum;                
     }
 
     public void makeDirty() {
@@ -106,7 +107,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         //************************************************************************
 
         public String getParserDescription() {
-            return "This element represents a discrete mixture of tree likelihood models.";
+            return "This element represents a finite mixture of likelihood models.";
         }
 
         public Class getReturnType() {
@@ -128,5 +129,99 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
     private final Parameter mixtureWeights;
     List<Likelihood> likelihoodList;
 
+
+    public static void main(String[] args) {
+
+        final double l1 = -10;
+        final double l2 = -2;
+
+        Likelihood like1 = new Likelihood() {
+
+
+            public Model getModel() {
+                return null;
+            }
+
+            public double getLogLikelihood() {
+                return l1;
+            }
+
+            public void makeDirty() {
+            }
+
+            public String prettyName() {
+                return null;
+            }
+
+            public boolean isUsed() {
+                return false;
+            }
+
+            public void setUsed() {
+            }
+
+            public LogColumn[] getColumns() {
+                return new LogColumn[0];
+            }
+
+            public String getId() {
+                return null;
+            }
+
+            public void setId(String id) {
+            }
+        };
+
+        Likelihood like2 = new Likelihood() {
+
+            public Model getModel() {
+                return null;
+            }
+
+            public double getLogLikelihood() {
+                return l2;
+            }
+
+            public void makeDirty() {
+            }
+
+            public String prettyName() {
+                return null;
+            }
+
+            public boolean isUsed() {
+                return false;
+            }
+
+            public void setUsed() {
+            }
+
+            public LogColumn[] getColumns() {
+                return new LogColumn[0];
+            }
+
+            public String getId() {
+                return null;
+            }
+
+            public void setId(String id) {                
+            }
+        };
+
+        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+        likelihoodList.add(like1);
+        likelihoodList.add(like2);
+
+        Parameter weights = new Parameter.Default(2);
+        double p1 = 0.05;
+        weights.setParameterValue(0, p1);
+        weights.setParameterValue(1, 1.0 - p1);
+
+        WeightedMixtureModel mixture = new WeightedMixtureModel(likelihoodList, weights);
+        System.err.println("getLogLikelihood() = " + mixture.getLogLikelihood());
+
+        double test = Math.log(p1 * Math.exp(l1) + (1.0 - p1) * Math.exp(l2));
+        System.err.println("correct            = " + test);
+    }
 
 }

@@ -1,7 +1,7 @@
 /*
  * BeautiApp.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -151,7 +151,7 @@ public class BeautiApp extends MultiDocApplication {
                 String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
                         "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Utility<br>" +
                         "Version " + versionString + ", " + version.getDateString() + "</p>" +
-                        "<p>by Alexei J. Drummond, Andrew Rambaut and Walter Xie</p></div>" +
+                        "<p>by Alexei J. Drummond, Andrew Rambaut, Marc A. Suchard and Walter Xie</p></div>" +
                         "<hr><div style=\"font-size:10;\">Part of the BEAST package:" +
                         version.getHTMLCredits() +
                         "</div></center></div></html>";

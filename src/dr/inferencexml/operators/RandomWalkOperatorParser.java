@@ -76,6 +76,8 @@ public class RandomWalkOperatorParser extends AbstractXMLObjectParser {
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WINDOW_SIZE),
                 AttributeRule.newDoubleRule(MCMCOperator.WEIGHT),
+                AttributeRule.newDoubleRule(LOWER, true),
+                AttributeRule.newDoubleRule(UPPER, true),
                 AttributeRule.newBooleanRule(CoercableMCMCOperator.AUTO_OPTIMIZE, true),
                 new ElementRule(UPDATE_INDEX,
                         new XMLSyntaxRule[] {

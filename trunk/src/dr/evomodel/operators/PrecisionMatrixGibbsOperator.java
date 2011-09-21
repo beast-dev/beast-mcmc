@@ -1,7 +1,7 @@
 /*
  * PrecisionMatrixGibbsOperator.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,8 +27,8 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
+import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
 import dr.inference.model.MatrixParameter;
@@ -41,8 +41,9 @@ import dr.math.distributions.WishartDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
-//import dr.math.matrixAlgebra.Matrix;
 import dr.xml.*;
+
+//import dr.math.matrixAlgebra.Matrix;
 
 /**
  * @author Marc Suchard
@@ -50,12 +51,12 @@ import dr.xml.*;
 public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements GibbsOperator {
 
     public static final String VARIANCE_OPERATOR = "precisionGibbsOperator";
-    public static final String PRECISION_MATRIX = "precisionMatrix";
+//    public static final String PRECISION_MATRIX = "precisionMatrix";
     public static final String TREE_MODEL = "treeModel";
-    public static final String OUTCOME = "outcome";
+//    public static final String OUTCOME = "outcome";
     public static final String MEAN = "mean";
     public static final String PRIOR = "prior";
-    public static final String TRAIT_MODEL = "traitModel";
+//    public static final String TRAIT_MODEL = "traitModel";
 
     private final AbstractMultivariateTraitLikelihood traitModel;
     private final MatrixParameter precisionParam;

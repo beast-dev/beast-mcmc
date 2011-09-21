@@ -1,7 +1,7 @@
 /*
  * RandomWalkOperator.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -101,7 +101,8 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
         }
 
         // a random point around old value within windowSize * 2
-        double newValue = parameter.getParameterValue(index) + ((2.0 * MathUtils.nextDouble() - 1.0) * windowSize);
+        double draw = (2.0 * MathUtils.nextDouble() - 1.0) * windowSize;
+        double newValue = parameter.getParameterValue(index) + draw;
 
         final Bounds<Double> bounds = parameter.getBounds();
         final double lower = (lowerOperatorBound == null ? bounds.getLowerLimit(index) : Math.max(bounds.getLowerLimit(index), lowerOperatorBound));
@@ -129,7 +130,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
             } else {
                 double remainder = lower - value;
 
-                int widths = (int)Math.floor(remainder / (upper - lower));
+                double widths = Math.floor(remainder / (upper - lower));
                 remainder -= (upper - lower) * widths;
 
                 // even reflections
@@ -148,7 +149,7 @@ public class RandomWalkOperator extends AbstractCoercableOperator {
 
                 double remainder = value - upper;
 
-                int widths = (int)Math.floor(remainder / (upper - lower));
+                double widths = Math.floor(remainder / (upper - lower));
                 remainder -= (upper - lower) * widths;
 
                 // even reflections

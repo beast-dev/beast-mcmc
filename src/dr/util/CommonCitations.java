@@ -78,6 +78,14 @@ public class CommonCitations {
             Citation.Status.IN_PREPARATION
     );
 
+    public static Citation LEMEY_MIXTURE_2012 = new Citation(
+            new Author[] {
+                    new Author("P", "Lemey"),
+                    new Author("MA", "Suchard"),
+            },
+            Citation.Status.IN_PREPARATION
+    );
+
     public static Citation BLOOM_2012 = new Citation(
             new Author[] {
                     new Author("J", "Bloom"),                    

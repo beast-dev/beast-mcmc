@@ -54,7 +54,6 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     private int findZeroHeightTip(Tree tree) {
         for (int i = 0; i < tree.getExternalNodeCount(); ++i) {
             NodeRef tip = tree.getExternalNode(i);
-            System.err.println("Height = " + tree.getNodeHeight(tip));
             if (tree.getNodeHeight(tip) == 0.0) {
                 return i;
             }

@@ -2,26 +2,45 @@ package dr.inference.model;
 
 import dr.inference.loggers.LogColumn;
 import dr.math.LogTricks;
+import dr.util.Citable;
+import dr.util.Citation;
+import dr.util.CommonCitations;
 import dr.xml.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Logger;
 
 /**
  * @author Marc A. Suchard
  * @author Andrew Rambaut
  */
-public class WeightedMixtureModel extends AbstractModelLikelihood {
+public class WeightedMixtureModel extends AbstractModelLikelihood implements Citable {
 
     public static final String MIXTURE_MODEL = "mixtureModel";
 //    public static final String MIXTURE_WEIGHTS = "weights";
     public static final String NORMALIZE = "normalize";
 
-    public WeightedMixtureModel(List<Likelihood> likelihoodList, Parameter mixtureWeights) {
+    public WeightedMixtureModel(List<AbstractModelLikelihood> likelihoodList, Parameter mixtureWeights) {
         super(MIXTURE_MODEL);
         this.likelihoodList = likelihoodList;
         this.mixtureWeights = mixtureWeights;
+        for (AbstractModelLikelihood model : likelihoodList) {
+            addModel(model);
+        }
         addVariable(mixtureWeights);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Constructing a finite mixture model\n");
+        sb.append("\tComponents:\n");
+        for (AbstractModelLikelihood model : likelihoodList) {
+            sb.append("\t\t\t").append(model.getId()).append("\n");
+        }
+        sb.append("\tMixing parameter: ").append(mixtureWeights.getId()).append("\n");
+        sb.append("\tPlease cite:\n");
+        sb.append(Citable.Utils.getCitationString((this)));
+
+        Logger.getLogger("dr.inference.model").info(sb.toString());
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -71,11 +90,11 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter weights = (Parameter) xo.getChild(Parameter.class);
-            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+            List<AbstractModelLikelihood> likelihoodList = new ArrayList<AbstractModelLikelihood>();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof Likelihood)
-                    likelihoodList.add((Likelihood) xo.getChild(i));
+                    likelihoodList.add((AbstractModelLikelihood) xo.getChild(i));
             }
 
             if (weights.getDimension() != likelihoodList.size()) {
@@ -130,7 +149,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
 
 
     private final Parameter mixtureWeights;
-    List<Likelihood> likelihoodList;
+    List<AbstractModelLikelihood> likelihoodList;
 
 
     public static void main(String[] args) {
@@ -138,7 +157,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         final double l1 = -10;
         final double l2 = -2;
 
-        Likelihood like1 = new Likelihood() {
+        AbstractModelLikelihood like1 = new AbstractModelLikelihood("dummy") {
 
 
             public Model getModel() {
@@ -160,6 +179,26 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
                 return false;
             }
 
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+            }
+
+            @Override
+            protected void storeState() {
+            }
+
+            @Override
+            protected void restoreState() {
+            }
+
+            @Override
+            protected void acceptState() {
+            }
+
             public void setUsed() {
             }
 
@@ -175,7 +214,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
             }
         };
 
-        Likelihood like2 = new Likelihood() {
+        AbstractModelLikelihood like2 = new AbstractModelLikelihood("dummy") {
 
             public Model getModel() {
                 return null;
@@ -196,6 +235,26 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
                 return false;
             }
 
+            @Override
+            protected void handleModelChangedEvent(Model model, Object object, int index) {
+            }
+
+            @Override
+            protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+            }
+
+            @Override
+            protected void storeState() {
+            }
+
+            @Override
+            protected void restoreState() {
+            }
+
+            @Override
+            protected void acceptState() {
+            }
+
             public void setUsed() {
             }
 
@@ -211,7 +270,7 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
             }
         };
 
-        List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
+        List<AbstractModelLikelihood> likelihoodList = new ArrayList<AbstractModelLikelihood>();
         likelihoodList.add(like1);
         likelihoodList.add(like2);
 
@@ -227,4 +286,9 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
         System.err.println("correct            = " + test);
     }
 
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(CommonCitations.LEMEY_MIXTURE_2012);
+        return citations;
+    }
 }

@@ -44,10 +44,13 @@ public class WeightedMixtureModel extends AbstractModelLikelihood {
     }
 
     public double getLogLikelihood() {
-        double logSum = Math.log(mixtureWeights.getParameterValue(0)) + likelihoodList.get(0).getLogLikelihood();
-        for (int i = 1; i < likelihoodList.size(); ++i) {
-            logSum = LogTricks.logSum(logSum,
-                    Math.log(mixtureWeights.getParameterValue(i)) + likelihoodList.get(i).getLogLikelihood());
+        double logSum = Double.NEGATIVE_INFINITY;
+        for (int i = 0; i < likelihoodList.size(); ++i) {
+            double pi = mixtureWeights.getParameterValue(i);
+            if (pi > 0.0) {            
+                logSum = LogTricks.logSum(logSum,
+                        Math.log(pi) + likelihoodList.get(i).getLogLikelihood());
+            }
         }   
         return logSum;                
     }

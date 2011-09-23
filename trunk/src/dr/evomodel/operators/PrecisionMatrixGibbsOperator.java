@@ -27,7 +27,6 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
-import dr.evomodel.continuous.FullyConjugateMultivariateTraitLikelihood;
 import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.MultivariateDistributionLikelihood;
@@ -39,11 +38,10 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.distributions.WishartDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
+import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.IllegalDimension;
 import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.xml.*;
-
-//import dr.math.matrixAlgebra.Matrix;
 
 /**
  * @author Marc Suchard
@@ -90,9 +88,9 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         isSampledTraitLikelihood = (traitModel instanceof SampledMultivariateTraitLikelihood);
 
         if (!isSampledTraitLikelihood &&
-                !(traitModel instanceof FullyConjugateMultivariateTraitLikelihood)) {
+                !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
             throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood and " +
-                    "FullyConjugateMultivariateTraitLikelihood");
+                    "ConjugateWishartStatisticsProvider");
         }
     }
 
@@ -117,7 +115,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 //    }
 
     private void incrementOuterProduct(double[][] S,
-                                       FullyConjugateMultivariateTraitLikelihood integratedLikelihood) {
+                                       ConjugateWishartStatisticsProvider integratedLikelihood) {
 
 
         final WishartSufficientStatistics sufficientStatistics = integratedLikelihood.getWishartStatistics();
@@ -179,7 +177,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         if (isSampledTraitLikelihood) {
             incrementOuterProduct(S, treeModel.getRoot());
         } else { // IntegratedTraitLikelihood
-            incrementOuterProduct(S, (FullyConjugateMultivariateTraitLikelihood) traitModel);
+            incrementOuterProduct(S, (ConjugateWishartStatisticsProvider) traitModel);
         }
 
         try {

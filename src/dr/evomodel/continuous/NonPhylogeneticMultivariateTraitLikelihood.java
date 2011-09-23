@@ -62,7 +62,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     }
 
     protected void printInformtion() {
-        StringBuffer sb = new StringBuffer("Creating non-phylogenetic multivariate diffusion model:\n");
+        StringBuilder sb = new StringBuilder("Creating non-phylogenetic multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
         sb.append("\tExchangeable tips:").append((exchangeableTips ? "yes" : "no")).append("\n");
@@ -94,13 +94,13 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     private class SufficientStatistics {
         double sumWeight;
         double productWeight;
-        double outerProduct;
+        double innerProduct;
         int nonMissingTips;
 
-        SufficientStatistics(double sumWeight, double productWeight, double outerProduct, int nonMissingTips) {
+        SufficientStatistics(double sumWeight, double productWeight, double innerProduct, int nonMissingTips) {
             this.sumWeight = sumWeight;
             this.productWeight = productWeight;
-            this.outerProduct = outerProduct;
+            this.innerProduct = innerProduct;
             this.nonMissingTips = nonMissingTips;
         }
     }
@@ -115,7 +115,12 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         return height;
     }
 
-    private SufficientStatistics computeOuterProductsForTips(double[][] traitPrecision, double[] tmpVector,
+
+    // Useful identity for computing outerproducts for Wishart statistics
+    // \sum (y_i - \bar{y}) (y_i - \bar{y})^{t} = \sum y_i y_i^{t} - n \bar{y} \bar{y}^t
+    //
+
+    private SufficientStatistics computeInnerProductsForTips(double[][] traitPrecision, double[] tmpVector,
                                                              WishartSufficientStatistics wishartStatistics) {
 
         // Compute the contribution of each datum at the root
@@ -127,7 +132,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
             meanCache[meanOffset + d] = 0;
         }
 
-        double outerProducts = 0.0;
+        double innerProducts = 0.0;
 
         // Compute the contribution of each datum at the root
         double productWeight = 1.0;
@@ -157,7 +162,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                     // Compute outer product
                     double yAy = computeWeightedAverageAndSumOfSquares(tmpVector, Ay, traitPrecision, dimTrait,
                                     tipWeight);
-                    outerProducts += yAy;
+                    innerProducts += yAy;
 
                     if (DEBUG_NO_TREE) {
                         System.err.println("OP for " + tipNumber + " = " + yAy);
@@ -169,6 +174,10 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                     tipOffset += dimTrait;
                     rootOffset += dimTrait;
                 }
+
+                if (computeWishartStatistics) {
+                    incrementOuterProducts(tipNumber, tipWeight);
+                }
             }
 
             if (tipWeight > 0.0) {
@@ -179,13 +188,38 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         }
 
         lowerPrecisionCache[rootIndex] = sumWeight;
+        normalize(meanCache, meanOffset, dim, sumWeight);
 
-        for (int d = 0; d < dim; ++d) {
-            meanCache[meanOffset + d] /= sumWeight;
+        if (computeWishartStatistics) {
+            incrementOuterProducts(rootIndex, -sumWeight);
         }
 
-        return new SufficientStatistics(sumWeight, productWeight, outerProducts,
+        return new SufficientStatistics(sumWeight, productWeight, innerProducts,
                 nonMissingTips);
+    }
+
+    private void normalize(double[] x, int offset, int dim, double weight) {
+        for (int d = 0; d < dim; ++d) {
+            x[offset + d] /= weight;
+        }
+    }
+
+    private void incrementOuterProducts(int nodeNumber, double nodeWeight) {
+
+        final double[][] outerProduct = wishartStatistics.getScaleMatrix();
+
+        int tipOffset = dim * nodeNumber;
+        for (int datum = 0; datum < numData; ++datum) {
+            for (int i = 0; i < dim; ++i) {
+                double yi = meanCache[tipOffset + i];
+                for (int j = 0; j < dim; ++j) {
+                    outerProduct[i][j] += yi * meanCache[tipOffset +j] * nodeWeight;
+                }
+            }
+            tipOffset += dimTrait;
+        }
+
+        wishartStatistics.incrementDf(1); // Peeled one node
     }
 
     protected boolean peel() {
@@ -198,17 +232,16 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         double logDetTraitPrecision = Math.log(diffusionModel.getDeterminantPrecisionMatrix());
         double[] marginalRoot = tmp2;
 
-        final boolean computeWishartStatistics = getComputeWishartSufficientStatistics();
-
         if (computeWishartStatistics) {
                 wishartStatistics = new WishartSufficientStatistics(dimTrait);
         }
 
         // Compute the contribution of each datum at the root
-        SufficientStatistics stats = computeOuterProductsForTips(traitPrecision, tmp2, wishartStatistics);
+        SufficientStatistics stats = computeInnerProductsForTips(traitPrecision, tmp2, wishartStatistics);
+
         double conditionalSumWeight = stats.sumWeight;
         double conditionalProductWeight = stats.productWeight;
-        double outerProducts = stats.outerProduct;
+        double innerProducts = stats.innerProduct;
         int nonMissingTips = stats.nonMissingTips;
 
         // Add in prior and integrate
@@ -229,7 +262,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
             // Compute outer product contribution from prior
             double yAy1 = computeWeightedAverageAndSumOfSquares(rootPriorMean, Ay, traitPrecision, dimTrait,
                     rootPriorSampleSize);
-            outerProducts += yAy1;  // TODO Only need to compute once
+            innerProducts += yAy1;  // TODO Only need to compute once
 
             if (DEBUG_NO_TREE) {
                 System.err.println("OP for root");
@@ -241,7 +274,22 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
             // Compute outer product differences to complete square
             double yAy2 = computeWeightedAverageAndSumOfSquares(marginalRoot, Ay, traitPrecision, dimTrait,
                     1.0 / sumWeight);
-            outerProducts -= yAy2;
+            innerProducts -= yAy2;
+
+            // Add prior on root contribution
+            if (computeWishartStatistics) {
+
+                final double[][] outerProducts = wishartStatistics.getScaleMatrix();
+                final double weight = conditionalSumWeight * rootPriorSampleSize / sumWeight;
+
+                for (int i = 0; i < dimTrait; i++) {
+                    final double diffi = meanCache[rootOffset + i] - rootPriorMean[i];
+                    for (int j = 0; j < dimTrait; j++) {
+                        outerProducts[i][j] += diffi * weight * (meanCache[rootOffset + j] - rootPriorMean[j]);
+                    }
+                }
+                wishartStatistics.incrementDf(1);
+            }
 
             rootOffset += dimTrait;
         }
@@ -249,7 +297,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         if (DEBUG_NO_TREE) {
             System.err.println("SumWeight    : " + sumWeight);
             System.err.println("ProductWeight: " + productWeight);
-            System.err.println("Total OP     : " + outerProducts);
+            System.err.println("Total OP     : " + innerProducts);
         }
 
         // Compute log likelihood
@@ -257,7 +305,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                 -LOG_SQRT_2_PI * dimTrait * nonMissingTips * numData
                 + 0.5 * logDetTraitPrecision * nonMissingTips * numData
                 + 0.5 * Math.log(rootPrecision) * dimTrait * numData        
-                - 0.5 * outerProducts;
+                - 0.5 * innerProducts;
 
         if (DEBUG_NO_TREE) {
             System.err.println("logLikelihood (final) = " + logLikelihood);

@@ -7,6 +7,7 @@ import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.distributions.WishartSufficientStatistics;
+import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Matrix;
 import dr.math.matrixAlgebra.Vector;
 
@@ -19,7 +20,7 @@ import java.util.List;
  *
  * @author Marc A. Suchard
  */
-public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood {
+public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultivariateTraitLikelihood implements ConjugateWishartStatisticsProvider {
 
     public FullyConjugateMultivariateTraitLikelihood(String traitName,
                                                      TreeModel treeModel,
@@ -258,7 +259,7 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     private boolean priorInformationKnown = false;
     private double zBz; // Prior sum-of-squares contribution
 
-    private boolean computeWishartStatistics = false;
+    protected boolean computeWishartStatistics = false;
     private double[] ascertainedData = null;
     private static final boolean DEBUG_ASCERTAINMENT = false;
 }

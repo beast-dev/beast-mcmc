@@ -13,7 +13,7 @@ public class WishartDistribution implements MultivariateDistribution {
 
     public static final String TYPE = "Wishart";
 
-    private int df;
+    private double df;
     private int dim;
     private double[][] scaleMatrix;
     private double[] Sinv;
@@ -28,7 +28,7 @@ public class WishartDistribution implements MultivariateDistribution {
      * @param scaleMatrix scaleMatrix
      */
 
-    public WishartDistribution(int df, double[][] scaleMatrix) {
+    public WishartDistribution(double df, double[][] scaleMatrix) {
         this.df = df;
         this.scaleMatrix = scaleMatrix;
         this.dim = scaleMatrix.length;
@@ -47,7 +47,7 @@ public class WishartDistribution implements MultivariateDistribution {
         this.df = 0;
         this.scaleMatrix = null;
         this.dim = dim;
-        logNormalizationConstant = 1.0;
+        logNormalizationConstant = 0.0;
     }
 
 
@@ -55,7 +55,11 @@ public class WishartDistribution implements MultivariateDistribution {
         logNormalizationConstant = computeNormalizationConstant(new Matrix(scaleMatrix), df, dim);
     }
 
-    public static double computeNormalizationConstant(Matrix Sinv, int df, int dim) {
+    public static double computeNormalizationConstant(Matrix Sinv, double df, int dim) {
+
+        if (df == 0) {
+            return 0.0;
+        }
 
         double logNormalizationConstant = 0;
         try {
@@ -116,7 +120,7 @@ public class WishartDistribution implements MultivariateDistribution {
 
     }
 
-    public int df() {
+    public double df() {
         return df;
     }
 
@@ -199,7 +203,7 @@ public class WishartDistribution implements MultivariateDistribution {
         return logPdf(W, SinvMat, df, dim, logNormalizationConstant);
     }
 
-    public static double logPdf2D(double[] W, double[] Sinv, int df, int dim, double logNormalizationConstant) {
+    public static double logPdf2D(double[] W, double[] Sinv, double df, int dim, double logNormalizationConstant) {
 
         final double det = W[0] * W[3] - W[1] * W[2];
         if (det <= 0) {
@@ -219,7 +223,7 @@ public class WishartDistribution implements MultivariateDistribution {
     }
 
 
-    public static double logPdf(Matrix W, Matrix Sinv, int df, int dim, double logNormalizationConstant) {
+    public static double logPdf(Matrix W, Matrix Sinv, double df, int dim, double logNormalizationConstant) {
 
         double logDensity = 0;
 

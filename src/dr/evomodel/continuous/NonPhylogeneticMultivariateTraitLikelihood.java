@@ -74,6 +74,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
                 rootPriorSampleSize, reciprocalRates);
         this.exchangeableTips = exchangeableTips;
         this.zeroHeightTip = findZeroHeightTip(treeModel);
+        printInformtion2();
     }
 
     private int findZeroHeightTip(Tree tree) {
@@ -87,10 +88,18 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     }
 
     protected void printInformtion() {
+        // Do nothing yet
+    }
+
+    protected void printInformtion2() {
         StringBuilder sb = new StringBuilder("Creating non-phylogenetic multivariate diffusion model:\n");
         sb.append("\tTrait: ").append(traitName).append("\n");
         sb.append("\tDiffusion process: ").append(diffusionModel.getId()).append("\n");
-        sb.append("\tExchangeable tips:").append((exchangeableTips ? "yes" : "no")).append("\n");
+        sb.append("\tExchangeable tips: ").append((exchangeableTips ? "yes" : "no"));
+        if (exchangeableTips) {
+            sb.append(" initial inverse-weight = ").append(1.0 / getLengthToRoot(treeModel.getExternalNode(0)));
+        }
+        sb.append("\n");
         sb.append(extraInfo());
         sb.append("\tPlease cite:\n");
         sb.append(Citable.Utils.getCitationString(this));
@@ -343,4 +352,5 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
     private final int zeroHeightTip;
 
     private static final boolean DEBUG_NO_TREE = false;
+    private static final boolean NO_RESCALING = false;
 }

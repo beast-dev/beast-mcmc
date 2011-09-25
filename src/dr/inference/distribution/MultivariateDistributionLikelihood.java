@@ -201,7 +201,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
                     throw new XMLParseException("Must specify both a df and scaleMatrix");
                 }
 
-                int df = xo.getIntegerAttribute(DF);
+                double df = xo.getDoubleAttribute(DF);
 
                 XMLObject cxo = xo.getChild(SCALE_MATRIX);
                 MatrixParameter scaleMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
@@ -231,7 +231,7 @@ public class MultivariateDistributionLikelihood extends AbstractDistributionLike
         private final XMLSyntaxRule[] rules;{
             rules = new XMLSyntaxRule[]{
                     AttributeRule.newBooleanRule(NON_INFORMATIVE, true),
-                    AttributeRule.newIntegerRule(DF, true),
+                    AttributeRule.newDoubleRule(DF, true),
                     new ElementRule(SCALE_MATRIX,
                             new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, true),
                     new ElementRule(DATA,

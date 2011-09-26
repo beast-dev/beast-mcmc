@@ -478,7 +478,31 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 	}
 
 
-    
+	// TreeLogger.LogUpon
+	
+	public boolean logNow(int state) {
+       //		grjtodo 
+
+		return false;
+	}
+
+
+	
+	
+	
+	
+/*
+ * 
+ * **************************************************************
+ * 
+ * 	
+ */
+	
+	
+	
+	
+	
+	
     private double randomnodeheight(double rate) {
     	return MathUtils.nextExponential(rate) + 1e-6/rate;
     	// 1e-6/rate to avoid very tiny heights
@@ -745,14 +769,6 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 	}
 
 	
-	// TreeLogger.LogUpon
-	
-	public boolean logNow(int state) {
-       //		grjtodo 
-
-		return false;
-	}
-
 	
 	
 	

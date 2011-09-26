@@ -8,7 +8,6 @@ import java.util.Arrays;
 import java.util.Formatter;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -185,7 +184,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	private SequenceAssignment seqassigns[];
     	private SequenceAssignment oldseqassigns[];
         private final int[] lineagesCount;
-        private final double popFactor;
+        private final double popFactor; // grjtodo mul pops by this.
         
         
     	/* class GeneTreeInfo.SequenceAssignments
@@ -223,9 +222,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
          * 
          * Node for GeneTreeInfo.GeneUnionTree.
          */
-    	// grjtodo parent field not needed?
-        private class GeneUnionNode {
-    		private GeneUnionNode parent;
+       private class GeneUnionNode {
     		private GeneUnionNode child[];
     		private double height;
     		private FixedBitSet union;
@@ -234,7 +231,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     		// Constructor makes a half-formed tip node. Tips need unions
     		// and internal nodes need all fields filling in.
     		public GeneUnionNode() {
-    			parent = null;
     			child = new GeneUnionNode[0];
     			height = 0.0;
     			union = new FixedBitSet(numberOfSpSeqs());
@@ -331,9 +327,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     				int c1 = nextn - 1;
     				nodes[nextn].child = new GeneUnionNode[2];
     				nodes[nextn].child[0] = nodes[c0];
-    				nodes[c0].parent = nodes[nextn];
     				nodes[nextn].child[1] = nodes[c1];
-    				nodes[c1].parent = nodes[nextn];
                     nodes[nextn].union.union(nodes[c0].union);
                     nodes[nextn].union.union(nodes[c1].union);
     			}

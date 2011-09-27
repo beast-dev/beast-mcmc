@@ -19,7 +19,7 @@ public class MatrixParameter extends CompoundParameter {
     }
 
     public MatrixParameter(String name, Parameter[] parameters) {
-        super(parameters);
+        super(name, parameters);
         dimensionsEstablished = true;
     }
 
@@ -149,7 +149,8 @@ public class MatrixParameter extends CompoundParameter {
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            MatrixParameter matrixParameter = new MatrixParameter(MATRIX_PARAMETER);
+            final String name = xo.hasId() ? xo.getId() : null;
+            MatrixParameter matrixParameter = new MatrixParameter(name);
 
             if (xo.hasAttribute(ROW_DIMENSION)) {
                 int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);

@@ -95,12 +95,12 @@ public class BeastParser extends XMLParser {
                     System.out.println("\nLoading additional development parsers from " + parsers + PARSER_PROPERTIES_SUFFIX
                             + ", which is additional set of parsers only available for development version ...");
                 }
-                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, verbose);
+                loadProperties(this.getClass(), parsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, true);
             }
             // load additional parsers
             if (additionalParsers != null) {
                 for (String addParsers : additionalParsers) {
-                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, this.parserWarnings, verbose);
+                    loadProperties(this.getClass(), addParsers + PARSER_PROPERTIES_SUFFIX, verbose, verbose, true);
                 }
             }
         } catch (IOException e) {

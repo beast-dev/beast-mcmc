@@ -37,9 +37,8 @@ import java.util.List;
  */
 public class CompoundParameter extends Parameter.Abstract implements VariableListener {
 
-    public CompoundParameter(Parameter[] params) {
-
-        dimension = 0;
+    public CompoundParameter(String name, Parameter[] params) {
+        this(name);
         for (Parameter parameter : params) {
             dimension += parameter.getDimension();
             parameter.addParameterListener(this);
@@ -51,13 +50,20 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
                 pindex.add(j);
             }
             uniqueParameters.add(parameter);
+            labelParameter(parameter);
         }
-
     }
 
     public CompoundParameter(String name) {
         this.name = name;
         dimension = 0;
+    }
+
+    private void labelParameter(Parameter parameter) {
+        if (parameter.getParameterName() == null) {
+            String parameterName = name + uniqueParameters.size();
+            parameter.setId(parameterName);
+        }
     }
 
     public void addParameter(Parameter param) {
@@ -74,6 +80,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
             );
         }
         param.addParameterListener(this);
+        labelParameter(param);
     }
 
     public void removeParameter(Parameter param) {
@@ -288,7 +295,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
         System.out.println(param1.getDimension());
 
-        CompoundParameter parameter = new CompoundParameter(new Parameter[]{param1, param2});
+        CompoundParameter parameter = new CompoundParameter("parameter", new Parameter[]{param1, param2});
         parameter.addParameter(param3);
         parameter.removeParameter(param2);
     }

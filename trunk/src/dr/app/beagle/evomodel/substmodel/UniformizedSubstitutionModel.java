@@ -5,6 +5,7 @@ import dr.inference.markovjumps.StateHistory;
 import dr.inference.markovjumps.SubordinatedProcess;
 import dr.inference.markovjumps.UniformizedStateHistory;
 import dr.inference.model.Model;
+import java.util.logging.Logger;
 
 /**
  * A class extension for implementing Markov chain-induced counting processes (markovjumps)
@@ -122,7 +123,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
         double total = 0;
         for (int i = 0; i < numSimulants; i++) {
-            StateHistory history = null;
+            StateHistory history;
             try {
                 history = UniformizedStateHistory.simulateConditionalOnEndingState(
                     0.0,
@@ -134,6 +135,17 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     subordinator
                 );
             } catch (SubordinatedProcess.Exception e) {
+
+                if (RETURN_NAN) {
+                    if (reportWarning) {
+                        Logger.getLogger("dr.app.beagle").info(
+                                "Unable to compute a robust count; this is most likely due to poor starting values."
+                        );
+                    }
+                    reportWarning = false;
+                    return Double.NaN;
+                }
+
                 // Error in uniformization; try rejection sampling
                 System.err.println("Attempting rejection sampling after uniformization failure");
 
@@ -177,4 +189,6 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
     private double[] tmp;
 
     private static int maxRejectionAttempts = 100000;
+    private static final boolean RETURN_NAN = true;
+    private static boolean reportWarning = true;
 }

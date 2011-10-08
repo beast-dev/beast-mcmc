@@ -1,7 +1,34 @@
+/*
+ * AbstractPartitionData.java
+ *
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
@@ -93,10 +120,16 @@ public abstract class AbstractPartitionData {
 
     public String getPrefix() {
         String prefix = "";
+        // Determine if we have multiple data partitions for *BEAST (I am guessing here): MAS
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
             options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
             // There is more than one active partition model
             prefix += getName() + ".";
+        }
+
+        // Try to return a sensible prefix for traits as well
+        if (getTraits() != null) {
+            prefix += getName() + "."; // Consistent with DiscreteTraitComponent and looks nice
         }
         return prefix;
     }

@@ -1,10 +1,51 @@
+/*
+ * DolloComponentGenerator.java
+ *
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.components.dollo;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.sitemodel.GammaSiteModel;
+import dr.evomodel.sitemodel.SiteModel;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.MSSD.ALSTreeLikelihoodParser;
+import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
+import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
+import dr.evomodelxml.sitemodel.GammaSiteModelParser;
+import dr.evomodelxml.substmodel.MutationDeathModelParser;
+import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
+import dr.evoxml.AlignmentParser;
+import dr.evoxml.MutationDeathTypeParser;
+import dr.evoxml.SitePatternsParser;
+import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
+import dr.xml.XMLParser;
 
 /**
  * @author Marc Suchard
@@ -12,8 +53,6 @@ import dr.util.Attribute;
  */
 
 public class DolloComponentGenerator extends BaseComponentGenerator {
-
-	private String logSuffix = ".dNdS.log";
 
 	protected DolloComponentGenerator(BeautiOptions options) {
 		super(options);
@@ -24,17 +63,20 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 		DolloComponentOptions component = (DolloComponentOptions) options
 				.getComponentOptions(DolloComponentOptions.class);
 
-		if (component.getPartitionList().size() == 0) {
-			// Empty, so do nothing
-			return false;
-		}
+        if (!component.isActive()) {
+            return false;
+        }
 
 		switch (point) {
-		case IN_OPERATORS:
-		case IN_FILE_LOG_PARAMETERS:
-		case IN_TREES_LOG:
-		case AFTER_TREES_LOG:
-		case AFTER_MCMC:
+        case AFTER_TAXA:
+        case AFTER_SUBSTITUTION_MODEL:
+        case IN_FILE_LOG_PARAMETERS:
+//        case IN_MCMC_LIKELIHOOD:
+//        case AFTER_TREE_LIKELIHOOD:
+//		case IN_OPERATORS:
+//		case IN_TREES_LOG:
+//		case AFTER_TREES_LOG:
+//		case AFTER_MCMC:
 			return true;
 		default:
 			return false;
@@ -47,21 +89,37 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 		DolloComponentOptions component = (DolloComponentOptions) options
 				.getComponentOptions(DolloComponentOptions.class);
 
+        if (!includeStochasticDollo()) {
+            return;
+        }
+
 		switch (point) {
+        case AFTER_TAXA:
+            writeDataType(writer);
+            break;
+        case AFTER_SUBSTITUTION_MODEL:
+            writeDolloSubstitutionModels(writer, component);
+            break;
+//        case AFTER_TREE_LIKELIHOOD:
+//            writeDolloTreeLikelihoods(writer, component);
+//            break;
 		case IN_OPERATORS:
-			writeCodonPartitionedRobustCounting(writer, component);
 			break;
+//        case IN_MCMC_LIKELIHOOD:
+//            writeDolloTreeLikelihoodReferences(writer);
+//            break;
+            
+        case IN_SCREEN_LOG:
+            writeScreenLogEntries(writer, component);
+            break;            
 		case IN_FILE_LOG_PARAMETERS:
-			writeLogs(writer, component);
+            writeLog(writer, component);
 			break;
 		case IN_TREES_LOG:
-			writeTreeLogs(writer, component);
 			break;
 		case AFTER_TREES_LOG:
-			writeDNdSLogger(writer, component);
 			break;
 		case AFTER_MCMC:
-			writeDNdSPerSiteAnalysisReport(writer, component);
 			break;
 		default:
 			throw new IllegalArgumentException(
@@ -71,157 +129,179 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 
 	}// END: generate
 
-	protected String getCommentLabel() {
-		return "Codon partitioned robust counting";
-	}
+    private void writeScreenLogEntries(XMLWriter writer, DolloComponentOptions component) {
+    }
 
-	private void writeCodonPartitionedRobustCounting(XMLWriter writer,
-			DolloComponentOptions component) {
+//    private void writeDolloTreeLikelihoodReferences(XMLWriter writer) {
+//
+//        for (AbstractPartitionData partition : options.dataPartitions) {
+//            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+//            String prefix = partition.getName();
+//            if (model.isDolloModel()) {
+//                writer.writeIDref(ALSTreeLikelihoodParser.LIKE_NAME,
+//                        prefix + ALSTreeLikelihoodParser.LIKE_NAME);
+//            }
+//        }
+//    }
 
-		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			writeCodonPartitionedRobustCounting(writer, model);
-		}
-	}
+    private void writeLog(XMLWriter writer, DolloComponentOptions component) {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model.isDolloModel()) {
+                String prefix = partition.getName() + ".";
+                writer.writeIDref(ParameterParser.PARAMETER,
+                    component.getOptions().getParameter(prefix + DolloComponentOptions.DEATH_RATE).getName());
+            }
+        }
+    }
 
-	// Called for each model that requires robust counting (can be more than
-	// one)
-	private void writeCodonPartitionedRobustCounting(XMLWriter writer,
-			PartitionSubstitutionModel model) {
+    private void writeDataType(XMLWriter writer) {
+        writer.writeOpenTag(MutationDeathTypeParser.MODEL_NAME,
+                new Attribute.Default<String>(XMLParser.ID, DolloComponentOptions.DATA_NAME));
+            writer.writeTag(MutationDeathTypeParser.EXTANT,
+                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "1"), true);
+            writer.writeTag(MutationDeathTypeParser.STATE,
+                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "0"), true);
+            writer.writeTag(MutationDeathTypeParser.AMBIGUITY,
+                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "?"), true);
+        writer.writeCloseTag(MutationDeathTypeParser.MODEL_NAME);
+    }
 
-		System.err.println("DEBUG: Writing RB for " + model.getName());
 
-		writer.writeComment("Robust counting for: " + model.getName());
+    private boolean includeStochasticDollo() {
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model.isDolloModel()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
-		// S operator
-		writer.writeOpenTag("codonPartitionedRobustCounting",
-				new Attribute[] {
-						new Attribute.Default<String>("id", "robustCounting1"),
-						new Attribute.Default<String>("labeling", "S"),
-						new Attribute.Default<String>("useUniformization",
-								"true"),
-						new Attribute.Default<String>("unconditionedPerBranch",
-								"true") });
+    @Override
+    protected String getCommentLabel() {
+        return "Stochastic Dollo";
+    }
 
-		writer.writeIDref("idref", "treeModel");
-		writer.writeOpenTag("firstPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
-		writer.writeCloseTag("firstPosition");
+    private void writeDolloSubstitutionModels(XMLWriter writer, DolloComponentOptions component) {
 
-		writer.writeOpenTag("secondPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
-		writer.writeCloseTag("secondPosition");
+        // generate tree likelihoods for stochastic Dollo partitions
+        for (AbstractPartitionData partition : options.dataPartitions) {
+            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+            if (model.isDolloModel()) {
+                writeDolloSubstitutionModel(partition, writer, component);
+                writeDolloSiteModel(partition, writer, component);
+                writeDolloTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
+            }
+        }
+    }
 
-		writer.writeOpenTag("thirdPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
-		writer.writeCloseTag("thirdPosition");
+    private void writeDolloSubstitutionModel(AbstractPartitionData partition, XMLWriter writer, DolloComponentOptions component) {
+        String prefix = partition.getName() + ".";
+//        String prefix = partition.getPrefix(); // TODO Fix
+        writer.writeOpenTag(MutationDeathModelParser.MD_MODEL,
+                new Attribute.Default<String>(XMLParser.ID, prefix + DolloComponentOptions.MODEL_NAME ));
+        writeParameter(prefix + DolloComponentOptions.DEATH_RATE,
+                component.getOptions().getParameter(prefix + DolloComponentOptions.DEATH_RATE), writer);
+        writer.writeTag(DataType.DATA_TYPE, new Attribute.Default<String>(XMLParser.IDREF, DolloComponentOptions.DATA_NAME), true);
+        writer.writeCloseTag(MutationDeathModelParser.MD_MODEL);
+        writer.write("\n");
+    }
 
-		writer.writeCloseTag("codonPartitionedRobustCounting");
+    private void writeDolloSiteModel(AbstractPartitionData partition, XMLWriter writer, DolloComponentOptions components) {
+        String prefix = partition.getName() + ".";
+        writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
-		writer.writeBlankLine();
 
-		// N operator:
-		writer.writeOpenTag("codonPartitionedRobustCounting",
-				new Attribute[] {
-						new Attribute.Default<String>("id", "robustCounting2"),
-						new Attribute.Default<String>("labeling", "N"),
-						new Attribute.Default<String>("useUniformization",
-								"true"),
-						new Attribute.Default<String>("unconditionedPerBranch",
-								"true") });
+        writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
+        writer.writeIDref(MutationDeathModelParser.MD_MODEL, prefix + DolloComponentOptions.MODEL_NAME);
+        writer.writeCloseTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
-		writer.writeIDref("idref", "treeModel");
-		writer.writeOpenTag("firstPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
-		writer.writeCloseTag("firstPosition");
+        PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+        if (model.hasCodon()) {
+            writeParameter(GammaSiteModelParser.RELATIVE_RATE, "mu", model, writer);
+        }
 
-		writer.writeOpenTag("secondPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
-		writer.writeCloseTag("secondPosition");
+        if (model.isGammaHetero()) {
+            writer.writeOpenTag(GammaSiteModelParser.GAMMA_SHAPE,
+                    new Attribute.Default<String>(GammaSiteModelParser.GAMMA_CATEGORIES, "" + model.getGammaCategories()));
+            writeParameter(prefix + "alpha", model, writer);
+            writer.writeCloseTag(GammaSiteModelParser.GAMMA_SHAPE);
+        }
 
-		writer.writeOpenTag("thirdPosition");
-		writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
-		writer.writeCloseTag("thirdPosition");
+        if (model.isInvarHetero()) {
+            writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
+        }
 
-		writer.writeCloseTag("codonPartitionedRobustCounting");
+        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+    }
 
-	}// END: writeCodonPartitionedRobustCounting()
+//    private void writeDolloTreeLikelihoods(XMLWriter writer, DolloComponentOptions component) {
+//
+//        // generate tree likelihoods for stochastic Dollo partitions
+//        for (AbstractPartitionData partition : options.dataPartitions) {
+//            PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
+//            if (model.isDolloModel()) {
+//                writeDolloTreeLikelihood(ALSTreeLikelihoodParser.LIKE_NAME, -1, partition, writer);
+//            }
+//        }
+//    }
 
-	private void writeLogs(XMLWriter writer, DolloComponentOptions component) {
+    private void writeDolloTreeLikelihood(String id, int num, AbstractPartitionData partition, XMLWriter writer) {
+        PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
+        PartitionTreeModel treeModel = partition.getPartitionTreeModel();
+        PartitionClockModel clockModel = partition.getPartitionClockModel();
 
-		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			writeLogs(writer, model);
-		}
-	}
+        String prefix = partition.getName() + ".";
+        String oldPrefix = partition.getPrefix(); // TODO Get working
 
-	private void writeLogs(XMLWriter writer, PartitionSubstitutionModel model) {
+        writer.writeComment("Likelihood for tree given a stochastic Dollo model");
 
-		writer.writeComment("Robust counting for: " + model.getName());
+        writer.writeOpenTag(
+                ALSTreeLikelihoodParser.LIKE_NAME,
+                new Attribute[]{
+                        new Attribute.Default<String>(XMLParser.ID, oldPrefix + id),
+                        new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                        new Attribute.Default<Boolean>(ALSTreeLikelihoodParser.INTEGRATE_GAIN_RATE, true)}
+        );
 
-		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
-		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+        if (!options.samplePriorOnly) {
+            writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
+        } else {
+            // We just need to use the dummy alignment
+            if (partition instanceof PartitionData) {
+                writer.writeIDref(AlignmentParser.ALIGNMENT, ((PartitionData) partition).getAlignment().getId());
+            }
+        }
 
-	}// END: writeLogs
+        writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
+        writer.writeIDref(GammaSiteModel.SITE_MODEL, prefix + SiteModel.SITE_MODEL);
 
-	private void writeTreeLogs(XMLWriter writer, DolloComponentOptions component) {
+        writer.writeTag(ALSTreeLikelihoodParser.OBSERVATION_PROCESS,
+                new Attribute.Default<String>(ALSTreeLikelihoodParser.OBSERVATION_TYPE,ALSTreeLikelihoodParser.ANY_TIP),
+                true);
 
-		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			// We re-use the same method
-			writeLogs(writer, model);
-		}
-	}
+        switch (clockModel.getClockType()) {
+            case STRICT_CLOCK:
+                writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
+                        + BranchRateModel.BRANCH_RATES);
+                break;
+            case UNCORRELATED:
+                writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, options.noDuplicatedPrefix(clockModel.getPrefix(), treeModel.getPrefix())
+                        + BranchRateModel.BRANCH_RATES);
+                break;
+            case RANDOM_LOCAL_CLOCK:
+                writer.writeIDref(RandomLocalClockModelParser.LOCAL_BRANCH_RATES, clockModel.getPrefix()
+                        + BranchRateModel.BRANCH_RATES);
+                break;
 
-	private void writeDNdSLogger(XMLWriter writer,
-			DolloComponentOptions component) {
-
-		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			writeDNdSLogger(writer, model);
-		}
-	}
-
-	private void writeDNdSLogger(XMLWriter writer,
-			PartitionSubstitutionModel model) {
-
-		writer.writeComment("Robust counting for: " + model.getName());
-
-		writer.writeOpenTag("log", new Attribute[] {
-				new Attribute.Default<String>("id", "fileLog_dNdS"),
-				new Attribute.Default<String>("logEvery", "10000"),
-				new Attribute.Default<String>("fileName", model.getName()
-						+ logSuffix) });
-
-		writer
-				.writeOpenTag("dNdSLogger",
-						new Attribute[] { new Attribute.Default<String>("id",
-								"dNdS") });
-		writer.writeIDref("idref", "treeModel");
-		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
-		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
-		writer.writeCloseTag("dNdSLogger");
-
-		writer.writeCloseTag("log");
-
-	}// END: writeLogs
-
-	private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
-			DolloComponentOptions component) {
-
-		for (PartitionSubstitutionModel model : component.getPartitionList()) {
-			writeDNdSPerSiteAnalysisReport(writer, model);
-		}
-	}
-
-	private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
-			PartitionSubstitutionModel model) {
-
-		writer.writeComment("Robust counting for: " + model.getName());
-
-		writer.writeOpenTag("report");
-
-		writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
-				+ logSuffix + '\"' + "/> \n");
-
-		writer.writeCloseTag("report");
-
-	}// END: writeDNdSReport
+            case AUTOCORRELATED:
+                throw new UnsupportedOperationException("Autocorrelated relaxed clock model not implemented yet");
+            default:
+                throw new IllegalArgumentException("Unknown clock model");
+        }
+        writer.writeCloseTag(ALSTreeLikelihoodParser.LIKE_NAME);
+    }
 
 }// END: class

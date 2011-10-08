@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * PartitionSubstitutionModel.java
+ *
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -10,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -26,10 +28,12 @@ package dr.app.beauti.options;
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
 import dr.app.beauti.types.*;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.AminoAcids;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
+import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
-import dr.inference.operators.RateBitExchangeOperator;
 
 import java.util.HashSet;
 import java.util.List;
@@ -441,6 +445,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
+                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:
@@ -657,6 +662,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
             case DataType.COVARION:
                 switch (binarySubstitutionModel) {
                     case BIN_SIMPLE:
+                    case BIN_DOLLO:
                         break;
 
                     case BIN_COVARION:

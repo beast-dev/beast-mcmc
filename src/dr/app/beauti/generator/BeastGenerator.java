@@ -1,7 +1,7 @@
 /*
  * BeastGenerator.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -28,12 +28,17 @@ package dr.app.beauti.generator;
 import dr.app.beast.BeastVersion;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.*;
+import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.FixRateType;
+import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
-import dr.evolution.continuous.Continuous;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.ContinuousDataType;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -299,12 +304,13 @@ public class BeastGenerator extends Generator {
         try {
             if (taxonSets != null && taxonSets.size() > 0) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
-                generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
             }
         } catch (Exception e) {
             e.printStackTrace();
             throw new GeneratorException("Taxon sets generation has failed:\n" + e.getMessage());
         }
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TAXA, writer);
 
         //++++++++++++++++ Alignments ++++++++++++++++++
         List<Alignment> alignments = new ArrayList<Alignment>();

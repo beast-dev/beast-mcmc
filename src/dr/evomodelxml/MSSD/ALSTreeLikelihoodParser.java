@@ -1,3 +1,28 @@
+/*
+ * ALSTreeLikelihoodParser.java
+ *
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodelxml.MSSD;
 
 import dr.evolution.alignment.PatternList;
@@ -25,6 +50,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String OBSERVATION_PROCESS = "observationProcess";
     public static final String OBSERVATION_TYPE = "type";
     public static final String OBSERVATION_TAXON = "taxon";
+    public static final String ANY_TIP = "anyTip";
     final static String IMMIGRATION_RATE = "immigrationRate";
 
     public String getParserName() {
@@ -71,7 +97,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
                             branchRateModel, mu, lam, taxon);
                     Logger.getLogger("dr.evolution").info("All traits are assumed extant in " + taxonName);
                 } else {  // "anyTip" observation process
-                    observationProcess = new AnyTipObservationProcess("anyTip", treeModel, patternList,
+                    observationProcess = new AnyTipObservationProcess(ANY_TIP, treeModel, patternList,
                             siteModel, branchRateModel, mu, lam);
                     Logger.getLogger("dr.evolution").info("Observed traits are assumed to be extant in at least one tip node.");
                 }

@@ -1,6 +1,32 @@
+/*
+ * AlignmentGenerator.java
+ *
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.types.BinaryModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -66,13 +92,20 @@ public class AlignmentGenerator extends Generator {
             writer.writeComment("Null sequences generated in order to sample from the prior only.");
         }
 
+        if (getAlignmentDataTypeDescription(alignment) != null) {
         writer.writeOpenTag(
                 AlignmentParser.ALIGNMENT,
                 new Attribute[]{
                         new Attribute.Default<String>(XMLParser.ID, alignment.getId()),
-                        new Attribute.Default<String>("dataType", getAlignmentDataTypeDescription(alignment))
+                        new Attribute.Default<String>(DataType.DATA_TYPE, getAlignmentDataTypeDescription(alignment))
                 }
         );
+        } else {
+        writer.writeOpenTag(
+                AlignmentParser.ALIGNMENT, new Attribute.Default<String>(XMLParser.ID, alignment.getId()));
+
+        writer.writeIDref(DataType.DATA_TYPE, getAlignmentDataTypeIdref(alignment));
+        }
 
         for (int i = 0; i < alignment.getTaxonCount(); i++) {
             Taxon taxon = alignment.getTaxon(i);
@@ -115,6 +148,9 @@ public class AlignmentGenerator extends Generator {
                 if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
                         == BinaryModelType.BIN_COVARION) {
                     description = TwoStateCovarion.INSTANCE.getDescription(); // dataType="twoStateCovarion"
+                } else if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
+                        == BinaryModelType.BIN_DOLLO) {
+                    description = null;
                 }
                 break;
         }
@@ -122,4 +158,15 @@ public class AlignmentGenerator extends Generator {
         return description;
     }
 
+    private String getAlignmentDataTypeIdref(Alignment alignment) {
+        String description = alignment.getDataType().getDescription();
+        switch (alignment.getDataType().getType()) {
+            case DataType.TWO_STATES:
+                if (options.getPartitionData(alignment).getPartitionSubstitutionModel().getBinarySubstitutionModel()
+                        == BinaryModelType.BIN_DOLLO) {
+                    description = DolloComponentOptions.DATA_NAME;
+                }
+        }
+        return description;
+    }
 }

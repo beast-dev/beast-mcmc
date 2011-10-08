@@ -1,7 +1,7 @@
 /*
  * PartitionModelPanel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -27,32 +27,12 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
-import dr.app.beauti.types.*;
-import jam.panels.OptionsPanel;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
-import java.util.EnumSet;
-import java.util.logging.Logger;
-
-import javax.swing.BorderFactory;
-import javax.swing.BoxLayout;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
-
 import dr.app.beauti.components.dnds.DnDsComponentOptions;
+import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.types.BinaryModelType;
+import dr.app.beauti.types.FrequencyPolicyType;
+import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
@@ -60,6 +40,12 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Microsatellite;
 import dr.evomodel.substmodel.AminoAcidModelType;
 import dr.evomodel.substmodel.NucModelType;
+import jam.panels.OptionsPanel;
+
+import javax.swing.*;
+import java.awt.event.*;
+import java.util.EnumSet;
+import java.util.logging.Logger;
 
 /**
  * @author Alexei Drummond
@@ -74,7 +60,8 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox nucSubstCombo = new JComboBox(EnumSet.range(
             NucModelType.HKY, NucModelType.TN93).toArray());
     private JComboBox aaSubstCombo = new JComboBox(AminoAcidModelType.values());
-    private JComboBox binarySubstCombo = new JComboBox(BinaryModelType.values());
+    private JComboBox binarySubstCombo = new JComboBox(
+            new BinaryModelType[] { BinaryModelType.BIN_SIMPLE, BinaryModelType.BIN_COVARION });
     private JCheckBox useAmbiguitiesTreeLikelihoodCheck = new JCheckBox(
             "Use ambiguities in the tree likelihood associated with this model");
 
@@ -102,7 +89,7 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox robustCountingCheck = new JCheckBox("Use robust counting");
     private JButton setSRD06Button;
 
-    private JCheckBox dolloCheck = new JCheckBox("Use Stochastic Dollo Model");
+    private JCheckBox dolloCheck = new JCheckBox("Use stochastic Dollo model");
     // private JComboBox dolloCombo = new JComboBox(new String[]{"Analytical",
     // "Sample"});
 
@@ -249,10 +236,40 @@ public class PartitionModelPanel extends OptionsPanel {
                 .setToolTipText("<html>Sets the SRD06 model as described in<br>"
                         + "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
 
+        class ListenClickBinaryStochasticDolloButton implements ActionListener {
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (dolloCheck.isSelected()) {
+                    binarySubstCombo.setSelectedIndex(0);
+                    binarySubstCombo.setEnabled(false);
+                    useAmbiguitiesTreeLikelihoodCheck.setSelected(true);
+                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(false);
+                    frequencyCombo.setEnabled(false);
+                    frequencyCombo.setSelectedItem(FrequencyPolicyType.EMPIRICAL);
+                    heteroCombo.setSelectedIndex(0);
+                    heteroCombo.setEnabled(false);
+                    model.setBinarySubstitutionModel(BinaryModelType.BIN_DOLLO);
+                    model.setDolloModel(true);
+                    DolloComponentOptions comp = (DolloComponentOptions)
+                        model.getOptions().getComponentOptions(DolloComponentOptions.class);
+                    comp.createParameters(model.getOptions());
+                    comp.setActive(true);
+
+                } else {
+                    binarySubstCombo.setEnabled(true);
+                    useAmbiguitiesTreeLikelihoodCheck.setEnabled(true);
+                    frequencyCombo.setEnabled(true);
+                    heteroCombo.setEnabled(true);
+                    model.setBinarySubstitutionModel((BinaryModelType) binarySubstCombo.getSelectedItem());
+                    model.setDolloModel(false);
+                }
+            }
+        }
+
+        dolloCheck.addActionListener(new ListenClickBinaryStochasticDolloButton());
+
         // ////////////////////////////
         // ---dNdS robust counting---//
         // ////////////////////////////
-        // TODO
 
         robustCountingCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ev) {
@@ -330,11 +347,11 @@ public class PartitionModelPanel extends OptionsPanel {
         // ////////////////////////
 
         PanelUtils.setupComponent(dolloCheck);
-        dolloCheck.addChangeListener(new ChangeListener() {
-            public void stateChanged(ChangeEvent e) {
-                model.setDolloModel(true);
-            }
-        });
+//        dolloCheck.addChangeListener(new ChangeListener() {
+//            public void stateChanged(ChangeEvent e) {
+//                model.setDolloModel(true);
+//            }
+//        });
         dolloCheck.setEnabled(true);
         dolloCheck
                 .setToolTipText("<html>Activates a Stochastic Dollo model as described in<br>"
@@ -625,6 +642,12 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
 
+                // Easy XML specification is currently only available for binary models
+                if (STOCHASTIC_DOLLO) {
+                    addSeparator();
+                    addComponent(dolloCheck);
+                }
+
                 break;
 
             case DataType.GENERAL:
@@ -655,11 +678,6 @@ public class PartitionModelPanel extends OptionsPanel {
                 throw new IllegalArgumentException("Unknown data type");
 
         }
-
-        // if (BeautiApp.advanced) {
-        addSeparator();
-        addComponent(dolloCheck);
-        // }
 
         setOptions();
     }
@@ -745,4 +763,5 @@ public class PartitionModelPanel extends OptionsPanel {
         });
     }
 
+    private static final boolean STOCHASTIC_DOLLO = true;
 }

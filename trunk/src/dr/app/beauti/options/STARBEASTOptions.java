@@ -110,10 +110,6 @@ public class STARBEASTOptions extends ModelOptions {
 
         //TODO: more
 
-        for (PartitionClockModel model : options.getPartitionClockModels()) {
-            model.iniClockRateStarBEAST();
-        }
-
     }
 
     /**

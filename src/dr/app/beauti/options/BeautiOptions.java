@@ -1083,7 +1083,7 @@ public class BeautiOptions extends ModelOptions {
     public List<String> treeFileName = new ArrayList<String>();
     public boolean substTreeLog = false;
     public List<String> substTreeFileName = new ArrayList<String>();
-    public boolean operatorAnalysis = false;
+    public boolean operatorAnalysis = true;
     public String operatorAnalysisFileName = null;
 
     public SiteModelOptions siteModelOptions = new SiteModelOptions(this);

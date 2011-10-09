@@ -344,57 +344,6 @@ public class PartitionClockModel extends PartitionOptions {
         ops.add(getOperator(ClockType.LOCAL_CLOCK + ".changes"));
     }
 
-    // +++++++++++++++++++++++++++ *BEAST ++++++++++++++++++++++++++++++++++++
-
-    public void iniClockRateStarBEAST() {
-        switch (clockType) {
-            case STRICT_CLOCK:
-//                rateParam = getParameter("clock.rate");
-                break;
-
-            case RANDOM_LOCAL_CLOCK:
-//                rateParam = getParameter("clock.rate");
-                getParameter(ClockType.LOCAL_CLOCK + ".relativeRates");
-                getParameter(ClockType.LOCAL_CLOCK + ".changes");
-                break;
-
-            case UNCORRELATED:
-                switch (clockDistributionType) {
-                    case LOGNORMAL:
-//                        rateParam = getParameter(ClockType.UCLD_MEAN);
-                        break;
-                    case GAMMA:
-                        throw new UnsupportedOperationException("Uncorrelated Gamma clock not implemented yet");
-//                        rateParam = getParameter(ClockType.UCGD_SCALE);
-//                        break;
-                    case CAUCHY:
-                        throw new UnsupportedOperationException("Uncorrelated Cauchy clock not implemented yet");
-//                        break;
-                    case EXPONENTIAL:
-//                        rateParam = getParameter(ClockType.UCED_MEAN);
-                        break;
-                }
-                break;
-
-            case AUTOCORRELATED:
-                throw new UnsupportedOperationException("Autocorrelated clock not implemented yet");
-//                rateParam = getParameter("treeModel.rootRate");//TODO fix tree?
-//                break;
-
-            default:
-                throw new IllegalArgumentException("Unknown clock model");
-        }
-
-        double selectedRate = options.clockModelOptions.getSelectedRate(options.getAllPartitionData(clockModelGroup));
-
-        Parameter rateParam = getClockRateParam();
-
-        rateParam.priorType = PriorType.GAMMA_PRIOR;
-        rateParam.initial = selectedRate;
-        rateParam.shape = 0.1;
-        rateParam.scale = 10 * selectedRate;
-        rateParam.offset = 0;
-    }
 
     /////////////////////////////////////////////////////////////
     public void setClockType(ClockType clockType) {

@@ -30,7 +30,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         // the default is 0 threads but an XML attribute can override it
         int threads = xo.getAttribute(THREADS, 0);
 
-        if (xo.getName().equalsIgnoreCase(LIKELIHOOD)) {
+//        if (xo.getName().equalsIgnoreCase(LIKELIHOOD)) {
             // if this is '<likelihood>' then the default is to use a cached thread pool...
             threads = xo.getAttribute(THREADS, -1);
 
@@ -43,7 +43,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
                     threads = -1;
                 }
             }
-        }
+//        }
 
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -57,7 +57,13 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
             }
         }
 
-        CompoundLikelihood compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
+        CompoundLikelihood compoundLikelihood;
+
+        if (xo.getName().equalsIgnoreCase(POSTERIOR)) {
+            compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
+        } else {
+            compoundLikelihood = new CompoundLikelihood(0, likelihoods);
+        }
 
         if (compoundLikelihood.getThreadCount() > 0) {
             Logger.getLogger("dr.evomodel").info("Likelihood is using " + threads + " threads.");

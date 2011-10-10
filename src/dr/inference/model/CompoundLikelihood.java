@@ -42,6 +42,8 @@ import java.util.concurrent.*;
  */
 public class CompoundLikelihood implements Likelihood, Reportable {
 
+    public final static boolean UNROLL_COMPOUND = true;
+
     public final static boolean EVALUATION_TIMERS = true;
     public final long[] evaluationTimes;
     public final int[] evaluationCounts;
@@ -54,7 +56,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             threadCount = threads;
         }
 
-        if (threadCount > 0) {
+        if (threadCount > 1) {
             pool = Executors.newFixedThreadPool(threadCount);
 //        } else if (threads < 0) {
 //            // create a cached thread pool which should create one thread per likelihood...
@@ -70,24 +72,31 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }
 
         if (EVALUATION_TIMERS) {
-            evaluationTimes = new long[likelihoods.size()];
-            evaluationCounts = new int[likelihoods.size()];
+            evaluationTimes = new long[this.likelihoods.size()];
+            evaluationCounts = new int[this.likelihoods.size()];
         } else {
             evaluationTimes = null;
             evaluationCounts = null;
         }
     }
 
-    private void addLikelihood(Likelihood likelihood, int index) {
+    protected void addLikelihood(Likelihood likelihood, int index) {
 
-        if (!likelihoods.contains(likelihood)) {
-
-            likelihoods.add(likelihood);
-            if (likelihood.getModel() != null) {
-                compoundModel.addModel(likelihood.getModel());
+        // unroll any compound likelihoods
+        if (UNROLL_COMPOUND && likelihood instanceof CompoundLikelihood) {
+            for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
+                addLikelihood(l, index);
             }
+        } else {
+            if (!likelihoods.contains(likelihood)) {
 
-            likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+                likelihoods.add(likelihood);
+                if (likelihood.getModel() != null) {
+                    compoundModel.addModel(likelihood.getModel());
+                }
+
+                likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+            }
         }
     }
 
@@ -97,6 +106,14 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
     public final Likelihood getLikelihood(int i) {
         return likelihoods.get(i);
+    }
+
+    public List<Likelihood> getLikelihoods() {
+        return likelihoods;
+    }
+
+    public List<Callable<Double>> getLikelihoodCallers() {
+        return likelihoodCallers;
     }
 
     // **************************************************************
@@ -385,5 +402,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         private final Likelihood likelihood;
         private final int index;
     }
+
 }
 

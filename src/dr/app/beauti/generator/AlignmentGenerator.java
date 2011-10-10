@@ -45,6 +45,7 @@ import java.util.List;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
  */
 public class AlignmentGenerator extends Generator {

@@ -19,6 +19,7 @@ import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
  */
 public class InitialTreeGenerator extends Generator {

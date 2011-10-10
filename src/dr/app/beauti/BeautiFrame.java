@@ -528,19 +528,38 @@ public class BeautiFrame extends DocumentFrame {
                                 "StarBEAST requires a trait to give species designations<br>" +
                                 "for each taxon. Create or import a discrete trait<br>" +
                                 "labelled 'species'.</p></html>",
-                        TraitData.TRAIT_SPECIES)) {
+                        TraitData.TRAIT_SPECIES,
+                        true /* isSpeciesTrait */
+                )) {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }
+            } else if (options.getAllPartitionData(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
+                int option = JOptionPane.showConfirmDialog(this,
+                        "The trait named '" + TraitData.TRAIT_SPECIES + "', used to denote species in *BEAST, is\n" +
+                                "already in use as a data partition. Do you wish to continue?",
+                        "Species trait already in use",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+                if (option == JOptionPane.NO_OPTION) {
+                    return;
+                }
+
             }
 
+        } else { // remove species
             // why delete this? The user may want to use it again
             // because it is how *BEAST reverse to normal BEAST, otherwise after uncheck, everything goes wrong.
-        } else { // remove species
-            if (options.traitExists(TraitData.TRAIT_SPECIES)) {
-                traitsPanel.removeTrait(TraitData.TRAIT_SPECIES);
-                options.fileNameStem = MCMCPanel.fileNameStem;
-            }
+
+            // AR - it is a fundamental point of UI design that we don't delete the user's work.
+            // If the user had hand typed all the species designations in and then just switched *BEAST
+            // off for a moment and lost all that work they would be annoyed. We need to work out what
+            // why turning off *BEAST doesn't fully work.
+
+//            if (options.traitExists(TraitData.TRAIT_SPECIES)) {
+//                traitsPanel.removeTrait(TraitData.TRAIT_SPECIES);
+            options.fileNameStem = MCMCPanel.fileNameStem;
+//            }
         }
 
         options.useStarBEAST = useStarBEAST;

@@ -121,6 +121,7 @@ public abstract class AbstractPartitionData {
     public String getPrefix() {
         String prefix = "";
         // Determine if we have multiple data partitions for *BEAST (I am guessing here): MAS
+        // or any other multi-partition case: AR
         if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
             options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
             // There is more than one active partition model
@@ -128,8 +129,10 @@ public abstract class AbstractPartitionData {
         }
 
         // Try to return a sensible prefix for traits as well
+        // This won't be good... (it may put the prefix twice if the above is true and there
+        // are traits defined). Todo: Need to think about this...
         if (getTraits() != null) {
-            prefix += getName() + "."; // Consistent with DiscreteTraitComponent and looks nice
+//            prefix += getName() + "."; // Consistent with DiscreteTraitComponent and looks nice
         }
         return prefix;
     }

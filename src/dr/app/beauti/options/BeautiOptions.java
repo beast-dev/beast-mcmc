@@ -329,7 +329,7 @@ public class BeautiOptions extends ModelOptions {
     public List<AbstractPartitionData> getAllPartitionData(TraitData trait) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
-            if (pd.getTraits().contains(trait)) {
+            if (pd.getTraits() != null && pd.getTraits().contains(trait)) {
                 pdList.add(pd);
             }
         }
@@ -861,11 +861,10 @@ public class BeautiOptions extends ModelOptions {
     public void removeTrait(String traitName) {
         if (traitExists(traitName)) {
             clearTraitValues(traitName); // Clear trait values
-            if (traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-                traits.remove(getTrait(traitName));
-            } else {
-                dataPartitions.remove(getTrait(traitName));
-            }
+            traits.remove(getTrait(traitName));
+
+            // the UI will already have required this...
+//                dataPartitions.remove(getTrait(traitName));
         }
     }
 

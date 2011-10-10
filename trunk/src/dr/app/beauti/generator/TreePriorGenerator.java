@@ -50,6 +50,7 @@ import dr.xml.XMLParser;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  */
 public class TreePriorGenerator extends Generator {
 

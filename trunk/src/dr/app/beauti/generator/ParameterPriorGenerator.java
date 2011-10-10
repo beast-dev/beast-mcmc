@@ -46,6 +46,7 @@ import java.util.Map;
 
 /**
  * @author Alexei Drummond
+ * @author Andrew Rambaut
  * @author Walter Xie
  */
 public class ParameterPriorGenerator extends Generator {

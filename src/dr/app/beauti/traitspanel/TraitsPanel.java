@@ -282,6 +282,12 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 frame.updateDiscreteTraitAnalysis();
             }
 
+//            if (selRow > 0) {
+//                traitsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
+//            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
+//                traitsTable.getSelectionModel().setSelectionInterval(0, 0);
+//            }
+
             traitsTableModel.fireTableDataChanged();
             options.updatePartitionAllLinks();
             frame.setDirty();
@@ -482,25 +488,13 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         traitsTable.getSelectionModel().setSelectionInterval(selRow, selRow);
     }
 
-    public void removeTrait() {
+    private void removeTrait() {
         int selRow = traitsTable.getSelectedRow();
-        options.removeTrait(traitsTable.getValueAt(selRow, 0).toString());
+        removeTrait(traitsTable.getValueAt(selRow, 0).toString());
+    }
 
-        if (currentTrait != null) {
-            clearTraitValues(currentTrait.getName()); // Clear trait values
-//            if (currentTrait.getName().equalsIgnoreCase(TraitData.Traits.TRAIT_SPECIES.toString())) {
-//                frame.removeSepciesAnalysis();
-//            } else
-            if (currentTrait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                frame.updateDiscreteTraitAnalysis();
-            }
-
-//            if (selRow > 0) {
-//                traitsTable.getSelectionModel().setSelectionInterval(selRow-1, selRow-1);
-//            } else if (selRow == 0 && options.traitsOptions.traits.size() > 0) { // options.traitsOptions.traits.size() after remove
-//                traitsTable.getSelectionModel().setSelectionInterval(0, 0);
-//            }
-        }
+    public void removeTrait(String traitName) {
+        options.removeTrait(traitName);
 
         fireTraitsChanged();
         traitSelectionChanged();

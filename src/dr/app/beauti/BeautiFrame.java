@@ -220,7 +220,7 @@ public class BeautiFrame extends DocumentFrame {
 
         importChooser.setMultiSelectionEnabled(true);
         importChooser.setFileFilter(new FileNameExtensionFilter(
-                        "Microsatellite (tab-delimited *.txt) Files", "txt"));
+                "Microsatellite (tab-delimited *.txt) Files", "txt"));
         importChooser.setFileFilter(new FileNameExtensionFilter(
                 "NEXUS (*.nex) & BEAST (*.xml) Files", "nex", "nexus", "nx", "xml", "beast", "fa", "fasta", "afa"));
         importChooser.setDialogTitle("Import Aligment...");
@@ -419,9 +419,9 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
-            setAllOptions();
-            dataPanel.selectAll();
-            dataPanel.unlinkTrees();
+        setAllOptions();
+        dataPanel.selectAll();
+        dataPanel.unlinkTrees();
 
         setAllOptions();
 
@@ -532,10 +532,14 @@ public class BeautiFrame extends DocumentFrame {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }
+            }
 
-                // why delete this? The user may want to use it again
-//        } else { // remove species
-//            options.removeTrait(TraitData.TRAIT_SPECIES);
+            // why delete this? The user may want to use it again
+            // because it is how *BEAST reverse to normal BEAST, otherwise after uncheck, everything goes wrong.
+        } else { // remove species
+            if (options.traitExists(TraitData.TRAIT_SPECIES)) {
+                traitsPanel.removeTrait(TraitData.TRAIT_SPECIES);
+                options.fileNameStem = MCMCPanel.fileNameStem;
             }
         }
 

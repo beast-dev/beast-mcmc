@@ -170,6 +170,8 @@ public class CreateTraitDialog {
             optionPanel.addComponentWithLabel("Type:", typeCombo);
             optionPanel.addComponent(createTraitPartitionCheck);
         }
+        // if create "species" partition for *BEAST, then everything goes wrong
+        createTraitPartitionCheck.setSelected(!isSpeciesTrait);
     }
 
     public String getName() {

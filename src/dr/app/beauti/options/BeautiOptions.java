@@ -861,7 +861,11 @@ public class BeautiOptions extends ModelOptions {
     public void removeTrait(String traitName) {
         if (traitExists(traitName)) {
             clearTraitValues(traitName); // Clear trait values
-            dataPartitions.remove(getTrait(traitName));
+            if (traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+                traits.remove(getTrait(traitName));
+            } else {
+                dataPartitions.remove(getTrait(traitName));
+            }
         }
     }
 

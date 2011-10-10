@@ -105,7 +105,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
             }
             params.add(modelOptions.getParameter(prefix + "frequencies"));
             params.add(modelOptions.getParameter(prefix + "rates"));
-            System.err.println("Selected OK");
+//            System.err.println("Selected OK");
 //               params.add(getParameter(prefix + "mu"));
         }
 

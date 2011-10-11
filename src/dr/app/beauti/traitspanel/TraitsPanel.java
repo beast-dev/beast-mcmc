@@ -475,7 +475,23 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             // called by guessTraits() anyway.
 //            guessTrait();
         } else if (result == CreateTraitDialog.OK_IMPORT) {
-            return frame.doImportTraits();
+            boolean done = frame.doImportTraits();
+            if (done) {
+                if (isSpeciesTrait) {
+                // check that we did indeed import a 'species' trait
+                    if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
+                        JOptionPane.showMessageDialog(this,
+                                        "The imported trait file didn't contain a trait\n" +
+                                        "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
+                                        "Please edit it or select a different file.",
+                                "Reserved trait name",
+                                JOptionPane.WARNING_MESSAGE);
+
+                        return false;
+                    }
+                }
+            }
+            return done;
         } else if (result == JOptionPane.CANCEL_OPTION) {
             return false;
         }

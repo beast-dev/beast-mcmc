@@ -508,6 +508,16 @@ public class BeautiFrame extends DocumentFrame {
             return false;
         }
 
+        if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+            JOptionPane.showMessageDialog(this,
+                    "This trait name is already in used to denote species\n" +
+                            "for *BEAST. Please select a different name.",
+                    "Reserved trait name",
+                    JOptionPane.WARNING_MESSAGE);
+
+            return false;
+        }
+
         // check that the trait name doesn't exist
         if (options.traitExists(traitName)) {
             int option = JOptionPane.showConfirmDialog(this,

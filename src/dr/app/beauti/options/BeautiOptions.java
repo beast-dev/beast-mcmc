@@ -466,9 +466,7 @@ public class BeautiOptions extends ModelOptions {
 
         for (AbstractPartitionData partition : givenDataPartitions) {
             PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
-            if (model != null && (!activeModels.contains(model))
-                    // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
+            if (model != null && (!activeModels.contains(model))) {
                 activeModels.add(model);
             }
         }
@@ -499,7 +497,6 @@ public class BeautiOptions extends ModelOptions {
             PartitionClockModel model = partition.getPartitionClockModel();
             if (model != null && (!activeModels.contains(model))
                     // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))
                     && (!partition.getDataType().equals(DataType.CONTINUOUS))) {
                 activeModels.add(model);
             }
@@ -558,9 +555,7 @@ public class BeautiOptions extends ModelOptions {
 
         for (AbstractPartitionData partition : givenDataPartitions) {
             PartitionTreeModel tree = partition.getPartitionTreeModel();
-            if (tree != null && (!activeTrees.contains(tree))
-                    // species excluded
-                    && (!partition.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES))) {
+            if (tree != null && (!activeTrees.contains(tree))) {
                 activeTrees.add(tree);
             }
         }

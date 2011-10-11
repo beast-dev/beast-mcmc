@@ -57,7 +57,7 @@ public class PriorDialog {
 
     private final Map<PriorType, PriorOptionsPanel> optionsPanels = new HashMap<PriorType, PriorOptionsPanel>();
 
-    private final JComboBox priorCombo = new JComboBox();
+    private JComboBox priorCombo;
 
     private JPanel contentPanel;
 
@@ -118,14 +118,14 @@ public class PriorDialog {
         improperCaution.setText(
                 "<html>This improper distribution often leads to an improper posterior. <br>" +
                       "This distribution is likely appropriate when used for the <br>" +
-                      "constant population size under the Coalescent.</html>");        
+                      "constant population size under the Coalescent.</html>");
     }
 
     public int showDialog(final Parameter parameter) {
 
         this.parameter = parameter;
 
-        priorCombo.removeAllItems();
+        priorCombo = new JComboBox();
         for (PriorType priorType : PriorType.getPriorTypes(parameter)) {
             priorCombo.addItem(priorType);
         }
@@ -163,6 +163,7 @@ public class PriorDialog {
         });
 
         for (PriorOptionsPanel optionsPanel : optionsPanels.values()) {
+            optionsPanel.removeAllListeners();
             optionsPanel.addListener(new PriorOptionsPanel.Listener() {
                 public void optionsPanelChanged() {
                     setupChart();

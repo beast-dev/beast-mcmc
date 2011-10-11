@@ -25,13 +25,13 @@
 
 package dr.app.beast;
 
+import dr.app.gui.FileDrop;
 import dr.app.gui.components.WholeNumberField;
 import jam.html.SimpleLinkListener;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.TitledBorder;
+import javax.swing.border.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
@@ -99,6 +99,16 @@ public class BeastDialog {
         panel1.add(inputFileNameText, BorderLayout.CENTER);
         panel1.add(inputFileButton, BorderLayout.EAST);
         optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
+
+        Color focusColor = UIManager.getColor("Focus.color");
+        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
+        new FileDrop( null, inputFileNameText, focusBorder, new FileDrop.Listener()
+        {   public void filesDropped( java.io.File[] files )
+            {
+                inputFile = files[0];
+                inputFileNameText.setText(inputFile.getName());
+            }   // end filesDropped
+        }); // end FileDrop.Listener
 
         optionPanel.addComponent(overwriteCheckBox);
 

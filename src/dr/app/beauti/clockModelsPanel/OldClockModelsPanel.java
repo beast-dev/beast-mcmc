@@ -32,7 +32,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.types.ClockType;
+import dr.app.beauti.types.OldClockType;
 import dr.app.beauti.types.PriorType;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
@@ -306,7 +306,16 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void modelsChanged() {
         TableColumn col = clockModelTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(EnumSet.range(ClockType.STRICT_CLOCK, ClockType.RANDOM_LOCAL_CLOCK).toArray())));
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(new OldClockType[] {
+                OldClockType.STRICT_CLOCK,
+                OldClockType.UNCORRELATED_LOGNORMAL,
+//                OldClockType.UNCORRELATED_CAUCHY,
+//                OldClockType.UNCORRELATED_GAMMA,
+                OldClockType.UNCORRELATED_EXPONENTIAL,
+//                OldClockType.AUTOCORRELATED
+                OldClockType.RANDOM_LOCAL_CLOCK,
+        } )));
+
         col = clockModelTable.getColumnModel().getColumn(4);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(options.clockModelOptions.getClockModelGroupNames(clockModelGroupList))));
 
@@ -410,7 +419,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 case 0:
                     return model.getName();
                 case 1:
-                    return model.getClockType();
+                    return OldClockType.getType(model.getClockType(), model.getClockDistributionType());
                 case 2:
                     return model.isEstimatedRate();
                 case 3:
@@ -431,7 +440,9 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     }
                     break;
                 case 1:
-                    model.setClockType((ClockType) aValue);
+                    OldClockType type = (OldClockType) aValue;
+                    model.setClockType(type.getClockType());
+                    model.setClockDistributionType(type.getClockDistributionType());
                     break;
                 case 2:
                     model.setEstimatedRate((Boolean) aValue);

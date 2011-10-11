@@ -29,6 +29,7 @@ import dr.app.beauti.options.TraitData;
 import dr.app.beauti.priorsPanel.DefaultPriorDialog;
 import dr.app.beauti.priorsPanel.PriorsPanel;
 import dr.app.beauti.siteModelsPanel.SiteModelsPanel;
+import dr.app.beauti.taxonsetspanel.SpeciesSetPanel;
 import dr.app.beauti.taxonsetspanel.TaxonSetPanel;
 import dr.app.beauti.tipdatepanel.TipDatesPanel;
 import dr.app.beauti.traitspanel.TraitsPanel;
@@ -77,6 +78,7 @@ public class BeautiFrame extends DocumentFrame {
     private TipDatesPanel tipDatesPanel;
     private TraitsPanel traitsPanel;
     private TaxonSetPanel taxonSetPanel;
+    private SpeciesSetPanel speciesSetPanel;
     private SiteModelsPanel siteModelsPanel;
     private OldClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
@@ -136,6 +138,7 @@ public class BeautiFrame extends DocumentFrame {
         tipDatesPanel = new TipDatesPanel(this);
         traitsPanel = new TraitsPanel(this, dataPanel, getImportTraitsAction());
         taxonSetPanel = new TaxonSetPanel(this);
+        speciesSetPanel = new SpeciesSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
         clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
@@ -147,6 +150,7 @@ public class BeautiFrame extends DocumentFrame {
 
         tabbedPane.addTab("Data Partitions", dataPanel);
         tabbedPane.addTab("Taxon Sets", taxonSetPanel);
+//        tabbedPane.addTab("Species Sets", speciesSetPanel);
         tabbedPane.addTab("Tip Dates", tipDatesPanel);
         tabbedPane.addTab("Traits", traitsPanel);
         tabbedPane.addTab("Site Models", siteModelsPanel);
@@ -245,7 +249,11 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.setOptions(options);
             tipDatesPanel.setOptions(options);
             traitsPanel.setOptions(options);
-            taxonSetPanel.setOptions(options);
+            if (options.useStarBEAST) {
+                speciesSetPanel.setOptions(options);
+            } else {
+                taxonSetPanel.setOptions(options);
+            }
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
@@ -268,7 +276,11 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.getOptions(options);
             tipDatesPanel.getOptions(options);
             traitsPanel.getOptions(options);
-            taxonSetPanel.getOptions(options);
+             if (options.useStarBEAST) {
+                speciesSetPanel.getOptions(options);
+            } else {
+                taxonSetPanel.getOptions(options);
+            }
             siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);
@@ -547,6 +559,9 @@ public class BeautiFrame extends DocumentFrame {
 
             }
 
+            tabbedPane.removeTabAt(1);
+            tabbedPane.insertTab("Species Sets", null, speciesSetPanel, null, 1);
+
         } else { // remove species
             // why delete this? The user may want to use it again
             // because it is how *BEAST reverse to normal BEAST, otherwise after uncheck, everything goes wrong.
@@ -560,6 +575,9 @@ public class BeautiFrame extends DocumentFrame {
 //                traitsPanel.removeTrait(TraitData.TRAIT_SPECIES);
             options.fileNameStem = MCMCPanel.fileNameStem;
 //            }
+
+            tabbedPane.removeTabAt(1);
+            tabbedPane.insertTab("Taxon Sets", null, taxonSetPanel, null, 1);
         }
 
         options.useStarBEAST = useStarBEAST;

@@ -125,6 +125,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         listeners.add(listener);
     }
 
+    void removeAllListeners() {
+        listeners.clear();
+    }
     protected void setFieldRange(RealNumberField field, boolean isNonNegative, boolean isZeroOne) {
         double lower = Double.NEGATIVE_INFINITY;
         double upper = Double.POSITIVE_INFINITY;

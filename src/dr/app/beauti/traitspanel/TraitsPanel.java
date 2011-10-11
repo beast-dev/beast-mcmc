@@ -495,12 +495,12 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void removeTrait(String traitName) {
         if (options.useStarBEAST && traitName.equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-            JOptionPane.showMessageDialog(this, "Trait in use", "The trait named '" + traitName + "' is being used by *BEAST.\nTurn *BEAST off before deleting this trait.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used by *BEAST.\nTurn *BEAST off before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
             return;
         }
         TraitData traitData = options.getTrait(traitName);
         if (options.getAllPartitionData(traitData).size() > 0) {
-            JOptionPane.showMessageDialog(this, "Trait in use", "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
             return;
         }
         options.removeTrait(traitName);

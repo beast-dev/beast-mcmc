@@ -1093,9 +1093,11 @@ public class BeautiOptions extends ModelOptions {
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
 //    public PriorOptions priorOptions = new PriorOptions(this);
+//    public TraitsOptions traitsOptions = new TraitsOptions(this);
 
-    //    public TraitsOptions traitsOptions = new TraitsOptions(this);
     public boolean useStarBEAST = false;
+    // speciesSets List<String> 1st element is name, 2nd is monophyletic
+    public List<List<String>> speciesSets = new ArrayList<List<String>>();
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

@@ -172,7 +172,7 @@ public class STARBEASTOptions extends ModelOptions {
     /////////////////////////////////////////////////////////////
 
     public List<String> getSpeciesList() {
-        return new ArrayList<String>(TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES.toString()));
+        return new ArrayList<String>(TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES));
     }
 
     public String getDescription() {

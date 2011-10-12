@@ -55,6 +55,7 @@ import java.util.Set;
 /**
  * It is specified to *BEAST and used to replace Taxon Sets panel,
  * because *BEAST calibration is only allowed in species tree
+ *
  * @author Andrew Rambaut
  * @author Alexei Drummond
  * @author Walter Xie
@@ -333,12 +334,14 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
                 includedSelectionChanging = true;
                 includedSpeciesTable.clearSelection();
                 if (includedSpeciesSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa) includedSpeciesSetsComboBox.getSelectedItem();
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        Taxon taxon = taxa.getTaxon(i);
-                        int index = includedSpecies.indexOf(taxon);
-                        includedSpeciesTable.getSelectionModel().addSelectionInterval(index, index);
-
+                    String spSetName = includedSpeciesSetsComboBox.getSelectedItem().toString();
+                    for (List<String> speciesSet : options.speciesSets) {
+                        if (spSetName.equalsIgnoreCase(speciesSet.get(0))) {
+                            for (int i = 2; i < speciesSet.size(); i++) {
+                                int index = includedSpecies.indexOf(speciesSet.get(i));
+                                includedSpeciesTable.getSelectionModel().addSelectionInterval(index, index);
+                            }
+                        }
                     }
                 }
                 includedSelectionChanging = false;
@@ -357,12 +360,14 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
                 excludedSelectionChanging = true;
                 excludedSpeciesTable.clearSelection();
                 if (excludedSpeciesSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa) excludedSpeciesSetsComboBox.getSelectedItem();
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        Taxon taxon = taxa.getTaxon(i);
-                        int index = excludedSpecies.indexOf(taxon);
-                        excludedSpeciesTable.getSelectionModel().addSelectionInterval(index, index);
-
+                    String spSetName = excludedSpeciesSetsComboBox.getSelectedItem().toString();
+                    for (List<String> speciesSet : options.speciesSets) {
+                        if (spSetName.equalsIgnoreCase(speciesSet.get(0))) {
+                            for (int i = 2; i < speciesSet.size(); i++) {
+                                int index = excludedSpecies.indexOf(speciesSet.get(i));
+                                excludedSpeciesTable.getSelectionModel().addSelectionInterval(index, index);
+                            }
+                        }
                     }
                 }
                 excludedSelectionChanging = false;
@@ -419,18 +424,19 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
     }
 
     private void validateSpeciesSets() {
-//        if (speciesSetsTable.getRowCount() > 0) {
-//            for (Taxa taxonSet : options.speciesSets) {
-//                if (taxonSet.getTaxonCount() < 1) {
-//                    JOptionPane.showMessageDialog(this, "Species set " + taxonSet.getId() + " is empty, "
-//                            + "\nplease go back to Species Sets panel to select included species.",
-//                                "Empty species set error", JOptionPane.ERROR_MESSAGE);
-//                }
-//            }
-//        }
+        if (speciesSetsTable.getRowCount() > 0) {
+            for (List<String> speciesSet : options.speciesSets) {
+                if (speciesSet == null || speciesSet.size() < 1) {
+                    JOptionPane.showMessageDialog(this, "Species set " + speciesSet.get(0) + " is empty, "
+                            + "\nplease go back to Species Sets panel to select included species.",
+                            "Empty species set error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
     }
 
-    public void getOptions(BeautiOptions options) {    }
+    public void getOptions(BeautiOptions options) {
+    }
 
     public JComponent getExportableComponent() {
         return speciesSetsTable;
@@ -477,16 +483,14 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
         public void actionPerformed(ActionEvent ae) {
             int row = speciesSetsTable.getSelectedRow();
             if (row != -1) {
-                Taxa taxa = options.taxonSets.remove(row);
-                options.taxonSetsMono.remove(taxa);
-                options.taxonSetsIncludeStem.remove(taxa);
+                options.speciesSets.remove(row);
             }
             speciesSetChanged();
 
             speciesSetsTableModel.fireTableDataChanged();
 
-            if (row >= options.taxonSets.size()) {
-                row = options.taxonSets.size() - 1;
+            if (row >= options.speciesSets.size()) {
+                row = options.speciesSets.size() - 1;
             }
             if (row >= 0) {
                 speciesSetsTable.setRowSelectionInterval(row, row);
@@ -541,15 +545,15 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
         includedSpeciesSetsComboBox.setSelectedIndex(0);
     }
 
-    private void setupSpeciesSetsComboBox(JComboBox comboBox, List<String> availableTaxa) {
+    private void setupSpeciesSetsComboBox(JComboBox comboBox, List<String> availableSpecies) {
         comboBox.removeAllItems();
 
         comboBox.addItem(SP_SET_DEFAULT);
         for (List<String> spSet : options.speciesSets) {
             if (spSet.containsAll(currentSpeciesSet) &&
                     currentSpeciesSet.containsAll(spSet.subList(2, spSet.size()))) { // this means spSet = currentSpeciesSet
-                if (isCompatible(spSet, availableTaxa)) {
-                    comboBox.addItem(spSet);
+                if (isCompatible(spSet, availableSpecies)) {
+                    comboBox.addItem(spSet.get(0));
                 }
             }
         }
@@ -570,22 +574,36 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
     }
 
     private boolean checkCompatibility(List<String> speciesSet) {
-//        for (List<String> speciesSet2 : options.speciesSets) {
-//            if (speciesSet2.get(0).equalsIgnoreCase(speciesSet.get(0)) && Boolean.parseBoolean(speciesSet2.get(1))) {
-//                if (containsAny(speciesSet, speciesSet2) && !containsAll(speciesSet, speciesSet2)
-//                        && !containsAll(speciesSet2, speciesSet)) {
-//                    JOptionPane.showMessageDialog(frame,
-//                            "You cannot enforce monophyly on this species set \n" +
-//                                    "because it is not compatible with another species \n" +
-//                                    "set, " + speciesSet2.get(0) + ", for which monophyly is\n" +
-//                                    "enforced.",
-//                            "Warning",
-//                            JOptionPane.WARNING_MESSAGE);
-//                    return false;
-//                }
-//            }
-//        }
+        for (List<String> speciesSet2 : options.speciesSets) {
+            if (speciesSet2.get(0).equalsIgnoreCase(speciesSet.get(0)) && Boolean.parseBoolean(speciesSet2.get(1))) {
+                if (containsAny(speciesSet, speciesSet2) && !containsAll(speciesSet, speciesSet2)
+                        && !containsAll(speciesSet2, speciesSet)) {
+                    JOptionPane.showMessageDialog(frame,
+                            "You cannot enforce monophyly on this species set \n" +
+                                    "because it is not compatible with another species \n" +
+                                    "set, " + speciesSet2.get(0) + ", for which monophyly is\n" +
+                                    "enforced.",
+                            "Warning",
+                            JOptionPane.WARNING_MESSAGE);
+                    return false;
+                }
+            }
+        }
         return true;
+    }
+
+    // speciesSet1 contains all species in speciesSet2
+    private boolean containsAll(List<String> speciesSet1, List<String> speciesSet2) {
+        return speciesSet1.containsAll(speciesSet2.subList(2, speciesSet2.size()));
+    }
+
+    // speciesSet contains any of speciesSet2
+    private boolean containsAny(List<String> speciesSet1, List<String> speciesSet2) {
+        // 1st element is name, 2nd is monophyletic
+        for (int i = 2; i < speciesSet2.size(); i++) {
+            if (speciesSet1.contains(speciesSet2.get(i))) return true;
+        }
+        return false;
     }
 
     /**
@@ -594,6 +612,7 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
     class SpeciesSetsTableModel extends AbstractTableModel {
 
         String[] columnNames = {"Species Sets", "Monophyletic?"};
+
         public SpeciesSetsTableModel() {
         }
 
@@ -616,7 +635,7 @@ public class SpeciesSetPanel extends BeautiPanel implements Exportable {
                 case 0:
                     return speciesSet.get(0); // name
                 case 1:
-                    return speciesSet.get(1); // monophyletic
+                    return Boolean.parseBoolean(speciesSet.get(1)); // monophyletic
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);
             }

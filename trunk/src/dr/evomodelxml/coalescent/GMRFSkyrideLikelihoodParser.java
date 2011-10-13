@@ -35,7 +35,8 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
     public static final String OLD_SKYRIDE = "oldSkyride";
     public static final String NUM_GRID_POINTS = "numGridPoints";
     public static final String CUT_OFF = "cutOff";
-
+    public static final String PHI_PARAMETER = "phiParameter";
+    
 
     public String getParserName() {
         return SKYLINE_LIKELIHOOD;
@@ -100,6 +101,12 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             cutOff = (Parameter) cxo.getChild(Parameter.class);
         }
 
+        Parameter phi = null;
+        if (xo.getChild(PHI_PARAMETER) != null) {
+            cxo = xo.getChild(PHI_PARAMETER);
+            phi = (Parameter) cxo.getChild(Parameter.class);
+        }
+
 
         Parameter beta = null;
         if (xo.getChild(BETA_PARAMETER) != null) {
@@ -151,7 +158,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
         } else {
 
              return new GMRFMultilocusSkyrideLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, beta, dMatrix, timeAwareSmoothing,cutOff.getParameterValue(0),(int) numGridPoints.getParameterValue(0));
+                lambda, beta, dMatrix, timeAwareSmoothing,cutOff.getParameterValue(0),(int) numGridPoints.getParameterValue(0), phi);
 
         }
     }
@@ -177,6 +184,9 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{

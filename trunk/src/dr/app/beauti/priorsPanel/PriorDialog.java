@@ -208,7 +208,7 @@ public class PriorDialog {
 
     private void setArguments(PriorType priorType) {
         PriorOptionsPanel panel = optionsPanels.get(priorType);
-        panel.setArguments(parameter, priorType);
+        if (panel != null) panel.setArguments(parameter, priorType);
     }
 
     private void getArguments() {

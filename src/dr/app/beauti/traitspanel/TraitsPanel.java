@@ -629,8 +629,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
 
         public boolean isCellEditable(int row, int col) {
-            return !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
-//            return true;
+            return !options.useStarBEAST || !options.traits.get(row).getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES.toString());
         }
 
         public String getColumnName(int column) {

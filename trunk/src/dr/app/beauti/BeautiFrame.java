@@ -204,10 +204,6 @@ public class BeautiFrame extends DocumentFrame {
             setSize(new java.awt.Dimension(1024, 768));
         }
 
-        // todo Andrew:
-        // It is really nasty on the Mac not to have a minimum window size (probably
-        // other platforms too?). We surely don't require a working interface less
-        // than this...
         if (OSType.isMac()) {
             setMinimumSize(new java.awt.Dimension(640, 480));
         }

@@ -104,56 +104,77 @@ public class SteppingStoneSamplingAnalysis {
     	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
     		
     		String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+    		StringTokenizer tokenFileName = new StringTokenizer(fileName);
+    		int numberOfFiles = tokenFileName.countTokens();
+    		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
     		try {
     			
-    			File file = new File(fileName);
-                String name = file.getName();
-                String parent = file.getParent();
+    			//File file;
+    			//String name, parent, 
+    			String likelihoodName = "";
+    			//String thetaName;
+    			//XMLObject cxo;
+    			//LogFileTraces traces;
+    			List sampleLogLikelihood = null;
+    			List sampleTheta = null;
+    			
+    			for (int j = 0; j < numberOfFiles; j++) {
+    			
+    				File file = new File(tokenFileName.nextToken());
+    				String name = file.getName();
+    				String parent = file.getParent();
 
-                if (!file.isAbsolute()) {
-                    parent = System.getProperty("user.dir");
-                }
+    				if (!file.isAbsolute()) {
+    					parent = System.getProperty("user.dir");
+    				}
 
-                file = new File(parent, name);
+    				file = new File(parent, name);
 
-                fileName = file.getAbsolutePath();
+    				fileName = file.getAbsolutePath();
 
-                XMLObject cxo = xo.getChild(LIKELIHOOD_COLUMN);
-                String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
+    				XMLObject cxo = xo.getChild(LIKELIHOOD_COLUMN);
+    				likelihoodName = cxo.getStringAttribute(Attribute.NAME);
 
-                cxo = xo.getChild(THETA_COLUMN);
-                String thetaName = cxo.getStringAttribute(Attribute.NAME);
+    				cxo = xo.getChild(THETA_COLUMN);
+    				String thetaName = cxo.getStringAttribute(Attribute.NAME);
 
-                LogFileTraces traces = new LogFileTraces(fileName, file);
-                traces.loadTraces();
+    				LogFileTraces traces = new LogFileTraces(fileName, file);
+    				traces.loadTraces();
                 
-                int burnin = 0;
+    				int burnin = 0;
                 
-                traces.setBurnIn(burnin);
+    				traces.setBurnIn(burnin);
 
-                int traceIndexLikelihood = -1;
-                int traceIndexTheta = -1;
-                for (int i = 0; i < traces.getTraceCount(); i++) {
-                    String traceName = traces.getTraceName(i);
-                    if (traceName.trim().equals(likelihoodName)) {
-                        traceIndexLikelihood = i;
-                    }
-                    if (traceName.trim().equals(thetaName)) {
-                        traceIndexTheta = i;
-                    }
-                }
+    				int traceIndexLikelihood = -1;
+    				int traceIndexTheta = -1;
+    				for (int i = 0; i < traces.getTraceCount(); i++) {
+    					String traceName = traces.getTraceName(i);
+    					if (traceName.trim().equals(likelihoodName)) {
+    						traceIndexLikelihood = i;
+    					}
+    					if (traceName.trim().equals(thetaName)) {
+    						traceIndexTheta = i;
+    					}
+    				}
 
-                if (traceIndexLikelihood == -1) {
-                    throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
-                }
+    				if (traceIndexLikelihood == -1) {
+    					throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
+    				}
 
-                if (traceIndexTheta == -1) {
-                    throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
-                }
+    				if (traceIndexTheta == -1) {
+    					throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
+    				}
 
-                List sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
-                List sampleTheta = traces.getValues(traceIndexTheta);
-
+    				if (sampleLogLikelihood == null && sampleTheta == null) {
+    					sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
+    					sampleTheta = traces.getValues(traceIndexTheta);
+    				} else {
+    					sampleLogLikelihood.addAll(traces.getValues(traceIndexLikelihood));
+    					sampleTheta.addAll(traces.getValues(traceIndexTheta));
+    				}
+    			
+    			}
+    			
                 SteppingStoneSamplingAnalysis analysis = new SteppingStoneSamplingAnalysis(likelihoodName, sampleLogLikelihood, sampleTheta);
 
                 System.out.println(analysis.toString());

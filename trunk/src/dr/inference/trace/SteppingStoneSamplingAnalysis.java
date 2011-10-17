@@ -109,12 +109,7 @@ public class SteppingStoneSamplingAnalysis {
     		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
     		try {
     			
-    			//File file;
-    			//String name, parent, 
     			String likelihoodName = "";
-    			//String thetaName;
-    			//XMLObject cxo;
-    			//LogFileTraces traces;
     			List sampleLogLikelihood = null;
     			List sampleTheta = null;
     			

@@ -95,8 +95,7 @@ public class PathSamplingAnalysis {
             sb.append("\n");
         }
 
-
-        sb.append("\nlog Bayes factor from ");
+        sb.append("\nlog Bayes factor (using path sampling) from ");
         sb.append(logLikelihoodName);
         sb.append(" = ");
         sb.append(String.format(FORMAT, bf) + " (" + bf + ")");
@@ -104,6 +103,7 @@ public class PathSamplingAnalysis {
                 + String.format(FORMAT, orderedTheta.get(1)) + ","
                 + String.format(FORMAT, orderedTheta.get(orderedTheta.size() - 2)) + ") = "
                 + String.format(FORMAT, innerArea));
+        sb.append("\n");
         return sb.toString();
     }
 
@@ -116,64 +116,80 @@ public class PathSamplingAnalysis {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             String fileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+            StringTokenizer tokenFileName = new StringTokenizer(fileName);
+    		int numberOfFiles = tokenFileName.countTokens();
+    		System.out.println(numberOfFiles + " file(s) found with marginal likelihood samples");
             try {
+            	
+            	String likelihoodName = "";
+    			List sampleLogLikelihood = null;
+    			List sampleTheta = null;
+    			
+    			for (int j = 0; j < numberOfFiles; j++) {
+    				
+    				File file = new File(tokenFileName.nextToken());
+                    String name = file.getName();
+                    String parent = file.getParent();
 
-                File file = new File(fileName);
-                String name = file.getName();
-                String parent = file.getParent();
-
-                if (!file.isAbsolute()) {
-                    parent = System.getProperty("user.dir");
-                }
-
-                file = new File(parent, name);
-
-                fileName = file.getAbsolutePath();
-
-                XMLObject cxo = xo.getChild(LIKELIHOOD_COLUMN);
-                String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
-
-                cxo = xo.getChild(THETA_COLUMN);
-                String thetaName = cxo.getStringAttribute(Attribute.NAME);
-
-                LogFileTraces traces = new LogFileTraces(fileName, file);
-                traces.loadTraces();
-                int maxState = traces.getMaxState();
-
-                // leaving the burnin attribute off will result in 10% being used
-                int burnin = xo.getAttribute(MarginalLikelihoodAnalysisParser.BURN_IN, maxState / 5);
-
-                if (burnin < 0 || burnin >= maxState) {
-                    burnin = maxState / 5;
-                    System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
-                }
-
-                burnin = 0;
-
-                traces.setBurnIn(burnin);
-
-                int traceIndexLikelihood = -1;
-                int traceIndexTheta = -1;
-                for (int i = 0; i < traces.getTraceCount(); i++) {
-                    String traceName = traces.getTraceName(i);
-                    if (traceName.trim().equals(likelihoodName)) {
-                        traceIndexLikelihood = i;
+                    if (!file.isAbsolute()) {
+                        parent = System.getProperty("user.dir");
                     }
-                    if (traceName.trim().equals(thetaName)) {
-                        traceIndexTheta = i;
+                    
+                    file = new File(parent, name);
+
+                    fileName = file.getAbsolutePath();
+                    
+                    XMLObject cxo = xo.getChild(LIKELIHOOD_COLUMN);
+                    likelihoodName = cxo.getStringAttribute(Attribute.NAME);
+    				
+                    cxo = xo.getChild(THETA_COLUMN);
+                    String thetaName = cxo.getStringAttribute(Attribute.NAME);
+                    
+                    LogFileTraces traces = new LogFileTraces(fileName, file);
+                    traces.loadTraces();
+                    int maxState = traces.getMaxState();
+                    
+                    // leaving the burnin attribute off will result in 10% being used
+                    int burnin = xo.getAttribute(MarginalLikelihoodAnalysisParser.BURN_IN, maxState / 5);
+
+                    if (burnin < 0 || burnin >= maxState) {
+                        burnin = maxState / 5;
+                        System.out.println("WARNING: Burn-in larger than total number of states - using to 20%");
                     }
-                }
 
-                if (traceIndexLikelihood == -1) {
-                    throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
-                }
+                    burnin = 0;
 
-                if (traceIndexTheta == -1) {
-                    throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
-                }
+                    traces.setBurnIn(burnin);
+                    
+                    int traceIndexLikelihood = -1;
+                    int traceIndexTheta = -1;
+                    for (int i = 0; i < traces.getTraceCount(); i++) {
+                        String traceName = traces.getTraceName(i);
+                        if (traceName.trim().equals(likelihoodName)) {
+                            traceIndexLikelihood = i;
+                        }
+                        if (traceName.trim().equals(thetaName)) {
+                            traceIndexTheta = i;
+                        }
+                    }
 
-                List sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
-                List sampleTheta = traces.getValues(traceIndexTheta);
+                    if (traceIndexLikelihood == -1) {
+                        throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
+                    }
+
+                    if (traceIndexTheta == -1) {
+                        throw new XMLParseException("Column '" + thetaName + "' can not be found for " + getParserName() + " element.");
+                    }
+                    
+                    if (sampleLogLikelihood == null && sampleTheta == null) {
+    					sampleLogLikelihood = traces.getValues(traceIndexLikelihood);
+    					sampleTheta = traces.getValues(traceIndexTheta);
+    				} else {
+    					sampleLogLikelihood.addAll(traces.getValues(traceIndexLikelihood));
+    					sampleTheta.addAll(traces.getValues(traceIndexTheta));
+    				}
+                    
+    			}
 
                 PathSamplingAnalysis analysis = new PathSamplingAnalysis(likelihoodName, sampleLogLikelihood, sampleTheta);
 

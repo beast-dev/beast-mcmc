@@ -335,11 +335,6 @@ public class Parameter {
     }
 
     public String getDescription() {
-        if (taxaId != null) {
-            return "tmrca statistic for taxon set " + taxaId;
-//        } else if (prefix != null) {
-//            return description + " of partition " + prefix;
-        }
         return description;
     }
 

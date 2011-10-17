@@ -244,7 +244,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
     }
 
     private PriorDialog priorDialog = null;
-//    private DiscretePriorDialog discretePriorDialog = null;
+    //    private DiscretePriorDialog discretePriorDialog = null;
     private HierarchicalPriorDialog hierarchicalPriorDialog = null;
 
     private void hierarchicalButtonPressed(int[] rows) {
@@ -289,7 +289,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             if (!sameBounds) {
                 JOptionPane.showMessageDialog(frame,
                         "Only parameters that share the same bounds\n" +
-                        "should be included in a HPM.",
+                                "should be included in a HPM.",
                         "HPM parameter link error",
                         JOptionPane.WARNING_MESSAGE);
                 return; // Bail out
@@ -301,7 +301,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (hierarchicalPriorDialog != null) { // Already called
             // Check to see if selected parameters are already in a HPM
             HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
             boolean anyConflicts = false;
             for (Parameter parameter : paramList) {
                 if (comp.isHierarchicalParameter(parameter)) {
@@ -310,13 +310,13 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 }
             }
             if (anyConflicts) {
-                 int option = JOptionPane.showConfirmDialog(this,
-                    "At one selected parameter already exists in a HPM.\n" +
-                    "Constructing a new prior will remove these parameter\n" +
-                    "from the original model. Continue?",
-                    "HPM warning",
-                    JOptionPane.YES_NO_OPTION,
-                    JOptionPane.WARNING_MESSAGE);
+                int option = JOptionPane.showConfirmDialog(this,
+                        "At one selected parameter already exists in a HPM.\n" +
+                                "Constructing a new prior will remove these parameter\n" +
+                                "from the original model. Continue?",
+                        "HPM warning",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
                 if (option == JOptionPane.NO_OPTION) {
                     return;
                 }
@@ -343,7 +343,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         // Remove parameters from old list
         for (Parameter parameter : paramList) {
             HierarchicalModelComponentOptions comp = (HierarchicalModelComponentOptions)
-                options.getComponentOptions(HierarchicalModelComponentOptions.class);
+                    options.getComponentOptions(HierarchicalModelComponentOptions.class);
             if (comp.isHierarchicalParameter(parameter)) {
                 comp.removeParameter(this, parameter, false);
             }
@@ -386,10 +386,10 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 //            }
 //            result = discretePriorDialog.showDialog(param);
 //        } else {
-            if (priorDialog == null) {
-                priorDialog = new PriorDialog(frame);
-            }
-            result = priorDialog.showDialog(param);
+        if (priorDialog == null) {
+            priorDialog = new PriorDialog(frame);
+        }
+        result = priorDialog.showDialog(param);
 //        }
 
 //        if (result == JOptionPane.CANCEL_OPTION) {
@@ -421,8 +421,13 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
             if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
                 if (options.clockModelOptions.isNodeCalibrated(param)) {
-                    List<ClockModelGroup> groupList = options.clockModelOptions.
-                            getClockModelGroups(options.getAllPartitionData(param.getOptions()));
+                    List<ClockModelGroup> groupList;
+                    if (options.useStarBEAST) {
+                        groupList = options.clockModelOptions.getClockModelGroups();
+                    } else {
+                        groupList = options.clockModelOptions.getClockModelGroups(options.getAllPartitionData(param.getOptions()));
+                    }
+
                     for (ClockModelGroup clockModelGroup : groupList) {
                         options.clockModelOptions.nodeCalibration(clockModelGroup);
                     }

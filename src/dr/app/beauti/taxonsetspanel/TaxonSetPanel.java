@@ -62,91 +62,70 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = -3138832889782090814L;
 
-    private final String TAXON_SET_DEFAULT = "taxon set...";
     private final String[] columnToolTips = {null,
             "Enforce the selected taxon set to be monophyletic on the specified tree",
             "The tmrcaStatistic will represent that age of the parent node of the MRCA, rather than the MRCA itself",
             "Select the tree from which to report the MRCA of the taxa"};
 
-    BeautiFrame frame = null;
-    BeautiOptions options = null;
+    protected String TAXA;
+    protected String TAXON;
 
-//    private TaxonList taxa = null;
-    private JTable taxonSetsTable = null;
-    private final TableColumnModel tableColumnModel;
-    private TaxonSetsTableModel taxonSetsTableModel = null;
+    protected BeautiFrame frame = null;
+    protected BeautiOptions options = null;
+
+    //    private TaxonList taxa = null;
+    protected JTable taxonSetsTable = null;
+    private TableColumnModel tableColumnModel;
+    protected TaxonSetsTableModel taxonSetsTableModel = new TaxonSetsTableModel();
     ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer();
 
-    private JPanel taxonSetEditingPanel = null;
+    protected JPanel taxonSetEditingPanel = null;
 
-    private Taxa currentTaxonSet = null;
+    protected Taxa currentTaxonSet = null;
 
-    private final List<Taxon> includedTaxa = new ArrayList<Taxon>();
-    private final List<Taxon> excludedTaxa = new ArrayList<Taxon>();
+    protected final List<Taxon> includedTaxa = new ArrayList<Taxon>();
+    protected final List<Taxon> excludedTaxa = new ArrayList<Taxon>();
 
-    private JTable excludedTaxaTable = null;
-    private TaxaTableModel excludedTaxaTableModel = null;
-    private JComboBox excludedTaxonSetsComboBox = null;
-    private boolean excludedSelectionChanging = false;
+    protected JTable excludedTaxaTable = null;
+    protected TaxaTableModel excludedTaxaTableModel = null;
+    protected JComboBox excludedTaxonSetsComboBox = null;
+    protected boolean excludedSelectionChanging = false;
 
-    private JTable includedTaxaTable = null;
-    private TaxaTableModel includedTaxaTableModel = null;
-    private JComboBox includedTaxonSetsComboBox = null;
-    private boolean includedSelectionChanging = false;
+    protected JTable includedTaxaTable = null;
+    protected TaxaTableModel includedTaxaTableModel = null;
+    protected JComboBox includedTaxonSetsComboBox = null;
+    protected boolean includedSelectionChanging = false;
 
-    private static int taxonSetCount = 0;
+    protected static int taxonSetCount = 0;
+
+    public TaxonSetPanel() {
+    }
 
     public TaxonSetPanel(BeautiFrame parent) {
 
         this.frame = parent;
 
-        Icon includeIcon = null, excludeIcon = null;
-        try {
-            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
-            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
-        } catch (Exception e) {
-            // do nothing
-        }
+        setText(false);
 
         // Taxon Sets
-        taxonSetsTableModel = new TaxonSetsTableModel();
-        taxonSetsTable = new JTable(taxonSetsTableModel) {
-            //Implement table header tool tips.
-            protected JTableHeader createDefaultTableHeader() {
-                return new JTableHeader(columnModel) {
-                    public String getToolTipText(MouseEvent e) {
-                        java.awt.Point p = e.getPoint();
-                        int index = columnModel.getColumnIndexAtX(p.x);
-                        int realIndex = columnModel.getColumn(index).getModelIndex();
-                        return columnToolTips[realIndex];
-                    }
-                };
-            }
-        };
+        initTaxonSetsTable(taxonSetsTableModel, columnToolTips);
 
-        taxonSetsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        initTableColumn();
 
-        tableColumnModel = taxonSetsTable.getColumnModel();
-        TableColumn tableColumn = tableColumnModel.getColumn(0);
-        tableColumn.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
-        tableColumn.setMinWidth(20);
+        initPanel(addTaxonSetAction, removeTaxonSetAction);
+    }
 
-        tableColumn = tableColumnModel.getColumn(1);
-        tableColumn.setPreferredWidth(10);
+    protected void setText(boolean useStarBEAST) {
+        if (useStarBEAST) {
+            TAXA = "Species";
+            TAXON = "Species set";
+        } else {
+            TAXA = "Taxa";
+            TAXON = "Taxon set";
+        }
+    }
 
-        tableColumn = tableColumnModel.getColumn(2);
-        tableColumn.setPreferredWidth(10);
-
-        tableColumn = tableColumnModel.getColumn(3);
-        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        tableColumn.setCellRenderer(comboBoxRenderer);
-
-        taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent evt) {
-                taxonSetsTableSelectionChanged();
-            }
-        });
-
+    protected void initPanel(Action addTaxonSetAction, Action removeTaxonSetAction) {
         JScrollPane scrollPane1 = new JScrollPane(taxonSetsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
@@ -179,16 +158,14 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
+        includedTaxonSetsComboBox = new JComboBox(new String[]{TAXON.toLowerCase() + "..."});
+        excludedTaxonSetsComboBox = new JComboBox(new String[]{TAXON.toLowerCase() + "..."});
+
         Box panel1 = new Box(BoxLayout.X_AXIS);
         panel1.add(new JLabel("Select: "));
         panel1.setOpaque(false);
-        excludedTaxonSetsComboBox = new JComboBox(new String[]{TAXON_SET_DEFAULT});
         excludedTaxonSetsComboBox.setOpaque(false);
         panel1.add(excludedTaxonSetsComboBox);
-
-        JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected taxa in the taxon set",
-                excludeTaxonAction, excludeIcon, "Exclude selected taxa from the taxon set",
-                javax.swing.BoxLayout.Y_AXIS);
 
         // Included Taxon List
         includedTaxaTableModel = new TaxaTableModel(true);
@@ -212,12 +189,24 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         Box panel2 = new Box(BoxLayout.X_AXIS);
         panel2.add(new JLabel("Select: "));
         panel2.setOpaque(false);
-        includedTaxonSetsComboBox = new JComboBox(new String[]{TAXON_SET_DEFAULT});
         includedTaxonSetsComboBox.setOpaque(false);
         panel2.add(includedTaxonSetsComboBox);
 
+        Icon includeIcon = null, excludeIcon = null;
+        try {
+            includeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/include.png"));
+            excludeIcon = new ImageIcon(IconUtils.getImage(BeautiApp.class, "images/exclude.png"));
+        } catch (Exception e) {
+            // do nothing
+        }
+
+        JPanel buttonPanel = createAddRemoveButtonPanel(includeTaxonAction, includeIcon, "Include selected "
+                + TAXA.toLowerCase() + " in the " + TAXON.toLowerCase(),
+                excludeTaxonAction, excludeIcon, "Exclude selected " + TAXA.toLowerCase()
+                + " from the " + TAXON.toLowerCase(), BoxLayout.Y_AXIS);
+
         taxonSetEditingPanel = new JPanel();
-        taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder("Taxon Set: none selected"));
+        taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(""));
         taxonSetEditingPanel.setOpaque(false);
         taxonSetEditingPanel.setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
@@ -390,12 +379,51 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             }
         });
 
-        taxonSetsTable.doLayout();
         includedTaxaTable.doLayout();
         excludedTaxaTable.doLayout();
     }
 
-    private void taxonSetChanged() {
+    protected void initTableColumn() {
+        tableColumnModel = taxonSetsTable.getColumnModel();
+        TableColumn tableColumn = tableColumnModel.getColumn(0);
+        tableColumn.setCellRenderer(new TableRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
+        tableColumn.setMinWidth(20);
+
+        tableColumn = tableColumnModel.getColumn(1);
+        tableColumn.setPreferredWidth(10);
+        tableColumn = tableColumnModel.getColumn(2);
+        tableColumn.setPreferredWidth(10);
+
+        tableColumn = tableColumnModel.getColumn(3);
+        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
+        tableColumn.setCellRenderer(comboBoxRenderer);
+    }
+
+    protected void initTaxonSetsTable(AbstractTableModel tableModel, final String[] columnToolTips) {
+        taxonSetsTable = new JTable(tableModel) {
+            //Implement table header tool tips.
+            protected JTableHeader createDefaultTableHeader() {
+                return new JTableHeader(columnModel) {
+                    public String getToolTipText(MouseEvent e) {
+                        Point p = e.getPoint();
+                        int index = columnModel.getColumnIndexAtX(p.x);
+                        int realIndex = columnModel.getColumn(index).getModelIndex();
+                        return columnToolTips[realIndex];
+                    }
+                };
+            }
+        };
+        taxonSetsTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        taxonSetsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent evt) {
+                taxonSetsTableSelectionChanged();
+            }
+        });
+        taxonSetsTable.doLayout();
+    }
+
+    protected void taxonSetChanged() {
         currentTaxonSet.removeAllTaxa();
         for (Taxon anIncludedTaxa : includedTaxa) {
             currentTaxonSet.addTaxon(anIncludedTaxa);
@@ -412,13 +440,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         frame.setDirty();
     }
 
-    private void treeModelsChanged() {
+    protected void treeModelsChanged() {
         Object[] modelArray = options.getPartitionTreeModels().toArray();
         TableColumn col = tableColumnModel.getColumn(3);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(modelArray)));
     }
 
-    private void resetPanel() {
+    protected void resetPanel() {
         if (!options.hasData() || options.taxonSets == null || options.taxonSets.size() < 1) {
             setCurrentTaxonSet(null);
         }
@@ -443,13 +471,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         validateTaxonSets();
     }
 
-    private void validateTaxonSets() {
+    protected void validateTaxonSets() {
         if (taxonSetsTable.getRowCount() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
                 if (taxonSet.getTaxonCount() < 1) {
-                    JOptionPane.showMessageDialog(this, "Taxon set " + taxonSet.getId() + " is empty, "
-                            + "\nplease go back to Taxon Sets panel to select included taxa.",
-                                "Empty taxon set error", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(this, TAXON + " " + taxonSet.getId() + " is empty, "
+                            + "\nplease go back to " + TAXON + "s panel to select included " + TAXA.toLowerCase() +".",
+                            "Empty " + TAXON.toLowerCase() + " error", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }
@@ -465,7 +493,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         return taxonSetsTable;
     }
 
-    private void taxonSetsTableSelectionChanged() {
+    protected void taxonSetsTableSelectionChanged() {
         treeModelsChanged();
 
         int[] rows = taxonSetsTable.getSelectedRows();
@@ -544,7 +572,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
     };
 
-    private void setCurrentTaxonSet(Taxa taxonSet) {
+    protected void setCurrentTaxonSet(Taxa taxonSet) {
 
         this.currentTaxonSet = taxonSet;
 
@@ -576,29 +604,29 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         excludedTaxaTableModel.fireTableDataChanged();
     }
 
-    private void setTaxonSetTitle() {
+    protected void setTaxonSetTitle() {
 
         if (currentTaxonSet == null) {
             taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(""));
             taxonSetEditingPanel.setEnabled(false);
         } else {
             taxonSetEditingPanel.setEnabled(true);
-            taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder("Taxon Set: " + currentTaxonSet.getId()));
+            taxonSetEditingPanel.setBorder(BorderFactory.createTitledBorder(TAXON + ": " + currentTaxonSet.getId()));
         }
     }
 
 
-    private void setupTaxonSetsComboBoxes() {
+    protected void setupTaxonSetsComboBoxes() {
         setupTaxonSetsComboBox(excludedTaxonSetsComboBox, excludedTaxa);
         excludedTaxonSetsComboBox.setSelectedIndex(0);
         setupTaxonSetsComboBox(includedTaxonSetsComboBox, includedTaxa);
         includedTaxonSetsComboBox.setSelectedIndex(0);
     }
 
-    private void setupTaxonSetsComboBox(JComboBox comboBox, List<Taxon> availableTaxa) {
+    protected void setupTaxonSetsComboBox(JComboBox comboBox, List<Taxon> availableTaxa) {
         comboBox.removeAllItems();
 
-        comboBox.addItem(TAXON_SET_DEFAULT);
+        comboBox.addItem(TAXON.toLowerCase() + "...");
         for (Taxa taxa : options.taxonSets) {
             if (taxa != currentTaxonSet) {
                 if (isCompatible(taxa, availableTaxa)) {
@@ -615,7 +643,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
      * @param availableTaxa a potential superset of taxa
      * @return true if the taxa are all found in availableTaxa
      */
-    private boolean isCompatible(Taxa taxa, List<Taxon> availableTaxa) {
+    protected boolean isCompatible(Taxa taxa, List<Taxon> availableTaxa) {
 
         for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
@@ -626,15 +654,14 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         return true;
     }
 
-    private boolean checkCompatibility(Taxa taxa) {
+    protected boolean checkCompatibility(Taxa taxa) {
         for (Taxa taxa2 : options.taxonSets) {
             if (taxa2 != taxa && options.taxonSetsMono.get(taxa2)) {
                 if (taxa.containsAny(taxa2) && !taxa.containsAll(taxa2) && !taxa2.containsAll(taxa)) {
                     JOptionPane.showMessageDialog(frame,
-                            "You cannot enforce monophyly on this taxon set \n" +
-                                    "because it is not compatible with another taxon \n" +
-                                    "set, " + taxa2.getId() + ", for which monophyly is\n" +
-                                    "enforced.",
+                            "You cannot enforce monophyly on this " + TAXON.toLowerCase() + " \n" +
+                                    "because it is not compatible with another " + TAXON.toLowerCase() + ",\n" +
+                                    taxa2.getId() + ", for which monophyly is\n" + "enforced.",
                             "Warning",
                             JOptionPane.WARNING_MESSAGE);
                     return false;
@@ -647,10 +674,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     /**
      * The table on the left side of panel
      */
-    class TaxonSetsTableModel extends AbstractTableModel {
+    protected class TaxonSetsTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 3318461381525023153L;
 
         String[] columnNames = {"Taxon Sets", "Monophyletic?", "IncludeStem?", "Tree"};
+
         public TaxonSetsTableModel() {
         }
 
@@ -724,8 +752,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    private JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
-                                              Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
+    protected JPanel createAddRemoveButtonPanel(Action addAction, Icon addIcon, String addToolTip,
+                                                Action removeAction, Icon removeIcon, String removeToolTip, int axis) {
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new BoxLayout(buttonPanel, axis));
@@ -852,9 +880,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
     class TaxaTableModel extends AbstractTableModel {
 
-        /**
-         *
-         */
         private static final long serialVersionUID = -8027482229525938010L;
         boolean included;
 
@@ -890,8 +915,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         }
 
         public String getColumnName(int column) {
-            if (included) return "Included Taxa";
-            else return "Excluded Taxa";
+            if (included) return "Included " + TAXA;
+            else return "Excluded " + TAXA;
         }
 
         public Class getColumnClass(int c) {

@@ -131,6 +131,8 @@ public class BeautiOptions extends ModelOptions {
 
 //        traitsOptions = new TraitsOptions(this);
         useStarBEAST = false;
+        speciesSets.clear();
+        speciesSetsMono.clear();
         starBEASTOptions = new STARBEASTOptions(this);
 
         beautiTemplate = new BeautiTemplate(this);
@@ -143,22 +145,42 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public void selectTaxonSetsStatistics(List<Parameter> params) {
+        if (useStarBEAST) {
+            if (speciesSets != null) {
+                for (Taxa taxa : speciesSets) {
+                    Parameter statistic = statistics.get(taxa);
+                    if (statistic == null) {
+                        statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for species set " + taxa.getId())
+                                .taxaId(taxa.getId()).isStatistic(true).isNodeHeight(true)
+                                .initial(Double.NaN).isNonNegative(true).build();
 
-        if (taxonSets != null) {
-            for (Taxa taxa : taxonSets) {
-                Parameter statistic = statistics.get(taxa);
-                if (statistic == null) {
-                    PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
-                    // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
-                    statistic = new Parameter.Builder(taxa.getId(), "")
-                            .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true).partitionOptions(treeModel)
-                            .initial(Double.NaN).isNonNegative(true).build();
-                    statistics.put(taxa, statistic);
+                        statistics.put(taxa, statistic);
+                    }
+                    params.add(statistic);
                 }
-                params.add(statistic);
+            } else {
+                System.err.println("SpeciesSets are null");
             }
+
         } else {
-            System.err.println("TaxonSets are null");
+            if (taxonSets != null) {
+                for (Taxa taxa : taxonSets) {
+                    Parameter statistic = statistics.get(taxa);
+                    if (statistic == null) {
+                        PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
+                        // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
+                        statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set " + taxa.getId())
+                                .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true)
+                                .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
+
+                        statistics.put(taxa, statistic);
+                    }
+                    params.add(statistic);
+                }
+            } else {
+                System.err.println("TaxonSets are null");
+            }
+
         }
     }
 
@@ -844,10 +866,10 @@ public class BeautiOptions extends ModelOptions {
 //            getPartitionTreeModels().get(0).addPartitionData(newTrait);
         }
 
-        ContinuousComponentOptions comp = (ContinuousComponentOptions)getComponentOptions(ContinuousComponentOptions.class);
+        ContinuousComponentOptions comp = (ContinuousComponentOptions) getComponentOptions(ContinuousComponentOptions.class);
         comp.createParameters(this);
 
-        DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions)getComponentOptions(DiscreteTraitsComponentOptions.class);
+        DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions) getComponentOptions(DiscreteTraitsComponentOptions.class);
         comp2.createParameters(this);
 
         return selRow; // only for trait panel
@@ -1013,10 +1035,10 @@ public class BeautiOptions extends ModelOptions {
         return message;
     }
 
-    public List<Object> getKeysFromValue(Map<?, ?> hm, Object value){
-        List <Object>list = new ArrayList<Object>();
-        for(Object o:hm.keySet()){
-            if(hm.get(o).equals(value)) {
+    public List<Object> getKeysFromValue(Map<?, ?> hm, Object value) {
+        List<Object> list = new ArrayList<Object>();
+        for (Object o : hm.keySet()) {
+            if (hm.get(o).equals(value)) {
                 list.add(o);
             }
         }
@@ -1091,8 +1113,8 @@ public class BeautiOptions extends ModelOptions {
 //    public TraitsOptions traitsOptions = new TraitsOptions(this);
 
     public boolean useStarBEAST = false;
-    // speciesSets List<String> 1st element is name, 2nd is monophyletic
-    public List<List<String>> speciesSets = new ArrayList<List<String>>();
+    public List<Taxa> speciesSets = new ArrayList<Taxa>();
+    public Map<Taxa, Boolean> speciesSetsMono = new HashMap<Taxa, Boolean>();
     public STARBEASTOptions starBEASTOptions = new STARBEASTOptions(this);
 
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);

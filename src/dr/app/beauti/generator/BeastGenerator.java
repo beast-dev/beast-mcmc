@@ -410,7 +410,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Statistics ++++++++++++++++++
         try {
             if (taxonSets != null && taxonSets.size() > 0) {
-                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
+                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer, options.useStarBEAST);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -511,15 +511,37 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
-        try {
-            if (options.useStarBEAST) { // species
-                writeStarBEAST(writer);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new GeneratorException("*BEAST special part generation has failed:\n" + e.getMessage());
-        }
+        if (options.useStarBEAST) { // species
+            try {
+                starBeastGenerator.writeSTARBEAST(writer);
 
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new GeneratorException("*BEAST section generation has failed:\n" + e.getMessage());
+            }
+
+            //++++++++++++++++ Species Sets ++++++++++++++++++
+            List<Taxa> speciesSets = options.speciesSets;
+            try {
+                if (speciesSets != null && speciesSets.size() > 0) {
+                    tmrcaStatisticsGenerator.writeTaxonSets(writer, speciesSets);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new GeneratorException("Species sets generation has failed:\n" + e.getMessage());
+            }
+
+            //++++++++++++++++ Statistics ++++++++++++++++++
+            try {
+                if (speciesSets != null && speciesSets.size() > 0) {
+                    tmrcaStatisticsGenerator.writeTMRCAStatistics(writer, options.useStarBEAST);
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new GeneratorException("TMRCA statistics for species sets generation has failed:\n" + e.getMessage());
+            }
+
+        }
         generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_TRAITS, writer);
 
         //++++++++++++++++ Operators ++++++++++++++++++
@@ -583,7 +605,8 @@ public class BeastGenerator extends Generator {
                 "ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = options.traits.size() > 0;
+        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
+                || (options.traits.size() > 1 && options.useStarBEAST);
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -622,12 +645,14 @@ public class BeastGenerator extends Generator {
             }
 
             for (TraitData trait : options.traits) {
-                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
+                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+                    writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                            new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                // denotes missing data using '?'
-                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
-                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+                    // denotes missing data using '?'
+                    writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
+                    writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+                }
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);
@@ -653,25 +678,6 @@ public class BeastGenerator extends Generator {
         }
 
         writer.writeCloseTag(TaxaParser.TAXA);
-    }
-
-    /**
-     * *BEAST block
-     *
-     * @param writer XMLWriter
-     */
-    private void writeStarBEAST(XMLWriter writer) {
-        String traitName = TraitData.TRAIT_SPECIES;
-        writer.writeText("");
-        writer.writeComment(options.starBEASTOptions.getDescription());
-
-        writer.writeOpenTag(traitName, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, traitName)});
-        //new Attribute.Default<String>("traitType", traitType)});
-        starBeastGenerator.writeMultiSpecies(options.taxonList, writer);
-        writer.writeCloseTag(traitName);
-
-        starBeastGenerator.writeSTARBEAST(writer);
     }
 
     /**
@@ -741,7 +747,7 @@ public class BeastGenerator extends Generator {
             writer.writeIDref(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, SPECIATION_LIKE);
         }
 
-        parameterPriorGenerator.writeParameterPriors(writer);
+        parameterPriorGenerator.writeParameterPriors(writer, options.useStarBEAST);
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();

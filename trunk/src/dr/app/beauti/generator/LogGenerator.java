@@ -251,10 +251,17 @@ public class LogGenerator extends Generator {
             writer.writeIDref(ParameterParser.PARAMETER, model.getPrefix() + TreeModel.TREE_MODEL + "." + TreeModelParser.ROOT_HEIGHT);
         }
 
-        for (Taxa taxa : options.taxonSets) {
-            // make tmrca(tree.name) eay to read in log for Tracer
-            PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
-            writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
+        if (options.useStarBEAST) {
+            for (Taxa taxa : options.speciesSets) {
+                // make tmrca(tree.name) eay to read in log for Tracer
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + taxa.getId() + ")");
+            }
+        } else {
+            for (Taxa taxa : options.taxonSets) {
+                // make tmrca(tree.name) eay to read in log for Tracer
+                PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(taxa);
+                writer.writeIDref(TMRCAStatisticParser.TMRCA_STATISTIC, "tmrca(" + treeModel.getPrefix() + taxa.getId() + ")");
+            }
         }
 
 //        if ( options.shareSameTreePrior ) { // Share Same Tree Prior

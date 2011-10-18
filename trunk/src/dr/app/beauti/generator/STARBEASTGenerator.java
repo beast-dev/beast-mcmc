@@ -68,12 +68,38 @@ public class STARBEASTGenerator extends Generator {
     }
 
     /**
+     * *BEAST block, write the species, species tree, species tree model, likelihood, etc.
+     *
+     * @param writer XMLWriter
+     */
+    public void writeSTARBEAST(XMLWriter writer) {
+        writeSpecies(writer);
+        writeSpeciesTree(writer);
+        writeSpeciesTreeModel(writer);
+        writeSpeciesTreeLikelihood(writer);
+        writeSpeciesTreeRootHeight(writer);
+        writeGeneUnderSpecies(writer);
+    }
+
+    private void writeSpecies(XMLWriter writer) {
+        String traitName = TraitData.TRAIT_SPECIES;
+        writer.writeText("");
+        writer.writeComment(options.starBEASTOptions.getDescription());
+
+        writer.writeOpenTag(traitName, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, traitName)});
+        //new Attribute.Default<String>("traitType", traitType)});
+        writeMultiSpecies(options.taxonList, writer);
+        writer.writeCloseTag(traitName);
+    }
+
+    /**
      * write tag <sp>
      *
      * @param taxonList TaxonList
      * @param writer    XMLWriter
      */
-    public void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
+    private void writeMultiSpecies(TaxonList taxonList, XMLWriter writer) {
         List<String> species = options.starBEASTOptions.getSpeciesList();
         String sp;
 
@@ -100,20 +126,6 @@ public class STARBEASTGenerator extends Generator {
 
         writeGeneTrees(writer);
     }
-
-    /**
-     * write the species tree, species tree model, likelihood, etc.
-     *
-     * @param writer XMLWriter
-     */
-    public void writeSTARBEAST(XMLWriter writer) {
-        writeSpeciesTree(writer);
-        writeSpeciesTreeModel(writer);
-        writeSpeciesTreeLikelihood(writer);
-        writeSpeciesTreeRootHeight(writer);
-        writeGeneUnderSpecies(writer);
-    }
-
 
     private void writeGeneTrees(XMLWriter writer) {
         writer.writeComment("Collection of Gene Trees");

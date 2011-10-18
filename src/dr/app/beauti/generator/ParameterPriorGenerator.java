@@ -58,11 +58,15 @@ public class ParameterPriorGenerator extends Generator {
     /**
      * Write the priors for each parameter
      *
-     * @param writer the writer
+     * @param useStarBEAST
+     * @param writer        the writer
      */
-    void writeParameterPriors(XMLWriter writer) {
+    public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
         boolean first = true;
-        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : options.taxonSetsMono.entrySet()) {
+
+        Map<Taxa, Boolean> taxonSetsMono = useStarBEAST ? options.speciesSetsMono : options.taxonSetsMono;
+
+        for (Map.Entry<Taxa, Boolean> taxaBooleanEntry : taxonSetsMono.entrySet()) {
             if (taxaBooleanEntry.getValue()) {
                 if (first) {
                     writer.writeOpenTag(BooleanLikelihoodParser.BOOLEAN_LIKELIHOOD);
@@ -77,29 +81,45 @@ public class ParameterPriorGenerator extends Generator {
         }
 
         ArrayList<Parameter> parameters = options.selectParameters();
-        for (Parameter parameter : parameters) {
-            if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
-                if (parameter.isCached) {
-                    writeCachedParameterPrior(parameter, writer);
-                } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    if (options.clockModelOptions.isNodeCalibrated(parameter) // not treeModel.rootHeight
-                            && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.YULE) {
-                        if (parameter.taxaId != null) {
-                            for (Taxa taxa : options.taxonSets) {
-                                if (taxa.getId().equalsIgnoreCase(parameter.getBaseName())) {
-                                    PartitionTreeModel model = options.taxonSetsTreeModel.get(taxa);
-                                    if (!(options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
-                                            && options.taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0)))) {
-                                        writeParameterPrior(parameter, writer);
-                                    }
-                                }
-                            }
-                        }
-                    } else {
+
+        if (useStarBEAST) {
+            for (Parameter parameter : parameters) {
+                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
+                    if (parameter.isCached) {
+                        writeCachedParameterPrior(parameter, writer);
+                    } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
                         writeParameterPrior(parameter, writer);
                     }
                 }
             }
+
+        } else {
+
+            for (Parameter parameter : parameters) {
+                if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
+                    if (parameter.isCached) {
+                        writeCachedParameterPrior(parameter, writer);
+                    } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                        if (options.clockModelOptions.isNodeCalibrated(parameter) // not treeModel.rootHeight
+                                && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.YULE) {
+                            if (parameter.taxaId != null) {
+                                for (Taxa taxa : options.taxonSets) {
+                                    if (taxa.getId().equalsIgnoreCase(parameter.getBaseName())) {
+                                        PartitionTreeModel model = options.taxonSetsTreeModel.get(taxa);
+                                        if (!(options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
+                                                && taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0)))) {
+                                            writeParameterPrior(parameter, writer);
+                                        }
+                                    }
+                                }
+                            }
+                        } else {
+                            writeParameterPrior(parameter, writer);
+                        }
+                    }
+                }
+            }
+
         }
     }
 

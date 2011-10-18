@@ -188,7 +188,7 @@ public class GMRFSkyrideLikelihoodParser extends AbstractXMLObjectParser {
             }),
             new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
-            }),
+            }, true), // Optional
             new ElementRule(POPULATION_TREE, new XMLSyntaxRule[]{
                     new ElementRule(TreeModel.class, 1, Integer.MAX_VALUE)
             }),

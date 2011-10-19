@@ -404,6 +404,7 @@ public class TreePriorGenerator extends Generator {
 
                     if (options.clockModelOptions.isNodeCalibrated(model.getParameter("treeModel.rootHeight"))) {
 
+                        writer.writeComment("Heled and Drummond 2011");
                         writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
 
                         parameterPriorGenerator.writeParameterPrior(model.getParameter("treeModel.rootHeight"), writer);
@@ -421,6 +422,7 @@ public class TreePriorGenerator extends Generator {
                         Parameter nodeCalib = options.getStatistic(t);
 
                         if (options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
+                            writer.writeComment("Heled and Drummond 2011");
                             writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
                             parameterPriorGenerator.writeParameterPrior(nodeCalib, writer);
                             writer.writeIDref(TaxaParser.TAXA, t.getId());

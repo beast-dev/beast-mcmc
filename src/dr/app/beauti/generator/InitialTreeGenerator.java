@@ -136,7 +136,7 @@ public class InitialTreeGenerator extends Generator {
 
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
 
-        if (options.taxonSets != null && options.taxonSets.size() > 0) {
+        if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST
             writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {

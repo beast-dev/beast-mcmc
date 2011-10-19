@@ -184,6 +184,21 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
+    public boolean renameTMRCAStatistic(Taxa taxonSet, String newName) {
+        Parameter statistic = statistics.get(taxonSet);
+        if (statistic != null) {
+            if (useStarBEAST) {
+                statistic.taxaId = taxonSet.getId();
+            } else {
+                PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxonSet);
+                statistic.taxaId = treeModel.getPrefix() + taxonSet.getId();
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     /**
      * return an list of parameters that are required
      *

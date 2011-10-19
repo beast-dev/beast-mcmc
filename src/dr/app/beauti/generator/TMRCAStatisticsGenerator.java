@@ -58,13 +58,12 @@ public class TMRCAStatisticsGenerator extends Generator {
      * Generate tmrca statistics
      *
      * @param writer       the writer
-     * @param useStarBEAST
      */
-    public void writeTMRCAStatistics(XMLWriter writer, boolean useStarBEAST) {
+    public void writeTMRCAStatistics(XMLWriter writer) {
         List<Taxa> taxonSets;
         Map<Taxa, Boolean> taxonSetsMono;
 
-        if (useStarBEAST) {
+        if (options.useStarBEAST) {
             taxonSets = options.speciesSets;
             taxonSetsMono = options.speciesSetsMono;
 

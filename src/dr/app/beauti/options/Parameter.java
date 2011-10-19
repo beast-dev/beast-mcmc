@@ -45,7 +45,7 @@ public class Parameter {
     private final String description;
 
     // final Builder para
-    public final String taxaId;
+    public String taxaId; // needs to change TMRCA stat name. Issue 520
     public final boolean isNodeHeight;
     public final boolean isStatistic;
     public final boolean isDiscrete;

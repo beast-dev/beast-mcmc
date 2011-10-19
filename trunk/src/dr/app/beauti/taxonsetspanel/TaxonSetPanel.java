@@ -716,6 +716,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             switch (columnIndex) {
                 case 0:
                     taxonSet.setId(aValue.toString());
+                    options.renameTMRCAStatistic(taxonSet, aValue.toString());
                     setTaxonSetTitle();
                     break;
 

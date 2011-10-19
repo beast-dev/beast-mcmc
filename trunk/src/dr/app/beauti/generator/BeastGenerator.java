@@ -302,7 +302,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         List<Taxa> taxonSets = options.taxonSets;
         try {
-            if (taxonSets != null && taxonSets.size() > 0) {
+            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
                 tmrcaStatisticsGenerator.writeTaxonSets(writer, taxonSets);
             }
         } catch (Exception e) {
@@ -409,8 +409,8 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Statistics ++++++++++++++++++
         try {
-            if (taxonSets != null && taxonSets.size() > 0) {
-                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer, options.useStarBEAST);
+            if (taxonSets != null && taxonSets.size() > 0 && !options.useStarBEAST) {
+                tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -547,7 +547,7 @@ public class BeastGenerator extends Generator {
             //++++++++++++++++ Statistics ++++++++++++++++++
             try {
                 if (speciesSets != null && speciesSets.size() > 0) {
-                    tmrcaStatisticsGenerator.writeTMRCAStatistics(writer, options.useStarBEAST);
+                    tmrcaStatisticsGenerator.writeTMRCAStatistics(writer);
                 }
             } catch (Exception e) {
                 e.printStackTrace();

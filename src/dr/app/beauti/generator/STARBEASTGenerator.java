@@ -34,9 +34,13 @@ import dr.app.beauti.types.PopulationSizeModelType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
+import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
+import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeModelParser;
@@ -47,6 +51,7 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
+import dr.inferencexml.distribution.UniformDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -61,6 +66,7 @@ import java.util.List;
  */
 public class STARBEASTGenerator extends Generator {
 
+    public static final String ALL_SPECIES = "allSpecies";
     private int numOfSpecies; // used in private String getIndicatorsParaValue()
 
     public STARBEASTGenerator(BeautiOptions options, ComponentFactory[] components) {
@@ -73,15 +79,13 @@ public class STARBEASTGenerator extends Generator {
      * @param writer XMLWriter
      */
     public void writeSTARBEAST(XMLWriter writer) {
-        writeSpecies(writer);
-        writeSpeciesTree(writer);
-        writeSpeciesTreeModel(writer);
+        writeSpeciesTreePrior(writer);
         writeSpeciesTreeLikelihood(writer);
         writeSpeciesTreeRootHeight(writer);
         writeGeneUnderSpecies(writer);
     }
 
-    private void writeSpecies(XMLWriter writer) {
+    public void writeSpecies(XMLWriter writer) {
         String traitName = TraitData.TRAIT_SPECIES;
         writer.writeText("");
         writer.writeComment(options.starBEASTOptions.getDescription());
@@ -91,7 +95,70 @@ public class STARBEASTGenerator extends Generator {
         //new Attribute.Default<String>("traitType", traitType)});
         writeMultiSpecies(options.taxonList, writer);
         writer.writeCloseTag(traitName);
+
+        writer.writeText("");
+        writer.writeComment("full species set for species tree root height");
+        writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, ALL_SPECIES)});
+        for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
+            writer.writeIDref(SpeciesBindingsSPinfoParser.SP, eachSp);
+        }
+        writer.writeCloseTag(TaxaParser.TAXA);
     }
+
+    public void writeStartingTreeForCalibration(XMLWriter writer) {
+        writer.writeComment("species starting tree for calibration");
+        writer.writeText("");
+        writer.writeOpenTag(CoalescentSimulatorParser.COALESCENT_TREE,
+                new Attribute[]{new Attribute.Default<String>(XMLParser.ID, SP_START_TREE)}
+        );
+
+        Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, ALL_SPECIES)};
+
+        writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+        writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
+        for (Taxa taxa : options.speciesSets) {
+            Parameter statistic = options.getStatistic(taxa);
+
+            Attribute mono = new Attribute.Default<Boolean>(
+                    CoalescentSimulatorParser.IS_MONOPHYLETIC, options.speciesSetsMono.get(taxa));
+
+            writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
+
+            writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+            if (statistic.isNodeHeight) {
+                if (statistic.isTruncated /*|| statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR*/) {
+                    writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                    writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
+                    writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);
+                    writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                }
+            }
+
+            writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
+
+        }
+        writer.writeCloseTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
+
+
+        writer.writeOpenTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
+                new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, "spInitDemo"),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                        });
+        writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
+
+        double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
+
+        writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
+                new Attribute.Default<String>(XMLParser.ID, "sp.popSize"),
+                new Attribute.Default<Double>(ParameterParser.VALUE, popSizeValue)
+        }, true);
+        writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
+        writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
+
+        writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+    }
+
 
     /**
      * write tag <sp>
@@ -162,7 +229,7 @@ public class STARBEASTGenerator extends Generator {
     }
 
 
-    private void writeSpeciesTree(XMLWriter writer) {
+    public void writeSpeciesTree(XMLWriter writer, boolean calibration) {
         writer.writeComment("Species Tree: Provides Per branch demographic function");
 
         List<Attribute> attributes = new ArrayList<Attribute>();
@@ -183,24 +250,23 @@ public class STARBEASTGenerator extends Generator {
         // *BEAST always share same tree prior
         double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"
         writer.writeOpenTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS, new Attribute[]{
-                new Attribute.Default<String>(ParameterParser.VALUE, Double.toString(popSizeValue))});
+                new Attribute.Default<Double>(ParameterParser.VALUE, popSizeValue)});
 
         writer.writeTag(ParameterParser.PARAMETER, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, SpeciesTreeModelParser.SPECIES_TREE + "." + SPLIT_POPS)}, true);
 
         writer.writeCloseTag(SpeciesTreeModelParser.SPP_SPLIT_POPULATIONS);
 
-        writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
+        if (calibration) writer.writeIDref(CoalescentSimulatorParser.COALESCENT_TREE, SP_START_TREE);
 
+        writer.writeCloseTag(SpeciesTreeModelParser.SPECIES_TREE);
     }
 
-    private void writeSpeciesTreeModel(XMLWriter writer) {
+    private void writeSpeciesTreePrior(XMLWriter writer) {
         Parameter para;
 
-        writer.writeComment("Species Tree: tree prior");
-
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            writer.writeComment("Species Tree: Birth Death Model");
+            writer.writeComment("Species tree prior: Birth Death Model");
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, BirthDeathModelParser.BIRTH_DEATH),
@@ -228,7 +294,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            writer.writeComment("Species Tree: Yule Model");
+            writer.writeComment("Species tree prior: Yule Model");
 
             writer.writeOpenTag(YuleModelParser.YULE_MODEL, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, YuleModelParser.YULE),
@@ -253,10 +319,9 @@ public class STARBEASTGenerator extends Generator {
 
 
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
-        writer.writeComment("Species Tree: Likelihood of species tree");
 
         if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
-            writer.writeComment("Species Tree: Birth Death Model");
+            writer.writeComment("Species Tree Likelihood: Birth Death Model");
 
             writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});
@@ -266,7 +331,7 @@ public class STARBEASTGenerator extends Generator {
             writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
 
         } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
-            writer.writeComment("Species Tree: Yule Model");
+            writer.writeComment("Species Tree Likelihood: Yule Model");
 
             writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, SPECIATION_LIKE)});
@@ -297,13 +362,7 @@ public class STARBEASTGenerator extends Generator {
         writer.writeIDref(SpeciesTreeModelParser.SPECIES_TREE, SP_TREE);
 
         writer.writeOpenTag(TMRCAStatisticParser.MRCA);
-        writer.writeOpenTag(TaxaParser.TAXA);
-
-        for (String eachSp : options.starBEASTOptions.getSpeciesList()) {
-            writer.writeIDref(SpeciesBindingsSPinfoParser.SP, eachSp);
-        }
-
-        writer.writeCloseTag(TaxaParser.TAXA);
+        writer.writeIDref(TaxaParser.TAXA, ALL_SPECIES);
         writer.writeCloseTag(TMRCAStatisticParser.MRCA);
         writer.writeCloseTag(TMRCAStatisticParser.TMRCA_STATISTIC);
 

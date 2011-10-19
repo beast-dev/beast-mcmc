@@ -21,6 +21,7 @@ public abstract class Generator {
 
     protected static final String COALESCENT = "coalescent";
     public static final String SP_TREE = "sptree";
+    protected static final String SP_START_TREE = "spStartingTree";
     protected static final String SPECIATION_LIKE = "speciation.likelihood";
     public static final String SPLIT_POPS = "splitPopSize";
     protected static final String PDIST = "pdist";

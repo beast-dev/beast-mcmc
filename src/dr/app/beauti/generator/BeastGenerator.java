@@ -511,13 +511,14 @@ public class BeastGenerator extends Generator {
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
-        if (options.useStarBEAST) { // species
+        if (options.useStarBEAST) {
+            //++++++++++++++++ species ++++++++++++++++++
             try {
-                starBeastGenerator.writeSTARBEAST(writer);
+                starBeastGenerator.writeSpecies(writer);
 
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new GeneratorException("*BEAST section generation has failed:\n" + e.getMessage());
+                throw new GeneratorException("*BEAST species section generation has failed:\n" + e.getMessage());
             }
 
             //++++++++++++++++ Species Sets ++++++++++++++++++
@@ -531,6 +532,18 @@ public class BeastGenerator extends Generator {
                 throw new GeneratorException("Species sets generation has failed:\n" + e.getMessage());
             }
 
+            //++++++++++++++++ trees ++++++++++++++++++
+            try {
+                if (speciesSets != null && speciesSets.size() > 0) {
+                    starBeastGenerator.writeStartingTreeForCalibration(writer);
+                }
+
+                starBeastGenerator.writeSpeciesTree(writer, speciesSets != null && speciesSets.size() > 0);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new GeneratorException("*BEAST trees generation has failed:\n" + e.getMessage());
+            }
+
             //++++++++++++++++ Statistics ++++++++++++++++++
             try {
                 if (speciesSets != null && speciesSets.size() > 0) {
@@ -538,7 +551,15 @@ public class BeastGenerator extends Generator {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new GeneratorException("TMRCA statistics for species sets generation has failed:\n" + e.getMessage());
+                throw new GeneratorException("*BEAST TMRCA statistics generation has failed:\n" + e.getMessage());
+            }
+
+            //++++++++++++++++ prior and likelihood ++++++++++++++++++
+            try {
+                starBeastGenerator.writeSTARBEAST(writer);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new GeneratorException("*BEAST trees section generation has failed:\n" + e.getMessage());
             }
 
         }

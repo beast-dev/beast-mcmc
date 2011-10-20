@@ -38,6 +38,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
     // sortedPoints[i][0] is the time of the i-th grid point or sampling or coalescent event
     // sortedPoints[i][1] is 0 if the i-th point is a grid point, 1 if it's a sampling point, and 2 if it's a coalescent point
     // sortedPoints[i][2] is the number of lineages present in the interval starting at time sortedPoints[i][0]
+
     protected Parameter phiParameter;
     protected SymmTridiagMatrix precMatrix;
 	protected SymmTridiagMatrix storedPrecMatrix;
@@ -77,7 +78,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 		if (betaParameter != null) {
 			addVariable(betaParameter);
         }
+        if(phiParameter != null){
         addVariable(phiParameter);
+        }
 
         setTree(treeList);
 
@@ -643,7 +646,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 	}
 
 
-    /*
+
     protected double calculateLogFieldLikelihood() {
         /*
         if (!intervalsKnown) {
@@ -654,7 +657,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             intervalsKnown = true;
          }
          */
-    /*
+
         double currentLike = 0;
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
@@ -673,9 +676,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
         return currentLike;
     }
-    */
 
 
+    /*
     protected double calculateLogFieldLikelihood() {
         /*
         if (!intervalsKnown) {
@@ -686,6 +689,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
             intervalsKnown = true;
          }
          */
+      /*
         double currentLike = 0;
         DenseVector diagonal1 = new DenseVector(fieldLength);
         DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
@@ -700,9 +704,9 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
         return currentLike;
     }
+       */
 
-
-
+    /*
     public SymmTridiagMatrix getPrecMatrix(double phiVal) {
 
         //setupSufficientStatistics();
@@ -732,10 +736,10 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 
         return precMatrix;
 	}
+      */
 
 
-
-    public double getLogLikelihood() {
+    public double getLogLikelihood(){
 	    if (!likelihoodKnown) {
 			logLikelihood = calculateLogCoalescentLikelihood();
             logFieldLikelihood = calculateLogFieldLikelihood();
@@ -786,19 +790,19 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
 		//First set up the offdiagonal entries;
 
 		for (int i = 0; i < fieldLength - 1; i++) {
-            offdiag[i] = -0.9;
+            offdiag[i] = -1;
         }
 
 		//Then set up the diagonal entries;
 		for (int i = 1; i < fieldLength - 1; i++){
 		//	diag[i] = -(offdiag[i] + offdiag[i - 1]);
-        diag[i] = 1.81;
+        diag[i] = 2.000001;
         }
 		//Take care of the endpoints
 		//diag[0] = -offdiag[0];
 		//diag[fieldLength - 1] = -offdiag[fieldLength - 2];
-        diag[0] = 1;
-		diag[fieldLength - 1] = 1;
+        diag[0] = 1.000001;
+		diag[fieldLength - 1] = 1.000001;
 
 
 		weightMatrix = new SymmTridiagMatrix(diag, offdiag);
@@ -880,7 +884,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
        // System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
 		super.storeState();
         System.arraycopy(numCoalEvents, 0, storedNumCoalEvents, 0, numCoalEvents.length);
-        storedPrecMatrix = precMatrix.copy();
+       // storedPrecMatrix = precMatrix.copy();
 	}
 
 
@@ -888,7 +892,7 @@ public class GMRFMultilocusSkyrideLikelihood extends GMRFSkyrideLikelihood imple
        // System.arraycopy(storedNumCoalEvents, 0, numCoalEvents, 0, storedNumCoalEvents.length);
 		super.restoreState();
         System.arraycopy(storedNumCoalEvents, 0, numCoalEvents, 0, storedNumCoalEvents.length);
-        precMatrix = storedPrecMatrix;
+        // precMatrix = storedPrecMatrix;
     }
 
 

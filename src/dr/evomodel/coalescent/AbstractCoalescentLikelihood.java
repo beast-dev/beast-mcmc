@@ -304,6 +304,6 @@ public abstract class AbstractCoalescentLikelihood extends AbstractModelLikeliho
 
     private double logLikelihood;
     private double storedLogLikelihood;
-    private boolean likelihoodKnown = false;
+    protected boolean likelihoodKnown = false;
     private boolean storedLikelihoodKnown = false;
 }

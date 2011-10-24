@@ -38,7 +38,7 @@ public class StarTreeModel extends TreeModel {
 
     public StarTreeModel(String id, Tree tree) {
         super(id, tree);
-        savedMaxTipHeightKnown = false;
+        maxTipHeightKnown = false;
     }
 
     @Override

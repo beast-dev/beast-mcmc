@@ -41,10 +41,13 @@ import dr.math.matrixAlgebra.Vector;
 
 /**
  * This Branch Rate Model takes a ancestral state likelihood and
- * gives the rate for each branch of the tree based on the child state (for now).
+ * gives the rate for each branch of the tree based on the ancestor
+ * state and child state or based on the Markov Rewards (i.e., time
+ * spent in each state).
  *
  * @author Alexei Drummond
  * @author Marc Suchard
+ * @author Andrew Rambaut
  */
 public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     enum Mode {

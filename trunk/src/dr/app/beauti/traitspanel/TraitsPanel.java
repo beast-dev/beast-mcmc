@@ -91,7 +91,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
     private TraitValueDialog traitValueDialog = null;
 
     AddTraitAction addTraitAction = new AddTraitAction();
+    Action importTraitsAction;
     CreateTraitPartitionAction createTraitPartitionAction = new CreateTraitPartitionAction();
+    GuessTraitsAction guessTraitsAction = new GuessTraitsAction();
+    SetValueAction setValueAction = new SetValueAction();
 
     public TraitsPanel(BeautiFrame parent, DataPanel dataPanel, Action importTraitsAction) {
 
@@ -173,6 +176,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         button.setToolTipText(ADD_TRAITS_TOOLTIP);
         toolBar1.add(button);
 
+        this.importTraitsAction = importTraitsAction;
         button = new JButton(importTraitsAction);
         PanelUtils.setupComponent(button);
         button.setToolTipText(IMPORT_TRAITS_TOOLTIP);
@@ -180,12 +184,12 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
 
-        button = new JButton(new GuessTraitsAction());
+        button = new JButton(guessTraitsAction);
         PanelUtils.setupComponent(button);
         button.setToolTipText(GUESS_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
 
-        button = new JButton(new SetValueAction());
+        button = new JButton(setValueAction);
         PanelUtils.setupComponent(button);
         button.setToolTipText(SET_TRAIT_VALUES_TOOLTIP);
         toolBar1.add(button);
@@ -239,6 +243,8 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 
     public void setOptions(BeautiOptions options) {
         this.options = options;
+
+        updateButtons();
 
 //        int selRow = traitsTable.getSelectedRow();
 //        traitsTableModel.fireTableDataChanged();
@@ -313,6 +319,15 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
 //        traitsTableModel.fireTableDataChanged();
     }
 
+    private void updateButtons() { //TODO: better to merge updateButtons() fireTraitsChanged() traitSelectionChanged() into one
+        boolean hasData = options.hasData();
+
+        addTraitAction.setEnabled(hasData);
+        importTraitsAction.setEnabled(hasData);
+        createTraitPartitionAction.setEnabled(hasData && options.traits.size() > 0);
+        guessTraitsAction.setEnabled(hasData && options.traits.size() > 0);
+        setValueAction.setEnabled(hasData && options.traits.size() > 0);
+    }
 
     public void clearTraitValues(String traitName) {
         options.clearTraitValues(traitName);
@@ -466,6 +481,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             }
 
             fireTraitsChanged();
+            updateButtons();
 //            traitsTableModel.fireTableDataChanged();
 //            dataTableModel.fireTableDataChanged();
 
@@ -490,6 +506,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                         return false;
                     }
                 }
+                updateButtons();
             }
             return done;
         } else if (result == JOptionPane.CANCEL_OPTION) {
@@ -521,6 +538,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         }
         options.removeTrait(traitName);
 
+        updateButtons();
         fireTraitsChanged();
         traitSelectionChanged();
     }

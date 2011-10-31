@@ -38,8 +38,6 @@ import java.util.List;
  */
 public class PartitionTreePrior extends PartitionOptions {
 
-    private PartitionTreeModel treeModel; // only used when not sharing same prior
-
     private TreePriorType nodeHeightPrior = TreePriorType.CONSTANT;
     private TreePriorParameterizationType parameterization = TreePriorParameterizationType.GROWTH_RATE;
     private int skylineGroupCount = 10;
@@ -55,7 +53,6 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
         super(options, treeModel.getName());
-        this.treeModel = treeModel;
     }
 
     /**
@@ -67,7 +64,6 @@ public class PartitionTreePrior extends PartitionOptions {
      */
     public PartitionTreePrior(BeautiOptions options, String name, PartitionTreePrior source) {
         super(options, name);
-        this.treeModel = source.treeModel;
 
         this.nodeHeightPrior = source.nodeHeightPrior;
         this.parameterization = source.parameterization;
@@ -366,14 +362,6 @@ public class PartitionTreePrior extends PartitionOptions {
     }
 
     /////////////////////////////////////////////////////////////////////////
-
-    public PartitionTreeModel getTreeModel() {
-        return treeModel;
-    }
-
-//    public void setTreeModel(PartitionTreeModel treeModel) {
-//        this.treeModel = treeModel;
-//    }
 
     public TreePriorType getNodeHeightPrior() {
         return nodeHeightPrior;

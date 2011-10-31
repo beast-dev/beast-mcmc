@@ -147,7 +147,9 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
 //	        samplingProportionField.addKeyListener(keyListener);
 
-        setupPanel();
+        // need it not setupPanel(), because it contains required setSelectedItem()
+        // to make Tree prior panel displayed properly when link/unlink tree prior
+        setOptions();
     }
 
     private void setupPanel() {

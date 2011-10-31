@@ -522,7 +522,7 @@ public class TreePriorGenerator extends Generator {
                                         prior.getSkyrideSmoothing() == TreePriorParameterizationType.TIME_AWARE_SKYRIDE ? "true" : "false"),
                                 new Attribute.Default<String>(GMRFSkyrideLikelihoodParser.RANDOMIZE_TREE,
                                         //TODO For GMRF, tree model/tree prior combination not implemented by BEAST yet. The validation is in BeastGenerator.checkOptions()
-                                        prior.getTreeModel().getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
+                                        options.getPartitionTreeModels(prior).get(0).getStartingTreeType() == StartingTreeType.UPGMA ? "true" : "false"),
                         }
                 );
 
@@ -662,10 +662,10 @@ public class TreePriorGenerator extends Generator {
                 }
             } else {//TODO correct for not sharing same prior?
                 writer.writeOpenTag(VariableDemographicModelParser.POP_TREE, new Attribute[]{
-                        new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(prior.getTreeModel().getPloidyType().getValue()))
+                        new Attribute.Default<String>(SpeciesBindingsParser.PLOIDY, Double.toString(options.getPartitionTreeModels(prior).get(0).getPloidyType().getValue()))
                 }
                 );
-                writer.writeIDref(TreeModel.TREE_MODEL, prior.getTreeModel().getPrefix() + TreeModel.TREE_MODEL);
+                writer.writeIDref(TreeModel.TREE_MODEL, options.getPartitionTreeModels(prior).get(0).getPrefix() + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(VariableDemographicModelParser.POP_TREE);
             }
 

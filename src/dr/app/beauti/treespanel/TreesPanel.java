@@ -81,13 +81,10 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     public JCheckBox linkTreePriorCheck = new JCheckBox("Link tree prior for all trees");
 
     JPanel treeModelPanelParent;
-    //    private OptionsPanel currentTreeModel = new OptionsPanel();
     public PartitionTreeModel currentTreeModel = null;
     TitledBorder treeModelBorder;
     Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
-    //  private OptionsPanel treePriorPanel = new OptionsPanel();
     JPanel treePriorPanelParent;
-    //    public PartitionTreePrior currentTreePrior = null;
     TitledBorder treePriorBorder;
     Map<PartitionTreePrior, OptionsPanel> treePriorPanels = new HashMap<PartitionTreePrior, OptionsPanel>();
 
@@ -158,7 +155,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         linkTreePriorCheck.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 updateShareSameTreePriorChanged();
-                fireTreePriorsChanged();
             }
         });
         linkTreePriorCheck.setToolTipText("Decide whether to use one tree prior for all trees");
@@ -178,30 +174,15 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void updateShareSameTreePriorChanged() {
-//    	options.shareSameTreePrior = linkTreePriorCheck.isSelected();
-//    	fireShareSameTreePriorChanged ();
-
         if (linkTreePriorCheck.isSelected()) {
             options.linkTreePriors(currentTreeModel.getPartitionTreePrior());
         } else {
-            options.unLinkTreePriors();
-//    		currentTreePrior = currentTreeModel.getPartitionTreePrior();
+            options.unLinkTreePriors(currentTreeModel);
         }
-//    	setCurrentModelAndPrior(currentTreeModel);
-        updateTreePriorBorder();
-    }
+    	setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
 
-//    private void fireShareSameTreePriorChanged() {
-//    	linkTreePriorCheck.setSelected(options.shareSameTreePrior);
-//    	if (options.shareSameTreePrior) {
-//    		options.activedSameTreePrior = currentTreePrior;
-//    		// keep previous prior for reuse
-//    	} else {
-//    		// reuse previous prior
-//    		setCurrentModelAndPrior(currentTreeModel);
-//    	}
-//    	updateTreePriorBorder();
-//    }
+        fireTreePriorsChanged();
+    }
 
     private void updateTreePriorBorder() {
         if (options.useStarBEAST) {
@@ -214,13 +195,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         repaint();
     }
 
-    void fireTreePriorsChanged() {
+    public void fireTreePriorsChanged() {
         options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
     public void updatePriorPanelForSpeciesAnalysis() {
-        linkTreePriorCheck.setSelected(true);
+        linkTreePriorCheck.setSelected(options.useStarBEAST);
         updateShareSameTreePriorChanged();
 
         if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();
@@ -228,7 +209,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (options.getPartitionTreePriors().size() > 0) {
             OptionsPanel p;
             if (options.useStarBEAST) {
-//                linkTreePriorCheck.setEnabled(false);
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
 
@@ -258,9 +238,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                 if (model != null && treeModelPanels.get(model) != null) treeModelPanels.get(model).setupPanel();
 
             }
-            updateTreePriorBorder();
             treePriorPanelParent.add(p);
         }
+        updateTreePriorBorder();
         repaint();
     }
 

@@ -608,6 +608,7 @@ public class BeautiOptions extends ModelOptions {
 //        return getPartitionTreeModels(getNonTraitsDataList());
 //    }
 
+
     // ++++++++++++++ Partition Tree Prior ++++++++++++++
 
     public List<PartitionTreePrior> getPartitionTreePriors() {
@@ -625,16 +626,39 @@ public class BeautiOptions extends ModelOptions {
         return activeTrees;
     }
 
-    public void unLinkTreePriors() {
+    public List<PartitionTreeModel> getPartitionTreeModels(PartitionTreePrior treePrior) {
+
+        List<PartitionTreeModel> activeTrees = new ArrayList<PartitionTreeModel>();
+
         for (PartitionTreeModel model : getPartitionTreeModels()) {
             PartitionTreePrior prior = model.getPartitionTreePrior();
-            if (prior == null || (!prior.getName().equals(model.getName()))) {
-                PartitionTreePrior ptp = new PartitionTreePrior(this, model);
+            if (prior != null && model.getPartitionTreePrior() == treePrior && (!activeTrees.contains(model))) {
+                activeTrees.add(model);
+            }
+        }
+
+        return activeTrees;
+    }
+
+    /**
+     * unlink all and copy the tree prior in selectedTreeModel to others
+     * currently, tree prior name cannot be changed, but tree model name can, so that we have to use instance
+     * @param selectedTreeModel      the selected tree model whose tree prior copied to others
+     */
+    public void unLinkTreePriors(PartitionTreeModel selectedTreeModel) {
+        for (PartitionTreeModel model : getPartitionTreeModels()) {
+            // because # tree prior = 1 or # tree model, prior here will be a same instance through all tree models
+            PartitionTreePrior prior = model.getPartitionTreePrior();
+            if (model == selectedTreeModel) {
+                prior.setName(model.getName()); // keep name same as its tree model
+            } else {
+                PartitionTreePrior ptp = new PartitionTreePrior(this, model.getName(), prior);
                 model.setPartitionTreePrior(ptp);
             }
         }
     }
 
+    // link all to given treePrior
     public void linkTreePriors(PartitionTreePrior treePrior) {
         if (treePrior == null) treePrior = new PartitionTreePrior(this, getPartitionTreeModels().get(0));
         for (PartitionTreeModel model : getPartitionTreeModels()) {

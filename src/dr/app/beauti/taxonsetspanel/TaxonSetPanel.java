@@ -462,7 +462,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             addTaxonSetAction.setEnabled(false);
             removeTaxonSetAction.setEnabled(false);
         } else {
-            addTaxonSetAction.setEnabled(true);
+            addTaxonSetAction.setEnabled(options.hasData());
         }
 
         taxonSetsTableSelectionChanged();

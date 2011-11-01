@@ -67,8 +67,7 @@ public class Parameter {
     // Editable fields
     public boolean isFixed;
     public double initial;
-    public boolean
-            isTruncated;
+    public boolean isTruncated;
     public double truncationUpper;
     public double truncationLower;
     public double mean;
@@ -108,8 +107,8 @@ public class Parameter {
         //        private double upper = Double.NaN;
 //        private double lower = Double.NaN;
         private boolean isTruncated = false;
-        public double truncationUpper = Double.POSITIVE_INFINITY;
-        public double truncationLower = Double.NEGATIVE_INFINITY;
+        public double truncationUpper = Double.MAX_VALUE;
+        public double truncationLower = Double.MIN_VALUE;
         public double mean = 0.0;
         public double stdev = 1.0;
         public double shape = 1.0;
@@ -381,7 +380,7 @@ public class Parameter {
     }
 
     public double getLowerBound() {
-        double lower = Double.NEGATIVE_INFINITY;
+        double lower = Double.MIN_VALUE;
 
         if (isNonNegative || isZeroOne) {
             lower = 0.0;
@@ -395,7 +394,7 @@ public class Parameter {
     }
 
     public double getUpperBound() {
-        double upper = Double.POSITIVE_INFINITY;
+        double upper = Double.MAX_VALUE;
 
         if (isZeroOne) {
             upper = 1.0;

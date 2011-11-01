@@ -127,6 +127,7 @@ public class PartitionTreeModel extends PartitionOptions {
         Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
     	rootHeightParameter.initial = getInitialRootHeight();
         rootHeightParameter.truncationLower = options.maximumTipHeight;
+        rootHeightParameter.uniformLower = options.maximumTipHeight;
         rootHeightParameter.isTruncated = true;
 //        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
 

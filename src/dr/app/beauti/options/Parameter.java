@@ -34,6 +34,7 @@ import java.util.Map;
  * @author Alexei Drummond
  */
 public class Parameter {
+    public static final double UNIFORM_MAX_BOUND = 1.0E100;
 
     private String prefix = null;
     private boolean priorEdited;
@@ -120,8 +121,8 @@ public class Parameter {
         public double precision = 1.0;
 
         // the uniform distribution has explicit bounds (ignores the truncations):
-        public double uniformUpper = Double.POSITIVE_INFINITY;
-        public double uniformLower = Double.NEGATIVE_INFINITY;
+        public double uniformUpper = UNIFORM_MAX_BOUND;
+        public double uniformLower = -UNIFORM_MAX_BOUND;
 
         private boolean isFixed = false;
 

@@ -272,7 +272,7 @@ public class BeautiFrame extends DocumentFrame {
             dataPanel.getOptions(options);
             tipDatesPanel.getOptions(options);
             traitsPanel.getOptions(options);
-             if (options.useStarBEAST) {
+            if (options.useStarBEAST) {
                 speciesSetPanel.getOptions(options);
             } else {
                 taxonSetPanel.getOptions(options);
@@ -426,10 +426,6 @@ public class BeautiFrame extends DocumentFrame {
                 }
             }
         }
-
-        setAllOptions();
-        dataPanel.selectAll();
-        dataPanel.unlinkTrees();
 
         setAllOptions();
 

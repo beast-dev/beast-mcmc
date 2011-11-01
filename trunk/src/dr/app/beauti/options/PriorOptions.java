@@ -110,6 +110,7 @@ public class PriorOptions extends ModelOptions {
 //                        param.upper = Math.min(timeScaleMaximum, param.upper);
                         if (param.isNodeHeight) { //TODO only affecting "treeModel.rootHeight", need to review
                             param.truncationLower = options.maximumTipHeight;
+                            param.uniformLower = options.maximumTipHeight;
                             param.isTruncated = true;
 //                    param.upper = timeScaleMaximum;
 //                    param.initial = avgInitialRootHeight;

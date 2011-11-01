@@ -142,13 +142,17 @@ public class ParameterPriorGenerator extends Generator {
         // if there is a truncation then put it at the top so it short-circuits any other prior
         // calculations
         if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
-            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                    new Attribute[]{
-                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                    });
-            writeParameterIdref(writer, parameter);
-            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            if (parameter.isPriorImproper()) {
+                writer.writeComment("Improper uniform prior: " + parameter.getName());
+            } else {
+                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
+                        });
+                writeParameterIdref(writer, parameter);
+                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+            }
         }
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:

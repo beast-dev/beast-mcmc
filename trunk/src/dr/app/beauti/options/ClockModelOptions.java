@@ -545,16 +545,19 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     private boolean hasProperPriorOn(Parameter para) {
-        return para.priorType == PriorType.LOGNORMAL_PRIOR
-                || para.priorType == PriorType.NORMAL_PRIOR
-                || para.priorType == PriorType.LAPLACE_PRIOR
+        return para.priorType == PriorType.EXPONENTIAL_PRIOR
 //                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
-                || (para.priorType == PriorType.GAMMA_PRIOR && para.shape > 1)
-                || (para.priorType == PriorType.GAMMA_PRIOR && para.offset > 0)
                 || (para.priorType == PriorType.UNIFORM_PRIOR && para.truncationLower > 0 && para.truncationUpper < Double.POSITIVE_INFINITY)
-                || (para.priorType == PriorType.EXPONENTIAL_PRIOR && para.offset > 0);
+                || para.priorType == PriorType.LAPLACE_PRIOR
+                || para.priorType == PriorType.NORMAL_PRIOR
+                || para.priorType == PriorType.LOGNORMAL_PRIOR
+                || para.priorType == PriorType.GAMMA_PRIOR
+                || para.priorType == PriorType.INVERSE_GAMMA_PRIOR
+                || para.priorType == PriorType.BETA_PRIOR
+                || para.priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR
+                || para.priorType == PriorType.LOGNORMAL_HPM_PRIOR
+                || para.priorType == PriorType.POISSON_PRIOR;
     }
-
 
     public boolean isRateCalibrated() {
         return false;//TODO

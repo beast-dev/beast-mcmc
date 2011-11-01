@@ -30,8 +30,7 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitData;
-import dr.app.beauti.types.PopulationSizeModelType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxa;
@@ -126,7 +125,7 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
             if (statistic.isNodeHeight) {
-                if (statistic.isTruncated /*|| statistic.priorType == PriorType.TRUNC_NORMAL_PRIOR*/) {
+                if (statistic.isTruncated || statistic.priorType == PriorType.UNIFORM_PRIOR) {
                     writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
                     writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
                     writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);

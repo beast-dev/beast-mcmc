@@ -607,6 +607,7 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     public PartitionTreePrior getCurrentPartitionTreePrior() {
+        treesPanel.setOptions(options); // need this to refresh the currentTreeModel
         return treesPanel.currentTreeModel.getPartitionTreePrior();
     }
 

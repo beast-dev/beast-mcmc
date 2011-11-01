@@ -777,25 +777,28 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public boolean hasDiffTaxa(List<AbstractPartitionData> partitionDataList) {
+        if (partitionDataList.size() < 2)
+            return false;
+
         TaxonList ref = null;
-        boolean legal = true;
+        boolean hasDiff = false;
         for (AbstractPartitionData partition : partitionDataList) {
             final TaxonList a = partition.getTaxonList();
             if (ref == null) {
                 ref = a;
             } else {
                 if (a.getTaxonCount() != ref.getTaxonCount()) {
-                    legal = false;
+                    hasDiff = true;
                 } else {
                     for (int k = 0; k < a.getTaxonCount(); ++k) {
                         if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
-                            legal = false;
+                            hasDiff = true;
                         }
                     }
                 }
             }
         }
-        return legal;
+        return hasDiff;
     }
 
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {

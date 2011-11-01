@@ -29,6 +29,7 @@ import dr.inference.distribution.DistributionLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Statistic;
 import dr.math.distributions.*;
+import dr.util.DataTable;
 import dr.xml.*;
 
 /**
@@ -68,6 +69,10 @@ public class PriorParsers {
 
             double lower = xo.getDoubleAttribute(LOWER);
             double upper = xo.getDoubleAttribute(UPPER);
+
+            if (lower == Double.NEGATIVE_INFINITY || upper == Double.POSITIVE_INFINITY)
+                throw new XMLParseException("Uniform prior " + xo.getName() + " cannot take a bound at infinity, " +
+                        "because it returns 1/(high-low) = 1/inf");
 
             DistributionLikelihood likelihood = new DistributionLikelihood(new UniformDistribution(lower, upper));
             for (int j = 0; j < xo.getChildCount(); j++) {

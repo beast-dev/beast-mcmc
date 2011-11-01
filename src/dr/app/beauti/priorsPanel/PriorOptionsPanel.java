@@ -313,9 +313,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         void getArguments(Parameter parameter) {
-            parameter.isTruncated = true;
-            parameter.truncationLower = getValue(0);
-            parameter.truncationUpper = getValue(1);
+            parameter.isTruncated = false;
+            parameter.uniformLower = getValue(0);
+            parameter.uniformUpper = getValue(1);
         }
     };
 

@@ -13,7 +13,7 @@ public enum PriorType {
     UNDEFINED("undefined", false, false),
     NONE_TREE_PRIOR("None (Tree Prior Only)", false, false),
     NONE_STATISTIC("None (Statistic)", false, false),
-    UNIFORM_PRIOR("Uniform", true, false),
+    UNIFORM_PRIOR("Uniform", false, false),
     EXPONENTIAL_PRIOR("Exponential", true, true),
     LAPLACE_PRIOR("Laplace", true, true),
     NORMAL_PRIOR("Normal", true, true),

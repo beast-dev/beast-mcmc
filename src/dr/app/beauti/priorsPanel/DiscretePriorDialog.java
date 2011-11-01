@@ -154,8 +154,8 @@ public class DiscretePriorDialog {
 
         switch (parameter.priorType) {
             case UNIFORM_PRIOR:
-                if (argumentFields[0].getValue() != null) parameter.truncationLower = argumentFields[0].getValue();
-                if (argumentFields[1].getValue() != null) parameter.truncationUpper = argumentFields[1].getValue();
+                if (argumentFields[0].getValue() != null) parameter.uniformLower = argumentFields[0].getValue();
+                if (argumentFields[1].getValue() != null) parameter.uniformUpper = argumentFields[1].getValue();
                 break;
             case POISSON_PRIOR:
                 if (argumentFields[0].getValue() != null) parameter.mean = argumentFields[0].getValue();

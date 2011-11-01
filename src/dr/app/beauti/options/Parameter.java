@@ -77,6 +77,8 @@ public class Parameter {
     public double scale;
     public double offset;
     public double precision;
+    public double uniformUpper;
+    public double uniformLower;
 
     public String hpmModelName;
 
@@ -116,6 +118,10 @@ public class Parameter {
         public double scale = 1.0;
         public double offset = 0.0;
         public double precision = 1.0;
+
+        // the uniform distribution has explicit bounds (ignores the truncations):
+        public double uniformUpper = Double.POSITIVE_INFINITY;
+        public double uniformLower = Double.NEGATIVE_INFINITY;
 
         private boolean isFixed = false;
 
@@ -297,6 +303,8 @@ public class Parameter {
         shapeB = builder.shapeB;
         scale = builder.scale;
         offset = builder.offset;
+        uniformUpper = builder.uniformUpper;
+        uniformLower = builder.uniformLower;
 
         // ExponentialDistribution(1.0 / mean)
         if (priorType == PriorType.EXPONENTIAL_PRIOR && mean == 0) mean = 1;
@@ -382,6 +390,10 @@ public class Parameter {
     public double getLowerBound() {
         double lower = Double.NEGATIVE_INFINITY;
 
+        if (priorType == PriorType.UNIFORM_PRIOR) {
+            lower = uniformLower;
+        }
+
         if (isNonNegative || isZeroOne) {
             lower = 0.0;
         }
@@ -395,6 +407,10 @@ public class Parameter {
 
     public double getUpperBound() {
         double upper = Double.POSITIVE_INFINITY;
+
+        if (priorType == PriorType.UNIFORM_PRIOR) {
+            upper = uniformUpper;
+        }
 
         if (isZeroOne) {
             upper = 1.0;

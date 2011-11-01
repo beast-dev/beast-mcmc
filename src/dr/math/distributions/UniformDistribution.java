@@ -26,6 +26,7 @@
 package dr.math.distributions;
 
 import dr.math.UnivariateFunction;
+import dr.util.DataTable;
 
 /**
  * uniform distribution.
@@ -112,7 +113,11 @@ public class UniformDistribution implements Distribution {
      * @return log pdf value
      */
     public static double logPdf(double x, double lower, double upper) {
-        return Math.log(pdf(x, lower, upper));
+        if (x >= lower && x <= upper) return Double.NEGATIVE_INFINITY;
+
+        // improve numerical stability:
+        return - Math.log(upper - lower);
+//        return Math.log(pdf(x, lower, upper));
     }
 
     /**

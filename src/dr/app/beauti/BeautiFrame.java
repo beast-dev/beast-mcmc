@@ -427,6 +427,11 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
+        if (options.hasDiffTaxa(options.dataPartitions)) {
+            dataPanel.selectAll();
+            dataPanel.unlinkTrees();
+        }
+
         setAllOptions();
 
 //          // @Todo templates are not implemented yet...

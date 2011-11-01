@@ -776,7 +776,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public boolean validateDiffTaxa(List<AbstractPartitionData> partitionDataList) {
+    public boolean hasDiffTaxa(List<AbstractPartitionData> partitionDataList) {
         TaxonList ref = null;
         boolean legal = true;
         for (AbstractPartitionData partition : partitionDataList) {

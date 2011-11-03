@@ -242,31 +242,32 @@ public enum PriorType {
             return new PriorType[] {
                     UNIFORM_PRIOR,
                     POISSON_PRIOR};
-        } else if (parameter.isStatistic) {
-            if (parameter.isNodeHeight) {
-                return new PriorType[] {
-                        NONE_TREE_PRIOR,
-                        UNIFORM_PRIOR,
-                        EXPONENTIAL_PRIOR,
-                        LAPLACE_PRIOR,
-                        NORMAL_PRIOR,
-                        LOGNORMAL_PRIOR,
-                        GAMMA_PRIOR,
-                        INVERSE_GAMMA_PRIOR,
-                        ONE_OVER_X_PRIOR};
-            } else {
-                return new PriorType[] {
-                        NONE_STATISTIC,
-                        UNIFORM_PRIOR,
-                        EXPONENTIAL_PRIOR,
-                        LAPLACE_PRIOR,
-                        NORMAL_PRIOR,
-                        LOGNORMAL_PRIOR,
-                        GAMMA_PRIOR,
-                        INVERSE_GAMMA_PRIOR,
-                        ONE_OVER_X_PRIOR};
-            }
-        } else if (parameter.isCMTCRate) {
+        }
+        if (parameter.isNodeHeight) {
+            return new PriorType[] {
+                    NONE_TREE_PRIOR,
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    LAPLACE_PRIOR,
+                    NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR,
+                    ONE_OVER_X_PRIOR};
+        }
+        if (parameter.isStatistic) {
+            return new PriorType[] {
+                    NONE_STATISTIC,
+                    UNIFORM_PRIOR,
+                    EXPONENTIAL_PRIOR,
+                    LAPLACE_PRIOR,
+                    NORMAL_PRIOR,
+                    LOGNORMAL_PRIOR,
+                    GAMMA_PRIOR,
+                    INVERSE_GAMMA_PRIOR,
+                    ONE_OVER_X_PRIOR};
+        }
+        if (parameter.isCMTCRate) {
             return new PriorType[] {
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -276,11 +277,13 @@ public enum PriorType {
                     CMTC_RATE_REFERENCE_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
-        } else if (parameter.isHierarchical) {
+        }
+        if (parameter.isHierarchical) {
             return new PriorType[] {
                     LOGNORMAL_HPM_PRIOR,
                     NORMAL_HPM_PRIOR};
-        } else if (parameter.isZeroOne) {
+        }
+        if (parameter.isZeroOne) {
             return new PriorType[] {
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -289,7 +292,8 @@ public enum PriorType {
                     GAMMA_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     BETA_PRIOR};
-        } else if (parameter.isNonNegative) {
+        }
+        if (parameter.isNonNegative) {
             return new PriorType[] {
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -299,16 +303,18 @@ public enum PriorType {
                     GAMMA_PRIOR,
                     INVERSE_GAMMA_PRIOR,
                     ONE_OVER_X_PRIOR};
-        } else { // just a continuous parameter
-            return new PriorType[] {
-                    UNIFORM_PRIOR,
-                    EXPONENTIAL_PRIOR,
-                    LAPLACE_PRIOR,
-                    NORMAL_PRIOR,
-                    LOGNORMAL_PRIOR,
-                    GAMMA_PRIOR,
-                    INVERSE_GAMMA_PRIOR};
         }
+
+        // just a continuous parameter
+        return new PriorType[] {
+                UNIFORM_PRIOR,
+                EXPONENTIAL_PRIOR,
+                LAPLACE_PRIOR,
+                NORMAL_PRIOR,
+                LOGNORMAL_PRIOR,
+                GAMMA_PRIOR,
+                INVERSE_GAMMA_PRIOR};
+
     }
 
     public String getName() {

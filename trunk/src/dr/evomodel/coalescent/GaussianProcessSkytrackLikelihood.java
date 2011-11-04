@@ -48,7 +48,7 @@ public class GaussianProcessSkytrackLikelihood extends GMRFSkyrideLikelihood {
     }
 
     public double calculateLogLikelihood() {
-        return 1.0; // TODO Return the correct log-density
+        return 2.0; // TODO Return the correct log-density
     }
 
 	public double getLogLikelihood() {

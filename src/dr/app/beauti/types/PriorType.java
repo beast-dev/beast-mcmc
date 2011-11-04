@@ -13,6 +13,7 @@ public enum PriorType {
     UNDEFINED("undefined", false, false),
     NONE_TREE_PRIOR("None (Tree Prior Only)", false, false),
     NONE_STATISTIC("None (Statistic)", false, false),
+    NONE_IMPROPER("Infinite Uniform (Improper)", false, false),
     UNIFORM_PRIOR("Uniform", false, false),
     EXPONENTIAL_PRIOR("Exponential", true, true),
     LAPLACE_PRIOR("Laplace", true, true),
@@ -109,6 +110,9 @@ public enum PriorType {
         double upper = parameter.getUpperBound();
 
         switch (parameter.priorType) {
+            case NONE_IMPROPER:
+                buffer.append("Uniform infinite bounds");
+                break;
             case NONE_TREE_PRIOR:
                 buffer.append("Using Tree Prior");
                 break;
@@ -201,7 +205,7 @@ public enum PriorType {
             default:
                 throw new IllegalArgumentException("Unknown prior type");
         }
-        if (parameter.priorType != UNIFORM_PRIOR && parameter.isTruncated) {
+        if (parameter.isTruncated) {
             buffer.append(" in [");
             buffer.append(NumberUtil.formatDecimal(parameter.truncationLower, 10, 6));
             buffer.append(", ");
@@ -269,6 +273,7 @@ public enum PriorType {
         }
         if (parameter.isCMTCRate) {
             return new PriorType[] {
+                    NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
@@ -295,6 +300,7 @@ public enum PriorType {
         }
         if (parameter.isNonNegative) {
             return new PriorType[] {
+                    NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     LAPLACE_PRIOR,
@@ -307,6 +313,7 @@ public enum PriorType {
 
         // just a continuous parameter
         return new PriorType[] {
+                NONE_IMPROPER,
                 UNIFORM_PRIOR,
                 EXPONENTIAL_PRIOR,
                 LAPLACE_PRIOR,

@@ -382,6 +382,7 @@ public class Parameter {
             // such (or we want to make a more explicit distinction about when it
             // might be appropriate:
             /* priorType == PriorType.ONE_OVER_X_PRIOR || */
+                (priorType == PriorType.NONE_IMPROPER) ||
                 (priorType == PriorType.UNIFORM_PRIOR && (Double.isInfinite(getLowerBound()) || Double.isInfinite(getUpperBound())))) {
             return true;
         }
@@ -390,10 +391,6 @@ public class Parameter {
 
     public double getLowerBound() {
         double lower = Double.NEGATIVE_INFINITY;
-
-        if (priorType == PriorType.UNIFORM_PRIOR) {
-            lower = uniformLower;
-        }
 
         if (isNonNegative || isZeroOne) {
             lower = 0.0;
@@ -408,10 +405,6 @@ public class Parameter {
 
     public double getUpperBound() {
         double upper = Double.POSITIVE_INFINITY;
-
-        if (priorType == PriorType.UNIFORM_PRIOR) {
-            upper = uniformUpper;
-        }
 
         if (isZeroOne) {
             upper = 1.0;

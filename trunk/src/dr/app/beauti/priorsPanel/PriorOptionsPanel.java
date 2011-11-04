@@ -211,7 +211,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             panel.add(upperField);
             panel.add(positiveInfinityButton);
             addComponents(upperLabel, panel);
-             panel = new JPanel();
+            panel = new JPanel();
             panel.add(lowerField);
             panel.add(negativeInfinityButton);
             addComponents(lowerLabel, panel);
@@ -296,26 +296,29 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     static final PriorOptionsPanel UNIFORM = new PriorOptionsPanel(false) {
         void setup() {
-            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
         }
 
         Distribution getDistribution() {
-            return new UniformDistribution(getValue(0), getValue(1));
+            return new UniformDistribution(
+                    getValue(1), // lower
+                    getValue(0) // upper
+            );
         }
 
         void setArguments(Parameter parameter) {
-            super.setFieldRange(getField(0), parameter.isNonNegative, parameter.isZeroOne);
-            super.setFieldRange(getField(1), parameter.isNonNegative, parameter.isZeroOne);
+            super.setFieldRange(getField(0), parameter.isNonNegative, parameter.isZeroOne, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
+            super.setFieldRange(getField(1), parameter.isNonNegative, parameter.isZeroOne, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
 
-            getField(0).setValue(parameter.getLowerBound());
-            getField(1).setValue(parameter.getUpperBound());
+            getField(0).setValue(parameter.uniformUpper);
+            getField(1).setValue(parameter.uniformLower);
         }
 
         void getArguments(Parameter parameter) {
             parameter.isTruncated = false;
-            parameter.uniformLower = getValue(0);
-            parameter.uniformUpper = getValue(1);
+            parameter.uniformUpper = getValue(0);
+            parameter.uniformLower = getValue(1);
         }
     };
 

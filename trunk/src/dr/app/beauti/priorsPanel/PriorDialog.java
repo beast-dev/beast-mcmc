@@ -26,13 +26,11 @@
 package dr.app.beauti.priorsPanel;
 
 import dr.app.beauti.options.Parameter;
-import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.PriorType;
 import dr.app.gui.chart.Axis;
 import dr.app.gui.chart.JChart;
 import dr.app.gui.chart.LinearAxis;
 import dr.app.gui.chart.PDFPlot;
-import dr.app.gui.components.RealNumberField;
 import dr.app.util.OSType;
 import dr.math.distributions.*;
 import dr.util.NumberFormatter;
@@ -62,6 +60,7 @@ public class PriorDialog {
     private JPanel contentPanel;
 
     private JLabel citationText;
+    private JLabel oneOverXCaution;
     private JLabel improperCaution;
     private JChart chart;
     private JPanel quantilePanel;
@@ -112,13 +111,20 @@ public class PriorDialog {
                     "reference prior developed in Ferreira & Suchard (2008).<br>" +
                     "Use when explicit prior information is unavailable</html>");
 
+        oneOverXCaution = new JLabel();
+        oneOverXCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
+        oneOverXCaution.setOpaque(false);
+        oneOverXCaution.setText(
+                "<html>This improper distribution often leads to an improper posterior. <br>" +
+                      "This distribution is likely appropriate when used for the <br>" +
+                      "constant population size under the Coalescent.</html>");
+
         improperCaution = new JLabel();
         improperCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
         improperCaution.setOpaque(false);
         improperCaution.setText(
-                "<html>This improper distribution often leads to an improper posterior. <br>" +
-                      "This distribution is likely appropriate when used for the <br>" +
-                      "constant population size under the Coalescent.</html>");
+                "<html>A uniform prior with infinite bounds is not a proper prior <br>" +
+                        "(it doesn't integrate to 1). This choice is not recommended.</html>");
     }
 
     public int showDialog(final Parameter parameter) {
@@ -287,6 +293,10 @@ public class PriorDialog {
         }
 
         if (priorType == PriorType.ONE_OVER_X_PRIOR) {
+            optionsPanel.addSpanningComponent(oneOverXCaution);
+        }
+
+        if (priorType == PriorType.NONE_IMPROPER) {
             optionsPanel.addSpanningComponent(improperCaution);
         }
 

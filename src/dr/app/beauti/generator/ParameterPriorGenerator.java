@@ -139,31 +139,38 @@ public class ParameterPriorGenerator extends Generator {
      * @param writer    the writer
      */
     public void writeParameterPrior(Parameter parameter, XMLWriter writer) {
-        // if there is a truncation then put it at the top so it short-circuits any other prior
-        // calculations
-        if (parameter.priorType == PriorType.UNIFORM_PRIOR || parameter.isTruncated) {
-            if (parameter.isPriorImproper()) {
-                writer.writeComment("Improper uniform prior: " + parameter.getName());
-            } else {
-                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
-                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
-                        });
-                writeParameterIdref(writer, parameter);
-                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
-            }
+        if (parameter.isTruncated) {
+            // if there is a truncation then put it at the top so it short-circuits any other prior
+            // calculations
+
+            // todo: We should switch this to truncatedDistribution so that the density is normalized correctly
+
+            writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                    new Attribute[]{
+                            new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                            new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
+                    });
+            writeParameterIdref(writer, parameter);
+            writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
         }
+
         switch (parameter.priorType) {
+            case NONE_IMPROPER:
+                writer.writeComment("Improper uniform prior: " + parameter.getName());
+                break;
             case UNIFORM_PRIOR:
-                // already handled, above
-//                writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.truncationLower),
-//                                new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.truncationUpper)
-//                        });
-//                writeParameterIdref(writer, parameter);
-//                writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+                if (parameter.isPriorImproper()) {
+                    throw new IllegalArgumentException("Uniform priors cannot have infinite bounds (use 'NONE_IMPROPER')");
+//                    writer.writeComment("Improper uniform prior: " + parameter.getName());
+                } else {
+                    writer.writeOpenTag(PriorParsers.UNIFORM_PRIOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(PriorParsers.LOWER, "" + parameter.getLowerBound()),
+                                    new Attribute.Default<String>(PriorParsers.UPPER, "" + parameter.getUpperBound())
+                            });
+                    writeParameterIdref(writer, parameter);
+                    writer.writeCloseTag(PriorParsers.UNIFORM_PRIOR);
+                }
                 break;
             case EXPONENTIAL_PRIOR:
                 writer.writeOpenTag(PriorParsers.EXPONENTIAL_PRIOR,

@@ -113,7 +113,7 @@ public class UniformDistribution implements Distribution {
      * @return log pdf value
      */
     public static double logPdf(double x, double lower, double upper) {
-        if (x >= lower && x <= upper) return Double.NEGATIVE_INFINITY;
+        if (x < lower || x > upper) return Double.NEGATIVE_INFINITY;
 
         // improve numerical stability:
         return - Math.log(upper - lower);

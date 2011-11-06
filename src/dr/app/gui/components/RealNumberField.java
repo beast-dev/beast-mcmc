@@ -24,8 +24,8 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     public static String NaN = "NaN";
     public static String POSITIVE_INFINITY = "+INF";
     public static String NEGATIVE_INFINITY = "-INF";
-    public static String MAX_VALUE = "MAX_VALUE";
-    public static String MIN_VALUE = "MIN_VALUE";
+    public static String MAX_VALUE = "MAX";
+    public static String MIN_VALUE = "MIN";
 
     protected static char MINUS = '-';
     protected static char PERIOD = '.';

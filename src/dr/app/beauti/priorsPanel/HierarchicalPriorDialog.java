@@ -396,7 +396,7 @@ public class HierarchicalPriorDialog {
             return new NormalDistribution(getValue(0), getValue(1));
         }
 
-        public void setArguments(Parameter parameter) {          
+        public void setArguments(Parameter parameter) {
             getInitialField().setValue(hpmMeanInitial);
             getField(0).setValue(hpmMeanMean);
             getField(1).setValue(hpmMeanStDev);
@@ -416,9 +416,9 @@ public class HierarchicalPriorDialog {
         }
 
         public void setup() {
-            addField("Hyperprior Shape", 0.001, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Hyperprior Scale", 1000.0, Double.MIN_VALUE, Double.MAX_VALUE);
-//            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Hyperprior Shape", 0.001, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Hyperprior Scale", 1000.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+//            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {

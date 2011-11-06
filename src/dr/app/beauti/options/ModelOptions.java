@@ -66,16 +66,21 @@ public class ModelOptions {
                   .initial(initial).isZeroOne(true).build(parameters);
     }
 
+    public void createNonNegativeParameterInfinitePrior(String name, String description, PriorScaleType scaleType, double initial) {
+        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.NONE_IMPROPER).isNonNegative(true)
+                  .initial(initial).build(parameters);
+    }
+
     public void createNonNegativeParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double truncationLower, double truncationUpper) {
+                                            double uniformLower, double uniformUpper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR).isNonNegative(true)
-                  .initial(initial).truncationLower(truncationLower).truncationUpper(truncationUpper).build(parameters);
+                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
     public void createParameterUniformPrior(String name, String description, PriorScaleType scaleType, double initial,
-                                            double truncationLower, double truncationUpper) {
+                                            double uniformLower, double uniformUpper) {
         new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNIFORM_PRIOR)
-                  .initial(initial).truncationLower(truncationLower).truncationUpper(truncationUpper).build(parameters);
+                  .initial(initial).uniformLower(uniformLower).uniformUpper(uniformUpper).build(parameters);
     }
 
     public Parameter createParameterGammaPrior(String name, String description, PriorScaleType scaleType, double initial,

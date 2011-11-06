@@ -586,7 +586,7 @@ public class BeastGenerator extends Generator {
             generateInsertionPoint(ComponentGenerator.InsertionPoint.AFTER_MCMC, writer);
         } catch (Exception e) {
             e.printStackTrace();
-            throw new GeneratorException("MCMC or log generation is failed:\n" + e.getMessage());
+            throw new GeneratorException("MCMC or log generation has failed:\n" + e.getMessage());
         }
 
         //++++++++++++++++  ++++++++++++++++++

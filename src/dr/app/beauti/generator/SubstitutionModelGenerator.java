@@ -96,7 +96,9 @@ public class SubstitutionModelGenerator extends Generator {
                             ParameterParser.PARAMETER,
                             new Attribute[]{
                                     new Attribute.Default<String>(XMLParser.ID, prefix + "frequencies"),
-                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25")
+                                    new Attribute.Default<String>(ParameterParser.VALUE, "0.25 0.25 0.25 0.25"),
+                                    new Attribute.Default<String>(ParameterParser.LOWER, "0.0"),
+                                    new Attribute.Default<String>(ParameterParser.UPPER, "1.0")
                             },
                             true
                     );

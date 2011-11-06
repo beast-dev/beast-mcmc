@@ -130,7 +130,7 @@ public class Parameter_Backup {
         this.scale = PriorScaleType.TIME_SCALE;
         this.priorEdited = false;
         this.lower = 0.0;
-        this.upper = Double.MAX_VALUE;
+        this.upper = Parameter.UNIFORM_MAX_BOUND;
 
         uniformLower = lower;
         uniformUpper = upper;

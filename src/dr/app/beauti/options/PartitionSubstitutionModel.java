@@ -239,16 +239,15 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         createZeroOneParameterUniformPrior("CP1+2.pInv", "proportion of invariant sites parameter for codon positions 1 & 2", 0.5);
         createZeroOneParameterUniformPrior("CP3.pInv", "proportion of invariant sites parameter for codon position 3", 0.5);
 
-        createNonNegativeParameterUniformPrior("mu", "relative rate parameter",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP1.mu", "relative rate parameter for codon position 1",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP2.mu", "relative rate parameter for codon position 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
-        createNonNegativeParameterUniformPrior("CP3.mu", "relative rate parameter for codon position 3",
-                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+        createNonNegativeParameterInfinitePrior("mu", "relative rate parameter", PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createNonNegativeParameterInfinitePrior("CP1.mu", "relative rate parameter for codon position 1",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createNonNegativeParameterInfinitePrior("CP2.mu", "relative rate parameter for codon position 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createNonNegativeParameterInfinitePrior("CP1+2.mu", "relative rate parameter for codon positions 1 & 2",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
+        createNonNegativeParameterInfinitePrior("CP3.mu", "relative rate parameter for codon position 3",
+                PriorScaleType.SUBSTITUTION_PARAMETER_SCALE, 1.0);
 
         // A vector of relative rates across all partitions...
         createAllMusParameter(this, "allMus", "All the relative rates regarding codon positions");

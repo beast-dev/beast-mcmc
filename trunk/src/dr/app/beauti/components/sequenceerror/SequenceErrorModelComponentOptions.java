@@ -30,8 +30,8 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     }
 
     public void createParameters(final ModelOptions modelOptions) {
-        modelOptions.createNonNegativeParameterUniformPrior(AGE_RATE_PARAMETER,"age dependent sequence error rate",
-                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8, 0.0, Double.MAX_VALUE);
+        modelOptions.createNonNegativeParameterInfinitePrior(AGE_RATE_PARAMETER,"age dependent sequence error rate",
+                PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8);
         modelOptions.createZeroOneParameterUniformPrior(BASE_RATE_PARAMETER,"base sequence error rate", 1.0E-8);
 
         modelOptions.createZeroOneParameterUniformPrior(HYPERMUTION_RATE_PARAMETER,"APOBEC editing rate per context", 1.0E-8);

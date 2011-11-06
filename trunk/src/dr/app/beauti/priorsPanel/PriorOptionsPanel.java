@@ -308,8 +308,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         void setArguments(Parameter parameter) {
-            super.setFieldRange(getField(0), parameter.isNonNegative, parameter.isZeroOne, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
-            super.setFieldRange(getField(1), parameter.isNonNegative, parameter.isZeroOne, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
+            super.setFieldRange(getField(0), parameter.isNonNegative, parameter.isZeroOne, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+            super.setFieldRange(getField(1), parameter.isNonNegative, parameter.isZeroOne, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
             getField(0).setValue(parameter.uniformUpper);
             getField(1).setValue(parameter.uniformLower);
@@ -325,8 +325,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel EXPONENTIAL = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Mean", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Mean", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -349,7 +349,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel LAPLACE = new PriorOptionsPanel(true) {
         void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -372,7 +372,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+            addField("Stdev", 1.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -400,8 +400,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             } else {
                 addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
-            addField("Log(Stdev)", 1.0, 0.0, Double.MAX_VALUE);
-            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Log(Stdev)", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
             addCheckBox("Mean In Real Space", meanInRealSpaceCheck);
 
             meanInRealSpaceCheck.addItemListener(new ItemListener() {
@@ -456,9 +456,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel GAMMA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -482,9 +482,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel INVERSE_GAMMA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -510,7 +510,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 //        public TruncatedNormalOptionsPanel() {
 //
 //            addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-//            addField("Stdev", 1.0, 0.0, Double.MAX_VALUE);
+//            addField("Stdev", 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 //            addField("Lower", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //            addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 //        }
@@ -531,9 +531,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel BETA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("ShapeB", 1.0, Double.MIN_VALUE, Double.MAX_VALUE);
-            addField("Offset", 0.0, 0.0, Double.MAX_VALUE);
+            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("ShapeB", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {

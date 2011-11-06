@@ -26,9 +26,7 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.ClockModelGroup;
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.PanelUtils;
@@ -76,7 +74,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JButton correctBranchLengthButton = new JButton("Correct Branch Length to Get Ultrametric Tree");
     private JButton exampleButton = new JButton("Introduce how to load starting tree by user");
 
-    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.MAX_VALUE);
+    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
     private BeautiOptions options = null;
 
@@ -90,7 +88,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         this.partitionTreeModel = parTreeModel;
         this.options = options;
 
-        PanelUtils.setupComponent(initRootHeightField);        
+        PanelUtils.setupComponent(initRootHeightField);
             initRootHeightField.setColumns(10);
             initRootHeightField.setEnabled(false);
 
@@ -103,7 +101,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
             ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
-        
+
         PanelUtils.setupComponent(startingTreeCombo);
         startingTreeCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {

@@ -104,17 +104,17 @@ public class PartitionTreePrior extends PartitionOptions {
         createZeroOneParameterUniformPrior("expansion.ancestralProportion", "ancestral population proportion", 0.1);
 
         createNonNegativeParameterUniformPrior("skyline.popSize", "Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
         // skyride.logPopSize is log unit unlike other popSize
         createNonNegativeParameterUniformPrior("skyride.logPopSize", "GMRF Bayesian skyride population sizes (log unit)",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, true);
 
         createNonNegativeParameterUniformPrior("demographic.popSize", "Extended Bayesian Skyline population sizes",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createParameter("demographic.indicators", "Extended Bayesian Skyline population switch", 0.0);
         createParameterOneOverXPrior("demographic.populationMean", "Extended Bayesian Skyline population prior mean",
                 PriorScaleType.TIME_SCALE, 1);
@@ -122,7 +122,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createDiscreteStatistic("demographic.populationSizeChanges", "Average number of population change points"); // POISSON_PRIOR
 
         createNonNegativeParameterUniformPrior("yule.birthRate", "Yule speciation process birth rate",
-                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Double.MAX_VALUE);
+                PriorScaleType.BIRTH_RATE_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
 
         createNonNegativeParameterUniformPrior(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME, "Birth-Death speciation process rate",
                 PriorScaleType.BIRTH_RATE_SCALE, 0.01, 0.0, 100000.0);
@@ -149,7 +149,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN,
                 "Birth-Death the time of the lineage originated (must > root height)", PriorScaleType.ORIGIN_SCALE,
-                1.0, 0.0, Double.MAX_VALUE);
+                1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
                 "Birth-Death the probabilty that a sampled individual continues being infectious after sample event",

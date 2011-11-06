@@ -184,11 +184,18 @@ public class Parameter {
 
         public Builder isNonNegative(boolean isNonNegative) {
             this.isNonNegative = isNonNegative;
+            if (isNonNegative) {
+                this.uniformLower = 0.0;
+            }
             return this;
         }
 
         public Builder isZeroOne(boolean isZeroOne) {
             this.isZeroOne = isZeroOne;
+            if (isZeroOne) {
+                this.uniformLower = 0.0;
+                this.uniformUpper = 1.0;
+            }
             return this;
         }
 
@@ -207,16 +214,16 @@ public class Parameter {
             return this;
         }
 
-        //        public Builder upper(double upper) {
-//            this.upper = upper;
-//            return this;
-//        }
-//
-//        public Builder lower(double lower) {
-//            this.lower = lower;
-//            return this;
-//        }
-//
+        public Builder uniformUpper(double upper) {
+            this.uniformUpper = upper;
+            return this;
+        }
+
+        public Builder uniformLower(double lower) {
+            this.uniformLower = lower;
+            return this;
+        }
+
         public Builder truncationUpper(double truncationUpper) {
             this.isTruncated = true;
             this.truncationUpper = truncationUpper;
@@ -392,6 +399,10 @@ public class Parameter {
     public double getLowerBound() {
         double lower = Double.NEGATIVE_INFINITY;
 
+        if (priorType == PriorType.UNIFORM_PRIOR) {
+            lower = uniformLower;
+        }
+
         if (isNonNegative || isZeroOne) {
             lower = 0.0;
         }
@@ -408,6 +419,10 @@ public class Parameter {
 
         if (isZeroOne) {
             upper = 1.0;
+        }
+
+        if (priorType == PriorType.UNIFORM_PRIOR) {
+            upper = uniformUpper;
         }
 
         if (isTruncated && !Double.isInfinite(truncationUpper)) {

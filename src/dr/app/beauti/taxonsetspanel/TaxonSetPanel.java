@@ -467,20 +467,6 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         taxonSetsTableSelectionChanged();
         taxonSetsTableModel.fireTableDataChanged();
-
-        validateTaxonSets();
-    }
-
-    protected void validateTaxonSets() {
-        if (taxonSetsTable.getRowCount() > 0) {
-            for (Taxa taxonSet : options.taxonSets) {
-                if (taxonSet.getTaxonCount() < 1) {
-                    JOptionPane.showMessageDialog(this, TAXON + " " + taxonSet.getId() + " is empty, "
-                            + "\nplease go back to " + TAXON + "s panel to select included " + TAXA.toLowerCase() +".",
-                            "Empty " + TAXON.toLowerCase() + " error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }
     }
 
     public void getOptions(BeautiOptions options) {

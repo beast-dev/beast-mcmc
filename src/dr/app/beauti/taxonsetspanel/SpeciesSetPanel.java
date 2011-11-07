@@ -95,8 +95,6 @@ public class SpeciesSetPanel extends TaxonSetPanel {
 
         taxonSetsTableSelectionChanged();
         taxonSetsTableModel.fireTableDataChanged();
-
-        validateTaxonSets();
     }
     
     protected void taxonSetsTableSelectionChanged() {

@@ -151,8 +151,8 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         for (Taxa taxa : options.taxonSets) {
             if (taxa.getTaxonCount() < 2) {
-                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ", should contain\n" +
-                        "at least two taxa.");
+                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ",\n should contain" +
+                        "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.");
             }
             if (ids.contains(taxa.getId())) {
                 throw new IllegalArgumentException("A taxon sets has the same id," + taxa.getId() +

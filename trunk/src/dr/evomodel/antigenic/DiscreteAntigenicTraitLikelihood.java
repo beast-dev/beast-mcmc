@@ -71,8 +71,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 name = virusName;
             }
 
-            virusToLocationIndices[count] = locationLabelsList.size();
-            locationLabelsList.add(name);
+            int index = locationLabelsList.indexOf(name);
+            if (index == -1) {
+                virusToLocationIndices[count] = locationLabelsList.size();
+                locationLabelsList.add(name);
+            }
+
             count++;
         }
 

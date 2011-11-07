@@ -80,6 +80,7 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
+    private final String VALIDATE_MESSAGE = "\nas another element (taxon, sequence, taxon set, species, etc.):\nAll ids should be unique.";
 
     private final AlignmentGenerator alignmentGenerator;
     private final PatternListGenerator patternListGenerator;
@@ -132,6 +133,7 @@ public class BeastGenerator extends Generator {
 
         ids.add(TaxaParser.TAXA);
         ids.add(AlignmentParser.ALIGNMENT);
+        ids.add(TraitData.TRAIT_SPECIES);
 
         if (taxonList != null) {
             if (taxonList.getTaxonCount() < 2) {
@@ -142,7 +144,7 @@ public class BeastGenerator extends Generator {
                 Taxon taxon = taxonList.getTaxon(i);
                 if (ids.contains(taxon.getId())) {
                     throw new IllegalArgumentException("A taxon has the same id," + taxon.getId() +
-                            "\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
+                            VALIDATE_MESSAGE);
                 }
                 ids.add(taxon.getId());
             }
@@ -155,18 +157,33 @@ public class BeastGenerator extends Generator {
                         "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.");
             }
             if (ids.contains(taxa.getId())) {
-                throw new IllegalArgumentException("A taxon sets has the same id," + taxa.getId() +
-                        "\nas another element (taxon, sequence, taxon set etc.):\nAll ids should be unique.");
+                throw new IllegalArgumentException("A taxon set has the same id," + taxa.getId() +
+                        VALIDATE_MESSAGE);
             }
             ids.add(taxa.getId());
         }
 
-        //++++++++++++++++ Traits ++++++++++++++++++
-        if (options.useStarBEAST && !options.traitExists(TraitData.TRAIT_SPECIES)) {
-            throw new IllegalArgumentException("Keyword \"species\" is reserved for *BEAST only !" +
-                    "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
+        //++++++++++++++++ *BEAST ++++++++++++++++++
+        if (options.useStarBEAST) {
+            if (!options.traitExists(TraitData.TRAIT_SPECIES))
+                throw new IllegalArgumentException("Keyword \"species\" is reserved for *BEAST only !" +
+                        "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
+
+            //++++++++++++++++ Species Sets ++++++++++++++++++
+            for (Taxa species : options.speciesSets) {
+                if (species.getTaxonCount() < 2) {
+                    throw new IllegalArgumentException("Species set, " + species.getId() + ",\n should contain" +
+                            "at least two species. \nPlease go back to Species Sets panel to select included species.");
+                }
+                if (ids.contains(species.getId())) {
+                    throw new IllegalArgumentException("A species set has the same id," + species.getId() +
+                            VALIDATE_MESSAGE);
+                }
+                ids.add(species.getId());
+            }
         }
 
+        //++++++++++++++++ Traits ++++++++++++++++++
         // missing data is not necessarily an issue...
 //        for (TraitData trait : options.traits) {
 //            for (int i = 0; i < trait.getTaxaCount(); i++) {

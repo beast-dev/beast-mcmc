@@ -32,7 +32,7 @@ import dr.inference.model.Parameter;
 import java.util.List;
 
 /**
- * @author US..
+ * @author US... ,
  */
 public class GaussianProcessSkytrackLikelihood extends GMRFSkyrideLikelihood {
 

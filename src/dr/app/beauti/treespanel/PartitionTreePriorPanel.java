@@ -217,6 +217,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 citation = "Gernhard T (2008) J Theor Biol 253, 769-778 [Yule Process]." +
                         "\nYule GU (1925) Phil Trans R Soc Lond B Biol Sci 213, 21-87 [Yule Process].";
                 break;
+
+            case YULE_CALIBRATION:
+                citation = "Heled J, Drummond AJ (2011), Syst Biol, doi: 10.1093/sysbio/syr087," +
+                        "\nCalibrated Tree Priors for Relaxed Phylogenetics and Divergence Time Estimation.";
+                break;
+
             case BIRTH_DEATH:
                 citation = BirthDeathModelParser.getCitation();
                 break;
@@ -339,6 +345,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         if (isTipCalibrated) {
             // remove models that require contemporaneous tips...
             treePriorCombo.removeItem(TreePriorType.YULE);
+            treePriorCombo.removeItem(TreePriorType.YULE_CALIBRATION);
             treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
             treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
         }

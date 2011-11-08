@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.*;
 import dr.evomodel.coalescent.VariableDemographicModel;
+import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
 import dr.math.MathUtils;
@@ -49,6 +50,7 @@ public class PartitionTreePrior extends PartitionOptions {
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;
+    private CalibrationPoints.CorrectionType calibCorrectionType = CalibrationPoints.CorrectionType.EXACT;
     private boolean fixedTree = false;
 
     public PartitionTreePrior(BeautiOptions options, PartitionTreeModel treeModel) {
@@ -73,6 +75,7 @@ public class PartitionTreePrior extends PartitionOptions {
         this.extendedSkylineModel = source.extendedSkylineModel;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
         this.populationSizeModel = source.populationSizeModel;
+        this.calibCorrectionType = source.calibCorrectionType;
         this.fixedTree = source.fixedTree;
     }
 
@@ -435,6 +438,14 @@ public class PartitionTreePrior extends PartitionOptions {
 
     public void setPopulationSizeModel(PopulationSizeModelType populationSizeModel) {
         this.populationSizeModel = populationSizeModel;
+    }
+
+    public CalibrationPoints.CorrectionType getCalibCorrectionType() {
+        return calibCorrectionType;
+    }
+
+    public void setCalibCorrectionType(CalibrationPoints.CorrectionType calibCorrectionType) {
+        this.calibCorrectionType = calibCorrectionType;
     }
 
     public BeautiOptions getOptions() {

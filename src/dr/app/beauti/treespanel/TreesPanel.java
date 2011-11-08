@@ -32,7 +32,6 @@ import dr.app.beauti.types.TreePriorType;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.Microsatellite;
 import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
 
 import javax.swing.*;

@@ -390,11 +390,11 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH);
                 treePriorCombo.removeItem(TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING);
             }
-            treePriorCombo.setSelectedItem(type);
-            if (treePriorCombo.getSelectedItem() == null) {
-                treePriorCombo.setSelectedIndex(0);
-            }
-
+        }
+        // this makes sure treePriorCombo selects correct prior
+        treePriorCombo.setSelectedItem(type);
+        if (treePriorCombo.getSelectedItem() == null) {
+            treePriorCombo.setSelectedIndex(0);
         }
     }
 }

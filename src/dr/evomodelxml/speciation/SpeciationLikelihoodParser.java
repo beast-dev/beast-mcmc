@@ -31,10 +31,10 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
     public static final String CALIBRATION = "calibration";
     public static final String CORRECTION = "correction";
 
-    public static final String EXACT = "exact";
-    public static final String APPROX = "approximated";
-    public static final String ALE = "pexact";
-    public static final String NONE = "none";
+    private final String EXACT = CalibrationPoints.CorrectionType.EXACT.toString();
+    private final String APPROX = CalibrationPoints.CorrectionType.APPROXIMATED.toString();
+    private final String PEXACT = CalibrationPoints.CorrectionType.PEXACT.toString();
+    private final String NONE = CalibrationPoints.CorrectionType.NONE.toString();
 
     public static final String PARENT = dr.evomodelxml.tree.TMRCAStatisticParser.PARENT;
 
@@ -147,7 +147,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
                 final CalibrationPoints.CorrectionType type = correction.equals(EXACT) ? CalibrationPoints.CorrectionType.EXACT :
                         (correction.equals(APPROX) ? CalibrationPoints.CorrectionType.APPROXIMATED :
                                 (correction.equals(NONE) ? CalibrationPoints.CorrectionType.NONE :
-                                        (correction.equals(ALE) ? CalibrationPoints.CorrectionType.PEXACT :  null)));
+                                        (correction.equals(PEXACT) ? CalibrationPoints.CorrectionType.PEXACT :  null)));
 
                 if( cal.hasAttribute(CORRECTION) && type == null ) {
                    throw new XMLParseException("correction type == " + correction + "???");

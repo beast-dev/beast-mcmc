@@ -70,7 +70,9 @@ public class PartitionTreePrior extends PartitionOptions {
         this.skylineGroupCount = source.skylineGroupCount;
         this.skylineModel = source.skylineModel;
         this.skyrideSmoothing = source.skyrideSmoothing;
+        this.extendedSkylineModel = source.extendedSkylineModel;
         this.birthDeathSamplingProportion = source.birthDeathSamplingProportion;
+        this.populationSizeModel = source.populationSizeModel;
         this.fixedTree = source.fixedTree;
     }
 
@@ -251,7 +253,7 @@ public class PartitionTreePrior extends PartitionOptions {
         } else if (nodeHeightPrior == TreePriorType.GMRF_SKYRIDE) {
 //            params.add(getParameter("skyride.popSize")); // force user to use GMRF, not allowed to change
             params.add(getParameter("skyride.precision"));
-        } else if (nodeHeightPrior == TreePriorType.YULE) {
+        } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             params.add(getParameter("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             params.add(getParameter(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));
@@ -323,7 +325,7 @@ public class PartitionTreePrior extends PartitionOptions {
             ops.add(getOperator("demographic.popSize"));
             ops.add(getOperator("demographic.indicators"));
             ops.add(getOperator("demographic.scaleActive"));
-        } else if (nodeHeightPrior == TreePriorType.YULE) {
+        } else if (nodeHeightPrior == TreePriorType.YULE || nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
             ops.add(getOperator("yule.birthRate"));
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH || nodeHeightPrior == TreePriorType.BIRTH_DEATH_INCOMPLETE_SAMPLING) {
             ops.add(getOperator(BirthDeathModelParser.MEAN_GROWTH_RATE_PARAM_NAME));

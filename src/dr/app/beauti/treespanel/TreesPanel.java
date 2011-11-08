@@ -86,7 +86,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     Map<PartitionTreeModel, PartitionTreeModelPanel> treeModelPanels = new HashMap<PartitionTreeModel, PartitionTreeModelPanel>();
     JPanel treePriorPanelParent;
     TitledBorder treePriorBorder;
-    Map<PartitionTreePrior, OptionsPanel> treePriorPanels = new HashMap<PartitionTreePrior, OptionsPanel>();
+    Map<PartitionTreePrior, PartitionTreePriorPanel> treePriorPanels = new HashMap<PartitionTreePrior, PartitionTreePriorPanel>();
 
     public TreesPanel(BeautiFrame parent, Action removeTreeAction) {
         super();
@@ -179,7 +179,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         } else {
             options.unLinkTreePriors(currentTreeModel);
         }
-    	setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
+        setCurrentModelAndPrior(currentTreeModel); // this is important to make panel refreshing
 
         fireTreePriorsChanged();
     }
@@ -207,7 +207,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();
 
         if (options.getPartitionTreePriors().size() > 0) {
-            OptionsPanel p;
+
             if (options.useStarBEAST) {
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.SPECIES_YULE);
@@ -217,8 +217,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
                     options.clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup); // fix 1st partition
                 }
 
-                p = new SpeciesTreesPanel(options.getPartitionTreePriors().get(0));
-
             } else {
 //                if (options.hasData() && options.contains(Microsatellite.INSTANCE)) {
 //                    linkTreePriorCheck.setEnabled(false);
@@ -227,10 +225,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //                }
 
                 options.getPartitionTreePriors().get(0).setNodeHeightPrior(TreePriorType.CONSTANT);
-
-                p = new PartitionTreePriorPanel(options.getPartitionTreePriors().get(0), this);
-
             }
+
+            PartitionTreePriorPanel p = new PartitionTreePriorPanel(options.getPartitionTreePriors().get(0), this);
 
             treePriorPanels.put(options.getPartitionTreePriors().get(0), p);
 
@@ -284,7 +281,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
             PartitionTreePrior prior = model.getPartitionTreePrior();
 
-            OptionsPanel panel1 = treePriorPanels.get(prior);
+            PartitionTreePriorPanel panel1 = treePriorPanels.get(prior);
             if (panel1 == null) {
                 panel1 = new PartitionTreePriorPanel(prior, this);
                 treePriorPanels.put(prior, panel1);
@@ -336,22 +333,18 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
             if (options.useStarBEAST) {
                 linkTreePriorCheck.setEnabled(false);
-                SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
-                if (ptpp != null) {
-                    ptpp.setOptions();
-                }
             } else {
                 linkTreePriorCheck.setEnabled(true);
-                PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
-                if (ptpp != null) {
-                    ptpp.setOptions();
-
+            }
+            PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
+            if (ptpp != null) {
+                ptpp.setOptions();
 //                    if (options.contains(Microsatellite.INSTANCE)) {
 //                        ptpp.setMicrosatelliteTreePrior();
 //                    } else
-                    ptpp.setTreePriorChoices(options.getPartitionTreeModels().size() > 1, options.clockModelOptions.isTipCalibrated());
-                    ptpp.repaint();
-                }
+                ptpp.setTreePriorChoices(options.useStarBEAST, options.getPartitionTreeModels().size() > 1,
+                        options.clockModelOptions.isTipCalibrated());
+                ptpp.repaint();
             }
         }
 
@@ -386,16 +379,9 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 //     	}
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (options.useStarBEAST) {
-                SpeciesTreesPanel ptpp = (SpeciesTreesPanel) treePriorPanels.get(prior);
-                if (ptpp != null) {
-                    ptpp.getOptions();
-                }
-            } else {
-                PartitionTreePriorPanel ptpp = (PartitionTreePriorPanel) treePriorPanels.get(prior);
-                if (ptpp != null) {
-                    ptpp.getOptions();
-                }
+            PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
+            if (ptpp != null) {
+                ptpp.getOptions();
             }
         }
     }

@@ -78,7 +78,7 @@ public class PatternListGenerator extends Generator {
         		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
 
-				boolean doRobustCounting = component.doRobustCounting();
+				boolean doRobustCounting = component.doRobustCounting(partition.getPartitionSubstitutionModel());
 
 				if (doRobustCounting) {
 

@@ -38,16 +38,16 @@ public class DnDsComponentOptions implements ComponentOptions {
 		// Do nothing
 	}
 
-	public boolean addPartition(PartitionSubstitutionModel partition) {
-		if (!partitionList.contains(partition)) {
-			partitionList.add(partition);
+	public boolean addPartition(PartitionSubstitutionModel partitionModel) {
+		if (!partitionList.contains(partitionModel)) {
+			partitionList.add(partitionModel);
 		}
 		return true; // No error
 	}
 
-	public void removePartition(PartitionSubstitutionModel model) {
-		if (partitionList.contains(model)) {
-			partitionList.remove(model);
+	public void removePartition(PartitionSubstitutionModel partitionModel) {
+		if (partitionList.contains(partitionModel)) {
+			partitionList.remove(partitionModel);
 		}
 	}
 
@@ -59,8 +59,8 @@ public class DnDsComponentOptions implements ComponentOptions {
 		return options;
 	}
 
-	public boolean doRobustCounting() {
-		return true;
-	}
+    public boolean doRobustCounting(PartitionSubstitutionModel partitionModel) {
+        return partitionList.contains(partitionModel);
+    }
 
 }

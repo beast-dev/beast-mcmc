@@ -80,7 +80,7 @@ public class TreeLikelihoodGenerator extends Generator {
 			DnDsComponentOptions robustCountingComponent = (DnDsComponentOptions) options
 					.getComponentOptions(DnDsComponentOptions.class);
 
-			boolean doRobustCounting = robustCountingComponent.doRobustCounting();
+			boolean doRobustCounting = robustCountingComponent.doRobustCounting(partition.getPartitionSubstitutionModel());
 
 			if (doRobustCounting) {
 

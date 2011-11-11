@@ -76,9 +76,16 @@ public class TreesPanel extends JPanel implements Exportable {
 
     //    JTreeDisplay treePanel;
     FigTreePanel treePanel;
+
     JChartPanel rootToTipPanel;
     JChart rootToTipChart;
     ScatterPlot rootToTipPlot;
+
+    private static final boolean SHOW_NODE_DENSITY = true;
+    JChartPanel nodeDensityPanel;
+    JChart nodeDensityChart;
+    ScatterPlot nodeDensityPlot;
+
     JChartPanel residualPanel;
     JChart residualChart;
     ScatterPlot residualPlot;
@@ -174,6 +181,19 @@ public class TreesPanel extends JPanel implements Exportable {
         panel2.add(tabbedPane, BorderLayout.CENTER);
 //        panel2.add(textArea, BorderLayout.SOUTH);
 
+        if (SHOW_NODE_DENSITY) {
+            nodeDensityChart = new JChart(new LinearAxis(), new LinearAxis(Axis.AT_ZERO, Axis.AT_MINOR_TICK));
+            nodeDensityPanel = new JChartPanel(nodeDensityChart, "", "time", "node density");
+            JPanel panel4 = new JPanel(new BorderLayout());
+            panel4.add(nodeDensityPanel, BorderLayout.CENTER);
+            panel4.setOpaque(false);
+
+            ChartSelector selector3 = new ChartSelector(nodeDensityChart);
+
+            tabbedPane.add("Node density", panel4);
+        }
+
+
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel2);
         splitPane.setDividerLocation(220);
         splitPane.setContinuousLayout(true);
@@ -218,6 +238,10 @@ public class TreesPanel extends JPanel implements Exportable {
             }
             rootToTipPlot.setSelectedPoints(selectedPoints);
             residualPlot.setSelectedPoints(selectedPoints);
+
+            if (SHOW_NODE_DENSITY) {
+                nodeDensityPlot.setSelectedPoints(selectedPoints);
+            }
 
             selectMRCA();
         }
@@ -480,6 +504,27 @@ public class TreesPanel extends JPanel implements Exportable {
 //                residualChart.addPlot(residualPlot);
 //                residualPanel.setXAxisTitle("residual");
 //                residualPanel.setYAxisTitle("proportion");
+
+                if (SHOW_NODE_DENSITY) {
+                    Regression r2 = temporalRooting.getNodeDensityRegression(currentTree);
+                    nodeDensityChart.removeAllPlots();
+                    nodeDensityPlot = new ScatterPlot(r2.getXData(), r2.getYData());
+                    nodeDensityPlot.addListener(new Plot.Adaptor() {
+                        public void selectionChanged(final Set<Integer> selectedPoints) {
+                            plotSelectionChanged(selectedPoints);
+                        }
+                    });
+                    nodeDensityPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
+                    nodeDensityPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
+
+                    nodeDensityChart.addPlot(nodeDensityPlot);
+
+                    nodeDensityChart.addPlot(new RegressionPlot(r2));
+
+                    nodeDensityChart.getXAxis().addRange(r2.getXIntercept(), (Double) r2.getXData().getMax());
+                    nodeDensityPanel.setXAxisTitle("time");
+                    nodeDensityPanel.setYAxisTitle("node density");
+                }
 
                 sb.append(", dated tips");
                 sb.append(", date range: " + nf.format(temporalRooting.getDateRange()));

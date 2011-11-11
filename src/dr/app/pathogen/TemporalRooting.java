@@ -129,6 +129,19 @@ public class TemporalRooting {
         return new Regression(dates, distances);
     }
 
+    public Regression getNodeDensityRegression(Tree tree) {
+
+        if (contemporaneous) {
+            throw new IllegalArgumentException("Cannot do a node density regression on contemporaneous tips");
+        }
+
+        double[] dates = getTipDates(tree);
+//        double[] distances = getRootToTipDistances(tree);
+        double[] density = getNodeDensity(tree);
+
+        return new Regression(dates, density);
+    }
+
     public Regression getAncestorRootToTipRegression(Tree tree, Regression regression) {
 
         if (contemporaneous) {
@@ -180,6 +193,16 @@ public class TemporalRooting {
             r[i] = regression.getResidual(date, d);
         }
         return r;
+    }
+
+    public double[] getNodeDensity(Tree tree) {
+
+        double[] d = new double[tree.getExternalNodeCount()];
+        for (int i = 0; i < tree.getExternalNodeCount(); i++) {
+            NodeRef tip = tree.getExternalNode(i);
+            d[i] = getNodeDensity(tree, tip);
+        }
+        return d;
     }
 
     public double[] getTipDates(Tree tree) {
@@ -333,6 +356,15 @@ public class TemporalRooting {
             node = tree.getParent(node);
         }
         return distance;
+    }
+
+    public double getNodeDensity(Tree tree, NodeRef node) {
+        double density = 0;
+        while (node != null) {
+            density ++;
+            node = tree.getParent(node);
+        }
+        return density;
     }
 
     public Tree adjustTreeToConstraints(Tree source, Map<Set<String>, double[]> cladeHeights) {

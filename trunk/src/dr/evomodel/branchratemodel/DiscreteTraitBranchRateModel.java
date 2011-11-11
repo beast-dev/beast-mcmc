@@ -53,6 +53,7 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     enum Mode {
         NODE_STATES,
         MARKOV_JUMP_PROCESS,
+        MARKOV_JUMP_COUNT,
         PARSIMONY
     }
 
@@ -67,6 +68,8 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private boolean storedNormKnown = false;
     private double norm = 1.0;
     private double storedNorm = 1.0;
+
+    private TreeTrait[] traits;
 
     private FitchParsimony fitchParsimony;
 
@@ -133,6 +136,21 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
         if (trait instanceof Model) {
             addModel((Model)trait); // MAS: Does this ever occur?
+        }
+    }
+
+    public DiscreteTraitBranchRateModel(TreeTraitProvider traitProvider, TreeTrait[] traits, TreeModel treeModel, Parameter ratesParameter) {
+
+        this(treeModel, 0, ratesParameter, null, null);
+
+        this.traits = traits;
+        mode = Mode.MARKOV_JUMP_PROCESS;
+
+        ratesParameter.setDimension(traits.length);
+
+
+        if (traitProvider instanceof Model) {
+            addModel((Model)traitProvider);
         }
     }
 
@@ -279,7 +297,10 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         double branchTime = tree.getBranchLength(node);
 
         if (mode == Mode.MARKOV_JUMP_PROCESS) {
-            processValues = (double[])trait.getTrait(tree, node);
+            processValues = new double[traits.length];
+            for (int i = 0; i < traits.length; i++) {
+                processValues[i] = ((TreeTrait.DA)traits[i]).getTrait(tree, node)[0];
+            }
         } else if (mode == Mode.PARSIMONY) {
             // an approximation to dwell times using parsimony, assuming
             // the state changes midpoint on the tree. Does a weighted

@@ -123,7 +123,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                                                   ContinuousComponentOptions component) {
 
         for (PartitionSubstitutionModel model : component.getOptions().getPartitionSubstitutionModels(ContinuousDataType.INSTANCE)) {
-            String precisionMatrixId = model.getPrefix(ContinuousDataType.INSTANCE) + "precision";
+            String precisionMatrixId = model.getName() + ".precision";
             writeMultivariateDiffusionModel(writer, model, precisionMatrixId);
             writeMultivariateWishartPrior(writer, model, precisionMatrixId);
         }
@@ -135,7 +135,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("multivariateDiffusionModel",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", model.getPrefix(ContinuousDataType.INSTANCE) + "diffusionModel")
+                        new Attribute.Default<String>("id", model.getName() + ".diffusionModel")
                 });
 
         writer.writeOpenTag("precisionMatrix");
@@ -178,7 +178,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("multivariateWishartPrior",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", model.getPrefix(ContinuousDataType.INSTANCE) + "precisionPrior"),
+                        new Attribute.Default<String>("id", model.getName() + ".precisionPrior"),
                         new Attribute.Default<String>("df", "" + n),
                 });
 
@@ -219,7 +219,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         for (AbstractPartitionData partitionData : component.getOptions().getAllPartitionData(ContinuousDataType.INSTANCE)) {
             PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
-            String diffusionModelId = model.getPrefix(ContinuousDataType.INSTANCE) + "diffusionModel";
+            String diffusionModelId = model.getName() + ".diffusionModel";
             String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
             if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
@@ -390,13 +390,15 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
                 writer.writeCloseTag("swapOperator");
 
-                writer.writeOpenTag("randomWalkIntegerOperator",
-                        new Attribute[] {
-                                new Attribute.Default<String>("size", "2"),
-                                new Attribute.Default<String>("weight", "10")
-                        });
-                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
-                writer.writeCloseTag("randomWalkIntegerOperator");
+                // See Issue 500:
+                // http://code.google.com/p/beast-mcmc/issues/detail?id=500&can=1&start=400
+//                writer.writeOpenTag("randomWalkIntegerOperator",
+//                        new Attribute[] {
+//                                new Attribute.Default<String>("windowSize", "2"),
+//                                new Attribute.Default<String>("weight", "10")
+//                        });
+//                writer.writeIDref("parameter", partitionData.getName() + ".rrwCategories");
+//                writer.writeCloseTag("randomWalkIntegerOperator");
 
                 writer.writeOpenTag("uniformIntegerOperator",
                         new Attribute[] {

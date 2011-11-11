@@ -794,7 +794,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="100000" autoOptimize="true" fullEvaluation="0">
+	<mcmc id="mcmc" chainLength="1000000" autoOptimize="true" fullEvaluation="0">
 		<posterior id="posterior">
 			<prior id="prior">
 				<gammaPrior shape="0.05" scale="10.0" offset="0.0">
@@ -821,7 +821,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -840,7 +840,8 @@
 		</log>
 
 		<!-- write log to file                                                       -->
-		<log id="fileLog" logEvery="1000" fileName="benchmark2.log" overwrite="false">
+		<!--
+		<log id="fileLog" logEvery="10000" fileName="benchmark2.log" overwrite="false">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
 			<likelihood idref="likelihood"/>
@@ -858,7 +859,6 @@
 			<speciationLikelihood idref="speciation"/>
 		</log>
 
-		<!--
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="benchmark2.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<strictClockBranchRates idref="branchRates"/>

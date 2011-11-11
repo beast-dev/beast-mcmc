@@ -49,7 +49,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
         }
 
         int traitIndex = xo.getAttribute(TRAIT_INDEX, 1) - 1;
-        String traitName = xo.getAttribute(TRAIT_NAME, "states");
+        String traitName = null;
 
         Logger.getLogger("dr.evomodel").info("Using discrete trait branch rate model.\n" +
                 "\tIf you use this model, please cite:\n" +
@@ -59,12 +59,23 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
             // Use the version that reconstructs the trait using parsimony:
             return new DiscreteTraitBranchRateModel(treeModel, patternList, traitIndex, ratesParameter);
         } else {
-            TreeTrait trait = traitProvider.getTreeTrait(traitName);
-            if (trait == null) {
-                throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
+            if (traitName != null) {
+                TreeTrait trait = traitProvider.getTreeTrait(traitName);
+                if (trait == null) {
+                    throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
+                }
+                return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
+            } else {
+                TreeTrait[] traits = new TreeTrait[dataType.getStateCount()];
+                for (int i =  0; i < dataType.getStateCount(); i++) {
+                    traits[i] = traitProvider.getTreeTrait(dataType.getCode(i));
+                    if (traits[i] == null) {
+                        throw new XMLParseException("A trait called, " + dataType.getCode(i) + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with ID " + xo.getId());
+                    }
+                }
+                return new DiscreteTraitBranchRateModel(traitProvider, traits, treeModel, rateParameter);
             }
 
-            return new DiscreteTraitBranchRateModel(traitProvider, dataType, treeModel, trait, traitIndex, rateParameter, ratesParameter, indicatorsParameter);
         }
     }
 
@@ -93,14 +104,12 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
                     new AndRule(
                             new ElementRule(TreeTraitProvider.class, "The trait provider"),
                             new XORRule(
-                                   new StringAttributeRule(DataType.DATA_TYPE, "The type of general data",
-                                                           DataType.getRegisteredDataTypeNames(), false),
-                                   new ElementRule(DataType.class))
-                    ), 
+                                    new StringAttributeRule(DataType.DATA_TYPE, "The type of general data",
+                                            DataType.getRegisteredDataTypeNames(), false),
+                                    new ElementRule(DataType.class))
+                    ),
                     new ElementRule(PatternList.class)),
-            new ElementRule(RATE, Parameter.class, "The absolute rate of state 0", false),
-            new ElementRule(RATES, Parameter.class, "The relative rates of state > 0", true),
-            new ElementRule(INDICATORS, Parameter.class, "An index that links the state with a rate", true),
+            new ElementRule(RATES, Parameter.class, "The relative rates of states", true),
             AttributeRule.newIntegerRule(TRAIT_INDEX, true),
             AttributeRule.newStringRule(TRAIT_NAME, true)
     };

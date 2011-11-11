@@ -463,6 +463,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      */
     protected void handleModelChangedEvent(Model model, Object object, int index) {
 
+        fireModelChanged();
+
         if (model == treeModel) {
             if (object instanceof TreeModel.TreeChangedEvent) {
 

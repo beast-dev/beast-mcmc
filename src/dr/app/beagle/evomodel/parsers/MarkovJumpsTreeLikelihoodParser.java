@@ -86,20 +86,20 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         );
 
         int registersFound = parseAllChildren(xo, treeLikelihood, dataType.getStateCount(), jumpTag,
-                        MarkovJumpsType.COUNTS, false); // For backwards compatibility
+                MarkovJumpsType.COUNTS, false); // For backwards compatibility
 
         XMLObject cxo = xo.getChild(COUNTS);
         if (cxo != null) {
             registersFound += parseAllChildren(cxo, treeLikelihood, dataType.getStateCount(), jumpTag,
-                        MarkovJumpsType.COUNTS, false);
+                    MarkovJumpsType.COUNTS, false);
         }
 
         cxo = xo.getChild(REWARDS);
         if (cxo != null) {
             registersFound += parseAllChildren(cxo, treeLikelihood, dataType.getStateCount(), jumpTag,
-                        MarkovJumpsType.REWARDS, scaleRewards);
+                    MarkovJumpsType.REWARDS, scaleRewards);
         }
-        
+
         if (registersFound == 0) { // Some default values for testing
 //            double[] registration = new double[dataType.getStateCount()*dataType.getStateCount()];
 //            MarkovJumpsCore.fillRegistrationMatrix(registration,dataType.getStateCount()); // Count all transitions
@@ -132,21 +132,21 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     }
 
     public static int parseAllChildren(XMLObject xo,
-                                 MarkovJumpsRegisterAcceptor acceptor,
-                                 int stateCount,
-                                 String jumpTag,
-                                 MarkovJumpsType type,
-                                 boolean scaleRewards) throws XMLParseException {
+                                       MarkovJumpsRegisterAcceptor acceptor,
+                                       int stateCount,
+                                       String jumpTag,
+                                       MarkovJumpsType type,
+                                       boolean scaleRewards) throws XMLParseException {
         int registersFound = 0;
         for(int i = 0; i < xo.getChildCount(); i++) {
             Object obj = xo.getChild(i);
             if (obj instanceof Parameter) {
                 Parameter registerParameter = (Parameter) obj;
                 if ((type == MarkovJumpsType.COUNTS &&
-                     registerParameter.getDimension() != stateCount * stateCount) ||
-                    (type == MarkovJumpsType.REWARDS &&
-                     registerParameter.getDimension() != stateCount)
-                   ) {
+                        registerParameter.getDimension() != stateCount * stateCount) ||
+                        (type == MarkovJumpsType.REWARDS &&
+                                registerParameter.getDimension() != stateCount)
+                        ) {
                     throw new XMLParseException("Register parameter " + registerParameter.getId() + " is of the wrong dimension");
                 }
                 if (registerParameter.getId() == null) {

@@ -10227,7 +10227,7 @@
 	</operators>
 
 	<!-- Define MCMC                                                             -->
-	<mcmc id="mcmc" chainLength="10000" autoOptimize="true" fullEvaluation="0">
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true" fullEvaluation="0">
 		<posterior id="posterior">
 			<prior id="prior">
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
@@ -10245,7 +10245,7 @@
 		<operators idref="operators"/>
 
 		<!-- write log to screen                                                     -->
-		<log id="screenLog" logEvery="1000">
+		<log id="screenLog" logEvery="10000">
 			<column label="Posterior" dp="4" width="12">
 				<posterior idref="posterior"/>
 			</column>
@@ -10264,6 +10264,7 @@
 		</log>
 
 		<!-- write log to file                                                       -->
+		<!--
 		<log id="fileLog" logEvery="1000" fileName="benchmark1.log" overwrite="true">
 			<posterior idref="posterior"/>
 			<prior idref="prior"/>
@@ -10277,7 +10278,6 @@
 			<coalescentLikelihood idref="coalescent"/>
 		</log>
 
-		<!--
 		<logTree id="treeFileLog" logEvery="1000" nexusFormat="true" fileName="benchmark1.trees" sortTranslationTable="true">
 			<treeModel idref="treeModel"/>
 			<strictClockBranchRates idref="branchRates"/>

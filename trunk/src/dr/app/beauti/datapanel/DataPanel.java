@@ -418,13 +418,15 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 selRow = options.createPartitionForTraits(name, trait);
             }
         } else {
-            String defaultName = (traits.size() == 1 ? traits.get(0).getName() : null);
-
-            // a set of traits have been passed to the function
-            int result = selectTraitDialog.showDialog(null, defaultName);
-            if (result != JOptionPane.CANCEL_OPTION) {
-                String name = selectTraitDialog.getName();
-                selRow = options.createPartitionForTraits(name, traits);
+            if (traits.size() > 1) {
+                // a set of traits have been passed to the function
+                int result = selectTraitDialog.showDialog(null, null);
+                if (result != JOptionPane.CANCEL_OPTION) {
+                    String name = selectTraitDialog.getName();
+                    selRow = options.createPartitionForTraits(name, traits);
+                }
+            } else {
+                selRow = options.createPartitionForTraits(traits.get(0).getName(), traits);
             }
         }
 

@@ -327,10 +327,6 @@ public class BeastMain {
                 arguments.hasOption("beagle_scaling") ||
                 arguments.hasOption("beagle_instances");
 
-        if (arguments.hasOption("beagle_scaling")) {
-            System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
-        }
-
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
 
         if (arguments.hasOption("beagle_CPU")) {

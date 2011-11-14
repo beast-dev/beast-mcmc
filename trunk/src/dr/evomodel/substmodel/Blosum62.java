@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * BLOSUM62 model of amino acid evolution
@@ -183,4 +188,20 @@ public class Blosum62 extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("S", "Henikoff"),
+                    new Author("JG", "Henikoff")
+            },
+            "Amino acid substitution matrices from protein blocks",
+            1992,
+            "Proc Natl Acad Sci, USA",
+            89,
+            10915, 10919,
+            Citation.Status.PUBLISHED
+    );
 }

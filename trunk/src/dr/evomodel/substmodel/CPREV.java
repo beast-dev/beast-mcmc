@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * CPREV 45 model of amino acid evolution
@@ -197,4 +202,22 @@ public class CPREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("J", "Adachi"),
+                    new Author("PJ", "Waddell"),
+                    new Author("W", "Martin"),
+                    new Author("M", "Hasegawa")
+            },
+            "Plastid Genome Phylogeny and a Model of Amino Acid Substitution for Proteins Encoded by Chloroplast DNA",
+            2000,
+            "J Mol Evol",
+            50,
+            348, 358,
+            Citation.Status.PUBLISHED
+    );
 }

@@ -102,6 +102,8 @@ public class PartitionModelPanel extends OptionsPanel {
     private JComboBox continuousTraitSiteModelCombo = new JComboBox(
             ContinuousSubstModelType.values());
 
+    private JTextArea citationText;
+
     // =========== micro sat ===========
     private JTextField microsatName = new JTextField();
     private WholeNumberField microsatMax = new WholeNumberField(2,
@@ -140,8 +142,9 @@ public class PartitionModelPanel extends OptionsPanel {
         PanelUtils.setupComponent(aaSubstCombo);
         aaSubstCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
-                model.setAaSubstitutionModel((AminoAcidModelType) aaSubstCombo
-                        .getSelectedItem());
+                AminoAcidModelType type = (AminoAcidModelType) aaSubstCombo.getSelectedItem();
+                model.setAaSubstitutionModel(type);
+                citationText.setText(type.getCitation().toString());
             }
         });
         aaSubstCombo
@@ -235,6 +238,15 @@ public class PartitionModelPanel extends OptionsPanel {
         setSRD06Button
                 .setToolTipText("<html>Sets the SRD06 model as described in<br>"
                         + "Shapiro, Rambaut & Drummond (2006) <i>MBE</i> <b>23</b>: 7-9.</html>");
+
+        citationText = new JTextArea(1, 40);
+        citationText.setLineWrap(true);
+        citationText.setWrapStyleWord(true);
+        citationText.setEditable(false);
+        citationText.setFont(this.getFont());
+        citationText.setOpaque(false);
+        AminoAcidModelType type = (AminoAcidModelType) aaSubstCombo.getSelectedItem();
+        citationText.setText(type.getCitation().toString());
 
         class ListenClickBinaryStochasticDolloButton implements ActionListener {
             public void actionPerformed(ActionEvent actionEvent) {
@@ -620,6 +632,8 @@ public class PartitionModelPanel extends OptionsPanel {
 
             case DataType.AMINO_ACIDS:
                 addComponentWithLabel("Substitution Model:", aaSubstCombo);
+                addComponentWithLabel("Citation:", citationText);
+
                 addComponentWithLabel("Site Heterogeneity Model:", heteroCombo);
                 heteroCombo.setSelectedIndex(0);
                 gammaCatLabel = addComponentWithLabel(

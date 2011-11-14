@@ -72,7 +72,8 @@ public class TraitData {
         return options.taxonList.getTaxon(i).getAttribute(getName()).toString().trim().length() > 0;
     }
 
-    public DataType getDataType() {
+    public DataType
+    getDataType() {
         switch (traitType) {
             case DISCRETE:
                 return GeneralDataType.INSTANCE;

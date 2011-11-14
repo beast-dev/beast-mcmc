@@ -35,6 +35,7 @@ import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
+import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import jam.framework.Exportable;
@@ -782,12 +783,36 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
         public void actionPerformed(ActionEvent ae) {
             int[] selRows = traitsTable.getSelectedRows();
             java.util.List<TraitData> traits = new ArrayList<TraitData>();
+            int discreteCount = 0;
+            int continuousCount = 0;
             for (int row : selRows) {
                 TraitData trait = options.traits.get(row);
                 traits.add(trait);
 
+                if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
+                    discreteCount ++;
+                }
+                if (trait.getTraitType() == TraitData.TraitType.CONTINUOUS) {
+                    continuousCount ++;
+                }
             }
-            dataPanel.createFromTraits(traits);
+
+            if (discreteCount > 0) {
+                if (continuousCount > 0)  {
+                    JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // with discrete traits, create a separate partition for each
+                for (TraitData trait : traits) {
+                    java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
+                    singleTrait.add(trait);
+                    dataPanel.createFromTraits(singleTrait);
+                }
+            } else {
+                // with
+                dataPanel.createFromTraits(traits);
+            }
         }
     }
 

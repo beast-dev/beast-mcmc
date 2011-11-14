@@ -34,7 +34,7 @@ package dr.inference.mcmc;
  */
 public class MCMCOptions {
 
-    private int chainLength;
+    private long chainLength;
     private int fullEvaluationCount = 2000;
     private int minOperatorCountForFullEvaluation = 1;
     private boolean coercion = true;
@@ -47,7 +47,7 @@ public class MCMCOptions {
     /**
      * @return the chain length of the MCMC analysis
      */
-    public final int getChainLength() {
+    public final long getChainLength() {
         return chainLength;
     }
 
@@ -72,7 +72,7 @@ public class MCMCOptions {
         this.temperature = temperature;
     }
 
-    public final void setChainLength(int length) {
+    public final void setChainLength(long length) {
         chainLength = length;
     }
 

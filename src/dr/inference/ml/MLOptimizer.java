@@ -134,7 +134,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 	// TRANSIENT PUBLIC METHODS *****************************************
 
 	/** @return the current state of the MCMC analysis. */
-	public final int getCurrentState() { return currentState; }
+	public final long getCurrentState() { return currentState; }
 
 	/** @return the progress (0 to 1) of the MCMC analysis. */
 	public final double getProgress() {
@@ -147,7 +147,7 @@ public class MLOptimizer implements Runnable, Identifiable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public void currentState(int state, Model currentModel) {
+        public void currentState(long state, Model currentModel) {
 
             currentState = state;
 
@@ -159,17 +159,17 @@ public class MLOptimizer implements Runnable, Identifiable {
         }
 
         /** Called when a new new best posterior state is found. */
-        public void bestState(int state, Model bestModel) {
+        public void bestState(long state, Model bestModel) {
             currentState = state;
         }
 
         /** Called when a new new best likelihood state is found. */
-        public void bestLklModel(int state, Model bestModel) {
+        public void bestLklModel(long state, Model bestModel) {
             currentState = state;
         }
 
         /** cleans up when the chain finishes (possibly early). */
-        public void finished(int chainLength) {
+        public void finished(long chainLength) {
             currentState = chainLength;
 
             if (loggers != null) {
@@ -209,7 +209,7 @@ public class MLOptimizer implements Runnable, Identifiable {
 
 	// PRIVATE TRANSIENTS
 
-	int currentState;
+	private long currentState;
 
     private final dr.util.Timer timer = new dr.util.Timer();
 

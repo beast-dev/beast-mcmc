@@ -55,7 +55,7 @@ public class XMLObject {
 
        this(obj.element);
        nativeObject = ((List)obj.getNativeObject()).get(index);
-   }  
+   }
 
     /**
      * @return the number of children this XMLObject has.
@@ -289,6 +289,13 @@ public class XMLObject {
      */
     public int getIntegerAttribute(String name) throws XMLParseException {
         return getInteger(getAndTest(name));
+    }
+
+    /**
+     * @return the named attribute as a long integer.
+     */
+    public long getLongIntegerAttribute(String name) throws XMLParseException {
+        return getLongInteger(getAndTest(name));
     }
 
     /**
@@ -527,6 +534,18 @@ public class XMLObject {
             return Integer.parseInt((String) obj);
         } catch (NumberFormatException e) {
             throw new XMLParseException("Expected integer, got " + obj);
+        }
+    }
+
+    /**
+     * @return the object as an integer if possible
+     */
+    private long getLongInteger(Object obj) throws XMLParseException {
+        if (obj instanceof Number) return ((Number) obj).longValue();
+        try {
+            return Long.parseLong((String) obj);
+        } catch (NumberFormatException e) {
+            throw new XMLParseException("Expected long integer, got " + obj);
         }
     }
 

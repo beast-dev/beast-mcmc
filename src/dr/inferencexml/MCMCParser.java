@@ -54,7 +54,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
         ArrayList<Logger> loggers = new ArrayList<Logger>();
 
         likelihood.setUsed();
-        
+
         // check that all models, parameters and likelihoods are being used
 //        for (Likelihood l : Likelihood.FULL_LIKELIHOOD_SET) {
 //            if (!l.isUsed()) {
@@ -75,12 +75,12 @@ public class MCMCParser extends AbstractXMLObjectParser {
 //            }
 //        }
 
-        options.setChainLength(xo.getIntegerAttribute(CHAIN_LENGTH));
+        options.setChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
         options.setUseCoercion(xo.getAttribute(COERCION, true));
         if (xo.hasAttribute(PRE_BURNIN)) {
-            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, options.getChainLength() / 100));
+            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int)(options.getChainLength() / 100)));
         }
-        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, options.getChainLength() / 100));
+        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int)(options.getChainLength() / 100)));
         options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
         options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
         options.setMinOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
@@ -145,7 +145,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            AttributeRule.newIntegerRule(CHAIN_LENGTH),
+            AttributeRule.newLongIntegerRule(CHAIN_LENGTH),
             AttributeRule.newBooleanRule(COERCION, true),
             AttributeRule.newIntegerRule(COERCION_DELAY, true),
             AttributeRule.newIntegerRule(PRE_BURNIN, true),

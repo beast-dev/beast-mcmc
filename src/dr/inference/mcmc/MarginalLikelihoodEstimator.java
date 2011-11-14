@@ -95,7 +95,7 @@ MCLogger logger) {
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin);
-            int cl = mc.getCurrentLength();
+            long cl = mc.getCurrentLength();
             mc.setCurrentLength(0);
             mc.runChain(burnin, false/*, 0*/);
             mc.setCurrentLength(cl);
@@ -133,15 +133,15 @@ MCLogger logger) {
             return pathParameter;
         }
     }
-    
+
     public class SigmoidIntegrator extends Integrator {
     	private double alpha;
-    	
+
     	public SigmoidIntegrator(double alpha, int pathSteps) {
     		super(pathSteps);
     		this.alpha = alpha;
     	}
-    	
+
     	double nextPathParameter() {
     		if (step == 0) {
     			step++;
@@ -158,15 +158,15 @@ MCLogger logger) {
     		}
     	}
     }
-    
+
     public class BetaQuantileIntegrator extends Integrator {
     	private double alpha;
-    	
+
     	public BetaQuantileIntegrator(double alpha, int pathSteps) {
     		super(pathSteps);
     		this.alpha = alpha;
     	}
-    	
+
     	double nextPathParameter() {
     		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
     		step++;
@@ -266,8 +266,8 @@ MCLogger logger) {
         }
     }*/
 
-    private void reportIteration(double pathParameter, int cl, int burn) {
-        System.out.println("Attempting theta = " + pathParameter + " for " + cl + " iterations + " + burn + " burnin.");
+    private void reportIteration(double pathParameter, long chainLength, long burnin) {
+        System.out.println("Attempting theta = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
     }
 
     public void run() {
@@ -326,7 +326,7 @@ MCLogger logger) {
         /**
          * Called to update the current model keepEvery states.
          */
-        public void currentState(int state, Model currentModel) {
+        public void currentState(long state, Model currentModel) {
 
             currentState = state;
 
@@ -338,14 +338,14 @@ MCLogger logger) {
         /**
          * Called when a new new best posterior state is found.
          */
-        public void bestState(int state, Model bestModel) {
+        public void bestState(long state, Model bestModel) {
             currentState = state;
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public void finished(int chainLength) {
+        public void finished(long chainLength) {
             currentState = chainLength;
             (new OperatorAnalysisPrinter(schedule)).showOperatorAnalysis(System.out);
 //            logger.log(currentState);
@@ -568,11 +568,11 @@ MCLogger logger) {
 
     private String id = null;
 
-    private int currentState;
-    private final int chainLength;
+    private long currentState;
+    private final long chainLength;
 
-    private int burnin;
-    private final int burninLength;
+    private long burnin;
+    private final long burninLength;
     private int pathSteps;
     //    private final boolean linear;
     //    private final boolean lacing;

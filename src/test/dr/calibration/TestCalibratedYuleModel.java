@@ -139,7 +139,7 @@ public class TestCalibratedYuleModel {
         MCMCOptions options = new MCMCOptions();
         options.setChainLength(chainLength);
         options.setUseCoercion(true);
-        options.setCoercionDelay(options.getChainLength() / 100);
+        options.setCoercionDelay((int)(options.getChainLength() / 100));
         options.setTemperature(1.0);
         options.setFullEvaluationCount(2000);
 
@@ -175,7 +175,7 @@ public class TestCalibratedYuleModel {
         ArrayLogFormatter logformatter = new ArrayLogFormatter(false);
 
         MCLogger[] loggers = new MCLogger[1];
-        loggers[0] = new MCLogger(logformatter, options.getChainLength() / 10000, false);
+        loggers[0] = new MCLogger(logformatter, (int)(options.getChainLength() / 10000), false);
         loggers[0].add(speciationLikelihood);
         loggers[0].add(rootHeight);
         loggers[0].add(tmrca);

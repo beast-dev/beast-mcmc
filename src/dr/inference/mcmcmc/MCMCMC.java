@@ -358,7 +358,7 @@ public class MCMCMC implements Runnable {
 
     public class BurninListener implements MarkovChainListener {
 
-        public BurninListener(int stateCount) {
+        public BurninListener(long stateCount) {
             this.stateCount = stateCount;
             step = 0;
             stepSize = (double) stateCount / 60.0;
@@ -367,7 +367,7 @@ public class MCMCMC implements Runnable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public synchronized void currentState(int state, Model currentModel) {
+        public synchronized void currentState(long state, Model currentModel) {
 
             if (state == 0) {
                 System.out.println();
@@ -388,18 +388,18 @@ public class MCMCMC implements Runnable {
         /**
          * Called when a new new best posterior state is found.
          */
-        public synchronized void bestState(int state, Model bestModel) {
+        public synchronized void bestState(long state, Model bestModel) {
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public synchronized void finished(int chainLength) {
+        public synchronized void finished(long chainLength) {
             System.out.println("*");
             System.out.println();
         }
 
-        int stateCount = 0;
+        long stateCount = 0;
         double stepSize;
         int step = 0;
     }
@@ -412,7 +412,7 @@ public class MCMCMC implements Runnable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public synchronized void currentState(int state, Model currentModel) {
+        public synchronized void currentState(long state, Model currentModel) {
 
             currentState = state;
 
@@ -444,14 +444,14 @@ public class MCMCMC implements Runnable {
         /**
          * Called when a new new best posterior state is found.
          */
-        public synchronized void bestState(int state, Model bestModel) {
+        public synchronized void bestState(long state, Model bestModel) {
             currentState = state;
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public synchronized void finished(int chainLength) {
+        public synchronized void finished(long chainLength) {
         }
 
     };
@@ -484,7 +484,7 @@ public class MCMCMC implements Runnable {
     /**
      * @return the length of this analysis.
      */
-    public final int getChainLength() {
+    public final long getChainLength() {
         return mcmcOptions.getChainLength();
     }
 
@@ -493,7 +493,7 @@ public class MCMCMC implements Runnable {
     /**
      * @return the current state of the MCMC analysis.
      */
-    public final int getCurrentState() {
+    public final long getCurrentState() {
         return currentState;
     }
 
@@ -539,7 +539,7 @@ public class MCMCMC implements Runnable {
 
     private boolean showOperatorAnalysis = true;
     private final dr.util.Timer timer = new dr.util.Timer();
-    private int currentState = 0;
+    private long currentState = 0;
 
     private final MarkovChain[] chains;
     private final MCLogger[][] mcLoggers;

@@ -56,7 +56,7 @@ public final class MarkovChain {
     private boolean pleaseStop = false;
     private boolean isStopped = false;
     private double bestScore, currentScore, initialScore;
-    private int currentLength;
+    private long currentLength;
 
     private boolean useCoercion = true;
 
@@ -100,12 +100,12 @@ public final class MarkovChain {
      *               <p/>
      *               param onTheFlyOperatorWeights
      */
-    public int runChain(int length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
+    public long runChain(long length, boolean disableCoerce /*,int onTheFlyOperatorWeights*/) {
 
         likelihood.makeDirty();
         currentScore = evaluate(likelihood, prior);
 
-        int currentState = currentLength;
+        long currentState = currentLength;
 
         final Model currentModel = likelihood.getModel();
 
@@ -427,11 +427,11 @@ public final class MarkovChain {
         return bestScore;
     }
 
-    public int getCurrentLength() {
+    public long getCurrentLength() {
         return currentLength;
     }
 
-    public void setCurrentLength(int currentLength) {
+    public void setCurrentLength(long currentLength) {
         this.currentLength = currentLength;
     }
 
@@ -512,20 +512,20 @@ public final class MarkovChain {
         listeners.remove(listener);
     }
 
-    private void fireBestModel(int state, Model bestModel) {
+    private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
             listener.bestState(state, bestModel);
         }
     }
 
-    private void fireCurrentModel(int state, Model currentModel) {
+    private void fireCurrentModel(long state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
     }
 
-    private void fireFinished(int chainLength) {
+    private void fireFinished(long chainLength) {
 
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);

@@ -798,15 +798,6 @@ public class BeastGenerator extends Generator {
             writer.writeText("");
         }
 
-        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels()) {
-            // e.g. <svsGeneralSubstitutionModel idref="locations.model" />
-//            if (!(model.getLocationSubstType() == DiscreteSubstModelType.SYM_SUBST && (!model.isActivateBSSVS()))) {
-            if (model.isActivateBSSVS()) {
-                writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getPrefix() + AbstractSubstitutionModel.MODEL);
-                writer.writeText("");
-            }
-        }
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_MCMC_PRIOR, writer);
 
         writer.writeCloseTag(CompoundLikelihoodParser.PRIOR);

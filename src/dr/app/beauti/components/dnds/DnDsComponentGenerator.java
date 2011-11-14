@@ -104,7 +104,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 						new Attribute.Default<String>("unconditionedPerBranch",
 								"true") });
 
-		writer.writeIDref("idref", "treeModel");
+		writer.writeIDref("treeModel", "treeModel");
 		writer.writeOpenTag("firstPosition");
 		writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
 		writer.writeCloseTag("firstPosition");
@@ -131,7 +131,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 						new Attribute.Default<String>("unconditionedPerBranch",
 								"true") });
 
-		writer.writeIDref("idref", "treeModel");
+		writer.writeIDref("treeModel", "treeModel");
 		writer.writeOpenTag("firstPosition");
 		writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
 		writer.writeCloseTag("firstPosition");
@@ -195,7 +195,7 @@ public class DnDsComponentGenerator extends BaseComponentGenerator {
 				.writeOpenTag("dNdSLogger",
 						new Attribute[] { new Attribute.Default<String>("id",
 								"dNdS") });
-		writer.writeIDref("idref", "treeModel");
+		writer.writeIDref("treeModel", "treeModel");
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
 		writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
 		writer.writeCloseTag("dNdSLogger");

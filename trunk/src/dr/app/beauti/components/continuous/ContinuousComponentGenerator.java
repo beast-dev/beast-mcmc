@@ -287,34 +287,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag("discretizedBranchRates");
 
-//        <discretizedBranchRates id="branchRatesDiffusion">
-//            <treeModel idref="treeModel"/>
-//            <distribution>
-//                <onePGammaDistributionModel id="gammaModel">
-//                     <shape>
-//                        <parameter id="halfDF" value="0.5"/>
-//                    </shape>
-//                </onePGammaDistributionModel>
-//            </distribution>
-//            <rateCategories>
-//                <parameter id="branchRatesDiffusion.categories" dimension="92"/>
-//            </rateCategories>
-//        </discretizedBranchRates>
-//
-//        <rateStatistic id="meanRateDiffusion" name="meanRate" mode="mean" internal="true" external="true">
-//            <treeModel idref="treeModel"/>
-//            <discretizedBranchRates idref="branchRatesDiffusion"/>
-//        </rateStatistic>
-//
-//        <rateStatistic id="coefficientOfVariationDiffusion" name="coefficientOfVariationDiffusion" mode="coefficientOfVariation" internal="true" external="true">
-//            <treeModel idref="treeModel"/>
-//            <discretizedBranchRates idref="branchRatesDiffusion"/>
-//        </rateStatistic>
-//
-//        <rateCovarianceStatistic id="covarianceDiffusion" name="covarianceDiffusion">
-//            <treeModel idref="treeModel"/>
-//            <discretizedBranchRates idref="branchRatesDiffusion"/>
-//        </rateCovarianceStatistic>
+        writer.writeBlankLine();
     }
 
     private void writeMultivariateTreeLikelihood(XMLWriter writer,
@@ -359,6 +332,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("priorSampleSize");
 
         writer.writeCloseTag("conjugateRootPrior");
+
+        if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+            writer.writeIDref("discretizedBranchRates",  partitionData.getName() + "." + "diffusionRates");
+        }
 
         writer.writeCloseTag("multivariateTraitLikelihood");
     }
@@ -460,6 +437,9 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
                 writer.writeIDref("multivariateDiffusionModel", model.getName() + ".diffusionModel");
                 writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
+                if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+                    writer.writeIDref("discretizedBranchRates",  partitionData.getName() + "." + "diffusionRates");
+                }
             }
         }
     }

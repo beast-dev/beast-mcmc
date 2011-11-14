@@ -174,7 +174,7 @@ public class MCMC implements Identifiable, Spawnable {
         if (!stopping) {
             mc.addMarkovChainListener(chainListener);
 
-            int chainLength = getChainLength();
+            long chainLength = getChainLength();
 
             final int coercionDelay = getCoercionDelay();
 
@@ -206,7 +206,7 @@ public class MCMC implements Identifiable, Spawnable {
         /**
          * Called to update the current model keepEvery states.
          */
-        public void currentState(int state, Model currentModel) {
+        public void currentState(long state, Model currentModel) {
 
             currentState = state;
 
@@ -220,14 +220,14 @@ public class MCMC implements Identifiable, Spawnable {
         /**
          * Called when a new new best posterior state is found.
          */
-        public void bestState(int state, Model bestModel) {
+        public void bestState(long state, Model bestModel) {
             currentState = state;
         }
 
         /**
          * cleans up when the chain finishes (possibly early).
          */
-        public void finished(int chainLength) {
+        public void finished(long chainLength) {
             currentState = chainLength;
 
             if (loggers != null) {
@@ -397,7 +397,7 @@ public class MCMC implements Identifiable, Spawnable {
     /**
      * @return the length of this analysis.
      */
-    public final int getChainLength() {
+    public final long getChainLength() {
         return options.getChainLength();
     }
 
@@ -406,7 +406,7 @@ public class MCMC implements Identifiable, Spawnable {
     /**
      * @return the current state of the MCMC analysis.
      */
-    public final int getCurrentState() {
+    public final long getCurrentState() {
         return currentState;
     }
 
@@ -455,7 +455,7 @@ public class MCMC implements Identifiable, Spawnable {
 
         int delay = options.getCoercionDelay();
         if (delay < 0) {
-            delay = options.getChainLength() / 100;
+            delay = (int)(options.getChainLength() / 100);
         }
         if (options.useCoercion()) return delay;
 
@@ -494,7 +494,7 @@ public class MCMC implements Identifiable, Spawnable {
     private boolean showOperatorAnalysis = true;
     private String operatorAnalysisFileName = null;
     private final dr.util.Timer timer = new dr.util.Timer();
-    private int currentState = 0;
+    private long currentState = 0;
     //private int stepsPerReport = 1000;
     private final NumberFormatter formatter = new NumberFormatter(8);
 

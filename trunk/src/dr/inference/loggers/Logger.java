@@ -37,8 +37,8 @@ public interface Logger {
 
 	void startLogging();
 
-	void log(int state);
-	
+	void log(long state);
+
 	void stopLogging();
 
 }

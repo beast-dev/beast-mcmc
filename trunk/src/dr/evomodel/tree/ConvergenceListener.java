@@ -54,14 +54,14 @@ public class ConvergenceListener implements MarkovChainListener {
     /* (non-Javadoc)
       * @see dr.inference.markovchain.MarkovChainListener#bestState(int, dr.inference.model.Model)
       */
-    public void bestState(int state, Model bestModel) {
+    public void bestState(long state, Model bestModel) {
         // do nothing
     }
 
     /* (non-Javadoc)
       * @see dr.inference.markovchain.MarkovChainListener#currentState(int, dr.inference.model.Model)
       */
-    public void currentState(int state, Model currentModel) {
+    public void currentState(long state, Model currentModel) {
         distance = convergence.log(state);
 
         if (distance <= threshold) {
@@ -72,7 +72,7 @@ public class ConvergenceListener implements MarkovChainListener {
     /* (non-Javadoc)
       * @see dr.inference.markovchain.MarkovChainListener#finished(int)
       */
-    public void finished(int chainLength) {
+    public void finished(long chainLength) {
         // write the time used
         long time = System.currentTimeMillis() - startTime;
 

@@ -34,7 +34,7 @@ import dr.inference.markovchain.MarkovChain;
  */
 public class MCMCMCRunner extends Thread {
 
-    public MCMCMCRunner(MarkovChain markovChain, int length, int totalLength, boolean disableCoerce) {
+    public MCMCMCRunner(MarkovChain markovChain, long length, long totalLength, boolean disableCoerce) {
 
         this.markovChain = markovChain;
         this.length = length;
@@ -43,7 +43,7 @@ public class MCMCMCRunner extends Thread {
     }
 
 	public void run() {
-        int i = 0;
+        long i = 0;
         while (i < totalLength) {
             markovChain.runChain(length, disableCoerce/*, 0*/);
 
@@ -80,8 +80,8 @@ public class MCMCMCRunner extends Thread {
 
 
 	private final MarkovChain markovChain;
-	private final int length;
-    private final int totalLength;
+	private final long length;
+    private final long totalLength;
     private final boolean disableCoerce;
 
 	private boolean chainDone;

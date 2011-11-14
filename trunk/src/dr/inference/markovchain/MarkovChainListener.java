@@ -38,9 +38,9 @@ import dr.inference.model.Model;
  */
 public interface MarkovChainListener {
 
-    void bestState(int state, Model bestModel);
+    void bestState(long state, Model bestModel);
 
-    void currentState(int state, Model currentModel);
+    void currentState(long state, Model currentModel);
 
-	void finished(int chainLength);
+	void finished(long chainLength);
 }

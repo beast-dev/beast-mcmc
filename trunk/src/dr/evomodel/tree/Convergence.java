@@ -117,7 +117,7 @@ public class Convergence {
         return taxa;
     }
 
-    public double log(int state) {
+    public double log(long state) {
 
         if (logEvery <= 0 || ((state % logEvery) == 0)) {
 

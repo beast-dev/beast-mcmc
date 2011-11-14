@@ -69,6 +69,7 @@ public class AttributeRule implements XMLSyntaxRule {
 	}
 
 	public static AttributeRule newIntegerRule(String name) { return new AttributeRule(name, Integer.class); }
+    public static AttributeRule newLongIntegerRule(String name) { return new AttributeRule(name, Long.class); }
 	public static AttributeRule newDoubleRule(String name) { return new AttributeRule(name, Double.class); }
 	public static AttributeRule newDoubleArrayRule(String name) { return new AttributeRule(name, Double[].class); }
 	public static AttributeRule newBooleanRule(String name) { return new AttributeRule(name, Boolean.class); }
@@ -77,12 +78,14 @@ public class AttributeRule implements XMLSyntaxRule {
 
 	public static AttributeRule newIntegerRule(String name, boolean optional) { return new AttributeRule(name, Integer.class, optional); }
 	public static AttributeRule newIntegerArrayRule(String name, boolean optional) { return new AttributeRule(name, Integer[].class, optional); }
+    public static AttributeRule newLongIntegerRule(String name, boolean optional) { return new AttributeRule(name, Long.class, optional); }
 	public static AttributeRule newDoubleRule(String name, boolean optional) { return new AttributeRule(name, Double.class, optional); }
 	public static AttributeRule newDoubleArrayRule(String name, boolean optional) { return new AttributeRule(name, Double[].class, optional); }
 	public static AttributeRule newBooleanRule(String name, boolean optional) { return new AttributeRule(name, Boolean.class, optional); }
 	public static AttributeRule newStringRule(String name, boolean optional) { return new AttributeRule(name, String.class, optional); }
 
 	public static AttributeRule newIntegerRule(String name, boolean optional, String description) { return new AttributeRule(name, Integer.class, optional, description); }
+    public static AttributeRule newLongIntegerRule(String name, boolean optional, String description) { return new AttributeRule(name, Long.class, optional, description); }
 	public static AttributeRule newDoubleRule(String name, boolean optional, String description) { return new AttributeRule(name, Double.class, optional, description); }
 	public static AttributeRule newDoubleArrayRule(String name, boolean optional, String description) { return new AttributeRule(name, Double[].class, optional, description); }
 	public static AttributeRule newBooleanRule(String name, boolean optional, String description) { return new AttributeRule(name, Boolean.class, optional, description); }
@@ -176,7 +179,9 @@ public class AttributeRule implements XMLSyntaxRule {
 				boolean compatible = isCompatible(obj);
 				if (compatible) {
 					return ruleString();
-				} else return "ATTRIBUTE " + name + " expected to be of type " + getTypeName();
+				} else {
+                    return "ATTRIBUTE " + name + " expected to be of type " + getTypeName();
+                }
 
 			} catch (XMLParseException xpe) {
 				return xpe.toString();
@@ -235,6 +240,12 @@ public class AttributeRule implements XMLSyntaxRule {
 					return true;
 				} catch (NumberFormatException nfe) { return false; }
 			}
+            if (c == Long.class) {
+                try {
+                    Long.parseLong((String)o);
+                    return true;
+                } catch (NumberFormatException nfe) { return false; }
+            }
 			if (c == Float.class) {
 				try {
 					Float.parseFloat((String)o);

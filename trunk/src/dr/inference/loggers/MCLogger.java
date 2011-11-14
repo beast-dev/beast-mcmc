@@ -70,7 +70,7 @@ public class MCLogger implements Logger {
     public MCLogger(LogFormatter formatter, int logEvery, boolean performanceReport) {
         this(formatter, logEvery, performanceReport, 0);
     }
-    
+
     /**
      * Constructor. Will log every logEvery.
      *
@@ -198,7 +198,7 @@ public class MCLogger implements Logger {
         }
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {
             startTime = System.currentTimeMillis();
@@ -212,7 +212,7 @@ public class MCLogger implements Logger {
 
             String[] values = new String[columnCount + (performanceReport ? 2 : 1)];
 
-            values[0] = Integer.toString(state);
+            values[0] = Long.toString(state);
 
             for (int i = 0; i < columnCount; i++) {
                 values[i + 1] = getColumnFormatted(i);
@@ -273,7 +273,7 @@ public class MCLogger implements Logger {
 
     private boolean performanceReportStarted = false;
     private long startTime;
-    private int startState;
+    private long startState;
 
     private final NumberFormat formatter = NumberFormat.getNumberInstance();
 

@@ -1,9 +1,19 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * FLU model of amino acid evolution (add reference).
+ *
+ * Cuong Cao Dang, Quang Si Le, Olivier Gascuel  and Vinh Sy Le (2010)
+ * FLU, an amino acid substitution model for influenza proteins. BMC Evol Biol 10:99
  *
  * @version 08/01/2010
  *
@@ -163,4 +173,23 @@ public class FLU extends EmpiricalRateMatrix.AbstractAminoAcid {
         f[19] = 0.0632292; // V
         setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
     }
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("CC", "Dang"),
+                    new Author("QS", "Le"),
+                    new Author("O", "Gascuel"),
+                    new Author("VS", "Le")
+            },
+            "FLU, an amino acid substitution model for influenza proteins",
+            2010,
+            "BMC Evolutionary Biology",
+            10,
+            99, -1,
+            Citation.Status.PUBLISHED
+    );
 }

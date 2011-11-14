@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * JTT model for amino acid evolution
@@ -184,4 +189,21 @@ public class JTT extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("DT", "Jones"),
+                    new Author("WR", "Taylor"),
+                    new Author("JM", "Thornton")
+            },
+            "The rapid generation of mutation data matrices from protein sequences",
+            1992,
+            "CABIOS",
+            8,
+            275, 282,
+            Citation.Status.PUBLISHED
+    );
 }

@@ -192,11 +192,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
                 //if GPU: the default is dynamic scaling in BEAST
                 if (resourceList != null && resourceList[0] > 1) {
-                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
+                    this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
                 } else { // if CPU: just run as fast as possible
 //                    this.rescalingScheme = PartialsRescalingScheme.NONE;
                     // Dynamic should run as fast as none until first underflow
-                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
+                    this.rescalingScheme = PartialsRescalingScheme.ALWAYS;
                 }
             }
 

@@ -99,6 +99,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case AFTER_TREE_LIKELIHOOD:
+                writeDiscreteTraitsModels(writer);
                 writeAncestralTreeLikelihoods(writer, comp);
                 break;
 
@@ -198,7 +199,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(AttributePatternsParser.ATTRIBUTE_PATTERNS);
     }
 
-    private void writeDiscreteTraitsModels(XMLWriter writer, DiscreteTraitsComponentOptions componentOptions) {
+    private void writeDiscreteTraitsModels(XMLWriter writer) {
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
             writeDiscreteTraitsSubstitutionModel(model, writer);
             writeDiscreteTraitsSiteModel(model, writer);
@@ -229,6 +230,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
+            writer.writeBlankLine();
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
@@ -249,6 +251,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
 
+            writer.writeBlankLine();
         } else {
 
         }
@@ -305,6 +308,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 //        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
+        writer.writeBlankLine();
     }
 
     private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
@@ -359,7 +363,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (partition.getTraits() != null) {
                 TraitData trait = partition.getTraits().get(0);
                 if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    writeDiscreteTraitsModels(writer, component);
                     writeAncestralTreeLikelihood(partition, writer);
                 }
             }
@@ -412,6 +415,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         writer.writeCloseTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD);
+        writer.writeBlankLine();
     }
 
     private void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {

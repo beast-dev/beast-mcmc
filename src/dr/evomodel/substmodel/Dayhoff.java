@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Dayhoff model for amino acid evolution
@@ -185,5 +190,23 @@ public class Dayhoff extends EmpiricalRateMatrix.AbstractAminoAcid {
 
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
+
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("MO", "Dayhoff"),
+                    new Author("RM", "Schwartz"),
+                    new Author("BC", "Orcutt")
+            },
+            "A model of evolutionary change in proteins",
+            1972,
+            "in Dayhoff, M.O. (ed.) Atlas of Protein Sequence Structur., Vol 5, Suppl. 3",
+            5,
+            345, 352,
+            Citation.Status.PUBLISHED
+    );
 
 }

@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * MTREV24 model of amino acid evolution
@@ -182,4 +187,20 @@ public class MTREV extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("J", "Adachi"),
+                    new Author("M", "Hasegawa")
+            },
+            "Model of amino acid substitution in proteins encoded by mitochondrial DNA",
+            1996,
+            "J Mol Evol",
+            42,
+            459, 468,
+            Citation.Status.PUBLISHED
+    );
 }

@@ -26,6 +26,11 @@
 package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
+import dr.util.Author;
+import dr.util.Citation;
+
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * WAG model of amino acid evolution (S. Whelan and N. Goldman 2000)
@@ -197,4 +202,20 @@ public class WAG extends EmpiricalRateMatrix.AbstractAminoAcid {
 		setEmpiricalFrequencies(f, "ARNDCQEGHILKMFPSTWYV");
 	}
 
+    public List<Citation> getCitations() {
+        return Arrays.asList(CITATION);
+    }
+
+    public static Citation CITATION = new Citation(
+            new Author[]{
+                    new Author("S", "Whelan"),
+                    new Author("N", "Goldman")
+            },
+            "A General Empirical Model of Protein Evolution Derived from Multiple Protein Families Using a Maximum-Likelihood Approach",
+            2001,
+            "Mol Biol Evol",
+            18,
+            691, 699,
+            Citation.Status.PUBLISHED
+    );
 }

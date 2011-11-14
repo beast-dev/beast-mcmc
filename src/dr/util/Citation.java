@@ -69,7 +69,8 @@ public class Citation {
              builder.append(". ");
             builder.append(volume);
             builder.append(", ");
-            builder.append(startpage).append("-").append(endpage);
+            builder.append(startpage);
+            if (endpage > 0) builder.append("-").append(endpage);
         }
         return builder.toString();
     }
@@ -87,7 +88,8 @@ public class Citation {
         builder.append(title).append(". ");
         builder.append("<i>").append(journal).append("</i>");
         builder.append(" <b>").append(volume).append("</b>:");
-        builder.append(startpage).append("-").append(endpage);
+        builder.append(startpage);
+        if (endpage > 0) builder.append("-").append(endpage);
         builder.append("</html>");
 
         return builder.toString();

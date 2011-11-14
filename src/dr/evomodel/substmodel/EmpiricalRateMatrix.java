@@ -27,6 +27,7 @@ package dr.evomodel.substmodel;
 
 import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
+import dr.util.Citable;
 
 /**
  * An interface for empirical rate matrices.
@@ -36,7 +37,7 @@ import dr.evolution.datatype.DataType;
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public interface EmpiricalRateMatrix {
+public interface EmpiricalRateMatrix extends Citable {
 
 	String getName();
 	DataType getDataType();

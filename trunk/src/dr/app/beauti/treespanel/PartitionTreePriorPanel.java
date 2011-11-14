@@ -185,7 +185,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         citationText.setWrapStyleWord(true);
         citationText.setEditable(false);
         citationText.setFont(this.getFont());
-        citationText.setBackground(this.getBackground());
+        citationText.setOpaque(false);
+//        citationText.setBackground(this.getBackground());
 //        JScrollPane scrollPane = new JScrollPane(citation, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 //                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 //        scrollPane.setOpaque(true);

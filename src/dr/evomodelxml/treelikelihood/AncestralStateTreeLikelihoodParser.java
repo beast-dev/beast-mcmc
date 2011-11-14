@@ -15,7 +15,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
-    public static final String TAG_NAME = "tagName";
+    public static final String RECONSTRUCTION_TAG_NAME = "stateTagName";
     public static final String MAP_RECONSTRUCTION = "useMAP";
     public static final String MARGINAL_LIKELIHOOD = "useMarginalLikelihood";
 
@@ -46,7 +46,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
 
         // default tag is RECONSTRUCTION_TAG
-        String tag = xo.getAttribute(TAG_NAME, RECONSTRUCTION_TAG);
+        String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 
         boolean forceRescaling = xo.getAttribute(TreeLikelihoodParser.FORCE_RESCALING, false);
 
@@ -74,7 +74,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
             AttributeRule.newBooleanRule(TreeLikelihoodParser.STORE_PARTIALS, true),
-            AttributeRule.newStringRule(TAG_NAME, true),
+            AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
             AttributeRule.newBooleanRule(TreeLikelihoodParser.FORCE_RESCALING, true),
             AttributeRule.newBooleanRule(MAP_RECONSTRUCTION, true),
             AttributeRule.newBooleanRule(MARGINAL_LIKELIHOOD, true),

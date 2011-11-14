@@ -71,7 +71,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
 
-    private JComboBox calibrationCorrectionCombo = new JComboBox(CalibrationPoints.CorrectionType.values());
+    private JComboBox calibrationCorrectionCombo = new JComboBox(new CalibrationPoints.CorrectionType[]
+            {CalibrationPoints.CorrectionType.EXACT, CalibrationPoints.CorrectionType.NONE});
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
@@ -179,10 +180,12 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         removeAll();
 
-        JTextArea citationText = new JTextArea(1, 200);
+        JTextArea citationText = new JTextArea(1, 40);
         citationText.setLineWrap(true);
+        citationText.setWrapStyleWord(true);
         citationText.setEditable(false);
         citationText.setFont(this.getFont());
+        citationText.setBackground(this.getBackground());
 //        JScrollPane scrollPane = new JScrollPane(citation, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 //                    JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 //        scrollPane.setOpaque(true);
@@ -247,7 +250,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                     addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
                     //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
                     addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
-                            + "It is only available for single tree model partition for this release.<br>"
+                            + "It is only available for single tree<br>model partition for this release. "
                             + "Please go to Data Partition panel to link all tree models." + "</html>");
 
                     citation = //citationCoalescent + "\n" +

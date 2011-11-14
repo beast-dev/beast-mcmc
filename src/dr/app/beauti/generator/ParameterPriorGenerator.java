@@ -34,12 +34,14 @@ import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.MSSD.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
+import dr.inference.distribution.ExponentialDistributionModel;
+import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
-import dr.inferencexml.distribution.CachedDistributionLikelihoodParser;
-import dr.inferencexml.distribution.PriorParsers;
+import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
+import dr.xml.XMLParser;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -59,7 +61,7 @@ public class ParameterPriorGenerator extends Generator {
      * Write the priors for each parameter
      *
      * @param useStarBEAST
-     * @param writer        the writer
+     * @param writer       the writer
      */
     public void writeParameterPriors(XMLWriter writer, boolean useStarBEAST) {
         boolean first = true;
@@ -290,6 +292,91 @@ public class ParameterPriorGenerator extends Generator {
             writer.writeIDref("statistic", parameter.getName());
         } else {
             writer.writeIDref(ParameterParser.PARAMETER, parameter.getName());
+        }
+    }
+
+    /**
+     * Write the distribution for *DistributionModel
+     *
+     * @param parameter the parameter
+     * @param writer    the writer
+     */
+    public void writeDistribution(Parameter parameter, XMLWriter writer) {
+
+        switch (parameter.priorType) {
+            case UNIFORM_PRIOR:
+                writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, parameter.taxaId + "-uniformDist")
+                        });
+                writer.writeOpenTag(UniformDistributionModelParser.LOWER);
+                writer.writeText(Double.toString(parameter.uniformLower));
+                writer.writeCloseTag(UniformDistributionModelParser.LOWER);
+
+                writer.writeOpenTag(UniformDistributionModelParser.UPPER);
+                writer.writeText(Double.toString(parameter.uniformUpper));
+                writer.writeCloseTag(UniformDistributionModelParser.UPPER);
+
+                writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
+                break;
+            case EXPONENTIAL_PRIOR:
+                writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(DistributionModelParser.MEAN);
+                writer.writeText(Double.toString(parameter.mean));
+                writer.writeCloseTag(DistributionModelParser.MEAN);
+
+                writer.writeOpenTag(DistributionModelParser.OFFSET);
+                writer.writeText(Double.toString(parameter.offset));
+                writer.writeCloseTag(DistributionModelParser.OFFSET);
+                writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
+                break;
+            case NORMAL_PRIOR:
+                writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(NormalDistributionModelParser.MEAN);
+                writer.writeText(Double.toString(parameter.mean));
+                writer.writeCloseTag(NormalDistributionModelParser.MEAN);
+
+                writer.writeOpenTag(NormalDistributionModelParser.STDEV);
+                writer.writeText(Double.toString(parameter.stdev));
+                writer.writeCloseTag(NormalDistributionModelParser.STDEV);
+                writer.writeCloseTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
+                break;
+            case LOGNORMAL_PRIOR:
+                writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
+                        new Attribute[]{
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace()),
+                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isMeanInRealSpace())
+                        });
+                writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
+                writer.writeText(Double.toString(parameter.mean));
+                writer.writeCloseTag(LogNormalDistributionModelParser.MEAN);
+
+                writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
+                writer.writeText(Double.toString(parameter.stdev));
+                writer.writeCloseTag(LogNormalDistributionModelParser.STDEV);
+
+                writer.writeOpenTag(LogNormalDistributionModelParser.OFFSET);
+                writer.writeText(Double.toString(parameter.offset));
+                writer.writeCloseTag(LogNormalDistributionModelParser.OFFSET);
+                writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
+                break;
+            case GAMMA_PRIOR:
+                writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                writer.writeOpenTag(DistributionModelParser.SHAPE);
+                writer.writeText(Double.toString(parameter.shape));
+                writer.writeCloseTag(DistributionModelParser.SHAPE);
+
+                writer.writeOpenTag(DistributionModelParser.SCALE);
+                writer.writeText(Double.toString(parameter.scale));
+                writer.writeCloseTag(DistributionModelParser.SCALE);
+
+                writer.writeOpenTag(DistributionModelParser.OFFSET);
+                writer.writeText(Double.toString(parameter.offset));
+                writer.writeCloseTag(DistributionModelParser.OFFSET);
+                writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
+                break;
+            default:
+                throw new IllegalArgumentException("Unknown Distribution Model");
         }
     }
 }

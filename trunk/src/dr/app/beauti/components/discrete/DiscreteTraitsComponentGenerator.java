@@ -83,6 +83,8 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case AFTER_FILE_LOG:
             case IN_TREES_LOG:
                 return true;
+            case IN_MCMC_PRIOR:
+                return hasBSSVS();
             default:
                 return false;
         }
@@ -98,6 +100,10 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             case AFTER_TREE_LIKELIHOOD:
                 writeAncestralTreeLikelihoods(writer, comp);
+                break;
+
+            case IN_MCMC_PRIOR:
+                writeDiscreteTraitsSubstitutionModelReferences(writer);
                 break;
 
             case IN_MCMC_LIKELIHOOD:
@@ -251,6 +257,20 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeStatisticModel(model, writer);
     }
 
+    private void writeDiscreteTraitsSubstitutionModelReferences(XMLWriter writer) {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, model.getName() + "." + AbstractSubstitutionModel.MODEL);
+        }
+    }
+
+    private boolean hasBSSVS() {
+        for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (model.isActivateBSSVS())
+                return true;
+        }
+        return false;
+    }
+
     private void writeDiscreteFrequencyModel(PartitionSubstitutionModel model, int stateCount, Boolean normalize, XMLWriter writer) {
         String prefix = model.getName() + ".";
         if (normalize == null) {
@@ -361,7 +381,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
-                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
         });
 
         writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + AttributePatternsParser.ATTRIBUTE_PATTERNS);

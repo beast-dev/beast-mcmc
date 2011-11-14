@@ -55,6 +55,7 @@ public class Parameter {
     public final boolean isNonNegative;
     public final boolean isZeroOne;
     public final boolean isCached;
+    public boolean isCalibratedYule = false;
 //    public final double lower;
 //    public final double upper;
 

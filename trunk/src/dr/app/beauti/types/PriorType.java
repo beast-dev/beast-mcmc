@@ -45,7 +45,8 @@ public enum PriorType {
                 dist = new UniformDistribution(parameter.getLowerBound(), parameter.getUpperBound());
                 break;
             case EXPONENTIAL_PRIOR:
-                if (parameter.mean == 0) throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
+                if (parameter.mean == 0)
+                    throw new IllegalArgumentException("The mean of exponential prior cannot be 0.");
                 dist = new OffsetPositiveDistribution(new ExponentialDistribution(1.0 / parameter.mean), parameter.offset);
                 break;
             case LAPLACE_PRIOR:
@@ -243,36 +244,56 @@ public enum PriorType {
 
     public static PriorType[] getPriorTypes(Parameter parameter) {
         if (parameter.isDiscrete) {
-            return new PriorType[] {
+            return new PriorType[]{
                     UNIFORM_PRIOR,
                     POISSON_PRIOR};
         }
         if (parameter.isNodeHeight) {
-            return new PriorType[] {
-                    NONE_TREE_PRIOR,
-                    UNIFORM_PRIOR,
-                    EXPONENTIAL_PRIOR,
-                    LAPLACE_PRIOR,
-                    NORMAL_PRIOR,
-                    LOGNORMAL_PRIOR,
-                    GAMMA_PRIOR,
-                    INVERSE_GAMMA_PRIOR,
-                    ONE_OVER_X_PRIOR};
+            if (parameter.isCalibratedYule) {
+                return new PriorType[]{
+                        NONE_TREE_PRIOR,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR};
+            } else {
+                return new PriorType[]{
+                        NONE_TREE_PRIOR,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        LAPLACE_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR,
+                        INVERSE_GAMMA_PRIOR,
+                        ONE_OVER_X_PRIOR};
+            }
         }
         if (parameter.isStatistic) {
-            return new PriorType[] {
-                    NONE_STATISTIC,
-                    UNIFORM_PRIOR,
-                    EXPONENTIAL_PRIOR,
-                    LAPLACE_PRIOR,
-                    NORMAL_PRIOR,
-                    LOGNORMAL_PRIOR,
-                    GAMMA_PRIOR,
-                    INVERSE_GAMMA_PRIOR,
-                    ONE_OVER_X_PRIOR};
+            if (parameter.isCalibratedYule) {
+                return new PriorType[]{
+                        NONE_STATISTIC,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR};
+            } else {
+                return new PriorType[]{
+                        NONE_STATISTIC,
+                        UNIFORM_PRIOR,
+                        EXPONENTIAL_PRIOR,
+                        LAPLACE_PRIOR,
+                        NORMAL_PRIOR,
+                        LOGNORMAL_PRIOR,
+                        GAMMA_PRIOR,
+                        INVERSE_GAMMA_PRIOR,
+                        ONE_OVER_X_PRIOR};
+            }
         }
         if (parameter.isCMTCRate) {
-            return new PriorType[] {
+            return new PriorType[]{
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -284,12 +305,12 @@ public enum PriorType {
                     ONE_OVER_X_PRIOR};
         }
         if (parameter.isHierarchical) {
-            return new PriorType[] {
+            return new PriorType[]{
                     LOGNORMAL_HPM_PRIOR,
                     NORMAL_HPM_PRIOR};
         }
         if (parameter.isZeroOne) {
-            return new PriorType[] {
+            return new PriorType[]{
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
                     NORMAL_PRIOR,
@@ -299,7 +320,7 @@ public enum PriorType {
                     BETA_PRIOR};
         }
         if (parameter.isNonNegative) {
-            return new PriorType[] {
+            return new PriorType[]{
                     NONE_IMPROPER,
                     UNIFORM_PRIOR,
                     EXPONENTIAL_PRIOR,
@@ -312,7 +333,7 @@ public enum PriorType {
         }
 
         // just a continuous parameter
-        return new PriorType[] {
+        return new PriorType[]{
                 NONE_IMPROPER,
                 UNIFORM_PRIOR,
                 EXPONENTIAL_PRIOR,

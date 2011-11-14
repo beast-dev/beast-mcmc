@@ -136,12 +136,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         scrollPane2.setBorder(null);
         scrollPane2.getViewport().setOpaque(false);
 
-        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, scrollPane2);
-        splitPane.setDividerLocation(180);
-        splitPane.setContinuousLayout(true);
-        splitPane.setBorder(BorderFactory.createEmptyBorder());
-        splitPane.setOpaque(false);
-
         treePriorPanelParent = new JPanel(new FlowLayout(FlowLayout.LEFT));
         treePriorPanelParent.setOpaque(false);
         treePriorBorder = new TitledBorder("Tree Prior");
@@ -161,14 +155,20 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         JPanel panel4 = new JPanel(new BorderLayout());
         panel4.setOpaque(false);
-        panel4.add(panel3, BorderLayout.NORTH);
-        panel4.add(treePriorPanelParent, BorderLayout.CENTER);
+        panel4.add(treePriorPanelParent, BorderLayout.NORTH);
+        panel4.add(scrollPane2, BorderLayout.CENTER);
+
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panel1, panel4);
+        splitPane.setDividerLocation(180);
+        splitPane.setContinuousLayout(true);
+        splitPane.setBorder(BorderFactory.createEmptyBorder());
+        splitPane.setOpaque(false);
 
         setOpaque(false);
         setLayout(new BorderLayout(0, 0));
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
 
-        add(panel4, BorderLayout.NORTH);
+        add(panel3, BorderLayout.NORTH);
         add(splitPane, BorderLayout.CENTER);
     }
 
@@ -200,7 +200,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
     }
 
     public void updatePriorPanelForSpeciesAnalysis() {
-        linkTreePriorCheck.setSelected(options.useStarBEAST);
+        if (options.useStarBEAST) linkTreePriorCheck.setSelected(true); // not to set false if non-*BEAST
         updateShareSameTreePriorChanged();
 
         if (currentTreeModel.getPartitionTreePrior() != null) treePriorPanelParent.removeAll();

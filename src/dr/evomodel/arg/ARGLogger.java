@@ -96,7 +96,7 @@ public class ARGLogger extends MCLogger {
 
 	static XMLOutputter outputter = new XMLOutputter(org.jdom.output.Format.getPrettyFormat());
 
-	public void log(int state) {
+	public void log(long state) {
 		if (logEvery <= 0 || ((state % logEvery) == 0)) {
 			Element graphElement = argModel.toXML();
 			graphElement.setAttribute(ARGModel.ID_ATTRIBUTE, "STATE_" + state);

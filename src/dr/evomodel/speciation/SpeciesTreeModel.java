@@ -1059,7 +1059,7 @@ public class SpeciesTreeModel extends AbstractModel implements MutableTree, Tree
 
     String previousTopology = null;
 
-    public boolean logNow(int state) {
+    public boolean logNow(long state) {
         final String curTop = Tree.Utils.uniqueNewick(spTree, spTree.getRoot());
         if (state == 0 || !curTop.equals(previousTopology)) {
             previousTopology = curTop;

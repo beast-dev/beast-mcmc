@@ -154,7 +154,7 @@ public class ConvergenceLogger extends MCLogger {
         return taxa;
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         if (logEvery <= 0 || ((state % logEvery) == 0)) {
 

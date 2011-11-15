@@ -153,7 +153,7 @@ public class OldTreeLogger extends MCLogger {
         }
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         if (logEvery <= 0 || ((state % logEvery) == 0)) {
             StringBuffer buffer = new StringBuffer("tree STATE_");

@@ -886,7 +886,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	}
 
 
-	public boolean logNow(int state) {
+	public boolean logNow(long state) {
 		return true;
 	}    		
 

@@ -70,7 +70,7 @@ public class TreeLogger extends MCLogger {
          * @param state
          * @return  True if log tree of this state.
          */
-       boolean logNow(int state);
+       boolean logNow(long state);
     }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
@@ -173,7 +173,7 @@ public class TreeLogger extends MCLogger {
         }
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         /*if(normaliseMeanRate) {
             NormaliseMeanTreeRate.analyze(tree, normaliseMeanRateTo);

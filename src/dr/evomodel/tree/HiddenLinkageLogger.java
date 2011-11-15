@@ -23,11 +23,11 @@ public class HiddenLinkageLogger extends MCLogger {
     	}
     	this.logLabels(labels);
     }
-    public void log(int state) {
+    public void log(long state) {
     	if(state % logEvery != 0)
     		return;
     	String[] values = new String[1 + hlm.getData().getReadsTaxa().getTaxonCount()];
-    	values[0] = new Integer(state).toString();
+    	values[0] = new Long(state).toString();
     	for(int i=1; i<values.length; i++){
     		values[i] = new Integer(hlm.getLinkageGroupId(hlm.getData().getReadsTaxa().getTaxon(i-1))).toString();
     	}

@@ -48,6 +48,7 @@ import java.util.*;
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @author Walter Xie
  */
 public class BeautiOptions extends ModelOptions {
 
@@ -155,6 +156,10 @@ public class BeautiOptions extends ModelOptions {
                                 .initial(Double.NaN).isNonNegative(true).build();
 
                         statistics.put(taxa, statistic);
+
+                    } else {
+                        statistic.isCalibratedYule = getPartitionTreePriors().get(0).getNodeHeightPrior()
+                                == TreePriorType.SPECIES_YULE_CALIBRATION && speciesSetsMono.get(taxa);
                     }
                     params.add(statistic);
                 }
@@ -166,14 +171,20 @@ public class BeautiOptions extends ModelOptions {
             if (taxonSets != null) {
                 for (Taxa taxa : taxonSets) {
                     Parameter statistic = statistics.get(taxa);
+                    PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
                     if (statistic == null) {
-                        PartitionTreeModel treeModel = taxonSetsTreeModel.get(taxa);
                         // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
                         statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set " + taxa.getId())
                                 .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true)
                                 .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
 
                         statistics.put(taxa, statistic);
+
+                    } else {
+                        statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
+                        PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
+                        statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
+                                && taxonSetsMono.get(taxa);
                     }
                     params.add(statistic);
                 }
@@ -643,7 +654,8 @@ public class BeautiOptions extends ModelOptions {
     /**
      * unlink all and copy the tree prior in selectedTreeModel to others
      * currently, tree prior name cannot be changed, but tree model name can, so that we have to use instance
-     * @param selectedTreeModel      the selected tree model whose tree prior copied to others
+     *
+     * @param selectedTreeModel the selected tree model whose tree prior copied to others
      */
     public void unLinkTreePriors(PartitionTreeModel selectedTreeModel) {
         for (PartitionTreeModel model : getPartitionTreeModels()) {

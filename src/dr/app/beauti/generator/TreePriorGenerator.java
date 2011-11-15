@@ -27,6 +27,7 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
@@ -235,8 +236,14 @@ public class TreePriorGenerator extends Generator {
                 break;
 
             case YULE:
-                writer.writeComment("A prior on the distribution node heights defined given",
-                        "a Yule speciation process (a pure birth process).");
+            case YULE_CALIBRATION:
+                if (nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
+                    writer.writeComment("Calibrated Yule --- Heled J, Drummond AJ (2011), Syst Biol, doi: " +
+                            "10.1093/sysbio/syr087");
+                } else {
+                    writer.writeComment("A prior on the distribution node heights defined given",
+                            "a Yule speciation process (a pure birth process).");
+                }
                 writer.writeOpenTag(
                         YuleModelParser.YULE_MODEL,
                         new Attribute[]{
@@ -313,8 +320,13 @@ public class TreePriorGenerator extends Generator {
 
             case SPECIES_BIRTH_DEATH:
             case SPECIES_YULE:
+            case SPECIES_YULE_CALIBRATION:
                 writer.writeComment("A prior assumption that the population size has remained constant");
                 writer.writeComment("throughout the time spanned by the genealogy.");
+                if (nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION)
+                    writer.writeComment("Calibrated Yule --- Heled J, Drummond AJ (2011), Syst Biol, doi: " +
+                            "10.1093/sysbio/syr087");
+
                 writer.writeOpenTag(
                         ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                         new Attribute[]{
@@ -362,18 +374,16 @@ public class TreePriorGenerator extends Generator {
     /**
      * Write the prior on node heights (coalescent or speciational models)
      *
-     * @param prior                   the partition tree prior
      * @param model                   PartitionTreeModel
-     * @param parameterPriorGenerator
      * @param writer                  the writer
      */
-    void writePriorLikelihood(PartitionTreePrior prior, PartitionTreeModel model,
-                              ParameterPriorGenerator parameterPriorGenerator, XMLWriter writer) {
+    void writePriorLikelihood(PartitionTreeModel model, XMLWriter writer) {
 
         //tree model prefix
         setModelPrefix(model.getPrefix()); // only has prefix, if (options.getPartitionTreePriors().size() > 1)
 //    	String priorPrefix = prior.getPrefix();
 
+        PartitionTreePrior prior = model.getPartitionTreePrior();
         TreePriorType treePrior = prior.getNodeHeightPrior();
 
         switch (treePrior) {
@@ -382,7 +392,7 @@ public class TreePriorGenerator extends Generator {
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
             case BIRTH_DEATH_SERIAL_SAMPLING:
             case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-
+            case YULE_CALIBRATION:
                 // generate a speciational process
                 writer.writeComment("Generate a speciation likelihood for Yule or Birth Death");
                 writer.writeOpenTag(
@@ -400,14 +410,14 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
 
-                if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE) {
+                if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
 
-                    if (options.clockModelOptions.isNodeCalibrated(model.getParameter("treeModel.rootHeight"))) {
+                    Parameter nodeCalib = model.getParameter("treeModel.rootHeight");
 
-                        writer.writeComment("Heled and Drummond 2011");
+                    if (options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
                         writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+                        writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
-                        parameterPriorGenerator.writeParameterPrior(model.getParameter("treeModel.rootHeight"), writer);
                         String taxaId;
                         if (options.partitionsHaveIdenticalTaxa()) {
                             taxaId = TaxaParser.TAXA;
@@ -415,18 +425,28 @@ public class TreePriorGenerator extends Generator {
                             taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
                         }
                         writer.writeIDref(TaxaParser.TAXA, taxaId);
-                        writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
-                    } else if (options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
-                            && options.taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0))) {
-                        Taxa t = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0);
-                        Parameter nodeCalib = options.getStatistic(t);
 
-                        if (options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
-                            writer.writeComment("Heled and Drummond 2011");
-                            writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
-                            parameterPriorGenerator.writeParameterPrior(nodeCalib, writer);
-                            writer.writeIDref(TaxaParser.TAXA, t.getId());
-                            writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+                        writeDistribution(nodeCalib, true, writer);
+
+                        writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
+                        writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+
+                    } else {
+                        // should be only 1 calibrated internal node with monophyletic for each tree at moment
+                        Taxa t = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0);
+                        nodeCalib = options.getStatistic(t);
+
+                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+                        writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
+
+                        writer.writeIDref(TaxaParser.TAXA, t.getId());
+                        writeDistribution(nodeCalib, true, writer);
+
+                        writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
+                        writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+
+                        if (!options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
+                            throw new IllegalArgumentException("Cannot find valid a calibrated internal node using Calibrated Yule !");
                         }
                     }
                 }
@@ -549,6 +569,7 @@ public class TreePriorGenerator extends Generator {
                 break;
 
             case SPECIES_YULE:
+            case SPECIES_YULE_CALIBRATION:
             case SPECIES_BIRTH_DEATH:
                 break;
 
@@ -577,6 +598,7 @@ public class TreePriorGenerator extends Generator {
             case CONSTANT:
             case SPECIES_YULE:
             case SPECIES_BIRTH_DEATH:
+            case SPECIES_YULE_CALIBRATION:
                 writer.writeIDref(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL, priorPrefix + "constant");
                 break;
             case EXPONENTIAL:
@@ -595,6 +617,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(GMRFSkyrideLikelihoodParser.SKYLINE_LIKELIHOOD, priorPrefix + "skyride");
                 break;
             case YULE:
+            case YULE_CALIBRATION:
                 writer.writeIDref(YuleModelParser.YULE_MODEL, priorPrefix + YuleModelParser.YULE);
                 break;
             case BIRTH_DEATH:
@@ -607,7 +630,7 @@ public class TreePriorGenerator extends Generator {
                         priorPrefix + BirthDeathSerialSamplingModelParser.BDSS);
                 break;
             default:
-                throw new RuntimeException("No tree prior has been specified so cannot refer to it");
+                throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
         }
     }
 
@@ -757,6 +780,7 @@ public class TreePriorGenerator extends Generator {
                 writeParameterRef(modelPrefix + "skyride.groupSize", writer);
                 break;
             case YULE:
+            case YULE_CALIBRATION:
                 writeParameterRef(modelPrefix + "yule.birthRate", writer);
                 break;
             case BIRTH_DEATH:
@@ -789,9 +813,10 @@ public class TreePriorGenerator extends Generator {
                 break;
             case SPECIES_YULE:
             case SPECIES_BIRTH_DEATH:
+            case SPECIES_YULE_CALIBRATION:
                 break;
             default:
-                throw new RuntimeException("No tree prior has been specified so cannot refer to it");
+                throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
         }
 
     }
@@ -867,6 +892,7 @@ public class TreePriorGenerator extends Generator {
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
+            case YULE_CALIBRATION:
             case BIRTH_DEATH:
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
             case BIRTH_DEATH_SERIAL_SAMPLING:
@@ -887,6 +913,7 @@ public class TreePriorGenerator extends Generator {
             case EXTENDED_SKYLINE:
                 // only 1 coalescent, so write it separately after this method
             case SPECIES_YULE:
+            case SPECIES_YULE_CALIBRATION:
             case SPECIES_BIRTH_DEATH:
                 // do not need
                 break;
@@ -903,6 +930,7 @@ public class TreePriorGenerator extends Generator {
         switch (prior.getNodeHeightPrior()) {
 
             case YULE:
+            case YULE_CALIBRATION:
             case BIRTH_DEATH:
             case BIRTH_DEATH_INCOMPLETE_SAMPLING:
             case BIRTH_DEATH_SERIAL_SAMPLING:
@@ -923,6 +951,7 @@ public class TreePriorGenerator extends Generator {
             case EXTENDED_SKYLINE:
                 // only 1 coalescent, so write it in writeEBSPVariableDemographicReference
             case SPECIES_YULE:
+            case SPECIES_YULE_CALIBRATION:
             case SPECIES_BIRTH_DEATH:
                 // do not need
                 break;

@@ -100,8 +100,7 @@ public abstract class PartitionOptions extends ModelOptions {
 //
     protected void createParameterTree(PartitionOptions options, String name, String description, boolean isNodeHeight, double value) {
         new Parameter.Builder(name, description).isNodeHeight(isNodeHeight).scaleType(PriorScaleType.TIME_SCALE)
-                .isNonNegative(true)
-                .initial(value).partitionOptions(options).build(parameters);
+                .isNonNegative(true).initial(value).partitionOptions(options).build(parameters);
     }
 
     protected void createAllMusParameter(PartitionOptions options, String name, String description) {

@@ -89,7 +89,8 @@ public class ParameterPriorGenerator extends Generator {
                 if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
-                    } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                    } else if (!(options.clockModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
                         writeParameterPrior(parameter, writer);
                     }
                 }
@@ -101,23 +102,9 @@ public class ParameterPriorGenerator extends Generator {
                 if (!(parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC)) {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
-                    } else {//if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                        if (options.clockModelOptions.isNodeCalibrated(parameter) // not treeModel.rootHeight
-                                && options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.YULE) {
-                            if (parameter.taxaId != null) {
-                                for (Taxa taxa : options.taxonSets) {
-                                    if (taxa.getId().equalsIgnoreCase(parameter.getBaseName())) {
-                                        PartitionTreeModel model = options.taxonSetsTreeModel.get(taxa);
-                                        if (!(options.getKeysFromValue(options.taxonSetsTreeModel, model).size() == 1
-                                                && taxonSetsMono.get((Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0)))) {
-                                            writeParameterPrior(parameter, writer);
-                                        }
-                                    }
-                                }
-                            }
-                        } else {
-                            writeParameterPrior(parameter, writer);
-                        }
+                    //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
+                    } else if (!(options.clockModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                        writeParameterPrior(parameter, writer);
                     }
                 }
             }
@@ -295,88 +282,4 @@ public class ParameterPriorGenerator extends Generator {
         }
     }
 
-    /**
-     * Write the distribution for *DistributionModel
-     *
-     * @param parameter the parameter
-     * @param writer    the writer
-     */
-    public void writeDistribution(Parameter parameter, XMLWriter writer) {
-
-        switch (parameter.priorType) {
-            case UNIFORM_PRIOR:
-                writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, parameter.taxaId + "-uniformDist")
-                        });
-                writer.writeOpenTag(UniformDistributionModelParser.LOWER);
-                writer.writeText(Double.toString(parameter.uniformLower));
-                writer.writeCloseTag(UniformDistributionModelParser.LOWER);
-
-                writer.writeOpenTag(UniformDistributionModelParser.UPPER);
-                writer.writeText(Double.toString(parameter.uniformUpper));
-                writer.writeCloseTag(UniformDistributionModelParser.UPPER);
-
-                writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                break;
-            case EXPONENTIAL_PRIOR:
-                writer.writeOpenTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-                writer.writeOpenTag(DistributionModelParser.MEAN);
-                writer.writeText(Double.toString(parameter.mean));
-                writer.writeCloseTag(DistributionModelParser.MEAN);
-
-                writer.writeOpenTag(DistributionModelParser.OFFSET);
-                writer.writeText(Double.toString(parameter.offset));
-                writer.writeCloseTag(DistributionModelParser.OFFSET);
-                writer.writeCloseTag(ExponentialDistributionModel.EXPONENTIAL_DISTRIBUTION_MODEL);
-                break;
-            case NORMAL_PRIOR:
-                writer.writeOpenTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
-                writer.writeOpenTag(NormalDistributionModelParser.MEAN);
-                writer.writeText(Double.toString(parameter.mean));
-                writer.writeCloseTag(NormalDistributionModelParser.MEAN);
-
-                writer.writeOpenTag(NormalDistributionModelParser.STDEV);
-                writer.writeText(Double.toString(parameter.stdev));
-                writer.writeCloseTag(NormalDistributionModelParser.STDEV);
-                writer.writeCloseTag(NormalDistributionModelParser.NORMAL_DISTRIBUTION_MODEL);
-                break;
-            case LOGNORMAL_PRIOR:
-                writer.writeOpenTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.MEAN_IN_REAL_SPACE, parameter.isMeanInRealSpace()),
-                                new Attribute.Default<Boolean>(LogNormalDistributionModelParser.STDEV_IN_REAL_SPACE, parameter.isMeanInRealSpace())
-                        });
-                writer.writeOpenTag(LogNormalDistributionModelParser.MEAN);
-                writer.writeText(Double.toString(parameter.mean));
-                writer.writeCloseTag(LogNormalDistributionModelParser.MEAN);
-
-                writer.writeOpenTag(LogNormalDistributionModelParser.STDEV);
-                writer.writeText(Double.toString(parameter.stdev));
-                writer.writeCloseTag(LogNormalDistributionModelParser.STDEV);
-
-                writer.writeOpenTag(LogNormalDistributionModelParser.OFFSET);
-                writer.writeText(Double.toString(parameter.offset));
-                writer.writeCloseTag(LogNormalDistributionModelParser.OFFSET);
-                writer.writeCloseTag(LogNormalDistributionModelParser.LOGNORMAL_DISTRIBUTION_MODEL);
-                break;
-            case GAMMA_PRIOR:
-                writer.writeOpenTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-                writer.writeOpenTag(DistributionModelParser.SHAPE);
-                writer.writeText(Double.toString(parameter.shape));
-                writer.writeCloseTag(DistributionModelParser.SHAPE);
-
-                writer.writeOpenTag(DistributionModelParser.SCALE);
-                writer.writeText(Double.toString(parameter.scale));
-                writer.writeCloseTag(DistributionModelParser.SCALE);
-
-                writer.writeOpenTag(DistributionModelParser.OFFSET);
-                writer.writeText(Double.toString(parameter.offset));
-                writer.writeCloseTag(DistributionModelParser.OFFSET);
-                writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
-                break;
-            default:
-                throw new IllegalArgumentException("Unknown Distribution Model");
-        }
-    }
 }

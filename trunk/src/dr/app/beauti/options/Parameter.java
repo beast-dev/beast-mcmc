@@ -59,7 +59,7 @@ public class Parameter {
 //    public final double lower;
 //    public final double upper;
 
-    private final PartitionOptions options;
+    private PartitionOptions options;
 
     public final PriorScaleType scaleType;
 
@@ -374,6 +374,10 @@ public class Parameter {
 
     public PartitionOptions getOptions() {
         return options;
+    }
+
+    public void setOptions(PartitionOptions options) { // need to set, which keeps consistent to taxonSetsTreeModel
+        this.options = options;
     }
 
     public void setPriorEdited(boolean priorEdited) {

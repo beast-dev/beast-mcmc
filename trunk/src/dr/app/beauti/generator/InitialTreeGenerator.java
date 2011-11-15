@@ -149,13 +149,9 @@ public class InitialTreeGenerator extends Generator {
                     writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
                     writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-                    if (statistic.isNodeHeight) {
-                        if (statistic.isTruncated || statistic.priorType == PriorType.UNIFORM_PRIOR) {
-                            writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                            writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
-                            writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);
-                            writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                        }
+
+                    if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                        writeDistribution(statistic, false, writer);
                     }
 
                     writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);

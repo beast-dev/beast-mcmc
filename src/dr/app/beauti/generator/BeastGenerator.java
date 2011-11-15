@@ -161,6 +161,15 @@ public class BeastGenerator extends Generator {
                         VALIDATE_MESSAGE);
             }
             ids.add(taxa.getId());
+
+            // should be only 1 calibrated internal node with monophyletic for each tree at moment
+            if (options.taxonSetsTreeModel.get(taxa).getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                if (!options.taxonSetsMono.get(taxa)
+                        || options.getKeysFromValue(options.taxonSetsTreeModel, options.taxonSetsTreeModel.get(taxa)).size() > 1) {
+                    throw new IllegalArgumentException("Calibrated Yule only allows 1 calibrated internal node " +
+                            "with monophyletic for each tree at moment !");
+                }
+            }
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
@@ -180,6 +189,15 @@ public class BeastGenerator extends Generator {
                             VALIDATE_MESSAGE);
                 }
                 ids.add(species.getId());
+
+                // should be only 1 calibrated internal node with monophyletic at moment
+                if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
+                    if (!options.speciesSetsMono.get(species)) {
+                        throw new IllegalArgumentException("Calibrated Yule only allows 1 calibrated internal node " +
+                                "with monophyletic at moment !");
+                    }
+                }
+
             }
         }
 
@@ -437,8 +455,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Tree Prior Likelihood ++++++++++++++++++
         try {
             for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-                PartitionTreePrior prior = model.getPartitionTreePrior();
-                treePriorGenerator.writePriorLikelihood(prior, model, parameterPriorGenerator, writer);
+                treePriorGenerator.writePriorLikelihood(model, writer);
                 writer.writeText("");
             }
 

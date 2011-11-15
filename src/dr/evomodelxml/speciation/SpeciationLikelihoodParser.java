@@ -30,6 +30,7 @@ public class SpeciationLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String CALIBRATION = "calibration";
     public static final String CORRECTION = "correction";
+    public static final String POINT = "point";
 
     private final String EXACT = CalibrationPoints.CorrectionType.EXACT.toString();
     private final String APPROX = CalibrationPoints.CorrectionType.APPROXIMATED.toString();

@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.StartingTreeType;
+import dr.app.beauti.types.TreePriorType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.tree.Tree;
@@ -131,7 +132,10 @@ public class PartitionTreeModel extends PartitionOptions {
         rootHeightParameter.isTruncated = true;
 //        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
 
-        if (!options.useStarBEAST) {
+        if (options.useStarBEAST) {
+            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION;
+        } else {
+            rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION;
             parameters.add(rootHeightParameter);
         }
 

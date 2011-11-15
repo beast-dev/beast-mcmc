@@ -901,6 +901,7 @@ public class AncestralSequenceAnnotator {
                 new HomogenousBranchSubstitutionModel(siteModel.getSubstitutionModel(), siteModel.getSubstitutionModel().getFrequencyModel()),
                 siteModel,
                 rateModel,
+                null,
                 false,
                 PartialsRescalingScheme.DEFAULT,
                 null,

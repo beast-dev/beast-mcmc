@@ -12,6 +12,7 @@ import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
@@ -36,7 +37,9 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                            BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
-                                           BranchRateModel branchRateModel, boolean useAmbiguities,
+                                           BranchRateModel branchRateModel,
+                                           TipStatesModel tipStatesModel,
+                                           boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme,
                                            Map<Set<String>, Parameter> partialsRestrictions,
                                            DataType dataType, String stateTag,
@@ -47,7 +50,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities,
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
                 scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;

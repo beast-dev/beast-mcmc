@@ -41,7 +41,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipPartialsModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.CompoundLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
@@ -65,7 +65,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TREE_LIKELIHOOD = TreeLikelihood.TREE_LIKELIHOOD;
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
-//    public static final String DEVICE_NUMBER = "deviceNumber";
+    //    public static final String DEVICE_NUMBER = "deviceNumber";
 //    public static final String PREFER_SINGLE_PRECISION = "preferSinglePrecision";
     public static final String SCALING_SCHEME = "scalingScheme";
     public static final String PARTIALS_RESTRICTION = "partialsRestriction";
@@ -75,21 +75,23 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                     BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
-                                                     BranchRateModel branchRateModel,
-                                                     boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
-                                                     Map<Set<String>, Parameter> partialsRestrictions,
-                                                     XMLObject xo) throws XMLParseException {
-           return new BeagleTreeLikelihood(
-                    patternList,
-                    treeModel,
-                   branchSubstitutionModel,
-                    siteRateModel,
-                    branchRateModel,
-                    useAmbiguities,
-                    scalingScheme,
-                    partialsRestrictions
-            );
+                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
+                                                        BranchRateModel branchRateModel,
+                                                        TipStatesModel tipStatesModel,
+                                                        boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
+                                                        Map<Set<String>, Parameter> partialsRestrictions,
+                                                        XMLObject xo) throws XMLParseException {
+        return new BeagleTreeLikelihood(
+                patternList,
+                treeModel,
+                branchSubstitutionModel,
+                siteRateModel,
+                branchRateModel,
+                tipStatesModel,
+                useAmbiguities,
+                scalingScheme,
+                partialsRestrictions
+        );
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -114,13 +116,15 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
         if (branchSubstitutionModel == null) {
             branchSubstitutionModel = new HomogenousBranchSubstitutionModel(
-                siteRateModel.getSubstitutionModel(),
-                (rootFreqModel != null ? rootFreqModel :
-                siteRateModel.getSubstitutionModel().getFrequencyModel())
+                    siteRateModel.getSubstitutionModel(),
+                    (rootFreqModel != null ? rootFreqModel :
+                            siteRateModel.getSubstitutionModel().getFrequencyModel())
             );
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+
+        TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
         if (xo.hasAttribute(SCALING_SCHEME)) {
@@ -146,7 +150,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
-        if (xo.getChild(TipPartialsModel.class) != null) {
+        if (xo.getChild(TipStatesModel.class) != null) {
             throw new XMLParseException("Sequence Error Models are not supported under BEAGLE yet. Please use Native BEAST Likelihood.");
         }
 
@@ -157,6 +161,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     branchSubstitutionModel,
                     siteRateModel,
                     branchRateModel,
+                    tipStatesModel,
                     useAmbiguities,
                     scalingScheme,
                     partialsRestrictions,
@@ -169,6 +174,11 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             if (!(patternList instanceof SitePatterns)) {
                 throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
             }
+
+            if (!(tipStatesModel != null)) {
+                throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
+            }
+
             Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
 
             BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
@@ -177,6 +187,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                     branchSubstitutionModel,
                     siteRateModel,
                     branchRateModel,
+                    null,
                     useAmbiguities,
                     scalingScheme,
                     partialsRestrictions,
@@ -207,14 +218,15 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchSubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),
+            new ElementRule(TipStatesModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
             new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
-                new ElementRule(TaxonList.class),
-                new ElementRule(Parameter.class),
+                    new ElementRule(TaxonList.class),
+                    new ElementRule(Parameter.class),
             }, true),
             new ElementRule(FrequencyModel.class, true),
-                new ElementRule(TipPartialsModel.class, true)
-        };
+            new ElementRule(TipStatesModel.class, true)
+    };
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return rules;

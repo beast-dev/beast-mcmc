@@ -35,10 +35,12 @@ import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.Citable;
@@ -79,10 +81,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 BranchSubstitutionModel branchSubstitutionModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
+                                TipStatesModel tipStatesModel,
                                 boolean useAmbiguities,
                                 PartialsRescalingScheme rescalingScheme) {
 
-        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, rescalingScheme,
+        this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme,
                 null);
     }
 
@@ -91,6 +94,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 BranchSubstitutionModel branchSubstitutionModel,
                                 SiteRateModel siteRateModel,
                                 BranchRateModel branchRateModel,
+                                TipStatesModel tipStatesModel,
                                 boolean useAmbiguities,
                                 PartialsRescalingScheme rescalingScheme,
                                 Map<Set<String>, Parameter> partialsRestrictions) {
@@ -122,6 +126,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 this.branchRateModel = new DefaultBranchRateModel();
             }
             addModel(this.branchRateModel);
+
+            this.tipStatesModel = tipStatesModel;
 
             this.categoryCount = this.siteRateModel.getCategoryCount();
 
@@ -171,7 +177,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 this.rescalingScheme = PartialsRescalingScheme.parseFromString(
                         scalingOrder.get(instanceCount % scalingOrder.size()));
             }
-        
+
             if (resourceOrder.size() > 0) {
                 // added the zero on the end so that a CPU is selected if requested resource fails
                 resourceList = new int[]{resourceOrder.get(instanceCount % resourceOrder.size()), 0};
@@ -261,6 +267,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             logger.info("  " + (useAmbiguities ? "Using" : "Ignoring") + " ambiguities in tree likelihood.");
             logger.info("  With " + patternList.getPatternCount() + " unique site patterns.");
 
+            if (tipStatesModel != null) {
+                tipStatesModel.setTree(treeModel);
+
+                if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
+                    tipPartials = new double[patternCount * stateCount];
+                } else {
+                    tipStates = new int[patternCount];
+                }
+
+                addModel(tipStatesModel);
+            }
+
             for (int i = 0; i < tipCount; i++) {
                 // Find the id of tip i in the patternList
                 String id = treeModel.getTaxonId(i);
@@ -270,10 +288,26 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     throw new TaxonList.MissingTaxonException("Taxon, " + id + ", in tree, " + treeModel.getId() +
                             ", is not found in patternList, " + patternList.getId());
                 } else {
-                    if (useAmbiguities) {
-                        setPartials(beagle, patternList, index, i);
+                    if (tipStatesModel != null) {
+                        // using a tipPartials model.
+                        // First set the observed states:
+                        tipStatesModel.setStates(patternList, index, i, id);
+
+                        if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
+                            // Then set the tip partials as determined by the model:
+                            setPartials(beagle, tipStatesModel, i);
+                        } else {
+                            // or the tip states:
+                            tipStatesModel.getTipStates(i, tipStates);
+                            beagle.setTipStates(i, tipStates);
+                        }
+
                     } else {
-                        setStates(beagle, patternList, index, i);
+                        if (useAmbiguities) {
+                            setPartials(beagle, patternList, index, i);
+                        } else {
+                            setStates(beagle, patternList, index, i);
+                        }
                     }
                 }
             }
@@ -414,6 +448,28 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         beagle.setPartials(nodeIndex, partials);
     }
 
+    /**
+     * Sets the partials from a sequence in an alignment.
+     *
+     */
+    protected final void setPartials(Beagle beagle,
+                                     TipStatesModel tipStatesModel,
+                                     int nodeIndex) {
+        double[] partials = new double[patternCount * stateCount * categoryCount];
+
+        tipStatesModel.getTipPartials(nodeIndex, partials);
+
+        // if there is more than one category then replicate the partials for each
+        int n = patternCount * stateCount;
+        int k = n;
+        for (int i = 1; i < categoryCount; i++) {
+            System.arraycopy(partials, 0, partials, k, n);
+            k += n;
+        }
+
+        beagle.setPartials(nodeIndex, partials);
+    }
+
     public int getPatternCount() {
         return patternCount;
     }
@@ -511,6 +567,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             updateSiteModel = true;
             updateAllNodes();
 
+        } else if (model == tipStatesModel) {
+            if(object instanceof Taxon) {
+                for(int i=0; i<treeModel.getNodeCount(); i++)
+                    if(treeModel.getNodeTaxon(treeModel.getNode(i))!=null && treeModel.getNodeTaxon(treeModel.getNode(i)).getId().equalsIgnoreCase(((Taxon)object).getId()))
+                        updateNode(treeModel.getNode(i));
+            } else
+                updateAllNodes();
         } else {
 
             throw new RuntimeException("Unknown componentChangedEvent");
@@ -615,6 +678,21 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
+        if (tipStatesModel != null) {
+            int tipCount = treeModel.getExternalNodeCount();
+            for (int index = 0; index < tipCount; index++) {
+                if (updateNode[index]) {
+                    if (tipStatesModel.getModelType() == TipStatesModel.Type.PARTIALS) {
+                        tipStatesModel.getTipPartials(index, tipPartials);
+                        beagle.setTipPartials(index, tipPartials);
+                    } else {
+                        tipStatesModel.getTipStates(index, tipStates);
+                        beagle.setTipStates(index, tipStates);
+                    }
+                }
+            }
+        }
+
         for (int i = 0; i < eigenCount; i++) {
             branchUpdateCount[i] = 0;
         }
@@ -639,10 +717,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 eigenBufferHelper.flipOffset(i);
 
                 beagle.setEigenDecomposition(
-                    eigenBufferHelper.getOffsetIndex(i),
-                    ed.getEigenVectors(),
-                    ed.getInverseEigenVectors(),
-                    ed.getEigenValues());
+                        eigenBufferHelper.getOffsetIndex(i),
+                        ed.getEigenVectors(),
+                        ed.getInverseEigenVectors(),
+                        ed.getEigenValues());
             }
         }
 
@@ -654,12 +732,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
                 beagle.updateTransitionMatrices(
-                    eigenBufferHelper.getOffsetIndex(i),
-                    matrixUpdateIndices[i],
-                    null,
-                    null,
-                    branchLengths[i],
-                    branchUpdateCount[i]);
+                        eigenBufferHelper.getOffsetIndex(i),
+                        matrixUpdateIndices[i],
+                        null,
+                        null,
+                        branchLengths[i],
+                        branchUpdateCount[i]);
             }
         }
 
@@ -667,7 +745,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             for (int i = 0; i < eigenCount; i++) {
                 totalMatrixUpdateCount += branchUpdateCount[i];
             }
-            
+
             for (int i = 0; i <= numRestrictedPartials; i++) {
                 totalOperationCount += operationCount[i];
             }
@@ -985,7 +1063,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private int[][] operations;
     private int operationListCount;
     private int[] operationCount;
-//    private final boolean hasRestrictedPartials;
+    //    private final boolean hasRestrictedPartials;
     private static final boolean hasRestrictedPartials = false;
 
     private final int numRestrictedPartials;
@@ -1021,10 +1099,16 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * the site model for these sites
      */
     protected final SiteRateModel siteRateModel;
+
     /**
      * the branch rate model
      */
     protected final BranchRateModel branchRateModel;
+
+    /**
+     * the tip partials model
+     */
+    private final TipStatesModel tipStatesModel;
 
     /**
      * the pattern likelihoods
@@ -1040,6 +1124,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
      * an array used to transfer tip partials
      */
     protected double[] tipPartials;
+
+    /**
+     * an array used to transfer tip states
+     */
+    protected int[] tipStates;
 
     /**
      * the BEAGLE library instance

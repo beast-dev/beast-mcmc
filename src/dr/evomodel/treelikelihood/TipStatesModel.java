@@ -41,12 +41,18 @@ import java.util.Map;
  * @author Alexei Drummond
  * @version $Id$
  */
-public abstract class TipPartialsModel extends AbstractModel {
+public abstract class TipStatesModel extends AbstractModel {
+
+    // an enum which specifies if the model emits tip states or partials
+    public enum Type {
+        PARTIALS,
+        STATES
+    };
 
     /**
      * @param name Model Name
      */
-    public TipPartialsModel(String name, TaxonList includeTaxa, TaxonList excludeTaxa) {
+    public TipStatesModel(String name, TaxonList includeTaxa, TaxonList excludeTaxa) {
         super(name);
 
         this.includeTaxa = includeTaxa;
@@ -89,7 +95,7 @@ public abstract class TipPartialsModel extends AbstractModel {
             patternCount = patternList.getPatternCount();
             stateCount = patternList.getDataType().getStateCount();
         } else if (patternList != this.patternList) {
-            throw new RuntimeException("The TipPartialsModel with id, " + getId() + ", has already been associated with a patternList.");
+            throw new RuntimeException("The TipStatesModel with id, " + getId() + ", has already been associated with a patternList.");
         }
         if (this.states[nodeIndex] == null) {
             this.states[nodeIndex] = new int[patternCount];
@@ -143,7 +149,11 @@ public abstract class TipPartialsModel extends AbstractModel {
         return patternList;
     }
 
+    public abstract Type getModelType();
+
     public abstract void getTipPartials(int nodeIndex, double[] tipPartials);
+
+    public abstract void getTipStates(int nodeIndex, int[] tipStates);
 
     protected int[][] states;
     protected boolean[] excluded;

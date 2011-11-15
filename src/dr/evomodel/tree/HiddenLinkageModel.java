@@ -10,18 +10,14 @@ import dr.evolution.MetagenomeData;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
-import dr.evolution.sequence.Sequence;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.SubstitutionModel;
-import dr.evomodel.treelikelihood.AminoAcidLikelihoodCore;
 import dr.evomodel.treelikelihood.GeneralLikelihoodCore;
 import dr.evomodel.treelikelihood.LikelihoodCore;
 import dr.evomodel.treelikelihood.NativeAminoAcidLikelihoodCore;
 import dr.evomodel.treelikelihood.NativeNucleotideLikelihoodCore;
-import dr.evomodel.treelikelihood.TipPartialsModel;
-import dr.inference.model.AbstractModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Variable;
 import dr.inference.model.Variable.ChangeType;
@@ -35,7 +31,7 @@ import dr.math.MathUtils;
  * @author Aaron Darling (koadman)
  *
  */
-public class HiddenLinkageModel extends TipPartialsModel implements PatternList 
+public class HiddenLinkageModel extends TipStatesModel implements PatternList
 {
 
 	int linkageGroupCount = 0;
@@ -406,7 +402,17 @@ public class HiddenLinkageModel extends TipPartialsModel implements PatternList
 		throw new RuntimeException("Not implemented!");
 	}
 
-	@Override
+    @Override
+    public Type getModelType() {
+        return Type.PARTIALS;
+    }
+
+    @Override
+    public void getTipStates(int nodeIndex, int[] tipStates) {
+        throw new IllegalArgumentException("This model emits only tip partials");
+    }
+
+    @Override
 	public void getTipPartials(int nodeIndex, double[] tipPartials) {
 		int n = nodeIdToMyTaxaMap[tree.getNode(nodeIndex).getNumber()];
 		System.arraycopy(this.tipPartials[n], 0, tipPartials, 0, tipPartials.length);

@@ -13,7 +13,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.HKY;
 import dr.evomodel.treelikelihood.SequenceErrorModel;
-import dr.evomodel.treelikelihood.TipPartialsModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.sitemodel.GammaSiteModelParser;
@@ -87,7 +87,7 @@ public class PMDTestProblem extends TraceCorrelationAssert {
         // SequenceErrorModel
         Parameter ageRelatedRateParameter = new Parameter.Default(SequenceErrorModelParser.AGE_RELATED_RATE, 4.0E-7, 0, 100.0);
 
-        TipPartialsModel aDNADamageModel =  new SequenceErrorModel(null, null, SequenceErrorModel.ErrorType.TRANSITIONS_ONLY,
+        TipStatesModel aDNADamageModel =  new SequenceErrorModel(null, null, SequenceErrorModel.ErrorType.TRANSITIONS_ONLY,
                 null, ageRelatedRateParameter, null);
 
         //treeLikelihood

@@ -6,6 +6,7 @@ import dr.evomodel.tree.TreeLogger;
 import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
 import dr.xml.*;
 
@@ -32,6 +33,9 @@ public class TreeLoggerParser extends LoggerParser {
     public static final String DECIMAL_PLACES = "dp";
     //    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
     public static final String FILTER_TRAITS = "traitFilter";
+    public static final String TREE_TRAIT = "trait";
+    public static final String NAME = "name";
+    public static final String TAG = "tag";
 
     public String getParserName() {
         return LOG_TREE;
@@ -124,23 +128,35 @@ public class TreeLoggerParser extends LoggerParser {
                     ttps.add((TreeTraitProvider) cxo);
                 }
             }
-            // Without this next block, branch rates get ignored :-(
-            if (cxo instanceof TreeTrait) {
-                final TreeTrait trait = (TreeTrait)cxo;
-                TreeTraitProvider ttp = new TreeTraitProvider() {
-                    public TreeTrait[] getTreeTraits() {
-                        return new TreeTrait[]  { trait };
-                    }
+            if (cxo instanceof XMLObject) {
+                XMLObject xco = (XMLObject)cxo;
+                if (xco.getName().equals(TREE_TRAIT)) {
+                    String name = xo.getStringAttribute(NAME);
+                    String tag = xo.getStringAttribute(TAG);
+                    TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
+                    TreeTrait trait = ttp.getTreeTrait(name);
 
-                    public TreeTrait getTreeTrait(String key) {
-                        if (key.equals(trait.getTraitName())) {
-                            return trait;
-                        }
-                        return null;
-                    }
-                };
-                ttps.add(ttp);
+                    ttps.add(new TreeTraitProvider.Helper(TAG, trait));
+                }
             }
+            // Without this next block, branch rates get ignored :-(
+            // BranchRateModels are now TreeTraitProviders so this is not needed.
+//            if (cxo instanceof TreeTrait) {
+//                final TreeTrait trait = (TreeTrait)cxo;
+//                TreeTraitProvider ttp = new TreeTraitProvider() {
+//                    public TreeTrait[] getTreeTraits() {
+//                        return new TreeTrait[]  { trait };
+//                    }
+//
+//                    public TreeTrait getTreeTrait(String key) {
+//                        if (key.equals(trait.getTraitName())) {
+//                            return trait;
+//                        }
+//                        return null;
+//                    }
+//                };
+//                ttps.add(ttp);
+//            }
             //}
         }
 
@@ -234,12 +250,18 @@ public class TreeLoggerParser extends LoggerParser {
             new StringAttributeRule(BRANCH_LENGTHS, "What units should the branch lengths be in",
                     new String[]{TIME, SUBSTITUTIONS}, true),
             new ElementRule(Tree.class, "The tree which is to be logged"),
-            new ElementRule(BranchRates.class, true),
-            new ElementRule(TreeColouringProvider.class, true),
+//            new ElementRule(BranchRates.class, true),
+//            new ElementRule(TreeColouringProvider.class, true),
             new ElementRule(Likelihood.class, true),
             new ElementRule(TreeAttributeProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(TreeTraitProvider.class, 0, Integer.MAX_VALUE),
             new ElementRule(TreeLogger.LogUpon.class, true),
+            new ElementRule(TREE_TRAIT,
+                    new XMLSyntaxRule[]{
+                            AttributeRule.newStringRule(NAME, true, "The name of the trait"),
+                            AttributeRule.newStringRule(TAG, true, "The label of the trait to be used in the tree"),
+                            new ElementRule(TreeAttributeProvider.class, "The trait provider")
+                    }, 0, Integer.MAX_VALUE),
             AttributeRule.newStringRule(FILTER_TRAITS, true),
             AttributeRule.newBooleanRule(MAP_NAMES, true),
             AttributeRule.newIntegerRule(DECIMAL_PLACES, true)

@@ -50,6 +50,14 @@ public interface TreeTraitProvider {
         }
 
         /**
+         * Constructor taking a single initial trait
+         * @param trait the TreeTrait
+         */
+        public Helper(String key, TreeTrait trait) {
+           addTrait(key, trait);
+        }
+
+        /**
          * Constructor taking an array of initial traits
          * @param traits the array of TreeTraits
          */

@@ -11,7 +11,6 @@ import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.Likelihood;
-import dr.math.matrixAlgebra.Vector;
 import dr.xml.*;
 
 /**
@@ -33,8 +32,8 @@ public class NodePosteriorTreeLikelihood extends TreeLikelihood implements TreeT
     private double[] childPartials;
     private double[] partialLikelihood;
 
-    public NodePosteriorTreeLikelihood(PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, TipPartialsModel tipPartialsModel, boolean useAmbiguities, boolean allowMissingTaxa, boolean storePartials, boolean forceJavaCore) {
-        super(patternList, treeModel, siteModel, branchRateModel, tipPartialsModel, useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore, false);
+    public NodePosteriorTreeLikelihood(PatternList patternList, TreeModel treeModel, SiteModel siteModel, BranchRateModel branchRateModel, TipStatesModel tipStatesModel, boolean useAmbiguities, boolean allowMissingTaxa, boolean storePartials, boolean forceJavaCore) {
+        super(patternList, treeModel, siteModel, branchRateModel, tipStatesModel, useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore, false);
         // TreeLikelihood does not initialize the partials for tips, we'll do it ourselves
         int extNodeCount = treeModel.getExternalNodeCount();
         for (int i = 0; i < extNodeCount; i++) {

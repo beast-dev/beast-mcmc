@@ -12,12 +12,12 @@ import dr.inference.model.Statistic;
  * (per site) base error rate and/or a time dependent error for which the probability
  * of no error decays over sampling time exponentially with a given rate. This model
  * is inspired by a brief description in Joe Felsenstein's book 'Inferring phylogenies'
- * (2004: Sinauer Associates) and was ellaborated on for DNA damage in Rambaut et al
+ * (2004: Sinauer Associates) and was elaborated on for DNA damage in Rambaut et al
  * (2008, MBE
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class SequenceErrorModel extends TipPartialsModel {
+public class SequenceErrorModel extends TipStatesModel {
     public enum ErrorType {
         TYPE_1_TRANSITIONS("type1Transitions"),
         TYPE_2_TRANSITIONS("type2Transitions"),
@@ -76,6 +76,17 @@ public class SequenceErrorModel extends TipPartialsModel {
         }
     }
 
+    @Override
+    public Type getModelType() {
+        return Type.PARTIALS;
+    }
+
+    @Override
+    public void getTipStates(int nodeIndex, int[] tipStates) {
+        throw new IllegalArgumentException("This model emits only tip partials");
+    }
+
+    @Override
     public void getTipPartials(int nodeIndex, double[] partials) {
 
         int[] states = this.states[nodeIndex];

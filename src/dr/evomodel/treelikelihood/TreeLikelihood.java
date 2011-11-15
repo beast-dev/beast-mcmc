@@ -60,7 +60,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                           TreeModel treeModel,
                           SiteModel siteModel,
                           BranchRateModel branchRateModel,
-                          TipPartialsModel tipPartialsModel,
+                          TipStatesModel tipStatesModel,
                           boolean useAmbiguities,
                           boolean allowMissingTaxa,
                           boolean storePartials,
@@ -78,7 +78,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             this.frequencyModel = siteModel.getFrequencyModel();
             addModel(frequencyModel);
 
-            this.tipPartialsModel = tipPartialsModel;
+            this.tipStatesModel = tipStatesModel;
 
             integrateAcrossCategories = siteModel.integrateAcrossCategories();
 
@@ -154,8 +154,8 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             int extNodeCount = treeModel.getExternalNodeCount();
             int intNodeCount = treeModel.getInternalNodeCount();
 
-            if (tipPartialsModel != null) {
-                tipPartialsModel.setTree(treeModel);
+            if (tipStatesModel != null) {
+                tipStatesModel.setTree(treeModel);
 
                 tipPartials = new double[patternCount * stateCount];
 
@@ -169,11 +169,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                                 ", is not found in patternList, " + patternList.getId());
                     }
 
-                    tipPartialsModel.setStates(patternList, index, i, id);
+                    tipStatesModel.setStates(patternList, index, i, id);
                     likelihoodCore.createNodePartials(i);
                 }
 
-                addModel(tipPartialsModel);
+                addModel(tipStatesModel);
                 //useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
@@ -260,7 +260,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
 
             updateAllNodes();
 
-        } else if (model == tipPartialsModel) {
+        } else if (model == tipStatesModel) {
         	if(object instanceof Taxon)
         	{
         		for(int i=0; i<treeModel.getNodeCount(); i++)
@@ -336,12 +336,12 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             }
         }
 
-        if (tipPartialsModel != null) {
+        if (tipStatesModel != null) {
             int extNodeCount = treeModel.getExternalNodeCount();
             for (int index = 0; index < extNodeCount; index++) {
                 if (updateNode[index]) {
                     likelihoodCore.setNodePartialsForUpdate(index);
-                    tipPartialsModel.getTipPartials(index, tipPartials);
+                    tipStatesModel.getTipPartials(index, tipPartials);
                     likelihoodCore.setCurrentNodePartials(index, tipPartials);
                 }
             }
@@ -404,7 +404,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     @param patternLogProbs log pattern probabilities
     @return the log total probability for a pattern.
     */
-    protected double getAscertainmentCorrection(double[] patternLogProbs) {               
+    protected double getAscertainmentCorrection(double[] patternLogProbs) {
         if (patternList instanceof AscertainedSitePatterns) {
             return ((AscertainedSitePatterns) patternList).getAscertainmentCorrection(patternLogProbs);
         } else {
@@ -601,7 +601,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
     /**
      * the tip partials model
      */
-    private final TipPartialsModel tipPartialsModel;
+    private final TipStatesModel tipStatesModel;
 
     private final boolean storePartials;
 

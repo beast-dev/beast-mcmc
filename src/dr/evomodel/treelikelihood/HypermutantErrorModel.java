@@ -1,9 +1,7 @@
 package dr.evomodel.treelikelihood;
 
-import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.HypermutantAlignment;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
@@ -17,7 +15,7 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id$
  */
-public class HypermutantErrorModel extends TipPartialsModel {
+public class HypermutantErrorModel extends TipStatesModel {
 
     public static final String HYPERMUTANT_ERROR_MODEL = "hypermutantErrorModel";
     public static final String HYPERMUTATION_RATE = "hypermutationRate";
@@ -52,6 +50,17 @@ public class HypermutantErrorModel extends TipPartialsModel {
         }
     }
 
+    @Override
+    public Type getModelType() {
+        return Type.PARTIALS;
+    }
+
+    @Override
+    public void getTipStates(int nodeIndex, int[] tipStates) {
+        throw new IllegalArgumentException("This model emits only tip partials");
+    }
+
+    @Override
     public void getTipPartials(int nodeIndex, double[] partials) {
         int[] states = this.states[nodeIndex];
         boolean isHypermutated = hypermuationIndicatorParameter.getParameterValue(nodeIndex) > 0.0;
@@ -112,6 +121,7 @@ public class HypermutantErrorModel extends TipPartialsModel {
 
     }
 
+    @Override
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable == hypermuationIndicatorParameter) {
             fireModelChanged();

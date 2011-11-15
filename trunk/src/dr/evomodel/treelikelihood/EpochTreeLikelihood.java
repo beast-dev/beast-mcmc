@@ -23,12 +23,12 @@ public class EpochTreeLikelihood extends TreeLikelihood {
                           TreeModel treeModel,
                           SiteModel siteModel,
                           BranchRateModel branchRateModel,
-                          TipPartialsModel tipPartialsModel,
+                          TipStatesModel tipStatesModel,
                           boolean useAmbiguities,
                           boolean allowMissingTaxa,
                           boolean storePartials,
                           boolean forceJavaCore) {
-		    super(patternList,  treeModel, siteModel, branchRateModel, tipPartialsModel,useAmbiguities,allowMissingTaxa,storePartials,forceJavaCore, false);
+		    super(patternList,  treeModel, siteModel, branchRateModel, tipStatesModel,useAmbiguities,allowMissingTaxa,storePartials,forceJavaCore, false);
 
 	    }
 
@@ -141,7 +141,7 @@ public class EpochTreeLikelihood extends TreeLikelihood {
 
             BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-            TipPartialsModel tipPartialsModel = (TipPartialsModel) xo.getChild(TipPartialsModel.class);
+            TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
 
 	        Logger.getLogger("dr.evolution").info("\n ---------------------------------\nCreating EpochTreeLikelihood model.");
 	          Logger.getLogger("dr.evolution").info("\tIf you publish results using substitution epoch likelihood, please reference" +
@@ -153,7 +153,7 @@ public class EpochTreeLikelihood extends TreeLikelihood {
                     treeModel,
                     siteModel,
                     branchRateModel,
-                    tipPartialsModel,
+                    tipStatesModel,
                     useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore);
         }
 
@@ -182,7 +182,7 @@ public class EpochTreeLikelihood extends TreeLikelihood {
                 new ElementRule(TreeModel.class),
                 new ElementRule(SiteModel.class),
                 new ElementRule(BranchRateModel.class, true),
-                new ElementRule(TipPartialsModel.class, true)
+                new ElementRule(TipStatesModel.class, true)
         };
     };
 

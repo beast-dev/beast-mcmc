@@ -4,7 +4,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.TipPartialsModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.xml.*;
 
@@ -44,10 +44,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
-        TipPartialsModel tipPartialsModel = (TipPartialsModel) xo.getChild(TipPartialsModel.class);
-        if (tipPartialsModel != null && tipPartialsModel.getPatternList() != null) {
-            throw new XMLParseException("A sequence error model cannot be used with multiple partitions");
+        TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
+        if (tipStatesModel != null && tipStatesModel.getPatternList() != null) {
+            throw new XMLParseException("The same sequence error model cannot be used for multiple partitions");
         }
+        if (tipStatesModel != null && tipStatesModel.getModelType() == TipStatesModel.Type.STATES) {
+            throw new XMLParseException("The state emitting TipStateModel requires BEAGLE");
+        }
+
 
         boolean forceRescaling = xo.getAttribute(FORCE_RESCALING, false);
 
@@ -56,7 +60,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 treeModel,
                 siteModel,
                 branchRateModel,
-                tipPartialsModel,
+                tipStatesModel,
                 useAmbiguities, allowMissingTaxa, storePartials, forceJavaCore, forceRescaling);
     }
 
@@ -86,6 +90,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(SiteModel.class),
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(TipPartialsModel.class, true)
+            new ElementRule(TipStatesModel.class, true)
     };
 }

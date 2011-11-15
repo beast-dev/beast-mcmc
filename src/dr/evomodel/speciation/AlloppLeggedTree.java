@@ -480,7 +480,7 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 
 	// TreeLogger.LogUpon
 	
-	public boolean logNow(int state) {
+	public boolean logNow(long state) {
        //		grjtodo 
 
 		return false;

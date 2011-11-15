@@ -38,7 +38,7 @@ public class MLLogger extends MCLogger {
 
     private final Likelihood likelihood;
     private double bestLikelihood;
-    private int bestState;
+    private long bestState;
     private String[] bestValues = null;
     private int logEvery = 0;
 
@@ -69,7 +69,7 @@ public class MLLogger extends MCLogger {
         super.startLogging();
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         double lik;
 
@@ -88,7 +88,7 @@ public class MLLogger extends MCLogger {
 
                 String[] values = new String[getColumnCount() + 1];
 
-                values[0] = Integer.toString(bestState);
+                values[0] = Long.toString(bestState);
 
                 System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
@@ -100,7 +100,7 @@ public class MLLogger extends MCLogger {
 
             String[] values = new String[getColumnCount() + 1];
 
-            values[0] = Integer.toString(bestState);
+            values[0] = Long.toString(bestState);
 
             System.arraycopy(bestValues, 0, values, 1, getColumnCount());
 
@@ -112,7 +112,7 @@ public class MLLogger extends MCLogger {
         final int columnCount = getColumnCount();
         String[] values = new String[columnCount + 2];
 
-        values[0] = Integer.toString(bestState);
+        values[0] = Long.toString(bestState);
         values[1] = Double.toString(bestLikelihood);
 
         System.arraycopy(bestValues, 0, values, 2, columnCount);

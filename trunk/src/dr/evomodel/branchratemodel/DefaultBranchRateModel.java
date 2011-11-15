@@ -25,8 +25,7 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.inference.model.Model;
 import dr.inference.model.ModelListener;
 import dr.inference.model.Variable;
@@ -106,6 +105,14 @@ public final class DefaultBranchRateModel implements BranchRateModel {
 
     public boolean getLoggable() {
         return true;
+    }
+
+    public TreeTrait getTreeTrait(final String key) {
+        return this;
+    }
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { this };
     }
 
     public Class getTraitClass() {

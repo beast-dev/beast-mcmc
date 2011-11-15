@@ -132,12 +132,39 @@ public class TreeLoggerParser extends LoggerParser {
             if (cxo instanceof XMLObject) {
                 XMLObject xco = (XMLObject)cxo;
                 if (xco.getName().equals(TREE_TRAIT)) {
-                    String name = xco.getStringAttribute(NAME);
-                    String tag = xco.getStringAttribute(TAG);
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
-                    TreeTrait trait = ttp.getTreeTrait(name);
 
-                    ttps.add(new TreeTraitProvider.Helper(tag, trait));
+                    String name = xco.getStringAttribute(NAME);
+                    final TreeTrait trait = ttp.getTreeTrait(name);
+
+                    final String tag = xco.getStringAttribute(TAG);
+
+                    ttps.add(new TreeTraitProvider.Helper(tag, new TreeTrait() {
+
+                        public String getTraitName() {
+                            return tag;
+                        }
+
+                        public Intent getIntent() {
+                            return trait.getIntent();
+                        }
+
+                        public Class getTraitClass() {
+                            return trait.getTraitClass();
+                        }
+
+                        public Object getTrait(Tree tree, NodeRef node) {
+                            return trait.getTrait(tree, node);
+                        }
+
+                        public String getTraitString(Tree tree, NodeRef node) {
+                            return trait.getTraitString(tree, node);
+                        }
+
+                        public boolean getLoggable() {
+                            return trait.getLoggable();
+                        }
+                    }));
                 }
             }
             // Without this next block, branch rates get ignored :-(

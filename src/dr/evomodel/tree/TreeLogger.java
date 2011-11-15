@@ -92,30 +92,6 @@ public class TreeLogger extends MCLogger {
                       boolean sortTranslationTable, boolean mapNames, NumberFormat format,
                       TreeLogger.LogUpon condition) {
 
-        /*this(tree, branchRates, treeAttributeProviders, nodeAttributeProviders, branchAttributeProviders, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, condition, Double.NaN);
-
-    }
-
-    public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable, boolean mapNames, double normaliseMeanRateTo) {
-
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, null, null, normaliseMeanRateTo);
-    }
-
-    public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable, boolean mapNames, NumberFormat format, double normaliseMeanRateTo) {
-
-        this(tree, null, null, null, null, formatter, logEvery, nexusFormat, sortTranslationTable, mapNames, format, null, normaliseMeanRateTo);
-    }
-
-    public TreeLogger(Tree tree, BranchRateController branchRates,
-                      TreeAttributeProvider[] treeAttributeProviders,
-                      NodeAttributeProvider[] nodeAttributeProviders,
-                      BranchAttributeProvider[] branchAttributeProviders,
-                      LogFormatter formatter, int logEvery, boolean nexusFormat,
-                      boolean sortTranslationTable, boolean mapNames, NumberFormat format,
-                      TreeLogger.LogUpon condition, double normaliseMeanRateTo) {
-                                                                              */
         super(formatter, logEvery, false);
 
         this.condition = condition;

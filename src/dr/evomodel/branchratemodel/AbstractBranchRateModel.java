@@ -25,8 +25,7 @@
 
 package dr.evomodel.branchratemodel;
 
-import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
+import dr.evolution.tree.*;
 import dr.inference.model.*;
 
 /**
@@ -48,6 +47,14 @@ public abstract class AbstractBranchRateModel extends AbstractModelLikelihood im
 
     public Intent getIntent() {
         return Intent.BRANCH;
+    }
+
+    public TreeTrait getTreeTrait(final String key) {
+        return this;
+    }
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[] { this };
     }
 
     public Class getTraitClass() {

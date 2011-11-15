@@ -13,6 +13,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -39,6 +40,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                         BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
+                                                        TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
@@ -59,6 +61,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
+                tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
                 partialsRestrictions,
@@ -72,20 +75,21 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-            AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
-            AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
-            new ElementRule(PatternList.class),
-            new ElementRule(TreeModel.class),
-            new ElementRule(GammaSiteRateModel.class),
-            new ElementRule(BranchSubstitutionModel.class, true),     
-            new ElementRule(BranchRateModel.class, true),
-            new ElementRule(SubstitutionModel.class),
-            AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
-                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
-                new ElementRule(TaxonList.class),
-                new ElementRule(Parameter.class),
-            }, true),
-            new ElementRule(FrequencyModel.class, true),
+                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
+                new ElementRule(PatternList.class),
+                new ElementRule(TreeModel.class),
+                new ElementRule(GammaSiteRateModel.class),
+                new ElementRule(BranchSubstitutionModel.class, true),
+                new ElementRule(BranchRateModel.class, true),
+                new ElementRule(TipStatesModel.class, true),
+                new ElementRule(SubstitutionModel.class),
+                AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
+                new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
+                        new ElementRule(TaxonList.class),
+                        new ElementRule(Parameter.class),
+                }, true),
+                new ElementRule(FrequencyModel.class, true),
         };
     }
 }

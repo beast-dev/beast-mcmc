@@ -69,6 +69,7 @@ public class MarkovJumpsTest extends TraceCorrelationAssert {
                 branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
+                null,
                 false,
                 PartialsRescalingScheme.AUTO,
                 null,

@@ -98,6 +98,7 @@ public class AncestralStateBeagleTreeLikelihoodTest extends TraceCorrelationAsse
                 branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
+                null,
                 false,
                 PartialsRescalingScheme.DEFAULT,
                 null,

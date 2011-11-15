@@ -12,6 +12,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
 import dr.xml.*;
 import dr.inference.model.Parameter;
@@ -46,6 +47,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                         BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
+                                                        TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
@@ -72,6 +74,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 branchSubstitutionModel,
                 siteRateModel,
                 branchRateModel,
+                tipStatesModel,
                 useAmbiguities,
                 scalingScheme,
                 partialsRestrictions,

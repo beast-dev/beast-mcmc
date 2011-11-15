@@ -13,6 +13,7 @@ import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -40,7 +41,9 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                               BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
-                                              BranchRateModel branchRateModel, boolean useAmbiguities,
+                                              BranchRateModel branchRateModel,
+                                              TipStatesModel tipStatesModel,
+                                              boolean useAmbiguities,
                                               PartialsRescalingScheme scalingScheme,
                                               Map<Set<String>, Parameter> partialsRestrictions,
                                               final DataType dataType,
@@ -49,7 +52,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
               partialsRestrictions);
 
         this.dataType = dataType;

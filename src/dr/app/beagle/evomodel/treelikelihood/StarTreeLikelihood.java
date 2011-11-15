@@ -52,7 +52,7 @@ public class StarTreeLikelihood extends BeagleTreeLikelihood {
                               BranchRateModel branchRateModel, boolean useAmbiguities,
                               PartialsRescalingScheme rescalingScheme,
                                Map<Set<String>, Parameter> partialsRestrictions) {
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, useAmbiguities,
+        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, null, useAmbiguities,
                 rescalingScheme, partialsRestrictions);
 
         // Modify tree into star

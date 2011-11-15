@@ -8,6 +8,7 @@ import dr.evolution.continuous.Continuous;
 import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxon;
+import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.util.Attribute;
@@ -438,7 +439,13 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 writer.writeIDref("multivariateDiffusionModel", model.getName() + ".diffusionModel");
                 writer.writeIDref("multivariateTraitLikelihood", partitionData.getName() + ".traitLikelihood");
                 if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
+                    writer.writeOpenTag(TreeLoggerParser.TREE_TRAIT,
+                            new Attribute[] {
+                                    new Attribute.Default<String>(TreeLoggerParser.NAME, "rate"),
+                                    new Attribute.Default<String>(TreeLoggerParser.TAG, partitionData.getName() + ".rate"),
+                            });
                     writer.writeIDref("discretizedBranchRates",  partitionData.getName() + "." + "diffusionRates");
+                    writer.writeCloseTag(TreeLoggerParser.TREE_TRAIT);
                 }
             }
         }

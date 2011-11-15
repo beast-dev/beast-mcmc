@@ -31,7 +31,7 @@ public class RLTVLogger extends MCLogger {
         logLine("State\tRate changes");
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         if (logEvery <= 0 || ((state % logEvery) == 0)) {
 

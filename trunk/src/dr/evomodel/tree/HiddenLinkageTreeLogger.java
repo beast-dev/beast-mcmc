@@ -38,7 +38,7 @@ public class HiddenLinkageTreeLogger extends TreeLogger {
     	this.hlm = hlm;
     }
 
-    public void log(int state) {
+    public void log(long state) {
         final boolean doIt = condition != null ? condition.logNow(state) :
             (logEvery < 0 || ((state % logEvery) == 0));
         if(!doIt)

@@ -254,9 +254,10 @@ public class ImportanceNarrowExchange extends AbstractTreeOperator implements Tr
         justAccepted = true;
     }
 
-    private final int lFreq = 1000;
-    private int lastLog = -lFreq-1;
-    public boolean logNow(int state) {
+    private final long lFreq = 1000;
+    private long lastLog = -lFreq-1;
+
+    public boolean logNow(long state) {
 
         boolean r = justAccepted;
         if( lastLog + lFreq >= state ) {

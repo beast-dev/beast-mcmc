@@ -68,7 +68,7 @@ public class TreeSummary extends MCLogger {
         return map;
     }
 
-    public void log(int state) {
+    public void log(long state) {
 
         if (logEvery <= 0 || ((state % logEvery) == 0)) {
             if (state == 0) {

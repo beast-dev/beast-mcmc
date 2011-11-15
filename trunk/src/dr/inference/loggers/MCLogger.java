@@ -198,6 +198,10 @@ public class MCLogger implements Logger {
         }
     }
 
+    public final void log(int state) {
+        // just to prevent overriding of the old 32 bit signature
+    }
+
     public void log(long state) {
 
         if (performanceReport && !performanceReportStarted && state >= performanceReportDelay) {

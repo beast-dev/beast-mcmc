@@ -366,7 +366,7 @@ public abstract class Generator {
                 writer.writeCloseTag(GammaDistributionModel.GAMMA_DISTRIBUTION_MODEL);
                 break;
             default:
-                throw new IllegalArgumentException("Unknown Distribution Model");
+                throw new IllegalArgumentException("Unknown Distribution Model for " + parameter.getName());
         }
     }
 

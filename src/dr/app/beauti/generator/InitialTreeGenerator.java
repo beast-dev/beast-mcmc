@@ -136,7 +136,8 @@ public class InitialTreeGenerator extends Generator {
 
         Attribute[] taxaAttribute = {new Attribute.Default<String>(XMLParser.IDREF, taxaId)};
 
-        if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST
+        if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+            // *BEAST case is in STARBEASTGenerator.writeStartingTreeForCalibration(XMLWriter writer)
             writer.writeOpenTag(CoalescentSimulatorParser.CONSTRAINED_TAXA);
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
             for (Taxa taxa : options.taxonSets) {
@@ -150,7 +151,8 @@ public class InitialTreeGenerator extends Generator {
 
                     writer.writeIDref(TaxaParser.TAXA, taxa.getId());
 
-                    if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                    if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
+                            && statistic.priorType == PriorType.UNIFORM_PRIOR) {
                         writeDistribution(statistic, false, writer);
                     }
 

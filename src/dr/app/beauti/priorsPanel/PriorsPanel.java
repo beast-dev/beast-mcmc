@@ -421,7 +421,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
             if (param.getBaseName().endsWith("treeModel.rootHeight") || param.taxaId != null) { // param.taxa != null is TMRCA
 
-                if (options.clockModelOptions.isNodeCalibrated(param)) {
+                if (options.treeModelOptions.isNodeCalibrated(param)) {
                     List<ClockModelGroup> groupList;
                     if (options.useStarBEAST) {
                         groupList = options.clockModelOptions.getClockModelGroups();

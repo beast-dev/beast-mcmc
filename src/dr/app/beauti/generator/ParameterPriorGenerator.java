@@ -90,7 +90,7 @@ public class ParameterPriorGenerator extends Generator {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
                     //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.clockModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
                         writeParameterPrior(parameter, writer);
                     }
                 }
@@ -103,7 +103,7 @@ public class ParameterPriorGenerator extends Generator {
                     if (parameter.isCached) {
                         writeCachedParameterPrior(parameter, writer);
                     //if (parameter.priorType != PriorType.UNIFORM_PRIOR || parameter.isNodeHeight) {
-                    } else if (!(options.clockModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
+                    } else if (!(options.treeModelOptions.isNodeCalibrated(parameter) && parameter.isCalibratedYule)) {
                         writeParameterPrior(parameter, writer);
                     }
                 }

@@ -450,8 +450,8 @@ public class TreePriorGenerator extends Generator {
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
 
                         if (!options.treeModelOptions.isNodeCalibrated(nodeCalib)) {
-                            throw new IllegalArgumentException("Cannot find a valid calibration on node " +
-                                    nodeCalib.getName() + " when using Calibrated Yule !");
+                            throw new IllegalArgumentException("Calibrated Yule model requires a calibration to be specified for node, " +
+                                    nodeCalib.getName() + ".");
                         }
                     }
                 }

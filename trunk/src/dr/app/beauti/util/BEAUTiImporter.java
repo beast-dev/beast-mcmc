@@ -369,67 +369,67 @@ public class BEAUTiImporter {
         setData(file.getName(), taxa, null, null, null, importedTraits, null);
     }
 
-    public void oldImportTraits(final File file) throws Exception {
-        List<TraitData> importedTraits = new ArrayList<TraitData>();
-        Taxa taxa = new Taxa();
-
-        try {
-            Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
-
-
-            for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
-                final Class c = Utils.detectType(e.getValue().get(0)[1]);
-                final String traitName = e.getKey();
-
-                Boolean warningGiven = false;
-                for (String[] v : e.getValue()) {
-                    final Class c1 = Utils.detectType(v[1]);
-                    if (c != c1 && !warningGiven) {
-                        JOptionPane.showMessageDialog(frame, "Not all values of same type in column" + traitName,
-                                "Incompatible values", JOptionPane.WARNING_MESSAGE);
-                        warningGiven = true;
-                        // TODO Error - not all values of same type
-                    }
-                }
-
-                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
-                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
-                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
-
-//                TraitData newTrait = new TraitData(options, traitName, file.getName(), TraitData.TraitType.DISCRETE);
-
-                if (validateTraitName(traitName)) {
-                    importedTraits.add(newTrait);
-                }
-
-                for (final String[] v : e.getValue()) {
-                    if (v[0].equalsIgnoreCase(v[1])) {
-                        throw new Arguments.ArgumentException("Trait (" + traitName + ") value (" + v[1]
-                                + ")\n cannot be same as taxon name (" + v[0] + ") !");
-                    }
-
-                    final int index = options.taxonList.getTaxonIndex(v[0]);
-                    Taxon taxon;
-                    if (index >= 0) {
-                        taxon = options.taxonList.getTaxon(index);
-//                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
-                    } else {
-                        taxon = new Taxon(v[0]);
-                    }
-                    taxon.setAttribute(traitName, v[1]);
-                    taxa.addTaxon(taxon);
-                }
-            }
-        } catch (Arguments.ArgumentException e) {
-            JOptionPane.showMessageDialog(frame, "Error in loading traits file " + file.getName() + " :\n" + e.getMessage(),
-                    "Error Loading file", JOptionPane.ERROR_MESSAGE);
-            // AR: this will remove all the existing traits including those loaded previously:
-//            traitsPanel.traitsTable.selectAll();
-//            traitsPanel.removeTrait();
-        }
-
-        setData(file.getName(), taxa, null, null, null, importedTraits, null);
-    }
+//    public void oldImportTraits(final File file) throws Exception {
+//        List<TraitData> importedTraits = new ArrayList<TraitData>();
+//        Taxa taxa = new Taxa();
+//
+//        try {
+//            Map<String, List<String[]>> traits = Utils.importTraitsFromFile(file, "\t");
+//
+//
+//            for (Map.Entry<String, List<String[]>> e : traits.entrySet()) {
+//                final Class c = Utils.detectType(e.getValue().get(0)[1]);
+//                final String traitName = e.getKey();
+//
+//                Boolean warningGiven = false;
+//                for (String[] v : e.getValue()) {
+//                    final Class c1 = Utils.detectType(v[1]);
+//                    if (c != c1 && !warningGiven) {
+//                        JOptionPane.showMessageDialog(frame, "Not all values of same type in column" + traitName,
+//                                "Incompatible values", JOptionPane.WARNING_MESSAGE);
+//                        warningGiven = true;
+//                        // TODO Error - not all values of same type
+//                    }
+//                }
+//
+//                TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+//                        (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
+//                TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
+//
+////                TraitData newTrait = new TraitData(options, traitName, file.getName(), TraitData.TraitType.DISCRETE);
+//
+//                if (validateTraitName(traitName)) {
+//                    importedTraits.add(newTrait);
+//                }
+//
+//                for (final String[] v : e.getValue()) {
+//                    if (v[0].equalsIgnoreCase(v[1])) {
+//                        throw new Arguments.ArgumentException("Trait (" + traitName + ") value (" + v[1]
+//                                + ")\n cannot be same as taxon name (" + v[0] + ") !");
+//                    }
+//
+//                    final int index = options.taxonList.getTaxonIndex(v[0]);
+//                    Taxon taxon;
+//                    if (index >= 0) {
+//                        taxon = options.taxonList.getTaxon(index);
+////                        taxon.setAttribute(traitName, Utils.constructFromString(c, v[1]));
+//                    } else {
+//                        taxon = new Taxon(v[0]);
+//                    }
+//                    taxon.setAttribute(traitName, v[1]);
+//                    taxa.addTaxon(taxon);
+//                }
+//            }
+//        } catch (Arguments.ArgumentException e) {
+//            JOptionPane.showMessageDialog(frame, "Error in loading traits file " + file.getName() + " :\n" + e.getMessage(),
+//                    "Error Loading file", JOptionPane.ERROR_MESSAGE);
+//            // AR: this will remove all the existing traits including those loaded previously:
+////            traitsPanel.traitsTable.selectAll();
+////            traitsPanel.removeTrait();
+//        }
+//
+//        setData(file.getName(), taxa, null, null, null, importedTraits, null);
+//    }
 
     public boolean validateTraitName(String traitName) {
         // check that the name is valid

@@ -327,7 +327,7 @@ public class BranchRatesModelGenerator extends Generator {
                 writer.writeComment("The random local clock model (Drummond & Suchard, 2010)");
 
                 if (activeTrees == null || activeTrees.size() != 1) {
-                    throw new IllegalArgumentException("One random local clock CANNOT have different tree models !!!");
+                    throw new IllegalArgumentException("A single random local clock cannot be applied to multiple trees.");
                 }
                 treePrefix = activeTrees.get(0).getPrefix();
 

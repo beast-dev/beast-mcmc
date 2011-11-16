@@ -91,7 +91,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
             // in place by the time setupMatrix is called.
 
             if (freqModel.getDataType() != dataType) {
-                throw new IllegalArgumentException("Datatypes do not match!");
+                throw new IllegalArgumentException("Datatypes do not match.");
             }
 
             this.freqModel = freqModel;

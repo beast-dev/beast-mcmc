@@ -392,6 +392,18 @@ public abstract class Generator {
     public class GeneratorException extends Exception {
         public GeneratorException(String message) {
             super(message);
+            switchToPanel = null;
         }
+
+        public GeneratorException(String message, String switchToPanel) {
+            super(message);
+            this.switchToPanel = switchToPanel;
+        }
+
+        public String getSwitchToPanel() {
+            return switchToPanel;
+        }
+
+        private final String switchToPanel;
     }
 }

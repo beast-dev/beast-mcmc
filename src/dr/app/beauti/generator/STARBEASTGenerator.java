@@ -125,7 +125,8 @@ public class STARBEASTGenerator extends Generator {
 
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
 
-            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION
+                    && statistic.priorType == PriorType.UNIFORM_PRIOR) {
                 writeDistribution(statistic, false, writer);
             }
 

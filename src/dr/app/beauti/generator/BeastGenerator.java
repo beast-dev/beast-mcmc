@@ -43,10 +43,8 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.evomodelxml.speciation.MultiSpeciesCoalescentParser;
 import dr.evomodelxml.speciation.SpeciationLikelihoodParser;
-import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.evoxml.AlignmentParser;
 import dr.evoxml.DateParser;
 import dr.evoxml.TaxaParser;
@@ -80,7 +78,9 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-    private final String VALIDATE_MESSAGE = "\nas another element (taxon, sequence, taxon set, species, etc.):\nAll ids should be unique.";
+    private static final String MESSAGE_CAL_YULE = "Calibrated Yule has to have only 1 calibrated internal node\n" +
+            "with monophyletic for each tree at moment !";
+    private final String MESSAGE_CAL = "\nas another element (taxon, sequence, taxon set, species, etc.):\nAll ids should be unique.";
 
     private final AlignmentGenerator alignmentGenerator;
     private final PatternListGenerator patternListGenerator;
@@ -144,13 +144,28 @@ public class BeastGenerator extends Generator {
                 Taxon taxon = taxonList.getTaxon(i);
                 if (ids.contains(taxon.getId())) {
                     throw new IllegalArgumentException("A taxon has the same id," + taxon.getId() +
-                            VALIDATE_MESSAGE);
+                            MESSAGE_CAL);
                 }
                 ids.add(taxon.getId());
             }
         }
 
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
+        for (PartitionTreeModel model : options.getPartitionTreeModels()) {
+            // should be only 1 calibrated internal node with monophyletic for each tree at moment
+            if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                if (options.treeModelOptions.isNodeCalibrated(model) < 0)
+                    throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+
+                if (options.treeModelOptions.isNodeCalibrated(model) > 0) {
+                    if (options.getKeysFromValue(options.taxonSetsTreeModel, model).size() != 1
+                            || !options.taxonSetsMono.get(options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0))) {
+                        throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+                    }
+                }
+            }
+        }
+
         for (Taxa taxa : options.taxonSets) {
             if (taxa.getTaxonCount() < 2) {
                 throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ",\n should contain" +
@@ -158,18 +173,9 @@ public class BeastGenerator extends Generator {
             }
             if (ids.contains(taxa.getId())) {
                 throw new IllegalArgumentException("A taxon set has the same id," + taxa.getId() +
-                        VALIDATE_MESSAGE);
+                        MESSAGE_CAL);
             }
             ids.add(taxa.getId());
-
-            // should be only 1 calibrated internal node with monophyletic for each tree at moment
-            if (options.taxonSetsTreeModel.get(taxa).getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
-                if (!options.taxonSetsMono.get(taxa)
-                        || options.getKeysFromValue(options.taxonSetsTreeModel, options.taxonSetsTreeModel.get(taxa)).size() > 1) {
-                    throw new IllegalArgumentException("Calibrated Yule only allows 1 calibrated internal node " +
-                            "with monophyletic for each tree at moment !");
-                }
-            }
         }
 
         //++++++++++++++++ *BEAST ++++++++++++++++++
@@ -179,6 +185,13 @@ public class BeastGenerator extends Generator {
                         "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
 
             //++++++++++++++++ Species Sets ++++++++++++++++++
+            // should be only 1 calibrated internal node with monophyletic at moment
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
+                if (options.speciesSets.size() != 1 || !options.speciesSetsMono.get(options.speciesSets.get(0))) {
+                    throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+                }
+            }
+
             for (Taxa species : options.speciesSets) {
                 if (species.getTaxonCount() < 2) {
                     throw new IllegalArgumentException("Species set, " + species.getId() + ",\n should contain" +
@@ -186,18 +199,9 @@ public class BeastGenerator extends Generator {
                 }
                 if (ids.contains(species.getId())) {
                     throw new IllegalArgumentException("A species set has the same id," + species.getId() +
-                            VALIDATE_MESSAGE);
+                            MESSAGE_CAL);
                 }
                 ids.add(species.getId());
-
-                // should be only 1 calibrated internal node with monophyletic at moment
-                if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-                    if (!options.speciesSetsMono.get(species)) {
-                        throw new IllegalArgumentException("Calibrated Yule only allows 1 calibrated internal node " +
-                                "with monophyletic at moment !");
-                    }
-                }
-
             }
         }
 

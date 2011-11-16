@@ -410,12 +410,13 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(TreeModel.TREE_MODEL, modelPrefix + TreeModel.TREE_MODEL);
                 writer.writeCloseTag(SpeciationLikelihoodParser.TREE);
 
-                if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
+                if (treePrior == TreePriorType.YULE_CALIBRATION) {
 
-                    Parameter nodeCalib = model.getParameter("treeModel.rootHeight");
-
-                    if (options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
-                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+                    if (options.treeModelOptions.isNodeCalibrated(model) == 0) {
+                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION,
+                        new Attribute[]{
+                                new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
+                        });
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
                         String taxaId;
@@ -426,17 +427,20 @@ public class TreePriorGenerator extends Generator {
                         }
                         writer.writeIDref(TaxaParser.TAXA, taxaId);
 
-                        writeDistribution(nodeCalib, true, writer);
+                        writeDistribution(model.getParameter("treeModel.rootHeight"), true, writer);
 
                         writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
 
-                    } else {
+                    } else if (options.treeModelOptions.isNodeCalibrated(model) == 1) {
                         // should be only 1 calibrated internal node with monophyletic for each tree at moment
                         Taxa t = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0);
-                        nodeCalib = options.getStatistic(t);
+                        Parameter nodeCalib = options.getStatistic(t);
 
-                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION);
+                        writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION,
+                        new Attribute[]{
+                                new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
+                        });
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
                         writer.writeIDref(TaxaParser.TAXA, t.getId());
@@ -445,8 +449,9 @@ public class TreePriorGenerator extends Generator {
                         writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
                         writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
 
-                        if (!options.clockModelOptions.isNodeCalibrated(nodeCalib)) {
-                            throw new IllegalArgumentException("Cannot find valid a calibrated internal node using Calibrated Yule !");
+                        if (!options.treeModelOptions.isNodeCalibrated(nodeCalib)) {
+                            throw new IllegalArgumentException("Cannot find a valid calibration on node " +
+                                    nodeCalib.getName() + " when using Calibrated Yule !");
                         }
                     }
                 }

@@ -111,7 +111,7 @@ public class TreeModelOptions extends ModelOptions {
     private boolean hasProperPriorOn(Parameter para) {
         return para.priorType == PriorType.EXPONENTIAL_PRIOR
 //                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
-                || (para.priorType == PriorType.UNIFORM_PRIOR && para.truncationLower > 0 && para.truncationUpper < Double.POSITIVE_INFINITY)
+                || (para.priorType == PriorType.UNIFORM_PRIOR && para.uniformLower > 0 && para.uniformUpper < Double.POSITIVE_INFINITY)
                 || para.priorType == PriorType.LAPLACE_PRIOR
                 || para.priorType == PriorType.NORMAL_PRIOR
                 || para.priorType == PriorType.LOGNORMAL_PRIOR

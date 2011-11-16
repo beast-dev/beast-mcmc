@@ -78,8 +78,8 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-    private static final String MESSAGE_CAL_YULE = "Calibrated Yule has to have only 1 calibrated internal node\n" +
-            "with monophyletic for each tree at moment !";
+    private static final String MESSAGE_CAL_YULE = "Calibrated Yule requires 1 calibrated internal node\n" +
+            "with monophyly enforced for each tree.";
     private final String MESSAGE_CAL = "\nas another element (taxon, sequence, taxon set, species, etc.):\nAll ids should be unique.";
 
     private final AlignmentGenerator alignmentGenerator;
@@ -181,8 +181,8 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ *BEAST ++++++++++++++++++
         if (options.useStarBEAST) {
             if (!options.traitExists(TraitData.TRAIT_SPECIES))
-                throw new IllegalArgumentException("Keyword \"species\" is reserved for *BEAST only !" +
-                        "\nPlease check the consistency between Use *BEAST check-box and Traits table.");
+                throw new IllegalArgumentException("A trait labelled \"species\" is required for *BEAST species designations." +
+                        "\nPlease create or import the species designations in the Traits table.");
 
             //++++++++++++++++ Species Sets ++++++++++++++++++
             // should be only 1 calibrated internal node with monophyletic at moment
@@ -243,7 +243,7 @@ public class BeastGenerator extends Generator {
                 PartitionTreeModel treeModel = null;
                 for (AbstractPartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
                     if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
-                        throw new IllegalArgumentException("One random local clock CANNOT have different tree models !");
+                        throw new IllegalArgumentException("A single random local clock cannot be applied to multiple trees.");
                     }
                     treeModel = pd.getPartitionTreeModel();
                 }
@@ -257,7 +257,7 @@ public class BeastGenerator extends Generator {
                 if (pd.getTaxonCount() > 0) {
                     if (numOfTaxa > 0) {
                         if (numOfTaxa != pd.getTaxonCount()) {
-                            throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree");
+                            throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree.");
                         }
                     } else {
                         numOfTaxa = pd.getTaxonCount();

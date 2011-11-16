@@ -539,26 +539,6 @@ public class ClockModelOptions extends ModelOptions {
         return options.maximumTipHeight > 0;
     }
 
-    public boolean isNodeCalibrated(Parameter para) {
-        return (para.taxaId != null && hasProperPriorOn(para)) // param.taxa != null is TMRCA
-                || (para.getBaseName().endsWith("treeModel.rootHeight") && hasProperPriorOn(para));
-    }
-
-    private boolean hasProperPriorOn(Parameter para) {
-        return para.priorType == PriorType.EXPONENTIAL_PRIOR
-//                || para.priorType == PriorType.TRUNC_NORMAL_PRIOR
-                || (para.priorType == PriorType.UNIFORM_PRIOR && para.truncationLower > 0 && para.truncationUpper < Double.POSITIVE_INFINITY)
-                || para.priorType == PriorType.LAPLACE_PRIOR
-                || para.priorType == PriorType.NORMAL_PRIOR
-                || para.priorType == PriorType.LOGNORMAL_PRIOR
-                || para.priorType == PriorType.GAMMA_PRIOR
-                || para.priorType == PriorType.INVERSE_GAMMA_PRIOR
-                || para.priorType == PriorType.BETA_PRIOR
-                || para.priorType == PriorType.CMTC_RATE_REFERENCE_PRIOR
-                || para.priorType == PriorType.LOGNORMAL_HPM_PRIOR
-                || para.priorType == PriorType.POISSON_PRIOR;
-    }
-
     public boolean isRateCalibrated() {
         return false;//TODO
     }

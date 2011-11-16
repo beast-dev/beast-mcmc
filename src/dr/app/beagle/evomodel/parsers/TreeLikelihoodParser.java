@@ -125,6 +125,9 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 
         TipStatesModel tipStatesModel = (TipStatesModel) xo.getChild(TipStatesModel.class);
+//        if (xo.getChild(TipStatesModel.class) != null) {
+//            throw new XMLParseException("Sequence Error Models are not supported under BEAGLE yet. Please use Native BEAST Likelihood.");
+//        }
 
         PartialsRescalingScheme scalingScheme = PartialsRescalingScheme.DEFAULT;
         if (xo.hasAttribute(SCALING_SCHEME)) {
@@ -150,9 +153,6 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
         }
 
-        if (xo.getChild(TipStatesModel.class) != null) {
-            throw new XMLParseException("Sequence Error Models are not supported under BEAGLE yet. Please use Native BEAST Likelihood.");
-        }
 
         if (instanceCount == 1 || patternList.getPatternCount() < instanceCount) {
             return createTreeLikelihood(

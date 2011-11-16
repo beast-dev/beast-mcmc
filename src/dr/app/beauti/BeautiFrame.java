@@ -41,6 +41,7 @@ import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
+import dr.evolution.util.Taxon;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
@@ -67,6 +68,17 @@ import java.io.IOException;
 public class BeautiFrame extends DocumentFrame {
 
     private static final long serialVersionUID = 2114148696789612509L;
+
+    public final static String DATA_PARTITIONS = "Partitions";
+    public final static String TAXON_SETS = "Taxa";
+    public final static String TIP_DATES = "Tips";
+    public final static String TRAITS = "Traits";
+    public final static String SITE_MODELS = "Sites";
+    public final static String CLOCK_MODELS = "Clocks";
+    public final static String TREES = "Trees";
+    public final static String PRIORS = "Priors";
+    public final static String OPERATORS = "Operators";
+    public final static String MCMC = "MCMC";
 
     private final BeautiOptions options;
     private final BeastGenerator generator;
@@ -148,17 +160,17 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
 
-        tabbedPane.addTab("Data Partitions", dataPanel);
-        tabbedPane.addTab("Taxon Sets", taxonSetPanel);
+        tabbedPane.addTab(DATA_PARTITIONS, dataPanel);
+        tabbedPane.addTab(TAXON_SETS, taxonSetPanel);
 //        tabbedPane.addTab("Species Sets", speciesSetPanel);
-        tabbedPane.addTab("Tip Dates", tipDatesPanel);
-        tabbedPane.addTab("Traits", traitsPanel);
-        tabbedPane.addTab("Site Models", siteModelsPanel);
-        tabbedPane.addTab("Clock Models", clockModelsPanel);
-        tabbedPane.addTab("Trees", treesPanel);
-        tabbedPane.addTab("Priors", priorsPanel);
-        tabbedPane.addTab("Operators", operatorsPanel);
-        tabbedPane.addTab("MCMC", mcmcPanel);
+        tabbedPane.addTab(TIP_DATES, tipDatesPanel);
+        tabbedPane.addTab(TRAITS, traitsPanel);
+        tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
+        tabbedPane.addTab(CLOCK_MODELS, clockModelsPanel);
+        tabbedPane.addTab(TREES, treesPanel);
+        tabbedPane.addTab(PRIORS, priorsPanel);
+        tabbedPane.addTab(OPERATORS, operatorsPanel);
+        tabbedPane.addTab(MCMC, mcmcPanel);
         currentPanel = (BeautiPanel) tabbedPane.getSelectedComponent();
 
         tabbedPane.addChangeListener(new ChangeListener() {
@@ -623,9 +635,17 @@ public class BeautiFrame extends DocumentFrame {
 
         try {
             generator.checkOptions();
-        } catch (IllegalArgumentException iae) {
-            JOptionPane.showMessageDialog(this, iae.getMessage(), "Invalid BEAUti setting : ",
+        } catch (Generator.GeneratorException ge) {
+            JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
                     JOptionPane.ERROR_MESSAGE);
+            if (ge.getSwitchToPanel() != null) {
+                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+                    if (tabbedPane.getTitleAt(i).equals(ge.getSwitchToPanel())) {
+                        tabbedPane.setSelectedIndex(i);
+                        break;
+                    }
+                }
+            }
             return false;
         }
 

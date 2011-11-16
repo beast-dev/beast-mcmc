@@ -26,6 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beast.BeastVersion;
+import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.ClockType;
@@ -126,7 +127,7 @@ public class BeastGenerator extends Generator {
      *
      * @throws IllegalArgumentException if there is a problem with the current settings
      */
-    public void checkOptions() throws IllegalArgumentException {
+    public void checkOptions() throws GeneratorException {
         //++++++++++++++++ Taxon List ++++++++++++++++++
         TaxonList taxonList = options.taxonList;
         Set<String> ids = new HashSet<String>();
@@ -137,14 +138,13 @@ public class BeastGenerator extends Generator {
 
         if (taxonList != null) {
             if (taxonList.getTaxonCount() < 2) {
-                throw new IllegalArgumentException("BEAST requires at least two taxa to run.");
+                throw new GeneratorException("BEAST requires at least two taxa to run.");
             }
 
             for (int i = 0; i < taxonList.getTaxonCount(); i++) {
                 Taxon taxon = taxonList.getTaxon(i);
                 if (ids.contains(taxon.getId())) {
-                    throw new IllegalArgumentException("A taxon has the same id," + taxon.getId() +
-                            MESSAGE_CAL);
+                    throw new GeneratorException("A taxon has the same id," + taxon.getId() +  MESSAGE_CAL);
                 }
                 ids.add(taxon.getId());
             }
@@ -155,12 +155,12 @@ public class BeastGenerator extends Generator {
             // should be only 1 calibrated internal node with monophyletic for each tree at moment
             if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
                 if (options.treeModelOptions.isNodeCalibrated(model) < 0)
-                    throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+                    throw new GeneratorException(MESSAGE_CAL_YULE);
 
                 if (options.treeModelOptions.isNodeCalibrated(model) > 0) {
                     if (options.getKeysFromValue(options.taxonSetsTreeModel, model).size() != 1
                             || !options.taxonSetsMono.get(options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0))) {
-                        throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+                        throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
                     }
                 }
             }
@@ -168,12 +168,12 @@ public class BeastGenerator extends Generator {
 
         for (Taxa taxa : options.taxonSets) {
             if (taxa.getTaxonCount() < 2) {
-                throw new IllegalArgumentException("Taxon set, " + taxa.getId() + ",\n should contain" +
-                        "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.");
+                throw new GeneratorException("Taxon set, " + taxa.getId() + ",\n should contain" +
+                        "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.", BeautiFrame.TAXON_SETS);
             }
             if (ids.contains(taxa.getId())) {
-                throw new IllegalArgumentException("A taxon set has the same id," + taxa.getId() +
-                        MESSAGE_CAL);
+                throw new GeneratorException("A taxon set has the same id," + taxa.getId() +
+                        MESSAGE_CAL, BeautiFrame.TAXON_SETS);
             }
             ids.add(taxa.getId());
         }
@@ -181,25 +181,25 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ *BEAST ++++++++++++++++++
         if (options.useStarBEAST) {
             if (!options.traitExists(TraitData.TRAIT_SPECIES))
-                throw new IllegalArgumentException("A trait labelled \"species\" is required for *BEAST species designations." +
-                        "\nPlease create or import the species designations in the Traits table.");
+                throw new GeneratorException("A trait labelled \"species\" is required for *BEAST species designations." +
+                        "\nPlease create or import the species designations in the Traits table.", BeautiFrame.TRAITS);
 
             //++++++++++++++++ Species Sets ++++++++++++++++++
             // should be only 1 calibrated internal node with monophyletic at moment
             if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
                 if (options.speciesSets.size() != 1 || !options.speciesSetsMono.get(options.speciesSets.get(0))) {
-                    throw new IllegalArgumentException(MESSAGE_CAL_YULE);
+                    throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
                 }
             }
 
             for (Taxa species : options.speciesSets) {
                 if (species.getTaxonCount() < 2) {
-                    throw new IllegalArgumentException("Species set, " + species.getId() + ",\n should contain" +
-                            "at least two species. \nPlease go back to Species Sets panel to select included species.");
+                    throw new GeneratorException("Species set, " + species.getId() + ",\n should contain" +
+                            "at least two species. \nPlease go back to Species Sets panel to select included species.", BeautiFrame.TAXON_SETS);
                 }
                 if (ids.contains(species.getId())) {
-                    throw new IllegalArgumentException("A species set has the same id," + species.getId() +
-                            MESSAGE_CAL);
+                    throw new GeneratorException("A species set has the same id," + species.getId() +
+                            MESSAGE_CAL, BeautiFrame.TAXON_SETS);
                 }
                 ids.add(species.getId());
             }
@@ -221,8 +221,8 @@ public class BeastGenerator extends Generator {
         if (options.getPartitionTreeModels().size() > 1) { //TODO not allowed multi-prior yet
             for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
                 if (prior.getNodeHeightPrior() == TreePriorType.GMRF_SKYRIDE) {
-                    throw new IllegalArgumentException("For GMRF, tree model/tree prior combination not implemented by BEAST yet" +
-                            "\nIt is only available for single tree model partition for this release.");
+                    throw new GeneratorException("For GMRF, tree model/tree prior combination not implemented by BEAST yet" +
+                            "\nIt is only available for single tree model partition for this release.", BeautiFrame.TREES);
                 }
             }
         }
@@ -231,7 +231,7 @@ public class BeastGenerator extends Generator {
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if (model.getStartingTreeType() == StartingTreeType.USER) {
                 if (model.getUserStartingTree() == null) {
-                    throw new IllegalArgumentException("Please selected a starting tree in Trees panel");
+                    throw new GeneratorException("Please selected a starting tree in Trees panel", BeautiFrame.TREES);
                 }
             }
         }
@@ -243,7 +243,7 @@ public class BeastGenerator extends Generator {
                 PartitionTreeModel treeModel = null;
                 for (AbstractPartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
                     if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
-                        throw new IllegalArgumentException("A single random local clock cannot be applied to multiple trees.");
+                        throw new GeneratorException("A single random local clock cannot be applied to multiple trees.", BeautiFrame.CLOCK_MODELS);
                     }
                     treeModel = pd.getPartitionTreeModel();
                 }
@@ -257,7 +257,7 @@ public class BeastGenerator extends Generator {
                 if (pd.getTaxonCount() > 0) {
                     if (numOfTaxa > 0) {
                         if (numOfTaxa != pd.getTaxonCount()) {
-                            throw new IllegalArgumentException("Partitions with different taxa cannot share the same tree.");
+                            throw new GeneratorException("Partitions with different taxa cannot share the same tree.", BeautiFrame.DATA_PARTITIONS);
                         }
                     } else {
                         numOfTaxa = pd.getTaxonCount();
@@ -270,18 +270,18 @@ public class BeastGenerator extends Generator {
         for (Parameter param : options.selectParameters()) {
             if (param.initial != Double.NaN) {
                 if (param.isTruncated && (param.initial < param.truncationLower || param.initial > param.truncationUpper)) {
-                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                             "\ninitial value " + param.initial + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
-                            "\nor this range is wrong. Please check the Prior panel.");
+                            "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
                 }
                 if (param.isNonNegative && param.initial < 0.0) {
-                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
-                            "\ninitial value " + param.initial + " should be non-negative. Please check the Prior panel.");
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\ninitial value " + param.initial + " should be non-negative. Please check the Prior panel.", BeautiFrame.PRIORS);
                 }
 
                 if (param.isZeroOne && (param.initial < 0.0 || param.initial > 1.0)) {
-                    throw new IllegalArgumentException("Parameter \"" + param.getName() + "\":" +
-                            "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.");
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\ninitial value " + param.initial + " should lie in the interval [0, 1]. Please check the Prior panel.", BeautiFrame.PRIORS);
                 }
             }
         }

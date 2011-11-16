@@ -124,13 +124,9 @@ public class STARBEASTGenerator extends Generator {
             writer.writeOpenTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT, mono);
 
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
-            if (statistic.isNodeHeight) {
-                if (statistic.isTruncated || statistic.priorType == PriorType.UNIFORM_PRIOR) {
-                    writer.writeOpenTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                    writer.writeTag(UniformDistributionModelParser.LOWER, new Attribute[]{}, "" + statistic.getLowerBound(), true);
-                    writer.writeTag(UniformDistributionModelParser.UPPER, new Attribute[]{}, "" + statistic.getUpperBound(), true);
-                    writer.writeCloseTag(UniformDistributionModelParser.UNIFORM_DISTRIBUTION_MODEL);
-                }
+
+            if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION) {
+                writeDistribution(statistic, false, writer);
             }
 
             writer.writeCloseTag(CoalescentSimulatorParser.TMRCA_CONSTRAINT);
@@ -141,9 +137,9 @@ public class STARBEASTGenerator extends Generator {
 
         writer.writeOpenTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL,
                 new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, "spInitDemo"),
-                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
-                        });
+                        new Attribute.Default<String>(XMLParser.ID, "spInitDemo"),
+                        new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(options.units))
+                });
         writer.writeOpenTag(ConstantPopulationModelParser.POPULATION_SIZE);
 
         double popSizeValue = options.getPartitionTreePriors().get(0).getParameter("constant.popSize").initial; // "initial" is "value"

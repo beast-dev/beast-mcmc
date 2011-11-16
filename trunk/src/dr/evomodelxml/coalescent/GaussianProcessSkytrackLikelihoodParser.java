@@ -45,6 +45,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 //	public static final String SKYLINE_LIKELIHOOD = "gmrfSkyrideLikelihood";
     public static final String SKYTRACK_LIKELIHOOD = "gpSkytrackLikelihood";
 
+    public static final String LAMBDA_BOUND_PARAMETER = "lambdaBoundParameter";
 	public static final String POPULATION_PARAMETER = "populationSizes";
 	public static final String GROUP_SIZES = "groupSizes";
 	public static final String PRECISION_PARAMETER = "precisionParameter";
@@ -53,7 +54,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 	public static final String BETA_PARAMETER = "betaParameter";
 	public static final String COVARIATE_MATRIX = "covariateMatrix";
 	public static final String RANDOMIZE_TREE = "randomizeTree";
-	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
+//	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
 
     public static final String RESCALE_BY_ROOT_ISSUE = "rescaleByRootHeight";
 //    public static final String GRID_POINTS = "gridPoints";
@@ -62,20 +63,27 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     public static final String CUT_OFF = "cutOff";
     public static final String PHI_PARAMETER = "phiParameter";
 
-    public static final String LATENT_PARAMETER = "latentPointParameter";
+//    public static final String LATENT_PARAMETER = "latentPointParameter";
     
 
     public String getParserName() {
-        return SKYTRACK_LIKELIHOOD;
+       return SKYTRACK_LIKELIHOOD;
     }
 
+
+
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
 
         XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
         Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
+
+        cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
+        Parameter lambda_bound = (Parameter) cxo.getChild(Parameter.class);
+
 
         cxo = xo.getChild(POPULATION_TREE);
 
@@ -105,13 +113,23 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
         } else {
             lambda = new Parameter.Default(1.0);
         }
-        /*
+
+//        Parameter lambda_bound;
+//        if (xo.getChild(LAMBDA_BOUND_PARAMETER) != null) {
+//            cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
+//            lambda_bound = (Parameter) cxo.getChild(Parameter.class);
+//        } else {
+//            lambda_bound = new Parameter.Default(1.0);
+//        }
+                /*
         Parameter gridPoints = null;
         if (xo.getChild(GRID_POINTS) != null) {
             cxo = xo.getChild(GRID_POINTS);
             gridPoints = (Parameter) cxo.getChild(Parameter.class);
         }
         */
+
+
         Parameter numGridPoints = null;
         if (xo.getChild(NUM_GRID_POINTS) != null) {
             cxo = xo.getChild(NUM_GRID_POINTS);
@@ -143,10 +161,10 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             dMatrix = (MatrixParameter) cxo.getChild(MatrixParameter.class);
         }
 
-        boolean timeAwareSmoothing = GMRFSkyrideLikelihood.TIME_AWARE_IS_ON_BY_DEFAULT;
-        if (xo.hasAttribute(TIME_AWARE_SMOOTHING)) {
-            timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
-        }
+//        boolean timeAwareSmoothing = GMRFSkyrideLikelihood.TIME_AWARE_IS_ON_BY_DEFAULT;
+//        if (xo.hasAttribute(TIME_AWARE_SMOOTHING)) {
+//            timeAwareSmoothing = xo.getBooleanAttribute(TIME_AWARE_SMOOTHING);
+//        }
 
         if ((dMatrix != null && beta == null) || (dMatrix == null && beta != null))
             throw new XMLParseException("Must specify both a set of regression coefficients and a design matrix.");
@@ -169,18 +187,18 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
         }
 
 
-        XMLObject latentChild = xo.getChild(LATENT_PARAMETER);
-        Parameter latentPoints = (Parameter) latentChild.getChild(Parameter.class);
+//        XMLObject latentChild = xo.getChild(LATENT_PARAMETER);
+//        Parameter latentPoints = (Parameter) latentChild.getChild(Parameter.class);
+
 
         boolean rescaleByRootHeight = xo.getAttribute(RESCALE_BY_ROOT_ISSUE, true);
 
-        Logger.getLogger("dr.evomodel").info("The " + SKYTRACK_LIKELIHOOD + " has " +
-                (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
-
+//        Logger.getLogger("dr.evomodel").info("The " + SKYTRACK_LIKELIHOOD + " has " +
+//                (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
 
              return new GaussianProcessSkytrackLikelihood(treeList, popParameter, groupParameter, precParameter,
-                lambda, beta, dMatrix, timeAwareSmoothing, rescaleByRootHeight, latentPoints);
+                lambda, beta, dMatrix, /*timeAwareSmoothing,*/ rescaleByRootHeight, /*latentPoints,*/ lambda_bound);
 
     }
 
@@ -193,7 +211,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     }
 
     public Class getReturnType() {
-        return GMRFSkyrideLikelihood.class;
+        return GaussianProcessSkytrackLikelihood.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -207,6 +225,9 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
+            new ElementRule(LAMBDA_BOUND_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
             new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true), // Optional
@@ -216,10 +237,11 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             new ElementRule(GROUP_SIZES, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true),
-            new ElementRule(LATENT_PARAMETER,Parameter.class),
+//            new ElementRule(LATENT_PARAMETER,Parameter.class),
+
             AttributeRule.newBooleanRule(RESCALE_BY_ROOT_ISSUE, true),
             AttributeRule.newBooleanRule(RANDOMIZE_TREE, true),
-            AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
+//            AttributeRule.newBooleanRule(TIME_AWARE_SMOOTHING, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true)
     };
 

@@ -409,7 +409,7 @@ public class Parameter {
         }
 
         if (isNonNegative || isZeroOne) {
-            lower = 0.0;
+            if (lower < 0) lower = 0.0;
         }
 
         if (isTruncated && !Double.isInfinite(truncationLower)) {
@@ -423,7 +423,7 @@ public class Parameter {
         double upper = Double.POSITIVE_INFINITY;
 
         if (isZeroOne) {
-            upper = 1.0;
+            if (upper > 1) upper = 1.0;
         }
 
         if (priorType == PriorType.UNIFORM_PRIOR) {

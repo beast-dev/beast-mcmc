@@ -49,7 +49,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
                     }
                 } else {
                     frequencies = patternList.getStateFrequencies();
-                }                
+                }
                 break;
             }
         }
@@ -57,7 +57,7 @@ public class FrequencyModelParser extends AbstractXMLObjectParser {
         StringBuilder sb = new StringBuilder("Creating state frequencies model '" + freqsParam.getParameterName() + "': ");
         if (frequencies != null) {
             if (freqsParam.getDimension() != frequencies.length) {
-                throw new XMLParseException("dimension of frequency parameter and number of sequence states don't match!");
+                throw new XMLParseException("dimension of frequency parameter and number of sequence states don't match.");
             }
             for (int j = 0; j < frequencies.length; j++) {
                 freqsParam.setParameterValue(j, frequencies[j]);

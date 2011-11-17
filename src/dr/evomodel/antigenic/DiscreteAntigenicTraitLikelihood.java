@@ -38,6 +38,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             DataTable<String[]> dataTable,
             Map<String, String> virusAntiserumMap,
             Map<String, String> assayAntiserumMap,
+            List<String> virusLocationStatisticList,
             final boolean log2Transform) {
 
         super(DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD);
@@ -257,6 +258,14 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         addStatistic(new ClusterCount());
         addStatistic(new ClusterSizes());
         addStatistic(new ClusteredLocations());
+
+        int i = 0;
+        for (String virusName : virusNames) {
+            if (virusLocationStatisticList.contains(virusName)) {
+                addStatistic(new VirusLocation(virusName + "." + "location", i));
+            }
+                    i++;
+        }
     }
 
     @Override
@@ -446,6 +455,35 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
     }
 
+    public class VirusLocation extends Statistic.Abstract {
+
+        public VirusLocation(String statisticName, int virusIndex) {
+            super(statisticName);
+            this.virusIndex = virusIndex;
+        }
+
+        @Override
+        public String getDimensionName(final int dim) {
+            if (getMDSDimension() == 2) {
+                return getStatisticName() + "_" + (dim == 0 ? "X" : "Y");
+            } else {
+                return getStatisticName() + "_" + (dim + 1);
+            }
+        }
+
+        public int getDimension() {
+            return getMDSDimension();
+        }
+
+        public double getStatisticValue(final int dim) {
+            int cluster = (int)clusterIndexParameter.getParameterValue(virusIndex);
+            Parameter loc = getLocationsParameter().getParameter(cluster);
+            return loc.getParameterValue(dim);
+        }
+
+        private final int virusIndex;
+    }
+
     private class Pair {
         Pair(final int location1, final int location2) {
             if (location1 < location2) {
@@ -484,6 +522,8 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
+
+        public static final String VIRUS_LOCATIONS = "virusLocations";
 
         public static final String LOG_2_TRANSFORM = "log2Transform";
         public static final String TITRATION_THRESHOLD = "titrationThreshold";
@@ -529,6 +569,14 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
             Parameter clusterIndicesParameter = (Parameter) xo.getElementFirstChild(CLUSTER_INDICES);
 
+            List<String> virusLocationStatisticList = null;
+            String[] virusLocations = xo.getStringArrayAttribute(VIRUS_LOCATIONS);
+            if (virusLocations != null) {
+                virusLocationStatisticList = Arrays.asList(virusLocations);
+            }
+
+
+
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -541,7 +589,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            AntigenicTraitLikelihood AGTL = new DiscreteAntigenicTraitLikelihood(mdsDimension, mdsPrecision, clusterIndicesParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+            AntigenicTraitLikelihood AGTL = new DiscreteAntigenicTraitLikelihood(mdsDimension, mdsPrecision, clusterIndicesParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, virusLocationStatisticList, log2Transform);
 
             Logger.getLogger("dr.evomodel").info("Using Discrete Evolutionary Cartography model. Please cite:\n" + Utils.getCitationString(AGTL));
 
@@ -591,6 +639,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                 AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, true, "The name of the file containing the assay to serum map"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
+                AttributeRule.newStringArrayRule(VIRUS_LOCATIONS, true, "A list of virus names to create location statistics for"),
                 new ElementRule(CLUSTER_INDICES, Parameter.class, "The parameter of cluster indices for each virus/serum"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),

@@ -264,7 +264,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             if (virusLocationStatisticList.contains(virusName)) {
                 addStatistic(new VirusLocation(virusName + "." + "location", i));
             }
-                    i++;
+            i++;
         }
     }
 
@@ -539,7 +539,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             try {
                 assayTable = DataTable.Text.parse(new FileReader(fileName));
             } catch (IOException e) {
-                throw new XMLParseException("Unable to read assay data from file, " + fileName);
+                throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
 
             Map<String, String> virusAntiserumMap = null;

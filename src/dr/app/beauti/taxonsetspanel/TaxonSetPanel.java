@@ -642,7 +642,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
     protected boolean checkCompatibility(Taxa taxa) {
         for (Taxa taxa2 : options.taxonSets) {
-            if (taxa2 != taxa && options.taxonSetsMono.get(taxa2)) {
+            if (taxa2 != taxa && options.taxonSetsMono.get(taxa2)
+                    && options.taxonSetsTreeModel.get(taxa) == options.taxonSetsTreeModel.get(taxa2)) { // no matter if diff tree
                 if (taxa.containsAny(taxa2) && !taxa.containsAll(taxa2) && !taxa2.containsAll(taxa)) {
                     JOptionPane.showMessageDialog(frame,
                             "You cannot enforce monophyly on this " + TAXON.toLowerCase() + " \n" +

@@ -93,6 +93,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         setTreePriorChoices(false, false, false);
         PanelUtils.setupComponent(treePriorCombo);
+        treePriorCombo.setMaximumRowCount(10); // to show Calibrated Yule
         treePriorCombo.addItemListener(new ItemListener() {
             public void itemStateChanged(ItemEvent ev) {
                 if (treePriorCombo.getSelectedItem() != null) {

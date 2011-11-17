@@ -230,6 +230,10 @@ public class AttributeRule implements XMLSyntaxRule {
 
 				return XMLObject.isIntegerArray((String)o, null);
 			}
+            if (c == String[].class) {
+
+                return true;
+            }
 			if (c == Double.class) {
 				try {
 					Double.parseDouble((String)o);

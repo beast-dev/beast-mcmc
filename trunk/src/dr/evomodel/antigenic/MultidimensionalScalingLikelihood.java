@@ -536,7 +536,7 @@ public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
             try {
                 distanceTable = DataTable.Double.parse(new FileReader(fileName));
             } catch (IOException e) {
-                throw new XMLParseException("Unable to read assay data from file, " + fileName);
+                throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
 
             if (distanceTable.getRowCount() != distanceTable.getColumnCount()) {

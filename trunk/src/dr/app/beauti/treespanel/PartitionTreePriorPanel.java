@@ -71,8 +71,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
     private JComboBox populationSizeCombo = new JComboBox(PopulationSizeModelType.values());
 
-    private JComboBox calibrationCorrectionCombo = new JComboBox(new CalibrationPoints.CorrectionType[]
-            {CalibrationPoints.CorrectionType.EXACT, CalibrationPoints.CorrectionType.NONE});
+//    private JComboBox calibrationCorrectionCombo = new JComboBox(new CalibrationPoints.CorrectionType[]
+//            {CalibrationPoints.CorrectionType.EXACT, CalibrationPoints.CorrectionType.NONE});
 
 //    RealNumberField samplingProportionField = new RealNumberField(Double.MIN_VALUE, 1.0);
 
@@ -162,14 +162,14 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         }
         );
 
-                PanelUtils.setupComponent(calibrationCorrectionCombo);
-        calibrationCorrectionCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreePrior.setCalibCorrectionType((CalibrationPoints.CorrectionType) calibrationCorrectionCombo.getSelectedItem());
-                parent.fireTreePriorsChanged();
-            }
-        }
-        );
+//        PanelUtils.setupComponent(calibrationCorrectionCombo);
+//        calibrationCorrectionCombo.addItemListener(new ItemListener() {
+//            public void itemStateChanged(ItemEvent ev) {
+//                partitionTreePrior.setCalibCorrectionType((CalibrationPoints.CorrectionType) calibrationCorrectionCombo.getSelectedItem());
+//                parent.fireTreePriorsChanged();
+//            }
+//        }
+//        );
 //	        samplingProportionField.addKeyListener(keyListener);
 
         // need it not setupPanel(), because it contains required setSelectedItem()
@@ -202,7 +202,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
             addLabel("Note: *BEAST only needs to select the prior for species tree.");
 
             if (treePriorCombo.getSelectedItem() == TreePriorType.SPECIES_YULE_CALIBRATION) {
-                addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
+//                addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
                 citation = calYule;
                 addComponentWithLabel("Citation:", citationText);
                 citationText.setText(citation);
@@ -265,7 +265,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                     break;
 
                 case YULE_CALIBRATION:
-                    addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
+//                    addComponentWithLabel("Calibration Correction Type:", calibrationCorrectionCombo);
                     citation = calYule;
                     break;
 
@@ -338,7 +338,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
         populationSizeCombo.setSelectedItem(partitionTreePrior.getPopulationSizeModel());
 
-        calibrationCorrectionCombo.setSelectedItem(partitionTreePrior.getCalibCorrectionType());
+//        calibrationCorrectionCombo.setSelectedItem(partitionTreePrior.getCalibCorrectionType());
 
         setupPanel();
 

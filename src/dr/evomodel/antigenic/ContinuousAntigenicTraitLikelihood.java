@@ -340,7 +340,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
             try {
                 assayTable = DataTable.Text.parse(new FileReader(fileName));
             } catch (IOException e) {
-                throw new XMLParseException("Unable to read assay data from file, " + fileName);
+                throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
 
             Map<String, String> virusAntiserumMap = null;

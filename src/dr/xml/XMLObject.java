@@ -576,7 +576,7 @@ public class XMLObject {
             }
             return strings;
         }
-        throw new XMLParseException("Expected array of double precision numbers, but got " + obj);
+        throw new XMLParseException("Expected array of strings, but got " + obj);
     }
 
     /**

@@ -26,12 +26,23 @@
 package dr.evomodel.coalescent;
 
 import com.sun.xml.internal.rngom.digested.DDataPattern;
+import dr.app.beast.BeastDialog;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
+import dr.math.MathUtils;
+import no.uib.cipr.matrix.DenseVector;
+import no.uib.cipr.matrix.NotConvergedException;
+import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
 
+import java.util.ArrayList;
 import java.util.List;
+
 
 /**
  * @author Vladimir Minin
@@ -39,104 +50,257 @@ import java.util.List;
  * @author Julia Palacios
  * @author Mandev
  */
-public class GaussianProcessSkytrackLikelihood extends GMRFSkyrideLikelihood {
+public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
-    public GaussianProcessSkytrackLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter,
+    protected Parameter popSizeParameter;
+    protected Parameter groupSizeParameter;
+    protected Parameter precisionParameter;
+    protected Parameter lambda_boundParameter;
+    protected Parameter lambdaParameter;
+    protected Parameter betaParameter;
+
+//    protected int GPfieldLength;
+    protected double[] coalescentIntervals;
+    protected double[] allintervals;
+    protected double[] storedCoalescentIntervals;
+    protected double[] sufficientStatistics;
+    protected double[] allsufficient;
+    protected double[] storedSufficientStatistics;
+
+    protected double[] latentLocations;
+    protected double[] storedlatentLocations;
+    protected double[] latentpopSizeValues;
+    protected double[] storedlatentpopSizeValues;
+
+    protected double logFieldLikelihood;
+    protected double storedLogFieldLikelihood;
+    protected SymmTridiagMatrix weightMatrix;
+	protected SymmTridiagMatrix storedWeightMatrix;
+	protected MatrixParameter dMatrix;
+	protected boolean rescaleByRootHeight;
+
+
+
+
+    public GaussianProcessSkytrackLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter,
                                              Parameter precParameter, Parameter lambda, Parameter beta,
                                              MatrixParameter dMatrix, /*boolean timeAwareSmoothing,*/
                                              boolean rescaleByRootHeight, /*Parameter latentPoints,*/ Parameter lambda_bound) {
-        super(treeList, popParameter, groupParameter, precParameter, lambda, beta, dMatrix, /*timeAwareSmoothing,*/ false,
-                rescaleByRootHeight);
-//        this.latentPoints = latentPoints;
-        this.lambda_bound = lambda_bound;
-        addVariable(lambda_bound);
-//        latentPoints.setDimension(1);
-        initializationReport();
-
-
+        this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, rescaleByRootHeight, lambda_bound);
     }
 
-//    protected double[] latentLocations;
-//    protected double[] storedlatentLocations;
-//    protected double[] latentpopSizeValues;
-//    protected double[] storedlatentpopSizeValues;
 
-    public double calculateLogLikelihood() {
-        return 2.0; // TODO Return the correct log-density
-    }
-
-	public double getLogLikelihood() {
-		if (!likelihoodKnown) {
-			logLikelihood = calculateLogLikelihood();
-			likelihoodKnown = true;
-		}
-		return logLikelihood;
+    public GaussianProcessSkytrackLikelihood(String name) {
+		super(name);
 	}
 
-//    private final Parameter latentPoints;
+     private static List<Tree> wrapTree(Tree tree) {
+        List<Tree> treeList = new ArrayList<Tree>();
+        treeList.add(tree);
+        return treeList;
+    }
 
-    private final Parameter lambda_bound;
+    public GaussianProcessSkytrackLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter,
+                                             Parameter precParameter, Parameter lambda, Parameter beta,
+                                             MatrixParameter dMatrix,
+                                             boolean rescaleByRootHeight, Parameter lambda_bound) {
+        super(GaussianProcessSkytrackLikelihoodParser.SKYTRACK_LIKELIHOOD);
 
 
-	public void initializationReport() {
+
+                this.popSizeParameter = popParameter;
+                this.groupSizeParameter = groupParameter;
+                this.precisionParameter = precParameter;
+                this.lambdaParameter = lambda;
+                this.betaParameter = beta;
+                this.dMatrix = dMatrix;
+                this.rescaleByRootHeight = rescaleByRootHeight;
+                this.lambda_boundParameter= lambda_bound;
+
+                addVariable(popSizeParameter);
+                addVariable(precisionParameter);
+                addVariable(lambdaParameter);
+                addVariable(lambda_boundParameter);
+                if (betaParameter != null) {
+                    addVariable(betaParameter);
+                }
+
+                setTree(treeList);
+
+                wrapSetupIntervals();
+
+                int fieldLength = getCorrectFieldLength();
+                int GPfieldLength= countChangePoints();
+
+                allintervals = new double[GPfieldLength];
+                allsufficient=new double[GPfieldLength];
+
+                coalescentIntervals = new double[fieldLength];
+		        storedCoalescentIntervals = new double[fieldLength];
+		        sufficientStatistics = new double[fieldLength];
+		        storedSufficientStatistics = new double[fieldLength];
+
+                initializationReport();
+                setupSufficientStatistics();
+
+
+         }
+
+
+
+
+    protected void setTree(List<Tree> treeList) {
+        if (treeList.size() != 1) {
+             throw new RuntimeException("GP-based method only implemented for one tree");
+        }
+        this.tree = treeList.get(0);
+        this.treesSet = null;
+        if (tree instanceof TreeModel) {
+            addModel((TreeModel) tree);
+        }
+    }
+
+
+    protected void wrapSetupIntervals() {
+        setupIntervals();
+    }
+
+    protected int getCorrectFieldLength() {
+            return tree.getExternalNodeCount() - 1;
+    }
+
+    //
+//
+//         wrapSetupIntervals();
+//         coalescentIntervals = new double[GPfieldLength];
+//         storedCoalescentIntervals = new double[GPfieldLength];
+//         sufficientStatistics = new double[GPfieldLength];
+//         storedSufficientStatistics = new double[GPfieldLength];
+//
+////        setupGPWeights();
+//
+////        System.err.println("Aqui busco:"+GPfieldLength);
+//
+
+//
+////    private void setupGPWeights() {
+////        GPsetupSufficientStatistics();
+////    }
+//
+//
+//
+//
+//
+//    public double calculateLogLikelihood() {
+//        return 2.0;
+// // TODO Return the correct log-density
+//    }
+//
+//	public double getLogLikelihood() {
+//		if (!likelihoodKnown) {
+//			logLikelihood = calculateLogLikelihood();
+//			likelihoodKnown = true;
+//		}
+//		return logLikelihood;
+//	}
+//
+////    private final Parameter latentPoints;
+//
+//    private final Parameter lambda_bound;
+//
+//
+//
+    public void initializationReport() {
+
 		System.out.println("Creating a GP based estimation of effective population trajectories:");
 		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Palacios, Suchard (XXXX), AAA");
-	}
 
-//    protected void setupGPWeights() {
+	}
 //
-//            setupSufficientStatistics();
+////    protected void setupGPWeights() {
+////
+////            setupSufficientStatistics();
+////
+////            //Set up the weight Matrix
+////            double[] offdiag = new double[fieldLength - 1];
+////            double[] diag = new double[fieldLength];
+////
+////            //First set up the offdiagonal entries;
+////
+////            if (!timeAwareSmoothing) {
+////                for (int i = 0; i < fieldLength - 1; i++) {
+////                    offdiag[i] = -1.0;
+////                }
+////
+////
+////            } else {
+////                for (int i = 0; i < fieldLength - 1; i++) {
+////                    offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
+////                }
+////            }
+////
+////            //Then set up the diagonal entries;
+////            for (int i = 1; i < fieldLength - 1; i++)
+////                diag[i] = -(offdiag[i] + offdiag[i - 1]);
+////
+////            //Take care of the endpoints
+////            diag[0] = -offdiag[0];
+////            diag[fieldLength - 1] = -offdiag[fieldLength - 2];
+////
+////            weightMatrix = new SymmTridiagMatrix(diag, offdiag);
+////        }
 //
-//            //Set up the weight Matrix
-//            double[] offdiag = new double[fieldLength - 1];
-//            double[] diag = new double[fieldLength];
 //
-//            //First set up the offdiagonal entries;
 //
-//            if (!timeAwareSmoothing) {
-//                for (int i = 0; i < fieldLength - 1; i++) {
-//                    offdiag[i] = -1.0;
+     //Sufficient Statistics for GP - coal+sampling
+    // We do not consider getLineageCount == 1, we combine it with the next time
+    // We do not need to make a difference between coalescent and sampling points
+    //CoalescentIntervals here actually contain change points
+    //sufficientStatistics here actually contain (k choose 2)
+
+    protected void setupSufficientStatistics() {
+	    int index = 0;
+        int index2 = 0;
+
+		double length = 0;
+//		double weight = 0;
+        System.err.println("Prueba dimension"+coalescentIntervals.length);
+		for (int i = 0; i < getIntervalCount(); i++) {
+
+//            if (getLineageCount(i)< 2) {
+//                length+=getInterval(i);
+//
+//             } else {
+			length += getInterval(i);
+              System.err.println("Aqui va: getInterval:"+i+" "+getInterval(i)+ "with length "+length+
+                    " with Type"+getIntervalType(i)+" lineage count "+getLineageCount(i));
+            	allintervals[index] = length;
+				allsufficient[index] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
+				index++;
+                if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
+				coalescentIntervals[index2] = length;
+				sufficientStatistics[index2] = getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
+				index2++;
+			        }
 //                }
-//
-//
-//            } else {
-//                for (int i = 0; i < fieldLength - 1; i++) {
-//                    offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
-//                }
+        }
+        System.exit(-1);
+    }
+
+//    protected int countChangePoints(){
+//        int countCPoints = 0;
+//        for (int i =0; i<getIntervalCount();i++){
+//            if (getLineageCount(i)>1){
+//            countCPoints++;
 //            }
 //
-//            //Then set up the diagonal entries;
-//            for (int i = 1; i < fieldLength - 1; i++)
-//                diag[i] = -(offdiag[i] + offdiag[i - 1]);
-//
-//            //Take care of the endpoints
-//            diag[0] = -offdiag[0];
-//            diag[fieldLength - 1] = -offdiag[fieldLength - 2];
-//
-//            weightMatrix = new SymmTridiagMatrix(diag, offdiag);
 //        }
-
-
-     //Sufficient Statistics for GP - coal+sampling
-//    protected void setupSufficientStatistics() {
-//	    int index = 0;
+//        return countCPoints;
 //
-//		double length = 0;
-//		double weight = 0;
-//		for (int i = 0; i < getIntervalCount(); i++) {
-//
-//			length += getInterval(i);
-//			weight += getInterval(i) * getLineageCount(i) * (getLineageCount(i) - 1);
-//			if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
-//				coalescentIntervals[index] = length;
-//				sufficientStatistics[index] = weight / 2.0;
-//				index++;
-//				length = 0;
-//				weight = 0;
-//			}
-//		}
 //    }
+  protected int countChangePoints(){
+    return getIntervalCount();
+    }
 //
-
 }

@@ -305,6 +305,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
         for (PartitionTreeModel model : treesPanel.treeModelPanels.keySet()) {
             if (model != null) {
                 treesPanel.treeModelPanels.get(model).setOptions();
+                treesPanel.treeModelPanels.get(model).setupPanel();
             }
         }
 

@@ -66,7 +66,7 @@ public class PriorOptions extends ModelOptions {
 //        if (clockModelGroupList.size() > 0) {
         //todo assume all Nucleotides data is in one group, it needs to extend to multi-group case
         double[] rootAndRate = options.clockModelOptions
-                .calculateInitialRootHeightAndRate(options.getAllPartitionData(Nucleotides.INSTANCE));
+                .calculateInitialRootHeightAndRate(options.getDataPartitions(Nucleotides.INSTANCE));
         avgInitialRootHeight = rootAndRate[0];
         avgInitialRate = rootAndRate[1];
 //        }

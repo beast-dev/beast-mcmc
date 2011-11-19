@@ -47,7 +47,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
     }
 
     public void createParameters(final ModelOptions modelOptions) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
             if (!modelOptions.parameterExists(prefix + "frequencies")) {
@@ -84,7 +84,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
     }
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
             if (partitionData.getPartitionSubstitutionModel().isActivateBSSVS()) {
@@ -116,7 +116,7 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
     }
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
 //            ops.add(modelOptions.getOperator(prefix + "frequencies")); // Usually fixed

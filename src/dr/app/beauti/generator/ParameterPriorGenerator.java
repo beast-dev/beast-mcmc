@@ -28,20 +28,16 @@ package dr.app.beauti.generator;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.PriorType;
-import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.util.Taxa;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.MSSD.CTMCScalePriorParser;
 import dr.evomodelxml.tree.MonophylyStatisticParser;
-import dr.inference.distribution.ExponentialDistributionModel;
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.*;
 import dr.inferencexml.model.BooleanLikelihoodParser;
 import dr.inferencexml.model.OneOnXPriorParser;
 import dr.util.Attribute;
-import dr.xml.XMLParser;
 
 import java.util.ArrayList;
 import java.util.Map;
@@ -253,7 +249,7 @@ public class ParameterPriorGenerator extends Generator {
                 PartitionTreeModel treeModel = null;
                 for (PartitionClockModel pcm : options.getPartitionClockModels()) {
                     if (pcm.getClockRateParam() == parameter) {
-                        for (AbstractPartitionData pd : options.getAllPartitionData(pcm)) {
+                        for (AbstractPartitionData pd : options.getDataPartitions(pcm)) {
                             treeModel = pd.getPartitionTreeModel();
                             break;
                         }

@@ -67,7 +67,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     public boolean usesInsertionPoint(final InsertionPoint point) {
-        if (options.getAllPartitionData(GeneralDataType.INSTANCE).size() == 0) {
+        if (options.getDataPartitions(GeneralDataType.INSTANCE).size() == 0) {
             // Empty, so do nothing
             return false;
         }
@@ -148,7 +148,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         // now create an attribute pattern for each trait that uses it
-        for (AbstractPartitionData partition : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
+        for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partition.getTraits() != null) {
                 writeAttributePatterns(partition, writer);
                 writer.writeText("");
@@ -501,7 +501,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(GeneralDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partitionData.getPartitionTreeModel() == treeModel) {
                 String prefix = partitionData.getName() + ".";
                 writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,

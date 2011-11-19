@@ -24,7 +24,6 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.PriorScaleType;
-import dr.app.beauti.types.PriorType;
 import dr.evolution.datatype.DataType;
 import dr.math.MathUtils;
 
@@ -147,7 +146,7 @@ public abstract class PartitionOptions extends ModelOptions {
     }
 
     public DataType getDataType() {
-        return options.getAllPartitionData(this).get(0).getDataType();
+        return options.getDataPartitions(this).get(0).getDataType();
     }
 
     public double[] getAvgRootAndRate() {
@@ -155,7 +154,7 @@ public abstract class PartitionOptions extends ModelOptions {
     }
 
     public void setAvgRootAndRate() {
-        this.avgRootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getAllPartitionData(this));
+        this.avgRootAndRate = options.clockModelOptions.calculateInitialRootHeightAndRate(options.getDataPartitions(this));
     }
 
     protected void autoScale(Parameter param) {

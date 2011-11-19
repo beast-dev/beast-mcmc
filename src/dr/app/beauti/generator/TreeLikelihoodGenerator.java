@@ -146,6 +146,8 @@ public class TreeLikelihoodGenerator extends Generator {
 				.getPrefix(num)
 				+ "hky");
 
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
+
 		writer.writeCloseTag(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD);
 
 	}// END: writeAncestralTreeLikelihood
@@ -230,6 +232,8 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
            writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         }*/
+
+        generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
 
         writer.writeCloseTag(TreeLikelihoodParser.TREE_LIKELIHOOD);
     }

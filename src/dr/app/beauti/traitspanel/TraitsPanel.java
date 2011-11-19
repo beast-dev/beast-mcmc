@@ -35,7 +35,6 @@ import dr.app.beauti.options.TraitGuesser;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.table.TableSorter;
-import dr.evolution.datatype.ContinuousDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import jam.framework.Exportable;
@@ -533,7 +532,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             return;
         }
         TraitData traitData = options.getTrait(traitName);
-        if (options.getAllPartitionData(traitData).size() > 0) {
+        if (options.getDataPartitions(traitData).size() > 0) {
             JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
             return;
         }

@@ -73,13 +73,13 @@ public class TreeModelOptions extends ModelOptions {
     /////////////////////////////////////////////////////////////
 //    public double getRandomStartingTreeInitialRootHeight(PartitionTreeModel model) {
 //    	Parameter rootHeight = model.getParameter("treeModel.rootHeight");
-//    	
+//
 //    	if (rootHeight.priorType != PriorType.NONE_TREE_PRIOR) {
 //    		return rootHeight.initial;
-//    	} else {    		
-//    		return calculateMeanDistance(model.getAllPartitionData());
-//    	}   	
-//		
+//    	} else {
+//    		return calculateMeanDistance(model.getDataPartitions());
+//    	}
+//
 //    }
 
     public double getExpectedAvgBranchLength(double rootHeight) {

@@ -426,7 +426,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                     if (options.useStarBEAST) {
                         groupList = options.clockModelOptions.getClockModelGroups();
                     } else {
-                        groupList = options.clockModelOptions.getClockModelGroups(options.getAllPartitionData(param.getOptions()));
+                        groupList = options.clockModelOptions.getClockModelGroups(options.getDataPartitions(param.getOptions()));
                     }
 
                     for (ClockModelGroup clockModelGroup : groupList) {

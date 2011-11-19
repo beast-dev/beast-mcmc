@@ -23,20 +23,15 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.app.beauti.siteModelsPanel;
+package dr.app.beauti.ancestralStatesPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.types.SequenceErrorType;
-import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
 import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
 import jam.table.TableRenderer;
 
 import javax.swing.*;
@@ -44,12 +39,8 @@ import javax.swing.border.TitledBorder;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.table.AbstractTableModel;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableColumnModel;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -59,60 +50,51 @@ import java.util.logging.Logger;
  * @author Alexei Drummond
  * @version $Id: ModelPanel.java,v 1.17 2006/09/05 13:29:34 rambaut Exp $
  */
-public class SiteModelsPanel extends BeautiPanel implements Exportable {
-
-    public final static boolean DEBUG = false;
+public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
     private static final long serialVersionUID = 2778103564318492601L;
 
     private static final int MINIMUM_TABLE_WIDTH = 140;
 
-    JTable modelTable = null;
-    ModelTableModel modelTableModel = null;
+    JTable partitionTable = null;
+    PartitionTableModel partitionTableModel = null;
     BeautiOptions options = null;
 
-    JPanel modelPanelParent;
-    PartitionSubstitutionModel currentModel = null;
-    Map<PartitionSubstitutionModel, PartitionModelPanel> modelPanels = new HashMap<PartitionSubstitutionModel, PartitionModelPanel>();
-    TitledBorder modelBorder;
+    JPanel optionsPanelParent;
+    AbstractPartitionData currentPartition = null;
+    Map<AbstractPartitionData, AncestralStatesOptionsPanel> optionsPanels = new HashMap<AbstractPartitionData, AncestralStatesOptionsPanel>();
+    TitledBorder optionsBorder;
 
     BeautiFrame frame = null;
-//    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
-    JLabel errorModelLabel;
-    SequenceErrorModelComponentOptions comp;
-
-
-    public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
+    public AncestralStatesPanel(BeautiFrame parent) {
 
         super();
 
         this.frame = parent;
 
-        modelTableModel = new ModelTableModel();
-        modelTable = new JTable(modelTableModel);
+        partitionTableModel = new PartitionTableModel();
+        partitionTable = new JTable(partitionTableModel);
 
-        modelTable.getTableHeader().setReorderingAllowed(false);
-        modelTable.getTableHeader().setResizingAllowed(false);
+        partitionTable.getTableHeader().setReorderingAllowed(false);
+        partitionTable.getTableHeader().setResizingAllowed(false);
 //        modelTable.getTableHeader().setDefaultRenderer(
 //                new HeaderRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        final TableColumnModel model = modelTable.getColumnModel();
+        final TableColumnModel model = partitionTable.getColumnModel();
         final TableColumn tableColumn0 = model.getColumn(0);
-        tableColumn0.setCellRenderer(new ModelsTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
 
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(modelTable);
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(partitionTable);
 
-        modelTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        modelTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        partitionTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        partitionTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
                 selectionChanged();
             }
         });
 
-        JScrollPane scrollPane = new JScrollPane(modelTable,
+        JScrollPane scrollPane = new JScrollPane(partitionTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
@@ -130,14 +112,14 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //        panel.add(controlPanel1, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
-        modelPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        modelPanelParent.setOpaque(false);
-        modelBorder = new TitledBorder("Substitution Model");
-        modelPanelParent.setBorder(modelBorder);
+        optionsPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        optionsPanelParent.setOpaque(false);
+        optionsBorder = new TitledBorder("Ancestral state options:");
+        optionsPanelParent.setBorder(optionsBorder);
 
-        setCurrentModel(null);
+        setCurrentPartition(null);
 
-        JScrollPane scrollPane2 = new JScrollPane(modelPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        JScrollPane scrollPane2 = new JScrollPane(optionsPanelParent, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane2.setOpaque(false);
         scrollPane2.setBorder(null);
         scrollPane2.getViewport().setOpaque(false);
@@ -147,20 +129,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-
-		PanelUtils.setupComponent(errorModelCombo);
-
-		errorModelCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                fireModelsChanged();
-            }
-        });
-
-		comp = new SequenceErrorModelComponentOptions();
-
-        OptionsPanel panel1 = new OptionsPanel(12, 12);
-        errorModelLabel = panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-
 
         // The bottom panel is now small enough that this is not necessary
 //        JScrollPane scrollPane2 = new JScrollPane(panel);
@@ -172,29 +140,24 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
-        add(panel1, BorderLayout.SOUTH);
     }
 
     private void resetPanel() {
-    	if (!options.hasData()) {
-    		currentModel = null;
-    		modelPanels.clear();
-    		modelPanelParent.removeAll();
-    		modelBorder.setTitle("Substitution Model");
+        if (!options.hasData()) {
+            currentPartition = null;
+            optionsPanels.clear();
+            optionsPanelParent.removeAll();
+            optionsBorder.setTitle("Substitution Model");
 
 //            if (currentDiscreteTraitOption != null) {
 //                this.remove(d_splitPane);
 //                currentDiscreteTraitOption = null;
 //            }
-        	return;
+            return;
         }
     }
 
     public void setOptions(BeautiOptions options) {
-
-        if (DEBUG) {
-            Logger.getLogger("dr.app.beauti").info("ModelsPanel.setOptions");
-        }
 
         this.options = options;
 
@@ -202,17 +165,17 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        int selRow = modelTable.getSelectedRow();
-        modelTableModel.fireTableDataChanged();
-        if (options.getPartitionSubstitutionModels().size() > 0) {
+        int selRow = partitionTable.getSelectedRow();
+        partitionTableModel.fireTableDataChanged();
+        if (options.getDataPartitions().size() > 0) {
             if (selRow < 0) {
                 selRow = 0;
             }
-            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
-        if (currentModel == null && options.getPartitionSubstitutionModels().size() > 0) {
-            modelTable.getSelectionModel().setSelectionInterval(0, 0);
+        if (currentPartition == null && options.getPartitionSubstitutionModels().size() > 0) {
+            partitionTable.getSelectionModel().setSelectionInterval(0, 0);
         }
 
         settingOptions = false;
@@ -225,42 +188,41 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
     }
 
     private void fireModelsChanged() {
-        options.updatePartitionAllLinks();
         frame.setDirty();
     }
 
     private void selectionChanged() {
-        int selRow = modelTable.getSelectedRow();
+        int selRow = partitionTable.getSelectedRow();
 
         if (selRow >= options.getPartitionSubstitutionModels().size()) {
             selRow = 0;
-            modelTable.getSelectionModel().setSelectionInterval(selRow, selRow);
+            partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }
 
         if (selRow >= 0) {
-            setCurrentModel(options.getPartitionSubstitutionModels().get(selRow));
+            setCurrentPartition(options.getDataPartitions().get(selRow));
 //            frame.modelSelectionChanged(!isUsed(selRow));
         }
     }
 
     /**
-     * Sets the current model that this model panel is displaying
+     * Sets the current partition that this panel is displaying
      *
-     * @param model the new model to display
+     * @param partition the new partition to display
      */
-    private void setCurrentModel(PartitionSubstitutionModel model) {
-        if (model != null) {
-            if (currentModel != null) modelPanelParent.removeAll();
+    private void setCurrentPartition(AbstractPartitionData partition) {
+        if (partition != null) {
+            if (currentPartition != null) optionsPanelParent.removeAll();
 
-            PartitionModelPanel panel = modelPanels.get(model);
+            AncestralStatesOptionsPanel panel = optionsPanels.get(partition);
             if (panel == null) {
-                panel = new PartitionModelPanel(model);
-                modelPanels.put(model, panel);
+                panel = new AncestralStatesOptionsPanel(options, partition);
+                optionsPanels.put(partition, panel);
             }
 
-            currentModel = model;
+            currentPartition = partition;
             panel.setOptions();
-            modelPanelParent.add(panel);
+            optionsPanelParent.add(panel);
 
             updateBorder();
         }
@@ -270,7 +232,7 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         String title;
 
-        switch (currentModel.getDataType().getType()) {
+        switch (currentPartition.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 title = "Nucleotide";
                 break;
@@ -293,33 +255,23 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
                 throw new IllegalArgumentException("Unsupported data type");
 
         }
-        modelBorder.setTitle(title + " Substitution Model - " + currentModel.getName());
+        optionsBorder.setTitle(title + " Partition - " + currentPartition.getName());
         repaint();
-    }
-
-    private boolean isUsed(int row) {
-        PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-        for (AbstractPartitionData partition : options.dataPartitions) {
-            if (partition.getPartitionSubstitutionModel() == model) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public JComponent getExportableComponent() {
         return this;
     }
 
-    class ModelTableModel extends AbstractTableModel {
+    class PartitionTableModel extends AbstractTableModel {
 
         /**
          *
          */
         private static final long serialVersionUID = -6707994233020715574L;
-        String[] columnNames = {"Substitution Model"};
+        String[] columnNames = {"Partition"};
 
-        public ModelTableModel() {
+        public PartitionTableModel() {
         }
 
         public int getColumnCount() {
@@ -328,31 +280,21 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 
         public int getRowCount() {
             if (options == null) return 0;
-            return options.getPartitionSubstitutionModels().size();
+            return options.getDataPartitions().size();
         }
 
         public Object getValueAt(int row, int col) {
-            PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
+            AbstractPartitionData partition = options.getDataPartitions().get(row);
             switch (col) {
                 case 0:
-                    return model.getName();
+                    return partition.getName();
                 default:
                     throw new IllegalArgumentException("unknown column, " + col);
             }
         }
 
         public boolean isCellEditable(int row, int col) {
-            return true;
-        }
-
-        public void setValueAt(Object value, int row, int col) {
-            String name = ((String) value).trim();
-            if (name.length() > 0) {
-                PartitionSubstitutionModel model = options.getPartitionSubstitutionModels().get(row);
-                model.setName(name); //TODO: update every same model in diff PD?
-                updateBorder();
-                fireModelsChanged();
-            }
+            return false;
         }
 
         public String getColumnName(int column) {
@@ -389,38 +331,4 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         }
     }
 
-    class ModelsTableCellRenderer extends TableRenderer {
-
-        public ModelsTableCellRenderer(int alignment, Insets insets) {
-            super(alignment, insets);
-        }
-
-        public Component getTableCellRendererComponent(JTable aTable,
-                                                       Object value,
-                                                       boolean aIsSelected,
-                                                       boolean aHasFocus,
-                                                       int aRow, int aColumn) {
-
-            if (value == null) return this;
-
-            Component renderer = super.getTableCellRendererComponent(aTable,
-                    value,
-                    aIsSelected,
-                    aHasFocus,
-                    aRow, aColumn);
-
-            if (!isUsed(aRow))
-                renderer.setForeground(Color.gray);
-            else
-                renderer.setForeground(Color.black);
-            return this;
-        }
-
-    }
-
-//    Action addModelAction = new AbstractAction("+") {
-//        public void actionPerformed(ActionEvent ae) {
-//            createModel();
-//        }
-//    };
 }

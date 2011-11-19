@@ -1,14 +1,9 @@
 package dr.app.beauti.components.continuous;
 
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
-import dr.evolution.continuous.Continuous;
 import dr.evolution.datatype.ContinuousDataType;
-import dr.util.Attribute;
-import dr.util.DataTable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -28,7 +23,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	}
 
 	public void createParameters(ModelOptions modelOptions) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             String prefix = partitionData.getName() + ".";
 
             if (!modelOptions.parameterExists(prefix + HALF_DF)) {
@@ -40,7 +35,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	}
 
 	public void selectOperators(ModelOptions modelOptions, List<Operator> ops) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 ops.add(modelOptions.getOperator(partitionData.getName() + "." + HALF_DF));
             }
@@ -48,7 +43,7 @@ public class ContinuousComponentOptions implements ComponentOptions {
 	}
 
 	public void selectParameters(ModelOptions modelOptions, List<Parameter> params) {
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(ContinuousDataType.INSTANCE)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
             if (partitionData.getPartitionSubstitutionModel().getContinuousSubstModelType() == ContinuousSubstModelType.GAMMA_RRW) {
                 params.add(modelOptions.getParameter(partitionData.getName() + "." + HALF_DF));
             }

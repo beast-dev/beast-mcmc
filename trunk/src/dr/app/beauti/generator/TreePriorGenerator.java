@@ -27,7 +27,6 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorParameterizationType;
 import dr.app.beauti.types.TreePriorType;
@@ -423,7 +422,7 @@ public class TreePriorGenerator extends Generator {
                         if (options.partitionsHaveIdenticalTaxa()) {
                             taxaId = TaxaParser.TAXA;
                         } else {
-                            taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
+                            taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
                         }
                         writer.writeIDref(TaxaParser.TAXA, taxaId);
 

@@ -241,7 +241,7 @@ public class BeastGenerator extends Generator {
             // 1 random local clock CANNOT have different tree models
             if (model.getClockType() == ClockType.RANDOM_LOCAL_CLOCK) { // || AUTOCORRELATED_LOGNORMAL
                 PartitionTreeModel treeModel = null;
-                for (AbstractPartitionData pd : options.getAllPartitionData(model)) { // only the PDs linked to this tree model
+                for (AbstractPartitionData pd : options.getDataPartitions(model)) { // only the PDs linked to this tree model
                     if (treeModel != null && treeModel != pd.getPartitionTreeModel()) {
                         throw new GeneratorException("A single random local clock cannot be applied to multiple trees.", BeautiFrame.CLOCK_MODELS);
                     }
@@ -253,7 +253,7 @@ public class BeastGenerator extends Generator {
         //++++++++++++++++ Tree Model ++++++++++++++++++
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             int numOfTaxa = -1;
-            for (AbstractPartitionData pd : options.getAllPartitionData(model)) {
+            for (AbstractPartitionData pd : options.getDataPartitions(model)) {
                 if (pd.getTaxonCount() > 0) {
                     if (numOfTaxa > 0) {
                         if (numOfTaxa != pd.getTaxonCount()) {
@@ -525,8 +525,6 @@ public class BeastGenerator extends Generator {
             for (AbstractPartitionData partition : options.dataPartitions) {
                 // generate tree likelihoods for alignment data partitions
                 if (partition.getTaxonList() != null) {
-                    generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, writer);
-
                     if (partition instanceof PartitionData) {
                         if (partition.getDataType() != GeneralDataType.INSTANCE &&
                                 partition.getDataType() != ContinuousDataType.INSTANCE) {

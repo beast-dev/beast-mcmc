@@ -225,7 +225,7 @@ public class PartitionTreeModel extends PartitionOptions {
 
 //    private void calculateInitialRootHeightPerTree() {
 //		initialRootHeight = options.clockModelOptions
-//                .calculateInitialRootHeightAndRate(options.getAllPartitionData(this)) [0];
+//                .calculateInitialRootHeightAndRate(options.getDataPartitions(this)) [0];
 //    }
 
     public String getPrefix() {
@@ -238,6 +238,6 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public int getDimension() { // n-1
-       return options.getTaxonCount(options.getAllPartitionData(this)) - 1;
+       return options.getTaxonCount(options.getDataPartitions(this)) - 1;
     }
 }

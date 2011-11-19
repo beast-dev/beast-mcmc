@@ -834,7 +834,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
         int[] weights = new int[getCodonPartitionCount()];
 
         int k = 0;
-        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partition : options.getDataPartitions(this)) {
             if (partition.getPartitionSubstitutionModel() == this) {
                 addWeightsForPartition(partition, weights, k);
             }
@@ -1067,7 +1067,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
      */
     public Set<String> getDiscreteStateSet() {
         Set<String> states = new HashSet<String>();
-        for (AbstractPartitionData partition : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partition : options.getDataPartitions(this)) {
             if (partition.getTraits() != null) {
                 states.addAll(partition.getTraits().get(0).getStatesOfTrait(options.taxonList));
             }

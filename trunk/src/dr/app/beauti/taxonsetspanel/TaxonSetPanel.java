@@ -573,7 +573,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
             // get taxa associated to each tree
             PartitionTreeModel treeModel = options.taxonSetsTreeModel.get(currentTaxonSet);
-            TaxonList alignment = options.getAllPartitionData(treeModel).get(0).getTaxonList();
+            TaxonList alignment = options.getDataPartitions(treeModel).get(0).getTaxonList();
             Taxa taxa = new Taxa(alignment);
             for (int i = 0; i < taxa.getTaxonCount(); i++) {
                 excludedTaxa.add(taxa.getTaxon(i));

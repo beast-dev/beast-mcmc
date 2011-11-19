@@ -105,7 +105,7 @@ public class TreeModelGenerator extends Generator {
 
 //        int randomLocalClockCount = 0;
 //        int autocorrelatedClockCount = 0;
-//        for (PartitionData pd : model.getAllPartitionData()) { // only the PDs linked to this tree model
+//        for (PartitionData pd : model.getDataPartitions()) { // only the PDs linked to this tree model
 //        	PartitionClockModel clockModel = pd.getPartitionClockModel();
 //        	switch (clockModel.getClockType()) {
 //	        	case AUTOCORRELATED_LOGNORMAL: autocorrelatedClockCount += 1; break;
@@ -198,7 +198,7 @@ public class TreeModelGenerator extends Generator {
             writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.INTERNAL_VALUES);
 
             writer.writeOpenTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);
-            for (AbstractPartitionData pattern : options.getAllPartitionData(model)) {
+            for (AbstractPartitionData pattern : options.getDataPartitions(model)) {
                 writer.writeIDref(MicrosatellitePatternParser.MICROSATPATTERN, pattern.getName());
             }
             writer.writeCloseTag(MicrosatelliteSamplerTreeModelParser.EXTERNAL_VALUES);

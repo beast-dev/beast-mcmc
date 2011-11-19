@@ -25,7 +25,6 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.OperatorType;
-import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.RelativeRatesType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
@@ -317,7 +316,7 @@ public class ClockModelOptions extends ModelOptions {
         double avgInitialRate = 1;
         double avgMeanDistance = 1;
 
-//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
+//        List<AbstractPartitionData> partitions = options.getDataPartitions(clockModelGroup);
 
         if (partitions.size() > 0) {
             avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
@@ -366,7 +365,7 @@ public class ClockModelOptions extends ModelOptions {
         double avgMeanDistance = 1;
         // calibration: all isEstimatedRate = true
 
-//        List<AbstractPartitionData> partitions = options.getAllPartitionData(clockModelGroup);
+//        List<AbstractPartitionData> partitions = options.getDataPartitions(clockModelGroup);
 
         if (partitions.size() > 0 && options.getPartitionClockModels(partitions).size() > 0) {
             //todo multi-group?
@@ -418,7 +417,7 @@ public class ClockModelOptions extends ModelOptions {
 //        List<AbstractPartitionData> allData = new ArrayList<AbstractPartitionData>();
 //
 //        for (PartitionClockModel model : models) {
-//            for (AbstractPartitionData partition : model.getAllPartitionData()) {
+//            for (AbstractPartitionData partition : model.getDataPartitions()) {
 //                if (partition != null && (!allData.contains(partition))) {
 //                    allData.add(partition);
 //                }
@@ -548,7 +547,7 @@ public class ClockModelOptions extends ModelOptions {
 
         int k = 0;
         for (PartitionClockModel model : options.getPartitionClockModels()) {
-            for (AbstractPartitionData partition : options.getAllPartitionData(model)) {
+            for (AbstractPartitionData partition : options.getDataPartitions(model)) {
                 int n = partition.getSiteCount();
                 weights[k] += n;
             }

@@ -13,7 +13,6 @@ import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
 import dr.evoxml.*;
-import dr.inferencexml.distribution.UniformDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
 
@@ -78,7 +77,7 @@ public class InitialTreeGenerator extends Generator {
                 writer.writeOpenTag(SitePatternsParser.PATTERNS);
                 writer.writeComment("To generate UPGMA starting tree, only use the 1st aligment, "
                         + "which may be 1 of many aligments using this tree.");
-                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getAllPartitionData(model).get(0).getTaxonList().getId());
+                writer.writeIDref(AlignmentParser.ALIGNMENT, options.getDataPartitions(model).get(0).getTaxonList().getId());
                 // alignment has no gene prefix
                 writer.writeCloseTag(SitePatternsParser.PATTERNS);
                 writer.writeCloseTag(DistanceMatrixParser.DISTANCE_MATRIX);
@@ -89,7 +88,7 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
 
-                ClockModelGroup group = options.getAllPartitionData(model).get(0).
+                ClockModelGroup group = options.getDataPartitions(model).get(0).
                         getPartitionClockModel().getClockModelGroup();
 
                 if (group.getRateTypeOption() == FixRateType.FIX_MEAN
@@ -118,7 +117,7 @@ public class InitialTreeGenerator extends Generator {
                 if (options.partitionsHaveIdenticalTaxa()) {
                     taxaId = TaxaParser.TAXA;
                 } else {
-                    taxaId = options.getAllPartitionData(model).get(0).getPrefix() + TaxaParser.TAXA;
+                    taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
                 }
                 writeTaxaRef(taxaId, model, writer);
 

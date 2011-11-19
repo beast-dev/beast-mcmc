@@ -27,7 +27,6 @@ package dr.app.beauti.siteModelsPanel;
 
 import dr.app.beauti.components.continuous.ContinuousSubstModelType;
 import dr.app.beauti.components.discrete.DiscreteSubstModelType;
-import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.components.dollo.DolloComponentOptions;
 import dr.app.beauti.options.PartitionSubstitutionModel;
 import dr.app.beauti.types.BinaryModelType;
@@ -53,6 +52,8 @@ import java.util.logging.Logger;
  * @author Walter Xie
  */
 public class PartitionModelPanel extends OptionsPanel {
+
+    private static final boolean ENABLE_STOCHASTIC_DOLLO = true;
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -86,7 +87,6 @@ public class PartitionModelPanel extends OptionsPanel {
     private JCheckBox freqsUnlinkCheck = new JCheckBox(
             "Unlink base frequencies across codon positions");
 
-    private JCheckBox robustCountingCheck = new JCheckBox("Use robust counting");
     private JButton setSRD06Button;
 
     private JCheckBox dolloCheck = new JCheckBox("Use stochastic Dollo model");
@@ -248,7 +248,7 @@ public class PartitionModelPanel extends OptionsPanel {
         AminoAcidModelType type = (AminoAcidModelType) aaSubstCombo.getSelectedItem();
         citationText.setText(type.getCitation().toString());
 
-        class ListenClickBinaryStochasticDolloButton implements ActionListener {
+        dolloCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent actionEvent) {
                 if (dolloCheck.isSelected()) {
                     binarySubstCombo.setSelectedIndex(0);
@@ -262,7 +262,7 @@ public class PartitionModelPanel extends OptionsPanel {
                     model.setBinarySubstitutionModel(BinaryModelType.BIN_DOLLO);
                     model.setDolloModel(true);
                     DolloComponentOptions comp = (DolloComponentOptions)
-                        model.getOptions().getComponentOptions(DolloComponentOptions.class);
+                            model.getOptions().getComponentOptions(DolloComponentOptions.class);
                     comp.createParameters(model.getOptions());
                     comp.setActive(true);
 
@@ -275,88 +275,7 @@ public class PartitionModelPanel extends OptionsPanel {
                     model.setDolloModel(false);
                 }
             }
-        }
-
-        dolloCheck.addActionListener(new ListenClickBinaryStochasticDolloButton());
-
-        // ////////////////////////////
-        // ---dNdS robust counting---//
-        // ////////////////////////////
-
-        robustCountingCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ev) {
-                if (robustCountingCheck.isSelected()) {
-
-                    if (checkRobustCounting()) {
-                        setRobustCountingModel();
-                    }
-
-                } else {
-                    removeRobustCountingModel();
-                }
-
-            }// END: actionPerformed
-
-            private boolean checkRobustCounting() {
-
-                if (heteroCombo.getSelectedIndex() == 0
-                        && codingCombo.getSelectedIndex() == 2) {
-
-                    return true;
-
-                } else {
-
-                    SwingUtilities.invokeLater(new Runnable() {
-
-                        public void run() {
-
-                            String msg = String.format("Wrong settings. \n"
-                                    + "Set site heterogeneity model to none \n"
-                                    + "and partition into 3 codon position.");
-
-                            JOptionPane.showMessageDialog(PanelUtils
-                                    .getActiveFrame(), msg, "Error",
-                                    JOptionPane.ERROR_MESSAGE);
-
-                            robustCountingCheck.setSelected(false);
-
-                        }
-                    });
-
-                    return false;
-                }
-
-            }// END: checkRobustCounting
-
-            private void setRobustCountingModel() {
-                DnDsComponentOptions comp = (DnDsComponentOptions) model
-                        .getOptions().getComponentOptions(
-                                DnDsComponentOptions.class);
-
-                // Add model to ComponentOptions
-                comp.addPartition(model);
-            }
-
-            private void removeRobustCountingModel() {
-                DnDsComponentOptions comp = (DnDsComponentOptions) model
-                        .getOptions().getComponentOptions(
-                                DnDsComponentOptions.class);
-
-                // Remove model from ComponentOptions
-                comp.removePartition(model);
-            }
-
         });
-
-        PanelUtils.setupComponent(robustCountingCheck);
-        robustCountingCheck
-                .setToolTipText("<html>"
-                        + "Enable counting of synonymous and non-synonymous mutations as described in<br> Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation)"
-                        + "</html>");
-
-        // ////////////////////////
-        // ---END: dNdS button---//
-        // ////////////////////////
 
         PanelUtils.setupComponent(dolloCheck);
 //        dolloCheck.addChangeListener(new ChangeListener() {
@@ -620,14 +539,6 @@ public class PartitionModelPanel extends OptionsPanel {
 
                 addComponent(setSRD06Button);
 
-                // ///////////////////////////
-                // ---dNdS robust countin---//
-                // ///////////////////////////
-                addComponent(robustCountingCheck);
-                // ////////////////////////////////
-                // ---END: dNdS robust countin---//
-                // ////////////////////////////////
-
                 break;
 
             case DataType.AMINO_ACIDS:
@@ -657,7 +568,7 @@ public class PartitionModelPanel extends OptionsPanel {
                 addComponentWithLabel("", useAmbiguitiesTreeLikelihoodCheck);
 
                 // Easy XML specification is currently only available for binary models
-                if (STOCHASTIC_DOLLO) {
+                if (ENABLE_STOCHASTIC_DOLLO) {
                     addSeparator();
                     addComponent(dolloCheck);
                 }
@@ -776,6 +687,4 @@ public class PartitionModelPanel extends OptionsPanel {
             }
         });
     }
-
-    private static final boolean STOCHASTIC_DOLLO = true;
 }

@@ -31,7 +31,8 @@ package dr.app.beauti.types;
  */
 public enum BinaryModelType {
 
-    BIN_SIMPLE("Simple model"), BIN_COVARION("Covarion model"),
+    BIN_SIMPLE("Simple model"),
+    BIN_COVARION("Covarion model"),
     BIN_DOLLO("Binary stochastic Dollo");
 
     BinaryModelType (String displayName) {

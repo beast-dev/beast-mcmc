@@ -374,7 +374,11 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(TraitData trait) {
+    public List<AbstractPartitionData> getDataPartitions() {
+        return dataPartitions;
+    }
+
+    public List<AbstractPartitionData> getDataPartitions(TraitData trait) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getTraits() != null && pd.getTraits().contains(trait)) {
@@ -384,7 +388,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(DataType dataType) {
+    public List<AbstractPartitionData> getDataPartitions(DataType dataType) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getDataType().getType() == dataType.getType()) {
@@ -394,25 +398,25 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionOptions model) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionOptions model) {
         if (model instanceof PartitionSubstitutionModel) {
-            return getAllPartitionData((PartitionSubstitutionModel) model);
+            return getDataPartitions((PartitionSubstitutionModel) model);
         } else if (model instanceof PartitionClockModel) {
-            return getAllPartitionData((PartitionClockModel) model);
+            return getDataPartitions((PartitionClockModel) model);
         } else if (model instanceof PartitionTreeModel) {
-            return getAllPartitionData((PartitionTreeModel) model);
+            return getDataPartitions((PartitionTreeModel) model);
         } else if (model instanceof PartitionTreePrior) {
-            return getAllPartitionData((PartitionTreePrior) model);
+            return getDataPartitions((PartitionTreePrior) model);
         } else if (model instanceof PartitionClockModelTreeModelLink) {
-            return getAllPartitionData((PartitionClockModelTreeModelLink) model);
+            return getDataPartitions((PartitionClockModelTreeModelLink) model);
         } else if (model instanceof PartitionClockModelSubstModelLink) {
-            return getAllPartitionData((PartitionClockModelSubstModelLink) model);
+            return getDataPartitions((PartitionClockModelSubstModelLink) model);
         } else {
             return null;
         }
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionSubstitutionModel model) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionSubstitutionModel model) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionSubstitutionModel() == model) {
@@ -422,7 +426,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionClockModel model) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionClockModel model) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionClockModel() == model) {
@@ -432,7 +436,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionTreeModel model) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionTreeModel model) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionTreeModel() == model) {
@@ -442,7 +446,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionTreePrior prior) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionTreePrior prior) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionTreeModel().getPartitionTreePrior() == prior) {
@@ -452,7 +456,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionClockModelTreeModelLink link) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionClockModelTreeModelLink link) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionClockModel() == link.getPartitionClockModel() && pd.getPartitionTreeModel() == link.getPartitionTreeTree()) {
@@ -462,7 +466,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(PartitionClockModelSubstModelLink link) {
+    public List<AbstractPartitionData> getDataPartitions(PartitionClockModelSubstModelLink link) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionClockModel() == link.getClockModel() && pd.getPartitionSubstitutionModel() == link.getSubstModel()) {
@@ -472,7 +476,7 @@ public class BeautiOptions extends ModelOptions {
         return pdList;
     }
 
-    public List<AbstractPartitionData> getAllPartitionData(ClockModelGroup clockModelGroup) {
+    public List<AbstractPartitionData> getDataPartitions(ClockModelGroup clockModelGroup) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getPartitionClockModel() != null && pd.getPartitionClockModel().getClockModelGroup() == clockModelGroup) {
@@ -707,7 +711,7 @@ public class BeautiOptions extends ModelOptions {
         partitionClockSubstLinks.clear();
 
         for (PartitionClockModel model : getPartitionClockModels()) {
-            for (PartitionTreeModel tree : getPartitionTreeModels(getAllPartitionData(model))) {
+            for (PartitionTreeModel tree : getPartitionTreeModels(getDataPartitions(model))) {
                 PartitionClockModelTreeModelLink clockTree = new PartitionClockModelTreeModelLink(this, model, tree);
 
                 if (!partitionClockTreeLinks.contains(clockTree)) {
@@ -756,17 +760,17 @@ public class BeautiOptions extends ModelOptions {
 //
 //        for (PartitionData partition : dataPartitions) {
 //            PartitionSubstitutionModel psm = partition.getPartitionSubstitutionModel();
-//            if (!psm.getAllPartitionData().contains(partition)) {
+//            if (!psm.getDataPartitions().contains(partition)) {
 //                psm.addPartitionData(partition);
 //            }
 //
 //            PartitionClockModel pcm = partition.getPartitionClockModel();
-//            if (!pcm.getAllPartitionData().contains(partition)) {
+//            if (!pcm.getDataPartitions().contains(partition)) {
 //                pcm.addPartitionData(partition);
 //            }
 //
 //            PartitionTreeModel ptm = partition.getPartitionTreeModel();
-//            if (!ptm.getAllPartitionData().contains(partition)) {
+//            if (!ptm.getDataPartitions().contains(partition)) {
 //                ptm.addPartitionData(partition);
 //            }
 //        }
@@ -1003,7 +1007,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Set<String> getStatesForDiscreteModel(PartitionSubstitutionModel model) {
         Set<String> states = new TreeSet<String>();
-        for (AbstractPartitionData partition : getAllPartitionData(model)) {
+        for (AbstractPartitionData partition : getDataPartitions(model)) {
             Set<String> newStates = partition.getTraits().get(0).getStatesOfTrait(taxonList);
 
             if (states.size() > 0) {

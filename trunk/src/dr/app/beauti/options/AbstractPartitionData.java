@@ -56,6 +56,11 @@ public abstract class AbstractPartitionData {
 
     protected DistanceMatrix distances;
 
+    protected boolean useAncestralReconstruction = false;
+    protected String ancestralReconstructionMRCA = null;
+    protected boolean useRobustCounting = false;
+    protected boolean useDnDsCount = false;
+
     protected void calculateMeanDistance(Patterns patterns) {
         if (patterns != null) {
             distances = new JukesCantorDistanceMatrix(patterns);
@@ -153,4 +158,5 @@ public abstract class AbstractPartitionData {
     public abstract DataType getDataType();
 
     public abstract String getDataDescription();
+
 }

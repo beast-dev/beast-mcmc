@@ -70,7 +70,7 @@ public class BranchRatesModelGenerator extends Generator {
         Attribute[] attributes;
         int categoryCount = 0;
         String treePrefix;
-        List<PartitionTreeModel> activeTrees = options.getPartitionTreeModels(options.getAllPartitionData(model));
+        List<PartitionTreeModel> activeTrees = options.getPartitionTreeModels(options.getDataPartitions(model));
 
         switch (model.getClockType()) {
             case STRICT_CLOCK:
@@ -499,7 +499,7 @@ public class BranchRatesModelGenerator extends Generator {
                 break;
 
             case UNCORRELATED:
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getAllPartitionData(model))) {
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
@@ -508,7 +508,7 @@ public class BranchRatesModelGenerator extends Generator {
 
             case AUTOCORRELATED:
 // TODO
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getAllPartitionData(model))) {
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");
@@ -519,7 +519,7 @@ public class BranchRatesModelGenerator extends Generator {
 
             case RANDOM_LOCAL_CLOCK:
                 writer.writeIDref(SumStatisticParser.SUM_STATISTIC, model.getPrefix() + "rateChanges");
-                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getAllPartitionData(model))) {
+                for (PartitionTreeModel tree : options.getPartitionTreeModels(options.getDataPartitions(model))) {
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "meanRate");
                     writer.writeIDref(RateStatisticParser.RATE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + RateStatisticParser.COEFFICIENT_OF_VARIATION);
                     writer.writeIDref(RateCovarianceStatisticParser.RATE_COVARIANCE_STATISTIC, options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + "covariance");

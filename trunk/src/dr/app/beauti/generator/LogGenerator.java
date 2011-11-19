@@ -44,8 +44,6 @@ import dr.evomodelxml.speciation.*;
 import dr.evomodelxml.tree.TMRCAStatisticParser;
 import dr.evomodelxml.tree.TreeLoggerParser;
 import dr.evomodelxml.tree.TreeModelParser;
-import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
-import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
 import dr.inferencexml.loggers.ColumnsParser;
@@ -407,7 +405,7 @@ public class LogGenerator extends Generator {
 
             writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-            for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
+            for (PartitionClockModel model : options.getPartitionClockModels(options.getDataPartitions(tree))) {
                 switch (model.getClockType()) {
                     case STRICT_CLOCK:
                         writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, model.getPrefix() + BranchRateModel.BRANCH_RATES);
@@ -459,7 +457,7 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                for (PartitionClockModel model : options.getPartitionClockModels(options.getAllPartitionData(tree))) {
+                for (PartitionClockModel model : options.getPartitionClockModels(options.getDataPartitions(tree))) {
 
                     switch (model.getClockType()) {
                         case STRICT_CLOCK:

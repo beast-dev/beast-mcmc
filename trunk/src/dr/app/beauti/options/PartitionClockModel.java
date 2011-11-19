@@ -72,7 +72,7 @@ public class PartitionClockModel extends PartitionOptions {
     protected void initModelParametersAndOpererators() {
         rate = 1.0;
         int dataLength = 0;
-        for (AbstractPartitionData partitionData : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData partitionData : options.getDataPartitions(this)) {
             dataLength += partitionData.getSiteCount();
         }
 
@@ -191,7 +191,7 @@ public class PartitionClockModel extends PartitionOptions {
 
             Parameter rateParam = getClockRateParam();
 
-//            if (this.getAllPartitionData().get(0) instanceof TraitData) {
+//            if (this.getDataPartitions().get(0) instanceof TraitData) {
 //                rateParam.priorType = PriorType.ONE_OVER_X_PRIOR; // 1/location.clock.rate
 //            }
             // if not fixed then do mutation rate move and up/down move

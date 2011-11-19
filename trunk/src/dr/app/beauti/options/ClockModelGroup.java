@@ -57,7 +57,7 @@ public class ClockModelGroup {
     }
 
     public boolean contain(DataType dataType, BeautiOptions options) {
-        for (AbstractPartitionData pd : options.getAllPartitionData(this)) {
+        for (AbstractPartitionData pd : options.getDataPartitions(this)) {
            if (pd.getDataType().getType() == dataType.getType()) {
                 return true;
             }

@@ -8,6 +8,8 @@
  */
 package dr.app.beauti;
 
+import dr.app.beauti.ancestralStatesPanel.AncestralStatesOptionsPanel;
+import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
@@ -41,7 +43,6 @@ import dr.app.util.OSType;
 import dr.app.util.Utils;
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NexusImporter.MissingBlockException;
-import dr.evolution.util.Taxon;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
@@ -67,6 +68,8 @@ import java.io.IOException;
  */
 public class BeautiFrame extends DocumentFrame {
 
+    private static final boolean ENABLE_ANCESTRAL_STATES = true;
+
     private static final long serialVersionUID = 2114148696789612509L;
 
     public final static String DATA_PARTITIONS = "Partitions";
@@ -76,6 +79,7 @@ public class BeautiFrame extends DocumentFrame {
     public final static String SITE_MODELS = "Sites";
     public final static String CLOCK_MODELS = "Clocks";
     public final static String TREES = "Trees";
+    public final static String ANCESTRAL_STATES = "States";
     public final static String PRIORS = "Priors";
     public final static String OPERATORS = "Operators";
     public final static String MCMC = "MCMC";
@@ -92,6 +96,7 @@ public class BeautiFrame extends DocumentFrame {
     private TaxonSetPanel taxonSetPanel;
     private SpeciesSetPanel speciesSetPanel;
     private SiteModelsPanel siteModelsPanel;
+    private AncestralStatesPanel ancestralStatesPanel;
     private OldClockModelsPanel clockModelsPanel;
     private TreesPanel treesPanel;
     private PriorsPanel priorsPanel;
@@ -152,6 +157,7 @@ public class BeautiFrame extends DocumentFrame {
         taxonSetPanel = new TaxonSetPanel(this);
         speciesSetPanel = new SpeciesSetPanel(this);
         siteModelsPanel = new SiteModelsPanel(this, getDeleteAction());
+        ancestralStatesPanel = new AncestralStatesPanel(this);
         clockModelsPanel = new OldClockModelsPanel(this);
 //        oldTreesPanel = new OldTreesPanel(this);
         treesPanel = new TreesPanel(this, getDeleteAction());
@@ -168,6 +174,9 @@ public class BeautiFrame extends DocumentFrame {
         tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
         tabbedPane.addTab(CLOCK_MODELS, clockModelsPanel);
         tabbedPane.addTab(TREES, treesPanel);
+        if (ENABLE_ANCESTRAL_STATES) {
+            tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
+        }
         tabbedPane.addTab(PRIORS, priorsPanel);
         tabbedPane.addTab(OPERATORS, operatorsPanel);
         tabbedPane.addTab(MCMC, mcmcPanel);
@@ -265,6 +274,9 @@ public class BeautiFrame extends DocumentFrame {
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
+            if (ENABLE_ANCESTRAL_STATES) {
+                ancestralStatesPanel.setOptions(options);
+            }
             priorsPanel.setOptions(options);
             operatorsPanel.setOptions(options);
             mcmcPanel.setOptions(options);
@@ -292,6 +304,9 @@ public class BeautiFrame extends DocumentFrame {
             siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);
+            if (ENABLE_ANCESTRAL_STATES) {
+                ancestralStatesPanel.getOptions(options);
+            }
             priorsPanel.getOptions(options);
             operatorsPanel.getOptions(options);
             mcmcPanel.getOptions(options);
@@ -565,7 +580,7 @@ public class BeautiFrame extends DocumentFrame {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }
-            } else if (options.getAllPartitionData(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
+            } else if (options.getDataPartitions(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
                 int option = JOptionPane.showConfirmDialog(this,
                         "The trait named '" + TraitData.TRAIT_SPECIES + "', used to denote species in *BEAST, is\n" +
                                 "already in use as a data partition. Do you wish to continue?",

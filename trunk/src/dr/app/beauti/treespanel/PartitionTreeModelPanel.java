@@ -206,8 +206,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         removeAll();
 
         ClockModelGroup group = null;
-        if (options.getAllPartitionData(partitionTreeModel).size() > 0)
-            group = options.getAllPartitionData(partitionTreeModel).get(0).getPartitionClockModel().getClockModelGroup();
+        if (options.getDataPartitions(partitionTreeModel).size() > 0)
+            group = options.getDataPartitions(partitionTreeModel).get(0).getPartitionClockModel().getClockModelGroup();
 
         if (group != null && (group.getRateTypeOption() == FixRateType.FIX_MEAN
                 || group.getRateTypeOption() == FixRateType.RELATIVE_TO)) {

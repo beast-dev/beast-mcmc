@@ -336,12 +336,12 @@ public class SubstitutionModelGenerator extends Generator {
     private void writeAlignmentRefInFrequencies(XMLWriter writer, PartitionSubstitutionModel model, String prefix, int num) {
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
             if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonPartitionCount() > 1 && model.isUnlinkedSubstitutionModel()) {
-                for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
+                for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
                     if (num >= 0)
                         writeCodonPatternsRef(prefix + partition.getPrefix(), num, model.getCodonPartitionCount(), writer);
                 }
             } else {
-                for (AbstractPartitionData partition : options.getAllPartitionData(model)) { //?
+                for (AbstractPartitionData partition : options.getDataPartitions(model)) { //?
                     writer.writeIDref(AlignmentParser.ALIGNMENT, partition.getTaxonList().getId());
                 }
             }
@@ -401,7 +401,7 @@ public class SubstitutionModelGenerator extends Generator {
         // merge patterns then get frequencies.
 
         if (model.getFrequencyPolicy() == FrequencyPolicyType.EMPIRICAL) {
-            List<AbstractPartitionData> partitions = options.getAllPartitionData(model);
+            List<AbstractPartitionData> partitions = options.getDataPartitions(model);
             Alignment alignment = ((PartitionData) partitions.get(0)).getAlignment();
 //            Patterns patterns = new Patterns(partitions.get(0).getAlignment());
 //            for (int i = 1; i < partitions.size(); i++) {

@@ -74,7 +74,7 @@ public class PatternListGenerator extends Generator {
 //                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
             } else {
-
+            	 // pattern is 123
         		DnDsComponentOptions component = (DnDsComponentOptions) options
 				.getComponentOptions(DnDsComponentOptions.class);
 
@@ -85,7 +85,7 @@ public class PatternListGenerator extends Generator {
 //					System.out.println("HERE");
 					for (int i = 1; i <= 3; i++) {
 						writePatternList(partition, i - 1, 3, model
-								.getPrefix(i), false, writer);
+								.getPrefix(i), false, isCovarionModel, writer);
 					}
 
 				} else {

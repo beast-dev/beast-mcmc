@@ -26,7 +26,7 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.dnds.DnDsComponentOptions;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
@@ -69,6 +69,9 @@ public class TreeLikelihoodGenerator extends Generator {
      */
     public void writeTreeLikelihood(PartitionData partition, XMLWriter writer) {
 
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         if (model.isDolloModel()) {
@@ -77,13 +80,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
 
-			DnDsComponentOptions robustCountingComponent = (DnDsComponentOptions) options
-					.getComponentOptions(DnDsComponentOptions.class);
-
-			boolean doRobustCounting = robustCountingComponent.doRobustCounting(partition.getPartitionSubstitutionModel());
-
-			if (doRobustCounting) {
-
+			if (ancestralStatesOptions.robustCounting(partition)) {
 				for (int i = 1; i <= model.getCodonPartitionCount(); i++) {
 					writeAncestralTreeLikelihood(
 							TreeLikelihoodParser.TREE_LIKELIHOOD, i,
@@ -100,7 +97,11 @@ public class TreeLikelihoodGenerator extends Generator {
 			}// END: doRobustCounting
 
         } else {
-            writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
+            if (ancestralStatesOptions.usingAncestralStates(partition)) {
+                writeAncestralTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
+            } else {
+                writeTreeLikelihood(TreeLikelihoodParser.TREE_LIKELIHOOD, -1, partition, writer);
+            }
         }
     }
 
@@ -108,16 +109,13 @@ public class TreeLikelihoodGenerator extends Generator {
 	 * Write the ancestral tree likelihood XML block. Needed for robust dN/dS
 	 * counting model
 	 */
-	private void writeAncestralTreeLikelihood(String id, int num,
-			PartitionData partition, XMLWriter writer) {
+	private void writeAncestralTreeLikelihood(String id, int num, PartitionData partition, XMLWriter writer) {
 
-		PartitionSubstitutionModel substModel = partition
-				.getPartitionSubstitutionModel();
+		PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
 		PartitionTreeModel treeModel = partition.getPartitionTreeModel();
 		PartitionClockModel clockModel = partition.getPartitionClockModel();
 
-		writer
-				.writeComment("Ancestral likelihood for tree given sequence data");
+		writer.writeComment("Ancestral likelihood for tree given sequence data");
 
 		writer.writeOpenTag(TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD,
 				new Attribute[] {

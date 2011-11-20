@@ -163,7 +163,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralStatesComponent.setReconstructAtMRCA(partition, mrcaReconstructionCheck.isSelected());
         ancestralStatesComponent.setMRCATaxonSet(partition, (Taxa) mrcaReconstructionCombo.getSelectedItem());
         ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
-        ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSCountingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());
     }

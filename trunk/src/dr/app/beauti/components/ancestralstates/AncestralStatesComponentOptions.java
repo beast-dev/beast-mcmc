@@ -37,6 +37,10 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         return options;
     }
 
+    public boolean usingAncestralStates(final AbstractPartitionData partition) {
+            return reconstructAtNodes(partition) || reconstructAtMRCA(partition) || robustCounting(partition);
+        }
+
     public boolean reconstructAtNodes(final AbstractPartitionData partition) {
         return getOptions(partition).reconstructAtNodes;
     }
@@ -71,11 +75,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     }
 
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
-        return getOptions(partition).dNdSRobustCounting;
-    }
-
-    public void setDNdSRobustCounting(final AbstractPartitionData partition, boolean dNdSRobustCounting) {
-        getOptions(partition).dNdSRobustCounting = dNdSRobustCounting;
+        return getOptions(partition).robustCounting && partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3;
     }
 
     class AncestralStateOptions {
@@ -83,7 +83,6 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         boolean reconstructAtMRCA = false;
         Taxa mrcaTaxonSet = null;
         boolean robustCounting = false;
-        boolean dNdSRobustCounting = false;
     };
 
     private final Map<AbstractPartitionData, AncestralStateOptions> ancestralStateOptionsMap = new HashMap<AbstractPartitionData, AncestralStateOptions>();

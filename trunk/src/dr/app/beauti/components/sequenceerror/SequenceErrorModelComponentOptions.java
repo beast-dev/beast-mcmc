@@ -92,6 +92,10 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
         return false;
     }
 
+    public boolean usingSequenceErrorModel(AbstractPartitionData partition) {
+       return (sequenceErrorTypeMap.get(partition) != SequenceErrorType.NO_ERROR);
+    }
+
     public boolean hasAgeDependentRate(final AbstractPartitionData partition) {
         SequenceErrorType errorModelType = sequenceErrorTypeMap.get(partition);
         return (errorModelType == SequenceErrorType.AGE_ALL) || (errorModelType == SequenceErrorType.AGE_TRANSITIONS);

@@ -12,6 +12,8 @@ import dr.util.Attribute;
  */
 public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
+    private final static boolean DEBUG = true;
+
     private final static String LOG_SUFFIX = ".dNdS.log";
 
     public AncestralStatesComponentGenerator(final BeautiOptions options) {
@@ -36,17 +38,20 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
         }
 
-        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting && !dNdSRobustCounting) {
+        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting) {
             return false;
         }
 
         switch (point) {
             case IN_OPERATORS:
+                return dNdSRobustCounting;
             case IN_FILE_LOG_PARAMETERS:
+                return true;
             case IN_TREES_LOG:
+                return robustCounting;
             case AFTER_TREES_LOG:
             case AFTER_MCMC:
-                return true;
+                return dNdSRobustCounting;
             default:
                 return false;
         }
@@ -55,8 +60,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
 
-        DnDsComponentOptions component = (DnDsComponentOptions) options
-                .getComponentOptions(DnDsComponentOptions.class);
+        AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
 
         switch (point) {
             case IN_OPERATORS:
@@ -69,7 +74,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writeTreeLogs(writer, component);
                 break;
             case AFTER_TREES_LOG:
-                writeDNdSLogger(writer, component);
+                writeAncestralStateLogger(writer, component);
                 break;
             case AFTER_MCMC:
                 writeDNdSPerSiteAnalysisReport(writer, component);
@@ -87,28 +92,34 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeCodonPartitionedRobustCounting(XMLWriter writer,
-                                                     DnDsComponentOptions component) {
+                                                     AncestralStatesComponentOptions component) {
 
-        for (PartitionSubstitutionModel model : component.getPartitionList()) {
-            writeCodonPartitionedRobustCounting(writer, model);
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+
+            if (component.dNdSRobustCounting(partition)) {
+                writeCodonPartitionedRobustCounting(writer, partition);
+            }
         }
     }
 
     // Called for each model that requires robust counting (can be more than
     // one)
     private void writeCodonPartitionedRobustCounting(XMLWriter writer,
-                                                     PartitionSubstitutionModel model) {
+                                                     AbstractPartitionData partition) {
 
-        System.err.println("DEBUG: Writing RB for " + model.getName());
+        if (DEBUG) {
+            System.err.println("DEBUG: Writing RB for " + partition.getName());
+        }
 
-        writer.writeComment("Robust counting for: " + model.getName());
+        writer.writeComment("Robust counting for: " + partition.getName());
 
         // TODO: Hand coding is so 90s
+        String prefix = partition.getName() + ".";
 
         // S operator
         writer.writeOpenTag("codonPartitionedRobustCounting",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", "robustCounting1"),
+                        new Attribute.Default<String>("id", prefix + "robustCounting1"),
                         new Attribute.Default<String>("labeling", "S"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
@@ -117,15 +128,15 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP1.treeLikelihood");
         writer.writeCloseTag("firstPosition");
 
         writer.writeOpenTag("secondPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP2.treeLikelihood");
         writer.writeCloseTag("secondPosition");
 
         writer.writeOpenTag("thirdPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP3.treeLikelihood");
         writer.writeCloseTag("thirdPosition");
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
@@ -135,7 +146,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         // N operator:
         writer.writeOpenTag("codonPartitionedRobustCounting",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", "robustCounting2"),
+                        new Attribute.Default<String>("id", prefix + "robustCounting2"),
                         new Attribute.Default<String>("labeling", "N"),
                         new Attribute.Default<String>("useUniformization",
                                 "true"),
@@ -144,71 +155,80 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP1.treeLikelihood");
         writer.writeCloseTag("firstPosition");
 
         writer.writeOpenTag("secondPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP2.treeLikelihood");
         writer.writeCloseTag("secondPosition");
 
         writer.writeOpenTag("thirdPosition");
-        writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP3.treeLikelihood");
         writer.writeCloseTag("thirdPosition");
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
 
     }// END: writeCodonPartitionedRobustCounting()
 
-    private void writeLogs(XMLWriter writer, DnDsComponentOptions component) {
+    private void writeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 
-        for (PartitionSubstitutionModel model : component.getPartitionList()) {
-            writeLogs(writer, model);
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+
+            if (component.dNdSRobustCounting(partition)) {
+                writeLogs(writer, partition);
+            }
         }
     }
 
-    private void writeLogs(XMLWriter writer, PartitionSubstitutionModel model) {
+    private void writeLogs(XMLWriter writer, AbstractPartitionData partition) {
+        String prefix = partition.getName() + ".";
 
-        writer.writeComment("Robust counting for: " + model.getName());
+        writer.writeComment("Robust counting for: " + partition.getName());
 
-        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
-        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+        writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
+        writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
 
     }// END: writeLogs
 
-    private void writeTreeLogs(XMLWriter writer, DnDsComponentOptions component) {
+    private void writeTreeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 
-        for (PartitionSubstitutionModel model : component.getPartitionList()) {
-            // We re-use the same method
-            writeLogs(writer, model);
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+
+            if (component.dNdSRobustCounting(partition)) {
+                writeLogs(writer, partition);
+            }
         }
     }
 
-    private void writeDNdSLogger(XMLWriter writer,
-                                 DnDsComponentOptions component) {
+    private void writeAncestralStateLogger(XMLWriter writer,
+                                           AncestralStatesComponentOptions component) {
 
-        for (PartitionSubstitutionModel model : component.getPartitionList()) {
-            writeDNdSLogger(writer, model);
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+
+            if (component.dNdSRobustCounting(partition)) {
+                writeDNdSLogger(writer, partition);
+            }
         }
     }
 
-    private void writeDNdSLogger(XMLWriter writer,
-                                 PartitionSubstitutionModel model) {
+    private void writeDNdSLogger(XMLWriter writer, AbstractPartitionData partition) {
 
-        writer.writeComment("Robust counting for: " + model.getName());
+        String prefix = partition.getName() + ".";
+
+        writer.writeComment("Robust counting for: " + partition.getName());
 
         writer.writeOpenTag("log", new Attribute[] {
                 new Attribute.Default<String>("id", "fileLog_dNdS"),
                 new Attribute.Default<String>("logEvery", "10000"),
-                new Attribute.Default<String>("fileName", model.getName()
-                        + LOG_SUFFIX) });
+                new Attribute.Default<String>("fileName", partition.getName() + LOG_SUFFIX) });
 
         writer
                 .writeOpenTag("dNdSLogger",
                         new Attribute[]{new Attribute.Default<String>("id",
                                 "dNdS")});
         writer.writeIDref("treeModel", "treeModel");
-        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
-        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+        writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
+        writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
         writer.writeCloseTag("dNdSLogger");
 
         writer.writeCloseTag("log");
@@ -216,22 +236,24 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     }// END: writeLogs
 
     private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
-                                                DnDsComponentOptions component) {
+                                                AncestralStatesComponentOptions component) {
 
-        for (PartitionSubstitutionModel model : component.getPartitionList()) {
-            writeDNdSPerSiteAnalysisReport(writer, model);
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+
+            if (component.dNdSRobustCounting(partition)) {
+                writeDNdSPerSiteAnalysisReport(writer, partition);
+            }
         }
     }
 
     private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
-                                                PartitionSubstitutionModel model) {
+                                                AbstractPartitionData partition) {
 
-        writer.writeComment("Robust counting for: " + model.getName());
+        writer.writeComment("Robust counting for: " + partition.getName());
 
         writer.writeOpenTag("report");
 
-        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
-                + LOG_SUFFIX + '\"' + "/> \n");
+        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + partition.getName() + LOG_SUFFIX + '\"' + "/> \n");
 
         writer.writeCloseTag("report");
 

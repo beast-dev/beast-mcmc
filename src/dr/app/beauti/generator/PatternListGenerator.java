@@ -1,7 +1,8 @@
 package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.dnds.DnDsComponentOptions;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
+import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionData;
 import dr.app.beauti.options.PartitionPattern;
@@ -40,6 +41,16 @@ public class PatternListGenerator extends Generator {
     public void writePatternList(PartitionData partition, XMLWriter writer) {
         writer.writeText("");
 
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+
+        SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
+                .getComponentOptions(SequenceErrorModelComponentOptions.class);
+
+        boolean unique = (!ancestralStatesOptions.usingAncestralStates(partition) &&
+                !sequenceErrorOptions.usingSequenceErrorModel(partition));
+
+
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         String codonHeteroPattern = model.getCodonHeteroPattern();
@@ -51,70 +62,37 @@ public class PatternListGenerator extends Generator {
         if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
             if (codonHeteroPattern.equals("112")) {
-                writer.writeComment("The unique patterns for codon positions 1 & 2");
+                writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon positions 1 & 2");
                 writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
                         new Attribute[]{
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
-                writePatternList(partition, 0, 3, null, isCovarionModel, writer);
-                writePatternList(partition, 1, 3, null, isCovarionModel, writer);
+                writePatternList(partition, 0, 3, "", unique, isCovarionModel, writer);
+                writePatternList(partition, 1, 3, "", unique, isCovarionModel, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
-                writer.writeComment("The unique patterns for codon positions 3");
-//                writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-//                        new Attribute[]{
-//                                new Attribute.Default<String>(XMLParser.ID, model.getPrefix(2) + partition.getPrefix() + SitePatternsParser.PATTERNS),
-//                        }
-//                );
-
+                writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position 3");
                 writePatternList(partition, 2, 3, model.getPrefix(2), isCovarionModel, writer);
 
-//                writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-
             } else {
-            	 // pattern is 123
-        		DnDsComponentOptions component = (DnDsComponentOptions) options
-				.getComponentOptions(DnDsComponentOptions.class);
-
-				boolean doRobustCounting = component.doRobustCounting(partition.getPartitionSubstitutionModel());
-
-				if (doRobustCounting) {
-
-//					System.out.println("HERE");
-					for (int i = 1; i <= 3; i++) {
-						writePatternList(partition, i - 1, 3, model
-								.getPrefix(i), false, isCovarionModel, writer);
-					}
-
-				} else {
-
                 // pattern is 123
-                // write pattern lists for all three codon positions
+
                 for (int i = 1; i <= 3; i++) {
-                    writer.writeComment("The unique patterns for codon positions " + i);
-//                    writer.writeOpenTag(MergePatternsParser.MERGE_PATTERNS,
-//                            new Attribute[]{
-//                                    new Attribute.Default<String>(XMLParser.ID, model.getPrefix(i) + partition.getPrefix() + SitePatternsParser.PATTERNS),
-//                            }
-//                    );
+                    writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position " + i);
+                    writePatternList(partition, i - 1, 3, model.getPrefix(i), unique, isCovarionModel, writer);
+                }
 
-                    writePatternList(partition, i - 1, 3, model.getPrefix(i), isCovarionModel, writer);
-
-						// writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
-					}
-				}// END: doRobustCounting
-
-			}// END: pattern is 123
+            }// END: pattern is 123
 
         } else {
-            writePatternList(partition, 0, 1, "", isCovarionModel, writer);
+            writePatternList(partition, 0, 1, "", unique, isCovarionModel, writer);
         }
     }
 
     private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean isCovarionModel, XMLWriter writer) {
-    	writePatternList(partition, offset, every, codonPrefix, true, isCovarionModel, writer);
+        writePatternList(partition, offset, every, codonPrefix, true, isCovarionModel, writer);
     }
     /**
      * Write a single pattern list
@@ -124,7 +102,7 @@ public class PatternListGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, boolean isCovarionModel, XMLWriter writer) {
+    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, boolean strip, XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();
@@ -138,9 +116,9 @@ public class PatternListGenerator extends Generator {
         from += offset;
 
         // this object is created solely to calculate the number of patterns in the alignment
-        SitePatterns patterns = new SitePatterns(alignment, from - 1, to - 1, every);
+        SitePatterns patterns = new SitePatterns(alignment, null, from - 1, to - 1, every, strip, unique);
 
-        writer.writeComment("The unique patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),
+        writer.writeComment("The " + (unique ? "unique " : "") + "patterns from " + from + " to " + (to > 0 ? to : "end") + ((every > 1) ? " every " + every : ""),
                 "npatterns=" + patterns.getPatternCount());
 
         List<Attribute> attributes = new ArrayList<Attribute>();
@@ -157,10 +135,10 @@ public class PatternListGenerator extends Generator {
         }
 
         if(!unique) {
-        	attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.UNIQUE, false));
+            attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.UNIQUE, false));
         }
 
-        if (isCovarionModel) {
+        if (strip) {
             attributes.add(new Attribute.Default<Boolean>(SitePatternsParser.STRIP, false)); // default true
         }
 

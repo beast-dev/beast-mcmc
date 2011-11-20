@@ -1087,7 +1087,7 @@ public class BeautiOptions extends ModelOptions {
         } else if (taxonList != null && taxonList.getTaxonCount() > 0) {  // TODO
             message += "Taxa only: " + taxonList.getTaxonCount() + " taxa";
         } else {
-            message += "No data loaded";
+            message += "No data loaded - select 'Import Data...' from the 'File' menu.";
         }
 //        message += "</p></html>";
         return message;

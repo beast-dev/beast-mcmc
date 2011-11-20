@@ -47,6 +47,16 @@ import java.awt.event.*;
  */
 public class AncestralStatesOptionsPanel extends OptionsPanel {
 
+    private static final String ROBUST_COUNTING_TOOL_TIP = "<html>"
+                        + "Enable counting of reconstructed number of substitutions as described in<br>" +
+                        "Minin & Suchard (in preparation). These will be annotated directly in the<br>"
+                        + "logged trees.</html>";
+
+    private static final String DNDS_ROBUST_COUNTING_TOOL_TIP = "<html>"
+                        + "Enable counting of synonymous and non-synonymous substitution as described in<br>" +
+                        "Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation). This model<br>"
+                        + "requires a 3-partition codon model to be selected, above.</html>";
+
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
 
@@ -59,8 +69,11 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     private JComboBox mrcaReconstructionCombo = new JComboBox();
     private JCheckBox robustCountingCheck = new JCheckBox(
             "Reconstruct state change counts");
-    private JCheckBox dNdSCountingCheck = new JCheckBox(
-            "Reconstruct synonymous/non-synonymous counts");
+
+    // dNdS robust counting is automatic if RC is turned on for a codon
+    // partitioned data set.
+//    private JCheckBox dNdSCountingCheck = new JCheckBox(
+//            "Reconstruct synonymous/non-synonymous counts");
 
     final BeautiOptions options;
 
@@ -95,22 +108,15 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                         "ancestor defined by a taxon set. This will be recorded in the log file.</html>");
 
         PanelUtils.setupComponent(robustCountingCheck);
-        robustCountingCheck
-                .setToolTipText("<html>"
-                        + "Enable counting of reconstructed number of substitutions as described in<br>" +
-                        "Minin & Suchard (in preparation). These will be annotated directly in the<br>"
-                        + "logged trees.</html>");
+        robustCountingCheck.setToolTipText(ROBUST_COUNTING_TOOL_TIP);
 
-        PanelUtils.setupComponent(dNdSCountingCheck);
-        dNdSCountingCheck
-                .setToolTipText("<html>"
-                        + "Enable counting of synonymous and non-synonymous substitution as described in<br>" +
-                        "Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation). This model<br>"
-                        + "requires a 3-partition codon model to be selected, above.</html>");
+//        PanelUtils.setupComponent(dNdSCountingCheck);
+//        dNdSCountingCheck
+//                .setToolTipText();
 
         robustCountingCheck.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ev) {
-                dNdSCountingCheck.setEnabled(robustCountingCheck.isSelected());
+//                dNdSCountingCheck.setEnabled(robustCountingCheck.isSelected());
 //                if (robustCountingCheck.isSelected()) {
 //                    if (checkRobustCounting()) {
 //                        setRobustCountingModel();
@@ -135,7 +141,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtMRCA(partition));
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
         robustCountingCheck.setSelected(ancestralStatesComponent.robustCounting(partition));
-        dNdSCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(sequenceErrorComponent.getSequenceErrorType(partition));
@@ -153,7 +158,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCheck.addItemListener(listener);
         mrcaReconstructionCombo.addItemListener(listener);
         robustCountingCheck.addItemListener(listener);
-        dNdSCountingCheck.addItemListener(listener);
 
         errorModelCombo.addItemListener(listener);
     }
@@ -227,7 +231,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         if (robustCounting) {
             addComponent(robustCountingCheck);
-            addComponent(dNdSCountingCheck);
+            robustCountingCheck.setToolTipText(ancestralStatesComponent.dNdSRobustCounting(partition) ?
+                    DNDS_ROBUST_COUNTING_TOOL_TIP : ROBUST_COUNTING_TOOL_TIP);
         }
 
         if (errorModel) {
@@ -238,49 +243,4 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         }
     }
 
-
-//    private boolean checkRobustCounting() {
-//
-//        if (heteroCombo.getSelectedIndex() == 0  && codingCombo.getSelectedIndex() == 2) {
-//            return true;
-//        } else {
-//            SwingUtilities.invokeLater(new Runnable() {
-//
-//                public void run() {
-//
-//                    String msg = String.format("Wrong settings. \n"
-//                            + "Set site heterogeneity model to none \n"
-//                            + "and partition into 3 codon position.");
-//
-//                    JOptionPane.showMessageDialog(PanelUtils
-//                            .getActiveFrame(), msg, "Error",
-//                            JOptionPane.ERROR_MESSAGE);
-//
-//                    robustCountingCheck.setSelected(false);
-//
-//                }
-//            });
-//
-//            return false;
-//        }
-//    }// END: checkRobustCounting
-//
-//    private void setRobustCountingModel() {
-//        DnDsComponentOptions comp = (DnDsComponentOptions) model
-//                .getOptions().getComponentOptions(
-//                        DnDsComponentOptions.class);
-//
-//        // Add model to ComponentOptions
-//        comp.addPartition(model);
-//    }
-//
-//    private void removeRobustCountingModel() {
-//        DnDsComponentOptions comp = (DnDsComponentOptions) model
-//                .getOptions().getComponentOptions(
-//                        DnDsComponentOptions.class);
-//
-//        // Remove model from ComponentOptions
-//        comp.removePartition(model);
-//    }
-//
 }

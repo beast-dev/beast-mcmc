@@ -167,19 +167,64 @@ public class BeautiFrame extends DocumentFrame {
         mcmcPanel = new MCMCPanel(this);
 
         tabbedPane.addTab(DATA_PARTITIONS, dataPanel);
+        tabbedPane.setToolTipTextAt(0, "<html>" +
+                "Import sequence alignments, organize data partitions,<br>" +
+                "link models between partitions and select *BEAST</html>");
+
         tabbedPane.addTab(TAXON_SETS, taxonSetPanel);
+        tabbedPane.setToolTipTextAt(1, "<html>" +
+                "Create and edit sets of taxa which can be used to <br>" +
+                "define times of most recent common ancestors and <br>" +
+                "to keep groups monophyletic.</html>");
 //        tabbedPane.addTab("Species Sets", speciesSetPanel);
         tabbedPane.addTab(TIP_DATES, tipDatesPanel);
+        tabbedPane.setToolTipTextAt(2, "<html>" +
+                "Specify sampling dates of tips for use in temporal <br>" +
+                "analyses of measurably evolving populations.</html>");
         tabbedPane.addTab(TRAITS, traitsPanel);
+        tabbedPane.setToolTipTextAt(3, "<html>" +
+                "Import and organize continuous and discrete traits <br>" +
+                "for taxa, convert them into data partitions for evolutionary<br>" +
+                "analysis.</html>");
         tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
+        tabbedPane.setToolTipTextAt(4, "<html>" +
+                "Select evolutionary models to be used for each data <br>" +
+                "partition including substitution models, codon partitioning<br>" +
+                "and trait evolution models.</html>");
         tabbedPane.addTab(CLOCK_MODELS, clockModelsPanel);
+        tabbedPane.setToolTipTextAt(5, "<html>" +
+                "Select relaxed molecular clock models to be used across <br>" +
+                "the tree. Specify sampling of rates.</html>");
         tabbedPane.addTab(TREES, treesPanel);
-        if (ENABLE_ANCESTRAL_STATES) {
+        tabbedPane.setToolTipTextAt(6, "<html>" +
+                "Select the priors on trees including coalescent models<br>" +
+                "birth-death speciation models and the *BEAST gene tree,<br>" +
+                "species tree options.</html>");
+       if (ENABLE_ANCESTRAL_STATES) {
             tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
+           tabbedPane.setToolTipTextAt(7, "<html>" +
+                   "Select options for sampling ancestral states at specific<br>" +
+                   "or all common ancestors and models of sequencing error<br>" +
+                   "for data partitions.</html>");
         }
         tabbedPane.addTab(PRIORS, priorsPanel);
+        tabbedPane.setToolTipTextAt(8, "<html>" +
+                "Specify prior probability distributions on each and every<br>" +
+                "parameter of the current model.</html>");
         tabbedPane.addTab(OPERATORS, operatorsPanel);
+        tabbedPane.setToolTipTextAt(9, "<html>" +
+                "Select and adjust the menu of operators that will be used<br>" +
+                "to propose changes to the parameters. Switch off operators<br>" +
+                "on certain parameters to fix them to initial values.</html>");
         tabbedPane.addTab(MCMC, mcmcPanel);
+        tabbedPane.setToolTipTextAt(10, "<html>" +
+                "Specify the details of MCMC sampling. This includes chain<br>" +
+                "length, sampling frequencies, log file names and more.</html>");
+
+        for (int i = 1; i < tabbedPane.getTabCount(); i++) {
+            tabbedPane.setEnabledAt(i, false);
+        }
+
         currentPanel = (BeautiPanel) tabbedPane.getSelectedComponent();
 
         tabbedPane.addChangeListener(new ChangeListener() {
@@ -286,6 +331,14 @@ public class BeautiFrame extends DocumentFrame {
             JOptionPane.showMessageDialog(this, illegEx.getMessage(),
                     "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
         }
+
+        // enable/disable the other tabs and generate option depending on whether any
+        // data has been loaded.
+        boolean enabled = options.getDataPartitions().size() > 0;
+        for (int i = 1; i < tabbedPane.getTabCount(); i++) {
+            tabbedPane.setEnabledAt(i, enabled);
+        }
+        getExportAction().setEnabled(enabled);
     }
 
     /**
@@ -461,10 +514,6 @@ public class BeautiFrame extends DocumentFrame {
 
         setAllOptions();
 
-//          // @Todo templates are not implemented yet...
-////        getOpenAction().setEnabled(true);
-////        getSaveAction().setEnabled(true);
-        getExportAction().setEnabled(true);
     }
 
     public final boolean doImportTraits() {

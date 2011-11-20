@@ -1,8 +1,6 @@
 package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.components.ComponentFactory;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentGenerator;
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
 import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ComponentOptions;
@@ -19,20 +17,20 @@ public class AncestralStatesComponentFactory implements ComponentFactory {
 
     public ComponentGenerator getGenerator(final BeautiOptions beautiOptions) {
         if (generator == null) {
-            generator = new SequenceErrorModelComponentGenerator(beautiOptions);
+            generator = new AncestralStatesComponentGenerator(beautiOptions);
         }
         return generator;
     }
 
     public ComponentOptions getOptions(final BeautiOptions beautiOptions) {
         if (options == null) {
-            options = new SequenceErrorModelComponentOptions();
+            options = new AncestralStatesComponentOptions();
         }
         return options;
     }
 
-    private SequenceErrorModelComponentGenerator generator = null;
-    private SequenceErrorModelComponentOptions options = null;
+    private AncestralStatesComponentGenerator generator = null;
+    private AncestralStatesComponentOptions options = null;
 
     public static ComponentFactory INSTANCE = new AncestralStatesComponentFactory();
 }

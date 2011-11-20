@@ -111,7 +111,16 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     }
 
     public SequenceErrorType getSequenceErrorType(final AbstractPartitionData partition) {
-        return sequenceErrorTypeMap.get(partition);
+        SequenceErrorType type = sequenceErrorTypeMap.get(partition);
+        if (type == null) {
+            type = SequenceErrorType.NO_ERROR;
+            sequenceErrorTypeMap.put(partition, type);
+        }
+        return type;
+    }
+
+    public void setSequenceErrorType(final AbstractPartitionData partition, SequenceErrorType sequenceErrorType) {
+        sequenceErrorTypeMap.put(partition, sequenceErrorType);
     }
 
     private final Map<AbstractPartitionData, SequenceErrorType> sequenceErrorTypeMap = new HashMap<AbstractPartitionData, SequenceErrorType>();

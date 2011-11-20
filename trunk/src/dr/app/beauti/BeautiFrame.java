@@ -12,6 +12,7 @@ import dr.app.beauti.ancestralStatesPanel.AncestralStatesOptionsPanel;
 import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentFactory;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentFactory;
 import dr.app.beauti.components.dnds.DnDsComponentFactory;
@@ -127,13 +128,14 @@ public class BeautiFrame extends DocumentFrame {
         getZoomWindowAction().setEnabled(false);
 
         ComponentFactory[] components = {
-                SequenceErrorModelComponentFactory.INSTANCE,
-                TipDateSamplingComponentFactory.INSTANCE,
-                HierarchicalModelComponentFactory.INSTANCE,
-                DnDsComponentFactory.INSTANCE,
-                DolloComponentFactory.INSTANCE,
+                AncestralStatesComponentFactory.INSTANCE,
                 ContinuousComponentFactory.INSTANCE,
-                DiscreteTraitsComponentFactory.INSTANCE
+                DiscreteTraitsComponentFactory.INSTANCE,
+//                DnDsComponentFactory.INSTANCE,
+                DolloComponentFactory.INSTANCE,
+                HierarchicalModelComponentFactory.INSTANCE,
+                SequenceErrorModelComponentFactory.INSTANCE,
+                TipDateSamplingComponentFactory.INSTANCE
         };
 
         options = new BeautiOptions(components);

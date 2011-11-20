@@ -257,7 +257,7 @@ public class ModelOptions {
             }
         }
 
-        return null;
+        throw new IllegalArgumentException("A component options of class, " + theClass.toString() + ", has not been registered");
     }
 
     protected void selectComponentParameters(ModelOptions options, List<Parameter> params) {

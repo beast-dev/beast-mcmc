@@ -437,6 +437,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
         }
 
+        frame.setAllOptions();
         frame.setDirty();
     }
 

@@ -27,6 +27,7 @@ package dr.app.beauti.ancestralStatesPanel;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.BeautiPanel;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.gui.table.TableEditorStopper;
@@ -98,18 +99,9 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.setOpaque(false);
 
-//        ActionPanel actionPanel1 = new ActionPanel(false);
-//        actionPanel1.setAddAction(addModelAction);
-//        actionPanel1.setRemoveAction(removeModelAction);
-
-        JPanel controlPanel1 = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        controlPanel1.setOpaque(false);
-//        controlPanel1.add(actionPanel1);
-
         JPanel panel = new JPanel(new BorderLayout(0, 0));
         panel.setOpaque(false);
         panel.add(scrollPane, BorderLayout.CENTER);
-//        panel.add(controlPanel1, BorderLayout.SOUTH);
         panel.setMinimumSize(new Dimension(MINIMUM_TABLE_WIDTH, 0));
 
         optionsPanelParent = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -129,12 +121,6 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-
-        // The bottom panel is now small enough that this is not necessary
-//        JScrollPane scrollPane2 = new JScrollPane(panel);
-//        scrollPane2.setOpaque(false);
-//        scrollPane2.setPreferredSize(new Dimension(400, 150));
-
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
@@ -165,10 +151,8 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
                 selRow = 0;
             }
             partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
-        }
 
-        if (currentPartition == null && options.getPartitionSubstitutionModels().size() > 0) {
-            partitionTable.getSelectionModel().setSelectionInterval(0, 0);
+            setCurrentPartition(options.getDataPartitions().get(selRow));
         }
 
         settingOptions = false;
@@ -185,9 +169,11 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
     }
 
     private void selectionChanged() {
+        if (settingOptions) return;
+
         int selRow = partitionTable.getSelectedRow();
 
-        if (selRow >= options.getPartitionSubstitutionModels().size()) {
+        if (selRow >= options.getDataPartitions().size()) {
             selRow = 0;
             partitionTable.getSelectionModel().setSelectionInterval(selRow, selRow);
         }

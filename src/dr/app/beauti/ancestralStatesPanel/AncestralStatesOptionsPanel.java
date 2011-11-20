@@ -36,6 +36,7 @@ import dr.evolution.util.Taxa;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -71,6 +72,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     public AncestralStatesOptionsPanel(final AncestralStatesPanel ancestralStatesPanel, final BeautiOptions options, final AbstractPartitionData partition) {
 
         super(12, (OSType.isMac() ? 6 : 24));
+        setOpaque(false);
 
         this.partition = partition;
         this.options = options;
@@ -138,6 +140,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(sequenceErrorComponent.getSequenceErrorType(partition));
 
+        setupPanel();
+
         ItemListener listener = new ItemListener() {
             public void itemStateChanged(final ItemEvent itemEvent) {
                 optionsChanged();
@@ -152,9 +156,6 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         dNdSCountingCheck.addItemListener(listener);
 
         errorModelCombo.addItemListener(listener);
-
-        setupPanel();
-        setOpaque(false);
     }
 
     private void optionsChanged() {
@@ -171,16 +172,20 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
      * Lays out the appropriate components in the panel for this partition
      * model.
      */
-    private void setupPanel() {
+    void setupPanel() {
 
-        Taxa selectedItem = (Taxa)mrcaReconstructionCombo.getSelectedItem();
+        String selectedItem = (String)mrcaReconstructionCombo.getSelectedItem();
 
-        mrcaReconstructionCombo.removeAllItems();
+        if (mrcaReconstructionCombo.getItemCount() > 0) {
+            mrcaReconstructionCombo.removeAllItems();
+        }
         if (options.taxonSets.size() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
-                mrcaReconstructionCombo.addItem(taxonSet);
+                mrcaReconstructionCombo.addItem(taxonSet.getId());
             }
-            mrcaReconstructionCombo.setSelectedItem(selectedItem);
+            if (selectedItem != null) {
+                mrcaReconstructionCombo.setSelectedItem(selectedItem);
+            }
             mrcaReconstructionCheck.setEnabled(true);
             mrcaReconstructionCombo.setEnabled(true);
         } else {
@@ -198,23 +203,24 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 break;
             case DataType.CONTINUOUS:
                 robustCounting = false;
-                errorModel = false;
                 break;
             case DataType.MICRO_SAT:
                 ancestralReconstruction = false;
                 robustCounting = false;
-                errorModel = false;
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported data type");
 
         }
 
+        if (ancestralReconstruction || robustCounting) {
+            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
+        }
         if (ancestralReconstruction) {
             addComponent(ancestralReconstructionCheck);
             JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             panel.setOpaque(false);
-            panel.setBorder(null);
+            panel.setBorder(BorderFactory.createEmptyBorder());
             panel.add(mrcaReconstructionCheck);
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);
@@ -226,7 +232,9 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         }
 
         if (errorModel) {
-            addSeparator();
+            if (ancestralReconstruction || robustCounting) {
+                addSeparator();
+            }
             addComponentWithLabel("Sequence Error Model:", errorModelCombo);
         }
     }

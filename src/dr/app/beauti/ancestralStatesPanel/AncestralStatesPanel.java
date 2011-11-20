@@ -147,13 +147,6 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             currentPartition = null;
             optionsPanels.clear();
             optionsPanelParent.removeAll();
-            optionsBorder.setTitle("Substitution Model");
-
-//            if (currentDiscreteTraitOption != null) {
-//                this.remove(d_splitPane);
-//                currentDiscreteTraitOption = null;
-//            }
-            return;
         }
     }
 
@@ -187,7 +180,7 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
     public void getOptions(BeautiOptions options) {
     }
 
-    private void fireModelsChanged() {
+    public void fireModelChanged() {
         frame.setDirty();
     }
 
@@ -216,12 +209,11 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
 
             AncestralStatesOptionsPanel panel = optionsPanels.get(partition);
             if (panel == null) {
-                panel = new AncestralStatesOptionsPanel(options, partition);
+                panel = new AncestralStatesOptionsPanel(this, options, partition);
                 optionsPanels.put(partition, panel);
             }
 
             currentPartition = partition;
-            panel.setOptions();
             optionsPanelParent.add(panel);
 
             updateBorder();

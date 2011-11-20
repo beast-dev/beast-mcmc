@@ -1,20 +1,10 @@
 package dr.app.beauti.components.ancestralstates;
 
-import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
+import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
-import dr.evolution.alignment.HypermutantAlignment;
-import dr.evomodel.treelikelihood.HypermutantErrorModel;
-import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
-import dr.evoxml.HypermutantAlignmentParser;
-import dr.inference.model.ParameterParser;
-import dr.inference.model.StatisticParser;
-import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
-import dr.xml.XMLParser;
 
 /**
  * @author Andrew Rambaut
@@ -22,165 +12,229 @@ import dr.xml.XMLParser;
  */
 public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
+    private final static String LOG_SUFFIX = ".dNdS.log";
+
     public AncestralStatesComponentGenerator(final BeautiOptions options) {
         super(options);
     }
 
-    public boolean usesInsertionPoint(final InsertionPoint point) {
-        SequenceErrorModelComponentOptions comp = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
 
+    public boolean usesInsertionPoint(InsertionPoint point) {
 
-        if (!comp.usingSequenceErrorModel()) {
+        AncestralStatesComponentOptions component = (AncestralStatesComponentOptions) options
+                .getComponentOptions(AncestralStatesComponentOptions.class);
+
+        boolean reconstructAtNodes = false;
+        boolean reconstructAtMRCA = false;
+        boolean robustCounting = false;
+        boolean dNdSRobustCounting = false;
+
+        for (AbstractPartitionData partition : options.getDataPartitions()) {
+            if (component.reconstructAtNodes(partition)) reconstructAtNodes = true;
+            if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
+            if (component.robustCounting(partition)) robustCounting = true;
+            if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
+        }
+
+        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting && !dNdSRobustCounting) {
             return false;
         }
 
         switch (point) {
-            case AFTER_PATTERNS:
-            case AFTER_SITE_MODEL:
-            case IN_TREE_LIKELIHOOD:
+            case IN_OPERATORS:
             case IN_FILE_LOG_PARAMETERS:
+            case IN_TREES_LOG:
+            case AFTER_TREES_LOG:
+            case AFTER_MCMC:
                 return true;
+            default:
+                return false;
         }
-        return false;
-    }
 
-    protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
-        SequenceErrorModelComponentOptions component = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+    }// END: usesInsertionPoint
+
+    protected void generate(InsertionPoint point, Object item, XMLWriter writer) {
+
+        DnDsComponentOptions component = (DnDsComponentOptions) options
+                .getComponentOptions(DnDsComponentOptions.class);
 
         switch (point) {
-            case AFTER_PATTERNS:
-                writeHypermutationAlignments(writer, component);
-                break;
-            case AFTER_SITE_MODEL:
-                writeErrorModels(writer, component);
-                break;
-            case IN_TREE_LIKELIHOOD:
-                AbstractPartitionData partition = (AbstractPartitionData)item;
-                SequenceErrorType errorType = component.getSequenceErrorType(partition);
-                if (errorType != SequenceErrorType.NO_ERROR) {
-                    writer.writeIDref(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, partition.getName() + ".errorModel");
-                }
+            case IN_OPERATORS:
+                writeCodonPartitionedRobustCounting(writer, component);
                 break;
             case IN_FILE_LOG_PARAMETERS:
-                writeLogParameters(writer, component);
+                writeLogs(writer, component);
+                break;
+            case IN_TREES_LOG:
+                writeTreeLogs(writer, component);
+                break;
+            case AFTER_TREES_LOG:
+                writeDNdSLogger(writer, component);
+                break;
+            case AFTER_MCMC:
+                writeDNdSPerSiteAnalysisReport(writer, component);
                 break;
             default:
-                throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
+                throw new IllegalArgumentException(
+                        "This insertion point is not implemented for "
+                                + this.getClass().getName());
         }
 
-    }
+    }// END: generate
 
     protected String getCommentLabel() {
-        return "Sequence Error Model";
+        return "Codon partitioned robust counting";
     }
 
-    private void writeHypermutationAlignments(XMLWriter writer, SequenceErrorModelComponentOptions component) {
-        for (AbstractPartitionData partition : options.getDataPartitions()) {
-            String prefix = partition.getName() + ".";
+    private void writeCodonPartitionedRobustCounting(XMLWriter writer,
+                                                     DnDsComponentOptions component) {
 
-            if (component.isHypermutation(partition)) {
-                SequenceErrorType errorType = component.getSequenceErrorType(partition);
-
-                final String errorTypeName;
-                switch (errorType) {
-                    case HYPERMUTATION_ALL:
-                        errorTypeName = HypermutantAlignment.APOBECType.ALL.toString();
-                        break;
-                    case HYPERMUTATION_BOTH:
-                        errorTypeName = HypermutantAlignment.APOBECType.BOTH.toString();
-                        break;
-                    case HYPERMUTATION_HA3F:
-                        errorTypeName = HypermutantAlignment.APOBECType.HA3G.toString();
-                        break;
-                    case HYPERMUTATION_HA3G:
-                        errorTypeName = HypermutantAlignment.APOBECType.HA3F.toString();
-                        break;
-                    default:
-                        throw new RuntimeException("Unknown ErrorModelType: " + errorType.toString());
-                }
-                writer.writeOpenTag(
-                        HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + "hypermutants"),
-                                new Attribute.Default<String>("type", errorTypeName)
-                        }
-                );
-
-                writer.writeIDref("alignment", prefix + "alignment");
-
-                writer.writeCloseTag(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT);
-            }
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            writeCodonPartitionedRobustCounting(writer, model);
         }
     }
 
-    private void writeErrorModels(XMLWriter writer, SequenceErrorModelComponentOptions component) {
-        for (AbstractPartitionData partition : options.getDataPartitions()) {
-            String prefix = partition.getName() + ".";
+    // Called for each model that requires robust counting (can be more than
+    // one)
+    private void writeCodonPartitionedRobustCounting(XMLWriter writer,
+                                                     PartitionSubstitutionModel model) {
 
-            SequenceErrorType errorType = component.getSequenceErrorType(partition);
-            if (component.isHypermutation(partition)) {
-                writer.writeOpenTag(
-                        HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + SequenceErrorModelComponentOptions.ERROR_MODEL)
-                        }
-                );
+        System.err.println("DEBUG: Writing RB for " + model.getName());
 
-                writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
-                writeParameter(HypermutantErrorModel.HYPERMUTATION_INDICATORS, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);
+        writer.writeComment("Robust counting for: " + model.getName());
 
-                writer.writeCloseTag(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL);
+        // TODO: Hand coding is so 90s
 
-                writer.writeOpenTag(SumStatisticParser.SUM_STATISTIC, new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC),
-                        new Attribute.Default<Boolean>(SumStatisticParser.ELEMENTWISE, true)});
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER);
-                writer.writeCloseTag(SumStatisticParser.SUM_STATISTIC);
-            } else {
-                final String errorTypeName = (errorType == SequenceErrorType.AGE_TRANSITIONS ||
-                        errorType == SequenceErrorType.BASE_TRANSITIONS ?
-                        "transitions" : "all");
+        // S operator
+        writer.writeOpenTag("codonPartitionedRobustCounting",
+                new Attribute[] {
+                        new Attribute.Default<String>("id", "robustCounting1"),
+                        new Attribute.Default<String>("labeling", "S"),
+                        new Attribute.Default<String>("useUniformization",
+                                "true"),
+                        new Attribute.Default<String>("unconditionedPerBranch",
+                                "true") });
 
-                writer.writeOpenTag(
-                        SequenceErrorModelParser.SEQUENCE_ERROR_MODEL,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, prefix + SequenceErrorModelComponentOptions.ERROR_MODEL),
-                                new Attribute.Default<String>("type", errorTypeName)
-                        }
-                );
+        writer.writeIDref("treeModel", "treeModel");
+        writer.writeOpenTag("firstPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
+        writer.writeCloseTag("firstPosition");
 
-                if (component.hasAgeDependentRate(partition)) {
-                    writeParameter(SequenceErrorModelComponentOptions.AGE_RATE, prefix + SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER, 1, writer);
-                }
-                if (component.hasBaseRate(partition)) {
-                    writeParameter(SequenceErrorModelComponentOptions.BASE_RATE, prefix + SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER, 1, writer);
-                }
+        writer.writeOpenTag("secondPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
+        writer.writeCloseTag("secondPosition");
 
-                writer.writeCloseTag(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL);
-            }
+        writer.writeOpenTag("thirdPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
+        writer.writeCloseTag("thirdPosition");
+
+        writer.writeCloseTag("codonPartitionedRobustCounting");
+
+        writer.writeBlankLine();
+
+        // N operator:
+        writer.writeOpenTag("codonPartitionedRobustCounting",
+                new Attribute[] {
+                        new Attribute.Default<String>("id", "robustCounting2"),
+                        new Attribute.Default<String>("labeling", "N"),
+                        new Attribute.Default<String>("useUniformization",
+                                "true"),
+                        new Attribute.Default<String>("unconditionedPerBranch",
+                                "true") });
+
+        writer.writeIDref("treeModel", "treeModel");
+        writer.writeOpenTag("firstPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP1.treeLikelihood");
+        writer.writeCloseTag("firstPosition");
+
+        writer.writeOpenTag("secondPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP2.treeLikelihood");
+        writer.writeCloseTag("secondPosition");
+
+        writer.writeOpenTag("thirdPosition");
+        writer.writeIDref("ancestralTreeLikelihood", "CP3.treeLikelihood");
+        writer.writeCloseTag("thirdPosition");
+
+        writer.writeCloseTag("codonPartitionedRobustCounting");
+
+    }// END: writeCodonPartitionedRobustCounting()
+
+    private void writeLogs(XMLWriter writer, DnDsComponentOptions component) {
+
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            writeLogs(writer, model);
         }
     }
 
-    private void writeLogParameters(final XMLWriter writer, final SequenceErrorModelComponentOptions component) {
-        for (AbstractPartitionData partition : options.getDataPartitions()) {
-            String prefix = partition.getName() + ".";
+    private void writeLogs(XMLWriter writer, PartitionSubstitutionModel model) {
 
-            if (component.isHypermutation(partition)) {
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER);
-                writer.writeIDref(StatisticParser.STATISTIC, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_COUNT_STATISTIC);
-                writer.writeOpenTag(StatisticParser.STATISTIC,
-                        new Attribute.Default<String>("name", "isHypermutated"));
-                writer.writeIDref(HypermutantErrorModel.HYPERMUTANT_ERROR_MODEL,
-                        prefix + SequenceErrorModelComponentOptions.ERROR_MODEL);
-                writer.writeCloseTag(StatisticParser.STATISTIC);
-            }
+        writer.writeComment("Robust counting for: " + model.getName());
 
-            if (component.hasAgeDependentRate(partition)) {
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.AGE_RATE_PARAMETER);
-            }
-            if (component.hasBaseRate(partition)) {
-                writer.writeIDref(ParameterParser.PARAMETER, prefix + SequenceErrorModelComponentOptions.BASE_RATE_PARAMETER);
-            }
+        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
+        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+
+    }// END: writeLogs
+
+    private void writeTreeLogs(XMLWriter writer, DnDsComponentOptions component) {
+
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            // We re-use the same method
+            writeLogs(writer, model);
         }
     }
+
+    private void writeDNdSLogger(XMLWriter writer,
+                                 DnDsComponentOptions component) {
+
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            writeDNdSLogger(writer, model);
+        }
+    }
+
+    private void writeDNdSLogger(XMLWriter writer,
+                                 PartitionSubstitutionModel model) {
+
+        writer.writeComment("Robust counting for: " + model.getName());
+
+        writer.writeOpenTag("log", new Attribute[] {
+                new Attribute.Default<String>("id", "fileLog_dNdS"),
+                new Attribute.Default<String>("logEvery", "10000"),
+                new Attribute.Default<String>("fileName", model.getName()
+                        + LOG_SUFFIX) });
+
+        writer
+                .writeOpenTag("dNdSLogger",
+                        new Attribute[]{new Attribute.Default<String>("id",
+                                "dNdS")});
+        writer.writeIDref("treeModel", "treeModel");
+        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting1");
+        writer.writeIDref("codonPartitionedRobustCounting", "robustCounting2");
+        writer.writeCloseTag("dNdSLogger");
+
+        writer.writeCloseTag("log");
+
+    }// END: writeLogs
+
+    private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
+                                                DnDsComponentOptions component) {
+
+        for (PartitionSubstitutionModel model : component.getPartitionList()) {
+            writeDNdSPerSiteAnalysisReport(writer, model);
+        }
+    }
+
+    private void writeDNdSPerSiteAnalysisReport(XMLWriter writer,
+                                                PartitionSubstitutionModel model) {
+
+        writer.writeComment("Robust counting for: " + model.getName());
+
+        writer.writeOpenTag("report");
+
+        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + model.getName()
+                + LOG_SUFFIX + '\"' + "/> \n");
+
+        writer.writeCloseTag("report");
+
+    }// END: writeDNdSReport
+
 }

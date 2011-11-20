@@ -2,6 +2,7 @@ package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.options.*;
 import dr.app.beauti.types.*;
+import dr.evolution.util.Taxa;
 
 import java.util.*;
 
@@ -27,40 +28,60 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
     }
 
-    public boolean reconstructAtNodes(final AbstractPartitionData partition) {
+    private AncestralStateOptions getOptions(final AbstractPartitionData partition) {
         AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.reconstructAtNodes;
+        if (options == null) {
+            options = new AncestralStateOptions();
+            ancestralStateOptionsMap.put(partition, options);
+        }
+        return options;
+    }
+
+    public boolean reconstructAtNodes(final AbstractPartitionData partition) {
+        return getOptions(partition).reconstructAtNodes;
     }
 
     public void setReconstructAtNodes(final AbstractPartitionData partition, boolean reconstructAtNodes) {
-        AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-         options.reconstructAtNodes = reconstructAtNodes;
+        getOptions(partition).reconstructAtNodes = reconstructAtNodes;
     }
 
     public boolean reconstructAtMRCA(final AbstractPartitionData partition) {
-        AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.reconstructAtMRCA;
+        return getOptions(partition).reconstructAtMRCA;
     }
 
-    public String getMRCAName(final AbstractPartitionData partition) {
+    public void setReconstructAtMRCA(final AbstractPartitionData partition, boolean reconstructAtMRCA) {
+        getOptions(partition).reconstructAtMRCA = reconstructAtMRCA;
+    }
+
+    public Taxa getMRCATaxonSet(final AbstractPartitionData partition) {
         AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.mrcaName;
+        return options.mrcaTaxonSet;
+    }
+
+    public void setMRCATaxonSet(final AbstractPartitionData partition, Taxa taxonSet) {
+        getOptions(partition).mrcaTaxonSet = taxonSet;
     }
 
     public boolean robustCounting(final AbstractPartitionData partition) {
-        AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.robustCounting;
+        return getOptions(partition).robustCounting;
+    }
+
+    public void setRobustCounting(final AbstractPartitionData partition, boolean robustCounting) {
+        getOptions(partition).robustCounting = robustCounting;
     }
 
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
-        AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.dNdSRobustCounting;
+        return getOptions(partition).dNdSRobustCounting;
+    }
+
+    public void setDNdSRobustCounting(final AbstractPartitionData partition, boolean dNdSRobustCounting) {
+        getOptions(partition).dNdSRobustCounting = dNdSRobustCounting;
     }
 
     class AncestralStateOptions {
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
-        String mrcaName = null;
+        Taxa mrcaTaxonSet = null;
         boolean robustCounting = false;
         boolean dNdSRobustCounting = false;
     };

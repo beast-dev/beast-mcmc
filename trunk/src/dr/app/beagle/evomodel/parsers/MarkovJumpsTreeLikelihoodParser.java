@@ -45,14 +45,16 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     }
 
     protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
+                                                        BranchSubstitutionModel branchSubstitutionModel,
+                                                        GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
-        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        SubstitutionModel substModel = siteRateModel.getSubstitutionModel();
+//        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 
         DataType dataType = substModel.getDataType();
 
@@ -182,7 +184,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new ElementRule(GammaSiteRateModel.class),
                     new ElementRule(BranchSubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),
-                    new ElementRule(SubstitutionModel.class),
+//                    new ElementRule(SubstitutionModel.class),
                     AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
                     new ElementRule(COUNTS,

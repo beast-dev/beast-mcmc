@@ -37,7 +37,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
         }
 
-        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting) {
+        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting && !dNdSRobustCounting) {
             return false;
         }
 

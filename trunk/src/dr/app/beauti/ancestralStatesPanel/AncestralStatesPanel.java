@@ -155,6 +155,11 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             setCurrentPartition(options.getDataPartitions().get(selRow));
         }
 
+        AncestralStatesOptionsPanel panel = optionsPanels.get(currentPartition);
+        if (panel != null) {
+            panel.setupPanel();
+        }
+
         settingOptions = false;
 
         validate();
@@ -200,6 +205,9 @@ public class AncestralStatesPanel extends BeautiPanel implements Exportable {
             }
 
             currentPartition = partition;
+
+            panel.setupPanel();
+
             optionsPanelParent.add(panel);
 
             updateBorder();

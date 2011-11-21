@@ -17,29 +17,40 @@
 
 
 Version History
-Last updated: alexei@cs.auckland.ac.nz - 1st April 2011
+Last updated: a.rambaut@ed.ac.uk - 21st November 2011
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.0 released 1st April 2011
+Version 1.7.0 released ??? November 2011
 
 	New Features:
-        Birth Death Serial Sampling Model, see:
-             Stadler, T; Sampling-through-time in birth-death trees
-             JOURNAL OF THEORETICAL BIOLOGY (2010) 267:396-404.
-             and
-             T. Stadler, R. Kouyos , V. von Wyl , S. Yerly , J. B�ni ,
-             P. B�rgisser , T. Klimkait , B. Joos , P. Rieder , D. Xie ,
-             H. G�nthard , A. Drummond , S. Bonhoeffer;
-             Estimating the basic reproductive number from viral
-             sequence data; Submitted.
+		New Birth-Death speciation and epidemiological tree models. See citation
+		panel in BEAUti for references.
+		
+		Multivatiate continuous trait evolution models including Brownian motion
+		and Relaxed Random Walk models.
+		
+		Revamped Traits panel with more options for creating and editing traits.
+		
+		New 'Create Partition from Trait' button to create a new data partition
+		from an imported discrete or continuous trait.
+		
+		New 'States' panel in BEAUti for ancestral reconstruction and sequence 
+		error model options for any data partition.
+		
+		Robust counting models to reconstruct number of substitutions (including
+		synonymous/non-synonymous for coding sequences).
+		
+       	Clock group table in BEAUti to specify shared molecular clocks.
+       	
+       	Construct Phylogenetic Hierarchical models in Priors panel of BEAUti.
+       	
+       	More 'Guess Dates' options for parsing dates from tip labels. Includes
+       	parsing calendar dates.
 
-        Added clock model group in BEAUti.
-
-        BEAUti starts to explicitly generate uniform priors in XML.
-
-        A new XML for Calibration with Yule.
+        More prior probability options for parameters and updated prior dialog
+        box.
 
 	Bug Fixes:
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation

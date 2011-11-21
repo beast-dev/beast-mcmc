@@ -38,6 +38,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
             DataTable<String[]> dataTable,
             Map<String, String> virusAntiserumMap,
             Map<String, String> assayAntiserumMap,
+            List<String> virusLocationStatisticList,
             final boolean log2Transform) {
 
         super(ANTIGENIC_TRAIT_LIKELIHOOD);
@@ -253,7 +254,14 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
         // some random initial locations
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
             for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
+             //   double r = MathUtils.nextGaussian();
+                double r = 0.0;
+                if (j == 0) {
+                    r = (double) i * 0.05;
+                }
+                else {
+                    r = MathUtils.nextGaussian();
+                }
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
 
                 if (tipTraitParameter != null) {
@@ -263,6 +271,15 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
                 }
             }
         }
+
+        int i = 0;
+        for (String virusName : virusNames) {
+	        if (virusLocationStatisticList.contains(virusName)) {
+                addStatistic(new VirusLocation(virusName + "." + "location", i));
+	        }
+            i++;
+        }
+
     }
 
     @Override
@@ -292,6 +309,34 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
 
     private CompoundParameter tipTraitParameter;
     private int[] tipIndices;
+
+    public class VirusLocation extends Statistic.Abstract {
+
+        public VirusLocation(String statisticName, int virusIndex) {
+            super(statisticName);
+            this.virusIndex = virusIndex;
+        }
+
+        @Override
+        public String getDimensionName(final int dim) {
+            if (getMDSDimension() == 2) {
+                return getStatisticName() + "_" + (dim == 0 ? "X" : "Y");
+            } else {
+                return getStatisticName() + "_" + (dim + 1);
+            }
+        }
+
+        public int getDimension() {
+            return getMDSDimension();
+        }
+
+        public double getStatisticValue(final int dim) {
+            Parameter loc = getLocationsParameter().getParameter(virusIndex);
+            return loc.getParameterValue(dim);
+        }
+
+        private final int virusIndex;
+    }
 
     private class Pair {
         Pair(final int location1, final int location2) {
@@ -325,6 +370,8 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
         public final static String LOCATIONS = "locations";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String MDS_PRECISION = "mdsPrecision";
+
+        public static final String VIRUS_LOCATIONS = "virusLocations";
 
         public static final String LOG_2_TRANSFORM = "log2Transform";
         public static final String TITRATION_THRESHOLD = "titrationThreshold";
@@ -368,6 +415,12 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
                 log2Transform = xo.getBooleanAttribute(LOG_2_TRANSFORM);
             }
 
+            List<String> virusLocationStatisticList = null;
+            String[] virusLocations = xo.getStringArrayAttribute(VIRUS_LOCATIONS);
+            if (virusLocations != null) {
+                virusLocationStatisticList = Arrays.asList(virusLocations);
+            }
+
             // This parameter needs to be linked to the one in the IntegratedMultivariateTreeLikelihood (I suggest that the parameter is created
             // here and then a reference passed to IMTL - which optionally takes the parameter of tip trait values, in which case it listens and
             // updates accordingly.
@@ -380,7 +433,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            ContinuousAntigenicTraitLikelihood AGTL = new ContinuousAntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, log2Transform);
+            ContinuousAntigenicTraitLikelihood AGTL = new ContinuousAntigenicTraitLikelihood(mdsDimension, mdsPrecision, tipTraitParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, virusLocationStatisticList, log2Transform);
 
             Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGTL));
 
@@ -429,6 +482,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
                 AttributeRule.newStringRule(ASSAY_MAP_FILE_NAME, true, "The name of the file containing the assay to serum map"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newBooleanRule(LOG_2_TRANSFORM, true, "Whether to log2 transform the data"),
+                AttributeRule.newStringArrayRule(VIRUS_LOCATIONS, true, "A list of virus names to create location statistics for"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)

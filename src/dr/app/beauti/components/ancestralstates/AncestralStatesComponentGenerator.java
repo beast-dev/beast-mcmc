@@ -1,6 +1,5 @@
 package dr.app.beauti.components.ancestralstates;
 
-import dr.app.beauti.components.dnds.DnDsComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
@@ -14,7 +13,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
     private final static boolean DEBUG = true;
 
-    private final static String LOG_SUFFIX = ".dNdS.log";
+    private final static String DNDS_LOG_SUFFIX = ".dNdS.log";
 
     public AncestralStatesComponentGenerator(final BeautiOptions options) {
         super(options);
@@ -220,7 +219,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeOpenTag("log", new Attribute[] {
                 new Attribute.Default<String>("id", "fileLog_dNdS"),
                 new Attribute.Default<String>("logEvery", "10000"),
-                new Attribute.Default<String>("fileName", partition.getName() + LOG_SUFFIX) });
+                new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX) });
 
         writer
                 .writeOpenTag("dNdSLogger",
@@ -253,7 +252,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("report");
 
-        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + partition.getName() + LOG_SUFFIX + '\"' + "/> \n");
+        writer.write("<dNdSPerSiteAnalysis fileName=" + '\"' + partition.getName() + DNDS_LOG_SUFFIX + '\"' + "/> \n");
 
         writer.writeCloseTag("report");
 

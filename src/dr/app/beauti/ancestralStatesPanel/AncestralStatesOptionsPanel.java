@@ -1,5 +1,5 @@
 /*
- * PartitionModelPanel.java
+ * AncestralStatesOptionsPanel.java
  *
  * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,8 +27,9 @@ package dr.app.beauti.ancestralStatesPanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.*;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
@@ -36,9 +37,11 @@ import dr.evolution.util.Taxa;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Alexei Drummond
@@ -48,14 +51,15 @@ import java.awt.event.*;
 public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     private static final String ROBUST_COUNTING_TOOL_TIP = "<html>"
-                        + "Enable counting of reconstructed number of substitutions as described in<br>" +
-                        "Minin & Suchard (in preparation). These will be annotated directly in the<br>"
+                        + "Enable counting of reconstructed number of substitutions as described in<br>"
+                        + "Minin & Suchard (2008). These will be annotated directly in the<br>"
                         + "logged trees.</html>";
 
     private static final String DNDS_ROBUST_COUNTING_TOOL_TIP = "<html>"
-                        + "Enable counting of synonymous and non-synonymous substitution as described in<br>" +
-                        "Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard (in preparation). This model<br>"
-                        + "requires a 3-partition codon model to be selected, above.</html>";
+                        + "Enable counting of synonymous and non-synonymous substitution as described in<br>"
+                        + "O'Brien, Minin & Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond &<br>"
+                        + "Suchard (in preparation). This model requires a 3-partition codon model to be<br>"
+                        + "selected, above.</html>";
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;

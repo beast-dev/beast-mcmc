@@ -85,6 +85,9 @@ public class MultivariateNormalDistribution implements MultivariateDistribution 
         return logPdf(x, mean, precision, getLogDet(), 1.0);
     }
 
+    // scale only modifies precision
+    // in one dimension, this is equivalent to:
+    // PDF[NormalDistribution[mean, Sqrt[scale]*Sqrt[1/precison]], x]
     public static double logPdf(double[] x, double[] mean, double[][] precision,
                                 double logDet, double scale) {
 

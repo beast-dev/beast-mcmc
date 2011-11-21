@@ -57,13 +57,13 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         getOptions(partition).reconstructAtMRCA = reconstructAtMRCA;
     }
 
-    public Taxa getMRCATaxonSet(final AbstractPartitionData partition) {
+    public String getMRCATaxonSet(final AbstractPartitionData partition) {
         AncestralStateOptions options = ancestralStateOptionsMap.get(partition);
-        return options.mrcaTaxonSet;
+        return options.mrcaTaxonSetName;
     }
 
-    public void setMRCATaxonSet(final AbstractPartitionData partition, Taxa taxonSet) {
-        getOptions(partition).mrcaTaxonSet = taxonSet;
+    public void setMRCATaxonSet(final AbstractPartitionData partition, String taxonSetName) {
+        getOptions(partition).mrcaTaxonSetName = taxonSetName;
     }
 
     public boolean robustCounting(final AbstractPartitionData partition) {
@@ -75,14 +75,27 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     }
 
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
-        return getOptions(partition).robustCounting && partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3;
+        return getOptions(partition).dNdSRobustCounting;
+    }
+
+    public void setDNdSRobustCounting(final AbstractPartitionData partition, boolean dNdSRobustCounting) {
+        if (dNdSRobustCounting && partition.getPartitionSubstitutionModel().getCodonPartitionCount() != 3) {
+            throw new IllegalArgumentException("dNdS Robust Counting can only be used with 3 codon partition models.");
+        }
+        getOptions(partition).dNdSRobustCounting = dNdSRobustCounting;
+    }
+
+    public boolean dNdSRobustCountingAvailable(final AbstractPartitionData partition) {
+        // todo  - are there other constraints of the use of this model?
+        return partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3;
     }
 
     class AncestralStateOptions {
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
-        Taxa mrcaTaxonSet = null;
+        String mrcaTaxonSetName = null;
         boolean robustCounting = false;
+        boolean dNdSRobustCounting = false;
     };
 
     private final Map<AbstractPartitionData, AncestralStateOptions> ancestralStateOptionsMap = new HashMap<AbstractPartitionData, AncestralStateOptions>();

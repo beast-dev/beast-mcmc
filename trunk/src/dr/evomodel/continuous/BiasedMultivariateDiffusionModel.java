@@ -33,8 +33,12 @@ public class BiasedMultivariateDiffusionModel extends MultivariateDiffusionModel
 
         final int dim = stop.length;
         double[] bias = biasParam.getParameterValues();
-        for (int i = 0; i < dim; i++)
+        for (int i = 0; i < dim; i++) {
+            bias[i] *= time;
             bias[i] += start[i];
+        }
+
+
 
         return super.calculateLogDensity(bias, stop, time);
     }

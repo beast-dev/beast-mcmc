@@ -35,7 +35,6 @@ import dr.util.Version;
  * 1. the dr source has been checked out *by tag* before being packaged for
  * distribution.
  * <p/>
- * Version last changed 2009/08/1 by AER
  *
  * @author Alexei Drummond
  * @author Andrew Rambaut

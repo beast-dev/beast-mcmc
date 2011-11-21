@@ -1,5 +1,5 @@
 /*
- * AncestralStatesOptionsPanel.java
+ * PartitionModelPanel.java
  *
  * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -27,9 +27,8 @@ package dr.app.beauti.ancestralStatesPanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.types.SequenceErrorType;
+import dr.app.beauti.options.*;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
@@ -37,11 +36,9 @@ import dr.evolution.util.Taxa;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 
 /**
  * @author Alexei Drummond
@@ -59,7 +56,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                         + "Enable counting of synonymous and non-synonymous substitution as described in<br>"
                         + "O'Brien, Minin & Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond &<br>"
                         + "Suchard (in preparation). This model requires a 3-partition codon model to be<br>"
-                        + "selected, above.</html>";
+                        + "selected in the Site model for this partition.</html>";
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -69,10 +66,12 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     private JCheckBox ancestralReconstructionCheck = new JCheckBox(
             "Reconstruct states at all ancestors");
     private JCheckBox mrcaReconstructionCheck = new JCheckBox(
-            "Reconstruct states at MRCA for Taxon Set:");
+            "Reconstruct states at ancestor:");
     private JComboBox mrcaReconstructionCombo = new JComboBox();
     private JCheckBox robustCountingCheck = new JCheckBox(
             "Reconstruct state change counts");
+    private JCheckBox dNdSRobustCountingCheck = new JCheckBox(
+            "Reconstruct synonymous/non-synonymous change counts");
 
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
@@ -114,24 +113,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         PanelUtils.setupComponent(robustCountingCheck);
         robustCountingCheck.setToolTipText(ROBUST_COUNTING_TOOL_TIP);
 
-//        PanelUtils.setupComponent(dNdSCountingCheck);
-//        dNdSCountingCheck
-//                .setToolTipText();
-
-        robustCountingCheck.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ev) {
-//                dNdSCountingCheck.setEnabled(robustCountingCheck.isSelected());
-//                if (robustCountingCheck.isSelected()) {
-//                    if (checkRobustCounting()) {
-//                        setRobustCountingModel();
-//                    }
-//
-//                } else {
-//                    removeRobustCountingModel();
-//                }
-
-            }// END: actionPerformed
-        });
+        PanelUtils.setupComponent(dNdSRobustCountingCheck);
+        dNdSRobustCountingCheck.setToolTipText(DNDS_ROBUST_COUNTING_TOOL_TIP);
 
         // ////////////////////////
         PanelUtils.setupComponent(errorModelCombo);
@@ -145,6 +128,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtMRCA(partition));
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
         robustCountingCheck.setSelected(ancestralStatesComponent.robustCounting(partition));
+        dNdSRobustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
         errorModelCombo.setSelectedItem(sequenceErrorComponent.getSequenceErrorType(partition));
@@ -162,15 +146,20 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCheck.addItemListener(listener);
         mrcaReconstructionCombo.addItemListener(listener);
         robustCountingCheck.addItemListener(listener);
+        dNdSRobustCountingCheck.addItemListener(listener);
 
         errorModelCombo.addItemListener(listener);
     }
 
     private void optionsChanged() {
+        if (isUpdating) return;
+
         ancestralStatesComponent.setReconstructAtNodes(partition, ancestralReconstructionCheck.isSelected());
         ancestralStatesComponent.setReconstructAtMRCA(partition, mrcaReconstructionCheck.isSelected());
-        ancestralStatesComponent.setMRCATaxonSet(partition, (Taxa) mrcaReconstructionCombo.getSelectedItem());
+        mrcaReconstructionCombo.setEnabled(mrcaReconstructionCheck.isSelected());
+        ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
         ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
+        ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());
     }
@@ -181,24 +170,23 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
      */
     void setupPanel() {
 
+        isUpdating = true;
+
         String selectedItem = (String)mrcaReconstructionCombo.getSelectedItem();
 
         if (mrcaReconstructionCombo.getItemCount() > 0) {
             mrcaReconstructionCombo.removeAllItems();
         }
+        mrcaReconstructionCombo.addItem("Tree Root");
         if (options.taxonSets.size() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
-                mrcaReconstructionCombo.addItem(taxonSet.getId());
+                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")");
             }
             if (selectedItem != null) {
                 mrcaReconstructionCombo.setSelectedItem(selectedItem);
             }
-            mrcaReconstructionCheck.setEnabled(true);
-            mrcaReconstructionCombo.setEnabled(true);
-        } else {
-            mrcaReconstructionCheck.setEnabled(false);
-            mrcaReconstructionCombo.setEnabled(false);
         }
+        mrcaReconstructionCombo.setEnabled(mrcaReconstructionCheck.isSelected());
 
         boolean ancestralReconstruction = true;
         boolean robustCounting = true;
@@ -220,10 +208,11 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         }
 
-        if (ancestralReconstruction || robustCounting) {
-            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
-        }
+        removeAll();
+
         if (ancestralReconstruction) {
+            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
+
             addComponent(ancestralReconstructionCheck);
             JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             panel.setOpaque(false);
@@ -234,17 +223,54 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         }
 
         if (robustCounting) {
+            if (ancestralReconstruction) {
+                addSeparator();
+            }
+            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
+
+            JTextArea text = new JTextArea(
+                    "Select this option to reconstruct counts of substitutions using " +
+                    "Markov Jumps. This approached is described in Minin & Suchard (2008).");
+            text.setColumns(40);
+            PanelUtils.setupComponent(text);
+            addComponent(text);
+
             addComponent(robustCountingCheck);
-            robustCountingCheck.setToolTipText(ancestralStatesComponent.dNdSRobustCounting(partition) ?
-                    DNDS_ROBUST_COUNTING_TOOL_TIP : ROBUST_COUNTING_TOOL_TIP);
+
+            text = new JTextArea(
+                    "Select this option to reconstruct counts of synonymous and nonsynonymous " +
+                    "changes usingRobust Counting. This approached as described in O'Brien, Minin " +
+                            "& Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard " +
+                            "(in preparation):");
+            text.setColumns(40);
+            PanelUtils.setupComponent(text);
+            addComponent(text);
+
+            addComponent(dNdSRobustCountingCheck);
+
+            text = new JTextArea(
+                    "This model requires a 3-partition codon model to be selected in " +
+                    "the Site model for this partition before it can be selected.");
+            text.setColumns(40);
+            text.setBorder(BorderFactory.createEmptyBorder(0, 32, 0, 0));
+            PanelUtils.setupComponent(text);
+            addComponent(text);
+            dNdSRobustCountingCheck.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
+            text.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
+
         }
 
         if (errorModel) {
             if (ancestralReconstruction || robustCounting) {
                 addSeparator();
             }
-            addComponentWithLabel("Sequence Error Model:", errorModelCombo);
+            addSpanningComponent(new JLabel("Sequence error model:"));
+            addComponentWithLabel("Error Model:", errorModelCombo);
         }
+        isUpdating = false;
+
     }
+
+    private boolean isUpdating = false;
 
 }

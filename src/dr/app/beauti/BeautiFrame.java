@@ -262,8 +262,8 @@ public class BeautiFrame extends DocumentFrame {
 
         Toolkit tk = Toolkit.getDefaultToolkit();
         Dimension d = tk.getScreenSize();
-        System.out.println("Screen width = " + d.width);
-        System.out.println("Screen height = " + d.height);
+//        System.out.println("Screen width = " + d.width);
+//        System.out.println("Screen height = " + d.height);
 
         if (d.width < 1000 || d.height < 700) {
             setSize(new java.awt.Dimension(700, 550));

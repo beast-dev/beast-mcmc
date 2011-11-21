@@ -54,6 +54,12 @@ public class PanelUtils {
 			comp.putClientProperty("JComboBox.isPopDown", Boolean.TRUE);
 			// comp.putClientProperty("JComboBox.isSquare", Boolean.TRUE);
 		}
+        if (comp instanceof JTextArea) {
+            ((JTextArea) comp).setEditable(false);
+            ((JTextArea) comp).setOpaque(false);
+            ((JTextArea) comp).setLineWrap(true);
+            ((JTextArea) comp).setWrapStyleWord(true);
+        }
 	}
 
 	public static Frame getActiveFrame() {

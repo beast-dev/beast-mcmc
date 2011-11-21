@@ -144,7 +144,7 @@ public class NexusApplicationImporter extends NexusImporter {
 
         CharSet charSet = new CharSet(name);
 
-        System.out.print("Char set " + name);
+//        System.out.print("Char set " + name);
 
         int from;
         int to;

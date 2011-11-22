@@ -365,13 +365,21 @@ public class BeautiOptions extends ModelOptions {
     }
 
     public PartitionData getPartitionData(Alignment alignment) {
-        for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionData) {
-                if (((PartitionData) partition).getAlignment() == alignment)
-                    return (PartitionData) partition;
-            }
+        for (PartitionData partition : getPartitionData()) {
+            if (partition.getAlignment() == alignment)
+                return partition;
         }
         return null;
+    }
+
+    public List<PartitionData> getPartitionData() {
+        List<PartitionData> pdList = new ArrayList<PartitionData>();
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition instanceof PartitionData) {
+                pdList.add((PartitionData) partition);
+            }
+        }
+        return pdList;
     }
 
     public List<AbstractPartitionData> getDataPartitions() {

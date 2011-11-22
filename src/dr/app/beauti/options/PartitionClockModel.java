@@ -38,7 +38,6 @@ public class PartitionClockModel extends PartitionOptions {
 
     private ClockType clockType = ClockType.STRICT_CLOCK;
     private ClockDistributionType clockDistributionType = ClockDistributionType.LOGNORMAL;
-    private boolean isEstimatedRate = true;
     private double rate; // move to initModelParametersAndOpererators() to initial
 
     private ClockModelGroup clockModelGroup = null;
@@ -58,7 +57,6 @@ public class PartitionClockModel extends PartitionOptions {
         super(options, name);
         this.clockType = source.clockType;
         clockDistributionType = source.clockDistributionType;
-        isEstimatedRate = source.isEstimatedRate;
         rate = source.rate;
 
         clockModelGroup = source.clockModelGroup;
@@ -211,11 +209,15 @@ public class PartitionClockModel extends PartitionOptions {
 //                rateParam.initial = selectedRate;
 //            }
 
-            if (isEstimatedRate) params.add(rateParam);
+            if (!rateParam.isFixed) params.add(rateParam);
         }
     }
 
     public Parameter getClockRateParam() {
+        return getClockRateParam(clockType, clockDistributionType);
+    }
+
+    private Parameter getClockRateParam(ClockType clockType, ClockDistributionType clockDistributionType) {
         Parameter rateParam = null;
         switch (clockType) {
             case STRICT_CLOCK:
@@ -261,8 +263,8 @@ public class PartitionClockModel extends PartitionOptions {
     public void selectOperators(List<Operator> ops) {
         if (options.hasData()) {
 
-            if ((!(clockModelGroup.getRateTypeOption() == FixRateType.FIX_MEAN))
-                    && isEstimatedRate) {
+            if (clockModelGroup.getRateTypeOption() != FixRateType.FIX_MEAN
+                    && isEstimatedRate()) {
                 switch (clockType) {
                     case STRICT_CLOCK:
                         ops.add(getOperator("clock.rate"));
@@ -362,14 +364,24 @@ public class PartitionClockModel extends PartitionOptions {
         this.clockDistributionType = clockDistributionType;
     }
 
+    // important to set all clock rate rateParam.isFixed same, which keeps isEstimatedRate() correct when change clock type
     public void setEstimatedRate(boolean isEstimatedRate) {
-        this.isEstimatedRate = isEstimatedRate;
-        Parameter rateParam = getClockRateParam();
+//        for (ClockType clockType : new ClockType[]{ClockType.STRICT_CLOCK, ClockType.UNCORRELATED, ClockType.RANDOM_LOCAL_CLOCK}) {
+//            Parameter rateParam = getClockRateParam(clockType, );
+//            rateParam.isFixed = !isEstimatedRate;
+//        }
+        //TODO a trouble to deal with clockDistributionType, when try to set all rate parameters
+        Parameter rateParam = getParameter("clock.rate");
+        rateParam.isFixed = !isEstimatedRate;
+        rateParam = getParameter(ClockType.UCLD_MEAN);
+        rateParam.isFixed = !isEstimatedRate;
+        rateParam = getParameter(ClockType.UCED_MEAN);
         rateParam.isFixed = !isEstimatedRate;
     }
 
     public boolean isEstimatedRate() {
-        return isEstimatedRate;
+        Parameter rateParam = getClockRateParam();
+        return !rateParam.isFixed;
     }
 
     public void setUseReferencePrior(boolean useReferencePrior) {

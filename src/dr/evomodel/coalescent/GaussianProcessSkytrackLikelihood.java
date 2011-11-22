@@ -53,11 +53,12 @@ import java.util.List;
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
     protected Parameter popSizeParameter;
-    protected Parameter groupSizeParameter;
+//    protected Parameter groupSizeParameter;
     protected Parameter precisionParameter;
     protected Parameter lambda_boundParameter;
-    protected Parameter lambdaParameter;
-    protected Parameter betaParameter;
+//    protected Parameter lambdaParameter;
+//    protected Parameter betaParameter;
+    protected Parameter localTMRCA;
 
 //    protected int GPfieldLength;
     protected double[] coalescentIntervals;  // data[,1]
@@ -77,17 +78,16 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected double storedLogFieldLikelihood;
     protected SymmTridiagMatrix weightMatrix;
 	protected SymmTridiagMatrix storedWeightMatrix;
-	protected MatrixParameter dMatrix;
+//	protected MatrixParameter dMatrix;
 	protected boolean rescaleByRootHeight;
 
 
 
 
-    public GaussianProcessSkytrackLikelihood(Tree tree, Parameter popParameter, Parameter groupParameter,
-                                             Parameter precParameter, Parameter lambda, Parameter beta,
-                                             MatrixParameter dMatrix, /*boolean timeAwareSmoothing,*/
-                                             boolean rescaleByRootHeight, /*Parameter latentPoints,*/ Parameter lambda_bound) {
-        this(wrapTree(tree), popParameter, groupParameter, precParameter, lambda, beta, dMatrix, rescaleByRootHeight, lambda_bound);
+    public GaussianProcessSkytrackLikelihood(Tree tree,
+                                             Parameter precParameter,
+                                             boolean rescaleByRootHeight,  Parameter lambda_bound) {
+        this(wrapTree(tree),  precParameter, rescaleByRootHeight, lambda_bound);
     }
 
 
@@ -95,36 +95,36 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 		super(name);
 	}
 
-     private static List<Tree> wrapTree(Tree tree) {
+
+    private static List<Tree> wrapTree(Tree tree) {
         List<Tree> treeList = new ArrayList<Tree>();
         treeList.add(tree);
         return treeList;
     }
 
-    public GaussianProcessSkytrackLikelihood(List<Tree> treeList, Parameter popParameter, Parameter groupParameter,
-                                             Parameter precParameter, Parameter lambda, Parameter beta,
-                                             MatrixParameter dMatrix,
-                                             boolean rescaleByRootHeight, Parameter lambda_bound) {
+    public GaussianProcessSkytrackLikelihood(List<Tree> treeList,
+                                             Parameter precParameter,
+                                              boolean rescaleByRootHeight, Parameter lambda_bound) {
         super(GaussianProcessSkytrackLikelihoodParser.SKYTRACK_LIKELIHOOD);
 
 
 
-                this.popSizeParameter = popParameter;
-                this.groupSizeParameter = groupParameter;
+//                this.popSizeParameter = popParameter;
+//                this.groupSizeParameter = groupParameter;
                 this.precisionParameter = precParameter;
-                this.lambdaParameter = lambda;
-                this.betaParameter = beta;
-                this.dMatrix = dMatrix;
+//                this.lambdaParameter = lambda;
+//                this.betaParameter = beta;
+//                this.dMatrix = dMatrix;
                 this.rescaleByRootHeight = rescaleByRootHeight;
                 this.lambda_boundParameter= lambda_bound;
 
-                addVariable(popSizeParameter);
+//                addVariable(popSizeParameter);
                 addVariable(precisionParameter);
-                addVariable(lambdaParameter);
+//                addVariable(lambdaParameter);
                 addVariable(lambda_boundParameter);
-                if (betaParameter != null) {
-                    addVariable(betaParameter);
-                }
+//                if (betaParameter != null) {
+//                    addVariable(betaParameter);
+//                }
 
                 setTree(treeList);
 
@@ -143,6 +143,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
                 initializationReport();
                 setupSufficientStatistics();
+                weightMatrix = new SymmTridiagMatrix(fieldLength);
 
 
          }
@@ -251,10 +252,32 @@ protected void storeState() {
     public void initializationReport() {
 
 		System.out.println("Creating a GP based estimation of effective population trajectories:");
-		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
+//		System.out.println("\tPopulation sizes: " + popSizeParameter.getDimension());
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Palacios, Suchard (XXXX), AAA");
 
 	}
+
+    public static void checkTree(TreeModel treeModel) {
+
+            // todo Should only be run if there exists a zero-length interval
+
+//        TreeModel treeModel = (TreeModel) tree;
+            for (int i = 0; i < treeModel.getInternalNodeCount(); i++) {
+                NodeRef node = treeModel.getInternalNode(i);
+                if (node != treeModel.getRoot()) {
+                    double parentHeight = treeModel.getNodeHeight(treeModel.getParent(node));
+                    double childHeight0 = treeModel.getNodeHeight(treeModel.getChild(node, 0));
+                    double childHeight1 = treeModel.getNodeHeight(treeModel.getChild(node, 1));
+                    double maxChild = childHeight0;
+                    if (childHeight1 > maxChild)
+                        maxChild = childHeight1;
+                    double newHeight = maxChild + MathUtils.nextDouble() * (parentHeight - maxChild);
+                    treeModel.setNodeHeight(node, newHeight);
+                }
+            }
+            treeModel.pushTreeChangedEvent();
+
+        }
 
 
      //Sufficient Statistics for GP - coal+sampling
@@ -287,6 +310,7 @@ protected void storeState() {
 				index2++;
 			        }
         }
+
     }
 
   protected int countChangePoints(){

@@ -26,9 +26,7 @@
 package dr.app.beauti.options;
 
 import dr.evolution.alignment.Patterns;
-import dr.evolution.datatype.AminoAcids;
 import dr.evolution.datatype.DataType;
-import dr.evolution.datatype.Nucleotides;
 import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
@@ -127,9 +125,13 @@ public abstract class AbstractPartitionData {
         String prefix = "";
         // Determine if we have multiple data partitions for *BEAST (I am guessing here): MAS
         // or any other multi-partition case: AR
-        if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) {
-            // There is more than one active partition model
+//        if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
+//            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) { //TODO this is wrong
+        // There is more than one active partition model
+
+        // this method provides prefix as long as multi-data-partitions case,
+        // because options.dataPartitions may contain traits, use options.getPartitionData()
+        if (options.getPartitionData().size() > 1) {
             prefix += getName() + ".";
         }
 

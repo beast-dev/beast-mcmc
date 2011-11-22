@@ -60,11 +60,12 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected Parameter betaParameter;
 
 //    protected int GPfieldLength;
-    protected double[] coalescentIntervals;
-    protected double[] allintervals;
+    protected double[] coalescentIntervals;  // data[,1]
+    protected double[] allintervals;         //s
+    protected double [] intervt;             //t
     protected double[] storedCoalescentIntervals;
-    protected double[] sufficientStatistics;
-    protected double[] allsufficient;
+    protected double[] sufficientStatistics; //coal.factor for coalescentIntervals, choose(data[,2],2)
+    protected double[] allsufficient;       //coal.factor for s
     protected double[] storedSufficientStatistics;
 
     protected double[] latentLocations;
@@ -147,6 +148,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
          }
 
 
+// Methods that override existent methods
 
 
     protected void setTree(List<Tree> treeList) {
@@ -169,41 +171,77 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
             return tree.getExternalNodeCount() - 1;
     }
 
-    //
-//
-//         wrapSetupIntervals();
-//         coalescentIntervals = new double[GPfieldLength];
-//         storedCoalescentIntervals = new double[GPfieldLength];
-//         sufficientStatistics = new double[GPfieldLength];
-//         storedSufficientStatistics = new double[GPfieldLength];
-//
-////        setupGPWeights();
-//
-////        System.err.println("Aqui busco:"+GPfieldLength);
-//
 
 //
-////    private void setupGPWeights() {
-////        GPsetupSufficientStatistics();
-////    }
 //
 //
+    public double calculateLogLikelihood() {
+        return 0.0;
+// TODO Return the correct log-density
+    }
+
+//    protected double calculateLogCoalescentLikelihood() {
 //
+//		if (!intervalsKnown) {
+//			// intervalsKnown -> false when handleModelChanged event occurs in super.
+//			wrapSetupIntervals();
+//			setupGMRFWeights();
+//            intervalsKnown = true;
+//		}
 //
+//		// Matrix operations taken from block update sampler to calculate data likelihood and field prior
 //
-//    public double calculateLogLikelihood() {
-//        return 2.0;
-// // TODO Return the correct log-density
+//		double currentLike = 0;
+//        double[] currentGamma = popSizeParameter.getParameterValues();
+//
+//		for (int i = 0; i < fieldLength; i++) {
+//			currentLike += -currentGamma[i] - sufficientStatistics[i] * Math.exp(-currentGamma[i]);
+//		}
+//
+//		return currentLike;// + LogNormalDistribution.logPdf(Math.exp(popSizeParameter.getParameterValue(coalescentIntervals.length - 1)), mu, sigma);
+//	return 0.0;
 //    }
+
 //
-//	public double getLogLikelihood() {
+	public double getLogLikelihood() {
 //		if (!likelihoodKnown) {
 //			logLikelihood = calculateLogLikelihood();
 //			likelihoodKnown = true;
 //		}
 //		return logLikelihood;
-//	}
-//
+        return 0.0;
+	}
+
+
+    protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
+		likelihoodKnown = false;
+        // Parameters (precision and popsizes do not change intervals or GMRF Q matrix (I DON'T UNDERSTAND THIS)
+	}
+
+//I will need to change this, probably need to add value of other parameters as well, like the upper bound lambda_bound
+// do the same changes in storeState()
+
+protected void restoreState() {
+		super.restoreState();
+		System.arraycopy(storedCoalescentIntervals, 0, coalescentIntervals, 0, storedCoalescentIntervals.length);
+		System.arraycopy(storedSufficientStatistics, 0, sufficientStatistics, 0, storedSufficientStatistics.length);
+		weightMatrix = storedWeightMatrix;
+        logFieldLikelihood = storedLogFieldLikelihood;
+    }
+
+
+
+protected void storeState() {
+		super.storeState();
+		System.arraycopy(coalescentIntervals, 0, storedCoalescentIntervals, 0, coalescentIntervals.length);
+		System.arraycopy(sufficientStatistics, 0, storedSufficientStatistics, 0, sufficientStatistics.length);
+		storedWeightMatrix = weightMatrix.copy();
+        storedLogFieldLikelihood = logFieldLikelihood;
+	}
+//                I don't understand this
+       public String toString() {
+        return getId() + "(" + Double.toString(getLogLikelihood()) + ")";
+    }
 ////    private final Parameter latentPoints;
 //
 //    private final Parameter lambda_bound;
@@ -217,42 +255,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 		System.out.println("\tIf you publish results using this model, please reference: Minin, Palacios, Suchard (XXXX), AAA");
 
 	}
-//
-////    protected void setupGPWeights() {
-////
-////            setupSufficientStatistics();
-////
-////            //Set up the weight Matrix
-////            double[] offdiag = new double[fieldLength - 1];
-////            double[] diag = new double[fieldLength];
-////
-////            //First set up the offdiagonal entries;
-////
-////            if (!timeAwareSmoothing) {
-////                for (int i = 0; i < fieldLength - 1; i++) {
-////                    offdiag[i] = -1.0;
-////                }
-////
-////
-////            } else {
-////                for (int i = 0; i < fieldLength - 1; i++) {
-////                    offdiag[i] = -2.0 / (coalescentIntervals[i] + coalescentIntervals[i + 1]) * getFieldScalar();
-////                }
-////            }
-////
-////            //Then set up the diagonal entries;
-////            for (int i = 1; i < fieldLength - 1; i++)
-////                diag[i] = -(offdiag[i] + offdiag[i - 1]);
-////
-////            //Take care of the endpoints
-////            diag[0] = -offdiag[0];
-////            diag[fieldLength - 1] = -offdiag[fieldLength - 2];
-////
-////            weightMatrix = new SymmTridiagMatrix(diag, offdiag);
-////        }
-//
-//
-//
+
+
      //Sufficient Statistics for GP - coal+sampling
     // We do not consider getLineageCount == 1, we combine it with the next time
     // We do not need to make a difference between coalescent and sampling points
@@ -273,8 +277,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //
 //             } else {
 			length += getInterval(i);
-              System.err.println("Aqui va: getInterval:"+i+" "+getInterval(i)+ "with length "+length+
-                    " with Type"+getIntervalType(i)+" lineage count "+getLineageCount(i));
+              System.err.println("Aqui va: "+length+"  "+getLineageCount(i));
             	allintervals[index] = length;
 				allsufficient[index] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
 				index++;
@@ -283,24 +286,14 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 				sufficientStatistics[index2] = getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
 				index2++;
 			        }
-//                }
         }
-        System.exit(-1);
     }
 
-//    protected int countChangePoints(){
-//        int countCPoints = 0;
-//        for (int i =0; i<getIntervalCount();i++){
-//            if (getLineageCount(i)>1){
-//            countCPoints++;
-//            }
-//
-//        }
-//        return countCPoints;
-//
-//    }
   protected int countChangePoints(){
     return getIntervalCount();
     }
-//
+
+
+//    Methods needed for GP-based
+
 }

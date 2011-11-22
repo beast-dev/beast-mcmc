@@ -542,7 +542,7 @@ public class OperatorsGenerator extends Generator {
 
         writer.writeOpenTag(UpDownOperatorParser.UP);
         // for isEstimatedRate() = false, write nothing on up part of upDownOp
-        if (!operator.parameter1.isFixed && !(operator.getClockModelGroup().getRateTypeOption() == FixRateType.FIX_MEAN)) {
+        if (!operator.parameter1.isFixed && operator.getClockModelGroup().getRateTypeOption() != FixRateType.FIX_MEAN) {
         	writeParameter1Ref(writer, operator);
         }
         writer.writeCloseTag(UpDownOperatorParser.UP);

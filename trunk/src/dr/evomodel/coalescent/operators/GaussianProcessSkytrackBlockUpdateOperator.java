@@ -1,8 +1,9 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;      //remove dependency at the end
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser; //remove dependency at the end
+import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
@@ -303,9 +304,9 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     }
 
     //MCMCOperator INTERFACE
-
+  // This is the only part where GPSBUOperateroParser is used
     public final String getOperatorName() {
-        return GMRFSkyrideBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
+        return GaussianProcessSkytrackBlockUpdateOperatorParser.BLOCK_UPDATE_OPERATOR;
     }
 
     public double getCoercableParameter() {

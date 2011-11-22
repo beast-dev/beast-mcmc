@@ -1,8 +1,8 @@
 package dr.evomodelxml.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
+//import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;           NOT DOING MULTILOCUS YET
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
+//import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;          NOT DOING MULTILOCUS YET
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -81,8 +81,12 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }else{
-            GMRFMultilocusSkyrideLikelihood gmrfMultilocusLikelihood = (GMRFMultilocusSkyrideLikelihood) xo.getChild(GMRFMultilocusSkyrideLikelihood.class);
-            return new GMRFMultilocusSkyrideBlockUpdateOperator(gmrfMultilocusLikelihood, weight, mode, scaleFactor,
+//            GMRFMultilocusSkyrideLikelihood gmrfMultilocusLikelihood = (GMRFMultilocusSkyrideLikelihood) xo.getChild(GMRFMultilocusSkyrideLikelihood.class);
+//            return new GMRFMultilocusSkyrideBlockUpdateOperator(gmrfMultilocusLikelihood, weight, mode, scaleFactor,
+//                maxIterations, stopValue);
+            GMRFSkyrideLikelihood gmrfLikelihood = (GMRFSkyrideLikelihood) xo.getChild(GMRFSkyrideLikelihood.class);
+
+             return new GMRFSkyrideBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }
 

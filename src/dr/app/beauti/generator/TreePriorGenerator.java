@@ -41,9 +41,11 @@ import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.model.ParameterParser;
+import dr.inference.model.Statistic;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.ExponentialMarkovModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
+import dr.inferencexml.model.RPNcalculatorStatisticParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -308,7 +310,7 @@ public class TreePriorGenerator extends Generator {
 
                 if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                     writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
-                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, prior, writer);
+                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, prior, writer);
 //                    writeParameter(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE,
 //                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, prior, writer);
                 }
@@ -368,13 +370,58 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(ConstantPopulationModelParser.POPULATION_SIZE);
             writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
         }
+
+        if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
+            writer.writeComment("R0 = b/(b*d+s*r)");
+            writer.writeOpenTag(RPNcalculatorStatisticParser.RPN_STATISTIC,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "R0")
+                    });
+
+            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "b")
+                    });
+            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
+            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+
+            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "d")
+                    });
+            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
+            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+
+            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "s")
+                    });
+            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, writer);
+            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+
+            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "r")
+                    });
+            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, writer);
+            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+
+            writer.writeOpenTag(RPNcalculatorStatisticParser.EXPRESSION,
+                    new Attribute[]{
+                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "R0")
+                    });
+            writer.writeText(modelPrefix + "b " + modelPrefix + "b " + modelPrefix + "d " + "* " + modelPrefix + "s " + modelPrefix + "r " + "* + /");
+            writer.writeCloseTag(RPNcalculatorStatisticParser.EXPRESSION);
+
+            writer.writeCloseTag(RPNcalculatorStatisticParser.RPN_STATISTIC);
+        }
     }
 
     /**
      * Write the prior on node heights (coalescent or speciational models)
      *
-     * @param model                   PartitionTreeModel
-     * @param writer                  the writer
+     * @param model  PartitionTreeModel
+     * @param writer the writer
      */
     void writePriorLikelihood(PartitionTreeModel model, XMLWriter writer) {
 
@@ -413,9 +460,9 @@ public class TreePriorGenerator extends Generator {
 
                     if (options.treeModelOptions.isNodeCalibrated(model) == 0) {
                         writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION,
-                        new Attribute[]{
-                                new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
-                        });
+                                new Attribute[]{
+                                        new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
+                                });
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
                         String taxaId;
@@ -437,9 +484,9 @@ public class TreePriorGenerator extends Generator {
                         Parameter nodeCalib = options.getStatistic(t);
 
                         writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION,
-                        new Attribute[]{
-                                new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
-                        });
+                                new Attribute[]{
+                                        new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, prior.getCalibCorrectionType().toString())
+                                });
                         writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
 
                         writer.writeIDref(TaxaParser.TAXA, t.getId());
@@ -471,7 +518,7 @@ public class TreePriorGenerator extends Generator {
 //    	                TestStatisticParser.TEST_STATISTIC,
 //    	                new Attribute[]{
 //    	                        new Attribute.Default<String>(XMLParser.ID, "test1"),
-//    	                        new Attribute.Default<String>("name", "test1")
+//    	                        new Attribute.Default<String>(Statistic.NAME, "test1")
 //    	                }
 //    	        );
 //    	        writer.writeIDref(ParameterParser.PARAMETER, priorPrefix + "logistic.t50");
@@ -809,10 +856,10 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.ORIGIN, writer);
                 if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                     writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-                            + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, writer);
+                            + BirthDeathSerialSamplingModelParser.R, writer);
 //                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
 //                            + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, writer);
-
+                    writer.writeIDref(RPNcalculatorStatisticParser.RPN_STATISTIC, modelPrefix + "R0");
                 }
                 break;
             case SPECIES_YULE:

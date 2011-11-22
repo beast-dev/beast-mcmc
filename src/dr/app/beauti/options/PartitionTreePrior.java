@@ -156,7 +156,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 "Birth-Death the time of the lineage originated (must > root height)", PriorScaleType.ORIGIN_SCALE,
                 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
+                + BirthDeathSerialSamplingModelParser.R,
                 "Birth-Death the probabilty that a sampled individual continues being infectious after sample event",
                 1.0); // 0 <= r <= 1
 //        createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -207,7 +207,7 @@ public class PartitionTreePrior extends PartitionOptions {
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.ORIGIN, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS, demoTuning, 1);
+                + BirthDeathSerialSamplingModelParser.R, demoTuning, 1);
 //        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, demoTuning, 1);
 //        createOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -278,7 +278,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.ORIGIN));
             if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                 params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS));
+                + BirthDeathSerialSamplingModelParser.R));
 //                params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE));
             }
@@ -348,7 +348,7 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.ORIGIN));
             if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
                 ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS));
+                + BirthDeathSerialSamplingModelParser.R));
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
 //                + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE));
             }

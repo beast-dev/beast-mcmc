@@ -1,8 +1,8 @@
 package dr.evomodel.coalescent.operators;
 
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+import dr.evomodel.coalescent.GMRFSkyrideLikelihood;      //remove dependency at the end
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
-import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
+import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser; //remove dependency at the end
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
 import dr.inference.operators.CoercionMode;
@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
-public class GPSkytrackBlockUpdateOperator extends AbstractCoercableOperator {
+public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercableOperator {
 
     private double scaleFactor;
     private double lambdaScaleFactor;
@@ -36,9 +36,9 @@ public class GPSkytrackBlockUpdateOperator extends AbstractCoercableOperator {
 
     private double[] zeros;
 
-    public GPSkytrackBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
-                                         double weight, CoercionMode mode, double scaleFactor,
-                                         int maxIterations, double stopValue) {
+    public GaussianProcessSkytrackBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+                                                      double weight, CoercionMode mode, double scaleFactor,
+                                                      int maxIterations, double stopValue) {
         super(mode);
         gmrfField = gmrfLikelihood;
         popSizeParameter = gmrfLikelihood.getPopSizeParameter();

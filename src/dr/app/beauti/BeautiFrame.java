@@ -8,7 +8,6 @@
  */
 package dr.app.beauti;
 
-import dr.app.beauti.ancestralStatesPanel.AncestralStatesOptionsPanel;
 import dr.app.beauti.ancestralStatesPanel.AncestralStatesPanel;
 import dr.app.beauti.clockModelsPanel.OldClockModelsPanel;
 import dr.app.beauti.components.ComponentFactory;
@@ -209,16 +208,16 @@ public class BeautiFrame extends DocumentFrame {
                    "for data partitions.</html>");
         }
         tabbedPane.addTab(PRIORS, priorsPanel);
-        tabbedPane.setToolTipTextAt(8, "<html>" +
+        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 8 : 7, "<html>" +
                 "Specify prior probability distributions on each and every<br>" +
                 "parameter of the current model.</html>");
         tabbedPane.addTab(OPERATORS, operatorsPanel);
-        tabbedPane.setToolTipTextAt(9, "<html>" +
+        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 9 : 8, "<html>" +
                 "Select and adjust the menu of operators that will be used<br>" +
                 "to propose changes to the parameters. Switch off operators<br>" +
                 "on certain parameters to fix them to initial values.</html>");
         tabbedPane.addTab(MCMC, mcmcPanel);
-        tabbedPane.setToolTipTextAt(10, "<html>" +
+        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 10 : 9, "<html>" +
                 "Specify the details of MCMC sampling. This includes chain<br>" +
                 "length, sampling frequencies, log file names and more.</html>");
 

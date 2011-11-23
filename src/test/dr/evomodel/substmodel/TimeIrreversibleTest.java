@@ -60,6 +60,11 @@ public class TimeIrreversibleTest extends TestCase {
                     return 0;   // NUCLEOTIDES = 0;
                 }
 
+                @Override
+                public char[] getValidChars() {
+                    return null;
+                }
+
                 public int getStateCount() {
                     return getFrequencies().length;  // = frequency
                 }

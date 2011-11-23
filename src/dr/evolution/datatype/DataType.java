@@ -30,13 +30,11 @@ import java.util.*;
 /**
  * Base class for sequence data types.
  *
- * @version $Id: DataType.java,v 1.13 2005/05/24 20:25:56 rambaut Exp $
- *
  * @author Andrew Rambaut
  * @author Alexei Drummond
+ * @version $Id: DataType.java,v 1.13 2005/05/24 20:25:56 rambaut Exp $
  */
-public abstract class DataType
-{
+public abstract class DataType {
     public static final String DATA_TYPE = "dataType";
 
 
@@ -68,28 +66,28 @@ public abstract class DataType
             registeredDataTypes = new Hashtable<String, DataType>();
             registerDataType(Nucleotides.DESCRIPTION, Nucleotides.INSTANCE);
             registerDataType(AminoAcids.DESCRIPTION, AminoAcids.INSTANCE);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.UNIVERSAL.getName(), Codons.UNIVERSAL);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.VERTEBRATE_MT.getName(), Codons.VERTEBRATE_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.YEAST.getName(), Codons.YEAST);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MOLD_PROTOZOAN_MT.getName(), Codons.MOLD_PROTOZOAN_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.MYCOPLASMA.getName(), Codons.MYCOPLASMA);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.INVERTEBRATE_MT.getName(), Codons.INVERTEBRATE_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.CILIATE.getName(), Codons.CILIATE);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ECHINODERM_MT.getName(), Codons.ECHINODERM_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.EUPLOTID_NUC.getName(), Codons.EUPLOTID_NUC);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BACTERIAL.getName(), Codons.BACTERIAL);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ALT_YEAST.getName(), Codons.ALT_YEAST);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.ASCIDIAN_MT.getName(), Codons.ASCIDIAN_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.FLATWORM_MT.getName(), Codons.FLATWORM_MT);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
-            registerDataType(Codons.DESCRIPTION+"-"+GeneticCode.NO_STOPS.getName(), Codons.NO_STOPS);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.UNIVERSAL.getName(), Codons.UNIVERSAL);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.VERTEBRATE_MT.getName(), Codons.VERTEBRATE_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.YEAST.getName(), Codons.YEAST);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.MOLD_PROTOZOAN_MT.getName(), Codons.MOLD_PROTOZOAN_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.MYCOPLASMA.getName(), Codons.MYCOPLASMA);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.INVERTEBRATE_MT.getName(), Codons.INVERTEBRATE_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.CILIATE.getName(), Codons.CILIATE);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.ECHINODERM_MT.getName(), Codons.ECHINODERM_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.EUPLOTID_NUC.getName(), Codons.EUPLOTID_NUC);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.BACTERIAL.getName(), Codons.BACTERIAL);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.ALT_YEAST.getName(), Codons.ALT_YEAST);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.ASCIDIAN_MT.getName(), Codons.ASCIDIAN_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.FLATWORM_MT.getName(), Codons.FLATWORM_MT);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.BLEPHARISMA_NUC.getName(), Codons.BLEPHARISMA_NUC);
+            registerDataType(Codons.DESCRIPTION + "-" + GeneticCode.NO_STOPS.getName(), Codons.NO_STOPS);
             registerDataType(TwoStates.DESCRIPTION, TwoStates.INSTANCE);
             registerDataType(HiddenNucleotides.DESCRIPTION, HiddenNucleotides.INSTANCE);
             registerDataType(TwoStateCovarion.DESCRIPTION, TwoStateCovarion.INSTANCE);
-	  registerDataType(HiddenCodons.DESCRIPTION+"2-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
-	  registerDataType(HiddenCodons.DESCRIPTION+"3-"+ GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION+"1", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
-            registerDataType(NewHiddenNucleotides.DESCRIPTION+"2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
+            registerDataType(HiddenCodons.DESCRIPTION + "2-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_2);
+            registerDataType(HiddenCodons.DESCRIPTION + "3-" + GeneticCode.UNIVERSAL.getName(), HiddenCodons.UNIVERSAL_HIDDEN_3);
+            registerDataType(NewHiddenNucleotides.DESCRIPTION + "1", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_1);
+            registerDataType(NewHiddenNucleotides.DESCRIPTION + "2", NewHiddenNucleotides.NUCLEOTIDE_HIDDEN_2);
             registerDataType(GeneralDataType.DESCRIPTION, GeneralDataType.INSTANCE);
             registerDataType(Microsatellite.DESCRIPTION, Microsatellite.INSTANCE);
             registerDataType(P2P.DESCRIPTION, P2P.INSTANCE);
@@ -100,12 +98,13 @@ public abstract class DataType
 
     /**
      * Registers a data type with a (hopefully unique) name.
+     *
      * @param name
      * @param dataType
      */
     public static void registerDataType(String name, DataType dataType) {
         lazyRegisterDataTypes();
-        registeredDataTypes.put(name,dataType);
+        registeredDataTypes.put(name, dataType);
 
     }
 
@@ -134,17 +133,14 @@ public abstract class DataType
      * guess data type suitable for a given sequence
      *
      * @param sequence a string of symbols representing a molecular sequence of unknown data type.
-     *
      * @return suitable DataType object
      */
-    public static DataType guessDataType(String sequence)
-    {
+    public static DataType guessDataType(String sequence) {
         // count A, C, G, T, U, N
         long numNucs = 0;
         long numChars = 0;
         long numBins = 0;
-        for (int i = 0; i < sequence.length(); i++)
-        {
+        for (int i = 0; i < sequence.length(); i++) {
             char c = sequence.charAt(i);
             int s = Nucleotides.INSTANCE.getState(c);
 
@@ -157,7 +153,9 @@ public abstract class DataType
             if (c == '0' || c == '1') numBins++;
         }
 
-        if (numChars == 0) { numChars = 1; }
+        if (numChars == 0) {
+            numChars = 1;
+        }
 
         // more than 85 % frequency advocates nucleotide data
         if ((double) numNucs / (double) numChars > 0.85) {
@@ -168,6 +166,12 @@ public abstract class DataType
             return AminoAcids.INSTANCE;
         }
     }
+
+    /**
+     * return the set of valid chars if they are defined, if not defined then return null
+     * cannot use stateCount and loop, because some data types stateCount is dynamic.
+     */
+    public abstract char[] getValidChars();
 
     /**
      * Get number of unique states
@@ -191,7 +195,6 @@ public abstract class DataType
      * Get state corresponding to a character
      *
      * @param code state code
-     *
      * @return state
      */
     public int getState(String code) {
@@ -202,11 +205,10 @@ public abstract class DataType
      * Get state corresponding to a character
      *
      * @param c character
-     *
      * @return state
      */
     public int getState(char c) {
-        return (int)c - 'A';
+        return (int) c - 'A';
     }
 
     /**
@@ -231,11 +233,11 @@ public abstract class DataType
      * Get character corresponding to a given state
      *
      * @param state state
-     *
-     * return corresponding character
+     *              <p/>
+     *              return corresponding character
      */
     public char getChar(int state) {
-        return (char)(state + 'A');
+        return (char) (state + 'A');
     }
 
     /**
@@ -243,8 +245,8 @@ public abstract class DataType
      * calls getChar but overriding classes may return multicharacter codes.
      *
      * @param state state
-     *
-     * return corresponding code
+     *              <p/>
+     *              return corresponding code
      */
     public String getCode(int state) {
         return String.valueOf(getChar(state));
@@ -254,11 +256,10 @@ public abstract class DataType
      * Get triplet string corresponding to a given state
      *
      * @param state state
-     *
-     * return corresponding triplet string
+     *              <p/>
+     *              return corresponding triplet string
      */
-    public String getTriplet(int state)
-    {
+    public String getTriplet(int state) {
         return " " + getChar(state) + " ";
     }
 
@@ -305,8 +306,7 @@ public abstract class DataType
     /**
      * returns the uncorrected distance between two states
      */
-    public double getObservedDistance(int state1, int state2)
-    {
+    public double getObservedDistance(int state1, int state2) {
         if (!isAmbiguousState(state1) && !isAmbiguousState(state2) && state1 != state2) {
             return 1.0;
         }
@@ -318,8 +318,7 @@ public abstract class DataType
      * returns the uncorrected distance between two states with full
      * treatment of ambiguity.
      */
-    public double getObservedDistanceWithAmbiguity(int state1, int state2)
-    {
+    public double getObservedDistanceWithAmbiguity(int state1, int state2) {
         boolean[] stateSet1 = getStateSet(state1);
         boolean[] stateSet2 = getStateSet(state2);
 

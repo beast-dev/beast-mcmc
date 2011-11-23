@@ -40,6 +40,11 @@ public class TwoStateCovarion extends DataType {
         ambiguousStateCount = 8;
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     public int getState(char c) {
         switch (c) {
             case 'a':

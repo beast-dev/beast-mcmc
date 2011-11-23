@@ -267,6 +267,11 @@ public class PositiveDefiniteSubstitutionModel extends AbstractModel implements 
             stateCount = count;
         }
 
+        @Override
+        public char[] getValidChars() {
+            return null;
+        }
+
         public String getDescription() {
             return null;  //To change body of implemented methods use File | Settings | File Templates.
         }

@@ -312,6 +312,13 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
     }
 
+    public void updateLinkTreePriorEnablility() {
+        boolean selected = !(options.getPartitionTreeModels().size() < 2
+                || options.contains(Microsatellite.INSTANCE) || options.useStarBEAST);
+
+        linkTreePriorCheck.setEnabled(selected);
+    }
+
     public void setOptions(BeautiOptions options) {
         this.options = options;
 
@@ -319,10 +326,7 @@ public class TreesPanel extends BeautiPanel implements Exportable {
 
         settingOptions = true;
 
-        boolean selected = !(options.getPartitionTreeModels().size() < 2
-                || options.contains(Microsatellite.INSTANCE) || options.useStarBEAST);
-
-        linkTreePriorCheck.setEnabled(selected);
+        updateLinkTreePriorEnablility();
         linkTreePriorCheck.setSelected(options.isShareSameTreePrior()); // important
 
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
@@ -330,11 +334,6 @@ public class TreesPanel extends BeautiPanel implements Exportable {
         }
 
         for (PartitionTreePrior prior : options.getPartitionTreePriors()) {
-            if (options.useStarBEAST) {
-                linkTreePriorCheck.setEnabled(false);
-            } else {
-                linkTreePriorCheck.setEnabled(true);
-            }
             PartitionTreePriorPanel ptpp = treePriorPanels.get(prior);
             if (ptpp != null) {
                 ptpp.setTreePriorChoices(options.useStarBEAST, options.getPartitionTreeModels().size() > 1,

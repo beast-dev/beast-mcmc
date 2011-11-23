@@ -34,7 +34,6 @@ import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.components.WholeNumberField;
 import dr.app.util.OSType;
 import dr.evomodel.coalescent.VariableDemographicModel;
-import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodelxml.speciation.BirthDeathModelParser;
 import dr.evomodelxml.speciation.BirthDeathSerialSamplingModelParser;
 import jam.panels.OptionsPanel;
@@ -214,6 +213,10 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
             addComponentWithLabel("Tree Prior:", treePriorCombo);
 
+            if (!treesPanel.linkTreePriorCheck.isEnabled()) {
+                treesPanel.updateLinkTreePriorEnablility();
+            }
+
             switch ((TreePriorType) treePriorCombo.getSelectedItem()) {
                 case CONSTANT:
                     citation = citationCoalescent;
@@ -242,6 +245,7 @@ public class PartitionTreePriorPanel extends OptionsPanel {
                 case EXTENDED_SKYLINE:
                     addComponentWithLabel("Model Type:", extendedBayesianSkylineCombo);
                     treesPanel.linkTreePriorCheck.setSelected(true);
+                    treesPanel.linkTreePriorCheck.setEnabled(false);
                     treesPanel.updateShareSameTreePriorChanged();
 
                     citation = //citationCoalescent + "\n" +
@@ -250,6 +254,8 @@ public class PartitionTreePriorPanel extends OptionsPanel {
 
                 case GMRF_SKYRIDE:
                     addComponentWithLabel("Smoothing:", gmrfBayesianSkyrideCombo);
+                    treesPanel.linkTreePriorCheck.setSelected(true);
+                    treesPanel.linkTreePriorCheck.setEnabled(false);
                     //For GMRF, one tree prior has to be associated to one tree model. The validation is in BeastGenerator.checkOptions()
                     addLabel("<html>For GMRF, tree model/tree prior combination not implemented by BEAST yet. "
                             + "It is only available for single tree<br>model partition for this release. "

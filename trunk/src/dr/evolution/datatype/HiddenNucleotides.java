@@ -43,6 +43,11 @@ public class HiddenNucleotides extends DataType {
         ambiguousStateCount = stateCount + 6;
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * Get state corresponding to a character
      *

@@ -413,6 +413,11 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
                 return 0;
             }
 
+            @Override
+            public char[] getValidChars() {
+                return null;
+            }
+
             public int getStateCount() {
                 return 400;
             }

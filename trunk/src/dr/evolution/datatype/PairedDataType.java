@@ -65,7 +65,12 @@ package dr.evolution.datatype;
 		return state % baseDataType.getStateCount();
 	}
 
-	public final int getState(char c)
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
+    public final int getState(char c)
 	{
 		throw new IllegalArgumentException("Paired datatype cannot be expressed as char");
 	}

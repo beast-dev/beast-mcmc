@@ -69,8 +69,13 @@ public class TwoStates extends DataType {
 		stateCount = 2;
 		ambiguousStateCount = 4;
 	}
-	
-	// Get state corresponding to character c
+
+    @Override
+    public char[] getValidChars() {
+        return TWOSTATE_CHARS;
+    }
+
+    // Get state corresponding to character c
 	public int getState(char c)
 	{
 		switch (c)

@@ -81,6 +81,11 @@ public class MutationDeathType extends DataType {
         this.stateCodes = new char[128]; /* Stores characters corresponding to unique state codes*/
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * Get state corresponding to a character
      *

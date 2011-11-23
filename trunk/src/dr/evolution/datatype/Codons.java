@@ -116,6 +116,11 @@ public class Codons extends DataType {
 
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * Get state corresponding to a character
      *

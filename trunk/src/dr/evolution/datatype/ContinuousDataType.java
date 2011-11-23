@@ -19,6 +19,11 @@ public class ContinuousDataType extends DataType {
         ambiguousStateCount = 0;
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * @return the description of the data type
      */

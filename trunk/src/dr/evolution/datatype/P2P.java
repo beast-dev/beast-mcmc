@@ -1,10 +1,5 @@
 package dr.evolution.datatype;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-
 /**
  * @version 08/01/2010
  *
@@ -68,8 +63,12 @@ public class P2P extends DataType {
 	}
 
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
 
-	/**
+    /**
 	 * Get character corresponding to a given state
 	 *
 	 * @param state state

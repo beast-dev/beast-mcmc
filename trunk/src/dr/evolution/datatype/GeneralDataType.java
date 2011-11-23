@@ -125,6 +125,11 @@ public class GeneralDataType extends DataType implements Identifiable {
         stateMap.put(code, state);
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * Get state corresponding to a code
      *

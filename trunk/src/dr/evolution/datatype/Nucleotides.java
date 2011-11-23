@@ -103,8 +103,13 @@ public class Nucleotides extends DataType {
 		stateCount = 4;
 		ambiguousStateCount = 18;
 	}
-	
-	/**
+
+    @Override
+    public char[] getValidChars() {
+        return NUCLEOTIDE_CHARS;
+    }
+
+    /**
 	 * Get state corresponding to a character
 	 *
 	 * @param c character

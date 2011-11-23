@@ -208,6 +208,11 @@ public class Microsatellite extends DataType {
         return (stateCode == stateCount);
     }
 
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
     /**
      * @return number of unambiguous states for this data type.
      */

@@ -141,8 +141,13 @@ public final class AminoAcids extends DataType
         stateCount = 20;
         ambiguousStateCount = 26;
     }
-	
-	/**
+
+    @Override
+    public char[] getValidChars() {
+        return AMINOACID_CHARS;
+    }
+
+    /**
 	 * Get state corresponding to a character.
 	 *
 	 * @param c character

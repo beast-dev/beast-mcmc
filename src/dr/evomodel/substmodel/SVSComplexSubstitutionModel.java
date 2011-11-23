@@ -105,6 +105,11 @@ public class SVSComplexSubstitutionModel extends ComplexSubstitutionModel implem
                 return 0;
             }
 
+            @Override
+            public char[] getValidChars() {
+                return null;
+            }
+
             public int getStateCount() {
                 return 13;
             }

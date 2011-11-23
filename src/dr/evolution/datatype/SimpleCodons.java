@@ -86,8 +86,13 @@ public class SimpleCodons extends DataType {
 		stateCount = 64;
 		ambiguousStateCount = 66;
 	}
-	
-	/**
+
+    @Override
+    public char[] getValidChars() {
+        return null;
+    }
+
+    /**
 	 * Get state corresponding to a character
 	 *
 	 * @param c character

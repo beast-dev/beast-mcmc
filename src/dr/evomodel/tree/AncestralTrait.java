@@ -47,7 +47,9 @@ public class AncestralTrait implements Loggable {
         this.name = name;
         this.tree = tree;
         this.ancestralTrait = ancestralTrait;
-        this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        if (taxa != null) {
+            this.leafSet = Tree.Utils.getLeavesForTaxa(tree, taxa);
+        }
     }
 
     public Tree getTree() {
@@ -59,8 +61,14 @@ public class AncestralTrait implements Loggable {
      */
     public String getAncestralState() {
 
-        NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
-        if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
+        NodeRef node;
+        if (leafSet != null) {
+            node = Tree.Utils.getCommonAncestorNode(tree, leafSet);
+            if (node == null) throw new RuntimeException("No node found that is MRCA of " + leafSet);
+        } else {
+            node = tree.getRoot();
+        }
+
         return ancestralTrait.getTraitString(tree, node);
     }
 

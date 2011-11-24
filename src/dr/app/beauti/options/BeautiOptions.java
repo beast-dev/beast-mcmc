@@ -1175,8 +1175,6 @@ public class BeautiOptions extends ModelOptions {
     public SiteModelOptions siteModelOptions = new SiteModelOptions(this);
     public ClockModelOptions clockModelOptions = new ClockModelOptions(this);
     public TreeModelOptions treeModelOptions = new TreeModelOptions(this);
-//    public PriorOptions priorOptions = new PriorOptions(this);
-//    public TraitsOptions traitsOptions = new TraitsOptions(this);
 
     public boolean useStarBEAST = false;
     public List<Taxa> speciesSets = new ArrayList<Taxa>();
@@ -1186,9 +1184,5 @@ public class BeautiOptions extends ModelOptions {
     public BeautiTemplate beautiTemplate = new BeautiTemplate(this);
 
     public boolean shareMicroSat = true;
-
-//    public static ArrayList<TraitData> getDiscreteTraitsExcludeSpecies() {
-//        return new ArrayList<TraitData>();  //Todo remove after
-//    }
 
 }

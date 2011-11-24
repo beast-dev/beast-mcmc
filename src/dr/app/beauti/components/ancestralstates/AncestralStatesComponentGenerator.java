@@ -14,11 +14,11 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     private final static boolean DEBUG = true;
 
     private final static String DNDS_LOG_SUFFIX = ".dNdS.log";
+    private final static String STATE_LOG_SUFFIX = ".states.log";
 
     public AncestralStatesComponentGenerator(final BeautiOptions options) {
         super(options);
     }
-
 
     public boolean usesInsertionPoint(InsertionPoint point) {
 
@@ -43,15 +43,20 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         switch (point) {
             case IN_FILE_LOG_PARAMETERS:
-                return true;
+                return robustCounting || dNdSRobustCounting;
 
             case IN_TREES_LOG:
-                return !reconstructAtMRCA;
+                return reconstructAtNodes || robustCounting || dNdSRobustCounting;
 
             case IN_OPERATORS:
+                return dNdSRobustCounting;
+
             case AFTER_TREES_LOG:
+                return reconstructAtMRCA || dNdSRobustCounting;
+
             case AFTER_MCMC:
                 return dNdSRobustCounting;
+
             default:
                 return false;
         }
@@ -180,7 +185,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
             } else {
-                writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
+
             }
         }
     }
@@ -194,7 +199,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
-            } else {
+            } else if (component.reconstructAtNodes(partition)) {
                 writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
             }
         }
@@ -207,9 +212,37 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
             if (component.dNdSRobustCounting(partition)) {
                 writeDNdSLogger(writer, partition);
+            } else if (component.reconstructAtMRCA(partition)) {
+                writeStateLogger(writer, partition, component.getMRCATaxonSet(partition));
             }
         }
     }
+
+    private void writeStateLogger(XMLWriter writer, AbstractPartitionData partition, String mrcaId) {
+
+        writer.writeComment("Ancestral state reconstruction for: " + partition.getName());
+
+        writer.writeOpenTag("log", new Attribute[] {
+                new Attribute.Default<String>("id", "fileLog_" + partition.getName()),
+                new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
+                new Attribute.Default<String>("fileName", partition.getName() + STATE_LOG_SUFFIX) });
+
+        writer.writeOpenTag("ancestralTrait",
+                        new Attribute[]{new Attribute.Default<String>("name", partition.getName())});
+        writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
+        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
+
+        if (mrcaId != null) {
+            writer.writeOpenTag("mrca");
+            writer.writeIDref("taxa", mrcaId);
+            writer.writeCloseTag("mrca");
+
+        }
+        writer.writeCloseTag("ancestralTrait");
+
+        writer.writeCloseTag("log");
+
+    }// END: writeLogs
 
     private void writeDNdSLogger(XMLWriter writer, AbstractPartitionData partition) {
 
@@ -219,7 +252,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeOpenTag("log", new Attribute[] {
                 new Attribute.Default<String>("id", "fileLog_dNdS"),
-                new Attribute.Default<String>("logEvery", "10000"),
+                new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX) });
 
         writer

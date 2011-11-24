@@ -44,9 +44,6 @@ public class PartitionTreePrior extends PartitionOptions {
     private int skylineGroupCount = 10;
     private TreePriorParameterizationType skylineModel = TreePriorParameterizationType.CONSTANT_SKYLINE;
     private TreePriorParameterizationType skyrideSmoothing = TreePriorParameterizationType.TIME_AWARE_SKYRIDE;
-    // AR - this seems to be set to taxonCount - 1 so we don't need to
-    // have a settable variable...
-    // public int skyrideIntervalCount = 1;
     private VariableDemographicModel.Type extendedSkylineModel = VariableDemographicModel.Type.LINEAR;
     private double birthDeathSamplingProportion = 1.0;
     private PopulationSizeModelType populationSizeModel = PopulationSizeModelType.CONTINUOUS_CONSTANT;

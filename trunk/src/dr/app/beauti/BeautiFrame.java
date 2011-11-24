@@ -166,58 +166,59 @@ public class BeautiFrame extends DocumentFrame {
         operatorsPanel = new OperatorsPanel(this);
         mcmcPanel = new MCMCPanel(this);
 
+        int index = 0;
         tabbedPane.addTab(DATA_PARTITIONS, dataPanel);
-        tabbedPane.setToolTipTextAt(0, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Import sequence alignments, organize data partitions,<br>" +
                 "link models between partitions and select *BEAST</html>");
 
         tabbedPane.addTab(TAXON_SETS, taxonSetPanel);
-        tabbedPane.setToolTipTextAt(1, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Create and edit sets of taxa which can be used to <br>" +
                 "define times of most recent common ancestors and <br>" +
                 "to keep groups monophyletic.</html>");
 //        tabbedPane.addTab("Species Sets", speciesSetPanel);
         tabbedPane.addTab(TIP_DATES, tipDatesPanel);
-        tabbedPane.setToolTipTextAt(2, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Specify sampling dates of tips for use in temporal <br>" +
                 "analyses of measurably evolving populations.</html>");
         tabbedPane.addTab(TRAITS, traitsPanel);
-        tabbedPane.setToolTipTextAt(3, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Import and organize continuous and discrete traits <br>" +
                 "for taxa, convert them into data partitions for evolutionary<br>" +
                 "analysis.</html>");
         tabbedPane.addTab(SITE_MODELS, siteModelsPanel);
-        tabbedPane.setToolTipTextAt(4, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Select evolutionary models to be used for each data <br>" +
                 "partition including substitution models, codon partitioning<br>" +
                 "and trait evolution models.</html>");
         tabbedPane.addTab(CLOCK_MODELS, clockModelsPanel);
-        tabbedPane.setToolTipTextAt(5, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Select relaxed molecular clock models to be used across <br>" +
                 "the tree. Specify sampling of rates.</html>");
         tabbedPane.addTab(TREES, treesPanel);
-        tabbedPane.setToolTipTextAt(6, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Select the priors on trees including coalescent models<br>" +
                 "birth-death speciation models and the *BEAST gene tree,<br>" +
                 "species tree options.</html>");
        if (ENABLE_ANCESTRAL_STATES) {
             tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
-           tabbedPane.setToolTipTextAt(7, "<html>" +
+           tabbedPane.setToolTipTextAt(index++, "<html>" +
                    "Select options for sampling ancestral states at specific<br>" +
-                   "or all common ancestors and models of sequencing error<br>" +
-                   "for data partitions.</html>");
+                   "or all common ancestors, models of counting state changes<br>" +
+                   "and models of sequencing error for data partitions.</html>");
         }
         tabbedPane.addTab(PRIORS, priorsPanel);
-        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 8 : 7, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Specify prior probability distributions on each and every<br>" +
                 "parameter of the current model.</html>");
         tabbedPane.addTab(OPERATORS, operatorsPanel);
-        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 9 : 8, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Select and adjust the menu of operators that will be used<br>" +
                 "to propose changes to the parameters. Switch off operators<br>" +
                 "on certain parameters to fix them to initial values.</html>");
         tabbedPane.addTab(MCMC, mcmcPanel);
-        tabbedPane.setToolTipTextAt(ENABLE_ANCESTRAL_STATES ? 10 : 9, "<html>" +
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Specify the details of MCMC sampling. This includes chain<br>" +
                 "length, sampling frequencies, log file names and more.</html>");
 

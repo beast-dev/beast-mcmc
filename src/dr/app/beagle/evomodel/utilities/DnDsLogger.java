@@ -15,13 +15,15 @@ import dr.math.EmpiricalBayesPoissonSmoother;
  */
 public class DnDsLogger implements Loggable {
 
-    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs) {
+    public DnDsLogger(String name, Tree tree, TreeTrait[] traits, boolean useSmoothing, boolean useDnMinusDs, boolean counts, boolean synonymous) {
         this.tree = tree;
         this.traits = traits;
         numberSites = getNumberSites();
         this.name = name;
         this.useSmoothing = useSmoothing;
         this.useDnMinusDs = useDnMinusDs;
+        this.counts = counts;
+        this.synonymous = synonymous;
 
         for (int i = 0; i < NUM_TRAITS; i++) {
             if (traits[i].getIntent() != TreeTrait.Intent.WHOLE_TREE) {
@@ -30,12 +32,102 @@ public class DnDsLogger implements Loggable {
         }
     }
 
+//    public LogColumn[] getColumns() {
+//        LogColumn[] columns;
+////        if (conditionalCounts) {
+//            columns = new LogColumn[numberSites * 3];
+////        } else {
+////            columns = new LogColumn[numberSites];
+////        }
+//        int columnCount = 0;
+////        if (!conditionalCounts){
+//            for (int i = 0; i < numberSites; i++) {
+//                columns[columnCount] = new SmoothedColumn(name, i);
+//                columnCount ++;
+//            }
+////        } else {
+//            for (int j = 0; j < numberSites; j++) {
+//                //CN and CS are outputted per site
+//                columns[columnCount] = new ConditionalColumn(conditionalNon, j, true);
+//                columns[columnCount + 1] = new ConditionalColumn(conditionalSyn, j, false);
+//                columnCount = columnCount + 2;
+//            }
+////        }
+//        return columns;
+//    }
+
     public LogColumn[] getColumns() {
-        LogColumn[] columns = new LogColumn[numberSites];
-        for (int i = 0; i < numberSites; i++) {
-            columns[i] = new SmoothedColumn(name, i);
+        LogColumn[] columns;
+        if (!counts){
+            columns = new LogColumn[numberSites];
+        } else {
+            columns = new LogColumn[numberSites * 2];
+        }
+        int columnCount = 0;
+        if (!counts){
+            for (int i = 0; i < numberSites; i++) {
+                columns[columnCount] = new SmoothedColumn(name, i);
+                columnCount ++;
+            }
+        } else {
+            for (int j = 0; j < numberSites; j++) {
+                //CN and CS are outputted per site
+                if (synonymous){
+                    columns[columnCount] = new ConditionalColumn(conditionalSyn, j, false, true);
+                } else {
+                    columns[columnCount] = new ConditionalColumn(conditionalNon, j, true, true);
+                }
+                columnCount ++;
+            }
+            for (int k = 0; k < numberSites; k++) {
+                if (synonymous){
+                    columns[columnCount] = new ConditionalColumn(unconditionalSyn, k, false, false);
+                }  else {
+                    columns[columnCount] = new ConditionalColumn(unconditionalNon, k, true, false);
+                }
+                columnCount ++;
+
+            }
+
         }
         return columns;
+    }
+
+    private class ConditionalColumn extends NumberColumn {
+        private final int index;
+        boolean nonsynonymous = false;
+        boolean conditional = true;
+
+        public ConditionalColumn(String label, int index, boolean N, boolean C) {
+            super(label + "[" + (index+1) + "]");
+            this.index = index;
+            if (N){
+                nonsynonymous = true;
+            }
+            if (!C){
+                conditional = false;
+            }
+        }
+
+        @Override
+        public double getDoubleValue() {
+            if (index == 0) {
+                doSmoothing();
+            }
+            if (conditional){
+                if (nonsynonymous){
+                    return cachedValues[CN][index];
+                }  else {
+                    return cachedValues[CS][index];
+                }
+            } else {
+                if (nonsynonymous){
+                    return cachedValues[UN][index];
+                }  else {
+                    return cachedValues[US][index];
+                }
+            }
+        }
     }
 
     private class SmoothedColumn extends NumberColumn {
@@ -93,8 +185,14 @@ public class DnDsLogger implements Loggable {
     private final Tree tree;
     private final int numberSites;
     private final String name;
+    private final String conditionalNon = "CN";
+    private final String conditionalSyn = "CS";
+    private final String unconditionalNon = "UN";
+    private final String unconditionalSyn = "US";
     private final boolean useSmoothing;
     private final boolean useDnMinusDs;
+    private final boolean counts;
+    private final boolean synonymous;
 
     private final static int NUM_TRAITS = 4;
     private final static int CS = 0;

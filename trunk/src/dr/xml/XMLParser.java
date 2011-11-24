@@ -33,6 +33,9 @@ import dr.util.FileHelpers;
 import dr.util.Identifiable;
 import org.w3c.dom.*;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import java.io.*;
 import java.util.*;
@@ -123,9 +126,9 @@ public class XMLParser {
      */
     public Object parse(Reader reader, Class target)
             throws java.io.IOException,
-                   org.xml.sax.SAXException,
-                   dr.xml.XMLParseException,
-                   javax.xml.parsers.ParserConfigurationException {
+            org.xml.sax.SAXException,
+            dr.xml.XMLParseException,
+            javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
@@ -146,14 +149,15 @@ public class XMLParser {
 
     public ObjectStore parse(Reader reader, boolean run)
             throws java.io.IOException,
-                   org.xml.sax.SAXException,
-                   dr.xml.XMLParseException,
-                   javax.xml.parsers.ParserConfigurationException {
+            org.xml.sax.SAXException,
+            dr.xml.XMLParseException,
+            javax.xml.parsers.ParserConfigurationException {
 
         InputSource in = new InputSource(reader);
         javax.xml.parsers.DocumentBuilderFactory documentBuilderFactory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
 
         javax.xml.parsers.DocumentBuilder documentBuilder = documentBuilderFactory.newDocumentBuilder();
+        documentBuilder.setErrorHandler(new MyErrorHandler());
         Document document = documentBuilder.parse(in);
 
         Element e = document.getDocumentElement();
@@ -169,6 +173,31 @@ public class XMLParser {
         return objectStore;
     }
 
+    private class MyErrorHandler extends DefaultHandler {
+        public void warning(SAXParseException e) throws SAXException {
+            System.out.println("Warning: ");
+            printInfo(e);
+        }
+
+        public void error(SAXParseException e) throws SAXException {
+            System.out.println("Error: ");
+            printInfo(e);
+        }
+
+        public void fatalError(SAXParseException e) throws SAXException {
+            System.out.println("Fattal error: ");
+            printInfo(e);
+        }
+
+        private void printInfo(SAXParseException e) {
+            System.out.println("\tPublic ID: " + e.getPublicId());
+            System.out.println("\tSystem ID: " + e.getSystemId());
+            System.out.println("\tLine number: " + e.getLineNumber());
+            System.out.println("\tColumn number: " + e.getColumnNumber());
+            System.out.println("\tError message: " + e.getMessage());
+        }
+    }
+
     public XMLObject getRoot() {
         return root;
     }
@@ -181,10 +210,10 @@ public class XMLParser {
 
             String idref = e.getAttribute(IDREF);
 
-            if(e.hasAttribute("index")){
+            if (e.hasAttribute("index")) {
                 index = Integer.parseInt(e.getAttribute("index"));
             }
-            if ((e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1)&& index == -1) {
+            if ((e.getAttributes().getLength() > 1 || e.getChildNodes().getLength() > 1) && index == -1) {
                 throw new XMLParseException("Object with idref=" + idref + " must not have other content or attributes (or perhaps it was not intended to be a reference?).");
             }
 
@@ -223,7 +252,6 @@ public class XMLParser {
             }
 
             if (verbose) System.out.println("  Restoring idref=" + idref);
-
 
 
             return new Reference(restoredXMLObject);
@@ -293,11 +321,11 @@ public class XMLParser {
                 }
 
                 if (obj instanceof Likelihood) {
-                    Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood)obj);
+                    Likelihood.FULL_LIKELIHOOD_SET.add((Likelihood) obj);
                 } else if (obj instanceof Model) {
-                    Model.FULL_MODEL_SET.add((Model)obj);
+                    Model.FULL_MODEL_SET.add((Model) obj);
                 } else if (obj instanceof Parameter) {
-                    Parameter.FULL_PARAMETER_SET.add((Parameter)obj);
+                    Parameter.FULL_PARAMETER_SET.add((Parameter) obj);
                 }
 
                 xo.setNativeObject(obj);
@@ -357,6 +385,7 @@ public class XMLParser {
 
     /**
      * Get filename and path from BEAST XML object
+     *
      * @param xo
      * @return
      */
@@ -422,8 +451,6 @@ public class XMLParser {
         }
         return new PrintWriter(System.out);
     }
-
-
 
 
     public class ArrayParser extends AbstractXMLObjectParser {

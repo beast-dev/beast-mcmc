@@ -306,7 +306,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         createScaleOperator("bcov.alpha", demoTuning, substWeights);
         createScaleOperator("bcov.s", demoTuning, substWeights);
-//        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
+        createOperator("hfrequencies", OperatorType.DELTA_EXCHANGE, 0.01, substWeights);
 
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
@@ -667,7 +667,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                     case BIN_COVARION:
                         ops.add(getOperator("bcov.alpha"));
                         ops.add(getOperator("bcov.s"));
-//                        ops.add(getOperator("hfrequencies"));
+                        ops.add(getOperator("hfrequencies"));
                         break;
 
                     default:

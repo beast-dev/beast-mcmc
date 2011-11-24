@@ -15,6 +15,8 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
     public static final String PARSER_NAME = "dNdSLogger";
     public static final String USE_SMOOTHING = "smooth";
     public static final String USE_DNMINUSDS = "dn-ds";
+    public static final String COUNTS = "counts";
+    public static final String SYNONYMOUS = "synonymous";
 
     @Override
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -47,8 +49,10 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
 
         boolean useSmoothing = xo.getAttribute(USE_SMOOTHING, true);
         boolean useDnMinusDs = xo.getAttribute(USE_DNMINUSDS, false);
+        boolean conditionalCounts = xo.getAttribute(COUNTS, false);
+        boolean synonymous = xo.getAttribute(SYNONYMOUS, false);
 
-        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing, useDnMinusDs);
+        return new DnDsLogger(xo.getId(), tree, foundTraits, useSmoothing, useDnMinusDs, conditionalCounts, synonymous);
     }
 
     @Override
@@ -60,6 +64,7 @@ public class DnDsLoggerParser extends AbstractXMLObjectParser {
             new ElementRule(CodonPartitionedRobustCounting.class, 2, 2),
             new ElementRule(Tree.class),
             AttributeRule.newBooleanRule(USE_SMOOTHING, true),
+            AttributeRule.newBooleanRule(COUNTS, true),
     };
 
     @Override

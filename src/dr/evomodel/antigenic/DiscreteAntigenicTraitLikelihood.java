@@ -35,6 +35,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             Parameter mdsPrecision,
             Parameter clusterIndexParameter,
             MatrixParameter locationsParameter,
+            CompoundParameter tipTraitParameter,
             DataTable<String[]> dataTable,
             Map<String, String> virusAntiserumMap,
             Map<String, String> assayAntiserumMap,
@@ -56,6 +57,21 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         ObservationType[][] observationTypeTable = new ObservationType[virusCount][assayCount];
 
         initalizeTable(dataTable, observationValueTable, observationTypeTable, log2Transform);
+
+        // This removes viruses that are not in the tree
+        List<String> tipLabels = null;
+        if (tipTraitParameter != null) {
+            tipLabels = new ArrayList<String>();
+            int tipCount = tipTraitParameter.getParameterCount();
+
+            for (int i = 0; i < tipCount; i++) {
+                String label = tipTraitParameter.getParameter(i).getParameterName();
+                if (label.endsWith(".antigenic")) {
+                    label = label.substring(0, label.indexOf(".antigenic"));
+                }
+                tipLabels.add(label);
+            }
+        }
 
         // locations are either viruses or sera (or both)
         List<String> locationLabelsList = new ArrayList<String>();
@@ -200,6 +216,30 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             thresholdCount += (observationTypes[i] != ObservationType.POINT ? 1 : 0);
         }
 
+        if (tipTraitParameter != null) {
+            //  the location -> tip map
+            tipIndices = new int[locationCount];
+            for (int i = 0; i < locationCount; i++) {
+                tipIndices[i] = tipLabels.indexOf(locationLabels[i]);
+            }
+
+            for (int i = 0; i < locationCount; i++) {
+                if (tipIndices[i] == -1) {
+                    System.err.println("Location, " + locationLabels[i] + ", not found in tree");
+                }
+            }
+
+            for (String tipLabel : tipLabels) {
+                if (!locationLabelsList.contains(tipLabel)) {
+                    System.err.println("Tip, " + tipLabel + ", not found in location list");
+                }
+            }
+        } else {
+            tipIndices = null;
+        }
+
+        this.tipTraitParameter = tipTraitParameter;
+
         StringBuilder sb = new StringBuilder();
         sb.append("\tDiscreteAntigenicTraitLikelihood:\n");
         sb.append("\t\t" + virusNames.length + " viruses\n");
@@ -292,8 +332,46 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             clusterMaskKnown = false;
         }
 
+        if (tipTraitParameter != null) {
+            Parameter locations = getLocationsParameter();
+            int mdsDimension = getMDSDimension();
+
+            if  (variable == locations) {
+                int location = index / mdsDimension;
+                int dim = index % mdsDimension;
+
+                for (int i = 0; i < clusterIndexParameter.getDimension(); i++) {
+                    // the location of a cluster has moved so set the new location of every virus in that cluster
+                    if (((int)clusterIndexParameter.getParameterValue(i)) == location) {
+                        if (tipIndices[i] != -1) {
+                            tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + dim, locations.getParameterValue(location));
+                        }
+                    }
+                }
+            } else if (variable == clusterIndexParameter) {
+                // a virus has moved cluster so set its location to that of a new cluster
+                if (tipIndices[index] != -1) {
+                    int location = (int)clusterIndexParameter.getParameterValue(index);
+                    for (int dim = 0; dim < mdsDimension; dim++) {
+                        tipTraitParameter.setParameterValue((tipIndices[index] * mdsDimension) + dim, locations.getParameterValue((location * mdsDimension) + dim));
+                    }
+                }
+            }
+        }
+
         super.handleVariableChangedEvent(variable, index, type);
     }
+
+    public CompoundParameter getTipTraitParameter() {
+        return tipTraitParameter;
+    }
+
+    public int[] getTipIndices() {
+        return tipIndices;
+    }
+
+    private CompoundParameter tipTraitParameter;
+    private int[] tipIndices;
 
     @Override
     public void makeDirty() {
@@ -508,9 +586,9 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             return "" + location1 + ", " + location2;
         }
     };
-    // **************************************************************
-    // XMLObjectParser
-    // **************************************************************
+// **************************************************************
+// XMLObjectParser
+// **************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public final static String FILE_NAME = "fileName";
@@ -589,7 +667,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            AntigenicTraitLikelihood AGTL = new DiscreteAntigenicTraitLikelihood(mdsDimension, mdsPrecision, clusterIndicesParameter, locationsParameter, assayTable, virusAntiserumMap, assayAntiserumMap, virusLocationStatisticList, log2Transform);
+            AntigenicTraitLikelihood AGTL = new DiscreteAntigenicTraitLikelihood(mdsDimension, mdsPrecision, clusterIndicesParameter, locationsParameter, tipTraitParameter, assayTable, virusAntiserumMap, assayAntiserumMap, virusLocationStatisticList, log2Transform);
 
             Logger.getLogger("dr.evomodel").info("Using Discrete Evolutionary Cartography model. Please cite:\n" + Utils.getCitationString(AGTL));
 
@@ -619,9 +697,9 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
 
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+//************************************************************************
+// AbstractXMLObjectParser implementation
+//************************************************************************
 
         public String getParserDescription() {
             return "Provides the likelihood of immunological assay data such as Hemagglutinin inhibition (HI) given vectors of coordinates" +

@@ -33,11 +33,15 @@ public class AncestralTraitParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String name = xo.getAttribute(NAME, xo.getId());
         String traitName = xo.getAttribute(TRAIT_NAME, STATES);
+        String name = xo.getAttribute(NAME, traitName);
         Tree tree = (Tree) xo.getChild(Tree.class);
-        TaxonList taxa = (TaxonList) xo.getElementFirstChild(MRCA);
         TreeTraitProvider treeTraitProvider = (TreeTraitProvider) xo.getChild(TreeTraitProvider.class);
+
+        TaxonList taxa = null;
+        if (xo.hasChildNamed(MRCA)) {
+            taxa = (TaxonList) xo.getElementFirstChild(MRCA);
+        }
 
         TreeTrait trait = treeTraitProvider.getTreeTrait(traitName);
         if (trait == null) {
@@ -71,7 +75,6 @@ public class AncestralTraitParser extends AbstractXMLObjectParser {
             new StringAttributeRule(TRAIT_NAME, "The name of the trait to log", true),
             new ElementRule(TreeModel.class),
             new ElementRule(TreeTraitProvider.class),
-            new ElementRule(MRCA,
-                    new XMLSyntaxRule[]{new ElementRule(Taxa.class)})
+            new ElementRule(MRCA, new XMLSyntaxRule[]{new ElementRule(Taxa.class)},  "The MRCA to reconstruct the trait at (default root node)", true)
     };
 }

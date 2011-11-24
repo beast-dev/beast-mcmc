@@ -101,11 +101,6 @@ public class TraitData {
         return getStatesListOfTrait(taxonList, getName());
     }
 
-    // todo this needs to go somewhere else...
-    public static String getPhylogeographicDescription() {
-        return "Discrete phylogeographic inference in BEAST (PLoS Comput Biol. 2009 Sep;5(9):e1000520)";
-    }
-
 
     public static Set<String> getStatesListOfTrait(Taxa taxonList, String traitName) {
         Set<String> states = new TreeSet<String>();

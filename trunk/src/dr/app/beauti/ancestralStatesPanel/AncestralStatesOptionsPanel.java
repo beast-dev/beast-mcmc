@@ -48,15 +48,15 @@ import java.awt.event.*;
 public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     private static final String ROBUST_COUNTING_TOOL_TIP = "<html>"
-                        + "Enable counting of reconstructed number of substitutions as described in<br>"
-                        + "Minin & Suchard (2008). These will be annotated directly in the<br>"
-                        + "logged trees.</html>";
+            + "Enable counting of reconstructed number of substitutions as described in<br>"
+            + "Minin & Suchard (2008). These will be annotated directly in the<br>"
+            + "logged trees.</html>";
 
     private static final String DNDS_ROBUST_COUNTING_TOOL_TIP = "<html>"
-                        + "Enable counting of synonymous and non-synonymous substitution as described in<br>"
-                        + "O'Brien, Minin & Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond &<br>"
-                        + "Suchard (in preparation). This model requires a 3-partition codon model to be<br>"
-                        + "selected in the Site model for this partition.</html>";
+            + "Enable counting of synonymous and non-synonymous substitution as described in<br>"
+            + "O'Brien, Minin & Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond &<br>"
+            + "Suchard (in preparation). This model requires a 3-partition codon model to be<br>"
+            + "selected in the Site model for this partition.</html>";
 
     // Components
     private static final long serialVersionUID = -1645661616353099424L;
@@ -157,7 +157,12 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralStatesComponent.setReconstructAtNodes(partition, ancestralReconstructionCheck.isSelected());
         ancestralStatesComponent.setReconstructAtMRCA(partition, mrcaReconstructionCheck.isSelected());
         mrcaReconstructionCombo.setEnabled(mrcaReconstructionCheck.isSelected());
-        ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
+        if (mrcaReconstructionCombo.getSelectedIndex() == 0) {
+            // root node
+            ancestralStatesComponent.setMRCATaxonSet(partition, null);
+        } else {
+            ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
+        }
         ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
         ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
 
@@ -190,11 +195,16 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         boolean ancestralReconstruction = true;
         boolean robustCounting = true;
+        boolean dNdSRobustCounting = false;
         boolean errorModel = false;
 
         switch (partition.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
                 errorModel = true;
+                dNdSRobustCounting = true; // but will be disabled if not codon partitioned
+                break;
+            case DataType.AMINO_ACIDS:
+            case DataType.GENERAL:
                 break;
             case DataType.CONTINUOUS:
                 robustCounting = false;
@@ -226,38 +236,40 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             if (ancestralReconstruction) {
                 addSeparator();
             }
-            addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
+            addSpanningComponent(new JLabel("State Change Count Reconstruction:"));
 
             JTextArea text = new JTextArea(
-                    "Select this option to reconstruct counts of substitutions using " +
-                    "Markov Jumps. This approached is described in Minin & Suchard (2008).");
+                    "Select this option to reconstruct counts of state changes using " +
+                            "Markov Jumps. This approached is described in Minin & Suchard (2008).");
             text.setColumns(40);
             PanelUtils.setupComponent(text);
             addComponent(text);
 
             addComponent(robustCountingCheck);
 
-            text = new JTextArea(
-                    "Select this option to reconstruct counts of synonymous and nonsynonymous " +
-                    "changes usingRobust Counting. This approached as described in O'Brien, Minin " +
-                            "& Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard " +
-                            "(in preparation):");
-            text.setColumns(40);
-            PanelUtils.setupComponent(text);
-            addComponent(text);
+            if (dNdSRobustCounting) {
+                addSeparator();
+                text = new JTextArea(
+                        "Select this option to reconstruct counts of synonymous and nonsynonymous " +
+                                "changes using Robust Counting. This approached is described in O'Brien, Minin " +
+                                "& Suchard (2009) and Lemey, Minin, Bielejec, Kosakovsky-Pond & Suchard " +
+                                "(in preparation):");
+                text.setColumns(40);
+                PanelUtils.setupComponent(text);
+                addComponent(text);
 
-            addComponent(dNdSRobustCountingCheck);
+                addComponent(dNdSRobustCountingCheck);
 
-            text = new JTextArea(
-                    "This model requires a 3-partition codon model to be selected in " +
-                    "the Site model for this partition before it can be selected.");
-            text.setColumns(40);
-            text.setBorder(BorderFactory.createEmptyBorder(0, 32, 0, 0));
-            PanelUtils.setupComponent(text);
-            addComponent(text);
-            dNdSRobustCountingCheck.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
-            text.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
-
+                text = new JTextArea(
+                        "This model requires a 3-partition codon model to be selected in " +
+                                "the Site model for this partition before it can be selected.");
+                text.setColumns(40);
+                text.setBorder(BorderFactory.createEmptyBorder(0, 32, 0, 0));
+                PanelUtils.setupComponent(text);
+                addComponent(text);
+                dNdSRobustCountingCheck.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
+                text.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
+            }
         }
 
         if (errorModel) {

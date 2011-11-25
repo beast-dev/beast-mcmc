@@ -29,7 +29,6 @@ import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
-import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.BeautiTemplate;
 import dr.evolution.alignment.Alignment;
@@ -730,24 +729,24 @@ public class BeautiOptions extends ModelOptions {
 
     }
 
-    public void updateAll() {
-        updatePartitionAllLinks();
-        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
-            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
-                if (getPartitionClockModels(clockModelGroup).size() == 1) {
-                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
-                } else {
-                    clockModelOptions.fixMeanRate(clockModelGroup);
-                }
-            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
-                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
-                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
-                //TODO correct?
-                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
-            }
-        }
-    }
+//    public void updateAll() {
+//        updatePartitionAllLinks();
+//        for (ClockModelGroup clockModelGroup : clockModelOptions.getClockModelGroups()) {
+//            if (clockModelGroup.contain(Microsatellite.INSTANCE, this)) {
+//                if (getPartitionClockModels(clockModelGroup).size() == 1) {
+//                    clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+//                    getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
+//                } else {
+//                    clockModelOptions.fixMeanRate(clockModelGroup);
+//                }
+//            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
+//                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
+//                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
+//                //TODO correct?
+//                clockModelOptions.fixRateOfFirstClockPartition(clockModelGroup);
+//            }
+//        }
+//    }
 
     // update links (e.g List<PartitionData> allPartitionData), after use (e.g partition.setPartitionSubstitutionModel(model))
 

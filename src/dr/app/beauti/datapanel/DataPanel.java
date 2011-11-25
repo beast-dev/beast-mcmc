@@ -279,7 +279,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
 
     private void fireDataChanged() {
 //        options.updateLinksBetweenPDPCMPSMPTMPTPP();
-        options.updateAll();
+        options.updatePartitionAllLinks();
 //        frame.setAllOptions();
         frame.setDirty();
     }

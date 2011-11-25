@@ -27,7 +27,6 @@ package dr.app.beauti.util;
 
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.options.*;
-import dr.app.util.Arguments;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.Patterns;
@@ -52,7 +51,9 @@ import org.jdom.JDOMException;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 
@@ -600,8 +601,8 @@ public class BEAUTiImporter {
             }
         }
 
+        options.updatePartitionAllLinks();
         options.clockModelOptions.initClockModelGroup();
-        options.updateAll();
     }
 
     private void setClockAndTree(AbstractPartitionData partition) {
@@ -660,7 +661,7 @@ public class BEAUTiImporter {
                 options.addTrait(trait);
             }
 
-            options.updateAll();
+            options.updatePartitionAllLinks();
         }
     }
 

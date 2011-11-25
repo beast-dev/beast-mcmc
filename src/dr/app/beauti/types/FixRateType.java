@@ -32,7 +32,8 @@ public enum FixRateType {
     RELATIVE_TO("Estimate clock rates relative to"),
 	TIP_CALIBRATED("Tip times calibrated"), //
 	NODE_CALIBRATED("Internal node(s) calibrated"), //
-	RATE_CALIBRATED("Rate is calibrated"); //
+	RATE_CALIBRATED("Rate is calibrated"), //
+    CUSTOMIZED("Customize clock rates");
 
 	FixRateType(String name) {
         this.name = name;

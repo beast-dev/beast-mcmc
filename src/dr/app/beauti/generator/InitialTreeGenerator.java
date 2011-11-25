@@ -6,6 +6,7 @@ import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.DataType;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -91,8 +92,8 @@ public class InitialTreeGenerator extends Generator {
                 ClockModelGroup group = options.getDataPartitions(model).get(0).
                         getPartitionClockModel().getClockModelGroup();
 
-                if (group.getRateTypeOption() == FixRateType.FIX_MEAN
-                        || group.getRateTypeOption() == FixRateType.RELATIVE_TO) {
+                if ( (group.getRateTypeOption() == FixRateType.FIX_MEAN || group.getRateTypeOption() == FixRateType.RELATIVE_TO)
+                        && model.getDataType().getType() != DataType.MICRO_SAT) {
 
 //            		writer.writeComment("No calibration");
                     writer.writeOpenTag(

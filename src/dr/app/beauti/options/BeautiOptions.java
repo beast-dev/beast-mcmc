@@ -1110,6 +1110,13 @@ public class BeautiOptions extends ModelOptions {
         return list;
     }
 
+    public Taxa getTaxa(String taxaName) {
+        for (Taxa taxa : taxonSets) {
+           if (taxa.getId().equalsIgnoreCase(taxaName)) return taxa;
+        }
+        return null;
+    }
+
     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // Data options
     public Taxa taxonList = null; // union set of all taxa in all partitions. todo change to List<Taxa> regarding data type?

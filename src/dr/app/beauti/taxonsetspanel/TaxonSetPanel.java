@@ -343,12 +343,17 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 includedSelectionChanging = true;
                 includedTaxaTable.clearSelection();
                 if (includedTaxonSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa) includedTaxonSetsComboBox.getSelectedItem();
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        Taxon taxon = taxa.getTaxon(i);
-                        int index = includedTaxa.indexOf(taxon);
-                        includedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+                    String taxaName = includedTaxonSetsComboBox.getSelectedItem().toString();
+                    if (!taxaName.endsWith("...")) {
+                        Taxa taxa = options.getTaxa(taxaName);
+                        if (taxa != null) {
+                            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                                Taxon taxon = taxa.getTaxon(i);
+                                int index = includedTaxa.indexOf(taxon);
+                                includedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
 
+                            }
+                        }
                     }
                 }
                 includedSelectionChanging = false;
@@ -367,12 +372,17 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                 excludedSelectionChanging = true;
                 excludedTaxaTable.clearSelection();
                 if (excludedTaxonSetsComboBox.getSelectedIndex() > 0) {
-                    Taxa taxa = (Taxa) excludedTaxonSetsComboBox.getSelectedItem();
-                    for (int i = 0; i < taxa.getTaxonCount(); i++) {
-                        Taxon taxon = taxa.getTaxon(i);
-                        int index = excludedTaxa.indexOf(taxon);
-                        excludedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
+                    String taxaName = excludedTaxonSetsComboBox.getSelectedItem().toString();
+                    if (!taxaName.endsWith("...")) {
+                        Taxa taxa = options.getTaxa(taxaName);
+                        if (taxa != null) {
+                            for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                                Taxon taxon = taxa.getTaxon(i);
+                                int index = excludedTaxa.indexOf(taxon);
+                                excludedTaxaTable.getSelectionModel().addSelectionInterval(index, index);
 
+                            }
+                        }
                     }
                 }
                 excludedSelectionChanging = false;
@@ -617,7 +627,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         for (Taxa taxa : options.taxonSets) {
             if (taxa != currentTaxonSet) {
                 if (isCompatible(taxa, availableTaxa)) {
-                    comboBox.addItem(taxa);
+                    comboBox.addItem(taxa.getId()); // have to add String, otherwise it will throw Exception to cast "taxa..." into Taxa
                 }
             }
         }

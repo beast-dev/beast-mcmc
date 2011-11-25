@@ -27,6 +27,7 @@ import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.RelativeRatesType;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Microsatellite;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.UPGMATree;
@@ -126,9 +127,25 @@ public class ClockModelOptions extends ModelOptions {
     }
 
     //+++++++++++++++++++++++ Clock Model Group ++++++++++++++++++++++++++++++++
-    public void initClockModelGroup() {
+    public void initClockModelGroup() { // only used in BeautiImporter
         for (PartitionClockModel model : options.getPartitionClockModels()) {
             addClockModelGroup(model);
+        }
+
+        for (ClockModelGroup clockModelGroup : getClockModelGroups()) {
+            if (clockModelGroup.contain(Microsatellite.INSTANCE, options)) {
+                if (options.getPartitionClockModels(clockModelGroup).size() == 1) {
+                    fixRateOfFirstClockPartition(clockModelGroup);
+                    options.getPartitionClockModels(clockModelGroup).get(0).setEstimatedRate(true);
+                } else {
+                    fixMeanRate(clockModelGroup);
+                }
+            } else if (!(clockModelGroup.getRateTypeOption() == FixRateType.TIP_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.NODE_CALIBRATED
+                    || clockModelGroup.getRateTypeOption() == FixRateType.RATE_CALIBRATED)) {
+                //TODO correct?
+                fixRateOfFirstClockPartition(clockModelGroup);
+            }
         }
     }
 

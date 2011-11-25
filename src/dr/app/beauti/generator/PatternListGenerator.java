@@ -181,7 +181,7 @@ public class PatternListGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, m.getName()),
                                 new Attribute.Default<Integer>(MicrosatelliteParser.MAX, m.getMax()),
                                 new Attribute.Default<Integer>(MicrosatelliteParser.MIN, m.getMin()),
-                                new Attribute.Default<Integer>(MicrosatelliteParser.MICROSAT, m.getMin()),
+                                new Attribute.Default<Integer>(MicrosatelliteParser.UNIT_LENGTH, m.getUnitLength()),
                         }, true);
 
             } else {

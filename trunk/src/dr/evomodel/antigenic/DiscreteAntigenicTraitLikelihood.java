@@ -264,7 +264,14 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         // some random initial locations
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
             for (int j = 0; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
+             //   double r = MathUtils.nextGaussian();
+                double r = 0.0;
+                if (j == 0) {
+                    r = (double) i * 0.05;
+                }
+                else {
+                    r = MathUtils.nextGaussian();
+                }
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
             }
         }

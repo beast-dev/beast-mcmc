@@ -27,8 +27,9 @@ package dr.app.beauti.ancestralStatesPanel;
 
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.sequenceerror.SequenceErrorModelComponentOptions;
-import dr.app.beauti.options.*;
-import dr.app.beauti.types.*;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
@@ -36,9 +37,9 @@ import dr.evolution.util.Taxa;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 /**
  * @author Alexei Drummond
@@ -205,6 +206,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 break;
             case DataType.AMINO_ACIDS:
             case DataType.GENERAL:
+            case DataType.TWO_STATES:
                 break;
             case DataType.CONTINUOUS:
                 robustCounting = false;

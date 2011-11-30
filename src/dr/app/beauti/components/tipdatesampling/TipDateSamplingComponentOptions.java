@@ -68,7 +68,7 @@ public class TipDateSamplingComponentOptions implements ComponentOptions {
                 if (operator == null) {
                     Parameter parameter = tipDateParameters.get(taxon);
 //                    operator = new Operator("age(" + taxon.getId() + ")", "", parameter, OperatorType.SCALE, 0.75, 1.0);
-                    operator = new Operator.Builder("age(" + taxon.getId() + ")", "", parameter, OperatorType.SCALE, 0.75, 1.0).build();
+                    operator = new Operator.Builder("age(" + taxon.getId() + ")", "", parameter, OperatorType.RANDOM_WALK, 1.0, 1.0).build();
                     tipDateOperators.put(taxon, operator);
                 }
                 ops.add(operator);

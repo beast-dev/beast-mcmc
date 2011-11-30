@@ -11,10 +11,11 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Alexei Drummond
@@ -93,8 +94,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             public void keyReleased(KeyEvent e) {
                 if (e.getComponent() instanceof RealNumberField) {
                     String number = ((RealNumberField) e.getComponent()).getText();
-                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E")
-                            || number.startsWith("-") || number.endsWith("-"))) {
+                    if (!(number.equals("") || number.endsWith("e") || number.endsWith("E") || number.endsWith("-"))) {
 //                        System.out.println(e.getID() + " = \"" + ((RealNumberField) e.getComponent()).getText() + "\"");
 //                        setupChart();
 //                        dialog.repaint();

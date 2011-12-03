@@ -598,7 +598,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         if (selectedPartitionData.size() > 1) {
-            if (options.hasDiffTaxa(selectedPartitionData)) {
+            if (options.hasDifferentTaxa(selectedPartitionData)) {
                 JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
                         "Illegal Configuration",
                         JOptionPane.ERROR_MESSAGE);

@@ -250,7 +250,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             isBounded = true;
         }
 
-        if (dist != null && isBounded) {
+        if (dist != null && isTruncatable && isBounded) {
             if (isTruncatedCheck.isSelected()) {
                 lower = lowerField.getValue();
                 upper = upperField.getValue();

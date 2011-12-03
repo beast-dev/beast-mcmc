@@ -799,7 +799,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public boolean hasDiffTaxa(List<AbstractPartitionData> partitionDataList) {
+    public boolean hasDifferentTaxa(List<AbstractPartitionData> partitionDataList) {
         if (partitionDataList.size() < 2)
             return false;
 

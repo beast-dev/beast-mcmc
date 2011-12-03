@@ -67,12 +67,14 @@ public class BEAUTiImporter {
     private final BeautiOptions options;
     private final BeautiFrame frame;
 
+    private PartitionNameDialog partitionNameDialog = null;
+
     public BEAUTiImporter(BeautiFrame frame, BeautiOptions options) {
         this.frame = frame;
         this.options = options;
     }
 
-    public void importFromFile(File file) throws Exception {
+    public void importFromFile(File file) throws IOException, ImportException, JDOMException {
         try {
             Reader reader = new FileReader(file);
 
@@ -108,7 +110,7 @@ public class BEAUTiImporter {
     }
 
     // micro-sat
-    private void importMicroSatFile(File file) throws Exception {
+    private void importMicroSatFile(File file) throws IOException, ImportException {
         try {
             Reader reader = new FileReader(file);
             BufferedReader bufferedReader = new BufferedReader(reader);
@@ -136,7 +138,7 @@ public class BEAUTiImporter {
     }
 
     // xml
-    private void importBEASTFile(File file) throws Exception {
+    private void importBEASTFile(File file) throws IOException, ImportException, JDOMException {
         try {
             FileReader reader = new FileReader(file);
 
@@ -186,7 +188,7 @@ public class BEAUTiImporter {
     }
 
     // nexus
-    private void importNexusFile(File file) throws Exception {
+    private void importNexusFile(File file) throws IOException, ImportException {
         TaxonList taxa = null;
         SimpleAlignment alignment = null;
         List<Tree> trees = new ArrayList<Tree>();
@@ -292,8 +294,8 @@ public class BEAUTiImporter {
             throw new IOException(e.getMessage());
         } catch (ImportException e) {
             throw new ImportException(e.getMessage());
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+//        } catch (Exception e) {
+//            throw new Exception(e.getMessage());
         }
 
         setData(file.getName(), taxa, alignment, charSets, model, null, trees);
@@ -301,7 +303,7 @@ public class BEAUTiImporter {
 
     // FASTA
 
-    private void importFastaFile(File file) throws Exception {
+    private void importFastaFile(File file) throws IOException, ImportException {
         try {
             FileReader reader = new FileReader(file);
 
@@ -575,9 +577,36 @@ public class BEAUTiImporter {
 
     private void createPartitionFramework(PartitionSubstitutionModel model, List<AbstractPartitionData> partitions) {
         for (AbstractPartitionData partition : partitions) {
-            if (options.hasPartitionData(partition.getName())) {
-                throw new IllegalArgumentException("New partition has a duplicate name: " + partition.getName());
+            String name = partition.getName();
+
+            while (name.length() == 0 || options.hasPartitionData(name)) {
+                String text;
+                if (options.hasPartitionData(name)) {
+                    text = "<html>" +
+                            "A partition named, " + name + ", already exists.<br>" +
+                            "Please provide a unique name for this partition." +
+                            "</html>";
+                } else {
+                    text = "<html>" +
+                            "Invalid partition name. Please provide a unique<br>" +
+                            "name for this partition." +
+                            "</html>";
+                }
+                if (partitionNameDialog == null) {
+                    partitionNameDialog = new PartitionNameDialog(frame);
+                }
+
+                partitionNameDialog.setDescription(text);
+
+                int result = partitionNameDialog.showDialog();
+
+                if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                    return;
+                }
+
+                name = partitionNameDialog.getName();
             }
+            partition.setName(name);
 
             options.dataPartitions.add(partition);
 

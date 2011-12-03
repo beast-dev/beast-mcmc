@@ -45,6 +45,7 @@ import dr.evolution.io.NexusImporter.MissingBlockException;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
 import jam.util.IconUtils;
+import org.jdom.JDOMException;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -492,23 +493,26 @@ public class BeautiFrame extends DocumentFrame {
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
                     ime.printStackTrace();
-                    // there may be other files in the list so don't return
-//                    return;
-                } catch (IllegalArgumentException illegEx) {
-                    JOptionPane.showMessageDialog(this, illegEx.getMessage(),
-                            "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
-
-                } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+                } catch (JDOMException jde) {
+                    JOptionPane.showMessageDialog(this, "Error parsing imported file: " + jde,
                             "Error reading file",
                             JOptionPane.ERROR_MESSAGE);
-                    ex.printStackTrace();
-                    return;
+                    jde.printStackTrace();
+//                } catch (IllegalArgumentException illegEx) {
+//                    JOptionPane.showMessageDialog(this, illegEx.getMessage(),
+//                            "Illegal Argument Exception", JOptionPane.ERROR_MESSAGE);
+//
+//                } catch (Exception ex) {
+//                    JOptionPane.showMessageDialog(this, "Fatal exception: " + ex,
+//                            "Error reading file",
+//                            JOptionPane.ERROR_MESSAGE);
+//                    ex.printStackTrace();
+//                    return;
                 }
             }
         }
 
-        if (options.hasDiffTaxa(options.dataPartitions)) {
+        if (options.hasDifferentTaxa(options.dataPartitions)) {
             dataPanel.selectAll();
             dataPanel.unlinkTrees();
         }

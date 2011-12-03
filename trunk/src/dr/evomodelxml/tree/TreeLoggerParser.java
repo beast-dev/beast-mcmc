@@ -44,6 +44,9 @@ public class TreeLoggerParser extends LoggerParser {
 
     protected void parseXMLParameters(XMLObject xo) throws XMLParseException
     {
+        // reset this every time...
+        branchRates = null;
+
         tree = (Tree) xo.getChild(Tree.class);
 
         title = xo.getAttribute(TITLE, "");
@@ -270,7 +273,7 @@ public class TreeLoggerParser extends LoggerParser {
     protected String title;
     protected boolean nexusFormat;
     protected boolean sortTranslationTable;
-    protected BranchRates branchRates = null;
+    protected BranchRates branchRates;
     protected NumberFormat format = null;
     protected TreeLogger.LogUpon condition;
     protected boolean mapNames;

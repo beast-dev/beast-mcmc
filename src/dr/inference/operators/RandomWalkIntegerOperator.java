@@ -5,9 +5,6 @@ import dr.inference.model.Variable;
 import dr.inferencexml.operators.RandomWalkIntegerOperatorParser;
 import dr.math.MathUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * A generic random walk operator for use with a multi-dimensional Integer parameters.
  *
@@ -182,10 +179,10 @@ public class RandomWalkIntegerOperator extends SimpleMCMCOperator {
         } else if (parameter instanceof Variable) {
             maxDelta = ((Variable<Integer>) parameter).getValue(0) * 2.0;
         }
-        double ws = Math.round(OperatorUtils.optimizeWindowSize(windowSize, maxDelta * 2.0, prob, targetProb));
+        long ws = Math.round(OperatorUtils.optimizeWindowSize(windowSize, maxDelta * 2.0, prob, targetProb));
 
         if (prob < getMinimumGoodAcceptanceLevel()) {
-            if(ws <= 1.0){
+            if(ws <= 1){
                 return "";
             }
             return "Try decreasing windowSize to about " + ws;            

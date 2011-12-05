@@ -118,6 +118,10 @@ public class BeastVersion implements Version {
     }
 
     public String getBuildString() {
-        return "r" + REVISION.split(" ")[1];
+        try {
+            return "r" + REVISION.split(" ")[1];
+        } catch (ArrayIndexOutOfBoundsException e) {
+            return "Invalid Revision String : " + REVISION;
+        }
     }
 }

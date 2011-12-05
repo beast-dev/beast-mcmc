@@ -49,9 +49,7 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     public PartitionData(BeautiOptions options, String name, String fileName, Alignment alignment, int fromSite, int toSite, int every) {
-        this.options = options;
-        this.name = name;
-        this.fileName = fileName;
+        super(options, name, fileName);
         this.alignment = alignment;
 
         this.fromSite = fromSite;
@@ -68,9 +66,7 @@ public class PartitionData extends AbstractPartitionData {
     }
 
     public PartitionData(BeautiOptions options, String name, String fileName, List<TraitData> traits) {
-        this.options = options;
-        this.name = name;
-        this.fileName = fileName;
+        super(options, name, fileName);
         this.alignment = null;
 
         this.fromSite = -1;

@@ -1,19 +1,19 @@
 package dr.app.beauti.components.sequenceerror;
 
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.generator.BaseComponentGenerator;
+import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.types.SequenceErrorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.alignment.HypermutantAlignment;
 import dr.evomodel.treelikelihood.HypermutantErrorModel;
-import dr.evomodel.treelikelihood.SequenceErrorModel;
 import dr.evomodelxml.treelikelihood.SequenceErrorModelParser;
 import dr.evoxml.HypermutantAlignmentParser;
-import dr.inference.model.*;
+import dr.inference.model.ParameterParser;
+import dr.inference.model.StatisticParser;
+import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
-import dr.inferencexml.model.SumStatisticParser;
 
 /**
  * @author Andrew Rambaut
@@ -105,7 +105,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                         }
                 );
 
-                writer.writeIDref("alignment", prefix + "alignment");
+                writer.writeIDref("alignment", partition.getTaxonList().getId());
 
                 writer.writeCloseTag(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT);
             }
@@ -124,6 +124,8 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                                 new Attribute.Default<String>(XMLParser.ID, prefix + SequenceErrorModelComponentOptions.ERROR_MODEL)
                         }
                 );
+
+                writer.writeIDref(HypermutantAlignmentParser.HYPERMUTANT_ALIGNMENT, prefix + "hypermutants");
 
                 writeParameter(HypermutantErrorModel.HYPERMUTATION_RATE, prefix + SequenceErrorModelComponentOptions.HYPERMUTION_RATE_PARAMETER, 1, writer);
                 writeParameter(HypermutantErrorModel.HYPERMUTATION_INDICATORS, prefix + SequenceErrorModelComponentOptions.HYPERMUTANT_INDICATOR_PARAMETER, 1, writer);

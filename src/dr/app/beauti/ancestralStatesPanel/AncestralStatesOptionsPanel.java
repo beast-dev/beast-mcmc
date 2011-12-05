@@ -125,6 +125,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         // Set the initial options
         ancestralStatesComponent = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+//        ancestralStatesComponent.createParameters(options);
         ancestralReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtNodes(partition));
         mrcaReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtMRCA(partition));
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
@@ -132,6 +133,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         dNdSRobustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
+//        sequenceErrorComponent.createParameters(options); // this cannot create correct param here, because of improper design
         errorModelCombo.setSelectedItem(sequenceErrorComponent.getSequenceErrorType(partition));
 
         setupPanel();
@@ -168,6 +170,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());
+        sequenceErrorComponent.createParameters(options);
     }
 
     /**

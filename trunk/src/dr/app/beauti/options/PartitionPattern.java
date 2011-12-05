@@ -13,9 +13,7 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
     private final Patterns patterns;
 
     public PartitionPattern(BeautiOptions options, String name, String fileName, Patterns patterns) {
-        this.options = options;
-        this.name = name;
-        this.fileName = fileName;
+        super(options, name, fileName);
         this.patterns = patterns;
 
         this.traits = null;

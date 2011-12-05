@@ -5,7 +5,9 @@ import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.SequenceErrorType;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Andrew Rambaut
@@ -28,7 +30,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
 
     public void createParameters(final ModelOptions modelOptions) {
         for (AbstractPartitionData partition : sequenceErrorTypeMap.keySet()) {
-            String prefix = partition.getName() + ".";
+            String prefix = partition.getPrefix();//partition.getName() + ".";
             modelOptions.createNonNegativeParameterInfinitePrior(prefix + AGE_RATE_PARAMETER,"age dependent sequence error rate",
                     PriorScaleType.SUBSTITUTION_RATE_SCALE, 1.0E-8);
             modelOptions.createZeroOneParameterUniformPrior(prefix + BASE_RATE_PARAMETER,"base sequence error rate", 1.0E-8);
@@ -48,7 +50,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
 
     public void selectParameters(final ModelOptions modelOptions, final List<Parameter> params) {
         for (AbstractPartitionData partition : sequenceErrorTypeMap.keySet()) {
-            String prefix = partition.getName() + ".";
+            String prefix = partition.getPrefix();//partition.getName() + ".";
             if (isHypermutation(partition)) {
                 params.add(modelOptions.getParameter(prefix + HYPERMUTION_RATE_PARAMETER));
                 params.add(modelOptions.getParameter(prefix + HYPERMUTANT_INDICATOR_PARAMETER));
@@ -69,16 +71,16 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
 
     public void selectOperators(final ModelOptions modelOptions, final List<Operator> ops) {
         for (AbstractPartitionData partition : sequenceErrorTypeMap.keySet()) {
-            String prefix = partition.getName() + ".";
+            String prefix = partition.getPrefix();//partition.getName() + ".";
             if (isHypermutation(partition)) {
-                ops.add(modelOptions.getOperator(HYPERMUTION_RATE_PARAMETER));
-                ops.add(modelOptions.getOperator(HYPERMUTANT_INDICATOR_PARAMETER));
+                ops.add(modelOptions.getOperator(prefix + HYPERMUTION_RATE_PARAMETER));
+                ops.add(modelOptions.getOperator(prefix + HYPERMUTANT_INDICATOR_PARAMETER));
             }
             if (hasAgeDependentRate(partition)) {
-                ops.add(modelOptions.getOperator(AGE_RATE_PARAMETER));
+                ops.add(modelOptions.getOperator(prefix + AGE_RATE_PARAMETER));
             }
             if (hasBaseRate(partition)) {
-                ops.add(modelOptions.getOperator(BASE_RATE_PARAMETER));
+                ops.add(modelOptions.getOperator(prefix + BASE_RATE_PARAMETER));
             }
         }
     }

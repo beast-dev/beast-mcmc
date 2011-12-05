@@ -59,6 +59,12 @@ public abstract class AbstractPartitionData {
     protected boolean useRobustCounting = false;
     protected boolean useDnDsCount = false;
 
+    public AbstractPartitionData(BeautiOptions options, String name, String fileName) {
+        this.options = options;
+        this.name = name;
+        this.fileName = fileName;
+    }
+
     protected void calculateMeanDistance(Patterns patterns) {
         if (patterns != null) {
             distances = new JukesCantorDistanceMatrix(patterns);

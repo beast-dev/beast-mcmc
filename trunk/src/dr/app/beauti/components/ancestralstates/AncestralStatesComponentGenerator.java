@@ -1,7 +1,8 @@
 package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.generator.BaseComponentGenerator;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
 import dr.util.Attribute;
 
@@ -119,7 +120,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         writer.writeComment("Robust counting for: " + partition.getName());
 
         // TODO: Hand coding is so 90s
-        String prefix = partition.getName() + ".";
+        String prefix = partition.getPrefix();//partition.getName() + ".";
 
         // S operator
         writer.writeOpenTag("codonPartitionedRobustCounting",
@@ -133,15 +134,15 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP1.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP1.treeLikelihood");
         writer.writeCloseTag("firstPosition");
 
         writer.writeOpenTag("secondPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP2.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP2.treeLikelihood");
         writer.writeCloseTag("secondPosition");
 
         writer.writeOpenTag("thirdPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP3.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP3.treeLikelihood");
         writer.writeCloseTag("thirdPosition");
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
@@ -160,15 +161,15 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeIDref("treeModel", "treeModel");
         writer.writeOpenTag("firstPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP1.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP1.treeLikelihood");
         writer.writeCloseTag("firstPosition");
 
         writer.writeOpenTag("secondPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP2.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP2.treeLikelihood");
         writer.writeCloseTag("secondPosition");
 
         writer.writeOpenTag("thirdPosition");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "CP3.treeLikelihood");
+        writer.writeIDref("ancestralTreeLikelihood", prefix + "CP3.treeLikelihood");
         writer.writeCloseTag("thirdPosition");
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
@@ -195,7 +196,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         for (AbstractPartitionData partition : options.getDataPartitions()) {
 
             if (component.dNdSRobustCounting(partition)) {
-                String prefix = partition.getName() + ".";
+                String prefix = partition.getPrefix();//partition.getName() + ".";
 
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");

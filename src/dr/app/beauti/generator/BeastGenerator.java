@@ -325,7 +325,7 @@ public class BeastGenerator extends Generator {
 
             writer.writeText("");
 
-            if (!options.partitionsHaveIdenticalTaxa()) {
+            if (!options.hasIdenticalTaxa()) {
                 // write all taxa in each gene tree regarding each data partition,
                 for (AbstractPartitionData partition : options.dataPartitions) {
                     if (partition.getTaxonList() != null) {

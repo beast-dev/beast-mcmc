@@ -115,7 +115,7 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 String taxaId;
-                if (options.partitionsHaveIdenticalTaxa()) {
+                if (options.hasIdenticalTaxa()) {
                     taxaId = TaxaParser.TAXA;
                 } else {
                     taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;

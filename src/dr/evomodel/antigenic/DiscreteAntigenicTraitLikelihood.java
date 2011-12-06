@@ -357,7 +357,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                     // the location of a cluster has moved so set the new location of every virus in that cluster
                     if (((int)clusterIndexParameter.getParameterValue(i)) == location) {
                         if (tipIndices[i] != -1) {
-                            tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + dim, locations.getParameterValue(location));
+                            tipTraitParameter.setParameterValue((tipIndices[i] * mdsDimension) + dim, locations.getParameterValue(index));
                         }
                     }
                 }

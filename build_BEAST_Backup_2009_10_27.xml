@@ -387,7 +387,7 @@
 			<fileset dir="${common_dir}/examples"/>
 		</copy>
 		<copy todir="${Windows_package_dir}/native">
-			<fileset dir="${common_dir}/native"/>
+			<fileset dir="native"/>
 		</copy>
 		<copy todir="${Windows_package_dir}/scripts">
 			<fileset dir="${Windows_dir}/scripts"/>
@@ -469,7 +469,7 @@
 			<fileset dir="${common_dir}/examples"/>
 		</copy>
 		<copy todir="${Linux_package_dir}/native">
-			<fileset dir="${common_dir}/native"/>
+			<fileset dir="native"/>
 		</copy>
 
 		<copy file="${common_dir}/icons/beast.png" todir="${Linux_package_dir}/images"/>
@@ -511,7 +511,7 @@
             <fileset dir="${common_dir}/examples"/>
         </copy>
         <copy todir="${Mac_package_dir}/native">
-            <fileset dir="${common_dir}/native"/>
+            <fileset dir="native"/>
         </copy>
 
 		<copy file="${dist}/beauti.jar" todir="${Mac_package_dir}/lib"/>

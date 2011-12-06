@@ -143,12 +143,12 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
 
         List<Pair> locationPairs = new ArrayList<Pair>();
 
-        System.out.print("virus");
-        for (int j = 0; j < assayCount; j++) {
-            int k = assayToSerumIndices[j];
-            System.out.print("\t" + assayNames[k] + "[" + locationLabels[serumToLocationIndices[k]] + "]");
-        }
-        System.out.println();
+//        System.out.print("virus");
+//        for (int j = 0; j < assayCount; j++) {
+//            int k = assayToSerumIndices[j];
+//            System.out.print("\t" + assayNames[k] + "[" + locationLabels[serumToLocationIndices[k]] + "]");
+//        }
+//        System.out.println();
 
         // Build a sparse matrix of non-missing assay values
         for (int i = 0; i < virusCount; i++) {
@@ -156,7 +156,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
             if (virusToLocationIndices[i] != -1) {
                 // viruses with location indices of minus one have been excluded
 
-                System.out.print(virusNames[i] + "[" + locationLabels[virusToLocationIndices[i]] + "]");
+//                System.out.print(virusNames[i] + "[" + locationLabels[virusToLocationIndices[i]] + "]");
 
                 for (int j = 0; j < assayCount; j++) {
                     int k = assayToSerumIndices[j];
@@ -164,7 +164,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                     Double value = observationValueTable[i][j];
                     ObservationType type = observationTypeTable[i][j];
 
-                    System.out.print("\t" + value);
+//                    System.out.print("\t" + value);
 
                     if (type != ObservationType.MISSING) {
                         observationList.add(value);
@@ -176,7 +176,7 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
                         serumObservationCounts[k]++;
                     }
                 }
-                System.out.println();
+//                System.out.println();
             }
         }
 

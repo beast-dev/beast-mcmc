@@ -10,13 +10,12 @@ OUTNAME		:= NativeLikelihoodCore-$(STATE_COUNT)
 ############
 
 MAC_JAVA_HOME	:= /Library/Java/Home
-#LINUX_JAVA_HOME	:= /usr/java/j2sdk1.4.1_01
-LINUX_JAVA_HOME	:= /usr/java/jdk1.6.0_07
+LINUX_JAVA_HOME	:= /usr/java/latest
 
 MAC_INCLUDES	+= -I$(MAC_JAVA_HOME)/include
 LINUX_INCLUDES	+= -I$(LINUX_JAVA_HOME)/include -I$(LINUX_JAVA_HOME)/include/linux
 
-ARCH		:= i386
+ARCH		:= native
 
 MAC_LINK	:= bundle  # Can also be 'dynamiclib'
 LINUX_LINK	:= shared

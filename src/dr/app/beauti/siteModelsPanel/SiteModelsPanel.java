@@ -50,6 +50,7 @@ import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -80,7 +81,8 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
+    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR,
+            SequenceErrorType.BASE_ALL).toArray());//new JComboBox(SequenceErrorType.values());
     JLabel errorModelLabel;
     SequenceErrorModelComponentOptions comp;
 

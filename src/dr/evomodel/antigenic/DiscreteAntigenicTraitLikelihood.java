@@ -219,15 +219,16 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         if (tipTraitParameter != null) {
             //  the location -> tip map
             tipIndices = new int[locationCount];
+
             for (int i = 0; i < locationCount; i++) {
                 tipIndices[i] = tipLabels.indexOf(locationLabels[i]);
             }
 
-            for (int i = 0; i < locationCount; i++) {
-                if (tipIndices[i] == -1) {
-                    System.err.println("Location, " + locationLabels[i] + ", not found in tree");
-                }
-            }
+//            for (int i = 0; i < locationCount; i++) {
+//                if (tipIndices[i] == -1) {
+//                    System.err.println("Location, " + locationLabels[i] + ", not found in tree");
+//                }
+//            }
 
             for (String tipLabel : tipLabels) {
                 if (!locationLabelsList.contains(tipLabel)) {
@@ -295,6 +296,11 @@ public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood i
         for (int i = 0; i < getLocationCount(); i++) {
             int r = i;
             clusterIndexParameter.setParameterValue(i, r);
+
+            for (int dim = 0; dim < mdsDimension; dim++) {
+                tipTraitParameter.setParameterValue((tipIndices[r] * mdsDimension) + dim,
+                        locationsParameter.getParameterValue((r * mdsDimension) + dim));
+            }
         }
 
         updateClusterSizes();

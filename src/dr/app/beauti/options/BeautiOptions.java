@@ -371,6 +371,9 @@ public class BeautiOptions extends ModelOptions {
         return null;
     }
 
+    /**
+     * exclude traits
+     */
     public List<PartitionData> getPartitionData() {
         List<PartitionData> pdList = new ArrayList<PartitionData>();
         for (AbstractPartitionData partition : dataPartitions) {
@@ -799,29 +802,69 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public boolean hasDifferentTaxa(List<AbstractPartitionData> partitionDataList) {
-        if (partitionDataList.size() < 2)
-            return false;
+//    public boolean hasDifferentTaxa(List<AbstractPartitionData> partitionDataList) {
+//        if (partitionDataList.size() < 2)
+//            return false;
+//
+//        TaxonList ref = null;
+//        boolean hasDiff = false;
+//        for (AbstractPartitionData partition : partitionDataList) {
+//            final TaxonList a = partition.getTaxonList();
+//            if (ref == null) {
+//                ref = a;
+//            } else {
+//                if (a.getTaxonCount() != ref.getTaxonCount()) {
+//                    hasDiff = true;
+//                } else {
+//                    for (int k = 0; k < a.getTaxonCount(); ++k) {
+//                        if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
+//                            hasDiff = true;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        return hasDiff;
+//    }
 
-        TaxonList ref = null;
-        boolean hasDiff = false;
+    /**
+     * check if all taxa are same across partitions.
+     */
+    public boolean hasIdenticalTaxa(List<AbstractPartitionData> partitionDataList) {
+        TaxonList taxa = null;
         for (AbstractPartitionData partition : partitionDataList) {
-            final TaxonList a = partition.getTaxonList();
-            if (ref == null) {
-                ref = a;
+            if (taxa == null) {
+                taxa = partition.getTaxonList();
             } else {
-                if (a.getTaxonCount() != ref.getTaxonCount()) {
-                    hasDiff = true;
-                } else {
-                    for (int k = 0; k < a.getTaxonCount(); ++k) {
-                        if (ref.getTaxonIndex(a.getTaxonId(k)) == -1) {
-                            hasDiff = true;
-                        }
+                TaxonList taxa1 = partition.getTaxonList();
+                if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
+                    return false;
+                }
+                for (Taxon taxon : taxa1) {
+                    if (taxa.getTaxonIndex(taxon) == -1) {
+                        return false;
                     }
                 }
             }
         }
-        return hasDiff;
+        return true;
+    }
+
+    public boolean hasIdenticalTaxa() {
+        return hasIdenticalTaxa(dataPartitions);
+    }
+
+    public void updateTaxonList() {
+        taxonList.removeAllTaxa();
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (!partition.isCreatedFromTrait()) {
+                for (Taxon taxon : partition.getTaxonList()) {
+                    if (!taxonList.contains(taxon)) {
+                        taxonList.addTaxon(taxon);
+                    }
+                }
+            }
+        }
     }
 
     public int getTaxonCount(List<AbstractPartitionData> partitionDataList) {
@@ -1033,26 +1076,6 @@ public class BeautiOptions extends ModelOptions {
         return states;
     }
 
-    public boolean partitionsHaveIdenticalTaxa() {
-        TaxonList taxa = null;
-        for (AbstractPartitionData partition : dataPartitions) {
-            if (taxa == null) {
-                taxa = partition.getTaxonList();
-            } else {
-                TaxonList taxa1 = partition.getTaxonList();
-                if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
-                    return false;
-                }
-                for (Taxon taxon : taxa1) {
-                    if (taxa.getTaxonIndex(taxon) == -1) {
-                        return false;
-                    }
-                }
-            }
-        }
-        return true;
-    }
-
     public static TraitData.TraitType guessTraitType(TaxonList taxa, String name) {
         TraitData.TraitType type = TraitData.TraitType.DISCRETE;
         return type;
@@ -1112,7 +1135,7 @@ public class BeautiOptions extends ModelOptions {
 
     public Taxa getTaxa(String taxaName) {
         for (Taxa taxa : taxonSets) {
-           if (taxa.getId().equalsIgnoreCase(taxaName)) return taxa;
+            if (taxa.getId().equalsIgnoreCase(taxaName)) return taxa;
         }
         return null;
     }

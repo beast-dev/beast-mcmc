@@ -512,7 +512,7 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
-        if (options.hasDifferentTaxa(options.dataPartitions)) {
+        if (!options.hasIdenticalTaxa(options.dataPartitions)) {
             dataPanel.selectAll();
             dataPanel.unlinkTrees();
         }

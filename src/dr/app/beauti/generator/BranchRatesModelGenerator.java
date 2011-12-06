@@ -151,7 +151,7 @@ public class BranchRatesModelGenerator extends Generator {
 
                     writer.writeOpenTag(DiscretizedBranchRatesParser.RATE_CATEGORIES);
                     // AR - this parameter will now set its dimension automatically when BEAST is run
-//                    if (!options.partitionsHaveIdenticalTaxa()) {
+//                    if (!options.hasIdenticalTaxa()) {
 //                        for (AbstractPartitionData dataPartition : options.dataPartitions) {
 //                            if (dataPartition.getPartitionClockModel().equals(model)) {
 //                                categoryCount = (dataPartition.getTaxonCount() - 1) * 2;

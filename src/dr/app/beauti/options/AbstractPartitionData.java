@@ -159,6 +159,10 @@ public abstract class AbstractPartitionData {
         }
     }
 
+    public boolean isCreatedFromTrait() {
+       return traits != null;
+    }
+
     public abstract TaxonList getTaxonList();
 
     public abstract int getSiteCount();

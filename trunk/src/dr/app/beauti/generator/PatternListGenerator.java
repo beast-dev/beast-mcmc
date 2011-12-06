@@ -165,7 +165,7 @@ public class PatternListGenerator extends Generator {
                             new Attribute.Default<String>(XMLParser.ID, partition.getName()),
                     });
 
-            if (options.partitionsHaveIdenticalTaxa()) {
+            if (options.hasIdenticalTaxa()) {
                 writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
             } else {
                 writer.writeIDref(TaxaParser.TAXA, partition.getName() + "." + TaxaParser.TAXA);

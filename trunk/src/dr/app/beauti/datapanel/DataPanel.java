@@ -374,12 +374,10 @@ public class DataPanel extends BeautiPanel implements Exportable {
             partitionsToRemove.add(options.dataPartitions.get(row));
         }
 
+        boolean hasIdenticalTaxa = options.hasIdenticalTaxa(); // need to check this before removing partitions
+
         // TODO: would probably be a good idea to check if the user wants to remove the last partition
         options.dataPartitions.removeAll(partitionsToRemove);
-
-//        if (options.allowDifferentTaxa && options.dataPartitions.size() < 2) {
-//            uncheckAllowDifferentTaxa();
-//        }
 
         if (options.dataPartitions.size() == 0) {
             // all data partitions removed so reset the taxa
@@ -388,6 +386,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
             frame.statusLabel.setText("");
             frame.setAllOptions();
             frame.getExportAction().setEnabled(false);
+        } else if (!hasIdenticalTaxa) {
+            options.updateTaxonList();
         }
 
         dataTableModel.fireTableDataChanged();
@@ -598,7 +598,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
 
         if (selectedPartitionData.size() > 1) {
-            if (options.hasDifferentTaxa(selectedPartitionData)) {
+            if (!options.hasIdenticalTaxa(selectedPartitionData)) {
                 JOptionPane.showMessageDialog(this, "To share a tree, partitions need to have identical taxa.",
                         "Illegal Configuration",
                         JOptionPane.ERROR_MESSAGE);

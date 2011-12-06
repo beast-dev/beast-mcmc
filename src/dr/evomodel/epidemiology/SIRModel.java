@@ -35,10 +35,14 @@ import dr.inference.model.Variable;
 import org.apache.commons.math.FunctionEvaluationException;
 
 /**
- * This class models an exponentially growing (or shrinking) population
- * (Parameters: N0=present-day population size; r=growth rate).
- * This model is nested with the constant-population size model (r=0).
+ * This class gives an SIR trajectory and hands off a population size at a given point in time.
  *
+ * @author: Tanja Stadler
+ * @author: Denise Kuehnert
+ * @author: David Rasmussen
+ * @author: Sam Lycett
+ * @author: Trevor Bedford
+ * @author: Erik Volz
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: ExponentialGrowthModel.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $

@@ -4,16 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import cern.jet.random.Poisson;
-//import sun.plugin.dom.exception.InvalidStateException;
 
 /**
  * Class implementing Cao et al.'s hybrid tau-leaping algorithm
  *
  * @author tvaughan
+ * @author Trevor Bedford
  */
 public class HybridTauleapSEIR {
 
-	SEIRState state;
+	SEIRState initialState;
 	double exposeRate, infectRate, recoverRate;
 	double alpha;
 	Random random;
@@ -33,7 +33,7 @@ public class HybridTauleapSEIR {
 			boolean useExposed,
 			double alpha, Random random) {
 		super();
-		this.state = state0.copy();
+		this.initialState = state0.copy();
 		this.exposeRate = expose;
 		this.infectRate = infect;
 		this.recoverRate = recover;
@@ -48,7 +48,7 @@ public class HybridTauleapSEIR {
 	 * @param newState
 	 */
 	public void setState(SEIRState newState) {
-		state = newState.copy();
+		initialState = newState.copy();
 	}
 
 	/**
@@ -66,8 +66,8 @@ public class HybridTauleapSEIR {
 		while (true) {
 
 			// Calculate propensities:
-			double a_infect = infectRate*state.S*state.I;
-			double a_recover = recoverRate*state.I;
+			double a_infect = infectRate*initialState.S*initialState.I;
+			double a_recover = recoverRate*initialState.I;
 
 			// Determine which reactions are "critical"
 			// and calculate next reaction time:
@@ -75,7 +75,7 @@ public class HybridTauleapSEIR {
 			int critReactionToFire = 0;
 
 			boolean infectIsCrit = false;
-			if (state.S < a_infect*dtCrit + alpha*Math.sqrt(a_infect*dtCrit)) {
+			if (initialState.S < a_infect*dtCrit + alpha*Math.sqrt(a_infect*dtCrit)) {
 
 				// Infection reaction is critical
 				infectIsCrit = true;
@@ -89,7 +89,7 @@ public class HybridTauleapSEIR {
 			}
 
 			boolean recoverIsCrit = false;
-			if (state.I < a_recover*dtCrit + alpha*Math.sqrt(a_recover*dtCrit)) {
+			if (initialState.I < a_recover*dtCrit + alpha*Math.sqrt(a_recover*dtCrit)) {
 
 				// Recovery is critical:
 				recoverIsCrit = true;
@@ -113,14 +113,14 @@ public class HybridTauleapSEIR {
 			// tau-leap non-critical reactions:
 			if (infectIsCrit == false) {
 				int q = Poisson.staticNextInt(a_infect*dtCrit);
-				state.S -= q;
-				state.I += q;
+				initialState.S -= q;
+				initialState.I += q;
 			}
 
 			if (recoverIsCrit == false) {
 				int q = Poisson.staticNextInt(a_recover*dtCrit);
-				state.I -= q;
-				state.R += q;
+				initialState.I -= q;
+				initialState.R += q;
 			}
 
 			// End step if no critical reaction fires:
@@ -130,18 +130,18 @@ public class HybridTauleapSEIR {
 			// implement one critical reaction:
 			if (critReactionToFire == 1) {
 				// Infection
-				state.S -= 1;
-				state.I += 1;
+				initialState.S -= 1;
+				initialState.I += 1;
 			} else {
 				// Recovery
-				state.I -= 1;
-				state.R += 1;
+				initialState.I -= 1;
+				initialState.R += 1;
 			}
 
 		}
 
 		// Check for negative populations:
-		if (state.S < 0 || state.I < 0 || state.R < 0) {
+		if (initialState.S < 0 || initialState.I < 0 || initialState.R < 0) {
 //			System.err.println("Error: negative population detected. Rejecting trajectory.");
             throw new RuntimeException("Error: negative population detected. Rejecting trajectory.");
 //			System.exit(1);
@@ -149,7 +149,7 @@ public class HybridTauleapSEIR {
 
 
 		// Update state time:
-		state.time += dt;
+		initialState.time += dt;
 
 		return critical_step;
 
@@ -169,9 +169,9 @@ public class HybridTauleapSEIR {
 		while (true) {
 
 			// Calculate propensities:
-			double a_expose = exposeRate*state.S*state.I;
-			double a_infect = infectRate*state.E;
-			double a_recover = recoverRate*state.I;
+			double a_expose = exposeRate*initialState.S*initialState.I;
+			double a_infect = infectRate*initialState.E;
+			double a_recover = recoverRate*initialState.I;
 
 			// Determine which reactions are "critical"
 			// and calculate next reaction time:
@@ -179,7 +179,7 @@ public class HybridTauleapSEIR {
 			int critReactionToFire = 0;
 
 			boolean exposeIsCrit = false;
-			if (state.S < a_expose*dtCrit + alpha*Math.sqrt(a_expose*dtCrit)) {
+			if (initialState.S < a_expose*dtCrit + alpha*Math.sqrt(a_expose*dtCrit)) {
 
 				// Exposure reaction is critical
 				exposeIsCrit = true;
@@ -193,7 +193,7 @@ public class HybridTauleapSEIR {
 			}
 
 			boolean infectIsCrit = false;
-			if (state.E < a_infect*dtCrit + alpha*Math.sqrt(a_infect*dtCrit)) {
+			if (initialState.E < a_infect*dtCrit + alpha*Math.sqrt(a_infect*dtCrit)) {
 
 				// Infection reaction is critical
 				infectIsCrit = true;
@@ -207,7 +207,7 @@ public class HybridTauleapSEIR {
 			}
 
 			boolean recoverIsCrit = false;
-			if (state.I < a_recover*dtCrit + alpha*Math.sqrt(a_recover*dtCrit)) {
+			if (initialState.I < a_recover*dtCrit + alpha*Math.sqrt(a_recover*dtCrit)) {
 
 				// Recovery is critical:
 				recoverIsCrit = true;
@@ -231,21 +231,21 @@ public class HybridTauleapSEIR {
 			// tau-leap non-critical reactions:
 			if (exposeIsCrit == false) {
 				int q = Poisson.staticNextInt(a_expose*dtCrit);
-				state.S -= q;
-				state.E += q;
+				initialState.S -= q;
+				initialState.E += q;
 			}
 
 			// tau-leap non-critical reactions:
 			if (infectIsCrit == false) {
 				int q = Poisson.staticNextInt(a_infect*dtCrit);
-				state.E -= q;
-				state.I += q;
+				initialState.E -= q;
+				initialState.I += q;
 			}
 
 			if (recoverIsCrit == false) {
 				int q = Poisson.staticNextInt(a_recover*dtCrit);
-				state.I -= q;
-				state.R += q;
+				initialState.I -= q;
+				initialState.R += q;
 			}
 
 			// End step if no critical reaction fires:
@@ -256,27 +256,27 @@ public class HybridTauleapSEIR {
 			switch (critReactionToFire) {
 			case 1:
 				// Exposure
-				state.S -= 1;
-				state.E += 1;
+				initialState.S -= 1;
+				initialState.E += 1;
 				break;
 
 			case 2:
 				// Infection
-				state.E -= 1;
-				state.I += 1;
+				initialState.E -= 1;
+				initialState.I += 1;
 				break;
 
 			case 3:
 				// Recovery
-				state.I -= 1;
-				state.R += 1;
+				initialState.I -= 1;
+				initialState.R += 1;
 				break;
 			}
 
 		}
 
 		// Check for negative populations:
-		if (state.S < 0 || state.E < 0 || state.I < 0 || state.R < 0) {
+		if (initialState.S < 0 || initialState.E < 0 || initialState.I < 0 || initialState.R < 0) {
             System.err.println("Error: negative population detected. Rejecting trajectory.");
             throw new RuntimeException("Error: negative population detected. Rejecting trajectory.");
 //			System.exit(1);
@@ -284,7 +284,7 @@ public class HybridTauleapSEIR {
 
 
 		// Update state time:
-		state.time += dt;
+		initialState.time += dt;
 
 		return critical_step;
 
@@ -311,7 +311,7 @@ public class HybridTauleapSEIR {
 		List<SEIRState> trajectory = new ArrayList<SEIRState>();
 
 		// Sample first state:
-		trajectory.add(state.copy());
+		trajectory.add(initialState.copy());
 
 		for (int tidx=1; tidx<Nt; tidx++) {
 
@@ -325,7 +325,7 @@ public class HybridTauleapSEIR {
 
 			// Sample if necessary:
 			if (tidx % stepsPerSample == 0) {
-				trajectory.add(state.copy());
+				trajectory.add(initialState.copy());
 
 				// Adjust critical trajectory count:
 //				if (crit)
@@ -335,6 +335,42 @@ public class HybridTauleapSEIR {
 		}
 
 		return trajectory;
+
+	}
+
+	/**
+	 * Generate trajectory and store trajectory in class
+     * Store one state per time step
+	 *
+	 * @param T			Integration time
+	 * @param Nt		Number of time-steps
+	 *
+	 */
+
+	public void storeTrajectory(double T, int Nt) {
+
+		// Determine time-step size:
+		double dt = T/(Nt-1);
+
+		// Allocate memory for sampled states:
+		List<SEIRState> trajectory = new ArrayList<SEIRState>();
+
+		// Sample first state:
+		trajectory.add(initialState.copy());
+
+		for (int tidx=1; tidx<Nt; tidx++) {
+
+			// Increment state:
+			boolean crit = false;
+
+			if (useExposed)
+				crit = step_exposed(dt);
+			else
+				crit = step(dt);
+
+			// Sample
+			trajectory.add(initialState.copy());
+		}
 
 	}
 
@@ -352,7 +388,7 @@ public class HybridTauleapSEIR {
 		List<SEIRState> trajectory = new ArrayList<SEIRState>();
 
 		// Sample first state:
-		trajectory.add(state.copy());
+		trajectory.add(initialState.copy());
 
 		for (int tidx=1; tidx<Nt; tidx++) {
 
@@ -364,17 +400,17 @@ public class HybridTauleapSEIR {
 
 			// Sample if necessary:
 			if (tidx % stepsPerSample == 0) {
-                if ((state.I < 1) && (!useExposed || (state.E == 0)))
+                if ((initialState.I < 1) && (!useExposed || (initialState.E == 0)))
 //                if (trajectory.get(trajectory.size()-1).S == state.S ) zeroCount++;
 //                if (check && zeroCount > Nsamples/2.)
                     throw new RuntimeException("Abort simulation. No infecteds left.");
 
-				trajectory.add(state.copy());
+				trajectory.add(initialState.copy());
 
 			}
 		}
 
-        if ((state.I < 1) && (!useExposed || (state.E == 0)))
+        if ((initialState.I < 1) && (!useExposed || (initialState.E == 0)))
             throw new RuntimeException("Abort simulation. No infecteds left.");
 
 		return trajectory;

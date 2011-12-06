@@ -40,6 +40,16 @@ import java.util.Set;
  */
 public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
+    // R0
+    Variable<Double> R0;
+
+    // recovery rate
+    Variable<Double> recoveryRate;
+
+    // sampling probability
+    Variable<Double> samplingProbability;
+
+
     // birth rate
     Variable<Double> lambda;
 
@@ -129,6 +139,38 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         }
     }
 
+    public BirthDeathSerialSamplingModel(
+            String modelName,
+            Variable<Double> R0,
+            Variable<Double> recoveryRate,
+            Variable<Double> samplingProbability,
+            Variable<Double> origin,
+            Type units) {
+
+        super(modelName, units);
+
+        this.relativeDeath = false;
+        this.hasFinalSample = false;
+
+        this.R0 = R0;
+        addVariable(R0);
+        R0.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.recoveryRate = recoveryRate;
+        addVariable(recoveryRate);
+        recoveryRate.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+
+        this.samplingProbability = samplingProbability;
+        addVariable(samplingProbability);
+        samplingProbability.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+
+        this.origin = origin;
+        if (origin != null) {
+            addVariable(origin);
+            origin.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
+        }
+    }
+
     /**
      * @param b   birth rate
      * @param d   death rate
@@ -180,19 +222,38 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
     public double birth() {
         if (mask != null) return mask.birth();
-
-        return lambda.getValue(0);
+        if (lambda != null) {
+            return lambda.getValue(0);
+        } else {
+            double r0 = R0.getValue(0);
+            double rr = recoveryRate.getValue(0);
+            return r0 * rr;
+        }
     }
 
     public double death() {
         if (mask != null) return mask.death();
-        return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
+        if (mu != null) {
+            return relativeDeath ? mu.getValue(0) * birth() : mu.getValue(0);
+        } else {
+            double rr = recoveryRate.getValue(0);
+            double sp = samplingProbability.getValue(0);
+
+            return rr * (1.0 - sp);
+        }
     }
 
     public double psi() {
         if (mask != null) return mask.psi();
 
+        if (psi != null) {
         return psi.getValue(0);
+        } else {
+            double rr = recoveryRate.getValue(0);
+            double sp = samplingProbability.getValue(0);
+
+            return rr * sp;
+        }
     }
 
     /**
@@ -202,12 +263,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         if (mask != null) return mask.p.getValue(0);
         return hasFinalSample ? p.getValue(0) : 0;
-    }
-
-    public double r() {
-        if (mask != null) return mask.r();
-
-        return r.getValue(0);
     }
 
     // The mask does not affect the following three methods
@@ -255,9 +310,6 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
                     "For sampling-through-time model there must be exactly one tip at time zero.");
         }
 
-        double x1 = tree.getNodeHeight(tree.getRoot());
-        double c1 = c1();
-        double c2 = c2();
         double b = birth();
         double p = p();
 
@@ -286,7 +338,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             double y = tree.getNodeHeight(tree.getExternalNode(i));
 
             if (y > 0.0) {
-                logL += Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y));
+                logL += Math.log(psi() * q(y));
 
                 //System.out.println("externalNodeLogL=" + Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y)));
 

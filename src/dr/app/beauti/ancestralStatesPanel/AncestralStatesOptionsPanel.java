@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
 
 /**
  * @author Alexei Drummond
@@ -81,7 +82,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     final BeautiOptions options;
 
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
+    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR,
+            SequenceErrorType.BASE_ALL).toArray());//new JComboBox(SequenceErrorType.values());
 
     AncestralStatesComponentOptions ancestralStatesComponent;
     SequenceErrorModelComponentOptions sequenceErrorComponent;

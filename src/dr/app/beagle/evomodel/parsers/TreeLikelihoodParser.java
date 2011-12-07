@@ -39,7 +39,6 @@ import dr.evolution.alignment.SitePatterns;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.newtreelikelihood.TreeLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.CompoundLikelihood;
@@ -62,7 +61,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
-    public static final String TREE_LIKELIHOOD = TreeLikelihood.TREE_LIKELIHOOD;
+    public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
     //    public static final String DEVICE_NUMBER = "deviceNumber";

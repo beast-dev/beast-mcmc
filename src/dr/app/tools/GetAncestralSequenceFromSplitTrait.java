@@ -14,7 +14,7 @@ import java.util.*;
 import java.io.*;
 
 /*
- * MakeAncestralSequenceAnnotatedTree.java
+ * GetAncestralSequenceFromSplitTrait.java
  *
  * Copyright (C) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc A. Suchard
  *
@@ -163,6 +163,11 @@ public class GetAncestralSequenceFromSplitTrait {
             TreeExporter exporter = new NexusExporter(System.out);
             exporter.exportTree(tree);
 
+
+            System.out.println("Begin trees;");
+            System.out.println("\ttree max_tree = " + tree.toString());
+            System.out.println("End;");
+
         } catch (IOException e) {
             System.err.println("Error Parsing Input log: " + e.getMessage());
         }
@@ -253,7 +258,7 @@ public class GetAncestralSequenceFromSplitTrait {
 
         if (outInputFileName == null) {
             // No input file name was given so throw up a dialog box...
-            outInputFileName = Utils.getLoadFileName("GetAncestralSequenceFromSplitTrait " + version.getVersionString() + " - Select *.out file to analyse");
+            outInputFileName = Utils.getLoadFileName("GetAncestralSequenceFromSplitTrait " + version.getVersionString() + " - Select *.tree file to analyse");
         }
         new GetAncestralSequenceFromSplitTrait(outInputFileName, outputFileName);
 

@@ -809,6 +809,7 @@ public class AncestralSequenceAnnotator {
     public static final String KAPPA_STRING = "kappa";
     //public static final String SEQ_STRING = "states"; // For BEAST input files
     public static String SEQ_STRING = "seq";
+    //public static final String SEQ_STRING_2 = "states"; // For BEAST input files
     public static final String NEW_SEQ = "newSeq";
     public static final String TAG = "tag";
     public static final String LIKELIHOOD = "lnL";
@@ -841,6 +842,7 @@ public class AncestralSequenceAnnotator {
             if (tree.isExternal(node)) {
                 Taxon taxon = tree.getNodeTaxon(node);
                 alignment.addSequence(new Sequence(taxon, sequence[i]));
+                //System.out.println("seq " + sequence[i]);
             }
         }
 
@@ -953,9 +955,7 @@ public class AncestralSequenceAnnotator {
         for (int i = 0; i < treeModel.getNodeCount(); i++) {
 
             NodeRef node = treeModel.getNode(i);
-            //System.out.println(treeModel.toString() + " booyaka " + node.toString()); //dd
             String sample = ancestralStates.getTraitString(treeModel, node);
-            //System.out.println("ittebayo " + sample); //dd
 
             String oldSeq = (String) flexTree.getNodeAttribute(flexTree.getNode(i), SEQ_STRING);
 
@@ -964,6 +964,7 @@ public class AncestralSequenceAnnotator {
                 char[] seq = (sample.substring(1, sample.length() - 1)).toCharArray();
 
                 int length = oldSeq.length();
+                //System.out.println("length " + length + "\t" + sample.length() + "\t" + sample + "\t" + seq.length + "\t" + oldSeq);
 
                 for (int j = 0; j < length; j++) {
                     if (oldSeq.charAt(j) == GAP)
@@ -1419,7 +1420,7 @@ public class AncestralSequenceAnnotator {
                 double[] support = null;
                 int numElements = values.keySet().size();
 //				System.err.println("size = "+numElements);
-                if (numElements > 1) {
+                if (numElements > 1) {  // Essentially just finding the modal character
                     try {
 
                         PrintWriter pw = new PrintWriter(new PrintStream(new FileOutputStream(fileName)));
@@ -1480,6 +1481,7 @@ public class AncestralSequenceAnnotator {
                                 int whichChar = pattern[k];
                                 if (whichChar < 30) {
                                     int addWeight = weight[index[k]];
+                                    //System.out.println(k + "\t" + addWeight + "\t" + whichChar + "\t" + siteWeight[whichChar]);
                                     siteWeight[whichChar] += addWeight;
                                     totalWeight += addWeight;
 //									if( k >= alignment.getDataType().getStateCount()+2 ) {
@@ -1487,6 +1489,7 @@ public class AncestralSequenceAnnotator {
 //										System.err.println("pattern = "+new dr.math.matrixAlgebra.Vector(pattern));
 //									}
                                     if (siteWeight[whichChar] > maxWeight) {
+
                                         maxWeight = siteWeight[whichChar];
                                         maxChar = whichChar;
                                     }
@@ -1532,6 +1535,7 @@ public class AncestralSequenceAnnotator {
                     System.exit(-1);
                 }
 
+                // Restripping all the sequences of gap characters since they may have been added in during clustal step
                 for (int i = 0; i < support.length; i++) {
                     if (consensusSeq.charAt(i) != GAP) {
                         newSeq.append(consensusSeq.charAt(i));

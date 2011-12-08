@@ -45,7 +45,7 @@ public class BirthDeathEpidemiologyModelParser extends AbstractXMLObjectParser {
     public static final String R0 = "R0";
     public static final String RECOVERY_RATE = "recoveryRate";
     public static final String SAMPLING_PROBABILITY = "samplingProbability";
-    public static final String ORIGIN = "origin";
+    public static final String ORIGIN = BirthDeathSerialSamplingModelParser.ORIGIN;
 
     public String getParserName() {
         return BIRTH_DEATH_EPIDEMIOLOGY;

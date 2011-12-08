@@ -41,11 +41,9 @@ import dr.evoxml.TaxaParser;
 import dr.inference.distribution.ExponentialDistributionModel;
 import dr.inference.distribution.ExponentialMarkovModel;
 import dr.inference.model.ParameterParser;
-import dr.inference.model.Statistic;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.ExponentialMarkovModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
-import dr.inferencexml.model.RPNcalculatorStatisticParser;
 import dr.inferencexml.model.SumStatisticParser;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
@@ -284,9 +282,7 @@ public class TreePriorGenerator extends Generator {
                 break;
 
             case BIRTH_DEATH_SERIAL_SAMPLING:
-            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
-                writer.writeComment(nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER ?
-                        BirthDeathSerialSamplingModelParser.getCitationRT() : BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
+                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationPsiOrg());
 
                 writer.writeOpenTag(
                         BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
@@ -308,14 +304,31 @@ public class TreePriorGenerator extends Generator {
                 writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.ORIGIN, prior, writer);
 
-                if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-                    writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_BECOMES_NON_INFECTIOUS,
-                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, prior, writer);
-//                    writeParameter(BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE,
-//                            BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, prior, writer);
-                }
-
                 writer.writeCloseTag(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL);
+
+                break;
+
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+                writer.writeComment(BirthDeathSerialSamplingModelParser.getCitationRT());
+
+                writer.writeOpenTag(
+                        BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY),
+                                new Attribute.Default<String>("units", Units.Utils.getDefaultUnitName(units))
+                        }
+                );
+
+                writeParameter(BirthDeathEpidemiologyModelParser.R0,
+                        BirthDeathEpidemiologyModelParser.R0, prior, writer);
+                writeParameter(BirthDeathEpidemiologyModelParser.RECOVERY_RATE,
+                        BirthDeathEpidemiologyModelParser.RECOVERY_RATE, prior, writer);
+                writeParameter(BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY,
+                        BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, prior, writer);
+                writeParameter(BirthDeathEpidemiologyModelParser.ORIGIN,
+                        BirthDeathEpidemiologyModelParser.ORIGIN, prior, writer);
+
+                writer.writeCloseTag(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
 
                 break;
 
@@ -371,50 +384,50 @@ public class TreePriorGenerator extends Generator {
             writer.writeCloseTag(ConstantPopulationModelParser.CONSTANT_POPULATION_MODEL);
         }
 
-        if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-            writer.writeComment("R0 = b/(b*d+s*r)");
-            writer.writeOpenTag(RPNcalculatorStatisticParser.RPN_STATISTIC,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "R0")
-                    });
-
-            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "b")
-                    });
-            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
-            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-
-            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "d")
-                    });
-            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
-            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-
-            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "s")
-                    });
-            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, writer);
-            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-
-            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "r")
-                    });
-            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, writer);
-            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
-
-            writer.writeOpenTag(RPNcalculatorStatisticParser.EXPRESSION,
-                    new Attribute[]{
-                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "R0")
-                    });
-            writer.writeText(modelPrefix + "b " + modelPrefix + "b " + modelPrefix + "d " + "* " + modelPrefix + "s " + modelPrefix + "r " + "* + /");
-            writer.writeCloseTag(RPNcalculatorStatisticParser.EXPRESSION);
-
-            writer.writeCloseTag(RPNcalculatorStatisticParser.RPN_STATISTIC);
-        }
+//        if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
+//            writer.writeComment("R0 = b/(b*d+s*r)");
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.RPN_STATISTIC,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(XMLParser.ID, modelPrefix + "R0")
+//                    });
+//
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "b")
+//                    });
+//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+//
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "d")
+//                    });
+//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+//
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "s")
+//                    });
+//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, writer);
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+//
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.VARIABLE,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "r")
+//                    });
+//            writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.R, writer);
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.VARIABLE);
+//
+//            writer.writeOpenTag(RPNcalculatorStatisticParser.EXPRESSION,
+//                    new Attribute[]{
+//                            new Attribute.Default<String>(Statistic.NAME, modelPrefix + "R0")
+//                    });
+//            writer.writeText(modelPrefix + "b " + modelPrefix + "b " + modelPrefix + "d " + "* " + modelPrefix + "s " + modelPrefix + "r " + "* + /");
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.EXPRESSION);
+//
+//            writer.writeCloseTag(RPNcalculatorStatisticParser.RPN_STATISTIC);
+//        }
     }
 
     /**
@@ -676,9 +689,12 @@ public class TreePriorGenerator extends Generator {
                 writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, priorPrefix + BirthDeathModelParser.BIRTH_DEATH);
                 break;
             case BIRTH_DEATH_SERIAL_SAMPLING:
-            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writer.writeIDref(BirthDeathSerialSamplingModelParser.BIRTH_DEATH_SERIAL_MODEL,
                         priorPrefix + BirthDeathSerialSamplingModelParser.BDSS);
+                break;
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+                writer.writeIDref(BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY,
+                        priorPrefix + BirthDeathEpidemiologyModelParser.BIRTH_DEATH_EPIDEMIOLOGY);
                 break;
             default:
                 throw new IllegalArgumentException("No tree prior has been specified so cannot refer to it");
@@ -843,7 +859,6 @@ public class TreePriorGenerator extends Generator {
                             + BirthDeathModelParser.SAMPLE_PROB, writer);
                 break;
             case BIRTH_DEATH_SERIAL_SAMPLING:
-            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -854,14 +869,12 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.PSI, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.ORIGIN, writer);
-                if (prior.getNodeHeightPrior() == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
-                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-                            + BirthDeathSerialSamplingModelParser.R, writer);
-//                    writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-//                            + BirthDeathSerialSamplingModelParser.HAS_FINAL_SAMPLE, writer);
-                    writer.writeIDref(RPNcalculatorStatisticParser.RPN_STATISTIC, modelPrefix + "R0");
-                }
                 break;
+            case BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER:
+                writeParameterRef(modelPrefix + BirthDeathEpidemiologyModelParser.R0, writer);
+                writeParameterRef(modelPrefix + BirthDeathEpidemiologyModelParser.RECOVERY_RATE, writer);
+                writeParameterRef(modelPrefix + BirthDeathEpidemiologyModelParser.SAMPLING_PROBABILITY, writer);
+                writeParameterRef(modelPrefix + BirthDeathEpidemiologyModelParser.ORIGIN, writer);
             case SPECIES_YULE:
             case SPECIES_BIRTH_DEATH:
             case SPECIES_YULE_CALIBRATION:

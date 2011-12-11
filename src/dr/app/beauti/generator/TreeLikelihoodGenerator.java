@@ -209,11 +209,11 @@ public class TreeLikelihoodGenerator extends Generator {
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-                if (ancestralStatesOptions.isCountingStates(partition) &&
-                        !ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                if (ancestralStatesOptions.isCountingStates(partition)) {
                     // State change counting uses the MarkovJumpsTreeLikelihood but
-                    // dNdS robust counting doesn't as it has its own counting code...
                     treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
+                } else if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                    // dNdS robust counting doesn't as it has its own counting code...
                 }
             }
 

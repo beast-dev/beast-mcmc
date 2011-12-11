@@ -42,7 +42,6 @@ import java.util.logging.Logger;
 public class SitePatternsParser extends AbstractXMLObjectParser {
 
     public static final String PATTERNS = "patterns";
-    public static final String MERGE_PATTERNS = "mergePatterns";
     public static final String FROM = "from";
     public static final String TO = "to";
     public static final String EVERY = "every";

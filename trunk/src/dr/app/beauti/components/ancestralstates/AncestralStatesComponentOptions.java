@@ -1,8 +1,6 @@
 package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.*;
-import dr.evolution.util.Taxa;
 
 import java.util.*;
 
@@ -66,13 +64,13 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         getOptions(partition).mrcaTaxonSetName = taxonSetName;
     }
 
-//    public boolean robustCounting(final AbstractPartitionData partition) {
-//        return getOptions(partition).robustCounting;
-//    }
-//
-//    public void setRobustCounting(final AbstractPartitionData partition, boolean robustCounting) {
-//        getOptions(partition).robustCounting = robustCounting;
-//    }
+    public boolean isCountingStates(final AbstractPartitionData partition) {
+        return getOptions(partition).countingStates;
+    }
+
+    public void setCountingStates(final AbstractPartitionData partition, boolean isCountingStates) {
+        getOptions(partition).countingStates = isCountingStates;
+    }
 
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
         return getOptions(partition).dNdSRobustCounting;
@@ -94,7 +92,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;
-//        boolean robustCounting = false;
+        boolean countingStates = false;
         boolean dNdSRobustCounting = false;
     };
 

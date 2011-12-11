@@ -25,6 +25,7 @@
 
 package dr.app.beauti.generator;
 
+import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.options.AbstractPartitionData;
@@ -118,13 +119,9 @@ public class TreeLikelihoodGenerator extends Generator {
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
-        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-        .getComponentOptions(AncestralStatesComponentOptions.class);
-        
         writer.writeComment("Likelihood for tree given sequence data");
 
         if (num > 0) {
-        	
             writer.writeOpenTag(
                     tag,
                     new Attribute[]{
@@ -142,18 +139,7 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
-
-            	// mergePatterns instead of patterns
-            	 if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-            	
-            		  writer.writeIDref(SitePatternsParser.MERGE_PATTERNS, partition.getPrefix() + SitePatternsParser.MERGE_PATTERNS);
-            		 
-            	 } else {
-            	
                 writeCodonPatternsRef(substModel.getPrefix(num) + partition.getPrefix(), num, substModel.getCodonPartitionCount(), writer);
-            	
-            	 }
-            	 
             } else {
                 writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
             }
@@ -195,13 +181,15 @@ public class TreeLikelihoodGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        //TODO: other subst models
-        if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-        	
-          writer.writeIDref(NucModelType.HKY.getXMLName(), substModel.getPrefix(num) + "hky");
-        	
-        }
-        
+        // Ancestral state likelihood doesn't need the substitution model - it gets
+        // it from the siteModel.
+
+//        if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+//
+//            writer.writeIDref(NucModelType.HKY.getXMLName(), substModel.getPrefix(num) + "hky");
+//
+//        }
+
         /*if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         } else {
@@ -221,10 +209,12 @@ public class TreeLikelihoodGenerator extends Generator {
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-//                if (ancestralStatesOptions.robustCounting(partition)) {
-//                if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-//                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-//                }
+                if (ancestralStatesOptions.isCountingStates(partition) &&
+                        !ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                    // State change counting uses the MarkovJumpsTreeLikelihood but
+                    // dNdS robust counting doesn't as it has its own counting code...
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
+                }
             }
 
             if (partition.getTaxonList() != null) {

@@ -50,7 +50,6 @@ public class PatternListGenerator extends Generator {
         boolean unique = (!ancestralStatesOptions.usingAncestralStates(partition) &&
                 !sequenceErrorOptions.usingSequenceErrorModel(partition));
 
-
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         String codonHeteroPattern = model.getCodonHeteroPattern();
@@ -77,8 +76,8 @@ public class PatternListGenerator extends Generator {
                 writePatternList(partition, 2, 3, model.getPrefix(2), isCovarionModel, writer);
 
             } else {
+            	
                 // pattern is 123
-
                 for (int i = 1; i <= 3; i++) {
                     writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position " + i);
                     writePatternList(partition, i - 1, 3, model.getPrefix(i), unique, isCovarionModel, writer);

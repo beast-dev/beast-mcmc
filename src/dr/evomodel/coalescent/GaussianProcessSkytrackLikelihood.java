@@ -25,7 +25,7 @@
 
 package dr.evomodel.coalescent;
 
-import com.sun.xml.internal.rngom.digested.DDataPattern;
+//import com.sun.xml.internal.rngom.digested.DDataPattern;
 import dr.app.beast.BeastDialog;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;

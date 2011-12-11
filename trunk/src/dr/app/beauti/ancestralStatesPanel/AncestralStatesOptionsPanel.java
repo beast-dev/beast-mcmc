@@ -131,7 +131,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtNodes(partition));
         mrcaReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtMRCA(partition));
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
-        robustCountingCheck.setSelected(ancestralStatesComponent.robustCounting(partition));
+        robustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
         dNdSRobustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
@@ -168,7 +168,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         } else {
             ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
         }
-        ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
+//        ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
+        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
         ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());

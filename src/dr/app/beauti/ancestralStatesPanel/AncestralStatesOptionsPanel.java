@@ -70,7 +70,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     private JCheckBox mrcaReconstructionCheck = new JCheckBox(
             "Reconstruct states at ancestor:");
     private JComboBox mrcaReconstructionCombo = new JComboBox();
-    private JCheckBox robustCountingCheck = new JCheckBox(
+    private JCheckBox countingCheck = new JCheckBox(
             "Reconstruct state change counts");
     private JCheckBox dNdSRobustCountingCheck = new JCheckBox(
             "Reconstruct synonymous/non-synonymous change counts");
@@ -113,8 +113,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                         + "Reconstruct posterior realizations of the states at a specific common.<br>" +
                         "ancestor defined by a taxon set. This will be recorded in the log file.</html>");
 
-        PanelUtils.setupComponent(robustCountingCheck);
-        robustCountingCheck.setToolTipText(ROBUST_COUNTING_TOOL_TIP);
+        PanelUtils.setupComponent(countingCheck);
+        countingCheck.setToolTipText(ROBUST_COUNTING_TOOL_TIP);
 
         PanelUtils.setupComponent(dNdSRobustCountingCheck);
         dNdSRobustCountingCheck.setToolTipText(DNDS_ROBUST_COUNTING_TOOL_TIP);
@@ -131,7 +131,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtNodes(partition));
         mrcaReconstructionCheck.setSelected(ancestralStatesComponent.reconstructAtMRCA(partition));
         mrcaReconstructionCombo.setSelectedItem(ancestralStatesComponent.getMRCATaxonSet(partition));
-        robustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
+        countingCheck.setSelected(ancestralStatesComponent.isCountingStates(partition));
         dNdSRobustCountingCheck.setSelected(ancestralStatesComponent.dNdSRobustCounting(partition));
 
         sequenceErrorComponent = (SequenceErrorModelComponentOptions)options.getComponentOptions(SequenceErrorModelComponentOptions.class);
@@ -150,7 +150,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         ancestralReconstructionCheck.addItemListener(listener);
         mrcaReconstructionCheck.addItemListener(listener);
         mrcaReconstructionCombo.addItemListener(listener);
-        robustCountingCheck.addItemListener(listener);
+        countingCheck.addItemListener(listener);
         dNdSRobustCountingCheck.addItemListener(listener);
 
         errorModelCombo.addItemListener(listener);
@@ -168,8 +168,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         } else {
             ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
         }
-//        ancestralStatesComponent.setRobustCounting(partition, robustCountingCheck.isSelected());
-        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
+        ancestralStatesComponent.setCountingStates(partition, countingCheck.isSelected());
+//        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
         ancestralStatesComponent.setDNdSRobustCounting(partition, dNdSRobustCountingCheck.isSelected());
 
         sequenceErrorComponent.setSequenceErrorType(partition, (SequenceErrorType)errorModelCombo.getSelectedItem());
@@ -200,26 +200,26 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         }
         mrcaReconstructionCombo.setEnabled(mrcaReconstructionCheck.isSelected());
 
-        boolean ancestralReconstruction = true;
-        boolean robustCounting = true;
-        boolean dNdSRobustCounting = false;
-        boolean errorModel = false;
+        boolean ancestralReconstructionAvailable = true;
+        boolean countingAvailable = true;
+        boolean dNdSRobustCountingAvailable = false;
+        boolean errorModelAvailable = false;
 
         switch (partition.getDataType().getType()) {
             case DataType.NUCLEOTIDES:
-                errorModel = true;
-                dNdSRobustCounting = true; // but will be disabled if not codon partitioned
+                errorModelAvailable = true;
+                dNdSRobustCountingAvailable = true; // but will be disabled if not codon partitioned
                 break;
             case DataType.AMINO_ACIDS:
             case DataType.GENERAL:
             case DataType.TWO_STATES:
                 break;
             case DataType.CONTINUOUS:
-                robustCounting = false;
+                countingAvailable = false;
                 break;
             case DataType.MICRO_SAT:
-                ancestralReconstruction = false;
-                robustCounting = false;
+                ancestralReconstructionAvailable = false;
+                countingAvailable = false;
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported data type");
@@ -228,7 +228,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
         removeAll();
 
-        if (ancestralReconstruction) {
+        if (ancestralReconstructionAvailable) {
             addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
 
             addComponent(ancestralReconstructionCheck);
@@ -240,8 +240,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addComponent(panel);
         }
 
-        if (robustCounting) {
-            if (ancestralReconstruction) {
+        if (countingAvailable) {
+            if (ancestralReconstructionAvailable) {
                 addSeparator();
             }
             addSpanningComponent(new JLabel("State Change Count Reconstruction:"));
@@ -253,9 +253,9 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             PanelUtils.setupComponent(text);
             addComponent(text);
 
-            addComponent(robustCountingCheck);
+            addComponent(countingCheck);
 
-            if (dNdSRobustCounting) {
+            if (dNdSRobustCountingAvailable) {
                 addSeparator();
                 text = new JTextArea(
                         "Select this option to reconstruct counts of synonymous and nonsynonymous " +
@@ -280,8 +280,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             }
         }
 
-        if (errorModel) {
-            if (ancestralReconstruction || robustCounting) {
+        if (errorModelAvailable) {
+            if (ancestralReconstructionAvailable || countingAvailable) {
                 addSeparator();
             }
             addSpanningComponent(new JLabel("Sequence error model:"));

@@ -28,29 +28,26 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
-//        boolean robustCounting = false;
+        boolean countingStates = false;
         boolean dNdSRobustCounting = false;
 
         for (AbstractPartitionData partition : options.getDataPartitions()) {
             if (component.reconstructAtNodes(partition)) reconstructAtNodes = true;
             if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
-//            if (component.dNdSRobustCounting(partition)) robustCounting = true;
-            if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
+            if (component.isCountingStates(partition)) countingStates = true;
+            if (countingStates && component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
         }
 
-//        if (!reconstructAtNodes && !reconstructAtMRCA && !robustCounting && !dNdSRobustCounting) {
-        if (!reconstructAtNodes && !reconstructAtMRCA && !dNdSRobustCounting) {
+        if (!reconstructAtNodes && !reconstructAtMRCA && !countingStates && !dNdSRobustCounting) {
             return false;
         }
 
         switch (point) {
             case IN_FILE_LOG_PARAMETERS:
-//                return robustCounting || dNdSRobustCounting;
-            	return dNdSRobustCounting;
+                return countingStates || dNdSRobustCounting;
 
             case IN_TREES_LOG:
-//                return reconstructAtNodes || robustCounting || dNdSRobustCounting;
-            	 return reconstructAtNodes ||  dNdSRobustCounting;
+                return reconstructAtNodes || countingStates || dNdSRobustCounting;
 
             case IN_OPERATORS:
                 return dNdSRobustCounting;

@@ -38,7 +38,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
     }
 
     public boolean usingAncestralStates(final AbstractPartitionData partition) {
-            return reconstructAtNodes(partition) || reconstructAtMRCA(partition) || robustCounting(partition);
+            return reconstructAtNodes(partition) || reconstructAtMRCA(partition) || dNdSRobustCounting(partition);
         }
 
     public boolean reconstructAtNodes(final AbstractPartitionData partition) {
@@ -66,13 +66,13 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         getOptions(partition).mrcaTaxonSetName = taxonSetName;
     }
 
-    public boolean robustCounting(final AbstractPartitionData partition) {
-        return getOptions(partition).robustCounting;
-    }
-
-    public void setRobustCounting(final AbstractPartitionData partition, boolean robustCounting) {
-        getOptions(partition).robustCounting = robustCounting;
-    }
+//    public boolean robustCounting(final AbstractPartitionData partition) {
+//        return getOptions(partition).robustCounting;
+//    }
+//
+//    public void setRobustCounting(final AbstractPartitionData partition, boolean robustCounting) {
+//        getOptions(partition).robustCounting = robustCounting;
+//    }
 
     public boolean dNdSRobustCounting(final AbstractPartitionData partition) {
         return getOptions(partition).dNdSRobustCounting;
@@ -94,7 +94,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;
-        boolean robustCounting = false;
+//        boolean robustCounting = false;
         boolean dNdSRobustCounting = false;
     };
 

@@ -27,7 +27,13 @@ package dr.app.beauti.generator;
 
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.AbstractPartitionData;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.PartitionClockModel;
+import dr.app.beauti.options.PartitionData;
+import dr.app.beauti.options.PartitionPattern;
+import dr.app.beauti.options.PartitionSubstitutionModel;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
@@ -36,13 +42,13 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
+import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
-import dr.evomodelxml.treelikelihood.MarkovJumpsTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MicrosatelliteSamplerTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
@@ -81,9 +87,9 @@ public class TreeLikelihoodGenerator extends Generator {
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-            if (ancestralStatesOptions.robustCounting(partition)) {
-                treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-            }
+//            if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+//                treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
+//            }
         }
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
@@ -112,9 +118,13 @@ public class TreeLikelihoodGenerator extends Generator {
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+        .getComponentOptions(AncestralStatesComponentOptions.class);
+        
         writer.writeComment("Likelihood for tree given sequence data");
 
         if (num > 0) {
+        	
             writer.writeOpenTag(
                     tag,
                     new Attribute[]{
@@ -132,7 +142,18 @@ public class TreeLikelihoodGenerator extends Generator {
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
+
+            	// mergePatterns instead of patterns
+            	 if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+            	
+            		  writer.writeIDref(SitePatternsParser.MERGE_PATTERNS, partition.getPrefix() + SitePatternsParser.MERGE_PATTERNS);
+            		 
+            	 } else {
+            	
                 writeCodonPatternsRef(substModel.getPrefix(num) + partition.getPrefix(), num, substModel.getCodonPartitionCount(), writer);
+            	
+            	 }
+            	 
             } else {
                 writer.writeIDref(SitePatternsParser.PATTERNS, partition.getPrefix() + SitePatternsParser.PATTERNS);
             }
@@ -174,6 +195,13 @@ public class TreeLikelihoodGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
+        //TODO: other subst models
+        if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+        	
+          writer.writeIDref(NucModelType.HKY.getXMLName(), substModel.getPrefix(num) + "hky");
+        	
+        }
+        
         /*if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
         } else {
@@ -193,9 +221,10 @@ public class TreeLikelihoodGenerator extends Generator {
             String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
             if (ancestralStatesOptions.usingAncestralStates(partition)) {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-                if (ancestralStatesOptions.robustCounting(partition)) {
-                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-                }
+//                if (ancestralStatesOptions.robustCounting(partition)) {
+//                if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
+//                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
+//                }
             }
 
             if (partition.getTaxonList() != null) {

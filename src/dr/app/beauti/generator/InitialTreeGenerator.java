@@ -189,24 +189,24 @@ public class InitialTreeGenerator extends Generator {
                         new Attribute.Default<Boolean>(SimpleTreeParser.USING_DATES, options.clockModelOptions.isTipCalibrated())
                 }
         );
-        writeNewickNode(tree, tree.getRoot(), writer);
+        writer.writeText(Tree.Utils.newick(tree));
         writer.writeCloseTag(NewickParser.NEWICK);
     }
 
-    private void writeNewickNode(Tree tree, NodeRef node, XMLWriter writer) {
-        if (tree.getChildCount(node) > 0)
-            writer.writeText("(");
-        if (tree.getChildCount(node) == 0)
-            writer.writeText("\'" + tree.getNodeTaxon(node).getId() + "\' : " + tree.getBranchLength(node));
-
-        for (int i = 0; i < tree.getChildCount(node); i++) {
-            if (i > 0) writer.writeText(", ");
-            writeNewickNode(tree, tree.getChild(node, i), writer);
-
-        }
-        if (tree.getChildCount(node) > 0)
-            writer.writeText(")");
-    }
+//    private void writeNewickNode(Tree tree, NodeRef node, XMLWriter writer) {
+//        if (tree.getChildCount(node) > 0)
+//            writer.writeText("(");
+//        if (tree.getChildCount(node) == 0)
+//            writer.writeText(tree.getNodeTaxon(node).getId() + " : " + tree.getBranchLength(node));
+//
+//        for (int i = 0; i < tree.getChildCount(node); i++) {
+//            if (i > 0) writer.writeText(", ");
+//            writeNewickNode(tree, tree.getChild(node, i), writer);
+//
+//        }
+//        if (tree.getChildCount(node) > 0)
+//            writer.writeText(")");
+//    }
 
     /**
      * Generate XML for the user tree

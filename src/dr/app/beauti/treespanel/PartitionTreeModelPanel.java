@@ -26,7 +26,9 @@
 package dr.app.beauti.treespanel;
 
 import dr.app.beauti.BeautiFrame;
-import dr.app.beauti.options.*;
+import dr.app.beauti.options.BeautiOptions;
+import dr.app.beauti.options.ClockModelGroup;
+import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.PanelUtils;
@@ -77,7 +79,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
     private BeautiOptions options = null;
-
+    private final BeautiFrame parent;
     private boolean settingOptions = false;
 
     PartitionTreeModel partitionTreeModel;
@@ -87,6 +89,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         this.partitionTreeModel = parTreeModel;
         this.options = options;
+        this.parent = parent;
 
         PanelUtils.setupComponent(initRootHeightField);
             initRootHeightField.setColumns(10);
@@ -119,25 +122,14 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             for (Tree tree : options.userTrees) {
                 userTreeCombo.addItem(tree.getId());
             }
-            userTreeCombo.setSelectedIndex(1);
+            userTreeCombo.setSelectedIndex(1); // need to call actionPerformed
             userTreeCombo.setEnabled(true);
         }
-        userTreeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
-                    Tree seleTree = getSelectedUserTree();
-                    if (seleTree == null || isBifurcatingTree(seleTree, seleTree.getRoot())) {
-                        partitionTreeModel.setUserStartingTree(seleTree);
-                    } else {
-                        JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
-                                "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
-                                "Illegal user-specified starting tree",
-                                JOptionPane.ERROR_MESSAGE);
-
-                        userTreeCombo.setSelectedItem(NO_TREE);
-                        partitionTreeModel.setUserStartingTree(null);
-                    }
-                }
+        // use ActionListener because itemStateChanged event is fired only when the selected item changes
+        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4713519
+        userTreeCombo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                setUserSpecifiedStartingTree();
             }
         });
 
@@ -201,6 +193,23 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         setupPanel();
     }
 
+    private void setUserSpecifiedStartingTree() {
+        if (userTreeCombo.getSelectedItem() != null && (!userTreeCombo.getSelectedItem().toString().equalsIgnoreCase(NO_TREE))) {
+            Tree seleTree = getSelectedUserTree();
+            if (seleTree == null || isBifurcatingTree(seleTree, seleTree.getRoot())) {
+                partitionTreeModel.setUserStartingTree(seleTree);
+            } else {
+                JOptionPane.showMessageDialog(parent, "The selected user-specified starting tree " +
+                        "is not fully bifurcating.\nBEAST requires rooted, bifurcating (binary) trees.",
+                        "Illegal user-specified starting tree",
+                        JOptionPane.ERROR_MESSAGE);
+
+                userTreeCombo.setSelectedItem(NO_TREE);
+                partitionTreeModel.setUserStartingTree(null);
+            }
+        }
+    }
+
     public void setupPanel() {
 
         removeAll();
@@ -223,6 +232,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
             addComponentWithLabel("Select User-specified Tree:", userTreeCombo);
+            setUserSpecifiedStartingTree();
 //            userTreeCombo.removeAllItems();
 
 //            addComponent(treeDisplayButton);  // todo JTreeDisplay not work properly

@@ -55,7 +55,10 @@ public class PartitionTreeModel extends PartitionOptions {
     public static final String USER_SPEC_TREE_FORMAT = "<html>User can only load specified starting tree(s) " +
             "from <font color=red>Nexus</font> file, for example :<br>" +
             "begin trees;<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tree StartingTree_1 = [&U] " +
-            "((((((((A,F),(T,P)),((C,D),S)), ... ..., (P,C))),(A,D));<br> end;<br>" +
+            "(((A,B),C), ... ..., (D,E));<br> end;<br>" +
+            "or<br>" +
+            "begin trees;<br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;tree StartingTree_2 = [&R] " +
+            "(((A:13.757,((B:5.932, ... ..., C:23.286):11.131);<br> end;<br>" +
             "Note: BEAST only allows <font color=red>bifurcating</font> tree.</html>";
 
     public PartitionTreeModel(BeautiOptions options, AbstractPartitionData partition) {

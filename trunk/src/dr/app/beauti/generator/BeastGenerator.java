@@ -231,7 +231,8 @@ public class BeastGenerator extends Generator {
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
             if (model.getStartingTreeType() == StartingTreeType.USER) {
                 if (model.getUserStartingTree() == null) {
-                    throw new GeneratorException("Please selected a starting tree in Trees panel", BeautiFrame.TREES);
+                    throw new GeneratorException("Please select a starting tree in " + BeautiFrame.TREES + " panel, " +
+                            "\nwhen choosing user specified starting tree option.", BeautiFrame.TREES);
                 }
             }
         }

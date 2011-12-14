@@ -197,7 +197,7 @@ public interface Plot {
 
         protected Shape mark;
 
-        protected Stroke lineStroke = new BasicStroke(2.0f);
+        protected Stroke lineStroke = new BasicStroke(1.5f);
         protected Paint linePaint = Color.black;
 
         protected Stroke markStroke = new BasicStroke(0.5f);

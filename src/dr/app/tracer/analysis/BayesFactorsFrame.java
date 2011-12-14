@@ -72,7 +72,6 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
         bayesFactorsModel = new BayesFactorsModel(hasErrors, isAICM);
         bayesFactorsTable = new JTable(bayesFactorsModel);
-        bayesFactorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
         JScrollPane scrollPane1 = new JScrollPane(bayesFactorsTable,
                 JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,

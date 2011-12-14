@@ -37,8 +37,9 @@ public class FrequencyPlot extends Plot.AbstractPlot {
 
     protected Variate raw = null;
 
-    protected Paint barPaint = Color.blue;
-    private Paint quantilePaint = Color.red;
+//    protected Paint barPaint = Color.blue;
+    protected Paint barPaint = new Color(124, 164, 221);
+    private Paint quantilePaint = new Color(232, 114, 103);
 
     private boolean hasQuantiles = false;
     private double quantiles = 0;

@@ -42,9 +42,8 @@ public class MarginalLikelihoodAnalysis {
     private final String traceName;
     private final List<Double> sample;
     private final int burnin;
-    private final boolean harmonicOnly;
+    private final String analysisType; // "harmonic" for harmonic mean, "smoothed" for smoothed harmonic mean, "aicm" for AICM
     private final int bootstrapLength;
-
 
     private boolean marginalLikelihoodCalculated = false;
     private double logMarginalLikelihood;
@@ -69,23 +68,28 @@ public class MarginalLikelihoodAnalysis {
      * @param sample
      * @param traceName       used for 'toString' display purposes only
      * @param burnin          used for 'toString' display purposes only
-     * @param harmonicOnly
+     * @param analysisType
      * @param bootstrapLength a value of zero will turn off bootstrapping
      */
-    public MarginalLikelihoodAnalysis(List<Double> sample, String traceName, int burnin, boolean harmonicOnly, int bootstrapLength) {
+    public MarginalLikelihoodAnalysis(List<Double> sample, String traceName, int burnin, String analysisType, int bootstrapLength) {
         this.sample = sample;
         this.traceName = traceName;
         this.burnin = burnin;
-        this.harmonicOnly = harmonicOnly;
+        this.analysisType = analysisType;
         this.bootstrapLength = bootstrapLength;
 //        System.err.println("setting burnin to "+burnin);
     }
 
     public double calculateLogMarginalLikelihood(List<Double> sample) {
-        if (harmonicOnly)
-            return logMarginalLikelihoodHarmonic(sample);
-        else
+        if (analysisType.equals("smoothed")) {
             return logMarginalLikelihoodSmoothed(sample);
+        }
+        else if (analysisType.equals("aicm")) {
+            return logMarginalLikelihoodAICM(sample);
+        }
+        else {
+            return logMarginalLikelihoodHarmonic(sample);
+        }
     }
 
     /**
@@ -108,6 +112,31 @@ public class MarginalLikelihoodAnalysis {
             denominator = LogTricks.logSum(denominator, sum - v.get(i));
 
         return sum - denominator + StrictMath.log(size);
+    }
+
+    /**
+     * Calculates the AICM of a model using method-of-moments from Raftery et al. (2007)
+     *
+     * @param v a posterior sample of logLikelihoods
+     * @return the AICM (lower values are better)
+     */
+
+    public double logMarginalLikelihoodAICM(List<Double> v) {
+
+        double sum = 0;
+        final int size = v.size();
+        for (int i = 0; i < size; i++)
+            sum += v.get(i);
+
+        double mean = sum / (double) size;
+
+        double var = 0;
+        for (int i = 0; i < size; i++)
+            var += (v.get(i)-mean) * (v.get(i)-mean);
+        var /= (double) size - 1;
+
+        return 2 * var - 2 * mean;
+
     }
 
     public void calculate() {
@@ -152,7 +181,7 @@ public class MarginalLikelihoodAnalysis {
     /**
      * Calculates the log marginal likelihood of a model using Newton and Raftery's smoothed estimator
      *
-     * @param v     a posterior sample of logLilelihood
+     * @param v     a posterior sample of logLikelihood
      * @param delta proportion of pseudo-samples from the prior
      * @param Pdata current estimate of the log marginal likelihood
      * @return the log marginal likelihood
@@ -205,10 +234,17 @@ public class MarginalLikelihoodAnalysis {
         } else {
             sb.append("           ");
         }
-        if (harmonicOnly)
-            sb.append(" (harmonic)");
-        else
+
+        if (analysisType.equals("smoothed")) {
             sb.append(" (smoothed)");
+        }
+        else if (analysisType.equals("aicm")) {
+            sb.append(" (AICM)");
+        }
+        else {
+            sb.append(" (harmonic)");
+        }
+
         sb.append(" burnin=").append(burnin);
         if (bootstrapLength > 1)
             sb.append(" replicates=").append(bootstrapLength);

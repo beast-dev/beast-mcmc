@@ -47,8 +47,8 @@ public class BayesFactorsFrame extends AuxilaryFrame {
     private JTable bayesFactorsTable;
 
     enum Transform {
-        LOG10_BF("log10 Bayes Factors"),
         LN_BF("ln Bayes Factors"),
+        LOG10_BF("log10 Bayes Factors"),
         BF("Bayes Factors");
 
 
@@ -64,13 +64,13 @@ public class BayesFactorsFrame extends AuxilaryFrame {
 
     }
 
-    public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors) {
+    public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors, boolean isAICM) {
 
         super(frame);
 
         setTitle(title);
 
-        bayesFactorsModel = new BayesFactorsModel(hasErrors);
+        bayesFactorsModel = new BayesFactorsModel(hasErrors, isAICM);
         bayesFactorsTable = new JTable(bayesFactorsModel);
         bayesFactorsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
@@ -125,6 +125,13 @@ public class BayesFactorsFrame extends AuxilaryFrame {
                 "with the modifications proprosed by Suchard et al (2001, <i>MBE</i> <b>18</b>: 1001-1013)</html>");
         label.setFont(UIManager.getFont("SmallSystemFont"));
 
+        if (isAICM) {
+            label = new JLabel("<html>Model comparison through AICM, lower values indicate better model fit. <br> " +
+                    "Please cite: Baele, Lemey, Bedford, Rambaut, Suchard and Alekseyenko. Improving the accuracy of demographic" +
+                    " and molecular clock model comparison while accommodating phylogenetic uncertainty. In prep.</html>");
+             label.setFont(UIManager.getFont("SmallSystemFont"));
+        }
+
         contentPanel.add(label, BorderLayout.SOUTH);
 
         setContentsPanel(contentPanel);
@@ -175,13 +182,18 @@ public class BayesFactorsFrame extends AuxilaryFrame {
     class BayesFactorsModel extends AbstractTableModel {
 
         String[] columnNames = {"Trace", "ln P(data | model)", "S.E."};
+        boolean isAICM = false;
 
         private DecimalFormat formatter2 = new DecimalFormat("####0.###");
 
         private int columnCount;
 
-        public BayesFactorsModel(boolean hasErrors) {
+        public BayesFactorsModel(boolean hasErrors, boolean isAICM) {
             this.columnCount = (hasErrors ? 3 : 2);
+            this.isAICM = isAICM;
+            if (isAICM) {
+                columnNames[1] = "AICM";
+            }
         }
 
         public int getColumnCount() {
@@ -207,6 +219,9 @@ public class BayesFactorsFrame extends AuxilaryFrame {
                     double lnML1 = marginalLikelihoods.get(row).getLogMarginalLikelihood();
                     double lnML2 = marginalLikelihoods.get(col - columnCount).getLogMarginalLikelihood();
                     double lnRatio = lnML1 - lnML2;
+                    if (isAICM) {
+                        lnRatio = lnML2 - lnML1;
+                    }
                     double value;
                     switch ((Transform) transformCombo.getSelectedItem()) {
                         case BF:

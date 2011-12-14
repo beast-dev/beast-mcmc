@@ -161,13 +161,13 @@ public class TraceAnalysis {
                         "' can not be found for marginal likelihood analysis.");
             }
 
-            boolean harmonicOnly = false;
+            String analysisType = "aicm";
             int bootstrapLength = 1000;
 
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
+                    traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
 
             System.out.println(analysis.toString());
         }
@@ -307,13 +307,13 @@ public class TraceAnalysis {
                 throw new TraceException("Column '" + likelihoodName + "' can not be found in file " + filename + ".");
             }
 
-            boolean harmonicOnly = false;
+            String analysisType = "aicm";
             int bootstrapLength = 1000;
 
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
+                    traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
 
             System.out.print(analysis.getLogMarginalLikelihood() + "\t");
             System.out.print(analysis.getBootstrappedSE() + "\t");

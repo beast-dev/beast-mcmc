@@ -20,7 +20,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
     public static final String BURN_IN = "burnIn";
     public static final String COLUMN_NAME = "likelihoodColumn";
     //public static final String DO_BOOTSTRAP = "bootstrap";
-    public static final String ONLY_HARMONIC = "harmonicOnly";
+    public static final String ANALYSIS_TYPE = "analysisType";
     public static final String BOOTSTRAP_LENGTH = "bootstrapLength";
 
     public String getParserName() {
@@ -74,9 +74,9 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
             }
 
-            boolean harmonicOnly = false;
-            if (cxo.hasAttribute(ONLY_HARMONIC)) {
-                harmonicOnly = cxo.getBooleanAttribute(ONLY_HARMONIC);
+            String analysisType = "harmonic";
+            if (cxo.hasAttribute(ANALYSIS_TYPE)) {
+                analysisType = cxo.getStringAttribute(ANALYSIS_TYPE);
             }
 
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
@@ -84,7 +84,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
-                    traces.getTraceName(traceIndex), burnin, harmonicOnly, bootstrapLength);
+                    traces.getTraceName(traceIndex), burnin, analysisType, bootstrapLength);
 
             System.out.println(analysis.toString());
 

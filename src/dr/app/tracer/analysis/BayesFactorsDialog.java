@@ -48,7 +48,7 @@ public class BayesFactorsDialog {
     private JFrame frame;
 
     private JComboBox likelihoodCombo;
-//    private JCheckBox harmonicOnlyCheck;
+    private JComboBox analysisTypeCombo;
     private WholeNumberField bootstrapCountField;
 
     private String[] likelihoodGuesses = {
@@ -63,7 +63,7 @@ public class BayesFactorsDialog {
         this.frame = frame;
 
         likelihoodCombo = new JComboBox();
-//        harmonicOnlyCheck = new JCheckBox("Calculate harmonic mean only (no smoothing)");
+        analysisTypeCombo = new JComboBox();
         bootstrapCountField = new WholeNumberField(0, Integer.MAX_VALUE);
         bootstrapCountField.setValue(1000);
 
@@ -123,6 +123,11 @@ public class BayesFactorsDialog {
         if (index == -1) index = 0;
         likelihoodCombo.setSelectedIndex(index);
 
+        analysisTypeCombo.removeAllItems();
+        analysisTypeCombo.addItem("aicm");
+        analysisTypeCombo.addItem("harmonic");
+        analysisTypeCombo.addItem("smoothed");
+
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
@@ -156,37 +161,49 @@ public class BayesFactorsDialog {
 
         optionPanel.addComponents(new JLabel("Likelihood trace:"), likelihoodCombo);
 
-        optionPanel.addSeparator();
+        optionPanel.addComponents(new JLabel("Analysis type:"), analysisTypeCombo);
 
-//        optionPanel.addComponent(harmonicOnlyCheck);
+ //       optionPanel.addSeparator();
+
         bootstrapCountField.setColumns(12);
         optionPanel.addComponents(new JLabel("Bootstrap replicates:"), bootstrapCountField);
 
-        optionPanel.addSeparator();
+//        optionPanel.addSeparator();
     }
 
     Timer timer = null;
 
     public void createBayesFactorsFrame(List<TraceList> traceLists, DocumentFrame parent) {
 
-//        boolean harmonicOnly = harmonicOnlyCheck.isSelected();
+        String analysisType = analysisTypeCombo.getSelectedItem().toString();
         int bootstrapLength = bootstrapCountField.getValue();
 
         String info = "trace: " + likelihoodTrace + ", ";
-//        if (harmonicOnly) {
-//            info += "harmonic mean";
-//        } else {
+        if (analysisType.equals("harmonic")) {
+            info += "harmonic mean";
+        }
+        if (analysisType.equals("smoothed")) {
             info += "smoothed estimate";
-//        }
+        }
+        if (analysisType.equals("aicm")) {
+            info += "AICM estimate";
+        }
         if (bootstrapLength > 1) {
             info += " (S.E. estimated using " + bootstrapLength + " bootstrap replicates)";
         }
+ //       if (analysisType.equals("aicm")) {
+ //          info += ", lower values indicate better model fit";
+ //       }
 
-        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Bayes Factors", info, bootstrapLength > 1);
+        boolean isAICM = false;
+        if (analysisType.equals("aicm")) {
+            isAICM = true;
+        }
+        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Bayes Factors", info, bootstrapLength > 1, isAICM);
         frame.initialize();
         frame.setVisible(true);
 
-        final MarginalLikelihoodTask analyseTask = new MarginalLikelihoodTask(frame, traceLists, false, bootstrapLength);
+        final MarginalLikelihoodTask analyseTask = new MarginalLikelihoodTask(frame, traceLists, analysisType, bootstrapLength);
 
         final ProgressMonitor progressMonitor = new ProgressMonitor(frame,
                 "Estimating Marginal Likelihoods",
@@ -213,15 +230,15 @@ public class BayesFactorsDialog {
 
         List<TraceList> traceLists;
         BayesFactorsFrame frame;
-        boolean harmonicOnly;
+        String analysisType;
         int bootstrapLength;
 
         private int lengthOfTask = 0;
         private int current = 0;
 
-        public MarginalLikelihoodTask(BayesFactorsFrame frame, List<TraceList> traceLists, boolean harmonicOnly, int bootstrapLength) {
+        public MarginalLikelihoodTask(BayesFactorsFrame frame, List<TraceList> traceLists, String analysisType, int bootstrapLength) {
             this.traceLists = traceLists;
-            this.harmonicOnly = harmonicOnly;
+            this.analysisType = analysisType;
             this.bootstrapLength = bootstrapLength;
             this.frame = frame;
             lengthOfTask = traceLists.size() * 100;
@@ -255,7 +272,7 @@ public class BayesFactorsDialog {
                 List<Double> likelihoods = traceList.getValues(index);
 
                 final MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(likelihoods,
-                        traceList.getName(), traceList.getBurnIn(), harmonicOnly, bootstrapLength);
+                        traceList.getName(), traceList.getBurnIn(), analysisType, bootstrapLength);
 
                 analysis.setTaskListener(new TaskListener() {
                     public void progress(double progress) {

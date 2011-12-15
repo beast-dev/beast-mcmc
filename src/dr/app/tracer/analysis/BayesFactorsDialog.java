@@ -136,7 +136,7 @@ public class BayesFactorsDialog {
                 null);
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
-        final JDialog dialog = optionPane.createDialog(frame, "Marginal Likelihood Analysis");
+        final JDialog dialog = optionPane.createDialog(frame, "Model Comparison");
         dialog.pack();
 
         dialog.setVisible(true);
@@ -199,7 +199,7 @@ public class BayesFactorsDialog {
         if (analysisType.equals("aicm")) {
             isAICM = true;
         }
-        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Bayes Factors", info, bootstrapLength > 1, isAICM);
+        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Model Comparison", info, bootstrapLength > 1, isAICM);
         frame.initialize();
         frame.setVisible(true);
 

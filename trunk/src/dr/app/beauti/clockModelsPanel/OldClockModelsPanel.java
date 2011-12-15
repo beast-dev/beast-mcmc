@@ -30,10 +30,8 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
-import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionClockModel;
 import dr.app.beauti.types.OldClockType;
-import dr.app.beauti.types.PriorType;
 import dr.app.gui.table.RealNumberCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 import dr.evolution.datatype.DataType;
@@ -46,12 +44,12 @@ import javax.swing.border.TitledBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -196,6 +194,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         col.setMinWidth(200);
         col = clockGroupTable.getColumnModel().getColumn(1);
         col.setMinWidth(40);
+        col.setCellRenderer(new GrayableCheckboxCellRenderer());
         col = clockGroupTable.getColumnModel().getColumn(2);
         col.setCellEditor(new RealNumberCellEditor(0, Double.POSITIVE_INFINITY));
         col.setMinWidth(80);
@@ -291,6 +290,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 
         col = dataTable.getColumnModel().getColumn(2);
         col.setMinWidth(40);
+        col.setCellRenderer(new GrayableCheckboxCellRenderer());
 
         col = dataTable.getColumnModel().getColumn(3);
         col.setCellRenderer(new ClockTableCellRenderer(SwingConstants.LEFT, new Insets(0, 4, 0, 4)));
@@ -306,7 +306,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
 
     private void modelsChanged() {
         TableColumn col = clockModelTable.getColumnModel().getColumn(1);
-        col.setCellEditor(new DefaultCellEditor(new JComboBox(new OldClockType[] {
+        col.setCellEditor(new DefaultCellEditor(new JComboBox(new OldClockType[]{
                 OldClockType.STRICT_CLOCK,
                 OldClockType.UNCORRELATED_LOGNORMAL,
 //                OldClockType.UNCORRELATED_CAUCHY,
@@ -314,7 +314,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                 OldClockType.UNCORRELATED_EXPONENTIAL,
 //                OldClockType.AUTOCORRELATED
                 OldClockType.RANDOM_LOCAL_CLOCK,
-        } )));
+        })));
 
         col = clockModelTable.getColumnModel().getColumn(4);
         col.setCellEditor(new DefaultCellEditor(new JComboBox(options.clockModelOptions.getClockModelGroupNames(clockModelGroupList))));
@@ -399,7 +399,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
         private static final long serialVersionUID = -2852144669936634910L;
 
         //        String[] columnNames = {"Clock Model Name", "Molecular Clock Model"};
-        final private String[] columnNames = new String[] {"Name", "Model", "Estimate", "Rate", "Group" };
+        final private String[] columnNames = new String[]{"Name", "Model", "Estimate", "Rate", "Group"};
 
         public ClockModelTableModel() {
         }
@@ -556,6 +556,18 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
             return this;
         }
 
+    }
+
+    public class GrayableCheckboxCellRenderer extends JCheckBox implements TableCellRenderer {
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                                 boolean isSelected, boolean hasFocus, int vRowIndex, int vColIndex) {
+            boolean editable = table.getModel().isCellEditable(vRowIndex, vColIndex);
+            setBackground(editable ? Color.WHITE : Color.LIGHT_GRAY);
+            setEnabled(editable);
+            setSelected((Boolean) value);
+            setHorizontalAlignment(SwingConstants.CENTER);
+            return this;
+        }
     }
 
     class ClockGroupTableModel extends AbstractTableModel {

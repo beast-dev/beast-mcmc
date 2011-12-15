@@ -512,7 +512,7 @@ public class BeautiFrame extends DocumentFrame {
             }
         }
 
-        if (!options.hasIdenticalTaxa(options.dataPartitions)) {
+        if (!options.hasIdenticalTaxa()) {
             setAllOptions(); // need this to refresh panels otherwise it will throw exception
             dataPanel.selectAll();
             dataPanel.unlinkTrees();

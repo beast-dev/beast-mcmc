@@ -836,12 +836,14 @@ public class BeautiOptions extends ModelOptions {
             if (taxa == null) {
                 taxa = partition.getTaxonList();
             } else {
-                TaxonList taxa1 = partition.getTaxonList();
+                final TaxonList taxa1 = partition.getTaxonList();
                 if (taxa1.getTaxonCount() != taxa.getTaxonCount()) {
                     return false;
                 }
-                for (Taxon taxon : taxa1) {
-                    if (taxa.getTaxonIndex(taxon) == -1) {
+                for (int k = 0; k < taxa1.getTaxonCount(); ++k) {
+                        if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
+//                for (Taxon taxon : taxa1) {
+//                    if (taxa.getTaxonIndex(taxon) == -1) { // this is wrong code
                         return false;
                     }
                 }

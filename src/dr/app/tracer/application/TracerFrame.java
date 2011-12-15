@@ -1674,7 +1674,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
     };
 
-    private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.CALCULATE_BAYES_FACTORS) {
+    private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.MODEL_COMPARISON) {
         public void actionPerformed(ActionEvent ae) {
             doCalculateBayesFactors();
         }

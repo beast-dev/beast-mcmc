@@ -47,9 +47,9 @@ public class BayesFactorsFrame extends AuxilaryFrame {
     private JTable bayesFactorsTable;
 
     enum Transform {
-        LN_BF("ln Bayes Factors"),
-        LOG10_BF("log10 Bayes Factors"),
-        BF("Bayes Factors");
+        LN_BF("ln Model Odds"),
+        LOG10_BF("log10 Model Odds"),
+        BF("Model Odds");
 
 
         Transform(String name) {

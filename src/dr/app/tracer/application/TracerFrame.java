@@ -61,6 +61,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
 
     private final List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
     private final List<TraceList> currentTraceLists = new ArrayList<TraceList>();
+    private final List<TraceList> allTraceLists = new ArrayList<TraceList>();
     private CombinedTraces combinedTraces = null;
 
     private final List<String> commonTraceNames = new ArrayList<String>();
@@ -434,6 +435,9 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
 
         setupDividerLocation();
+
+        allTraceLists.add(traceList);
+
     }
 
     private void removeTraceList() {
@@ -447,6 +451,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
         }
         for (LogFileTraces tl : tls) {
             traceLists.remove(tl);
+            allTraceLists.remove(tl);
         }
 
         updateCombinedTraces();
@@ -460,6 +465,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             setAnalysesEnabled(false);
 
             currentTraceLists.clear();
+            allTraceLists.clear();
             statisticTableModel.fireTableDataChanged();
         }
 
@@ -1337,11 +1343,11 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
             bayesFactorsDialog = new BayesFactorsDialog(this);
         }
 
-        if (bayesFactorsDialog.showDialog(currentTraceLists) == JOptionPane.CANCEL_OPTION) {
+        if (bayesFactorsDialog.showDialog(allTraceLists) == JOptionPane.CANCEL_OPTION) {
             return;
         }
 
-        bayesFactorsDialog.createBayesFactorsFrame(currentTraceLists, this);
+        bayesFactorsDialog.createBayesFactorsFrame(allTraceLists, this);
 
     }
 

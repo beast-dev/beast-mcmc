@@ -86,6 +86,8 @@ public class BayesFactorsDialog {
 
         setArguments();
 
+        likelihoodCombo.removeAllItems();
+
         List<String> statistics = new ArrayList<String>();
         TraceList tl = traceLists.get(0);
         for (int j = 0; j < tl.getTraceCount(); j++) {
@@ -163,12 +165,9 @@ public class BayesFactorsDialog {
 
         optionPanel.addComponents(new JLabel("Analysis type:"), analysisTypeCombo);
 
- //       optionPanel.addSeparator();
-
         bootstrapCountField.setColumns(12);
         optionPanel.addComponents(new JLabel("Bootstrap replicates:"), bootstrapCountField);
 
-//        optionPanel.addSeparator();
     }
 
     Timer timer = null;

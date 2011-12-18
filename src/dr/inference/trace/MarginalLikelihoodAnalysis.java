@@ -81,14 +81,11 @@ public class MarginalLikelihoodAnalysis {
     }
 
     public double calculateLogMarginalLikelihood(List<Double> sample) {
-        if (analysisType.equals("smoothed")) {
-            return logMarginalLikelihoodSmoothed(sample);
-        }
-        else if (analysisType.equals("aicm")) {
+        if (analysisType.equals("aicm")) {
             return logMarginalLikelihoodAICM(sample);
         }
         else {
-            return logMarginalLikelihoodHarmonic(sample);
+            return logMarginalLikelihoodSmoothed(sample);
         }
     }
 

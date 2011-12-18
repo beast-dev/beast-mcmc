@@ -127,8 +127,7 @@ public class BayesFactorsDialog {
 
         analysisTypeCombo.removeAllItems();
         analysisTypeCombo.addItem("aicm");
-        analysisTypeCombo.addItem("harmonic");
-        analysisTypeCombo.addItem("smoothed");
+        analysisTypeCombo.addItem("harmonic mean");
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.QUESTION_MESSAGE,
@@ -177,28 +176,12 @@ public class BayesFactorsDialog {
         String analysisType = analysisTypeCombo.getSelectedItem().toString();
         int bootstrapLength = bootstrapCountField.getValue();
 
-        String info = "trace: " + likelihoodTrace + ", ";
-        if (analysisType.equals("harmonic")) {
-            info += "harmonic mean";
-        }
-        if (analysisType.equals("smoothed")) {
-            info += "smoothed estimate";
-        }
-        if (analysisType.equals("aicm")) {
-            info += "AICM estimate";
-        }
-        if (bootstrapLength > 1) {
-            info += " (S.E. estimated using " + bootstrapLength + " bootstrap replicates)";
-        }
- //       if (analysisType.equals("aicm")) {
- //          info += ", lower values indicate better model fit";
- //       }
-
         boolean isAICM = false;
         if (analysisType.equals("aicm")) {
             isAICM = true;
         }
-        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Model Comparison", info, bootstrapLength > 1, isAICM);
+
+        BayesFactorsFrame frame = new BayesFactorsFrame(parent, "Model Comparison", bootstrapLength > 1, isAICM);
         frame.initialize();
         frame.setVisible(true);
 

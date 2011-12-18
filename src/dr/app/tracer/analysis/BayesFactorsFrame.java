@@ -72,12 +72,12 @@ public class BayesFactorsFrame extends AuxilaryFrame {
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
 
-        JLabel label = new JLabel("<html>Models compared by marginal likelihood (S.E. estimated using 1000 bootstrap " +
+        JLabel label = new JLabel("<html>Models compared by marginal likelihood (S.E. estimated from bootstrap " +
                 "replicates). Differences between log marginal likelihoods (specifically, log Bayes factors) are " +
                 "reported.  Positive values indicate better relative model fit of the rows's model compared to the " +
                 "column's model.</html>");
         if (isAICM) {
-            label = new JLabel("<html>Models compared by AICM (S.E. estimated using 1000 bootstrap replicates). " +
+            label = new JLabel("<html>Models compared by AICM (S.E. estimated from bootstrap replicates). " +
                     "Lower AICM values indicate better model fit.  Differences between AICM estimates are reported. " +
                     "Positive values indicate better relative model fit of the row's model compared to the column's " +
                     "model.</html>");

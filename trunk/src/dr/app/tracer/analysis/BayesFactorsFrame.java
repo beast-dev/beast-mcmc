@@ -30,6 +30,7 @@ import jam.framework.AuxilaryFrame;
 import jam.framework.DocumentFrame;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 import java.awt.*;
@@ -46,25 +47,7 @@ public class BayesFactorsFrame extends AuxilaryFrame {
     private BayesFactorsModel bayesFactorsModel;
     private JTable bayesFactorsTable;
 
-    enum Transform {
-        LN_BF("ln ratios"),
-        LOG10_BF("log10 ratios"),
-        BF("ratios");
-
-
-        Transform(String name) {
-            this.name = name;
-        }
-
-        public String toString() {
-            return name;
-        }
-
-        private String name;
-
-    }
-
-    public BayesFactorsFrame(DocumentFrame frame, String title, String info, boolean hasErrors, boolean isAICM) {
+    public BayesFactorsFrame(DocumentFrame frame, String title, boolean hasErrors, boolean isAICM) {
 
         super(frame);
 
@@ -86,50 +69,39 @@ public class BayesFactorsFrame extends AuxilaryFrame {
         toolBar.setLayout(new FlowLayout(FlowLayout.LEFT));
         toolBar.setFloatable(false);
 
-        transformCombo = new JComboBox(Transform.values());
-        transformCombo.setFont(UIManager.getFont("SmallSystemFont"));
-
-        JLabel label = new JLabel("Show:");
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-        label.setLabelFor(transformCombo);
-        toolBar.add(label);
-        toolBar.add(transformCombo);
-
-        toolBar.add(new JToolBar.Separator(new Dimension(8, 8)));
-
-        contentPanel.add(toolBar, BorderLayout.NORTH);
-
-        transformCombo.addItemListener(
-                new java.awt.event.ItemListener() {
-                    public void itemStateChanged(java.awt.event.ItemEvent ev) {
-                        bayesFactorsModel.fireTableDataChanged();
-                    }
-                }
-        );
-
         JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.setOpaque(false);
 
-        label = new JLabel(info);
+        JLabel label = new JLabel("<html>Models compared by marginal likelihood (S.E. estimated using 1000 bootstrap " +
+                "replicates). Differences between log marginal likelihoods (specifically, log Bayes factors) are " +
+                "reported.  Positive values indicate better relative model fit of the rows's model compared to the " +
+                "column's model.</html>");
+        if (isAICM) {
+            label = new JLabel("<html>Models compared by AICM (S.E. estimated using 1000 bootstrap replicates). " +
+                    "Lower AICM values indicate better model fit.  Differences between AICM estimates are reported. " +
+                    "Positive values indicate better relative model fit of the row's model compared to the column's " +
+                    "model.</html>");
+             label.setFont(UIManager.getFont("SmallSystemFont"));
+        }
         label.setFont(UIManager.getFont("SmallSystemFont"));
+        label.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         panel1.add(label, BorderLayout.NORTH);
         panel1.add(scrollPane1, BorderLayout.CENTER);
 
         contentPanel.add(panel1, BorderLayout.CENTER);
 
-        label = new JLabel("<html>Marginal likelihood estimated using the method Newton & Raftery <br>" +
-                "(Newton M, Raftery A: Approximate Bayesian inference with the weighted likelihood bootstrap.<br>" +
-                "Journal of the Royal Statistical Society, Series B 1994, 56:3-48)<br>" +
-                "with the modifications proprosed by Suchard et al (2001, <i>MBE</i> <b>18</b>: 1001-1013)</html>");
-        label.setFont(UIManager.getFont("SmallSystemFont"));
-
+        label = new JLabel("<html>Marginal likelihood estimated using the smoothed harmonic mean estimator following " +
+                "Newton & Raftery (1994, <i>J. Roy. Statist. Soc. B.</i> <b>56</b>: 3-48) " +
+                "with the modifications proprosed by Suchard et al. (2001, <i>MBE</i> <b>18</b>: 1001-1013)</html>");
         if (isAICM) {
-            label = new JLabel("<html>Model comparison through AICM, lower values indicate better model fit. <br> " +
-                    "Please cite: Baele, Lemey, Bedford, Rambaut, Suchard and Alekseyenko. Improving the accuracy of demographic" +
-                    " and molecular clock model comparison while accommodating phylogenetic uncertainty. In prep.</html>");
+            label = new JLabel("<html>AICM estimated using the method-of-moments estimator. Please cite: Baele, " +
+                    "Lemey, Bedford, Rambaut, Suchard and Alekseyenko. Improving the accuracy of demographic and " +
+                    "molecular clock model comparison while accommodating phylogenetic uncertainty. In prep.</html>");
              label.setFont(UIManager.getFont("SmallSystemFont"));
         }
+        label.setFont(UIManager.getFont("SmallSystemFont"));
+        label.setBorder(new EmptyBorder(5, 5, 5, 5));
 
         contentPanel.add(label, BorderLayout.SOUTH);
 
@@ -221,22 +193,7 @@ public class BayesFactorsFrame extends AuxilaryFrame {
                     if (isAICM) {
                         lnRatio = lnML2 - lnML1;
                     }
-                    double value;
-                    switch ((Transform) transformCombo.getSelectedItem()) {
-                        case BF:
-                            value = Math.exp(lnRatio);
-                            break;
-                        case LN_BF:
-                            value = lnRatio;
-                            break;
-                        case LOG10_BF:
-                            value = lnRatio / Math.log(10.0);
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Unknown transform type");
-                    }
-
-                    return formatter2.format(value);
+                    return formatter2.format(lnRatio);
                 } else {
                     return "-";
                 }

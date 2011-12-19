@@ -394,10 +394,16 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
             // This uses taxa list for *all* gene trees, not this gene tree.
             for (int s = 0; s < apspecies.length; s++) {
             	for (int i = 0; i < apspecies[s].individuals.length; i++) {
-            		for (int x = 0; x < apspecies[s].individuals[i].taxa.length; x++) {
+            		int nseqs = apspecies[s].individuals[i].taxa.length;
+            		int asgns[] = new int [nseqs];
+            		for (int x = 0; x < nseqs; x++) {
+            			asgns[x] = x;
+            		}
+            		MathUtils.permute(asgns);
+            		for (int x = 0; x < nseqs; x++) {
             			int t = taxon2index.get(apspecies[s].individuals[i].taxa[x]);
-            			seqassigns[t] = new SequenceAssignment(s, x);
-            			oldseqassigns[t] = new SequenceAssignment(s, x);
+            			seqassigns[t] = new SequenceAssignment(s, asgns[x]);
+            			oldseqassigns[t] = new SequenceAssignment(s, asgns[x]);
             		}
             	}
             }

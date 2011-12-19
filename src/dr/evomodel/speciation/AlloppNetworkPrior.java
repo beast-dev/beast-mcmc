@@ -90,7 +90,7 @@ public class AlloppNetworkPrior extends Likelihood.Abstract {
 		AlloppLeggedTree ditree = asnm.getHomoploidTree(AlloppSpeciesNetworkModel.DITREES, 0);
 		loglhood += bdgm.calculateTreeLogLikelihood(ditree);
 		double z = loglhoodDiploidTree(ditree);
-		if (Math.abs(z - loglhood) >= 1e-14) {
+		if (Math.abs(z - loglhood) >= 1e-12) {
 			System.err.println("AlloppNetworkPrior.calculateLogLikelihood() numerical error?");
 		}
 

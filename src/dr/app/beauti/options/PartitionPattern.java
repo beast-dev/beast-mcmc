@@ -48,4 +48,12 @@ public class PartitionPattern extends AbstractPartitionData { // microsatellite
             throw new RuntimeException("patterns should not be null");
         }
     }
+
+    public String getPrefix() {
+        String prefix = "";
+        if (options.getPartitionPattern().size() > 1) { // getPartitionPattern() already excludes traits and PartitionData
+            prefix += getName() + ".";
+        }
+        return prefix;
+    }
 }

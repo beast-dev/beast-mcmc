@@ -115,9 +115,9 @@ public class InitialTreeGenerator extends Generator {
                 }
 
                 String taxaId;
-                if (options.hasIdenticalTaxa()) {
+                if (options.hasIdenticalTaxa() && options.getPartitionPattern().size() > 0) {
                     taxaId = TaxaParser.TAXA;
-                } else {
+                } else { // Microsatellite always uses code below
                     taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
                 }
                 writeTaxaRef(taxaId, model, writer);

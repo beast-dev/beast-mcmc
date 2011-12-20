@@ -127,29 +127,6 @@ public abstract class AbstractPartitionData {
         this.treeModel = treeModel;
     }
 
-    public String getPrefix() {
-        String prefix = "";
-        // Determine if we have multiple data partitions for *BEAST (I am guessing here): MAS
-        // or any other multi-partition case: AR
-//        if (options.getPartitionSubstitutionModels(Nucleotides.INSTANCE).size() +
-//            options.getPartitionSubstitutionModels(AminoAcids.INSTANCE).size()  > 1) { //TODO this is wrong
-        // There is more than one active partition model
-
-        // this method provides prefix as long as multi-data-partitions case,
-        // because options.dataPartitions may contain traits, use options.getPartitionData()
-        if (options.getPartitionData().size() > 1) {
-            prefix += getName() + ".";
-        }
-
-        // Try to return a sensible prefix for traits as well
-        // This won't be good... (it may put the prefix twice if the above is true and there
-        // are traits defined). Todo: Need to think about this...
-        if (getTraits() != null) {
-//            prefix += getName() + "."; // Consistent with DiscreteTraitComponent and looks nice
-        }
-        return prefix;
-    }
-
     public int getTaxonCount() {
         if (getTaxonList() != null) {
             return getTaxonList().getTaxonCount();
@@ -162,6 +139,8 @@ public abstract class AbstractPartitionData {
     public boolean isCreatedFromTrait() {
        return traits != null;
     }
+
+    public abstract String getPrefix(); // be careful of microsatellite PartitionPattern
 
     public abstract TaxonList getTaxonList();
 

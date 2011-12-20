@@ -372,13 +372,26 @@ public class BeautiOptions extends ModelOptions {
     }
 
     /**
-     * exclude traits
+     * exclude microsatellite and traits
      */
     public List<PartitionData> getPartitionData() {
         List<PartitionData> pdList = new ArrayList<PartitionData>();
         for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionData) {
+            if (partition instanceof PartitionData && partition.getTraits() != null) {
                 pdList.add((PartitionData) partition);
+            }
+        }
+        return pdList;
+    }
+
+    /**
+     * exclude PartitionData and traits
+     */
+    public List<PartitionPattern> getPartitionPattern() {
+        List<PartitionPattern> pdList = new ArrayList<PartitionPattern>();
+        for (AbstractPartitionData partition : dataPartitions) {
+            if (partition instanceof PartitionPattern) {
+                pdList.add((PartitionPattern) partition);
             }
         }
         return pdList;
@@ -841,7 +854,7 @@ public class BeautiOptions extends ModelOptions {
                     return false;
                 }
                 for (int k = 0; k < taxa1.getTaxonCount(); ++k) {
-                        if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
+                    if (taxa.getTaxonIndex(taxa1.getTaxonId(k)) == -1) {
 //                for (Taxon taxon : taxa1) {
 //                    if (taxa.getTaxonIndex(taxon) == -1) { // this is wrong code
                         return false;

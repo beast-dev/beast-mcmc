@@ -28,13 +28,7 @@ package dr.app.beauti.generator;
 import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
-import dr.app.beauti.options.AbstractPartitionData;
-import dr.app.beauti.options.BeautiOptions;
-import dr.app.beauti.options.PartitionClockModel;
-import dr.app.beauti.options.PartitionData;
-import dr.app.beauti.options.PartitionPattern;
-import dr.app.beauti.options.PartitionSubstitutionModel;
-import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.beauti.options.*;
 import dr.app.beauti.types.MicroSatModelType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.Nucleotides;
@@ -43,7 +37,6 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
-import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -237,7 +230,7 @@ public class TreeLikelihoodGenerator extends Generator {
     }
 
     /**
-     * Write the tree likelihood XML block.
+     * Write Microsatellite Sampler tree likelihood XML block.
      *
      * @param partition the partition  to write likelihood block for
      * @param writer    the writer

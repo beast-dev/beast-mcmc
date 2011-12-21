@@ -112,9 +112,9 @@ public class BeastVersion implements Version {
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://code.google.com/p/beast-mcmc\">http://code.google.com/p/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
-                        "Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, "+
-                        "Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, "+
-                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, "+
+                        "Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled,<br>"+
+                        "Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li,<br>"+
+                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel,<br>"+
                         "Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }

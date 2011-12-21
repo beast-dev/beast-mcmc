@@ -46,7 +46,7 @@ public class BeastVersion implements Version {
      */
     private static final String VERSION = "1.7.0";
 
-    private static final String DATE_STRING = "2002-2011";
+    private static final String DATE_STRING = "2002-2012";
 
     private static final boolean IS_PRERELEASE = true;
 
@@ -89,9 +89,10 @@ public class BeastVersion implements Version {
                 "\thttp://code.google.com/p/beast-mcmc",
                 "",
                 "BEAST developers:",
-                "\tAlex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, ",
-                "\tPhilippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, ",
-                "\tVladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie",
+                "\tAlex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, ",
+                "\tSebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, ",
+                "\tGerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, ",
+                "\tOliver Pybus, Chieh-Hsi Wu, Walter Xie",
                 "",
                 "Thanks to:",
                 "\tRoald Forsberg, Beth Shapiro and Korbinian Strimmer"};
@@ -111,9 +112,10 @@ public class BeastVersion implements Version {
                         "<p>Source code distributed under the GNU LGPL:<br>" +
                         "<a href=\"http://code.google.com/p/beast-mcmc\">http://code.google.com/p/beast-mcmc</a></p>" +
                         "<p>BEAST developers:<br>" +
-                        "Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, Philippe Lemey,<br>" +
-                        "Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, Vladimir Minin,<br>" +
-                        "Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
+                        "Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, "+
+                        "Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, "+
+                        "Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, "+
+                        "Oliver Pybus, Chieh-Hsi Wu, Walter Xie</p>" +
                         "<p>Thanks to Roald Forsberg, Beth Shapiro and Korbinian Strimmer</p>";
     }
 

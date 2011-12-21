@@ -85,7 +85,7 @@ public class BirthDeathEpidemiologyModelParser extends AbstractXMLObjectParser {
     }
 
     public String getParserDescription() {
-        return "Stadler et al (2010) model of speciation.";
+        return "Stadler et al (2011) model of epidemiology.";
     }
 
     public Class getReturnType() {
@@ -100,7 +100,7 @@ public class BirthDeathEpidemiologyModelParser extends AbstractXMLObjectParser {
             new ElementRule(ORIGIN, Parameter.class, "The origin of the infection, x0 > tree.rootHeight", true),
             new ElementRule(R0, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RECOVERY_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SAMPLING_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
+            new ElementRule(SAMPLING_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };
 }

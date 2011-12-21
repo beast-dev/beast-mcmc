@@ -137,7 +137,11 @@ public class LogCombiner {
                                 }
                             }
 
-                            if (resample < 0 || stateCount % resample == 0) {
+                            if (resample < 0) {
+                                if (resample % stateStep != 0) {
+                                    System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
+                                    return;
+                                }
                                 if (useScale) {
                                     rescaleTree(tree, scale);
                                 }
@@ -220,7 +224,12 @@ public class LogCombiner {
                                         stateCount += 1;
                                     }
                                 }
-                                if (resample < 0 || stateCount % resample == 0) {
+                                if (resample < 0) {
+                                    if (resample % stateStep != 0) {
+                                        System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
+                                        return;
+                                    }
+
                                     writer.print(stateCount);
                                     for (int j = 1; j < parts.length; j++) {
                                         String value = parts[j];

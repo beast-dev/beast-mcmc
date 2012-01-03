@@ -65,16 +65,24 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private final String NO_TREE = "no tree loaded";
     private JComboBox ploidyTypeCombo = new JComboBox(PloidyType.values());
 
-    private JComboBox startingTreeCombo = new JComboBox(StartingTreeType.values());
+    private ButtonGroup startingTreeGroup = new ButtonGroup();
+    private JRadioButton randomTreeRadio = new JRadioButton("Random starting tree");
+    private JRadioButton upgmaTreeRadio = new JRadioButton("UPGMA starting tree");
+    private JRadioButton userTreeRadio = new JRadioButton("User-specified starting tree");
+
+    private JLabel userTreeLabel = new JLabel("Select user-specified tree:");
     private JComboBox userTreeCombo = new JComboBox();
 
-    private ButtonGroup treeFormatButtonGroup = new ButtonGroup();
-    private JRadioButton newickJRadioButton = new JRadioButton("Generate Newick Starting Tree");
-    private JRadioButton simpleJRadioButton = new JRadioButton("Generate XML Starting Tree");
+    private JLabel treeFormatLabel = new JLabel("Export format for tree:");
+    private JComboBox treeFormatCombo = new JComboBox(new String[] {"Newick", "XML"});
 
-    private JButton treeDisplayButton = new JButton("Display Selected Tree");
-    private JButton correctBranchLengthButton = new JButton("Correct Branch Length to Get Ultrametric Tree");
-    private JButton exampleButton = new JButton("Introduce how to load starting tree by user");
+    private JLabel userTreeInfo = new JLabel("<html>" +
+            "Import user-specified starting trees from <b>NEXUS</b><br>" +
+            "format  data files using the 'Import Data' menu option.<br>" +
+            "Trees must be rooted and strictly bifucating (binary).</html>");
+
+//    private JButton treeDisplayButton = new JButton("Display selected tree");
+//    private JButton correctBranchLengthButton = new JButton("Correct branch lengths to get ultrametric tree");
 
     private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
 
@@ -84,7 +92,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
     PartitionTreeModel partitionTreeModel;
 
-    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel parTreeModel, BeautiOptions options) {
+    public PartitionTreeModelPanel(final BeautiFrame parent, PartitionTreeModel parTreeModel, final BeautiOptions options) {
         super(12, (OSType.isMac() ? 6 : 24));
 
         this.partitionTreeModel = parTreeModel;
@@ -92,8 +100,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
         this.parent = parent;
 
         PanelUtils.setupComponent(initRootHeightField);
-            initRootHeightField.setColumns(10);
-            initRootHeightField.setEnabled(false);
+        initRootHeightField.setColumns(10);
+        initRootHeightField.setEnabled(false);
 
         PanelUtils.setupComponent(ploidyTypeCombo);
         ploidyTypeCombo.addItemListener(new ItemListener() {
@@ -105,90 +113,99 @@ public class PartitionTreeModelPanel extends OptionsPanel {
             ploidyTypeCombo.setSelectedItem(partitionTreeModel.getPloidyType());
         }
 
-        PanelUtils.setupComponent(startingTreeCombo);
-        startingTreeCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreeModel.setStartingTreeType((StartingTreeType) startingTreeCombo.getSelectedItem());
-                setupPanel();
+        PanelUtils.setupComponent(randomTreeRadio);
+        PanelUtils.setupComponent(upgmaTreeRadio);
+        PanelUtils.setupComponent(userTreeRadio);
+
+        startingTreeGroup.add(randomTreeRadio);
+        startingTreeGroup.add(upgmaTreeRadio);
+        startingTreeGroup.add(userTreeRadio);
+
+        randomTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.RANDOM);
+        upgmaTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.UPGMA);
+        userTreeRadio.setSelected(partitionTreeModel.getStartingTreeType() == StartingTreeType.USER);
+        userTreeRadio.setEnabled(options.userTrees.size() > 0);
+
+        boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
+        userTreeLabel.setEnabled(enabled);
+        userTreeCombo.setEnabled(enabled);
+        treeFormatLabel.setEnabled(enabled);
+        treeFormatCombo.setEnabled(enabled);
+        userTreeInfo.setEnabled(enabled);
+
+        PanelUtils.setupComponent(treeFormatCombo);
+
+        ActionListener listener = new ActionListener() {
+            public void actionPerformed(ActionEvent actionEvent) {
+                if (randomTreeRadio.isSelected()) {
+                    partitionTreeModel.setStartingTreeType(StartingTreeType.RANDOM);
+                } else if (upgmaTreeRadio.isSelected()) {
+                    partitionTreeModel.setStartingTreeType(StartingTreeType.UPGMA);
+                } else if (userTreeRadio.isSelected()) {
+                    partitionTreeModel.setStartingTreeType(StartingTreeType.USER);
+                }
+                boolean enabled = partitionTreeModel.getStartingTreeType() == StartingTreeType.USER;
+                userTreeLabel.setEnabled(enabled);
+                userTreeCombo.setEnabled(enabled);
+                treeFormatLabel.setEnabled(enabled);
+                treeFormatCombo.setEnabled(enabled);
+                userTreeInfo.setEnabled(enabled);
+            }
+        };
+        randomTreeRadio.addActionListener(listener);
+        upgmaTreeRadio.addActionListener(listener);
+        userTreeRadio.addActionListener(listener);
+
+        treeFormatCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent itemEvent) {
+                partitionTreeModel.setNewick(treeFormatCombo.getSelectedItem().equals("Newick"));
             }
         });
-        startingTreeCombo.setSelectedItem(partitionTreeModel.getStartingTreeType());
 
         PanelUtils.setupComponent(userTreeCombo);
-        userTreeCombo.addItem(NO_TREE);
-        if (options.userTrees.size() < 1) {
-            userTreeCombo.setEnabled(false);
-        } else {
-            for (Tree tree : options.userTrees) {
-                userTreeCombo.addItem(tree.getId());
-            }
-            userTreeCombo.setSelectedIndex(1); // need to call actionPerformed
-            userTreeCombo.setEnabled(true);
-        }
-        // use ActionListener because itemStateChanged event is fired only when the selected item changes
-        // http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4713519
-        userTreeCombo.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent actionEvent) {
+
+        userTreeCombo.addItemListener(new ItemListener() {
+            public void itemStateChanged(ItemEvent ev) {
                 setUserSpecifiedStartingTree();
             }
         });
 
-        PanelUtils.setupComponent(treeDisplayButton);
-        treeDisplayButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                SquareTreePainter treePainter = new SquareTreePainter();
-                treePainter.setColorAttribute("color");
-                treePainter.setLineAttribute("line");
-//        treePainter.setShapeAttribute("shape");
-                treePainter.setLabelAttribute("label");
-                Tree tree = getSelectedUserTree();
-                JTreeDisplay treeDisplay = new JTreeDisplay(treePainter, tree);
+//        PanelUtils.setupComponent(treeDisplayButton);
+//        treeDisplayButton.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
+//                SquareTreePainter treePainter = new SquareTreePainter();
+//                treePainter.setColorAttribute("color");
+//                treePainter.setLineAttribute("line");
+////        treePainter.setShapeAttribute("shape");
+//                treePainter.setLabelAttribute("label");
+//                Tree tree = getSelectedUserTree();
+//                JTreeDisplay treeDisplay = new JTreeDisplay(treePainter, tree);
+//
+//                JTreePanel treePanel = new JTreePanel(treeDisplay);
+//
+//                JOptionPane optionPane = new JOptionPane(treePanel,
+//                        JOptionPane.PLAIN_MESSAGE,
+//                        JOptionPane.OK_OPTION,
+//                        null,
+//                        null,
+//                        null);
+//                optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
+//
+//                final JDialog dialog = optionPane.createDialog(parent, "Display the selected starting tree - " + tree.getId());
+//                dialog.setSize(600, 400);
+//                dialog.setResizable(true);
+//                dialog.setVisible(true);
+//            }
+//        });
 
-                JTreePanel treePanel = new JTreePanel(treeDisplay);
-
-                JOptionPane optionPane = new JOptionPane(treePanel,
-                        JOptionPane.PLAIN_MESSAGE,
-                        JOptionPane.OK_OPTION,
-                        null,
-                        null,
-                        null);
-                optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-                final JDialog dialog = optionPane.createDialog(parent, "Display the selected starting tree - " + tree.getId());
-                dialog.setSize(600, 400);
-                dialog.setResizable(true);
-                dialog.setVisible(true);
-            }
-        });
-
-        treeFormatButtonGroup.add(newickJRadioButton);
-        treeFormatButtonGroup.add(simpleJRadioButton);
-        ItemListener itemListener = new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                partitionTreeModel.setNewick(newickJRadioButton.isSelected());
-            }
-        };
-        newickJRadioButton.addItemListener(itemListener);
-        simpleJRadioButton.addItemListener(itemListener);
-
-        PanelUtils.setupComponent(correctBranchLengthButton);
-        correctBranchLengthButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+//        PanelUtils.setupComponent(correctBranchLengthButton);
+//        correctBranchLengthButton.addActionListener(new ActionListener() {
+//            public void actionPerformed(ActionEvent e) {
 //                Tree tree = getSelectedUserTree();
 //                Tree.Utils.correctBranchLengthToGetUltrametricTree(tree);
 //                partitionTreeModel.setUserStartingTree(tree);
-            }
-        });
-
-        exampleButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent ae) {
-                JScrollPane scrollPane = TextUtil.createHTMLScrollPane(PartitionTreeModel.USER_SPEC_TREE_FORMAT, new Dimension(400, 200));
-
-                JOptionPane.showMessageDialog(parent, scrollPane,
-                        "Introduction of loading starting tree by user",
-                        JOptionPane.PLAIN_MESSAGE);
-            }
-        });
+//            }
+//        });
 
         setupPanel();
     }
@@ -220,30 +237,40 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 
         if (group != null && (group.getRateTypeOption() == FixRateType.FIX_MEAN
                 || group.getRateTypeOption() == FixRateType.RELATIVE_TO)) {
-            addComponentWithLabel("The Estimated Initial Root Height:", initRootHeightField);
+            addComponentWithLabel("The estimated initial root height:", initRootHeightField);
         }
 
         if (options.isEBSPSharingSamePrior() || options.useStarBEAST) {
-            addComponentWithLabel("Ploidy Type:", ploidyTypeCombo);
+            addComponentWithLabel("Ploidy type:", ploidyTypeCombo);
         }
 
-        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT)
-            addComponentWithLabel("Starting Tree:", startingTreeCombo);
+        if (partitionTreeModel.getDataType().getType() != DataType.MICRO_SAT) {
+            addSpanningComponent(randomTreeRadio);
+            addSpanningComponent(upgmaTreeRadio);
+            addSpanningComponent(userTreeRadio);
 
-        if (startingTreeCombo.getSelectedItem() == StartingTreeType.USER) {
-            addComponentWithLabel("Select User-specified Tree:", userTreeCombo);
-            setUserSpecifiedStartingTree();
-//            userTreeCombo.removeAllItems();
+            addComponents(userTreeLabel, userTreeCombo);
+            userTreeCombo.removeAllItems();
+            if (options.userTrees.size() < 1) {
+                userTreeCombo.addItem(NO_TREE);
+            } else {
+                Object selectedItem = userTreeCombo.getSelectedItem();
+                for (Tree tree : options.userTrees) {
+                    userTreeCombo.addItem(tree.getId());
+                }
+                if (selectedItem != null) {
+                    userTreeCombo.setSelectedItem(selectedItem);
+                } else {
+                    userTreeCombo.setSelectedIndex(0);
+                }
+            }
 
 //            addComponent(treeDisplayButton);  // todo JTreeDisplay not work properly
-            addComponent(newickJRadioButton);
-            addComponent(simpleJRadioButton);
-            addComponent(exampleButton);
-            newickJRadioButton.setSelected(partitionTreeModel.isNewick());
-//            simpleJRadioButton.setSelected(!partitionTreeModel.isNewick());
+
+            addComponents(treeFormatLabel, treeFormatCombo);
+            addComponent(userTreeInfo);
 
         }
-
 //		generateTreeAction.setEnabled(options != null && options.dataPartitions.size() > 0);
 
         setOptions();
@@ -272,6 +299,8 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 //        } else {
 //            userTreeCombo.setSelectedItem(partitionTreeModel.getUserStartingTree().getId());
 //        }
+
+        userTreeRadio.setEnabled(options.userTrees.size() > 0);
 
         settingOptions = false;
 

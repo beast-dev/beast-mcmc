@@ -57,9 +57,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 
 /**
  * @author Andrew Rambaut
@@ -84,8 +82,9 @@ public class BeautiFrame extends DocumentFrame {
     public final static String OPERATORS = "Operators";
     public final static String MCMC = "MCMC";
 
-    private final BeautiOptions options;
-    private final BeastGenerator generator;
+    private BeautiOptions options;
+    private BeastGenerator generator;
+    private final ComponentFactory[] components;
 
     public final JTabbedPane tabbedPane = new JTabbedPane();
     public final JLabel statusLabel = new JLabel();
@@ -119,14 +118,14 @@ public class BeautiFrame extends DocumentFrame {
         // after a user cancel or a failure in beast file generation
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
 
-        getOpenAction().setEnabled(false);
-        getSaveAction().setEnabled(false);
+//        getOpenAction().setEnabled(false);
+//        getSaveAction().setEnabled(false);
 
         getFindAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
 
-        ComponentFactory[] components = {
+        components = new ComponentFactory[] {
                 AncestralStatesComponentFactory.INSTANCE,
                 ContinuousComponentFactory.INSTANCE,
                 DiscreteTraitsComponentFactory.INSTANCE,
@@ -202,12 +201,12 @@ public class BeautiFrame extends DocumentFrame {
                 "Select the priors on trees including coalescent models<br>" +
                 "birth-death speciation models and the *BEAST gene tree,<br>" +
                 "species tree options.</html>");
-       if (ENABLE_ANCESTRAL_STATES) {
+        if (ENABLE_ANCESTRAL_STATES) {
             tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
-           tabbedPane.setToolTipTextAt(index++, "<html>" +
-                   "Select options for sampling ancestral states at specific<br>" +
-                   "or all common ancestors, models of counting state changes<br>" +
-                   "and models of sequencing error for data partitions.</html>");
+            tabbedPane.setToolTipTextAt(index++, "<html>" +
+                    "Select options for sampling ancestral states at specific<br>" +
+                    "or all common ancestors, models of counting state changes<br>" +
+                    "and models of sequencing error for data partitions.</html>");
         }
         tabbedPane.addTab(PRIORS, priorsPanel);
         tabbedPane.setToolTipTextAt(index++, "<html>" +
@@ -441,7 +440,24 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean readFromFile(File file) throws IOException {
-        return false;
+        FileInputStream fileIn =
+                new FileInputStream(file);
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        try {
+            options = (BeautiOptions) in.readObject();
+        } catch (ClassNotFoundException cnfe) {
+            JOptionPane.showMessageDialog(this, "Unable to read BEAUti file: " + cnfe.getMessage(),
+                    "Unable to read file",
+                    JOptionPane.ERROR_MESSAGE);
+            cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            return false;
+        }
+        in.close();
+        fileIn.close();
+
+        generator = new BeastGenerator(options, components);
+
+        return true;
     }
 
     public String getDefaultFileName() {
@@ -449,7 +465,13 @@ public class BeautiFrame extends DocumentFrame {
     }
 
     protected boolean writeToFile(File file) throws IOException {
-        return false;
+        OutputStream fileOut = new FileOutputStream(file);
+        ObjectOutputStream out =
+                new ObjectOutputStream(fileOut);
+        out.writeObject(options);
+        out.close();
+        fileOut.close();
+        return true;
     }
 
     public final void doImport() {
@@ -779,64 +801,64 @@ public class BeautiFrame extends DocumentFrame {
         return exportable;
     }
 
-    public boolean doSave() {
-        return doSaveAs();
-    }
+//    public boolean doSave() {
+//        return doSaveAs();
+//    }
+//
+//    public boolean doSaveAs() {
+//        FileDialog dialog = new FileDialog(this,
+//                "Save Template As...",
+//                FileDialog.SAVE);
+//
+//        dialog.setVisible(true);
+//        if (dialog.getFile() == null) {
+//            // the dialog was cancelled...
+//            return false;
+//        }
+//
+//        File file = new File(dialog.getDirectory(), dialog.getFile());
+//
+//        try {
+//            if (writeToFile(file)) {
+//
+//                clearDirty();
+//            }
+//        } catch (IOException ioe) {
+//            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
+//                    "Unable to save file",
+//                    JOptionPane.ERROR_MESSAGE);
+//        }
+//
+//        return true;
+//    }
 
-    public boolean doSaveAs() {
-        FileDialog dialog = new FileDialog(this,
-                "Save Template As...",
-                FileDialog.SAVE);
+//    public Action getOpenAction() {
+//        return openTemplateAction;
+//    }
+//
+//    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
+//        private static final long serialVersionUID = 2450459627280385426L;
+//
+//        public void actionPerformed(ActionEvent ae) {
+//            doApplyTemplate();
+//        }
+//    };
 
-        dialog.setVisible(true);
-        if (dialog.getFile() == null) {
-            // the dialog was cancelled...
-            return false;
-        }
-
-        File file = new File(dialog.getDirectory(), dialog.getFile());
-
-        try {
-            if (writeToFile(file)) {
-
-                clearDirty();
-            }
-        } catch (IOException ioe) {
-            JOptionPane.showMessageDialog(this, "Unable to save file: " + ioe,
-                    "Unable to save file",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-
-        return true;
-    }
-
-    public Action getOpenAction() {
-        return openTemplateAction;
-    }
-
-    private final AbstractAction openTemplateAction = new AbstractAction("Apply Template...") {
-        private static final long serialVersionUID = 2450459627280385426L;
-
-        public void actionPerformed(ActionEvent ae) {
-            doApplyTemplate();
-        }
-    };
-
-    public Action getSaveAction() {
-        return saveAsAction;
-    }
-
-    public Action getSaveAsAction() {
-        return saveAsAction;
-    }
-
-    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
-        private static final long serialVersionUID = 2424923366448459342L;
-
-        public void actionPerformed(ActionEvent ae) {
-            doSaveAs();
-        }
-    };
+//    public Action getSaveAction() {
+//        return saveAsAction;
+//    }
+//
+//    public Action getSaveAsAction() {
+//        return saveAsAction;
+//    }
+//
+//    private final AbstractAction saveAsAction = new AbstractAction("Save Template As...") {
+//        private static final long serialVersionUID = 2424923366448459342L;
+//
+//        public void actionPerformed(ActionEvent ae) {
+//            doSaveAs();
+//        }
+//    };
 
     public Action getImportAction() {
         return importAlignmentAction;

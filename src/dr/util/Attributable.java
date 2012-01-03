@@ -25,6 +25,7 @@
 
 package dr.util;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Iterator;
 
@@ -35,7 +36,7 @@ import java.util.Iterator;
  *
  * @author Andrew Rambaut
  */
-public interface Attributable {
+public interface Attributable extends Serializable {
 	
 	public final static String ATTRIBUTE = "att";
 	public final static String NAME = "name";

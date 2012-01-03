@@ -3,11 +3,13 @@ package dr.app.beauti.options;
 import dr.app.beauti.types.FixRateType;
 import dr.evolution.datatype.DataType;
 
+import java.io.Serializable;
+
 /**
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class ClockModelGroup {
+public class ClockModelGroup implements Serializable {
 
     private String name;
     private boolean fixMean = false;

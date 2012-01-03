@@ -28,6 +28,7 @@ import dr.evolution.util.Date;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
 
+import java.io.Serializable;
 import java.text.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +36,7 @@ import java.util.regex.Pattern;
 /**
  * @author Andrew Rambaut
  */
-public class DateGuesser {
+public class DateGuesser implements Serializable {
     public enum GuessType {
         ORDER,
         PREFIX,

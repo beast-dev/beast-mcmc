@@ -28,6 +28,7 @@ import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.evolution.util.TaxonList;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -37,7 +38,7 @@ import java.util.Map;
  * @author Alexei Drummond
  * @author Andrew Rambaut
  */
-public class ModelOptions {
+public class ModelOptions implements Serializable {
 
     protected final Map<String, Parameter> parameters = new HashMap<String, Parameter>();
     protected final Map<String, Operator> operators = new HashMap<String, Operator>();

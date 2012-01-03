@@ -27,13 +27,14 @@ import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.PriorType;
 import dr.math.distributions.Distribution;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
  * @author Andrew Rambaut
  * @author Alexei Drummond
  */
-public class Parameter {
+public class Parameter implements Serializable {
     public static final double UNIFORM_MAX_BOUND = 1.0E100;
 
     private String prefix = null;

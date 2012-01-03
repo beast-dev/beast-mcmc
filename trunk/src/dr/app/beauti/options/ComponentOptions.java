@@ -23,13 +23,14 @@
 
 package dr.app.beauti.options;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @version $Id$
  */
-public interface ComponentOptions {
+public interface ComponentOptions extends Serializable {
 
     void createParameters(ModelOptions modelOptions);
 

@@ -31,6 +31,7 @@ import dr.evolution.distance.DistanceMatrix;
 import dr.evolution.distance.JukesCantorDistanceMatrix;
 import dr.evolution.util.TaxonList;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ import java.util.List;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public abstract class AbstractPartitionData {
+public abstract class AbstractPartitionData implements Serializable {
 
 
     protected String fileName;
@@ -53,11 +54,6 @@ public abstract class AbstractPartitionData {
     protected double meanDistance;
 
     protected DistanceMatrix distances;
-
-    protected boolean useAncestralReconstruction = false;
-    protected String ancestralReconstructionMRCA = null;
-    protected boolean useRobustCounting = false;
-    protected boolean useDnDsCount = false;
 
     public AbstractPartitionData(BeautiOptions options, String name, String fileName) {
         this.options = options;

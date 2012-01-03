@@ -35,6 +35,19 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
+        item = new JMenuItem(frame.getOpenAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAsAction());
+        menu.add(item);
+
+        menu.addSeparator();
+
         item = new JMenuItem(frame.getImportAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
         menu.add(item);
@@ -43,19 +56,7 @@ public class BeautiDefaultFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
         menu.add(item);
 
-//        menu.addSeparator();
-//
-//        item = new JMenuItem(frame.getOpenAction());
-//        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-//        menu.add(item);
-//
-//        item = new JMenuItem(frame.getSaveAsAction());
-//        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-//        menu.add(item);
-
-        menu.addSeparator();
-
-        item = new JMenuItem(frame.getExportAction());
+       item = new JMenuItem(frame.getExportAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, MenuBarFactory.MENU_MASK));
         menu.add(item);
 

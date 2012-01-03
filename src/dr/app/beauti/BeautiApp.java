@@ -51,18 +51,18 @@ public class BeautiApp extends MultiDocApplication {
         super(new BeautiMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
     }
 
-    /**
-     * In a departure from the standard UI, there is no "Open" command for this application
-     * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
-     * None of these operations result in a file being associated with the DocumentFrame. All
-     * these actions are located in the BeautiFrame class. This overriden method should never
-     * be called and throw a RuntimeException if it is.
-     *
-     * @return the action
-     */
-    public Action getOpenAction() {
-        throw new UnsupportedOperationException("getOpenAction is not supported");
-    }
+//    /**
+//     * In a departure from the standard UI, there is no "Open" command for this application
+//     * Instead, the user can create a New window, Import a NEXUS file and Apply a Template file.
+//     * None of these operations result in a file being associated with the DocumentFrame. All
+//     * these actions are located in the BeautiFrame class. This overriden method should never
+//     * be called and throw a RuntimeException if it is.
+//     *
+//     * @return the action
+//     */
+//    public Action getOpenAction() {
+//        throw new UnsupportedOperationException("getOpenAction is not supported");
+//    }
 
     // Main entry point
     static public void main(String[] args) {

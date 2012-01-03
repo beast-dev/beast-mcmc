@@ -26,6 +26,7 @@ package dr.app.beauti.options;
 import dr.app.beauti.traitspanel.GuessTraitException;
 import dr.evolution.util.TaxonList;
 
+import java.io.Serializable;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,7 +34,7 @@ import java.util.regex.Pattern;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class TraitGuesser {
+public class TraitGuesser implements Serializable {
 
     private final TraitData traitData;
 

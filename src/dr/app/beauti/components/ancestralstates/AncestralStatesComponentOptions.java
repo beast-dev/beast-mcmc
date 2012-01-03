@@ -2,6 +2,7 @@ package dr.app.beauti.components.ancestralstates;
 
 import dr.app.beauti.options.*;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -88,7 +89,7 @@ public class AncestralStatesComponentOptions implements ComponentOptions {
         return partition.getPartitionSubstitutionModel().getCodonPartitionCount() == 3;
     }
 
-    class AncestralStateOptions {
+    class AncestralStateOptions implements Serializable {
         boolean reconstructAtNodes = false;
         boolean reconstructAtMRCA = false;
         String mrcaTaxonSetName = null;

@@ -26,6 +26,8 @@
 package dr.util;
 
 
+import java.io.Serializable;
+
 /**
  * An immutable attribute has a name and value.
  *
@@ -34,7 +36,7 @@ package dr.util;
  */
 
 
-public interface Attribute<T> {
+public interface Attribute<T> extends Serializable {
 
     public final static String ATTRIBUTE = "att";
     public final static String NAME = "name";

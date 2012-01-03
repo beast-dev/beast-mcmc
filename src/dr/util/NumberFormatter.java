@@ -25,6 +25,7 @@
 
 package dr.util;
 
+import java.io.Serializable;
 import java.text.DecimalFormat;
 
 /**
@@ -39,7 +40,7 @@ import java.text.DecimalFormat;
  *
  * @author Alexei Drummond
  */
-public class NumberFormatter {
+public class NumberFormatter implements Serializable {
 
     private int sf;
     private double upperCutoff;

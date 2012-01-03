@@ -25,13 +25,15 @@
 
 package dr.util;
 
+import java.io.Serializable;
+
 /**
  * An interface for supplying an Id for a data object.
  *
  * @author Andrew Rambaut
  * @version $Id: Identifiable.java,v 1.6 2005/05/24 20:26:01 rambaut Exp $
  */
-public interface Identifiable {
+public interface Identifiable extends Serializable {
 
     /**
      * @return the id as a string.

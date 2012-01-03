@@ -25,6 +25,7 @@ package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -32,7 +33,7 @@ import java.util.Map;
  * @author Andrew Rambaut
  * @author Walter Xie
  */
-public class Operator {
+public class Operator implements Serializable {
 
     private String prefix = null;
 

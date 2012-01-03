@@ -5,6 +5,7 @@ import dr.evolution.datatype.*;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
+import java.io.Serializable;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -13,7 +14,7 @@ import java.util.TreeSet;
  * @author Alexei Drummond
  * @author Walter Xie
  */
-public class TraitData {
+public class TraitData implements Serializable {
     public static final String TRAIT_SPECIES = "species";
 
     public static enum TraitType {

@@ -57,7 +57,18 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_N, MenuBarFactory.MENU_MASK));
         menu.add(item);
 
+        item = new JMenuItem(application.getOpenAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        if (application.getRecentFileMenu() != null) {
+            JMenu subMenu = application.getRecentFileMenu();
+            menu.add(subMenu);
+        }
+
         if (frame instanceof BeautiFrame) {
+            menu.addSeparator();
+
             item = new JMenuItem(frame.getImportAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
             menu.add(item);
@@ -65,16 +76,6 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             item = new JMenuItem(((BeautiFrame)frame).getImportTraitsAction());
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK + ActionEvent.ALT_MASK));
             menu.add(item);
-
-//            menu.addSeparator();
-//
-//            item = new JMenuItem(((BeautiFrame)frame).getOpenAction());
-//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_O, MenuBarFactory.MENU_MASK));
-//            menu.add(item);
-//
-//            item = new JMenuItem(frame.getSaveAsAction());
-//            item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
-//            menu.add(item);
 
             menu.addSeparator();
 
@@ -85,6 +86,8 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
             // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
             // At present the only situation where this may happen is in Mac OS X when no windows
             // are open and the menubar is created by the hidden frame.
+
+            menu.addSeparator();
 
             item = new JMenuItem("Import Data...");
             item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_I, MenuBarFactory.MENU_MASK));
@@ -120,6 +123,14 @@ public class BeautiMacFileMenuFactory implements MenuFactory {
 
         item = new JMenuItem(frame.getCloseWindowAction());
         item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_W, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK));
+        menu.add(item);
+
+        item = new JMenuItem(frame.getSaveAsAction());
+        item.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, MenuBarFactory.MENU_MASK + ActionEvent.SHIFT_MASK));
         menu.add(item);
 
         menu.addSeparator();

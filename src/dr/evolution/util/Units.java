@@ -27,6 +27,8 @@ package dr.evolution.util;
 
 import dr.evoxml.util.XMLUnits;
 
+import java.io.Serializable;
+
 /**
  * interface holding unit constants
  *
@@ -34,7 +36,7 @@ import dr.evoxml.util.XMLUnits;
  * @author Andrew Rambaut
  * @version $Id: Units.java,v 1.17 2005/05/24 20:25:57 rambaut Exp $
  */
-public interface Units {
+public interface Units extends Serializable {
 
     public enum Type {
         SUBSTITUTIONS(XMLUnits.SUBSTITUTIONS), GENERATIONS(XMLUnits.GENERATIONS),

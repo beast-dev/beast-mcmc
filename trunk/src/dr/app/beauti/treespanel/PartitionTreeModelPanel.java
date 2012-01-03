@@ -79,7 +79,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
     private JLabel userTreeInfo = new JLabel("<html>" +
             "Import user-specified starting trees from <b>NEXUS</b><br>" +
             "format  data files using the 'Import Data' menu option.<br>" +
-            "Trees must be rooted and strictly bifucating (binary).</html>");
+            "Trees must be rooted and strictly bifurcating (binary).</html>");
 
 //    private JButton treeDisplayButton = new JButton("Display selected tree");
 //    private JButton correctBranchLengthButton = new JButton("Correct branch lengths to get ultrametric tree");

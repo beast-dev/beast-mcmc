@@ -135,7 +135,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 
 		final public String name; // grjtodo needed?
 		final public int ploidylevel; // 2 means diploid, 4 means allotetraploid, etc
-		final private Individual[] individuals;
+		final Individual[] individuals;
 
 		public ApSpInfo(String name, int ploidylevel, Individual[] individuals) {
 			super(name);
@@ -487,13 +487,13 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		}	
 		
 		
-		public void storeGeneTreeState() {
+		public void storeSequenceAssignments() {
 			for (int i = 0; i < seqassigns.length; i++) {
 				oldseqassigns[i].seqIndex = seqassigns[i].seqIndex;
 			}
 		}
         
-		public void restoreGeneTreeState() {
+		public void restoreSequenceAssignments() {
 			for (int i = 0; i < seqassigns.length; i++) {
 				seqassigns[i].seqIndex = oldseqassigns[i].seqIndex;
 			}
@@ -940,7 +940,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	@Override
 	protected void storeState() {
     	for (GeneTreeInfo gti : geneTreeInfos) {
-    		gti.storeGeneTreeState();
+    		gti.storeSequenceAssignments();
     	}
 		if (AlloppSpeciesNetworkModel.DBUGTUNE)
 			System.err.println("AlloppSpeciesBindings.storeState()");
@@ -949,7 +949,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	@Override
 	protected void restoreState() {
     	for (GeneTreeInfo gti : geneTreeInfos) {
-    		gti.restoreGeneTreeState();
+    		gti.restoreSequenceAssignments();
 		if (AlloppSpeciesNetworkModel.DBUGTUNE)
 			System.err.println("AlloppSpeciesBindings.restoreState()");
     	}

@@ -67,7 +67,7 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 // AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon.
 // Nothing so far does TreeTraitProvider.
 public class AlloppSpeciesNetworkModel extends AbstractModel implements
-		Scalable, Units, Citable, Loggable, Tree, TreeLogger.LogUpon{
+		Scalable, Units, Citable, Tree, TreeLogger.LogUpon {
 
 	private final AlloppSpeciesBindings apsp;
 	private AlloppLeggedTree[][] trees;

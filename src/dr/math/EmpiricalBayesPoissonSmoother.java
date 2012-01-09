@@ -77,7 +77,6 @@ public class EmpiricalBayesPoissonSmoother {
             }
         } else {
             for (int i = 0; i < length; i++) {
-//                out[i] = (in[i] + alpha) / (1 + 1 / beta);
                 double shape = in[i] + alpha;
                 double scale = 1 / (1 + 1 / beta);
                 out[i] = GammaDistribution.nextGamma(shape, scale);

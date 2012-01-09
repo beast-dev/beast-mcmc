@@ -1,7 +1,7 @@
 /*
  * BeagleOperationReport.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.Beagle;
 import dr.app.beagle.evomodel.parsers.BeagleOperationParser;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -34,6 +35,8 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
+
+import java.io.PrintWriter;
 
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -46,11 +49,14 @@ import dr.evomodel.treelikelihood.TipStatesModel;
 
 public class BeagleOperationReport extends AbstractTreeLikelihood {
 
-    public BeagleOperationReport(TreeModel treeModel, PatternList patternList, BranchRateModel branchRateModel) {
+    public BeagleOperationReport(TreeModel treeModel, PatternList patternList, BranchRateModel branchRateModel, Alignment alignment, PrintWriter branch, PrintWriter operation) {
         super(BeagleOperationParser.OPERATION_REPORT, patternList, treeModel);
 
         boolean useAmbiguities = false;
         this.branchRateModel = branchRateModel;
+        this.branchWriter = branch;
+        this.operationWriter = operation;
+        this.alignment = alignment;
 
         try {
 
@@ -82,7 +88,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
                     if (useAmbiguities) {
                         setPartials(beagle, patternList, index, i);
                     } else {
-                        setStates(beagle, patternList, index, i);
+                        setStates(beagle, patternList, id, index, i);
                     }
 
                 }
@@ -182,25 +188,30 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
      *
      * @param beagle        beagle
      * @param patternList   patternList
+     * @param id
      * @param sequenceIndex sequenceIndex
      * @param nodeIndex     nodeIndex
      */
     protected final void setStates(Beagle beagle,
                                    PatternList patternList,
-                                   int sequenceIndex,
+                                   String id, int sequenceIndex,
                                    int nodeIndex) {
         int i;
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("/* ").append(id).append(" */\n\t\tmSeqs[").append(nodeIndex).append("] = \"");
+        sb.append(alignment.getAlignedSequenceString(sequenceIndex)).append("\";\n");
 
         int[] states = new int[patternCount];
 
         for (i = 0; i < patternCount; i++) {
-
             states[i] = patternList.getPatternState(sequenceIndex, i);
         }
 
-        // TODO Print states
-        System.err.println("TODO Print states");
-//        beagle.setTipStates(nodeIndex, states);
+        if (alignmentString == null) {
+            alignmentString = new StringBuilder();
+        }
+        alignmentString.append(sb);
     }
 
 
@@ -234,6 +245,8 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
             operationCount[0] = 0;
         }
 
+        System.out.println(alignmentString.toString());
+
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, false); // Do not flip buffers
 
@@ -243,9 +256,26 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
                 if (DEBUG_BEAGLE_OPERATIONS) {
                     StringBuilder sb = new StringBuilder();
                     sb.append("Branch count: ").append(branchUpdateCount[i]);
+                    sb.append("\nNode indices:\n");
+                    if (SINGLE_LINE) {
+                        sb.append("int n[] = {");
+                    }
+                    for (int k = 0; k < branchUpdateCount[i]; ++k) {
+                        if (SINGLE_LINE) {
+                            sb.append(" ").append(matrixUpdateIndices[i][k]);
+                            if (k < (branchUpdateCount[i] - 1)) {
+                                sb.append(",");
+                            }
+                        } else {
+                            sb.append(matrixUpdateIndices[i][k]).append("\n");
+                        }
+                    }
+                    if (SINGLE_LINE) {
+                        sb.append(" };\n");
+                    }
                     sb.append("\nBranch lengths:\n");
                     if (SINGLE_LINE) {
-                        sb.append("{");
+                        sb.append("double b[] = {");
                     }
                     for (int k = 0; k < branchUpdateCount[i]; ++k) {
                         if (SINGLE_LINE) {
@@ -258,7 +288,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
                         }
                     }
                     if (SINGLE_LINE) {
-                        sb.append(" }\n");
+                        sb.append(" };\n");
                     }
                     System.out.println(sb.toString());
                 }
@@ -271,7 +301,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
             sb.append("Operation count: ").append(operationCount[0]);
             sb.append("\nOperations:\n");
             if (SINGLE_LINE) {
-                sb.append("{");
+                sb.append("BeagleOperation o[] = {");
             }
             for (int k = 0; k < operationCount[0] * Beagle.OPERATION_TUPLE_SIZE; ++k) {
                 if (SINGLE_LINE) {
@@ -284,7 +314,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
                 }
             }
             if (SINGLE_LINE) {
-                sb.append(" }\n");
+                sb.append(" };\n");
             }
             sb.append("Use scale factors: ").append(useScaleFactors).append("\n");
             System.out.println(sb.toString());
@@ -486,7 +516,15 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
     protected boolean updateSiteModel;
 
     private static final boolean DEBUG_BEAGLE_OPERATIONS = true;
-    private static final boolean SINGLE_LINE = false;
+    private static final boolean SINGLE_LINE = true;
+
+    private StringBuilder alignmentString;
+
+
+    private final PrintWriter branchWriter;
+    private final PrintWriter operationWriter;
+
+    private final Alignment alignment;
 
     protected class BufferIndexHelper {
         /**

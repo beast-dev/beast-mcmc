@@ -1,10 +1,35 @@
+/*
+ * CodonPartitionedRobustCountingTest.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package test.dr.evomodel.substmodel;
 
-import junit.framework.TestCase;
+import dr.app.beagle.evomodel.substmodel.*;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.GeneticCode;
 import dr.evolution.datatype.Nucleotides;
-import dr.app.beagle.evomodel.substmodel.*;
+import junit.framework.TestCase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,7 +93,7 @@ public class CodonPartitionedRobustCountingTest extends TestCase {
         double[] synRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.SYN, codons, true);
         double totalSyn = sumMatrix(synRegMatrix);
         System.out.println("Sum syn matrix = " + totalSyn);
-        assertEquals(134, (int)totalSyn);
+        assertEquals(134, (int) totalSyn);
 
         /* R markovjumps
         sum(regist.synonym())
@@ -77,13 +102,43 @@ public class CodonPartitionedRobustCountingTest extends TestCase {
         double[] nonSynRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.NON_SYN, codons, true);
         double totalNonSyn = sumMatrix(nonSynRegMatrix);
         System.out.println("Sum non-syn matrix = " + totalNonSyn);
-        assertEquals(392, (int)totalNonSyn);
+        assertEquals(392, (int) totalNonSyn);
 
         /* R markovjumps
         sum(regist.nonsynonym())
          */
 
         System.out.println("");
+    }
+
+    public void testStopCodons() {
+        // AGA -> TGA
+        // AAA -> TAA
+
+        System.out.println("Testing several stop codons...");
+
+        setUpNucleotides();
+
+        int from, to;
+        double[] synRegMatrix, nonSynRegMatrix;
+
+        from = codons.getState('A', 'G', 'A');
+        to = codons.getState('T', 'G', 'A');
+
+        synRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.SYN, codons, true);
+        nonSynRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.NON_SYN, codons, true);
+
+        System.out.println("AGA -> TGA syn = " + synRegMatrix[from * 64 + to]);
+        System.out.println("AGA -> TGA non = " + nonSynRegMatrix[from * 64 + to]);
+
+        from = codons.getState('A', 'A', 'A');
+        to = codons.getState('T', 'A', 'A');
+
+        synRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.SYN, codons, true);
+        nonSynRegMatrix = CodonLabeling.getRegisterMatrix(CodonLabeling.NON_SYN, codons, true);
+
+        System.out.println("AAA -> TAA syn = " + synRegMatrix[from * 64 + to]);
+        System.out.println("AAA -> TAA non = " + nonSynRegMatrix[from * 64 + to]);
     }
 
     public void testCounts() {
@@ -127,7 +182,7 @@ public class CodonPartitionedRobustCountingTest extends TestCase {
          */
     }
 
-    public void testRegistrationMatrixCodonBase() {        
+    public void testRegistrationMatrixCodonBase() {
         runRegistrationMatrixTest(false); // test in 64 - stop codon states
     }
 

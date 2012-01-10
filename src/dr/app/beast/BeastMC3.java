@@ -375,9 +375,11 @@ public class BeastMC3 {
             }
 
             String nameString = "BEAST " + version.getVersionString();
-            String aboutString = "Bayesian Evolutionary Analysis Sampling Trees\n" +
-                    version.getVersionString() + " �2002-2004 Alexei Drummond & Andrew Rambaut\n" +
-                    "University of Oxford";
+            String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
+                    "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
+                    version.getHTMLCredits() +
+                    "</div></center></div></html>";
 
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }

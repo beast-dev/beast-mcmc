@@ -27,6 +27,8 @@ package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.Beagle;
 import dr.app.beagle.evomodel.parsers.BeagleOperationParser;
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.tree.NodeRef;
@@ -35,6 +37,7 @@ import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
+import dr.math.matrixAlgebra.Vector;
 
 import java.io.PrintWriter;
 
@@ -49,7 +52,7 @@ import java.io.PrintWriter;
 
 public class BeagleOperationReport extends AbstractTreeLikelihood {
 
-    public BeagleOperationReport(TreeModel treeModel, PatternList patternList, BranchRateModel branchRateModel, Alignment alignment, PrintWriter branch, PrintWriter operation) {
+    public BeagleOperationReport(TreeModel treeModel, PatternList patternList, BranchRateModel branchRateModel, GammaSiteRateModel siteRateModel, Alignment alignment, PrintWriter branch, PrintWriter operation) {
         super(BeagleOperationParser.OPERATION_REPORT, patternList, treeModel);
 
         boolean useAmbiguities = false;
@@ -57,6 +60,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
         this.branchWriter = branch;
         this.operationWriter = operation;
         this.alignment = alignment;
+        this.substitutionModel = siteRateModel.getSubstitutionModel();
 
         try {
 
@@ -250,11 +254,19 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
         final NodeRef root = treeModel.getRoot();
         traverse(treeModel, root, null, false); // Do not flip buffers
 
+        // Print out eigendecompositions
+
+
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
 
                 if (DEBUG_BEAGLE_OPERATIONS) {
                     StringBuilder sb = new StringBuilder();
+
+                    sb.append("eval = ").append(new Vector(substitutionModel.getEigenDecomposition().getEigenValues())).append("\n");
+                    sb.append("evec = ").append(new Vector(substitutionModel.getEigenDecomposition().getEigenVectors())).append("\n");
+                    sb.append("ivec = ").append(new Vector(substitutionModel.getEigenDecomposition().getInverseEigenVectors())).append("\n");
+
                     sb.append("Branch count: ").append(branchUpdateCount[i]);
                     sb.append("\nNode indices:\n");
                     if (SINGLE_LINE) {
@@ -523,6 +535,7 @@ public class BeagleOperationReport extends AbstractTreeLikelihood {
 
     private final PrintWriter branchWriter;
     private final PrintWriter operationWriter;
+    private final SubstitutionModel substitutionModel;
 
     private final Alignment alignment;
 

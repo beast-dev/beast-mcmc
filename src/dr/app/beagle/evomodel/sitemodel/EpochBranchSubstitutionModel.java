@@ -1,5 +1,5 @@
 /*
- * ExternalInternalBranchSubstitutionModel.java
+ * EpochBranchSubstitutionModel.java
  *
  * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -43,23 +43,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * @author Filip Bielejec
  * @author Marc A. Suchard
  * @version $Id$
  */
-public class ExternalInternalBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel, Citable {
-    public ExternalInternalBranchSubstitutionModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList) {
-        super("ExternalInternalBranchSubstitutionModel");
+public class EpochBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel, Citable {
+
+    // TODO Most of the functions below are a copy-n-paste from ExternalInternalBranchSubstitutionModel and need
+    // TODO to be rewritten.
+
+    public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList,
+                                        Parameter epochTimes) {
+        super("EpochBranchSubstitutionModel");
 
         if (substModelList.size() != 2) {
-            throw new IllegalArgumentException("ExternalInternalBranchSubstitutionModel requires two SubstitutionModels");
+            throw new IllegalArgumentException("EpochBranchSubstitutionModel requires two SubstitutionModels");
         }
 
         if (frequencyModelList.size() != 1) {
-            throw new IllegalArgumentException("ExternalInternalBranchSubstitutionModel requires one FrequencyModel");
+            throw new IllegalArgumentException("EpochBranchSubstitutionModel requires one FrequencyModel");
         }
 
         this.substModelList = substModelList;
         this.frequencyModelList = frequencyModelList;
+        this.epochTimes = epochTimes;
 
         for (SubstitutionModel model : substModelList) {
             addModel(model);
@@ -67,10 +74,13 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
         for (FrequencyModel model : frequencyModelList) {
             addModel(model);
         }
+
+        addVariable(epochTimes);
     }
 
     public int getBranchIndex(final Tree tree, final NodeRef node) {
-        return (tree.isExternal(node) ? 1 : 0);
+        // TODO return substModelList.size() if branch will require convolution
+        return 0;
     }
 
     public EigenDecomposition getEigenDecomposition(int branchIndex, int categoryIndex) {
@@ -95,7 +105,7 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
     }
 
     public int getEigenCount() {
-        return 2;
+        return substModelList.size() + 1; // Use an extra eigenIndex to identify branches that need convolution
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -117,12 +127,20 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
     public void updateTransitionMatrices(Beagle beagle, int eigenIndex, final int[] probabilityIndices,
                                          final int[] firstDerivativeIndices, final int[] secondDervativeIndices,
                                          final double[] edgeLengths, int count) {
-        beagle.updateTransitionMatrices(eigenIndex, probabilityIndices, firstDerivativeIndices,
-                secondDervativeIndices, edgeLengths, count);
+
+        if (eigenIndex < substModelList.size()) {
+            // Branch falls in a single category
+            beagle.updateTransitionMatrices(eigenIndex, probabilityIndices, firstDerivativeIndices,
+                    secondDervativeIndices, edgeLengths, count);
+        } else {
+            // Branch requires convolution of two or more matrices
+            // TODO Do fun work here
+        }
     }
 
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
+    private final Parameter epochTimes;
 
     /**
      * @return a list of citations associated with this object
@@ -132,6 +150,7 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
         citations.add(
                 new Citation(
                         new Author[]{
+                                new Author("F", "Bielejec"),
                                 new Author("P", "Lemey"),
                                 new Author("MA", "Suchard")
                         },

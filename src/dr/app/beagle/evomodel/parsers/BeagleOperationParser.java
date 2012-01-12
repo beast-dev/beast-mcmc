@@ -25,6 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleOperationReport;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.PatternList;
@@ -56,6 +57,7 @@ public class BeagleOperationParser extends AbstractXMLObjectParser {
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
         Alignment alignment = (Alignment) xo.getChild(Alignment.class);
+        GammaSiteRateModel substitutionModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 
         PrintWriter branch = null, operation = null;
 
@@ -66,7 +68,7 @@ public class BeagleOperationParser extends AbstractXMLObjectParser {
             operation = XMLParser.getFilePrintWriter(xo, OPERATION_REPORT, OPERATION_FILE_NAME);
         }
 
-        return new BeagleOperationReport(treeModel, patternList, rateModel, alignment, branch, operation);
+        return new BeagleOperationReport(treeModel, patternList, rateModel, substitutionModel, alignment, branch, operation);
     }
 
     //************************************************************************
@@ -85,6 +87,7 @@ public class BeagleOperationParser extends AbstractXMLObjectParser {
             new ElementRule(PatternList.class, 2, 2),
             new ElementRule(TreeModel.class),
             new ElementRule(BranchRateModel.class),
+            new ElementRule(GammaSiteRateModel.class),
 //            new ElementRule(Alignment.class),
             AttributeRule.newStringRule(BRANCH_FILE_NAME, true),
             AttributeRule.newStringRule(OPERATION_FILE_NAME, true),

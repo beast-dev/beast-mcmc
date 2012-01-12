@@ -1,7 +1,7 @@
 /*
- * TreeLikelihood.java
+ * BeagleTreeLikelihood.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -76,6 +76,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
+    private static final boolean TRY_EPOCH = false;
+
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
                                 BranchSubstitutionModel branchSubstitutionModel,
@@ -113,7 +115,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (!(branchSubstitutionModel instanceof HomogenousBranchSubstitutionModel)) {
                 logger.info("  Branch site model used: " + branchSubstitutionModel.getModelName());
                 if (branchSubstitutionModel instanceof Citable) {
-                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable) branchSubstitutionModel,"",""));
+                    logger.info("      Please cite: " + Citable.Utils.getCitationString((Citable) branchSubstitutionModel, "", ""));
                 }
             }
             eigenCount = this.branchSubstitutionModel.getEigenCount();
@@ -450,7 +452,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     /**
      * Sets the partials from a sequence in an alignment.
-     *
      */
     protected final void setPartials(Beagle beagle,
                                      TipStatesModel tipStatesModel,
@@ -568,9 +569,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             updateAllNodes();
 
         } else if (model == tipStatesModel) {
-            if(object instanceof Taxon) {
-                for(int i=0; i<treeModel.getNodeCount(); i++)
-                    if(treeModel.getNodeTaxon(treeModel.getNode(i))!=null && treeModel.getNodeTaxon(treeModel.getNode(i)).getId().equalsIgnoreCase(((Taxon)object).getId()))
+            if (object instanceof Taxon) {
+                for (int i = 0; i < treeModel.getNodeCount(); i++)
+                    if (treeModel.getNodeTaxon(treeModel.getNode(i)) != null && treeModel.getNodeTaxon(treeModel.getNode(i)).getId().equalsIgnoreCase(((Taxon) object).getId()))
                         updateNode(treeModel.getNode(i));
             } else
                 updateAllNodes();
@@ -731,13 +732,25 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
-                beagle.updateTransitionMatrices(
-                        eigenBufferHelper.getOffsetIndex(i),
-                        matrixUpdateIndices[i],
-                        null,
-                        null,
-                        branchLengths[i],
-                        branchUpdateCount[i]);
+
+                if (TRY_EPOCH) {
+                    branchSubstitutionModel.updateTransitionMatrices(
+                            beagle,
+                            eigenBufferHelper.getOffsetIndex(i),
+                            matrixUpdateIndices[i],
+                            null,
+                            null,
+                            branchLengths[i],
+                            branchUpdateCount[i]);
+                } else {
+                    beagle.updateTransitionMatrices(
+                            eigenBufferHelper.getOffsetIndex(i),
+                            matrixUpdateIndices[i],
+                            null,
+                            null,
+                            branchLengths[i],
+                            branchUpdateCount[i]);
+                }
             }
         }
 

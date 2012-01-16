@@ -35,13 +35,19 @@ import dr.inference.model.Variable;
 import org.apache.commons.math.FunctionEvaluationException;
 
 /**
- * This class gives an SIR trajectory and hands off a population size at a given point in time.
+ * This class gives an SIR trajectory and hands off a rate of coalescence at a given point in time.
  *
+ * transmissionRateParameter is the number of contacts an infected individual makes per time unit
+ * recoveryRateParameter is the number of recovery events an infected individual makes per time unit
+ * susceptibleParameter is the number of susceptible hosts at present day (t=0)
+ * infectedParameter is the number of infected hosts at present day (t=0)
+ * recoveredParameter is the number of recovered hosts at present day (t=0)
+ *
+ * @author: Trevor Bedford
  * @author: Tanja Stadler
  * @author: Denise Kuehnert
  * @author: David Rasmussen
  * @author: Sam Lycett
- * @author: Trevor Bedford
  * @author: Erik Volz
  * @author Alexei Drummond
  * @author Andrew Rambaut
@@ -57,9 +63,13 @@ public class SIRModel extends DemographicModel {
      */
     public SIRModel(Parameter transmissionRateParameter,
                     Parameter recoveryRateParameter,
+                    Parameter susceptiblesParameter,
+                    Parameter infectedsParameter,
+                    Parameter recoveredsParameter,
                     Type units) {
 
-        this(SIRModelParser.SIR_MODEL, transmissionRateParameter, recoveryRateParameter, units);
+        this(SIRModelParser.SIR_MODEL, transmissionRateParameter, recoveryRateParameter,
+            susceptiblesParameter, infectedsParameter, recoveredsParameter, units);
     }
 
     /**
@@ -68,6 +78,9 @@ public class SIRModel extends DemographicModel {
     public SIRModel(String name,
                     Parameter transmissionRateParameter,
                     Parameter recoveryRateParameter,
+                    Parameter susceptiblesParameter,
+                    Parameter infectedsParameter,
+                    Parameter recoveredsParameter,
                     Type units) {
 
         super(name);
@@ -82,13 +95,28 @@ public class SIRModel extends DemographicModel {
         addVariable(recoveryRateParameter);
         recoveryRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
+        this.susceptiblesParameter = susceptiblesParameter;
+        addVariable(susceptiblesParameter);
+        susceptiblesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+
+        this.infectedsParameter = infectedsParameter;
+        addVariable(infectedsParameter);
+        infectedsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+
+        this.recoveredsParameter = recoveredsParameter;
+        addVariable(recoveredsParameter);
+        recoveredsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+
         setUnits(units);
     }
 
     @Override
     protected void handleVariableChangedEvent(final Variable variable, final int index, final Variable.ChangeType type) {
-        demographicFunction.setBeta(transmissionRateParameter.getParameterValue(0));
-        demographicFunction.setGamma(recoveryRateParameter.getParameterValue(0));
+        demographicFunction.setTransmissionRate(transmissionRateParameter.getParameterValue(0));
+        demographicFunction.setRecoveryRate(recoveryRateParameter.getParameterValue(0));
+        demographicFunction.setSusceptibles(susceptiblesParameter.getParameterValue(0));
+        demographicFunction.setInfecteds(infectedsParameter.getParameterValue(0));
+        demographicFunction.setRecovereds(recoveredsParameter.getParameterValue(0));
     }
 
     public DemographicFunction getDemographicFunction() {
@@ -97,6 +125,9 @@ public class SIRModel extends DemographicModel {
 
     Parameter transmissionRateParameter = null;
     Parameter recoveryRateParameter = null;
+    Parameter susceptiblesParameter = null;
+    Parameter infectedsParameter = null;
+    Parameter recoveredsParameter = null;
 
     boolean functionKnown = false;
 
@@ -110,16 +141,34 @@ public class SIRModel extends DemographicModel {
             super(units);
         }
 
-        double beta = 1.0;
-        double gamma = 1.0;
+        double transmissionRate = 1.0;
+        double recoveryRate = 1.0;
+        double susceptibles = 1.0;
+        double infecteds = 1.0;
+        double recovereds = 1.0;
 
-        public void setBeta(final double beta) {
-            this.beta = beta;
+        public void setTransmissionRate(final double transmissionRate) {
+            this.transmissionRate = transmissionRate;
             functionKnown = false;
         }
 
-        public void setGamma(final double gamma) {
-            this.gamma = gamma;
+        public void setRecoveryRate(final double recoveryRate) {
+            this.recoveryRate = recoveryRate;
+            functionKnown = false;
+        }
+
+        public void setSusceptibles(final double susceptibles) {
+            this.susceptibles = susceptibles;
+            functionKnown = false;
+        }
+
+        public void setInfecteds(final double infecteds) {
+            this.infecteds = infecteds;
+            functionKnown = false;
+        }
+
+        public void setRecovereds(final double recovereds) {
+            this.recovereds = recovereds;
             functionKnown = false;
         }
 
@@ -128,7 +177,7 @@ public class SIRModel extends DemographicModel {
                 calculateDemographicFunction();
                 functionKnown = true;
             }
-            return 0;
+            return 1.0;
         }
 
         public double getLogDemographic(final double t) {
@@ -144,11 +193,15 @@ public class SIRModel extends DemographicModel {
         }
 
         public double getIntensity(final double t) {
-            throw new RuntimeException("Function not implemented");
+            return 1.0;
         }
 
         public double getInverseIntensity(final double x) {
-            throw new RuntimeException("Function not implemented");
+            return 1.0;
+        }
+
+        public double getIntegral(final double start, final double finish) {
+            return 1.0;
         }
 
         // ignore the rest:

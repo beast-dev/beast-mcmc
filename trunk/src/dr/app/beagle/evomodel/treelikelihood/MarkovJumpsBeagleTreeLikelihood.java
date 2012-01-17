@@ -304,7 +304,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
 
             final int modelNumberFromrRegistry = branchModelNumber.get(r);
-            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode);
+            int dummy = 0;
+            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
 
             if (modelNumberFromrRegistry == modelNumberFromTree) {
                 if (useUniformization) {

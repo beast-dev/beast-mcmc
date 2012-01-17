@@ -36,6 +36,8 @@ import org.apache.commons.math.FunctionEvaluationException;
 
 /**
  * This class gives an SIR trajectory and hands off a rate of coalescence at a given point in time.
+ * SIR trajectories are simulated deterministically
+ * Transmission is frequency-dependent
  *
  * transmissionRateParameter is the number of contacts an infected individual makes per time unit
  * recoveryRateParameter is the number of recovery events an infected individual makes per time unit
@@ -43,12 +45,12 @@ import org.apache.commons.math.FunctionEvaluationException;
  * infectedParameter is the number of infected hosts at present day (t=0)
  * recoveredParameter is the number of recovered hosts at present day (t=0)
  *
- * @author: Trevor Bedford
- * @author: Tanja Stadler
- * @author: Denise Kuehnert
- * @author: David Rasmussen
- * @author: Sam Lycett
- * @author: Erik Volz
+ * @author Trevor Bedford
+ * @author Tanja Stadler
+ * @author Denise Kuehnert
+ * @author David Rasmussen
+ * @author Sam Lycett
+ * @author Erik Volz
  * @author Alexei Drummond
  * @author Andrew Rambaut
  * @version $Id: ExponentialGrowthModel.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $

@@ -76,7 +76,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
-    private static final boolean TRY_EPOCH = false;
+    private static final boolean TRY_EPOCH = true;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -154,6 +154,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
+            
+            this.branchSubstitutionModel.setFirstBuffer(matrixBufferHelper.getBufferCount());
 
             // Attempt to get the resource order from the System Property
             if (resourceOrder == null) {
@@ -233,7 +235,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     stateCount,
                     patternCount,
                     eigenBufferHelper.getBufferCount(),            // eigenBufferCount
-                    matrixBufferHelper.getBufferCount(),
+                    matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(),
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
@@ -713,6 +715,16 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             // we are currently assuming a no-category model...
             for (int i = 0; i < eigenCount; i++) {
+            	if (TRY_EPOCH) {
+            		  eigenBufferHelper.flipOffset(i);
+            		  
+            		  branchSubstitutionModel.setEigenDecomposition(
+            				  beagle, i, eigenBufferHelper, 0
+            				  );
+            		
+            		
+            	} else {
+            	
                 EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
 
                 eigenBufferHelper.flipOffset(i);
@@ -722,6 +734,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                         ed.getEigenVectors(),
                         ed.getInverseEigenVectors(),
                         ed.getEigenValues());
+            	}
             }
         }
 
@@ -736,7 +749,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 if (TRY_EPOCH) {
                     branchSubstitutionModel.updateTransitionMatrices(
                             beagle,
-                            eigenBufferHelper.getOffsetIndex(i),
+                            i,
+                            eigenBufferHelper,
                             matrixUpdateIndices[i],
                             null,
                             null,
@@ -971,9 +985,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
             // then set which matrix to update
-            final int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node);
+            final int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+            final int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
             final int updateCount = branchUpdateCount[eigenIndex];
-            matrixUpdateIndices[eigenIndex][updateCount] = matrixBufferHelper.getOffsetIndex(nodeNum);
+            matrixUpdateIndices[eigenIndex][updateCount] = bufferIndex;
 
             branchLengths[eigenIndex][updateCount] = branchTime;
             branchUpdateCount[eigenIndex]++;
@@ -1172,60 +1187,60 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private boolean ascertainedSitePatterns = false;
 
-    protected class BufferIndexHelper {
-        /**
-         * @param maxIndexValue the number of possible input values for the index
-         * @param minIndexValue the minimum index value to have the mirrored buffers
-         */
-        BufferIndexHelper(int maxIndexValue, int minIndexValue) {
-            this.maxIndexValue = maxIndexValue;
-            this.minIndexValue = minIndexValue;
-
-            offsetCount = maxIndexValue - minIndexValue;
-            indexOffsets = new int[offsetCount];
-            storedIndexOffsets = new int[offsetCount];
-        }
-
-        public int getBufferCount() {
-            return 2 * offsetCount + minIndexValue;
-        }
-
-        void flipOffset(int i) {
-            if (i >= minIndexValue) {
-                indexOffsets[i - minIndexValue] = offsetCount - indexOffsets[i - minIndexValue];
-            } // else do nothing
-        }
-
-        int getOffsetIndex(int i) {
-            if (i < minIndexValue) {
-                return i;
-            }
-            return indexOffsets[i - minIndexValue] + i;
-        }
-
-        void getIndices(int[] outIndices) {
-            for (int i = 0; i < maxIndexValue; i++) {
-                outIndices[i] = getOffsetIndex(i);
-            }
-        }
-
-        void storeState() {
-            System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
-
-        }
-
-        void restoreState() {
-            int[] tmp = storedIndexOffsets;
-            storedIndexOffsets = indexOffsets;
-            indexOffsets = tmp;
-        }
-
-        private final int maxIndexValue;
-        private final int minIndexValue;
-        private final int offsetCount;
-
-        private int[] indexOffsets;
-        private int[] storedIndexOffsets;
-
-    }
+//    protected class BufferIndexHelper {
+//        /**
+//         * @param maxIndexValue the number of possible input values for the index
+//         * @param minIndexValue the minimum index value to have the mirrored buffers
+//         */
+//        BufferIndexHelper(int maxIndexValue, int minIndexValue) {
+//            this.maxIndexValue = maxIndexValue;
+//            this.minIndexValue = minIndexValue;
+//
+//            offsetCount = maxIndexValue - minIndexValue;
+//            indexOffsets = new int[offsetCount];
+//            storedIndexOffsets = new int[offsetCount];
+//        }
+//
+//        public int getBufferCount() {
+//            return 2 * offsetCount + minIndexValue;
+//        }
+//
+//        void flipOffset(int i) {
+//            if (i >= minIndexValue) {
+//                indexOffsets[i - minIndexValue] = offsetCount - indexOffsets[i - minIndexValue];
+//            } // else do nothing
+//        }
+//
+//        int getOffsetIndex(int i) {
+//            if (i < minIndexValue) {
+//                return i;
+//            }
+//            return indexOffsets[i - minIndexValue] + i;
+//        }
+//
+//        void getIndices(int[] outIndices) {
+//            for (int i = 0; i < maxIndexValue; i++) {
+//                outIndices[i] = getOffsetIndex(i);
+//            }
+//        }
+//
+//        void storeState() {
+//            System.arraycopy(indexOffsets, 0, storedIndexOffsets, 0, indexOffsets.length);
+//
+//        }
+//
+//        void restoreState() {
+//            int[] tmp = storedIndexOffsets;
+//            storedIndexOffsets = indexOffsets;
+//            indexOffsets = tmp;
+//        }
+//
+//        private final int maxIndexValue;
+//        private final int minIndexValue;
+//        private final int offsetCount;
+//
+//        private int[] indexOffsets;
+//        private int[] storedIndexOffsets;
+//
+//    }
 }

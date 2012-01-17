@@ -29,6 +29,7 @@ import beagle.Beagle;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.AbstractModel;
@@ -68,8 +69,22 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
             addModel(model);
         }
     }
+    
+	@Override
+	public void setEigenDecomposition(Beagle beagle, int eigenIndex,
+			BufferIndexHelper bufferHelper, int dummy) {
+        EigenDecomposition ed = getEigenDecomposition(eigenIndex, dummy);
 
-    public int getBranchIndex(final Tree tree, final NodeRef node) {
+        beagle.setEigenDecomposition(
+//                offsetIndex,
+        		eigenIndex,
+                ed.getEigenVectors(),
+                ed.getInverseEigenVectors(),
+                ed.getEigenValues());
+		
+	}    
+
+    public int getBranchIndex(final Tree tree, final NodeRef node, int bufferIndex) {
         return (tree.isExternal(node) ? 1 : 0);
     }
 
@@ -114,9 +129,14 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
     protected void acceptState() {
     }
 
-    public void updateTransitionMatrices(Beagle beagle, int eigenIndex, final int[] probabilityIndices,
-                                         final int[] firstDerivativeIndices, final int[] secondDervativeIndices,
-                                         final double[] edgeLengths, int count) {
+    public void updateTransitionMatrices( Beagle beagle,
+            int eigenIndex,
+            BufferIndexHelper bufferHelper,
+            final int[] probabilityIndices,
+            final int[] firstDerivativeIndices,
+            final int[] secondDervativeIndices,
+            final double[] edgeLengths,
+            int count) {
         beagle.updateTransitionMatrices(eigenIndex, probabilityIndices, firstDerivativeIndices,
                 secondDervativeIndices, edgeLengths, count);
     }
@@ -140,4 +160,16 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
         );
         return citations;
     }
+
+	@Override
+	public int getExtraBufferCount() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void setFirstBuffer(int bufferCount) {
+		// TODO Auto-generated method stub
+		
+	}
 }

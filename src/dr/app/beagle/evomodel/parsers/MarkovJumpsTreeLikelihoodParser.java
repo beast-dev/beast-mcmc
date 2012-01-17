@@ -53,8 +53,10 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
 
-        SubstitutionModel substModel = siteRateModel.getSubstitutionModel();
-//        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+        if (substModel == null) {
+            substModel = siteRateModel.getSubstitutionModel();
+        }
 
         DataType dataType = substModel.getDataType();
 
@@ -184,7 +186,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new ElementRule(GammaSiteRateModel.class),
                     new ElementRule(BranchSubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),
-//                    new ElementRule(SubstitutionModel.class),
+                    new ElementRule(SubstitutionModel.class, true),
                     AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
                     new ElementRule(COUNTS,

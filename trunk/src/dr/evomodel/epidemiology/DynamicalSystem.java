@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 
 public class DynamicalSystem {
 
@@ -50,10 +51,10 @@ public class DynamicalSystem {
         f4.addMultiplier(infecteds);
         syst.addForce(f4);
 
-        for (int i=0; i<10; i++) {
+        while (syst.getTime() < 400) {
             syst.step();
         }
-        syst.print(0,1,0.1);
+        syst.print(0,400,1);
 
     }
 

@@ -76,7 +76,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
-    private static final boolean TRY_EPOCH = true;
+    private static final boolean TRY_EPOCH = false;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,

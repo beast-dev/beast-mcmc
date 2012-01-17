@@ -55,12 +55,78 @@ public class DynamicalVariable {
         return name;
     }
 
+    public double getTimeAtIndex(int i) {
+        return times.get(i).doubleValue();
+    }
+
+    public double getValueAtIndex(int i) {
+        return values.get(i).doubleValue();
+    }
+
     // pull value closest to given point in time
+    // uses linear interpolation when the exact time point isn't present
     public double getValue(double t) {
+
+        double rval = 0.0;
         Double tD = new Double(t);
         int index = Collections.binarySearch(times, tD);
-        Double vD = values.get(index);
-        return vD.doubleValue();
+
+        // found exact match
+        if (index >= 0) {
+            Double vD = values.get(index);
+            rval = vD.doubleValue();
+        }
+
+        // need to interpolate between two adjacent values
+        else {
+            int a = Math.abs(index) - 2;
+            int b = Math.abs(index) - 1;
+            double t0 = getTimeAtIndex(a);
+            double v0 = getValueAtIndex(a);
+            double t1 = getTimeAtIndex(b);
+            double v1 = getValueAtIndex(b);
+            rval = v0 + (t-t0) * ( (v1-v0) / (t1-t0) );
+        }
+
+        return rval;
+    }
+
+    // return integral between two points in time
+    // approximation via trapezoidal rule
+    public double getIntegral(double start, double finish) {
+
+        // first index after start and last index before finish
+        int a = 0;
+        int b = 0;
+        double sum = 0.0;
+
+        // if not exact match, need first index after than start
+        int index = Collections.binarySearch(times, new Double(start));
+        if (index >= 0)
+            a = index;
+        else
+            a = Math.abs(index) - 1;
+
+         // if not exact match, need last index before than finish
+        index = Collections.binarySearch(times, new Double(finish));
+        if (index >= 0)
+            b = index;
+        else
+            b = Math.abs(index) - 2;
+
+        // from start to a
+        sum += 0.5 * (getTimeAtIndex(a) - start) * (getValueAtIndex(a) + getValue(start));
+
+        // between a and b
+        for (index = a; index < b; index++) {
+            sum += 0.5 * (getTimeAtIndex(index+1) - getTimeAtIndex(index)) * (getValueAtIndex(index+1) + getValueAtIndex(index));
+        }
+
+        // b to finish
+        sum += 0.5 * (finish - getTimeAtIndex(b)) * (getValue(finish) + getValueAtIndex(b));
+
+        return sum;
+
     }
 
     public void print() {

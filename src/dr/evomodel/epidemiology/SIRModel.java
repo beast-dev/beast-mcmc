@@ -131,79 +131,93 @@ public class SIRModel extends DemographicModel {
     Parameter infectedsParameter = null;
     Parameter recoveredsParameter = null;
 
-    boolean functionKnown = false;
-
     SIRDemographicFunction demographicFunction = null;
 
     class SIRDemographicFunction extends DemographicFunction.Abstract {
-        /**
-         * Construct demographic model with default settings
-         */
+
+        DynamicalSystem syst = new DynamicalSystem(0, 0.001);
+        double transmissionRate = 0.01;
+        double recoveryRate = 0.01;
+        double presentSusceptibles = 1000.0;
+        double presentInfecteds = 1000.0;
+        double presentRecovereds = 1000.0;
+
         public SIRDemographicFunction(Type units) {
+
             super(units);
+
+
+            syst.addVariable("susceptibles", 0, presentSusceptibles);
+            syst.addVariable("infecteds", 0, presentInfecteds);
+            syst.addVariable("recovereds", 0, presentRecovereds);
+            syst.addVariable("total", 0, presentSusceptibles + presentInfecteds + presentRecovereds);
+            syst.addForce("contact", transmissionRate, new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
+            syst.addForce("recovery", recoveryRate, new String[]{"infecteds"}, new String[]{}, "infecteds", "recovereds");
+
         }
 
-        double transmissionRate = 1.0;
-        double recoveryRate = 1.0;
-        double susceptibles = 1.0;
-        double infecteds = 1.0;
-        double recovereds = 1.0;
-
-        public void setTransmissionRate(final double transmissionRate) {
-            this.transmissionRate = transmissionRate;
-            functionKnown = false;
+        public void reset() {
+            syst.resetVar("susceptibles", 0, presentSusceptibles);
+            syst.resetVar("infecteds", 0, presentInfecteds);
+            syst.resetVar("recovereds", 0, presentRecovereds);
+            syst.resetVar("total", 0, presentSusceptibles + presentInfecteds + presentRecovereds);
+            syst.resetForce("contact", transmissionRate);
+            syst.resetForce("recovery", recoveryRate);
+            syst.resetTime();
         }
 
-        public void setRecoveryRate(final double recoveryRate) {
-            this.recoveryRate = recoveryRate;
-            functionKnown = false;
+        public void setTransmissionRate(final double beta) {
+            this.transmissionRate = beta;
+            reset();
         }
 
-        public void setSusceptibles(final double susceptibles) {
-            this.susceptibles = susceptibles;
-            functionKnown = false;
+        public void setRecoveryRate(final double gamma) {
+            this.recoveryRate = gamma;
+            reset();
         }
 
-        public void setInfecteds(final double infecteds) {
-            this.infecteds = infecteds;
-            functionKnown = false;
+        public void setSusceptibles(final double s) {
+            this.presentSusceptibles = s;
+            reset();
         }
 
-        public void setRecovereds(final double recovereds) {
-            this.recovereds = recovereds;
-            functionKnown = false;
+        public void setInfecteds(final double i) {
+            this.presentInfecteds = i;
+            reset();
         }
 
+        public void setRecovereds(final double r) {
+            this.presentRecovereds = r;
+            reset();
+        }
+
+        // return N(t)
         public double getDemographic(final double t) {
-            if (!functionKnown) {
-                calculateDemographicFunction();
-                functionKnown = true;
-            }
-            return 1.0;
+            double numer = syst.getValue("infecteds", t) * syst.getValue("total", t);
+            double denom = 2.0 * transmissionRate * syst.getValue("susceptibles", t);
+            return numer / denom;
         }
 
+        // return log N(t)
         public double getLogDemographic(final double t) {
-            if (!functionKnown) {
-                calculateDemographicFunction();
-                functionKnown = true;
-            }
-            return 0;
+            return Math.log(getDemographic(t));
         }
 
-        private void calculateDemographicFunction() {
-            // todo
-        }
-
+        // return t/N(t)
         public double getIntensity(final double t) {
             return 1.0;
         }
 
+        // return x*N(t)
         public double getInverseIntensity(final double x) {
             return 1.0;
         }
 
+        // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
-            return 1.0;
+            double numer = 2.0 * transmissionRate * syst.getIntegral("susceptibles", start, finish);
+            double denom = syst.getIntegral("infecteds", start, finish) * syst.getIntegral("total", start, finish);
+            return numer / denom;
         }
 
         // ignore the rest:

@@ -2,59 +2,40 @@ package dr.evomodel.epidemiology;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Collections;
+import java.util.HashMap;
 
 public class DynamicalSystem {
 
     private List<DynamicalVariable> variables = new ArrayList<DynamicalVariable>();
     private List<DynamicalForce> forces = new ArrayList<DynamicalForce>();
+    private HashMap<String,DynamicalVariable> varMap = new HashMap<String,DynamicalVariable>();
+    private HashMap<String,DynamicalForce> forceMap = new HashMap<String,DynamicalForce>();
     private double currentTime = 0.0;
     private double timeStep = 0.0;
 
     public static void main(String[] args) {
 
-        DynamicalSystem syst = new DynamicalSystem(0, 0.1);
+        DynamicalSystem syst = new DynamicalSystem(0, 0.001);
 
         double time = syst.getTime();
-        double beta = 0.25;
-        double gamma = 0.2;
+        double transmissionRate = 0.01;
+        double recoveryRate = 0.01;
 
-        DynamicalVariable susceptibles = new DynamicalVariable("susceptibles", time, 999.0);
-        syst.addVariable(susceptibles);
+        syst.addVariable("susceptibles", time, 1000.0);
+        syst.addVariable("infecteds", time, 1000.0);
+        syst.addVariable("recovereds", time, 1000.0);
+        syst.addVariable("total", time, 3000.0);
+        syst.addForce("contact", transmissionRate, new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
+        syst.addForce("recovery", recoveryRate, new String[]{"infecteds"}, new String[]{}, "infecteds", "recovereds");
 
-        DynamicalVariable infecteds = new DynamicalVariable("infecteds", time, 1.0);
-        syst.addVariable(infecteds);
+//        while (syst.getTime() < 400) {
+//            syst.step();
+//        }
+//        syst.print(0,400,1);
 
-        DynamicalVariable recovereds = new DynamicalVariable("recovereds", time, 0.0);
-        syst.addVariable(recovereds);
-
-        DynamicalVariable total = new DynamicalVariable("total", time, 1000.0);
-        syst.addVariable(total);
-
-        DynamicalForce f1 = new DynamicalForce("f1", -1*beta, susceptibles);
-        f1.addMultiplier(infecteds);
-        f1.addMultiplier(susceptibles);
-        f1.addDivisor(total);
-        syst.addForce(f1);
-
-        DynamicalForce f2 = new DynamicalForce("f2", beta, infecteds);
-        f2.addMultiplier(infecteds);
-        f2.addMultiplier(susceptibles);
-        f2.addDivisor(total);
-        syst.addForce(f2);
-
-        DynamicalForce f3 = new DynamicalForce("f3", -1*gamma, infecteds);
-        f3.addMultiplier(infecteds);
-        syst.addForce(f3);
-
-        DynamicalForce f4 = new DynamicalForce("f4", gamma, recovereds);
-        f4.addMultiplier(infecteds);
-        syst.addForce(f4);
-
-        while (syst.getTime() < 400) {
-            syst.step();
-        }
-        syst.print(0,400,1);
+        double val = syst.getValue("susceptibles", 2);
+        System.out.println(val);
+        syst.print(0,2,0.01);
 
     }
 
@@ -67,11 +48,87 @@ public class DynamicalSystem {
         return currentTime;
     }
 
-    public void addVariable(DynamicalVariable var) {
+    public int size() {
+        return variables.size();
+    }
+
+    public DynamicalVariable getVar(String n) {
+        return varMap.get(n);
+    }
+
+   public DynamicalForce getForce(String n) {
+        return forceMap.get(n);
+    }
+
+    public void resetVar(String n, double t0, double v0) {
+        DynamicalVariable var = getVar(n);
+        var.reset(t0, v0);
+    }
+
+    public void resetForce(String n, double c) {
+        DynamicalForce frc = getForce(n);
+        frc.reset(c);
+    }
+
+    public void resetTime() {
+        currentTime = 0.0;
+    }
+
+    // get value of indexed variable at time t
+    // dynamically extend trace
+    public double getValue(int index, double t) {
+        while (currentTime < t) {
+            step();
+        }
+        DynamicalVariable var = variables.get(index);
+        return var.getValue(t);
+    }
+
+    // get value of named variable at time t
+    // dynamically extend trace
+    public double getValue(String n, double t) {
+        while (currentTime < t) {
+            step();
+        }
+        DynamicalVariable var = getVar(n);
+        return var.getValue(t);
+    }
+
+    // get integral of indexed variable between times start and finish
+    // dynamically extend trace
+    public double getIntegral(int index, double start, double finish) {
+        while (currentTime < finish) {
+            step();
+        }
+        DynamicalVariable var = variables.get(index);
+        return var.getIntegral(start, finish);
+    }
+
+    // get integral of named variable between times start and finish
+    // dynamically extend trace
+    public double getIntegral(String n, double start, double finish) {
+        while (currentTime < finish) {
+            step();
+        }
+        DynamicalVariable var = getVar(n);
+        return var.getIntegral(start, finish);
+    }
+
+    public void addVariable(String n, double t0, double v0) {
+        DynamicalVariable var = new DynamicalVariable(n, t0, v0);
+        varMap.put(n, var);
         variables.add(var);
     }
 
-    public void addForce(DynamicalForce frc) {
+    public void addForce(String n, double coeff, String[] mult, String[] div, String increasing, String decreasing) {
+        DynamicalForce frc = new DynamicalForce(n, coeff, getVar(increasing), getVar(decreasing));
+        for (String s : mult) {
+            frc.addMultiplier(getVar(s));
+        }
+        for (String s : div) {
+            frc.addDivisor(getVar(s));
+        }
+        forceMap.put(n, frc);
         forces.add(frc);
     }
 

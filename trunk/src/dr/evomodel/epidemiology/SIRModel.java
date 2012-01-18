@@ -108,6 +108,7 @@ public class SIRModel extends DemographicModel {
     @Override
     protected void handleVariableChangedEvent(final Variable variable, final int index, final Variable.ChangeType type) {
         demographicFunction.reset();
+        fireModelChanged();
     }
 
     @Override
@@ -134,7 +135,7 @@ public class SIRModel extends DemographicModel {
 
     class SIRDemographicFunction extends DemographicFunction.Abstract {
 
-        DynamicalSystem syst = new DynamicalSystem(0.001);
+        DynamicalSystem syst = new DynamicalSystem(0.01);
 
         public SIRDemographicFunction(Type units) {
 
@@ -152,10 +153,10 @@ public class SIRModel extends DemographicModel {
         }
 
         public void reset() {
-            syst.resetVar("susceptibles", 0, susceptiblesParameter.getParameterValue(0));
-            syst.resetVar("infecteds", 0, infectedsParameter.getParameterValue(0));
-            syst.resetVar("recovereds", 0, recoveredsParameter.getParameterValue(0));
-            syst.resetVar("total", 0, susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
+            syst.resetVar("susceptibles", susceptiblesParameter.getParameterValue(0));
+            syst.resetVar("infecteds", infectedsParameter.getParameterValue(0));
+            syst.resetVar("recovereds", recoveredsParameter.getParameterValue(0));
+            syst.resetVar("total", susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
                     + recoveredsParameter.getParameterValue(0));
             syst.resetForce("contact", transmissionRateParameter.getParameterValue(0));
             syst.resetForce("recovery", recoveryRateParameter.getParameterValue(0));

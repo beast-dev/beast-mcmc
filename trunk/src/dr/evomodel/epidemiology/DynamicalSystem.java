@@ -61,9 +61,9 @@ public class DynamicalSystem {
         return forceMap.get(n);
     }
 
-    public void resetVar(String n, double t0, double v0) {
+    public void resetVar(String n, double v0) {
         DynamicalVariable var = getVar(n);
-        var.reset(t0, v0);
+        var.reset(v0);
     }
 
     public void resetForce(String n, double c) {
@@ -138,7 +138,7 @@ public class DynamicalSystem {
     }
 
     public void addVariable(String n, double v0) {
-        DynamicalVariable var = new DynamicalVariable(n, 0, v0);
+        DynamicalVariable var = new DynamicalVariable(n, v0);
         varMap.put(n, var);
         variables.add(var);
     }

@@ -18,11 +18,11 @@ public class DynamicalVariable {
     private double storedValue = 0.0;
 
     // initialize variable
-    public DynamicalVariable(String n, double t0, double v0) {
+    public DynamicalVariable(String n, double v0) {
         name = n;
-        currentTime = t0;
+        currentTime = 0.0;
         currentValue = v0;
-        add(t0, v0);
+        add(currentTime, currentValue);
     }
 
     // add a time / value pair
@@ -46,10 +46,12 @@ public class DynamicalVariable {
     }
 
     // reset arrays
-    public void reset(double t0, double v0) {
+    public void reset(double v0) {
+        currentTime = 0.0;
+        currentValue = v0;
         times.clear();
         values.clear();
-        add(t0, v0);
+        add(currentTime, currentValue);
     }
 
     // copy values to stored state

@@ -46,14 +46,7 @@ import org.apache.commons.math.FunctionEvaluationException;
  * recoveredParameter is the number of recovered hosts at present day (t=0)
  *
  * @author Trevor Bedford
- * @author Tanja Stadler
- * @author Denise Kuehnert
- * @author David Rasmussen
- * @author Sam Lycett
- * @author Erik Volz
- * @author Alexei Drummond
  * @author Andrew Rambaut
- * @version $Id: ExponentialGrowthModel.java,v 1.14 2005/05/24 20:25:57 rambaut Exp $
  */
 public class SIRModel extends DemographicModel {
 
@@ -114,11 +107,17 @@ public class SIRModel extends DemographicModel {
 
     @Override
     protected void handleVariableChangedEvent(final Variable variable, final int index, final Variable.ChangeType type) {
-        demographicFunction.setTransmissionRate(transmissionRateParameter.getParameterValue(0));
-        demographicFunction.setRecoveryRate(recoveryRateParameter.getParameterValue(0));
-        demographicFunction.setSusceptibles(susceptiblesParameter.getParameterValue(0));
-        demographicFunction.setInfecteds(infectedsParameter.getParameterValue(0));
-        demographicFunction.setRecovereds(recoveredsParameter.getParameterValue(0));
+        demographicFunction.reset();
+    }
+
+    @Override
+    protected void storeState() {
+        demographicFunction.store();
+    }
+
+    @Override
+    protected void restoreState() {
+        demographicFunction.restore();
     }
 
     public DemographicFunction getDemographicFunction() {
@@ -135,66 +134,46 @@ public class SIRModel extends DemographicModel {
 
     class SIRDemographicFunction extends DemographicFunction.Abstract {
 
-        DynamicalSystem syst = new DynamicalSystem(0, 0.001);
-        double transmissionRate = 0.01;
-        double recoveryRate = 0.01;
-        double presentSusceptibles = 1000.0;
-        double presentInfecteds = 1000.0;
-        double presentRecovereds = 1000.0;
+        DynamicalSystem syst = new DynamicalSystem(0.001);
 
         public SIRDemographicFunction(Type units) {
 
             super(units);
 
-
-            syst.addVariable("susceptibles", 0, presentSusceptibles);
-            syst.addVariable("infecteds", 0, presentInfecteds);
-            syst.addVariable("recovereds", 0, presentRecovereds);
-            syst.addVariable("total", 0, presentSusceptibles + presentInfecteds + presentRecovereds);
-            syst.addForce("contact", transmissionRate, new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
-            syst.addForce("recovery", recoveryRate, new String[]{"infecteds"}, new String[]{}, "infecteds", "recovereds");
+            syst.addVariable("susceptibles", 1.0);
+            syst.addVariable("infecteds", 1.0);
+            syst.addVariable("recovereds", 1.0);
+            syst.addVariable("total", 1.0);
+            syst.addForce("contact", 1.0, new String[]{"infecteds","susceptibles"},
+                    new String[]{"total"}, "susceptibles", "infecteds");
+            syst.addForce("recovery", 1.0, new String[]{"infecteds"},
+                    new String[]{}, "infecteds", "recovereds");
 
         }
 
         public void reset() {
-            syst.resetVar("susceptibles", 0, presentSusceptibles);
-            syst.resetVar("infecteds", 0, presentInfecteds);
-            syst.resetVar("recovereds", 0, presentRecovereds);
-            syst.resetVar("total", 0, presentSusceptibles + presentInfecteds + presentRecovereds);
-            syst.resetForce("contact", transmissionRate);
-            syst.resetForce("recovery", recoveryRate);
+            syst.resetVar("susceptibles", 0, susceptiblesParameter.getParameterValue(0));
+            syst.resetVar("infecteds", 0, infectedsParameter.getParameterValue(0));
+            syst.resetVar("recovereds", 0, recoveredsParameter.getParameterValue(0));
+            syst.resetVar("total", 0, susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
+                    + recoveredsParameter.getParameterValue(0));
+            syst.resetForce("contact", transmissionRateParameter.getParameterValue(0));
+            syst.resetForce("recovery", recoveryRateParameter.getParameterValue(0));
             syst.resetTime();
         }
 
-        public void setTransmissionRate(final double beta) {
-            this.transmissionRate = beta;
-            reset();
+        public void store () {
+            syst.store();
         }
 
-        public void setRecoveryRate(final double gamma) {
-            this.recoveryRate = gamma;
-            reset();
-        }
-
-        public void setSusceptibles(final double s) {
-            this.presentSusceptibles = s;
-            reset();
-        }
-
-        public void setInfecteds(final double i) {
-            this.presentInfecteds = i;
-            reset();
-        }
-
-        public void setRecovereds(final double r) {
-            this.presentRecovereds = r;
-            reset();
+        public void restore () {
+            syst.restore();
         }
 
         // return N(t)
         public double getDemographic(final double t) {
             double numer = syst.getValue("infecteds", t) * syst.getValue("total", t);
-            double denom = 2.0 * transmissionRate * syst.getValue("susceptibles", t);
+            double denom = 2.0 * transmissionRateParameter.getParameterValue(0) * syst.getValue("susceptibles", t);
             return numer / denom;
         }
 
@@ -215,7 +194,7 @@ public class SIRModel extends DemographicModel {
 
         // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
-            double numer = 2.0 * transmissionRate * syst.getIntegral("susceptibles", start, finish);
+            double numer = 2.0 * transmissionRateParameter.getParameterValue(0) * syst.getIntegral("susceptibles", start, finish);
             double denom = syst.getIntegral("infecteds", start, finish) * syst.getIntegral("total", start, finish);
             return numer / denom;
         }

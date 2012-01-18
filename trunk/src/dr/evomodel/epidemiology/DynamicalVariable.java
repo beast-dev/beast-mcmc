@@ -12,6 +12,11 @@ public class DynamicalVariable {
     private double currentTime = 0.0;
     private double currentValue = 0.0;
 
+    private List<Double> storedTimes = new ArrayList<Double>();
+    private List<Double> storedValues = new ArrayList<Double>();
+    private double storedTime = 0.0;
+    private double storedValue = 0.0;
+
     // initialize variable
     public DynamicalVariable(String n, double t0, double v0) {
         name = n;
@@ -45,6 +50,42 @@ public class DynamicalVariable {
         times.clear();
         values.clear();
         add(t0, v0);
+    }
+
+    // copy values to stored state
+    public void store() {
+
+        storedTimes.clear();
+        for (Double t : times) {
+            Double tD = new Double(t.doubleValue());
+            storedTimes.add(tD);
+        }
+        storedValues.clear();
+        for (Double v : values) {
+            Double vD = new Double(v.doubleValue());
+            storedValues.add(vD);
+        }
+        storedTime = currentTime;
+        storedValue = currentValue;
+
+    }
+
+    // copy values from stored state
+    public void restore() {
+
+        times.clear();
+        for (Double t : storedTimes) {
+            Double tD = new Double(t.doubleValue());
+            times.add(tD);
+        }
+        values.clear();
+        for (Double v : storedValues) {
+            Double vD = new Double(v.doubleValue());
+            values.add(vD);
+        }
+        currentTime = storedTime;
+        currentValue = storedValue;
+
     }
 
     public int size() {

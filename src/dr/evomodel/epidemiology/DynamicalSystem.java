@@ -19,13 +19,13 @@ public class DynamicalSystem {
 
         DynamicalSystem syst = new DynamicalSystem(0.001);
 
-        double transmissionRate = 0.01;
-        double recoveryRate = 0.01;
+        double transmissionRate = 0.027;
+        double recoveryRate = 0.00054;
 
-        syst.addVariable("susceptibles", 1000.0);
-        syst.addVariable("infecteds", 1000.0);
-        syst.addVariable("recovereds", 1000.0);
-        syst.addVariable("total", 3000.0);
+        syst.addVariable("susceptibles", 330);
+        syst.addVariable("infecteds", 23325);
+        syst.addVariable("recovereds", 4524);
+        syst.addVariable("total", 330 + 23325 + 4524);
         syst.addForce("contact", transmissionRate, new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
         syst.addForce("recovery", recoveryRate, new String[]{"infecteds"}, new String[]{}, "infecteds", "recovereds");
 
@@ -34,9 +34,9 @@ public class DynamicalSystem {
 //        }
 //        syst.print(0,400,1);
 
-        double val = syst.getValue("susceptibles", 2);
+        double val = syst.getValue("susceptibles", 500);
         System.out.println(val);
-        syst.print(0,2,0.01);
+        syst.print(0,500,10);
 
     }
 

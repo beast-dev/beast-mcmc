@@ -12,6 +12,8 @@ public class DynamicalForce {
     private DynamicalVariable increasingVariable;
     private DynamicalVariable decreasingVariable;
 
+    private double storedCoefficient = 0.0;
+
     public DynamicalForce(String n, double c, DynamicalVariable increasing, DynamicalVariable decreasing) {
         name = n;
         coefficient = c;
@@ -34,6 +36,14 @@ public class DynamicalForce {
     // reset
     public void reset(double c) {
         coefficient = c;
+    }
+
+    public void store() {
+        storedCoefficient = coefficient;
+    }
+
+    public void restore() {
+        coefficient = storedCoefficient;
     }
 
     public double getForce(double t) {

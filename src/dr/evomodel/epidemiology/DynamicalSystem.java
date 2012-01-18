@@ -13,18 +13,19 @@ public class DynamicalSystem {
     private double currentTime = 0.0;
     private double timeStep = 0.0;
 
+    private double storedTime = 0.0;
+
     public static void main(String[] args) {
 
-        DynamicalSystem syst = new DynamicalSystem(0, 0.001);
+        DynamicalSystem syst = new DynamicalSystem(0.001);
 
-        double time = syst.getTime();
         double transmissionRate = 0.01;
         double recoveryRate = 0.01;
 
-        syst.addVariable("susceptibles", time, 1000.0);
-        syst.addVariable("infecteds", time, 1000.0);
-        syst.addVariable("recovereds", time, 1000.0);
-        syst.addVariable("total", time, 3000.0);
+        syst.addVariable("susceptibles", 1000.0);
+        syst.addVariable("infecteds", 1000.0);
+        syst.addVariable("recovereds", 1000.0);
+        syst.addVariable("total", 3000.0);
         syst.addForce("contact", transmissionRate, new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
         syst.addForce("recovery", recoveryRate, new String[]{"infecteds"}, new String[]{}, "infecteds", "recovereds");
 
@@ -39,8 +40,8 @@ public class DynamicalSystem {
 
     }
 
-    public DynamicalSystem(double t, double dt) {
-        currentTime = t;
+    public DynamicalSystem(double dt) {
+        currentTime = 0.0;
         timeStep = dt;
     }
 
@@ -72,6 +73,28 @@ public class DynamicalSystem {
 
     public void resetTime() {
         currentTime = 0.0;
+    }
+
+    // copy values to stored state
+    public void store() {
+        storedTime = currentTime;
+        for (DynamicalVariable var : variables) {
+            var.store();
+        }
+        for (DynamicalForce frc : forces) {
+            frc.store();
+        }
+    }
+
+    // copy values from stored state
+    public void restore() {
+        currentTime = storedTime;
+        for (DynamicalVariable var : variables) {
+            var.restore();
+        }
+        for (DynamicalForce frc : forces) {
+            frc.restore();
+        }
     }
 
     // get value of indexed variable at time t
@@ -114,8 +137,8 @@ public class DynamicalSystem {
         return var.getIntegral(start, finish);
     }
 
-    public void addVariable(String n, double t0, double v0) {
-        DynamicalVariable var = new DynamicalVariable(n, t0, v0);
+    public void addVariable(String n, double v0) {
+        DynamicalVariable var = new DynamicalVariable(n, 0, v0);
         varMap.put(n, var);
         variables.add(var);
     }

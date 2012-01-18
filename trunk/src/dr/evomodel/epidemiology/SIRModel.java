@@ -80,8 +80,6 @@ public class SIRModel extends DemographicModel {
 
         super(name);
 
-        demographicFunction = new SIRDemographicFunction(units);
-
         this.transmissionRateParameter = transmissionRateParameter;
         addVariable(transmissionRateParameter);
         transmissionRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
@@ -102,7 +100,9 @@ public class SIRModel extends DemographicModel {
         addVariable(recoveredsParameter);
         recoveredsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
+        demographicFunction = new SIRDemographicFunction(units);
         setUnits(units);
+
     }
 
     @Override
@@ -141,13 +141,14 @@ public class SIRModel extends DemographicModel {
 
             super(units);
 
-            syst.addVariable("susceptibles", 1.0);
-            syst.addVariable("infecteds", 1.0);
-            syst.addVariable("recovereds", 1.0);
-            syst.addVariable("total", 1.0);
-            syst.addForce("contact", 1.0, new String[]{"infecteds","susceptibles"},
+            syst.addVariable("susceptibles", susceptiblesParameter.getParameterValue(0));
+            syst.addVariable("infecteds", infectedsParameter.getParameterValue(0));
+            syst.addVariable("recovereds", recoveredsParameter.getParameterValue(0));
+            syst.addVariable("total", susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
+                    + recoveredsParameter.getParameterValue(0));
+            syst.addForce("contact", transmissionRateParameter.getParameterValue(0), new String[]{"infecteds","susceptibles"},
                     new String[]{"total"}, "susceptibles", "infecteds");
-            syst.addForce("recovery", 1.0, new String[]{"infecteds"},
+            syst.addForce("recovery", recoveryRateParameter.getParameterValue(0), new String[]{"infecteds"},
                     new String[]{}, "infecteds", "recovereds");
 
         }
@@ -195,9 +196,14 @@ public class SIRModel extends DemographicModel {
 
         // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
+
             double numer = 2.0 * transmissionRateParameter.getParameterValue(0) * syst.getIntegral("susceptibles", start, finish);
             double denom = syst.getIntegral("infecteds", start, finish) * syst.getIntegral("total", start, finish);
-            return numer / denom;
+
+            double integral = (finish-start)*(numer / denom);
+
+            return integral ;
+
         }
 
         // ignore the rest:

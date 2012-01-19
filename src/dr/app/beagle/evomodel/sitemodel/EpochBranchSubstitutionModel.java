@@ -23,122 +23,6 @@
  * Boston, MA  02110-1301  USA
  */
 
-///////////////////
-//---SCRAPBOOK---//
-///////////////////
-
-//		timeSlices = new double[nModels + 1];
-//		timeSlices[0] = nodeHeight;
-//		for (int k = 1; k < nModels; k++) {
-//
-//			timeSlices[k] = transitionTimes[k - 1];
-//
-//		}
-//		timeSlices[nModels] = parentHeight;
-//
-//		printArray(timeSlices);
-
-//		timeSlices = new double[nModels + 1];
-//		timeSlices[0] = parentHeight;
-//		int k = 1;
-//		for (int i = transitionTimes.length - 1; i >= 0; i--) {
-//		
-//			timeSlices[k] = transitionTimes[i];
-//			k++;
-//			
-//		}
-//		timeSlices[nModels] = nodeHeight;
-//		
-//		for (int i = transitionTimes.length - 0; i >= 0; i--) {
-//		
-//			System.out.println(timeSlices[i] - timeSlices[i+1]);
-//		
-//		}
-//		System.out.println();
-
-// int nodeNum = node.getNumber();
-//
-// switch (nodeNum) {
-// case 0:
-// returnValue = 2;
-// weights = new double[] { epochTimes.getParameterValue(0),
-// 73.7468 - epochTimes.getParameterValue(0) , 0.0};
-// convolutionMatricesMap.put(bufferIndex, weights);
-// // System.err.println("Case 0 gets index = " + bufferIndex);
-// break;
-// case 1:
-// returnValue = 1;
-// break;
-// case 2:
-// returnValue = 2;
-// weights = new double[] { epochTimes.getParameterValue(0) - 10.0083,
-// 45.2487 - epochTimes.getParameterValue(0) + 10.0083, 0.0 };
-// convolutionMatricesMap.put(bufferIndex, weights);
-// // System.err.println("Case 2 gets index = " + bufferIndex);
-// break;
-// case 3:
-// returnValue = 1;
-// break;
-// }//END: hardcoded (sw/b)itch
-//
-// System.out.println("============");
-// printArray(weights);
-// System.out.println("============");
-
-//		int returnValue = 0;
-//		for (int i = 0; i < transitionTimes.length - 0; i++) {
-//
-//			double transitionTime = transitionTimes[i];
-//			
-//			if (nodeHeight < transitionTime && transitionTime <= parentHeight) {
-//
-//				// TODO gets proportional lengths
-////				weights[i] = (transitionTimes[i] - nodeHeight);
-////				weights[i + 1] = (parentHeight - transitionTimes[i]);
-//				
-//				returnValue = nModels;
-//
-//				System.out.println("branch of length " + branchLength
-//						+ " intersects transition time " + i);
-////				System.out.println("\t gets weights of " + weights[i]);
-////				System.out.println("\t and " + weights[i + 1]);
-//				System.out.println("\t returnValue = " + returnValue
-//						+ " (branch needs convolution)");
-//				System.out.println();
-//
-//		
-//			} else if (nodeHeight > transitionTime) {
-//				// TODO gets full length
-//
-////				weights[i] = 0.0;// branchLength;
-//				returnValue = 1;
-//
-//				System.out.println("branch of length " + branchLength
-//						+ " is above transition time " + i);
-////				System.out.println("\t gets weight of " + weights[i]);
-//				System.out.println("\t returnValue = " + returnValue);
-//				System.out.println();
-//
-//			} else if (parentHeight < transitionTime) {
-//				// TODO gets length 0
-//
-////				weights[i] = 0.0;
-//				returnValue = 1;
-//
-//				System.out.println("branch of length " + branchLength
-//						+ " is beneath transition time " + i);
-////				System.out.println("\t gets weight of " + weights[i]);
-//				System.out.println("\t returnValue = " + returnValue);
-//				System.out.println();
-//
-//			} else {
-//
-//				System.err.println("bad juju");
-//
-//			}
-//
-//		}// END: transitionTimes loop	
-
 package dr.app.beagle.evomodel.sitemodel;
 
 import java.util.ArrayList;
@@ -206,9 +90,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 	public int getBranchIndex(final Tree tree, final NodeRef node,
 			int bufferIndex) {
-		// TODO return substModelList.size() if branch will require convolution
-		// 3 cases: 0 - first transition, i-th to i+1-th transition, last
-		// transition - infinity
 
 		int nModels = substModelList.size();
 		int lastTransitionTime = nModels - 2;
@@ -221,11 +102,15 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		int returnValue = 0;
 
-		///////////////////////
-		//---TODO: TRIAL 2---//
-		///////////////////////
-		
-//		//first case: 0th transition time
+		// /////////////////////
+		// ---TODO: TRIAL 3---//
+		// /////////////////////
+
+		// /////////////////////
+		// ---TODO: TRIAL 2---//
+		// /////////////////////
+
+		// first case: 0th transition time
 		if (parentHeight <= transitionTimes[0]) {
 
 			weights[0] = branchLength;
@@ -237,112 +122,58 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 				weights[0] = transitionTimes[0] - nodeHeight;
 				returnValue = nModels;
-				
+
 			} else if (nodeHeight > transitionTimes[0]) {
 
-				 weights[0] = 0;
-				
+				weights[0] = 0;
+
 			}// END: 0-th model overlap check
 
-			//TODO: tu jest spierdolone
-			//second case: i to i+1 transition times
+			// TODO:
+			// second case: i to i+1 transition times
 			for (int i = 1; i <= lastTransitionTime; i++) {
 
 				if (parentHeight <= transitionTimes[i]) {
-				
+
 					break;
-					
-				} else { 
-					
+
+				} else {
+
 					if (parentHeight >= transitionTimes[i] && transitionTimes[i] > nodeHeight) {
-				
-				    double startTime = Math.max(nodeHeight, transitionTimes[i - 1]);
-	                double endTime = Math.min(parentHeight, transitionTimes[i]);
-	                weights[i] = (endTime - startTime);
-					
-				} else if (nodeHeight > transitionTimes[i]) {
-					
-					//
-					
-				}
-					
-				}//END: bail out check
-		
+
+						double startTime = Math.max(nodeHeight, transitionTimes[i - 1]);
+						double endTime = Math.min(parentHeight, transitionTimes[i]);
+						weights[i] = (endTime - startTime);
+
+					} else if (nodeHeight > transitionTimes[i]) {
+
+						//
+
+					}
+
+				}// END: bail out check
+
 			}// END: i loop
-			
-			//third case: last transition time
+
+			// third case: last transition time
 			if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
-			
-						weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
-						returnValue = nModels;
-			
-					} else if (parentHeight <= transitionTimes[0]) {
-			
-						 weights[lastTransitionTime + 1] = 0;
-			
-					} else if (nodeHeight > transitionTimes[0]) {
-			
-						weights[lastTransitionTime + 1] = branchLength;
-						returnValue = nModels-1;
-						
-					}// END: last transition time check
-			
+
+				weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
+				returnValue = nModels;
+
+			} else if (parentHeight <= transitionTimes[0]) {
+
+				weights[lastTransitionTime + 1] = 0;
+
+			} else if (nodeHeight > transitionTimes[0]) {
+
+				weights[lastTransitionTime + 1] = branchLength;
+				returnValue = nModels - 1;
+
+			}// END: last transition time check
+
 		}// END: if branch below first transition time bail out
-		
 
-		///////////////////////
-		//---TODO: TRIAL 1---//
-		///////////////////////
-		
-//		if (nodeHeight < transitionTimes[0] && transitionTimes[0] <= parentHeight) {
-//
-//			weights[0] = transitionTimes[0] - nodeHeight;
-//			returnValue = nModels; // Branch overlaps 0th model
-//
-//		} else if (parentHeight <= transitionTimes[0]) {
-//
-//			weights[0] = branchLength;
-//			returnValue = 0; // Whole branch in 0th model
-//			// TODO Check this condition first and bail out of function if true
-//
-//		} else if (nodeHeight > transitionTimes[0]) {
-//
-//			// weights[0] = 0;
-//
-//		}// END: cutoff check
-//
-//		for (int i = 1; i <= lastTransitionTime; i++) {
-//			if (nodeHeight <= transitionTimes[i]) {
-//
-//				weights[i] = transitionTimes[i] - transitionTimes[i - 1];
-//
-//			}// END: are we there yet check
-//			
-//			
-//			
-//		}// END: i loop
-//
-//		if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
-//
-//			weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
-////			returnValue = nModels;
-//
-//		} else if (parentHeight <= transitionTimes[0]) {
-//
-//			// weights[lastTransitionTime + 1] = 0;
-//
-//		} else if (nodeHeight > transitionTimes[0]) {
-//
-//			weights[lastTransitionTime + 1] = branchLength;
-////			returnValue = nModels;
-//			
-//		}// END: last transition time check
-
-		
-		
-
-		
-		
 		System.out.println("branch length: " + branchLength);
 		System.out.println("return value: " + returnValue);
 		printArray(weights);
@@ -388,8 +219,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	}
 
 	public int getEigenCount() {
-		return substModelList.size() + 1; // Use an extra eigenIndex to identify
+		// Use an extra eigenIndex to identify
 		// branches that need convolution
+		return substModelList.size() + 1; 
 	}
 
 	protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -417,60 +249,22 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 			int count) {
 
 		if (eigenIndex < substModelList.size()) {
+			
 			// Branch falls in a single category
-			beagle.updateTransitionMatrices(bufferHelper
-					.getOffsetIndex(eigenIndex), probabilityIndices,
-					firstDerivativeIndices, secondDervativeIndices,
-					edgeLengths, count);
+			beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
+					                        probabilityIndices,
+					                        firstDerivativeIndices, 
+					                        secondDervativeIndices,
+					                        edgeLengths, 
+					                        count);
 		} else {
+
 			// Branch requires convolution of two or more matrices
-
-			// for(int i = 0; i < substModelList.size(); i++) {
-			// int[] firstIndices = Arrays.copyOfRange(probabilityIndices,
-			// eigenIndex, eigenIndex);
-			// int[] secondIndices = Arrays.copyOfRange(probabilityIndices,
-			// eigenIndex, eigenIndex);
-			// int[] resultIndices = Arrays.copyOfRange(probabilityIndices,
-			// eigenIndex, eigenIndex);
-			// }//END: subst model loop
-
-			// System.err.println("eigenIndex = " + eigenIndex);
-			//			
-			// double[] firstBranchLengths = { epochTimes.getParameterValue(0),
-			// 73.7468 - epochTimes.getParameterValue(0) };
-			// double[] secondBranchLengths = { epochTimes.getParameterValue(0)
-			// - 10.0083, 45.2487
-			// - epochTimes.getParameterValue(0) + 10.00832 };
-
-			// double[] firstBranchLengths = { epochTimes.getParameterValue(0),
-			// 73.7468 - epochTimes.getParameterValue(0) };
-			// double[] secondBranchLengths = { epochTimes.getParameterValue(0)
-			// - 10.0083, 45.2487
-			// - epochTimes.getParameterValue(0) + 10.00832 };
-
 			for (int i = 0; i < count; i++) {
 
 				final int resultIndex = probabilityIndices[i];
 				final int firstIndex = firstBuffer;
 				final int secondIndex = firstBuffer + 1;
-
-				// System.out.println("firstIndex " + firstIndex);
-				// System.out.println("secondIndex " + secondIndex);
-
-				// int[] firstProbIndices = { firstIndex };
-				// double[] firstBranchLength = { 72 };
-				// beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(1),
-				// firstProbIndices, null, null, firstBranchLength, 1);
-				// int[] secondProbIndices = { secondIndex };
-				// double[] secondBranchLength = { 22 };
-				// beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(0),
-				// secondProbIndices, null, null, secondBranchLength, 1);
-				// int[] resultProbIndices = { resultIndex };
-				//				
-				// beagle.convolveTransitionMatrices(firstProbIndices,
-				// secondProbIndices, resultProbIndices, 1);
-				// System.err.println("Writing to buffer " +
-				// resultProbIndices[0]);
 
 				double[] length = convolutionMatricesMap
 						.get(probabilityIndices[i]);
@@ -532,8 +326,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	public List<Citation> getCitations() {
 		List<Citation> citations = new ArrayList<Citation>();
 		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
-				new Author("P", "Lemey"), new Author("MA", "Suchard") },
-				Citation.Status.IN_PREPARATION));
+				new Author("P", "Lemey"), new Author("G", "Baele"),
+				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
 		return citations;
 	}
 
@@ -553,11 +347,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	}
 
 	public static void printMatrix(double[] matrix) {
-		int stateCount = matrix.length;
+		int stateCount = 4;// matrix.length;
 		for (int row = 0; row < stateCount; row++) {
 			System.out.print("| ");
 			for (int col = 0; col < stateCount; col++)
-				System.out.print(String.format("%.6f", matrix[col + row
+				System.out.print(String.format("%.20f", matrix[col + row
 						* stateCount])
 						+ " ");
 			System.out.print("|\n");
@@ -568,9 +362,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 	public static void printArray(double[] array) {
 		for (int col = 0; col < array.length; col++) {
-			System.out.println(String.format("%.6f", array[col]));
+			System.out.println(String.format("%.20f", array[col]));
 		}
 		System.out.print("\n");
 	}// END: printArray
 
-}
+}// END: class

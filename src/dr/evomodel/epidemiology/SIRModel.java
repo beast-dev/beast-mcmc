@@ -26,13 +26,15 @@
 package dr.evomodel.epidemiology;
 
 import dr.evolution.coalescent.DemographicFunction;
-import dr.evolution.coalescent.ExponentialGrowth;
-import dr.evolution.util.Units;
 import dr.evomodel.coalescent.DemographicModel;
-import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
+import dr.inference.loggers.LogColumn;
+import dr.inference.loggers.NumberColumn;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import org.apache.commons.math.FunctionEvaluationException;
+import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
+import dr.math.distributions.NormalDistribution;
+
 
 /**
  * This class gives an SIR trajectory and hands off a rate of coalescence at a given point in time.
@@ -48,7 +50,7 @@ import org.apache.commons.math.FunctionEvaluationException;
  * @author Trevor Bedford
  * @author Andrew Rambaut
  */
-public class SIRModel extends DemographicModel {
+public class SIRModel extends DemographicModel implements Likelihood {
 
     //
     // Public stuff
@@ -109,17 +111,81 @@ public class SIRModel extends DemographicModel {
     protected void handleVariableChangedEvent(final Variable variable, final int index, final Variable.ChangeType type) {
         demographicFunction.reset();
         fireModelChanged();
+        likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
         demographicFunction.store();
     }
 
     @Override
     protected void restoreState() {
+        logLikelihood = storedLogLikelihood;
+        likelihoodKnown = true;
         demographicFunction.restore();
     }
+
+    /* Likelihood methods */
+
+    public String prettyName() {
+        return Likelihood.Abstract.getPrettyName(this);
+    }
+
+    public final double getLogLikelihood() {
+        if (!getLikelihoodKnown()) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
+
+    protected boolean getLikelihoodKnown() {
+        return likelihoodKnown;
+    }
+
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    public Model getModel() {
+        return this;
+    }
+
+    public void makeDirty() {
+        likelihoodKnown = false;
+    }
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
+
+    public double calculateLogLikelihood() {
+        double r = demographicFunction.getRecovereds(5);
+        return NormalDistribution.logPdf(r, 0, 100);
+    }
+
+    private boolean isUsed = false;
+    private boolean likelihoodKnown = false;
+    private double logLikelihood;
+    private double storedLogLikelihood;
 
     public DemographicFunction getDemographicFunction() {
         return demographicFunction;
@@ -174,14 +240,36 @@ public class SIRModel extends DemographicModel {
 
         // return N(t)
         public double getDemographic(final double t) {
-            double numer = syst.getValue("infecteds", t) * syst.getValue("total", t);
+
+            double inf = syst.getValue("infecteds", t);
+            if (inf < 1)
+                inf = 1.0;
+
+            double numer = inf * syst.getValue("total", t);
             double denom = 2.0 * transmissionRateParameter.getParameterValue(0) * syst.getValue("susceptibles", t);
+
             return numer / denom;
+
         }
 
         // return log N(t)
         public double getLogDemographic(final double t) {
             return Math.log(getDemographic(t));
+        }
+
+         // return S(t)
+        public double getSusceptibles(final double t) {
+            return syst.getValue("susceptibles", t);
+        }
+
+         // return I(t)
+        public double getInfecteds(final double t) {
+            return syst.getValue("infecteds", t);
+        }
+
+         // return R(t)
+        public double getRecovereds(final double t) {
+            return syst.getValue("recovereds", t);
         }
 
         // return t/N(t)
@@ -197,8 +285,12 @@ public class SIRModel extends DemographicModel {
         // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
 
+            double inf = syst.getIntegral("infecteds", start, finish);
+            if (inf < 1)
+                inf = 1.0;
+
             double numer = 2.0 * transmissionRateParameter.getParameterValue(0) * syst.getIntegral("susceptibles", start, finish);
-            double denom = syst.getIntegral("infecteds", start, finish) * syst.getIntegral("total", start, finish);
+            double denom = inf * syst.getIntegral("total", start, finish);
 
             double integral = (finish-start)*(numer / denom);
 

@@ -197,8 +197,8 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 //                (timeAwareSmoothing ? "time aware smoothing" : "uniform smoothing"));
 
 
-             return new GaussianProcessSkytrackLikelihood(treeList,  precParameter,
-                 rescaleByRootHeight,  lambda_bound);
+             return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
+                 rescaleByRootHeight, numGridPoints, lambda_bound);
 
     }
 

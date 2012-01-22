@@ -21,6 +21,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeLogger;
 import dr.math.MathUtils;
+import dr.util.AlloppMisc;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 
 
@@ -351,90 +352,6 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
      }
 
 
-     // tetraonly twodiploidsonly     
-     // grjtodo. Should do smaller moves, at least sometimes
-     public void moveMostRecentLegHeight() {
-     	 if (getNumberOfLegs() == 1) {
-     		 setSplitHeight(MathUtils.uniform(getHybridHeight(), legs[0].height));
-    	 } else {
-    		 assert getNumberOfLegs() == 2;
-    		 if (legs[0].height < legs[1].height) {
-    			 legs[0].height = MathUtils.uniform(getHybridHeight(), legs[1].height);
-    		 } else {
-    			 legs[1].height = MathUtils.uniform(getHybridHeight(), legs[0].height);
-    		 }
-    	 }   	 
-     }
-     
-     
-     // tetraonly twodiploidsonly
-     // grjtodo. Should do smaller moves, at least sometimes
-     public void moveMostAncientLegHeight(double dirooth) {
-    	 if (getNumberOfLegs() == 1) {
-    		 legs[0].height = MathUtils.uniform(getSplitHeight(), dirooth);
-    	 } else {
-    		 assert getNumberOfLegs() == 2;
-    		 if (legs[0].height < legs[1].height) {
-    			 legs[1].height = MathUtils.uniform(legs[0].height, dirooth);
-    		 } else {
-    			 legs[0].height = MathUtils.uniform(legs[1].height, dirooth);
-    		 }
-    	 }
-     }
-
-
-     // grjtodo tetraonly twodiploidsonly
-     public void moveLegTopology(FixedBitSet dip0, FixedBitSet dip1) {
-    	 int rnd = MathUtils.nextInt(6);
-    	 double t0;
-    	 double t1;
-    	 if (getNumberOfLegs() == 1) {
-    		 t0 = getSplitHeight();
-    		 t1 = legs[0].height;
-    	 } else {
-    		 t0 = Math.min(legs[0].height, legs[1].height);
-    		 t1 = Math.max(legs[0].height, legs[1].height);
-    	 }
-    	 switch (rnd) {
-    	 case 0:  case 1:  case 2:  case 3:
-    		 // TWOBRANCH, ONEBRANCH
-    		 legs = new Leg[2];
-    		 legs[0] = new Leg(t0);
-    		 legs[1] = new Leg(t1);
-    		 break;
-    	 case 4: case 5:
-    		 // JOINED
-    		 legs = new Leg[1];
-    		 legs[0] = new Leg(t1);
-    		 setSplitHeight(t0);
-    		 break;
-    	 }
-    	 switch (rnd) {
-    	 case 0:
-    		 legs[0].footUnion = dip0;
-    		 legs[1].footUnion = dip1;
-    		 break;
-    	 case 1:
-    		 legs[0].footUnion = dip1;
-    		 legs[1].footUnion = dip0;
-    		 break;
-    	 case 2:
-    		 legs[0].footUnion = dip0;
-    		 legs[1].footUnion = dip0;
-    		 break;
-    	 case 3:
-    		 legs[0].footUnion = dip1;
-    		 legs[1].footUnion = dip1;
-    		 break;
-    	 case 4:
-    		 legs[0].footUnion = dip0;
-    		 break;
-    	 case 5:
-    		 legs[0].footUnion = dip1;
-    		 break;
-    	 }    	 
-     }
-
     
      
 	public void setFootUnion(int leg, FixedBitSet footUnion) {
@@ -477,6 +394,163 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 		splitheight = news;
 	}
 
+	
+	
+	
+    
+    // Moves 
+
+    public void moveSplitOrLeg(double dirooth) {
+    	if (getNumberOfLegs() == 1) {
+    		if (MathUtils.nextBoolean() == true) {
+    			moveSplitHeight(dirooth);
+    		} else {
+    			moveLegHeight(0, dirooth);
+    		}
+    	} else {
+    		if (MathUtils.nextBoolean() == true) {
+    			moveLegHeight(0, dirooth);
+    		} else {
+    			moveLegHeight(0, dirooth);
+    		}    		 
+    	}
+
+    }
+
+
+    // tetraonly twodiploidsonly     
+    public void moveMostRecentLegHeight() {
+    	if (MathUtils.nextBoolean() == true) {
+    		// small move
+    		if (getNumberOfLegs() == 1) {
+    			double oldh = getSplitHeight();
+    			double minh = getHybridHeight();
+    			double maxh = legs[0].height;
+    			setSplitHeight(AlloppMisc.uniformInRange(oldh, minh, maxh, 0.1));
+    		} else {
+    			assert getNumberOfLegs() == 2;
+    			if (legs[0].height < legs[1].height) {
+    				legs[0].height = AlloppMisc.uniformInRange(legs[0].height, getHybridHeight(), legs[1].height, 0.1);
+    			} else {
+    				legs[1].height = AlloppMisc.uniformInRange(legs[1].height, getHybridHeight(), legs[0].height, 0.1); 
+    			}
+    		}      		 
+    	} else {
+    		// big move
+    		if (getNumberOfLegs() == 1) {
+    			setSplitHeight(MathUtils.uniform(getHybridHeight(), legs[0].height));
+    		} else {
+    			assert getNumberOfLegs() == 2;
+    			if (legs[0].height < legs[1].height) {
+    				legs[0].height = MathUtils.uniform(getHybridHeight(), legs[1].height);
+    			} else {
+    				legs[1].height = MathUtils.uniform(getHybridHeight(), legs[0].height);
+    			}
+    		}      		 
+    	}
+
+    }
+
+    
+    // tetraonly twodiploidsonly
+    public void moveMostAncientLegHeight(double dirooth) {
+    	if (MathUtils.nextBoolean() == true) {
+    		// small move
+    		if (getNumberOfLegs() == 1) {
+    			legs[0].height = AlloppMisc.uniformInRange(legs[0].height, getSplitHeight(), dirooth, 0.1);
+    		} else {
+    			assert getNumberOfLegs() == 2;
+    			if (legs[0].height < legs[1].height) {
+    				legs[1].height = AlloppMisc.uniformInRange(legs[1].height, legs[0].height, dirooth, 0.1);
+    			} else {
+    				legs[0].height = AlloppMisc.uniformInRange(legs[0].height, legs[1].height, dirooth, 0.1);
+    			}
+    		}     		 
+    	} else {
+    		// big move
+    		if (getNumberOfLegs() == 1) {
+    			legs[0].height = MathUtils.uniform(getSplitHeight(), dirooth);
+    		} else {
+    			assert getNumberOfLegs() == 2;
+    			if (legs[0].height < legs[1].height) {
+    				legs[1].height = MathUtils.uniform(legs[0].height, dirooth);
+    			} else {
+    				legs[0].height = MathUtils.uniform(legs[1].height, dirooth);
+    			}
+    		}    		 
+    	}
+
+    }
+
+
+    // grjtodo tetraonly twodiploidsonly
+     public void moveLegTopology(FixedBitSet dip0, FixedBitSet dip1) {
+    	 int rnd = MathUtils.nextInt(6);
+    	 double t0;
+    	 double t1;
+    	 if (getNumberOfLegs() == 1) {
+    		 t0 = getSplitHeight();
+    		 t1 = legs[0].height;
+    	 } else {
+    		 t0 = Math.min(legs[0].height, legs[1].height);
+    		 t1 = Math.max(legs[0].height, legs[1].height);
+    	 }
+    	 switch (rnd) {
+    	 case 0:  case 1:  case 2:  case 3:
+    		 // TWOBRANCH, ONEBRANCH
+    		 legs = new Leg[2];
+    		 if (MathUtils.nextBoolean()) {
+    		   legs[0] = new Leg(t0);
+    		   legs[1] = new Leg(t1);
+    		 } else {
+    		   legs[0] = new Leg(t1);
+    		   legs[1] = new Leg(t0);
+    		 }
+    			 
+    		 break;
+    	 case 4: case 5:
+    		 // JOINED
+    		 legs = new Leg[1];
+    		 legs[0] = new Leg(t1);
+    		 setSplitHeight(t0);
+    		 break;
+    	 }
+    	 switch (rnd) {
+    	 case 0:
+    		 legs[0].footUnion = dip0;
+    		 legs[1].footUnion = dip1;
+    		 break;
+    	 case 1:
+    		 legs[0].footUnion = dip1;
+    		 legs[1].footUnion = dip0;
+    		 break;
+    	 case 2:
+    		 legs[0].footUnion = dip0;
+    		 legs[1].footUnion = dip0;
+    		 break;
+    	 case 3:
+    		 legs[0].footUnion = dip1;
+    		 legs[1].footUnion = dip1;
+    		 break;
+    	 case 4:
+    		 legs[0].footUnion = dip0;
+    		 break;
+    	 case 5:
+    		 legs[0].footUnion = dip1;
+    		 break;
+    	 }    	 
+     }
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 
 	// TreeLogger.LogUpon
 	
@@ -500,6 +574,33 @@ public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 	
 	
 	
+	private void moveLegHeight(int lg, double dirooth) {
+		double minh = getHybridHeight();
+		if (getNumberOfLegs() == 1) {
+			minh = getSplitHeight();
+		}
+		if (MathUtils.nextBoolean() == true) {
+			// small move
+			legs[lg].height = AlloppMisc.uniformInRange(legs[lg].height, minh, dirooth, 0.1);
+		} else {
+			// big move
+			legs[lg].height = MathUtils.uniform(minh, dirooth);
+		}
+	}
+
+
+	private void moveSplitHeight(double dirooth) {
+		double oldh = getSplitHeight();
+		double minh = getHybridHeight();
+		double maxh = legs[0].height;
+		if (MathUtils.nextBoolean() == true) {
+			// small move
+			setSplitHeight(AlloppMisc.uniformInRange(oldh, minh, maxh, 0.1));
+		} else {
+			// big move
+			setSplitHeight(MathUtils.uniform(getHybridHeight(), legs[0].height));
+		}
+	}
 	
 	
 	

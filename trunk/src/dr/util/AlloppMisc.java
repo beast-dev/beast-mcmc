@@ -10,6 +10,8 @@ import java.util.Formatter;
 
 import java.util.Locale;
 
+import dr.math.MathUtils;
+
 import jebl.util.FixedBitSet;
 
 public class AlloppMisc {
@@ -59,7 +61,21 @@ public class AlloppMisc {
 			formatter.format("%2d", x);
 		}
 		return s.toString();
-	}	
+	}
+	
+	
+    public static double uniformInRange(double oldx, double min, double max, double halfwidth) {
+   	 assert halfwidth > 0.0;
+   	 assert halfwidth < 0.5;
+   	 assert min < max;
+   	 double change = MathUtils.uniform(-1.0, 1.0) * (max - min) * halfwidth;
+   	 double newx = oldx + change;
+   	 if (newx < min) { newx = 2*min - newx; }
+   	 if (newx > max) { newx = 2*max - newx; }
+   	 assert newx > min;
+   	 assert newx < max;
+   	 return newx;
+    }
 	
 }
 

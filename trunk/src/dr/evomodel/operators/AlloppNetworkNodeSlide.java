@@ -80,16 +80,18 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		int noftettrees = apspnet.getNumberOfTetraTrees();
 		int count;
 		if (nofditrees <= 1  &&  noftettrees == 1) {
-			//grjtodo 2011-08-11. tetraonly morethanonetree. 
+			//grjtodo 2011-08-11. tetraonly morethanonetree, twodiploids. 
 			// For now, don't change diploid tree with networkslide
 			int nheights = apspnet.getNumberOfNodeHeightsInTree(AlloppSpeciesNetworkModel.TETRATREES, 0);
-			count = nheights + 2; // internal/root heights, plus hybrid and split
+			count = nheights + 3; // internal/root heights, plus hybrid and split, plus diploid root
 			int which = MathUtils.nextInt(count);
 			if (which < nheights) {
 				return new NodeHeightInNetIndex(AlloppSpeciesNetworkModel.TETRATREES, 0, which, -1);
-			} else {
+			} else if (which < nheights + 2) {
 				which -= nheights;
 				return new NodeHeightInNetIndex(AlloppSpeciesNetworkModel.TETRATREES, 0, -1, which);
+			} else {
+				return new NodeHeightInNetIndex(AlloppSpeciesNetworkModel.DITREES, 0, 0, -1);
 			}
 		} else {
 			assert nofditrees == 1;
@@ -134,7 +136,13 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		AlloppLeggedTree altree = apspnet.getHomoploidTree(nhi.pl, nhi.t);
 		if (nhi.n >= 0) {
 			// change node height nhi.n within tree trees[nhi.pl][nhi.t]
-			operateOneNodeInLeggedTree(altree, nhi.n, factor);
+			if (nhi.pl == AlloppSpeciesNetworkModel.TETRATREES) {
+				operateOneNodeInTetraTree(altree, nhi.n, factor);
+			} else if (nhi.pl == AlloppSpeciesNetworkModel.DITREES) {
+				operateRootInDiTree(altree);
+			} else {
+				assert false;
+			}
 		} else {
 			// change hybrid (nhi.r==0) or split/foot heights (nhi.r=1,2) within tree trees[nhi.pl][nhi.t]
 			if (nhi.r == 0) {
@@ -192,7 +200,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 	}
 	
 	
-	private void operateOneNodeInLeggedTree(AlloppLeggedTree tree, int which, double factor) {
+	private void operateOneNodeInTetraTree(AlloppLeggedTree tree, int which, double factor) {
 		
 		// As TreeNodeSlide(). Randomly flip children at each node,
 		// keeping track of node order (in-order order, left to right)
@@ -237,6 +245,20 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		apspnet.endNetworkEdit();
 	}
 	
+	
+	private void operateRootInDiTree(AlloppLeggedTree ditree) {
+		double minh = apspnet.getMaxFootHeight();
+		double change =  MathUtils.uniform(-1.0, 1.0) * minh * 0.25; // grjtodo tune 0.25
+		NodeRef root = ditree.getRoot();
+		double oldh = ditree.getRootHeight();
+		double newh = oldh + change;
+		if (newh < minh) { newh = 2*minh - newh; }
+		// grjtodo It would be better to find the time of the most recent gene coalescence which
+		// has species to left and right of the root and use that as a max.
+	    apspnet.beginNetworkEdit();
+		ditree.setNodeHeight(root, newh);
+		apspnet.endNetworkEdit();
+	}
 
 	
 	

@@ -60,7 +60,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected Parameter precisionParameter;
     protected Parameter lambda_boundParameter;
     protected Parameter numGridPoints;
-    protected Parameter lambdaParameter;
+    protected Parameter lambdaParameter;    //prior for lambda_bound, will be used in operators only
 //    protected Parameter lambdaParameter;
 //    protected Parameter betaParameter;
 
@@ -73,13 +73,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected int [] storedGPcounts;
     protected int numintervals;
 
-//    Those that change size, theyare initialized per tree, no need to store them
+//    Those that change size, they are initialized per tree, no need to store them
 //    use as Parameter since they will be changing by operators
-    protected Parameter GPtimepoints;  //tree + latent
-    protected Parameter GPintervalkey;         // membership that links with those that do not change in size
-    protected Parameter GPcoalfactor2;        // choose(k,2) depending on membership
+//    protected Parameter GPtimepoints;  //tree + latent
+//    protected double GPintervalkey;         // membership that links with those that do not change in size
+//    protected Parameter GPcoalfactor2;        // choose(k,2) depending on membership
     protected int[] GPtype;  // 1 if observed, -1 if latent
-//    protected Parameter GPvalues; //
+    public double[] GPvalues;     //may need to change type: Parameter? didn't know how to work with it
 
     protected double logGPLikelihood;
     protected double storedLogGPLikelihood;
@@ -147,20 +147,15 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         storedGPchangePoints = new double[numintervals];
         GPcoalfactor = new double[numintervals];
         storedGPcoalfactor = new double[numintervals];
-//        GPcounts = new int[numintervals];
-//        GPtype=new int[numintervals];
-//        GPintervalkey.setDimension(numintervals);
-//        GPtimepoints.setDimension(numintervals);
-//        GPvalues.setDimension(numintervals);
+        GPcounts = new int[numintervals];
+        GPtype=new int[numintervals];
 
 
 
 
                 initializationReport();
-//                setupSufficientStatistics();
-//                setupQmatrix();
-//                getScaledQMatrix(precisionParameter.getParameterValue(0));
-//                setupGPvalues();
+                setupSufficientStatistics();
+                setupGPvalues();  //need to be changed
 
 //
 //                weightMatrix = new SymmTridiagMatrix(numintervals);
@@ -197,6 +192,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //
 // Is it ok to have this public and override the one in OldAbstract...
     public double calculateLogLikelihood() {
+        logGPLikelihood=0.0;
         return 0.0;
 // TODO Return the correct log-density  (augmented?)
     }
@@ -309,11 +305,8 @@ protected void storeState() {
 //              System.err.println(i+"  "+length+"  "+getLineageCount(i)+" type "+getIntervalType(i));
                 GPcounts[i]=0;
                 GPtype[i]=1;
-                GPintervalkey.setParameterValue(i,i);
                 GPchangePoints[i]=length;
-                GPtimepoints.setParameterValue(i, 1.0);
              	GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
-                GPcoalfactor2.setParameterValue(i,GPcoalfactor[i]);
                 if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                     GPcounts[i]=1;
 			        }
@@ -322,7 +315,7 @@ protected void storeState() {
 
     }
 
-    protected void setupQmatrix() {
+    protected void setupQmatrix(double precision) {
 
 
             //Set up the weight Matrix
@@ -330,37 +323,30 @@ protected void storeState() {
             double[] diag = new double[getIntervalCount()];
 
 
-             for (int i = 0; i < numintervals - 1; i++) {
-                    offdiag[i] = -1.0 / getInterval(i);
-                    diag[i+1]= 1.0/getInterval(i)+1.0/getInterval(i+1)+.000001;
+             for (int i = 0; i < getIntervalCount() - 1; i++) {
+                    offdiag[i] = precision*(-1.0 / getInterval(i));
+                    diag[i+1]= precision*(1.0/getInterval(i)+1.0/getInterval(i+1)+.000001);
 
                 }
 //              Diffuse prior correction - intrinsic
              //Take care of the endpoints
-            diag[0] = -offdiag[0]+.000001;
-            diag[numintervals - 1] = -offdiag[numintervals - 2]+.000001;
+            diag[0] = -offdiag[0]+precision*.000001;
+            diag[getIntervalCount() - 1] = -offdiag[getIntervalCount() - 2]+precision*(.000001);
+
             weightMatrix = new SymmTridiagMatrix(diag, offdiag);
         }
 
 
-	public SymmTridiagMatrix getScaledQMatrix(double precision) {
-		SymmTridiagMatrix a = weightMatrix.copy();
-		for (int i = 0; i < a.numRows() - 1; i++) {
-			a.set(i, i, a.get(i, i) * precision);
-			a.set(i + 1, i, a.get(i + 1, i) * precision);
-		}
-		a.set(numintervals - 1, numintervals - 1, a.get(numintervals - 1, numintervals - 1) * precision);
-        System.err.println("element 1-1:"+a.get(1,1));
-        System.err.println("element 1-2:"+a.get(1,2));
-        System.err.println("element 2-1:"+a.get(2,1));
-        System.exit(-1);
-
-		return a;
-	}
 
     protected void setupGPvalues() {
+        setupQmatrix(precisionParameter.getParameterValue(0));
+        GPvalues = new double[numintervals];
+
+        // Need to add L<-chol.spam(Q), y2<-rnorm(nrow(Q),0,1), g<-backsolve(L,y2)
 
     }
+
+
 
 
 //    Methods needed for GP-based

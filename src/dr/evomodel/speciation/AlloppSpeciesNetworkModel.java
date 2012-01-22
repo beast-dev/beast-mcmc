@@ -301,6 +301,16 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		return trees[pl][t];
 	}
 	
+	public double getMaxFootHeight() {
+		// grjtodo tetraonly
+		double maxfh = 0.0;
+		for (AlloppLeggedTree ttree : trees[TETRATREES]) {
+			for (int i = 0;  i < ttree.getNumberOfLegs();  ++i) {
+				maxfh = Math.max(maxfh, ttree.getFootHeight(i));
+			}
+		}
+		return maxfh;
+	}
 	
 	
 	public String mullabTreeAsText() {
@@ -385,13 +395,18 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		assert trees[DITREES].length == 1;
 		assert trees[DITREES][0].getExternalNodeCount() == 2;
 		assert trees[TETRATREES].length == 1;
-		if (MathUtils.nextInt(2) == 0) {
-			// change times but not topology
+		int choice = MathUtils.nextInt(3);
+		double dirooth = trees[DITREES][0].getRootHeight();
+		if (choice == 0) {
+			// change times but not topology or leg order
 			if (MathUtils.nextInt(2) == 0) {
 				trees[TETRATREES][0].moveMostRecentLegHeight();
 			} else {
-				trees[TETRATREES][0].moveMostAncientLegHeight(trees[DITREES][0].getRootHeight());
+				trees[TETRATREES][0].moveMostAncientLegHeight(dirooth);
 			}
+		} else if (choice == 1) {
+			// change times, maybe leg order but not topology
+			trees[TETRATREES][0].moveSplitOrLeg(dirooth);
 		} else {
 			// change topology but not times 
 			trees[TETRATREES][0].moveLegTopology(diploidtipbitset(0), diploidtipbitset(1));

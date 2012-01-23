@@ -100,14 +100,14 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		double nodeHeight = tree.getNodeHeight(node);
 		double branchLength = tree.getBranchLength(node);
 
+//		int returnValue = nModels;
 		int returnValue = 0;
-
+		
 		// /////////////////////
 		// ---TODO: TRIAL 2---//
 		// /////////////////////
 		// TODO: simplify this logic, it's a mess
 
-		// first case: 0th transition time
 		if (parentHeight <= transitionTimes[0]) {
 
 			weights[0] = branchLength;
@@ -115,59 +115,91 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		} else {
 
+			// first case: 0th transition time
 			if (nodeHeight < transitionTimes[0] && transitionTimes[0] <= parentHeight) {
 
 				weights[0] = transitionTimes[0] - nodeHeight;
 				returnValue = nModels;
-
-			} else if (nodeHeight > transitionTimes[0]) {
+				
+			} else {
 
 				weights[0] = 0;
 
-			}// END: 0-th model overlap check
-
+			}// END: 0-th model check
+			
+			//TODO: mother of God what an atrocity
 			// second case: i to i+1 transition times
-			for (int i = 1; i <= lastTransitionTime; i++) {
+	        for (int i = 1; i <= lastTransitionTime; i++) {
+	        	
+	        	if (nodeHeight < transitionTimes[i]) {
+	                     
+	        		if(parentHeight <= transitionTimes[i] && transitionTimes[i-1] < nodeHeight) {
 
-				if (parentHeight <= transitionTimes[i]) {
+						weights[i] = branchLength;
+						returnValue = i;
 
-					break;
+					} else {
+
+						double startTime = Math.max(nodeHeight,
+								transitionTimes[i - 1]);
+						double endTime = Math.min(parentHeight,
+								transitionTimes[i]);
+						
+						if (endTime < startTime) {
+
+							weights[i] = 0;
+
+						} else {
+							
+							weights[i] = (endTime - startTime);
+							returnValue = i;
+//							returnValue = nModels;
+
+						}//END: negative weights check
+
+					}//END: full branch in middle epoch check
 
 				} else {
 
-					if (parentHeight >= transitionTimes[i] && transitionTimes[i] > nodeHeight) {
+					weights[i] = 0;
 
-						double startTime = Math.max(nodeHeight, transitionTimes[i - 1]);
-						double endTime = Math.min(parentHeight, transitionTimes[i]);
-						weights[i] = (endTime - startTime);
-
-					} else if (nodeHeight > transitionTimes[i]) {
-
-						//
-
-					}
-
-				}// END: bail out check
-
-			}// END: i loop
-
+				}// END: i-th model check
+	        
+	        }//END: i loop
+	        
+//	        for (int i = 1; i <= lastTransitionTime; i++) {
+//	        	
+//	        	if (nodeHeight <= transitionTimes[i]) {
+//	            	
+//	        		double start = Math.max(nodeHeight, transitionTimes[i - 1]);
+//	                double end = Math.min(parentHeight, transitionTimes[i]);
+//	                weights[i] = (end - start) ;
+//	                returnValue = i;
+//	                
+//	            } else {
+//	            	
+//	                weights[i] = 0;
+//	            
+//	            }//END: i-th model check
+//	        }//END: i loop
+			
 			// third case: last transition time
 			if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
 
 				weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
 				returnValue = nModels;
 
-			} else if (parentHeight <= transitionTimes[lastTransitionTime]) {
-
-				weights[lastTransitionTime + 1] = 0;
-
 			} else if (nodeHeight > transitionTimes[lastTransitionTime]) {
 
 				weights[lastTransitionTime + 1] = branchLength;
 				returnValue = nModels - 1;
 
+			} else {
+				
+					weights[lastTransitionTime + 1] = 0;
+				
 			}// END: last transition time check
-
+			
 		}// END: if branch below first transition time bail out
 
 		System.out.println("branch length: " + branchLength);

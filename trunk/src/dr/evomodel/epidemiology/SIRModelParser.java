@@ -12,7 +12,7 @@ import dr.xml.*;
 public class SIRModelParser extends AbstractXMLObjectParser {
 
     public static String SIR_MODEL = "sirEpidemiology";
-    public static String TRANSMISSION_RATE = "transmissionRate";
+    public static String REPRODUCTIVE_NUMBER = "reproductiveNumber";
     public static String RECOVERY_RATE = "recoveryRate";
     public static String SUSCEPTIBLES = "susceptibles";
     public static String INFECTEDS = "infecteds";
@@ -27,8 +27,8 @@ public class SIRModelParser extends AbstractXMLObjectParser {
 
         Units.Type units = XMLUnits.Utils.getUnitsAttr(xo);
 
-        XMLObject cxo = xo.getChild(TRANSMISSION_RATE);
-        Parameter transmissionRateParameter = (Parameter) cxo.getChild(Parameter.class);
+        XMLObject cxo = xo.getChild(REPRODUCTIVE_NUMBER);
+        Parameter reproductiveNumberParameter = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(RECOVERY_RATE);
         Parameter recoveryRateParameter = (Parameter) cxo.getChild(Parameter.class);
@@ -42,7 +42,7 @@ public class SIRModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(RECOVEREDS);
         Parameter recoveredsParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        return new SIRModel(transmissionRateParameter, recoveryRateParameter,
+        return new SIRModel(reproductiveNumberParameter, recoveryRateParameter,
                 susceptiblesParameter, infectedsParameter, recoveredsParameter, units);
     }
 
@@ -63,7 +63,7 @@ public class SIRModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(TRANSMISSION_RATE,
+            new ElementRule(REPRODUCTIVE_NUMBER,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RECOVERY_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),

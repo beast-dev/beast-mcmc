@@ -50,7 +50,7 @@ import dr.math.distributions.NormalDistribution;
  * @author Trevor Bedford
  * @author Andrew Rambaut
  */
-public class SIRModel extends DemographicModel {
+public class SIRModel extends DemographicModel implements Likelihood {
 
     //
     // Public stuff
@@ -111,17 +111,81 @@ public class SIRModel extends DemographicModel {
     protected void handleVariableChangedEvent(final Variable variable, final int index, final Variable.ChangeType type) {
         demographicFunction.reset();
         fireModelChanged();
+        likelihoodKnown = false;
     }
 
     @Override
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
         demographicFunction.store();
     }
 
     @Override
     protected void restoreState() {
+        logLikelihood = storedLogLikelihood;
+        likelihoodKnown = true;
         demographicFunction.restore();
     }
+
+    /* Likelihood methods */
+
+    public String prettyName() {
+        return Likelihood.Abstract.getPrettyName(this);
+    }
+
+    public final double getLogLikelihood() {
+        if (!getLikelihoodKnown()) {
+            logLikelihood = calculateLogLikelihood();
+            likelihoodKnown = true;
+        }
+        return logLikelihood;
+    }
+
+    protected boolean getLikelihoodKnown() {
+        return likelihoodKnown;
+    }
+
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed() {
+        isUsed = true;
+    }
+
+    public Model getModel() {
+        return this;
+    }
+
+    public void makeDirty() {
+        likelihoodKnown = false;
+    }
+
+    public LogColumn[] getColumns() {
+        return new LogColumn[]{
+                new LikelihoodColumn(getId())
+        };
+    }
+
+    protected class LikelihoodColumn extends NumberColumn {
+        public LikelihoodColumn(String label) {
+            super(label);
+        }
+
+        public double getDoubleValue() {
+            return getLogLikelihood();
+        }
+    }
+
+    public double calculateLogLikelihood() {
+        double r = demographicFunction.getRecovereds(5);
+        return NormalDistribution.logPdf(r, 0, 100);
+    }
+
+    private boolean isUsed = false;
+    private boolean likelihoodKnown = false;
+    private double logLikelihood;
+    private double storedLogLikelihood;
 
     public DemographicFunction getDemographicFunction() {
         return demographicFunction;

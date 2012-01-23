@@ -127,6 +127,21 @@ public class SIRModel extends DemographicModel implements Likelihood {
         demographicFunction.restore();
     }
 
+    // return S(t)
+    public double getSusceptibles(final double t) {
+        return demographicFunction.getSusceptibles(t);
+    }
+
+    // return I(t)
+    public double getInfecteds(final double t) {
+        return demographicFunction.getInfecteds(t);
+    }
+
+    // return R(t)
+    public double getRecovereds(final double t) {
+        return demographicFunction.getRecovereds(t);
+    }
+
     /* Likelihood methods */
 
     public String prettyName() {

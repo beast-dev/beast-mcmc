@@ -29,10 +29,7 @@ import dr.evolution.coalescent.DemographicFunction;
 import dr.evomodel.coalescent.DemographicModel;
 import dr.inference.loggers.LogColumn;
 import dr.inference.loggers.NumberColumn;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
-import dr.inference.model.Likelihood;
-import dr.inference.model.Model;
+import dr.inference.model.*;
 import dr.math.distributions.NormalDistribution;
 
 
@@ -104,6 +101,11 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
         demographicFunction = new SIRDemographicFunction(units);
         setUnits(units);
+
+        addStatistic(new SusceptiblesStatistic());
+        addStatistic(new InfectedsStatistic());
+        addStatistic(new RecoveredsStatistic());
+        addStatistic(new EffectivePopulationSizeStatistic());
 
     }
 
@@ -193,7 +195,7 @@ public class SIRModel extends DemographicModel implements Likelihood {
     }
 
     public double calculateLogLikelihood() {
-        double r = demographicFunction.getRecovereds(5);
+        double r = demographicFunction.getRecovereds(endTime);
         return NormalDistribution.logPdf(r, 0, 100);
     }
 
@@ -201,6 +203,9 @@ public class SIRModel extends DemographicModel implements Likelihood {
     private boolean likelihoodKnown = false;
     private double logLikelihood;
     private double storedLogLikelihood;
+
+    private double stepSize = 0.01;
+    private double endTime = 5;
 
     public DemographicFunction getDemographicFunction() {
         return demographicFunction;
@@ -348,4 +353,101 @@ public class SIRModel extends DemographicModel implements Likelihood {
         }
 
     }
+
+    public class SusceptiblesStatistic extends Statistic.Abstract {
+
+        public SusceptiblesStatistic() {
+            super("susceptibles");
+        }
+
+        @Override
+        public String getDimensionName(final int i) {
+            double t = (double) i * stepSize;
+            return Double.toString(t);
+        }
+
+        public int getDimension() {
+            return (int) (endTime / stepSize);
+        }
+
+        public double getStatisticValue(final int i) {
+            double t = (double) i * stepSize;
+            return getSusceptibles(t);
+        }
+
+    }
+
+    public class InfectedsStatistic extends Statistic.Abstract {
+
+        public InfectedsStatistic() {
+            super("infecteds");
+        }
+
+        @Override
+        public String getDimensionName(final int i) {
+            double t = (double) i * stepSize;
+            return Double.toString(t);
+        }
+
+        public int getDimension() {
+            return (int) (endTime / stepSize);
+        }
+
+        public double getStatisticValue(final int i) {
+            double t = (double) i * stepSize;
+            return getInfecteds(t);
+        }
+
+    }
+
+    public class RecoveredsStatistic extends Statistic.Abstract {
+
+        public RecoveredsStatistic() {
+            super("recovereds");
+        }
+
+        @Override
+        public String getDimensionName(final int i) {
+            double t = (double) i * stepSize;
+            return Double.toString(t);
+        }
+
+        public int getDimension() {
+            return (int) (endTime / stepSize);
+        }
+
+        public double getStatisticValue(final int i) {
+            double t = (double) i * stepSize;
+            return getRecovereds(t);
+        }
+
+    }
+
+    public class EffectivePopulationSizeStatistic extends Statistic.Abstract {
+
+        public EffectivePopulationSizeStatistic() {
+            super("effectivePopulationSize");
+        }
+
+        @Override
+        public String getDimensionName(final int i) {
+            double t = (double) i * stepSize;
+            return Double.toString(t);
+        }
+
+        public int getDimension() {
+            return (int) (endTime / stepSize);
+        }
+
+        public double getStatisticValue(final int i) {
+            double t = (double) i * stepSize;
+            double beta = reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0);
+            double total = getSusceptibles(t) + getInfecteds(t) + getRecovereds(t);
+            double numer = getInfecteds(t) * total;
+            double denom = 2.0 * beta * getSusceptibles(t);
+            return numer / denom;
+        }
+
+    }
+
 }

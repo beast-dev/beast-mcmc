@@ -103,12 +103,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		int returnValue = 0;
 
 		// /////////////////////
-		// ---TODO: TRIAL 3---//
-		// /////////////////////
-
-		// /////////////////////
 		// ---TODO: TRIAL 2---//
 		// /////////////////////
+		// TODO: simplify this logic, it's a mess
 
 		// first case: 0th transition time
 		if (parentHeight <= transitionTimes[0]) {
@@ -129,7 +126,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 			}// END: 0-th model overlap check
 
-			// TODO:
 			// second case: i to i+1 transition times
 			for (int i = 1; i <= lastTransitionTime; i++) {
 
@@ -161,11 +157,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
 				returnValue = nModels;
 
-			} else if (parentHeight <= transitionTimes[0]) {
+			} else if (parentHeight <= transitionTimes[lastTransitionTime]) {
 
 				weights[lastTransitionTime + 1] = 0;
 
-			} else if (nodeHeight > transitionTimes[0]) {
+			} else if (nodeHeight > transitionTimes[lastTransitionTime]) {
 
 				weights[lastTransitionTime + 1] = branchLength;
 				returnValue = nModels - 1;

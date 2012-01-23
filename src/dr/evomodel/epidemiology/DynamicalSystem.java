@@ -184,4 +184,17 @@ public class DynamicalSystem {
 
     }
 
+    public String printValues(String n, double start, double finish, double step) {
+
+        String out = "";
+        DynamicalVariable var = getVar(n);
+        for (double t=start; t<=finish; t += step) {
+            double v = var.getValue(t);
+            out += "\t";
+            out += Double.toString(v);
+        }
+        return out;
+
+    }
+
 }

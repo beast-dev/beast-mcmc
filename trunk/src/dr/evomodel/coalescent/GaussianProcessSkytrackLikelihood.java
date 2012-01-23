@@ -72,6 +72,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
     protected int [] GPcounts;   //It changes values, no need to storage
 //    protected int [] storedGPcounts;
     protected int numintervals;
+    protected double constlik;
 
 //    Those that change size, they are initialized per tree, no need to store them
 //    use as Parameter since they will be changing by operators
@@ -191,8 +192,13 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //
 //
 // Is it ok to have this public and override the one in OldAbstract...
-    public double calculateLogLikelihood() {
-        logGPLikelihood=0.0;
+    //I will use specific input
+    public double calculateLogLikelihood(double[] Gfunction, SymmTridiagMatrix QMatrix, int[] latentCounts, int [] eventType, double upperBound, double [] Gintervals, int [] Gfactor) {
+        logGPLikelihood=-getConstlik();
+
+        for (int i=0; i<Gfunction.length;i++){
+        logGPLikelihood+= latentCounts[i]*Math.log(upperBound*Gfactor[i])-upperBound*Gfactor[i]*Gintervals[i]-Math.log(1+Math.exp(-eventType[i]*Gfunction[i])   );
+        }
         return 0.0;
 // TODO Return the correct log-density  (augmented?)
     }
@@ -220,13 +226,17 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    }
 
 //
+
+    public double getConstlik(){
+        return constlik;
+    }
 	public double getLogLikelihood() {
-//		if (!likelihoodKnown) {
-//			logLikelihood = calculateLogLikelihood();
-//			likelihoodKnown = true;
-//		}
-//		return logLikelihood;
-        return 0.0;
+		if (!likelihoodKnown) {
+			logLikelihood = calculateLogLikelihood();
+			likelihoodKnown = true;
+		}
+		return logLikelihood;
+//        return 0.0;
 	}
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
@@ -299,6 +309,7 @@ protected void storeState() {
 
 
 		double length = 0;
+        constlik= 0;
 		for (int i = 0; i < getIntervalCount(); i++) {
 
 			length += getInterval(i);
@@ -307,6 +318,7 @@ protected void storeState() {
                 GPtype[i]=1;
                 GPchangePoints[i]=length;
              	GPcoalfactor[i] =getLineageCount(i)*(getLineageCount(i)-1) / 2.0;
+                constlik+=GPcoalfactor[i]*getInterval(i);
                 if (getIntervalType(i) == CoalescentEventType.COALESCENT) {
                     GPcounts[i]=1;
 			        }

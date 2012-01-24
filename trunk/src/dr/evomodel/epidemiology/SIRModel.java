@@ -102,10 +102,10 @@ public class SIRModel extends DemographicModel implements Likelihood {
         demographicFunction = new SIRDemographicFunction(units);
         setUnits(units);
 
-        addStatistic(new SusceptiblesStatistic());
-        addStatistic(new InfectedsStatistic());
-        addStatistic(new RecoveredsStatistic());
-        addStatistic(new EffectivePopulationSizeStatistic());
+        addStatistic(new TimeseriesStatistic("susceptibles"));
+        addStatistic(new TimeseriesStatistic("infecteds"));
+        addStatistic(new TimeseriesStatistic("recovereds"));
+        addStatistic(new TimeseriesStatistic("effectivePopulationSize"));
 
     }
 
@@ -142,6 +142,11 @@ public class SIRModel extends DemographicModel implements Likelihood {
     // return R(t)
     public double getRecovereds(final double t) {
         return demographicFunction.getRecovereds(t);
+    }
+
+    // return R(t)
+    public double getEffectivePopulationSize(final double t) {
+        return demographicFunction.getDemographic(t);
     }
 
     /* Likelihood methods */
@@ -354,10 +359,10 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
     }
 
-    public class SusceptiblesStatistic extends Statistic.Abstract {
+    public class TimeseriesStatistic extends Statistic.Abstract {
 
-        public SusceptiblesStatistic() {
-            super("susceptibles");
+        public TimeseriesStatistic(String name) {
+            super(name);
         }
 
         @Override
@@ -372,80 +377,21 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
         public double getStatisticValue(final int i) {
             double t = (double) i * stepSize;
-            return getSusceptibles(t);
-        }
-
-    }
-
-    public class InfectedsStatistic extends Statistic.Abstract {
-
-        public InfectedsStatistic() {
-            super("infecteds");
-        }
-
-        @Override
-        public String getDimensionName(final int i) {
-            double t = (double) i * stepSize;
-            return Double.toString(t);
-        }
-
-        public int getDimension() {
-            return (int) (endTime / stepSize);
-        }
-
-        public double getStatisticValue(final int i) {
-            double t = (double) i * stepSize;
-            return getInfecteds(t);
-        }
-
-    }
-
-    public class RecoveredsStatistic extends Statistic.Abstract {
-
-        public RecoveredsStatistic() {
-            super("recovereds");
-        }
-
-        @Override
-        public String getDimensionName(final int i) {
-            double t = (double) i * stepSize;
-            return Double.toString(t);
-        }
-
-        public int getDimension() {
-            return (int) (endTime / stepSize);
-        }
-
-        public double getStatisticValue(final int i) {
-            double t = (double) i * stepSize;
-            return getRecovereds(t);
-        }
-
-    }
-
-    public class EffectivePopulationSizeStatistic extends Statistic.Abstract {
-
-        public EffectivePopulationSizeStatistic() {
-            super("effectivePopulationSize");
-        }
-
-        @Override
-        public String getDimensionName(final int i) {
-            double t = (double) i * stepSize;
-            return Double.toString(t);
-        }
-
-        public int getDimension() {
-            return (int) (endTime / stepSize);
-        }
-
-        public double getStatisticValue(final int i) {
-            double t = (double) i * stepSize;
-            double beta = reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0);
-            double total = getSusceptibles(t) + getInfecteds(t) + getRecovereds(t);
-            double numer = getInfecteds(t) * total;
-            double denom = 2.0 * beta * getSusceptibles(t);
-            return numer / denom;
+            if (getStatisticName().equals("susceptibles")) {
+                return getSusceptibles(t);
+            }
+            else if (getStatisticName().equals("infecteds")) {
+                return getInfecteds(t);
+            }
+            else if (getStatisticName().equals("recovereds")) {
+                return getRecovereds(t);
+            }
+            else if (getStatisticName().equals("effectivePopulationSize")) {
+                return getEffectivePopulationSize(t);
+            }
+            else {
+                return 0.0;
+            }
         }
 
     }

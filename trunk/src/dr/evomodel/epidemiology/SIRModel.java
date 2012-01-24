@@ -226,7 +226,7 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
     class SIRDemographicFunction extends DemographicFunction.Abstract {
 
-        DynamicalSystem syst = new DynamicalSystem(0.01);
+        DynamicalSystem syst = new DynamicalSystem(0, 0.01);
 
         public SIRDemographicFunction(Type units) {
 
@@ -311,13 +311,13 @@ public class SIRModel extends DemographicModel implements Likelihood {
         // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
 
-            double inf = syst.getIntegral("infecteds", start, finish);
+            double inf = syst.getAverage("infecteds", start, finish);
             if (inf < 1)
                 inf = 1.0;
 
             double beta = reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0);
-            double numer = 2.0 * beta * syst.getIntegral("susceptibles", start, finish);
-            double denom = inf * syst.getIntegral("total", start, finish);
+            double numer = 2.0 * beta * syst.getAverage("susceptibles", start, finish);
+            double denom = inf * syst.getAverage("total", start, finish);
 
             double integral = (finish-start)*(numer / denom);
 

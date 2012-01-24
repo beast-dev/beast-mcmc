@@ -1,7 +1,7 @@
 /*
  * TreeModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -83,7 +83,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
 
         // adjust the heights to be compatible with the tip dates and perturb
         // any zero branches.
-        MutableTree.Utils.correctHeightsForTips(binaryTree);
+//        MutableTree.Utils.correctHeightsForTips(binaryTree);
 
         // clone the node structure (this will create the individual parameters
         Node node = new Node(binaryTree, binaryTree.getRoot());
@@ -258,8 +258,8 @@ public class TreeModel extends AbstractModel implements MutableTree {
             return parameter == node.traitParameters.get(name);
         }
 
-        public boolean areAllInternalHeightsChanged(){
-            if(parameter != null){
+        public boolean areAllInternalHeightsChanged() {
+            if (parameter != null) {
                 return parameter == node.heightParameter && index == CHANGE_IN_ALL_INTERNAL_NODES;
             }
             return false;

@@ -10,14 +10,17 @@ public class DynamicalSystem {
     private List<DynamicalForce> forces = new ArrayList<DynamicalForce>();
     private HashMap<String,DynamicalVariable> varMap = new HashMap<String,DynamicalVariable>();
     private HashMap<String,DynamicalForce> forceMap = new HashMap<String,DynamicalForce>();
+
     private double currentTime = 0.0;
+    private double startTime = 0.0;
     private double timeStep = 0.0;
 
-    private double storedTime = 0.0;
+    private double storedCurrentTime = 0.0;
+    private double storedStartTime = 0.0;
 
     public static void main(String[] args) {
 
-        DynamicalSystem syst = new DynamicalSystem(0.001);
+        DynamicalSystem syst = new DynamicalSystem(0, 0.001);
 
         double transmissionRate = 0.027;
         double recoveryRate = 0.00054;
@@ -40,8 +43,9 @@ public class DynamicalSystem {
 
     }
 
-    public DynamicalSystem(double dt) {
-        currentTime = 0.0;
+    public DynamicalSystem(double t0, double dt) {
+        startTime = t0;
+        currentTime = startTime;
         timeStep = dt;
     }
 
@@ -63,7 +67,7 @@ public class DynamicalSystem {
 
     public void resetVar(String n, double v0) {
         DynamicalVariable var = getVar(n);
-        var.reset(v0);
+        var.reset(startTime, v0);
     }
 
     public void resetForce(String n, double c) {
@@ -72,12 +76,13 @@ public class DynamicalSystem {
     }
 
     public void resetTime() {
-        currentTime = 0.0;
+        currentTime = startTime;
     }
 
     // copy values to stored state
     public void store() {
-        storedTime = currentTime;
+        storedCurrentTime = currentTime;
+        storedStartTime = startTime;
         for (DynamicalVariable var : variables) {
             var.store();
         }
@@ -88,7 +93,8 @@ public class DynamicalSystem {
 
     // copy values from stored state
     public void restore() {
-        currentTime = storedTime;
+        currentTime = storedCurrentTime;
+        startTime = storedStartTime;
         for (DynamicalVariable var : variables) {
             var.restore();
         }
@@ -137,8 +143,28 @@ public class DynamicalSystem {
         return var.getIntegral(start, finish);
     }
 
+   // get average of indexed variable between times start and finish
+    // dynamically extend trace
+    public double getAverage(int index, double start, double finish) {
+        while (currentTime < finish) {
+            step();
+        }
+        DynamicalVariable var = variables.get(index);
+        return var.getAverage(start, finish);
+    }
+
+    // get average of named variable between times start and finish
+    // dynamically extend trace
+    public double getAverage(String n, double start, double finish) {
+        while (currentTime < finish) {
+            step();
+        }
+        DynamicalVariable var = getVar(n);
+        return var.getAverage(start, finish);
+    }
+
     public void addVariable(String n, double v0) {
-        DynamicalVariable var = new DynamicalVariable(n, v0);
+        DynamicalVariable var = new DynamicalVariable(n, startTime, v0);
         varMap.put(n, var);
         variables.add(var);
     }

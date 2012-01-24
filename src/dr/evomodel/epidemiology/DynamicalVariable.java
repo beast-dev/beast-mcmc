@@ -18,9 +18,9 @@ public class DynamicalVariable {
     private double storedValue = 0.0;
 
     // initialize variable
-    public DynamicalVariable(String n, double v0) {
+    public DynamicalVariable(String n, double t0, double v0) {
         name = n;
-        currentTime = 0.0;
+        currentTime = t0;
         currentValue = v0;
         add(currentTime, currentValue);
     }
@@ -46,8 +46,8 @@ public class DynamicalVariable {
     }
 
     // reset arrays
-    public void reset(double v0) {
-        currentTime = 0.0;
+    public void reset(double t0, double v0) {
+        currentTime = t0;
         currentValue = v0;
         times.clear();
         values.clear();
@@ -139,39 +139,41 @@ public class DynamicalVariable {
     public double getIntegral(double start, double finish) {
 
         // first index after start and last index before finish
-//        int a = 0;
-//        int b = 0;
-//        double sum = 0.0;
+        int a = 0;
+        int b = 0;
+        double sum = 0.0;
 
         // if not exact match, need first index after than start
-//        int index = Collections.binarySearch(times, new Double(start));
-//        if (index >= 0)
-//            a = index;
-//        else
-//            a = Math.abs(index) - 1;
+        int index = Collections.binarySearch(times, new Double(start));
+        if (index >= 0)
+            a = index;
+        else
+            a = Math.abs(index) - 1;
 
-         // if not exact match, need last index before than finish
-//        index = Collections.binarySearch(times, new Double(finish));
-//        if (index >= 0)
-//            b = index;
-//        else
-//            b = Math.abs(index) - 2;
+        // if not exact match, need last index before than finish
+        index = Collections.binarySearch(times, new Double(finish));
+        if (index >= 0)
+            b = index;
+        else
+            b = Math.abs(index) - 2;
 
         // from start to a
-//        sum += 0.5 * (getTimeAtIndex(a) - start) * (getValueAtIndex(a) + getValue(start));
+        sum += 0.5 * (getTimeAtIndex(a) - start) * (getValueAtIndex(a) + getValue(start));
 
         // between a and b
-//        for (index = a; index < b; index++) {
-//            sum += 0.5 * (getTimeAtIndex(index+1) - getTimeAtIndex(index)) * (getValueAtIndex(index+1) + getValueAtIndex(index));
-//       }
+        for (index = a; index < b; index++) {
+            sum += 0.5 * (getTimeAtIndex(index+1) - getTimeAtIndex(index)) * (getValueAtIndex(index+1) + getValueAtIndex(index));
+        }
 
         // b to finish
-//        sum += 0.5 * (finish - getTimeAtIndex(b)) * (getValue(finish) + getValueAtIndex(b));
+        sum += 0.5 * (finish - getTimeAtIndex(b)) * (getValue(finish) + getValueAtIndex(b));
 
- //       return sum;
+        return sum;
 
+    }
+
+    public double getAverage(double start, double finish) {
         return 0.5*(getValue(start) + getValue(finish));
-
     }
 
     public void print() {

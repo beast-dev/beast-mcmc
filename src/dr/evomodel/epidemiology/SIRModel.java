@@ -57,13 +57,12 @@ public class SIRModel extends DemographicModel implements Likelihood {
      */
     public SIRModel(Parameter reproductiveNumberParameter,
                     Parameter recoveryRateParameter,
-                    Parameter susceptiblesParameter,
-                    Parameter infectedsParameter,
-                    Parameter recoveredsParameter,
+                    Parameter hostPopulationSizeParameter,
+                    Parameter proportionsParameter,
                     Type units) {
 
         this(SIRModelParser.SIR_MODEL, reproductiveNumberParameter, recoveryRateParameter,
-            susceptiblesParameter, infectedsParameter, recoveredsParameter, units);
+            hostPopulationSizeParameter, proportionsParameter, units);
     }
 
     /**
@@ -72,9 +71,8 @@ public class SIRModel extends DemographicModel implements Likelihood {
     public SIRModel(String name,
                     Parameter reproductiveNumberParameter,
                     Parameter recoveryRateParameter,
-                    Parameter susceptiblesParameter,
-                    Parameter infectedsParameter,
-                    Parameter recoveredsParameter,
+                    Parameter hostPopulationSizeParameter,
+                    Parameter proportionsParameter,
                     Type units) {
 
         super(name);
@@ -87,17 +85,12 @@ public class SIRModel extends DemographicModel implements Likelihood {
         addVariable(recoveryRateParameter);
         recoveryRateParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
-        this.susceptiblesParameter = susceptiblesParameter;
-        addVariable(susceptiblesParameter);
-        susceptiblesParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+        this.hostPopulationSizeParameter = hostPopulationSizeParameter;
+        addVariable(hostPopulationSizeParameter);
+        hostPopulationSizeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
-        this.infectedsParameter = infectedsParameter;
-        addVariable(infectedsParameter);
-        infectedsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
-
-        this.recoveredsParameter = recoveredsParameter;
-        addVariable(recoveredsParameter);
-        recoveredsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+        this.proportionsParameter = proportionsParameter;
+        addVariable(proportionsParameter);
 
         demographicFunction = new SIRDemographicFunction(units);
         setUnits(units);
@@ -218,9 +211,8 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
     Parameter reproductiveNumberParameter = null;
     Parameter recoveryRateParameter = null;
-    Parameter susceptiblesParameter = null;
-    Parameter infectedsParameter = null;
-    Parameter recoveredsParameter = null;
+    Parameter hostPopulationSizeParameter = null;
+    Parameter proportionsParameter = null;
 
     SIRDemographicFunction demographicFunction = null;
 
@@ -232,11 +224,15 @@ public class SIRModel extends DemographicModel implements Likelihood {
 
             super(units);
 
-            syst.addVariable("susceptibles", susceptiblesParameter.getParameterValue(0));
-            syst.addVariable("infecteds", infectedsParameter.getParameterValue(0));
-            syst.addVariable("recovereds", recoveredsParameter.getParameterValue(0));
-            syst.addVariable("total", susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
-                    + recoveredsParameter.getParameterValue(0));
+            double hostPop = hostPopulationSizeParameter.getParameterValue(0);
+            double initialS = hostPop * proportionsParameter.getParameterValue(0);
+            double initialI = hostPop * proportionsParameter.getParameterValue(1);
+            double initialR = hostPop * proportionsParameter.getParameterValue(2);
+
+            syst.addVariable("susceptibles", initialS);
+            syst.addVariable("infecteds", initialI);
+            syst.addVariable("recovereds", initialR);
+            syst.addVariable("total", hostPop);
             syst.addForce("contact", reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0),
                     new String[]{"infecteds","susceptibles"}, new String[]{"total"}, "susceptibles", "infecteds");
             syst.addForce("recovery", recoveryRateParameter.getParameterValue(0), new String[]{"infecteds"},
@@ -245,11 +241,16 @@ public class SIRModel extends DemographicModel implements Likelihood {
         }
 
         public void reset() {
-            syst.resetVar("susceptibles", susceptiblesParameter.getParameterValue(0));
-            syst.resetVar("infecteds", infectedsParameter.getParameterValue(0));
-            syst.resetVar("recovereds", recoveredsParameter.getParameterValue(0));
-            syst.resetVar("total", susceptiblesParameter.getParameterValue(0) + infectedsParameter.getParameterValue(0)
-                    + recoveredsParameter.getParameterValue(0));
+
+            double hostPop = hostPopulationSizeParameter.getParameterValue(0);
+            double initialS = hostPop * proportionsParameter.getParameterValue(0);
+            double initialI = hostPop * proportionsParameter.getParameterValue(1);
+            double initialR = hostPop * proportionsParameter.getParameterValue(2);
+
+            syst.resetVar("susceptibles", initialS);
+            syst.resetVar("infecteds", initialI);
+            syst.resetVar("recovereds", initialR);
+            syst.resetVar("total", hostPop);
             syst.resetForce("contact", reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0));
             syst.resetForce("recovery", recoveryRateParameter.getParameterValue(0));
             syst.resetTime();
@@ -266,15 +267,16 @@ public class SIRModel extends DemographicModel implements Likelihood {
         // return N(t)
         public double getDemographic(final double t) {
 
-            double inf = syst.getValue("infecteds", t);
-            if (inf < 1)
-                inf = 1.0;
-
             double beta = reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0);
-            double numer = inf * syst.getValue("total", t);
-            double denom = 2.0 * beta * syst.getValue("susceptibles", t);
+            double numer = getInfecteds(t) * hostPopulationSizeParameter.getParameterValue(0);
+            double denom = 2.0 * beta * getSusceptibles(t);
+            double ne = numer / denom;
 
-            return numer / denom;
+            if (ne < 0.001) {
+                ne = 0.001;
+            }
+
+            return ne;
 
         }
 
@@ -311,16 +313,8 @@ public class SIRModel extends DemographicModel implements Likelihood {
         // return integral of 1/N(t)
         public double getIntegral(final double start, final double finish) {
 
-            double inf = syst.getAverage("infecteds", start, finish);
-            if (inf < 1)
-                inf = 1.0;
-
-            double beta = reproductiveNumberParameter.getParameterValue(0) * recoveryRateParameter.getParameterValue(0);
-            double numer = 2.0 * beta * syst.getAverage("susceptibles", start, finish);
-            double denom = inf * syst.getAverage("total", start, finish);
-
-            double integral = (finish-start)*(numer / denom);
-
+            double neAvg = 0.5 * (getDemographic(start) + getDemographic(finish));
+            double integral = (finish-start)*(1.0 / neAvg);
             return integral ;
 
         }

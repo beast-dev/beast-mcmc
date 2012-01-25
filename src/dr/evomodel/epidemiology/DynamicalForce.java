@@ -54,9 +54,9 @@ public class DynamicalForce {
         for (DynamicalVariable var : divisors) {
             force /= var.getValue(t);
         }
-  //      if (increasingVariable.getValue(t) < 0 || decreasingVariable.getValue(t) < 0) {
-  //          force = 0.0;
-  //      }
+        if (increasingVariable.getValue(t) < 0 || decreasingVariable.getValue(t) < 0) {
+            force = 0.0;
+        }
         return force;
     }
 

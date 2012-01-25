@@ -14,10 +14,8 @@ public class SIRModelParser extends AbstractXMLObjectParser {
     public static String SIR_MODEL = "sirEpidemiology";
     public static String REPRODUCTIVE_NUMBER = "reproductiveNumber";
     public static String RECOVERY_RATE = "recoveryRate";
-    public static String SUSCEPTIBLES = "susceptibles";
-    public static String INFECTEDS = "infecteds";
-    public static String RECOVEREDS = "recovereds";
-
+    public static String HOST_POPULATION_SIZE = "hostPopulationSize";
+    public static String PROPORTIONS = "proportions";
 
     public String getParserName() {
         return SIR_MODEL;
@@ -33,17 +31,14 @@ public class SIRModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(RECOVERY_RATE);
         Parameter recoveryRateParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(SUSCEPTIBLES);
-        Parameter susceptiblesParameter = (Parameter) cxo.getChild(Parameter.class);
+        cxo = xo.getChild(HOST_POPULATION_SIZE);
+        Parameter hostPopulationSizeParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(INFECTEDS);
-        Parameter infectedsParameter = (Parameter) cxo.getChild(Parameter.class);
-
-        cxo = xo.getChild(RECOVEREDS);
-        Parameter recoveredsParameter = (Parameter) cxo.getChild(Parameter.class);
+        cxo = xo.getChild(PROPORTIONS);
+        Parameter proportionsParameter = (Parameter) cxo.getChild(Parameter.class);
 
         return new SIRModel(reproductiveNumberParameter, recoveryRateParameter,
-                susceptiblesParameter, infectedsParameter, recoveredsParameter, units);
+                hostPopulationSizeParameter, proportionsParameter, units);
     }
 
     //************************************************************************
@@ -67,11 +62,9 @@ public class SIRModelParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(RECOVERY_RATE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(SUSCEPTIBLES,
+            new ElementRule(HOST_POPULATION_SIZE,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(INFECTEDS,
-                    new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(RECOVEREDS,
+            new ElementRule(PROPORTIONS,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             XMLUnits.SYNTAX_RULES[0]
     };

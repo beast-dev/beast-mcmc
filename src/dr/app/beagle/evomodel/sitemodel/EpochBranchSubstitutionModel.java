@@ -268,7 +268,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         } else {
         	
         	// To GB: maybe it doesn't look like this immediately but this logic is simpler than what we previously had here.
-        	// Basicaly it covers all "corner cases" in if-else statements with the default else being:
+        	// Basicaly it covers all "corner cases" in if-else statements with the default being:
         	// "Copy what we previously have convolved on that branch into second index, populate the first index, convolve, repeat"
         	//
         	
@@ -288,7 +288,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				for (int j = 0; j < weights.length - 1; j++) {
 
 					if (weights[j] == 0 && weights[j + 1] != 0) {
-
+						// This weight is zero but next ones are non-zero
+						// let's start convolving
+						
 						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 2]);
 
 						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j + 1), // eigenIndex
@@ -325,11 +327,14 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 						// TODO: not needed?
 
 					} else if (weights[j] != 0 && weights[j + 1] == 0) {
+						// Next weights are all zero, let's bail out
 
 						System.err.println("Time to GTFO");
 						break;
 
 					} else {
+						// Situation Normal (All Fucked Up), let's keep up the
+						// good work
 
 						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 1]);
 
@@ -342,7 +347,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 								);
 
 						if (j == 0) {
-
+							// If this branch is a virgin let's deflower it
+							
 							System.out.println("populating matrix index " + secondProbIndices[0] + " for length " + weights[j]);
 
 							beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
@@ -354,7 +360,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 									);
 
 						} else {
-
+							// it's already been convolved so let's copy it
+							
 							System.out.println("copying matrix index " + resultProbIndices[0] + " into matrix index " + secondProbIndices[0]);
 
 							// TODO: check if this works as expected

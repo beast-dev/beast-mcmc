@@ -87,7 +87,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         }
 
         addVariable(epochTimes);
-    }
+    }//END: constructor
 
     public int getBranchIndex(final Tree tree, final NodeRef node,
                               int bufferIndex) {
@@ -193,28 +193,26 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     /*
       * Return number of transition matrices buffers
       */
-    public int getExtraBufferCount() {
-        return (2);
-    }// END: getBufferCount
+	public int getExtraBufferCount() {
+		// return (2);
+		return substModelList.size() + 2;
+	}// END: getBufferCount
 
-    //	@Override
-    public void setFirstBuffer(int firstBufferCount) {
-        firstBuffer = firstBufferCount;
-    }// END: setFirstBuffer
+	public void setFirstBuffer(int firstBufferCount) {
+		firstBuffer = firstBufferCount;
+	}// END: setFirstBuffer
 
-    public EigenDecomposition getEigenDecomposition(int branchIndex,
-                                                    int categoryIndex) {
-        return substModelList.get(branchIndex).getEigenDecomposition();
-    }
+	public EigenDecomposition getEigenDecomposition(int branchIndex, int categoryIndex) {
+		return substModelList.get(branchIndex).getEigenDecomposition();
+	}// END: getEigenDecomposition
 
-    public SubstitutionModel getSubstitutionModel(int branchIndex,
-                                                  int categoryIndex) {
-        return substModelList.get(branchIndex);
-    }
+	public SubstitutionModel getSubstitutionModel(int branchIndex, int categoryIndex) {
+		return substModelList.get(branchIndex);
+	}// END: getSubstitutionModel
 
     public double[] getStateFrequencies(int categoryIndex) {
         return frequencyModelList.get(categoryIndex).getFrequencies();
-    }
+    }//END: getS
 
     public boolean canReturnComplexDiagonalization() {
         for (SubstitutionModel model : substModelList) {
@@ -256,8 +254,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                                          int count //number of branches to update in paralell
                                          ) {
 	
+//    	int stateCount = getStateCount();
+    	
         if (eigenIndex < substModelList.size()) {
-
+        	
             // Branches fall in a single category
             beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
                     probabilityIndices,
@@ -266,169 +266,248 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                     edgeLengths,
                     count);
         } else {
-        	
-        	// To GB: maybe it doesn't look like this immediately but this logic is simpler than what we previously had here.
-        	// Basicaly it covers all "corner cases" in if-else statements with the default being:
-        	// "Copy what we previously have convolved on that branch into second index, populate the first index, convolve, repeat"
-        	//
-        	
-			// Branches require convolution of two or more matrices
+
+			// ///////////////
+			// ---TRIAL 2---//
+			// ///////////////
+
+			int[] probabilityBuffers = new int[substModelList.size()];
+			for (int i = 0; i < substModelList.size(); i++) {
+				probabilityBuffers[i] = firstBuffer + i;
+			}// END: fill loop
+
+			int[] firstProbIndices = { probabilityBuffers[0] };
+			int[] firstExtraIndices = { firstBuffer + substModelList.size() };
+			int[] secondExtraIndices = { firstBuffer + substModelList.size() + 1 };
+
 			for (int i = 0; i < count; i++) {
 
 				int index = probabilityIndices[i];
 				double[] weights = convolutionMatricesMap.get(index);
 				int[] resultProbIndices = { index };
-				int[] firstProbIndices = { firstBuffer };
-				int[] secondProbIndices = { firstBuffer + 1 };
 
 				System.out.println("branch: " + index);
 				System.out.println("weights:");
 				printArray(weights, weights.length);
+				System.out.println("buffers:");
+				printArray(probabilityBuffers, probabilityBuffers.length);
+
+				// TODO: not the right eigen indices (doesn't matter for now cause model is homogenous)
+				// TODO: we need to write an updateTransitionMatrices routine that takes list of eigen indices to REALLY 
+				// do it in paralell
+				beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(0), // eigenIndex
+						probabilityBuffers, // probabilityIndices
+						null, // firstDerivativeIndices
+						null, // secondDerivativeIndices
+						weights, // edgeLengths
+						weights.length // count
+						);
+
+				int lastResultIndex = -1;
 
 				for (int j = 0; j < weights.length - 1; j++) {
 
-					if (weights[j] == 0 && weights[j + 1] != 0) {
-						// This weight is zero but next ones are non-zero
-						// let's start convolving
+					int[] secondProbIndices = { probabilityBuffers[j + 1] };
+					
+					if( (j == 0) && (j == (weights.length - 2)) ) {
 						
-						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 2]);
-
-						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j + 1), // eigenIndex
-								firstProbIndices, // probabilityIndices
-								null, // firstDerivativeIndices
-								null, // secondDerivativeIndices
-								new double[] { weights[j + 2] }, // edgeLengths
-								1 // count
-								);
-
-						System.out.println("populating matrix index " + secondProbIndices[0] + " for length " + weights[j + 1]);
-
-						beagle.updateTransitionMatrices(bufferHelper
-								.getOffsetIndex(j), // eigenIndex
-								secondProbIndices, // probabilityIndices
-								null, // firstDerivativeIndices
-								null, // secondDerivativeIndices
-								new double[] { weights[j + 1] }, // edgeLengths
-								1 // count
-								);
-
 						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
 
 						beagle.convolveTransitionMatrices(firstProbIndices, // A
 								secondProbIndices, // B
 								resultProbIndices, // C
 								1 // count
-								);
+								);	
+						
+					} else if ( (j == 0) && (j != (weights.length - 2)) ) {
 
-						j++;
+						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
 
-					} else if (weights[j] == 0 && weights[j + 1] == 0) {
-
-						// TODO: not needed?
-
-					} else if (weights[j] != 0 && weights[j + 1] == 0) {
-						// Next weights are all zero, let's bail out
-
-						System.err.println("Time to GTFO");
-						break;
-
-					} else {
-						// Situation Normal (All Fucked Up), let's keep up the
-						// good work
-
-						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 1]);
-
-						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j + 1), // eigenIndex
-								firstProbIndices, // probabilityIndices
-								null, // firstDerivativeIndices
-								null, // secondDerivativeIndices
-								new double[] { weights[j + 1] }, // edgeLengths
+						beagle.convolveTransitionMatrices(firstProbIndices, // A
+								secondProbIndices, // B
+								firstExtraIndices, // C
 								1 // count
 								);
 
-						if (j == 0) {
-							// If this branch is a virgin let's deflower it
-							
-							System.out.println("populating matrix index " + secondProbIndices[0] + " for length " + weights[j]);
+						lastResultIndex = firstExtraIndices[0];
+						
+					} else if ( (j != 0) && (j == (weights.length - 2)) ) {
 
-							beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
-									secondProbIndices, // probabilityIndices
-									null, // firstDerivativeIndices
-									null, // secondDerivativeIndices
-									new double[] { weights[j] }, // edgeLengths
+						System.out.println("convolving matrix index " + lastResultIndex + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
+
+						int[] lastResultIndices = { lastResultIndex };
+
+						beagle.convolveTransitionMatrices(lastResultIndices, // A
+								secondProbIndices, // B
+								resultProbIndices, // C
+								1 // count
+								);
+
+					} else {
+
+						if (j % 2 == 1) {
+							// odd
+							System.out.println("convolving matrix index " + firstExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + secondExtraIndices[0]);
+
+							beagle.convolveTransitionMatrices(
+									firstExtraIndices, // A
+									secondProbIndices, // B
+									secondExtraIndices, // C
 									1 // count
 									);
 
-						} else {
-							// it's already been convolved so let's copy it
-							
-							System.out.println("copying matrix index " + resultProbIndices[0] + " into matrix index " + secondProbIndices[0]);
+							lastResultIndex = secondExtraIndices[0];
 
-							// TODO: check if this works as expected
-							// memcpy resultIndex into secondIndex
-							double tmp[] = new double[4 * 4 * 1];
-							beagle.getTransitionMatrix(resultProbIndices[0], // matrixIndex
-									tmp // outMatrix
+						} else {
+							// even
+							System.out.println("convolving matrix index " + secondExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
+
+							beagle.convolveTransitionMatrices(
+									secondExtraIndices, // A
+									secondProbIndices, // B
+									firstExtraIndices, // C
+									1 // count
 									);
 
-							beagle.setTransitionMatrix(secondProbIndices[0], // matrixIndex
-									tmp, // inMatrix
-									1.0); // paddedValue
+							lastResultIndex = firstExtraIndices[0];
 
-						}// END: j check
-
-						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
-
-						beagle.convolveTransitionMatrices(firstProbIndices, // A
-								secondProbIndices, // B
-								resultProbIndices, // C
-								1 // count
-								);
-
-					}// END: ill weights logic
-				}// END: weight loop
-
-				System.out.println();
+						}// END: odd-even check
+						
+					}// END: first-last buffer check
+				}// END: weights loop
 			}// END: branches loop
 			
-        	
-        	
-//             // Branch requires convolution of two or more matrices
-//            for (int i = 0; i < count; i++) {
+			
+			
+//			// ///////////////
+//			// ---TRIAL 1---//
+//			// ///////////////
+//        	
+//        	// To GB: maybe it doesn't look like this immediately but this logic is simpler than what we previously had here.
+//        	// Basicaly it covers all "corner cases" in if-else statements with the default being:
+//        	// "Copy what we previously have convolved on that branch into second index, populate the first index, convolve, repeat"
+//        	
+//			// Branches require convolution of two or more matrices
+//			for (int i = 0; i < count; i++) {
 //
-//                final int resultIndex = probabilityIndices[i];
-//                final int firstIndex = firstBuffer;
-//                final int secondIndex = firstBuffer + 1;
+//				int index = probabilityIndices[i];
+//				double[] weights = convolutionMatricesMap.get(index);
+//				int[] resultProbIndices = { index };
+//				int[] firstProbIndices = { firstBuffer };
+//				int[] secondProbIndices = { firstBuffer + 1 };
 //
-//                double[] weights = convolutionMatricesMap.get(probabilityIndices[i]);
+//				System.out.println("branch: " + index);
+//				System.out.println("weights:");
+//				printArray(weights, weights.length);
 //
-//                 
-//                int[] firstProbIndices = { firstIndex };
-//                beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(1), // eigenIndex
-//                                                firstProbIndices, // probabilityIndices
-//                                                null, // firstDerivativeIndices
-//                                                null, // secondDerivativeIndices
-//                                                new double[]{ weights[1] }, // edgeLengths
-//                                                1 // count
-//                                                );
-//                
-//                int[] secondProbIndices = { secondIndex };
-//                beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(0), // eigenIndex
-//                                                secondProbIndices, // probabilityIndices
-//                                                null, // firstDerivativeIndices
-//                                                null, // secondDerivativeIndices
-//                                                new double[]{ weights[0] }, // edgeLengths
-//                                                1 // count
-//                                                );
-//                
-//                int[] resultProbIndices = { resultIndex };
-//                beagle.convolveTransitionMatrices(firstProbIndices, // A
-//                                                  secondProbIndices, // B
-//                                                  resultProbIndices, // C
-//                                                  1 // count
-//                                                  );
-//			      
-//            }// END: count loop
+//				for (int j = 0; j < weights.length - 1; j++) {
+//
+//					if (weights[j] == 0 && weights[j + 1] != 0) {
+//						// This weight is zero but next ones are non-zero
+//						// let's start convolving
+//						
+//						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 2]);
+//
+//						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j + 1), // eigenIndex
+//								firstProbIndices, // probabilityIndices
+//								null, // firstDerivativeIndices
+//								null, // secondDerivativeIndices
+//								new double[] { weights[j + 2] }, // edgeLengths
+//								1 // count
+//								);
+//
+//						System.out.println("populating matrix index " + secondProbIndices[0] + " for length " + weights[j + 1]);
+//
+//						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
+//								secondProbIndices, // probabilityIndices
+//								null, // firstDerivativeIndices
+//								null, // secondDerivativeIndices
+//								new double[] { weights[j + 1] }, // edgeLengths
+//								1 // count
+//								);
+//
+//						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
+//
+//						beagle.convolveTransitionMatrices(firstProbIndices, // A
+//								secondProbIndices, // B
+//								resultProbIndices, // C
+//								1 // count
+//								);
+//
+//						j++;
+//
+//					} else if (weights[j] == 0 && weights[j + 1] == 0) {
+//
+//						// do nothing
+//						System.out.println("doing nothing");
+//						
+//					} else if (weights[j] != 0 && weights[j + 1] == 0) {
+//						// Next weights are all zero, let's bail out
+//
+//						System.out.println("Time to GTFO");
+//						break;
+//
+//					} else {
+//						// Situation Normal (All Fucked Up), let's keep up the
+//						// good work
+//
+//						System.out.println("populating matrix index " + firstProbIndices[0] + " for length " + weights[j + 1]);
+//
+//						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j + 1), // eigenIndex
+//								firstProbIndices, // probabilityIndices
+//								null, // firstDerivativeIndices
+//								null, // secondDerivativeIndices
+//								new double[] { weights[j + 1] }, // edgeLengths
+//								1 // count
+//								);
+//
+//						if (j == 0) {
+//							// If this branch is a virgin let's deflower it
+//							
+//							System.out.println("populating matrix index " + secondProbIndices[0] + " for length " + weights[j]);
+//
+//							beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
+//									secondProbIndices, // probabilityIndices
+//									null, // firstDerivativeIndices
+//									null, // secondDerivativeIndices
+//									new double[] { weights[j] }, // edgeLengths
+//									1 // count
+//									);
+//
+//						} else {
+//							// let's copy what already has been convolved on
+//							// that branch
+//							
+//							System.out.println("copying matrix index " + resultProbIndices[0] + " into matrix index " + secondProbIndices[0]);
+//
+//							// TODO: check if this works as expected
+//							// TODO: matrix size is hardcoded, that's BAD
+//							// TODO: beagleCopyTransitionMatrices
+//							// memcpy resultIndex into secondIndex
+//							double tmp[] = new double[stateCount * stateCount * 1];
+//							beagle.getTransitionMatrix(resultProbIndices[0], // matrixIndex
+//									tmp // outMatrix
+//									);
+//
+//							beagle.setTransitionMatrix(secondProbIndices[0], // matrixIndex
+//									tmp, // inMatrix
+//									1.0); // paddedValue
+//
+//						}// END: j check
+//
+//						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
+//
+//						beagle.convolveTransitionMatrices(firstProbIndices, // A
+//								secondProbIndices, // B
+//								resultProbIndices, // C
+//								1 // count
+//								);
+//
+//					}// END: ill weights logic
+//				}// END: weight loop
+//
+//				System.out.println();
+//			}// END: branches loop
 
         }// END: eigenIndex check
     }// END: updateTransitionMatrices
@@ -442,7 +521,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 new Author("P", "Lemey"), new Author("G", "Baele"),
                 new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
         return citations;
-    }
+    }//END: getCitations
 
     //	@Override
     public void setEigenDecomposition(Beagle beagle, int eigenIndex,
@@ -456,9 +535,17 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                     .getOffsetIndex(eigenIndex), ed.getEigenVectors(), ed
                     .getInverseEigenVectors(), ed.getEigenValues());
 
-        }
-    }
+        }//END: nModels check
+    }//END: setEigenDecomposition
+    
+    private int getStateCount() {
+    	return substModelList.get(0).getDataType().getStateCount();
+    }//END: getStateCount
 
+	// /////////////
+	// ---DEBUG---//
+	// /////////////
+    
     public static void printMatrix(double[] matrix, int nrow, int ncol) {
         for (int row = 0; row < nrow; row++) {
             System.out.print("| ");
@@ -469,7 +556,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             System.out.print("|\n");
         }
         System.out.print("\n");
-
     }// END: printMatrix
 
     public static void printArray(double[] array, int ncol) {
@@ -479,11 +565,15 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         System.out.print("\n");
     }// END: printArray
     
-    public static void printArray(int[] array) {
-        for (int col = 0; col < array.length; col++) {
+    public static void printArray(int[] array, int nrow) {
+        for (int col = 0; col < nrow; col++) {
             System.out.println(array[col]);
         }
         System.out.print("\n");
     }// END: printArray
 
+	// //////////////////
+	// ---END: DEBUG---//
+	// //////////////////
+    
 }// END: class

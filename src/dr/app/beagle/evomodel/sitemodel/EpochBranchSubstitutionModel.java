@@ -305,7 +305,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				} else {
 
 					for (int j = 0; j < substModelList.size(); j++) {
-						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
+						beagle.updateTransitionMatrices(eigenIndices[j], // eigenIndex
 								probabilityBuffers, // probabilityIndices
 								null, // firstDerivativeIndices
 								null, // secondDerivativeIndices

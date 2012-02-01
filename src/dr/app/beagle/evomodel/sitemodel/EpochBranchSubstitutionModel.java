@@ -292,12 +292,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				double[] weights = convolutionMatricesMap.get(index);
 				int[] resultProbIndices = { index };
 
-				System.out.println(count);
-				System.out.println(substModelList.size() );
-				System.out.println(weights.length);//2
-				
-				System.out.println("========================");
-				
 				if (IN_PARALELL) {
 
 					beagle.updateTransitionMatrices2(eigenIndices, // eigenIndices

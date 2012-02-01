@@ -1,8 +1,9 @@
 package dr.evomodel.coalescent.operators;
 
+//import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
-import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser; //remove dependency at the end
+//import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
 import dr.inference.operators.AbstractCoercableOperator;
@@ -14,9 +15,10 @@ import no.uib.cipr.matrix.*;
 
 import java.util.logging.Logger;
 
-/* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a Gaussian Markov random field prior
+/* A Metropolis-Hastings operator to update the log population sizes and precision parameter jointly under a GP  prior
  *
- * @author Erik Bloomquist
+ * @author Julia Palacios
+ * @author Vladimir Minin
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
@@ -32,25 +34,32 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     private Parameter popSizeParameter;
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
+    private Parameter lambdaBoundParameter;
 
+
+
+
+    GaussianProcessSkytrackLikelihood GPvalue;
     GMRFSkyrideLikelihood gmrfField;
 
     private double[] zeros;
 
-    public GaussianProcessSkytrackBlockUpdateOperator(GMRFSkyrideLikelihood gmrfLikelihood,
+    public GaussianProcessSkytrackBlockUpdateOperator(GaussianProcessSkytrackLikelihood GPLikelihood,
                                                       double weight, CoercionMode mode, double scaleFactor,
                                                       int maxIterations, double stopValue) {
         super(mode);
-        gmrfField = gmrfLikelihood;
-        popSizeParameter = gmrfLikelihood.getPopSizeParameter();
-        precisionParameter = gmrfLikelihood.getPrecisionParameter();
-        lambdaParameter = gmrfLikelihood.getLambdaParameter();
+        GPvalue = GPLikelihood;     //before gmrfField
+        popSizeParameter = GPLikelihood.getPopSizeParameter();
+        precisionParameter = GPLikelihood.getPrecisionParameter();
+        lambdaParameter = GPLikelihood.getLambdaParameter();
+        lambdaBoundParameter=GPLikelihood.getLambdaBoundParameter();
 
         this.scaleFactor = scaleFactor;
         lambdaScaleFactor = 0.0;
         fieldLength = popSizeParameter.getDimension();
 
         this.maxIterations = maxIterations;
+
         this.stopValue = stopValue;
         setWeight(weight);
 

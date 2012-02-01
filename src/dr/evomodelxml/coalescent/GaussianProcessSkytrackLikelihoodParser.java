@@ -46,11 +46,11 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     public static final String SKYTRACK_LIKELIHOOD = "gpSkytrackLikelihood";
 
     public static final String LAMBDA_BOUND_PARAMETER = "lambdaBoundParameter";
-//	public static final String POPULATION_PARAMETER = "populationSizes";
+	public static final String POPULATION_PARAMETER = "populationSizes";
 //	public static final String GROUP_SIZES = "groupSizes";
 	public static final String PRECISION_PARAMETER = "precisionParameter";
 	public static final String POPULATION_TREE = "populationTree";
-//	public static final String LAMBDA_PARAMETER = "lambdaParameter";
+	public static final String LAMBDA_PARAMETER = "lambdaParameter";
 //	public static final String BETA_PARAMETER = "betaParameter";
 //	public static final String COVARIATE_MATRIX = "covariateMatrix";
 	public static final String RANDOMIZE_TREE = "randomizeTree";
@@ -75,14 +75,17 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 
-//        XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
-//        Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
+        XMLObject cxo = xo.getChild(POPULATION_PARAMETER);
+        Parameter popParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        XMLObject cxo = xo.getChild(PRECISION_PARAMETER);
+        cxo = xo.getChild(PRECISION_PARAMETER);
         Parameter precParameter = (Parameter) cxo.getChild(Parameter.class);
 
-        cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
-        Parameter lambda_bound = (Parameter) cxo.getChild(Parameter.class);
+//        cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
+//        Parameter lambda_bound = (Parameter) cxo.getChild(Parameter.class);
+//
+//        cxo = xo.getChild(LAMBDA_PARAMETER);
+//        Parameter lambda_parameter = (Parameter) cxo.getChild(Parameter.class);
 
 
         cxo = xo.getChild(POPULATION_TREE);
@@ -106,21 +109,21 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 //                throw new XMLParseException("Population and group size parameters must have the same length");
 //        }
 
-//        Parameter lambda;
-//        if (xo.getChild(LAMBDA_PARAMETER) != null) {
-//            cxo = xo.getChild(LAMBDA_PARAMETER);
-//            lambda = (Parameter) cxo.getChild(Parameter.class);
-//        } else {
-//            lambda = new Parameter.Default(1.0);
-//        }
+        Parameter lambda_parameter;
+        if (xo.getChild(LAMBDA_PARAMETER) != null) {
+            cxo = xo.getChild(LAMBDA_PARAMETER);
+            lambda_parameter = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            lambda_parameter = new Parameter.Default(1.0);
+        }
 
-//        Parameter lambda_bound;
-//        if (xo.getChild(LAMBDA_BOUND_PARAMETER) != null) {
-//            cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
-//            lambda_bound = (Parameter) cxo.getChild(Parameter.class);
-//        } else {
-//            lambda_bound = new Parameter.Default(1.0);
-//        }
+        Parameter lambda_bound;
+        if (xo.getChild(LAMBDA_BOUND_PARAMETER) != null) {
+            cxo = xo.getChild(LAMBDA_BOUND_PARAMETER);
+            lambda_bound = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            lambda_bound = new Parameter.Default(1.0);
+        }
                 /*
         Parameter gridPoints = null;
         if (xo.getChild(GRID_POINTS) != null) {
@@ -198,7 +201,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
 
              return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
-                 rescaleByRootHeight, numGridPoints, lambda_bound);
+                 rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter);
 
     }
 
@@ -219,9 +222,9 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
     }
 
     private final XMLSyntaxRule[] rules = {
-//            new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
-//                    new ElementRule(Parameter.class)
-//            }),
+            new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
@@ -229,6 +232,9 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
                                new ElementRule(Parameter.class)
                        }),
             new ElementRule(LAMBDA_BOUND_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
 //            new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{

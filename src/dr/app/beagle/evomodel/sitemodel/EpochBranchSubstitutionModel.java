@@ -54,8 +54,6 @@ import java.util.Map;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
-	private static final boolean IN_PARALELL = false;
-	
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
     private final Parameter epochTimes;
@@ -292,18 +290,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				double[] weights = convolutionMatricesMap.get(index);
 				int[] resultProbIndices = { index };
 
-				if (IN_PARALELL) {
-
-					beagle.updateTransitionMatrices2(eigenIndices, // eigenIndices
-							probabilityBuffers, // probabilityIndices
-							null, // firstDerivativeIndices
-							null, // secondDerivativeIndices
-							weights, // edgeLengths
-							substModelList.size() // count
-							);
-
-				} else {
-
 					for (int j = 0; j < substModelList.size(); j++) {
 
 						beagle.updateTransitionMatrices(eigenIndices[j], // eigenIndex
@@ -316,8 +302,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 					}// END: j loop
 					
-				}// END: in paralell check
-
 //				System.out.println("branch: " + index);
 //				System.out.println("weights:");
 //				printArray(weights, weights.length);

@@ -54,6 +54,8 @@ import java.util.Map;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
+	private static final boolean IN_PARALELL = false;
+	
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
     private final Parameter epochTimes;
@@ -62,6 +64,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
     public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
                                         List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
+    	
         super("EpochBranchSubstitutionModel");
 
         // if (substModelList.size() != 2) {
@@ -212,7 +215,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
     public double[] getStateFrequencies(int categoryIndex) {
         return frequencyModelList.get(categoryIndex).getFrequencies();
-    }//END: getS
+    }//END: getStateFrequencies
 
     public boolean canReturnComplexDiagonalization() {
         for (SubstitutionModel model : substModelList) {
@@ -221,31 +224,31 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             }
         }
         return false;
-    }
+    }//END: canReturnComplexDiagonalization
 
     public int getEigenCount() {
         // Use an extra eigenIndex to identify
         // branches that need convolution
         return substModelList.size() + 1;
-    }
+    }//END: getEigenCount
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
-    }
+    }//END: handleModelChangedEvent
 
     @SuppressWarnings("unchecked")
     protected void handleVariableChangedEvent(Variable variable, int index,
                                               Parameter.ChangeType type) {
-    }
+    }//END: handleVariableChangedEvent
 
     protected void storeState() {
-    }
+    }//END: storeState
 
     protected void restoreState() {
-    }
+    }//END: restoreState
 
     protected void acceptState() {
-    }
+    }//END: acceptState
 
     public void updateTransitionMatrices(Beagle beagle, int eigenIndex,
                                          BufferIndexHelper bufferHelper, final int[] probabilityIndices,
@@ -272,8 +275,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 			// ///////////////
 
 			int[] probabilityBuffers = new int[substModelList.size()];
+			int[] eigenIndices = new int[substModelList.size()];
+			
 			for (int i = 0; i < substModelList.size(); i++) {
 				probabilityBuffers[i] = firstBuffer + i;
+				eigenIndices[i] = bufferHelper.getOffsetIndex(i);
 			}// END: fill loop
 
 			int[] firstProbIndices = { probabilityBuffers[0] };
@@ -286,23 +292,36 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				double[] weights = convolutionMatricesMap.get(index);
 				int[] resultProbIndices = { index };
 
-				System.out.println("branch: " + index);
-				System.out.println("weights:");
-				printArray(weights, weights.length);
-				System.out.println("buffers:");
-				printArray(probabilityBuffers, probabilityBuffers.length);
+				if (IN_PARALELL) {
 
-				// TODO: not the right eigen indices (doesn't matter for now cause model is homogenous)
-				// TODO: we need to write an updateTransitionMatrices routine that takes list of eigen indices to REALLY 
-				// do it in paralell
-				beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(0), // eigenIndex
-						probabilityBuffers, // probabilityIndices
-						null, // firstDerivativeIndices
-						null, // secondDerivativeIndices
-						weights, // edgeLengths
-						weights.length // count
-						);
+					beagle.updateTransitionMatrices2(eigenIndices, // eigenIndices
+							probabilityBuffers, // probabilityIndices
+							null, // firstDerivativeIndices
+							null, // secondDerivativeIndices
+							weights, // edgeLengths
+							weights.length // count
+							);
 
+				} else {
+
+					for (int j = 0; j < substModelList.size(); j++) {
+						beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(j), // eigenIndex
+								probabilityBuffers, // probabilityIndices
+								null, // firstDerivativeIndices
+								null, // secondDerivativeIndices
+								weights, // edgeLengths
+								weights.length // count
+								);
+					}// END: j loop
+
+				}// END: in paralell check
+
+//				System.out.println("branch: " + index);
+//				System.out.println("weights:");
+//				printArray(weights, weights.length);
+//				System.out.println("buffers:");
+//				printArray(probabilityBuffers, probabilityBuffers.length);
+				
 				int lastResultIndex = -1;
 
 				for (int j = 0; j < weights.length - 1; j++) {
@@ -311,7 +330,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 					
 					if( (j == 0) && (j == (weights.length - 2)) ) {
 						
-						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
+//						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
 
 						beagle.convolveTransitionMatrices(firstProbIndices, // A
 								secondProbIndices, // B
@@ -321,7 +340,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 						
 					} else if ( (j == 0) && (j != (weights.length - 2)) ) {
 
-						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
+//						System.out.println("convolving matrix index " + firstProbIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
 
 						beagle.convolveTransitionMatrices(firstProbIndices, // A
 								secondProbIndices, // B
@@ -333,7 +352,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 						
 					} else if ( (j != 0) && (j == (weights.length - 2)) ) {
 
-						System.out.println("convolving matrix index " + lastResultIndex + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
+//						System.out.println("convolving matrix index " + lastResultIndex + " with matrix index " + secondProbIndices[0] + " into matrix index " + resultProbIndices[0]);
 
 						int[] lastResultIndices = { lastResultIndex };
 
@@ -347,7 +366,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 						if (j % 2 == 1) {
 							// odd
-							System.out.println("convolving matrix index " + firstExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + secondExtraIndices[0]);
+//							System.out.println("convolving matrix index " + firstExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + secondExtraIndices[0]);
 
 							beagle.convolveTransitionMatrices(
 									firstExtraIndices, // A
@@ -360,7 +379,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 						} else {
 							// even
-							System.out.println("convolving matrix index " + secondExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
+//							System.out.println("convolving matrix index " + secondExtraIndices[0] + " with matrix index " + secondProbIndices[0] + " into matrix index " + firstExtraIndices[0]);
 
 							beagle.convolveTransitionMatrices(
 									secondExtraIndices, // A
@@ -382,10 +401,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //			// ///////////////
 //			// ---TRIAL 1---//
 //			// ///////////////
-//        	
-//        	// To GB: maybe it doesn't look like this immediately but this logic is simpler than what we previously had here.
-//        	// Basicaly it covers all "corner cases" in if-else statements with the default being:
-//        	// "Copy what we previously have convolved on that branch into second index, populate the first index, convolve, repeat"
 //        	
 //			// Branches require convolution of two or more matrices
 //			for (int i = 0; i < count; i++) {
@@ -480,9 +495,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //							
 //							System.out.println("copying matrix index " + resultProbIndices[0] + " into matrix index " + secondProbIndices[0]);
 //
-//							// TODO: check if this works as expected
-//							// TODO: matrix size is hardcoded, that's BAD
-//							// TODO: beagleCopyTransitionMatrices
 //							// memcpy resultIndex into secondIndex
 //							double tmp[] = new double[stateCount * stateCount * 1];
 //							beagle.getTransitionMatrix(resultProbIndices[0], // matrixIndex
@@ -515,15 +527,14 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     /**
      * @return a list of citations associated with this object
      */
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(new Citation(new Author[]{new Author("F", "Bielejec"),
-                new Author("P", "Lemey"), new Author("G", "Baele"),
-                new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
-        return citations;
-    }//END: getCitations
+	public List<Citation> getCitations() {
+		List<Citation> citations = new ArrayList<Citation>();
+		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
+				new Author("P", "Lemey"), new Author("G", "Baele"),
+				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
+		return citations;
+	}// END: getCitations
 
-    //	@Override
     public void setEigenDecomposition(Beagle beagle, int eigenIndex,
                                       BufferIndexHelper bufferHelper, int dummy) {
 
@@ -538,9 +549,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         }//END: nModels check
     }//END: setEigenDecomposition
     
-    private int getStateCount() {
-    	return substModelList.get(0).getDataType().getStateCount();
-    }//END: getStateCount
+//    private int getStateCount() {
+//    	return substModelList.get(0).getDataType().getStateCount();
+//    }//END: getStateCount
 
 	// /////////////
 	// ---DEBUG---//
@@ -550,7 +561,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         for (int row = 0; row < nrow; row++) {
             System.out.print("| ");
             for (int col = 0; col < nrow; col++)
-                System.out.print(String.format("%.20f", matrix[col + row
+                System.out.print(String.format("%.4f", matrix[col + row
                         * nrow])
                         + " ");
             System.out.print("|\n");

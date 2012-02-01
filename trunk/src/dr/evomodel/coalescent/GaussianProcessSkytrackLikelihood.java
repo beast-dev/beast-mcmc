@@ -26,6 +26,7 @@
 package dr.evomodel.coalescent;
 
 //import com.sun.xml.internal.rngom.digested.DDataPattern;
+import com.sun.xml.internal.rngom.digested.DDataPattern;
 import dr.app.beast.BeastDialog;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -33,6 +34,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
 import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
+import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.DenseVector;
@@ -55,7 +57,6 @@ import java.util.List;
  */
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
-//    protected Parameter popSizeParameter;
 //    protected Parameter groupSizeParameter;
     protected Parameter precisionParameter;
     protected Parameter lambda_boundParameter;
@@ -65,7 +66,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected Parameter betaParameter;
 
 //   Those that do not change in size  - fixed per tree -hence need to store/restore
-    protected double[] GPchangePoints; //s
+    protected Parameter popSizeParameter;     //before called GPvalues
+    protected double [] GPchangePoints;
     protected double [] storedGPchangePoints;
     protected double [] GPcoalfactor;
     protected double [] storedGPcoalfactor;
@@ -80,7 +82,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //    protected double GPintervalkey;         // membership that links with those that do not change in size
 //    protected Parameter GPcoalfactor2;        // choose(k,2) depending on membership
     protected int[] GPtype;  // 1 if observed, -1 if latent
-    public double[] GPvalues;     //may need to change type: Parameter? didn't know how to work with it
+//    public double[] GPvalues;     //may need to change type: Parameter? didn't know how to work with it
 
     protected double logGPLikelihood;
     protected double storedLogGPLikelihood;
@@ -97,8 +99,8 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(Tree tree,
                                              Parameter precParameter,
-                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound) {
-        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound);
+                                             boolean rescaleByRootHeight, Parameter numGridPoints,  Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter) {
+        this(wrapTree(tree),  precParameter, rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter);
     }
 
 
@@ -111,15 +113,15 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
     public GaussianProcessSkytrackLikelihood(List<Tree> treeList,
                                              Parameter precParameter,
-                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound) {
+                                              boolean rescaleByRootHeight, Parameter numGridPoints, Parameter lambda_bound, Parameter lambda_parameter, Parameter popParameter) {
         super(GaussianProcessSkytrackLikelihoodParser.SKYTRACK_LIKELIHOOD);
 
 
 
-//                this.popSizeParameter = popParameter;
+                this.popSizeParameter = popParameter;
 //                this.groupSizeParameter = groupParameter;
                 this.precisionParameter = precParameter;
-//                this.lambdaParameter = lambda;
+                this.lambdaParameter = lambda_parameter;
 //                this.betaParameter = beta;
 //                this.dMatrix = dMatrix;
                 this.rescaleByRootHeight = rescaleByRootHeight;
@@ -150,6 +152,7 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
         storedGPcoalfactor = new double[numintervals];
         GPcounts = new int[numintervals];
         GPtype=new int[numintervals];
+        popSizeParameter.setDimension(numintervals);
 
 
 
@@ -352,13 +355,27 @@ protected void storeState() {
 
     protected void setupGPvalues() {
         setupQmatrix(precisionParameter.getParameterValue(0));
-        GPvalues = new double[numintervals];
+        popSizeParameter.setParameterValue(0,0);
 
         // Need to add L<-chol.spam(Q), y2<-rnorm(nrow(Q),0,1), g<-backsolve(L,y2)
 
     }
 
+    public Parameter getPrecisionParameter() {
+            return precisionParameter;
+        }
 
+        public Parameter getPopSizeParameter() {
+            return popSizeParameter;
+        }
+
+        public Parameter getLambdaParameter() {
+            return lambdaParameter;
+        }
+
+          public Parameter getLambdaBoundParameter() {
+               return lambda_boundParameter;
+        }
 
 
 //    Methods needed for GP-based

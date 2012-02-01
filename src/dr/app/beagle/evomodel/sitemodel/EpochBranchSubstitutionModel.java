@@ -292,6 +292,12 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				double[] weights = convolutionMatricesMap.get(index);
 				int[] resultProbIndices = { index };
 
+				System.out.println(count);
+				System.out.println(substModelList.size() );
+				System.out.println(weights.length);//2
+				
+				System.out.println("========================");
+				
 				if (IN_PARALELL) {
 
 					beagle.updateTransitionMatrices2(eigenIndices, // eigenIndices
@@ -299,21 +305,23 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 							null, // firstDerivativeIndices
 							null, // secondDerivativeIndices
 							weights, // edgeLengths
-							weights.length // count
+							substModelList.size() // count
 							);
 
 				} else {
 
 					for (int j = 0; j < substModelList.size(); j++) {
+
 						beagle.updateTransitionMatrices(eigenIndices[j], // eigenIndex
-								probabilityBuffers, // probabilityIndices
+								new int[] { probabilityBuffers[j] }, // probabilityIndices
 								null, // firstDerivativeIndices
 								null, // secondDerivativeIndices
-								weights, // edgeLengths
-								weights.length // count
+								new double[] { weights[j] }, // edgeLengths
+								1 // count
 								);
-					}// END: j loop
 
+					}// END: j loop
+					
 				}// END: in paralell check
 
 //				System.out.println("branch: " + index);

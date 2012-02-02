@@ -241,11 +241,24 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
             }
         }
         messageLabel.setText(getMessage());
+
+        if (continueButton != null) {
+            continueButton.setEnabled(!hasUndefinedPrior);
+        }
     }
 
     private PriorDialog priorDialog = null;
     //    private DiscretePriorDialog discretePriorDialog = null;
     private HierarchicalPriorDialog hierarchicalPriorDialog = null;
+
+    private JButton continueButton = null;
+
+    public void setContinueButton(JButton continueButton) {
+        this.continueButton = continueButton;
+        if (continueButton != null) {
+            continueButton.setEnabled(!hasUndefinedPrior);
+        }
+ }
 
     private void hierarchicalButtonPressed(int[] rows) {
 

@@ -101,7 +101,7 @@ public class PatternListGenerator extends Generator {
      * @param every     skip every
      * @param writer    the writer
      */
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean unique, boolean strip, XMLWriter writer) {
+    private void writePatternList(final PartitionData partition, int offset, int every, final String codonPrefix, final boolean unique, final boolean strip, final XMLWriter writer) {
 
         Alignment alignment = partition.getAlignment();
         int from = partition.getFromSite();

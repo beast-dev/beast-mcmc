@@ -22,6 +22,8 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id: GMRFSkylineBlockUpdateOperator.java,v 1.5 2007/03/20 11:26:49 msuchard Exp $
  */
+
+//TODO: create a new parameter "alpha" for the proposal on lambda
 public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercableOperator {
 
     private double scaleFactor;
@@ -64,6 +66,33 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         setWeight(weight);
 
         zeros = new double[fieldLength];
+    }
+
+
+    //change the 0.0005 to a parameter
+    private double getProposalLambda(double currentValue) {
+        double proposal= MathUtils.uniform(currentValue-0.0005,currentValue+0.0005);
+        //Symmetric proposal
+        if (proposal<0){
+         proposal=-proposal;
+        }
+        return proposal;
+    }
+
+    //change mixing values to parameters - see Eq. 7
+    private double getPriorLambda(Parameter lambdaMean){
+     return 0.0;
+    }
+
+    private double getNewLambda_Bound(double currentValue, double lambdaScale) {
+        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
+        double b = currentValue + a;
+        if (b > 1)
+            b = 2 - b;
+        if (b < 0)
+            b = -b;
+
+        return b;
     }
 
     private double getNewLambda(double currentValue, double lambdaScale) {

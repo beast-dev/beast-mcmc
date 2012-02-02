@@ -4,6 +4,7 @@ import dr.app.beauti.options.*;
 import dr.app.beauti.types.OperatorType;
 import dr.app.beauti.types.PriorScaleType;
 import dr.app.beauti.types.SequenceErrorType;
+import dr.evomodel.treelikelihood.SequenceErrorModel;
 
 import java.util.HashMap;
 import java.util.List;
@@ -95,21 +96,21 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     }
 
     public boolean usingSequenceErrorModel(AbstractPartitionData partition) {
-       return (sequenceErrorTypeMap.get(partition) != SequenceErrorType.NO_ERROR);
+       return (getSequenceErrorType(partition) != SequenceErrorType.NO_ERROR);
     }
 
     public boolean hasAgeDependentRate(final AbstractPartitionData partition) {
-        SequenceErrorType errorModelType = sequenceErrorTypeMap.get(partition);
+        SequenceErrorType errorModelType = getSequenceErrorType(partition);
         return (errorModelType == SequenceErrorType.AGE_ALL) || (errorModelType == SequenceErrorType.AGE_TRANSITIONS);
     }
 
     public boolean hasBaseRate(final AbstractPartitionData partition) {
-        SequenceErrorType errorModelType = sequenceErrorTypeMap.get(partition);
+        SequenceErrorType errorModelType = getSequenceErrorType(partition);
         return (errorModelType == SequenceErrorType.BASE_ALL) || (errorModelType == SequenceErrorType.BASE_TRANSITIONS);
     }
 
     public boolean isHypermutation(final AbstractPartitionData partition) {
-        SequenceErrorType errorModelType = sequenceErrorTypeMap.get(partition);
+        SequenceErrorType errorModelType = getSequenceErrorType(partition);
         return (errorModelType == SequenceErrorType.HYPERMUTATION_ALL) ||
                 (errorModelType == SequenceErrorType.HYPERMUTATION_BOTH) ||
                 (errorModelType == SequenceErrorType.HYPERMUTATION_HA3G) ||

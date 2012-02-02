@@ -49,7 +49,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableColumn;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
 
 /**
  * @author Andrew Rambaut
@@ -532,7 +532,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             return;
         }
         TraitData traitData = options.getTrait(traitName);
-        if (options.getDataPartitions(traitData).size() > 0) {
+        if (options.getTraitPartitions(traitData).size() > 0) {
             JOptionPane.showMessageDialog(this, "The trait named '" + traitName + "' is being used in a partition.\nRemove the partition before deleting this trait.", "Trait in use", JOptionPane.ERROR_MESSAGE);
             return;
         }

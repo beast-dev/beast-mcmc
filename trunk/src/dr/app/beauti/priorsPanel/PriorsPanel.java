@@ -141,7 +141,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         add(scrollPane, BorderLayout.CENTER);
 
-        if (HIERARCHICAL_ENABLED) {
+        if (HIERARCHICAL_ENABLED && !isDefaultOnly) {
             JPanel southPanel = new JPanel();
             southPanel.setLayout(new BorderLayout(0, 0));
             JToolBar toolBar1 = new JToolBar();

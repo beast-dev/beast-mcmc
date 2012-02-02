@@ -1,4 +1,4 @@
-                    BEAST v1.7.0 2002-2011
+                    BEAST v1.7.0 2002-2012
         Bayesian Evolutionary Analysis Sampling Trees
                               by
       Alexei J. Drummond, Andrew Rambaut & Marc Suchard
@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: alexei@cs.auckland.ac.nz - 1st April 2011
+Last updated: a.rambaut@ed.ac.uk - 2nd February 2012
 
 Contents:
 1) INTRODUCTION
@@ -213,9 +213,10 @@ ___________________________________________________________________________
 Thanks to the following for supplying code or assisting with the creation
 or testing of BEAST:
 
-	Alex Alekseyenko, Beth Shapiro, Chieh-Hsi Wu, Erik Bloomquist,
-	Gerton Lunter, Joseph Heled, Korbinian Strimmer, Michael Defoin Platel,
-	Oliver Pybus, Philippe Lemey, Roald Forsberg, Sebastian Hoehna,
-	Sidney Markowitz, Simon Ho, Tulio de Oliveira, Oliver Pybus,
-	Vladimir Minin, Wai Lok Sibon Li, Walter Xie
-	+ numerous other users who have kindly helped make BEAST better.
+	Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Roald Forsberg,
+	Joseph Heled, Simon Ho, Sebastian Hoehna, Denise Kuehnert,
+	Philippe Lemey, Gerton Lunter, Sam Lycett, Sidney Markowitz,
+	Vladimir Minin, Michael Defoin Platel, Oliver Pybus, Tulio de Oliveira,
+	Beth Shapiro, Korbinian Strimmer, Wai Lok Sibon Li, Chieh-Hsi Wu,
+	Walter Xie
+

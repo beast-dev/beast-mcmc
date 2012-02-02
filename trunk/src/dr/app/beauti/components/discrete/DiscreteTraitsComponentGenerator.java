@@ -192,7 +192,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         String prefix = partition.getName() + ".";
         // <attributePatterns>
         writer.writeOpenTag(AttributePatternsParser.ATTRIBUTE_PATTERNS, new Attribute[]{
-                new Attribute.Default<String>(XMLParser.ID, prefix + AttributePatternsParser.ATTRIBUTE_PATTERNS),
+                new Attribute.Default<String>(XMLParser.ID, prefix + "pattern"),
                 new Attribute.Default<String>(AttributePatternsParser.ATTRIBUTE, partition.getTraits().get(0).getName())});
         writer.writeIDref(TaxaParser.TAXA, TaxaParser.TAXA);
         writer.writeIDref(GeneralDataTypeParser.GENERAL_DATA_TYPE, prefix + "dataType");
@@ -387,7 +387,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
         });
 
-        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + AttributePatternsParser.ATTRIBUTE_PATTERNS);
+        writer.writeIDref(AttributePatternsParser.ATTRIBUTE_PATTERNS, prefix + "pattern");
         writer.writeIDref(TreeModel.TREE_MODEL, treeModel.getPrefix() + TreeModel.TREE_MODEL);
         writer.writeIDref(SiteModel.SITE_MODEL, substModel.getName() + "." + SiteModel.SITE_MODEL);
         writer.writeIDref(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL, substModel.getName() + "." + AbstractSubstitutionModel.MODEL);

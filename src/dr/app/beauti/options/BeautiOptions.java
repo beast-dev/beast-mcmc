@@ -377,7 +377,7 @@ public class BeautiOptions extends ModelOptions {
     public List<PartitionData> getPartitionData() {
         List<PartitionData> pdList = new ArrayList<PartitionData>();
         for (AbstractPartitionData partition : dataPartitions) {
-            if (partition instanceof PartitionData && partition.getTraits() != null) {
+            if (partition instanceof PartitionData && partition.getTraits() == null) {
                 pdList.add((PartitionData) partition);
             }
         }
@@ -401,7 +401,7 @@ public class BeautiOptions extends ModelOptions {
         return dataPartitions;
     }
 
-    public List<AbstractPartitionData> getDataPartitions(TraitData trait) {
+    public List<AbstractPartitionData> getTraitPartitions(TraitData trait) {
         List<AbstractPartitionData> pdList = new ArrayList<AbstractPartitionData>();
         for (AbstractPartitionData pd : dataPartitions) {
             if (pd.getTraits() != null && pd.getTraits().contains(trait)) {

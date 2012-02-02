@@ -54,7 +54,6 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.HierarchyBoundsListener;
 import java.awt.event.HierarchyEvent;
 import java.io.*;
@@ -657,7 +656,7 @@ public class BeautiFrame extends DocumentFrame {
                     dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
                     useStarBEAST = false;
                 }
-            } else if (options.getDataPartitions(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
+            } else if (options.getTraitPartitions(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
                 int option = JOptionPane.showConfirmDialog(this,
                         "The trait named '" + TraitData.TRAIT_SPECIES + "', used to denote species in *BEAST, is\n" +
                                 "already in use as a data partition. Do you wish to continue?",

@@ -67,8 +67,8 @@ public class PatternListGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
-                writePatternList(partition, 0, 3, "", unique, isCovarionModel, writer);
-                writePatternList(partition, 1, 3, "", unique, isCovarionModel, writer);
+                writePatternList(partition, 0, 3, null, unique, isCovarionModel, writer);
+                writePatternList(partition, 1, 3, null, unique, isCovarionModel, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
@@ -122,7 +122,7 @@ public class PatternListGenerator extends Generator {
 
         List<Attribute> attributes = new ArrayList<Attribute>();
 
-        // no 11 of 112 codon, which uses mergePatterns
+        // no 11 of 112 codon, which uses mergePatterns id instead
         if (codonPrefix != null)
             attributes.add(new Attribute.Default<String>(XMLParser.ID, codonPrefix + partition.getPrefix() + SitePatternsParser.PATTERNS));
 

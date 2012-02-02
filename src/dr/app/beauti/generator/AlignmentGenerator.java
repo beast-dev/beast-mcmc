@@ -78,7 +78,7 @@ public class AlignmentGenerator extends Generator {
 
     }
 
-        /**
+    /**
      * Generate an alignment block from these beast options
      *
      * @param alignment the alignment to write
@@ -94,18 +94,18 @@ public class AlignmentGenerator extends Generator {
         }
 
         if (getAlignmentDataTypeDescription(alignment) != null) {
-        writer.writeOpenTag(
-                AlignmentParser.ALIGNMENT,
-                new Attribute[]{
-                        new Attribute.Default<String>(XMLParser.ID, alignment.getId()),
-                        new Attribute.Default<String>(DataType.DATA_TYPE, getAlignmentDataTypeDescription(alignment))
-                }
-        );
+            writer.writeOpenTag(
+                    AlignmentParser.ALIGNMENT,
+                    new Attribute[]{
+                            new Attribute.Default<String>(XMLParser.ID, alignment.getId()),
+                            new Attribute.Default<String>(DataType.DATA_TYPE, getAlignmentDataTypeDescription(alignment))
+                    }
+            );
         } else {
-        writer.writeOpenTag(
-                AlignmentParser.ALIGNMENT, new Attribute.Default<String>(XMLParser.ID, alignment.getId()));
+            writer.writeOpenTag(
+                    AlignmentParser.ALIGNMENT, new Attribute.Default<String>(XMLParser.ID, alignment.getId()));
 
-        writer.writeIDref(DataType.DATA_TYPE, getAlignmentDataTypeIdref(alignment));
+            writer.writeIDref(DataType.DATA_TYPE, getAlignmentDataTypeIdref(alignment));
         }
 
         for (int i = 0; i < alignment.getTaxonCount(); i++) {

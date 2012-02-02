@@ -76,7 +76,7 @@ public class PatternListGenerator extends Generator {
                 writePatternList(partition, 2, 3, model.getPrefix(2), isCovarionModel, writer);
 
             } else {
-            	
+
                 // pattern is 123
                 for (int i = 1; i <= 3; i++) {
                     writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position " + i);
@@ -123,8 +123,9 @@ public class PatternListGenerator extends Generator {
         List<Attribute> attributes = new ArrayList<Attribute>();
 
         // no 11 of 112 codon, which uses mergePatterns id instead
-        if (codonPrefix != null)
+        if (codonPrefix != null) {
             attributes.add(new Attribute.Default<String>(XMLParser.ID, codonPrefix + partition.getPrefix() + SitePatternsParser.PATTERNS));
+        }
 
         attributes.add(new Attribute.Default<String>("from", "" + from));
         if (to >= 0) attributes.add(new Attribute.Default<String>("to", "" + to));

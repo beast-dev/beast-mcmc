@@ -4,7 +4,6 @@ import dr.evolution.datatype.DataType;
 import dr.evomodel.substmodel.ComplexSubstitutionModel;
 import dr.evomodel.substmodel.FrequencyModel;
 import dr.evomodel.substmodel.SVSComplexSubstitutionModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.BayesianStochasticSearchVariableSelection;
 import dr.inference.model.Parameter;
@@ -86,6 +85,11 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             if (randomize) {
                 BayesianStochasticSearchVariableSelection.Utils.randomize(indicators,
                         dataType.getStateCount(), false);
+
+                boolean valid = !Double.isInfinite(model.getLogLikelihood());
+                if (!valid) {
+                    throw new XMLParseException("Poor tolerance in complex substitution model.  Please retry analysis using BEAGLE");
+                }
             }
             sb.append("\tBSSVS indicators: ").append(indicators.getId()).append("\n");
             sb.append("\tGraph must be connected: ").append(connected).append("\n");
@@ -108,7 +112,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         model.setMaxIterations(maxIterations);
         sb.append("\tMax iterations: ").append(maxIterations).append("\n");
 
-        sb.append("Please cite Lemey, Rambaut, Drummond and Suchard (in submission)\n");
+        sb.append("\t\tPlease cite Edwards, Suchard et al. (2011)\n");
 
         Logger.getLogger("dr.evomodel.substmodel").info(sb.toString());
         return model;

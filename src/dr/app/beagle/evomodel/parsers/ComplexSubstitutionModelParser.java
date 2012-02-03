@@ -1,13 +1,13 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.xml.*;
-import dr.inference.model.Parameter;
-import dr.inference.model.BayesianStochasticSearchVariableSelection;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.ComplexSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SVSComplexSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
+import dr.inference.model.BayesianStochasticSearchVariableSelection;
+import dr.inference.model.Parameter;
+import dr.xml.*;
 
 import java.util.logging.Logger;
 
@@ -26,6 +26,8 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     public static final String INDICATOR = "rateIndicator";
     public static final String BSSVS_TOLERANCE = "bssvsTolerance";
     public static final String BSSVS_SCALAR = "bssvsScalar";
+
+    public static final int maxRandomizationTries = 100;
 
     public String getParserName() {
         return COMPLEX_SUBSTITUTION_MODEL;
@@ -78,12 +80,6 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
         cxo = xo.getChild(INDICATOR);
 
         Parameter indicatorParameter = (Parameter) cxo.getChild(Parameter.class);
-        boolean randomize = xo.getAttribute(RANDOMIZE, false);
-        if (randomize) {
-            BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
-                    dataType.getStateCount(),false);
-        }
-
         if (indicatorParameter == null || ratesParameter == null || indicatorParameter.getDimension() != ratesParameter.getDimension())
             throw new XMLParseException("Rates and indicator parameters in " + getParserName() + " element must be the same dimension.");
 
@@ -93,7 +89,7 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
             if (tolerance > BayesianStochasticSearchVariableSelection.Utils.getTolerance()) {
                 // Only increase smallest allowed tolerance
                 BayesianStochasticSearchVariableSelection.Utils.setTolerance(tolerance);
-                Logger.getLogger("dr.app.beagle.evomodel").info("Increasing BSSVS tolerance to " + tolerance);
+                Logger.getLogger("dr.app.beagle.evomodel").info("\tIncreasing BSSVS tolerance to " + tolerance);
             }
         }
 
@@ -102,12 +98,27 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
                     BayesianStochasticSearchVariableSelection.Utils.getScalar());
             if (scalar < BayesianStochasticSearchVariableSelection.Utils.getScalar()) {
                 BayesianStochasticSearchVariableSelection.Utils.setScalar(scalar);
-                Logger.getLogger("dr.app.beagle.evomodel").info("Decreasing BSSVS scalar to " + scalar);
+                Logger.getLogger("dr.app.beagle.evomodel").info("\tDecreasing BSSVS scalar to " + scalar);
             }
         }
 
-        return new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+        SVSComplexSubstitutionModel model = new SVSComplexSubstitutionModel(SVS_COMPLEX_SUBSTITUTION_MODEL,dataType, freqModel, ratesParameter, indicatorParameter);
+        boolean randomize = xo.getAttribute(RANDOMIZE, false);
+        if (randomize) {
+            // Randomization may need multiple tries
+            int tries = 0;
+            boolean valid = false;
 
+            while (!valid && tries < maxRandomizationTries) {
+                BayesianStochasticSearchVariableSelection.Utils.randomize(indicatorParameter,
+                    dataType.getStateCount(),false);
+                valid = !Double.isInfinite(model.getLogLikelihood());
+                tries++;
+            }
+            Logger.getLogger("dr.app.beagle.evomodel").info("\tRandomization attempts: " + tries);
+        }
+        Logger.getLogger("dr.app.beagle.evomodel").info("\t\tPlease cite: Edwards, Suchard et al. (2011)\n");
+        return model;
     }
 
     //************************************************************************
@@ -127,6 +138,12 @@ public class ComplexSubstitutionModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
+            new XORRule(
+                    new StringAttributeRule(DataType.DATA_TYPE, "The type of sequence data",
+                            DataType.getRegisteredDataTypeNames(), false),
+                    new ElementRule(DataType.class),
+                    true // Optional
+            ),
             AttributeRule.newBooleanRule(RANDOMIZE,true),
             new XORRule(
                 new ElementRule(FREQUENCIES,FrequencyModel.class),

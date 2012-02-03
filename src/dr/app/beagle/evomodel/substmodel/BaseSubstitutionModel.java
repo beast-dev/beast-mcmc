@@ -358,7 +358,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         double MINFREQ = getMINFREQ();
 
 
-        System.err.println("diff = "+MINFDIFF+" freq = "+MINFREQ);
+//        System.err.println("diff = "+MINFDIFF+" freq = "+MINFREQ);
         int maxi = 0;
         double sum = 0.0;
         double maxfreq = 0.0;

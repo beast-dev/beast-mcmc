@@ -1,7 +1,5 @@
 package dr.inference.model;
 
-import dr.xml.*;
-
 /**
  * @author Marc Suchard
  */
@@ -101,7 +99,10 @@ public class DuplicatedParameter extends Parameter.Abstract implements VariableL
             updateDuplication();
         }
         // Values have changed, so notify listeners
-        fireParameterChangedEvent();
+        for (int i = 0; i < copies; ++i) {
+            // fire once for each duplication
+            fireParameterChangedEvent(index + i * parameter.getDimension(), Parameter.ChangeType.VALUE_CHANGED);
+        }
     }
 
     private final Parameter parameter;

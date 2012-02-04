@@ -345,14 +345,14 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				
 			} else {
 
-				// odd
-				if (i % 2 == 1) {
+				// even
+				if (i % 2 == 0) {
 
 					firstConvolutionBuffers = firstExtraBuffers;
 					secondConvolutionBuffers = probabilityBuffers;
 					resultConvolutionBuffers = secondExtraBuffers;
 					
-					// even
+					// odd
 				} else {
 
 					firstConvolutionBuffers = secondExtraBuffers;

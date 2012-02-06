@@ -191,7 +191,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
     public static double q(double b, double d, double p, double psi, double t) {
         double c1 = c1(b, d, psi);
         double c2 = c2(b, d, p, psi);
-        double res = 2.0 * (1.0 - c2 * c2) + Math.exp(-c1 * t) * (1.0 - c2) * (1.0 - c2) + Math.exp(c1 * t) * (1.0 + c2) * (1.0 + c2);
+//        double res = 2.0 * (1.0 - c2 * c2) + Math.exp(-c1 * t) * (1.0 - c2) * (1.0 - c2) + Math.exp(c1 * t) * (1.0 + c2) * (1.0 + c2);
+        double res = c1 * t + 2.0 * Math.log( Math.exp(-c1 * t) * (1.0 - c2) + (1.0 + c2) ); // operate directly in logspace, c1 * t too big
         return res;
     }
 
@@ -315,7 +316,8 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
 
         double logL;
         if (isSamplingOrigin()) {
-            logL = Math.log(1.0 / q(x0()));
+//            logL = Math.log(1.0 / q(x0()));
+            logL = - q(x0());
             //System.out.println("originLogL=" + logL + " x0");
         } else {
             throw new RuntimeException(
@@ -329,7 +331,7 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
         }
         for (int i = 0; i < tree.getInternalNodeCount(); i++) {
             double x = tree.getNodeHeight(tree.getInternalNode(i));
-            logL += Math.log(b / q(x));
+            logL += Math.log(b) - q(x);
 
             //System.out.println("internalNodeLogL=" + Math.log(b / q(x)));
 
@@ -338,13 +340,13 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             double y = tree.getNodeHeight(tree.getExternalNode(i));
 
             if (y > 0.0) {
-                logL += Math.log(psi() * q(y));
+                logL += Math.log(psi()) + q(y);
 
                 //System.out.println("externalNodeLogL=" + Math.log(psi() * (r() + (1.0 - r()) * p0(y)) * q(y)));
 
             } else if (!hasFinalSample) {
                 //handle condition ending on final tip in sampling-through-time-only situation
-                logL += Math.log(psi() * q(y));
+                logL += Math.log(psi()) + q(y);
 //                System.out.println("externalNodeLogL=" + Math.log(psi() * q(y)));
 
             }

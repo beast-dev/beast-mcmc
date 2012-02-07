@@ -16,7 +16,7 @@
                       msuchard@ucla.edu
 
 
-Last updated: a.rambaut@ed.ac.uk - 2nd February 2012
+Last updated: a.rambaut@ed.ac.uk - 8th February 2012
 
 Contents:
 1) INTRODUCTION
@@ -26,7 +26,7 @@ Contents:
 5) ANALYZING RESULTS
 6) NATIVE LIBRARIES
 7) SUPPORT & LINKS
-8) ACKNOWLEDGMENTS 
+8) ACKNOWLEDGMENTS
 
 ___________________________________________________________________________
 1) INTRODUCTION
@@ -72,7 +72,7 @@ Within the BEAST.v1.7.x package will be the following directories:
 Directory       Contents
 doc/            documentation of BEAST
 examples/       some example NEXUS and XML files
-lib/            Java & native libraries used by BEAST 
+lib/            Java & native libraries used by BEAST
 native/         some C code to compile into native libraries
 bin/            Scripts of the corresponding OS
 
@@ -83,8 +83,8 @@ A program called "BEAUti" will import data in NEXUS format, allow you to
 select various models and options and generate an XML file ready for use in
 BEAST.
 
-To run BEAUti simply double-click the "BEAUti v1.7.x.exe" file in the BEAST
-folder. If this doesn't work then you may not have Java installed correctly. 
+To run BEAUti simply double-click the "BEAUti v1.7.x" application in the BEAST
+folder. If this doesn't work then you may not have Java installed correctly.
 Try opening an MS-DOS window and typing:
 
 	java -jar lib/beauti.jar
@@ -94,16 +94,16 @@ See also the separate BEAUti README.txt document.
 __________________________________________________________________________
 4) RUNNING BEAST
 
-To run BEAST simply double-click the "BEAST v1.7.x.exe" file in the BEAST
+To run BEAST simply double-click the "BEAST v1.7.x" application in the BEAST
 folder. You will be asked to select a BEAST XML input file.
 
 Alternatively open a Command window and type:
-	
+
 	java -jar lib/beast.jar input.xml
 
 Where "input.xml" is the name of a BEAST XML format file. This file can
 either be created from scratch using a text editor or be created by the
-BEAUti program from a NEXUS format file. 
+BEAUti program from a NEXUS format file.
 
 For documentation on creating and tuning the input files look at the
 documentation and tutorials on-line at:
@@ -177,8 +177,8 @@ ___________________________________________________________________________
 Some of the core of the BEAST program has been converted into 'C' and can
 be compiled into native code. This involves compiling the source code in
 '/native' into a shared library that Java can find and use. We have
-compiled this library for Mac OS X, Windows and Linux on x86 machines. BEAST 
-should automatically find these libraries and use them. If a suitable version 
+compiled this library for Mac OS X, Windows and Linux on x86 machines. BEAST
+should automatically find these libraries and use them. If a suitable version
 of this library is not found then BEAST will use a Java version of the core
 which will be slower.
 

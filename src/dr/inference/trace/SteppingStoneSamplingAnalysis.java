@@ -46,6 +46,7 @@ public class SteppingStoneSamplingAnalysis {
     	Map<Double, List<Double>> map = new HashMap<Double, List<Double>>();
         orderedTheta = new ArrayList<Double>();
 
+        //only the log-likelihoods are needed to calculate the marginal likelihood
         for (int i = 0; i < logLikelihoodSample.size(); i++) {
         	if (!map.containsKey(thetaSample.get(i))) {
         		map.put(thetaSample.get(i), new ArrayList<Double>());
@@ -56,6 +57,7 @@ public class SteppingStoneSamplingAnalysis {
 
         Collections.sort(orderedTheta);
 
+        //a list with the maxima of the log-likelihood values is constructed
         maxLogLikelihood = new ArrayList<Double>();
         for (double t : orderedTheta) {
         	List<Double> values = map.get(t);
@@ -91,7 +93,7 @@ public class SteppingStoneSamplingAnalysis {
             sb.append("\n");
         }
 
-        sb.append("\nlog Bayes factor (using stepping stone sampling) from " + logLikelihoodName + " = " + bf + "\n");
+        sb.append("\nlog marginal likelihood (using stepping stone sampling) from " + logLikelihoodName + " = " + bf + "\n");
         return sb.toString();
     }
     

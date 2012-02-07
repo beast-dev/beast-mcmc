@@ -17,7 +17,7 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 2nd February 2012
+Last updated: a.rambaut@ed.ac.uk - 8th February 2012
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
@@ -56,6 +56,8 @@ Version 1.7.0 released ??? February 2012
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation
         Issue 85: 	Add search filter above Included and Excluded taxa in Taxon
                     Sets panel of BEAUti
+        Issue 88:	LogCombiner should not allow thinning that is not compatible
+                    with the original sampling rate
         Issue 189:	Gamma quantile fails on values close to 0 or 1
         Issue 228:	LogCombiner mishandles trees with attributes
         Issue 312:	BEAST continues to run (inappropriately) when sequence contains
@@ -109,12 +111,16 @@ Version 1.7.0 released ??? February 2012
         Issue 444: 	BEAUti: model table select row not update
         Issue 445: 	BEAUti: clock rate configuration is not consistent
                     between clock model panel and prior panel
+        Issue 446:	no indication that Checkboxes and rate text boxes are not
+                    editable in Clock Group table
         Issue 447: 	The Birth-Death models in the Trees Panel show a
                     citation - other models do not
+        Issue 448:	Cannot load 2 nexus files with the same name
         Issue 451:	BEAST suggests using a non-integer for randomWalkIntegerOperator
         Issue 457:	BEAST should raise an error if binary dataType set but data is
                     not binary
         Issue 466:	Cannot run beauti / beast from git-svn clone
+        Issue 467:	Native support for likelihoods is broken in linux
         Issue 469:	BEAUTi Covarion generation fails to add hfrequencies to operators.
         Issue 477:	Unable to calibrate species tree in BEAUti under *BEAST
         Issue 481:	Improve reporting of XML errors
@@ -126,9 +132,10 @@ Version 1.7.0 released ??? February 2012
         Issue 502:	BEAUti prior panel: the lognormal prior chart cannot accept
                     negative numbers for M=log(mean), but it should
         Issue 503:	BEAUti operator analysis should be chosen as default
-        Issue 505:	BEAUti Taxon Sets panel should have species rather than taxa for *BEAST
-        Issue 506:	The gamma prior is not reverted to what it was previously if *BEAST
-                    in unselected.
+        Issue 505:	BEAUti Taxon Sets panel should have species rather than taxa
+                    for *BEAST
+        Issue 506:	The gamma prior is not reverted to what it was previously if
+                    *BEAST in unselected.
         Issue 513:	*BEAST constraint of the 'species' trait
         Issue 522:	BEAUti Taxon Sets panel should not allow to add taxon if no data
         Issue 523:	BEAUti Traits panel buttons enable/disable should adapt to data
@@ -137,15 +144,25 @@ Version 1.7.0 released ??? February 2012
         Issue 528:	the BEAST parser for UniformPrior should throw a parser exception
                     if you attempt to give a bound at infinity.
         Issue 529:	proper priors to determine calibration in BEAUti
+        Issue 532:	compileNativeLinux.sh uses non-optimal / fixed compile settings
         Issue 533:	Taxon set validation fires twice
         Issue 535:	SpeciesTreesPanel are not necessary
         Issue 538:	move tree prior panel to the right of table
         Issue 540:	MCMC chain limited to 2^31-1 (Integer.MAX_VALUE)
+        Issue 541:	BEAUti generates wrong xml when enforcing a uniform prior on
+                    node ages
         Issue 545:	BEAUti taxon set compatibility should be focused on each tree
+        Issue 548:	Beauti does not generate functional xml for msat data analysis
         Issue 549:	BeautiOptions.updateAll() stop user to customize clock rates
         Issue 557:	Removing a partition doesn't remove its unique taxa
         Issue 560:	wrong dependency to dr.evomodel.newtreelikelihood.
                     TreeLikelihood
+        Issue 562:	BEAUTi : Birth Death Epidemiology Model update
+        Issue 565:	hasIdenticalTaxa(List<AbstractPartitionData> partitionDataList)
+                    gives wrong boolean
+        Issue 568:	same pattern id given to two different partitions
+        Issue 569:	BirthDeathEpidemiologyModel bug
+        Issue 570:	bug of unique attribute in pattern lists
 
 
 ================================================================================

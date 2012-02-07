@@ -95,10 +95,7 @@ public class PathSamplingAnalysis {
             sb.append("\n");
         }
 
-        sb.append("\nlog Bayes factor (using path sampling) from ");
-        sb.append(logLikelihoodName);
-        sb.append(" = ");
-        sb.append(String.format(FORMAT, bf) + " (" + bf + ")");
+        sb.append("\nlog marginal likelihood (using path sampling) from " + logLikelihoodName + " = " + bf + "\n");
         sb.append("\nInner area for path parameter in ("
                 + String.format(FORMAT, orderedTheta.get(1)) + ","
                 + String.format(FORMAT, orderedTheta.get(orderedTheta.size() - 2)) + ") = "

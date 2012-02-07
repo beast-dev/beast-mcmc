@@ -25,24 +25,14 @@
 
 package dr.evomodel.coalescent;
 
-//import com.sun.xml.internal.rngom.digested.DDataPattern;
-import com.sun.xml.internal.rngom.digested.DDataPattern;
-import dr.app.beast.BeastDialog;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.GaussianProcessSkytrackLikelihoodParser;
-import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
-import dr.inference.model.Statistic;
 import dr.inference.model.Variable;
 import dr.math.MathUtils;
-import no.uib.cipr.matrix.DenseVector;
-import no.uib.cipr.matrix.NotConvergedException;
-import no.uib.cipr.matrix.SymmTridiagEVD;
 import no.uib.cipr.matrix.SymmTridiagMatrix;
-import sun.jvm.hotspot.memory.SystemDictionary;
-
 
 import java.util.ArrayList;
 import java.util.List;

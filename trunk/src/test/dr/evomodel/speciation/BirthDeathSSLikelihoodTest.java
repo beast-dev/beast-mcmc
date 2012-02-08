@@ -91,7 +91,7 @@ public class BirthDeathSSLikelihoodTest extends TestCase {
     public void testBirthDeathLikelihoodOrigin() {
         System.out.println("RootHeight = " + tree.getRootHeight());
         Variable<Double> origin = new Variable.D("origin", 50);
-        likelihoodTester(tree, birthRate, deathRate, origin, -29.529647743897876);
+        likelihoodTester(tree, birthRate, deathRate, origin, -29.529647743897872);
     }
 
     private void likelihoodTester(Tree tree, double birthRate, double deathRate, Variable<Double> origin, double logL) {

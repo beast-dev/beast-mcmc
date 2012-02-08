@@ -174,13 +174,15 @@ public class BeautiOptions extends ModelOptions {
                     if (statistic == null) {
                         // default scaleType = PriorScaleType.NONE; priorType = PriorType.NONE_TREE_PRIOR
                         statistic = new Parameter.Builder(taxa.getId(), "tmrca statistic for taxon set " + taxa.getId())
-                                .taxaId(treeModel.getPrefix() + taxa.getId()).isStatistic(true).isNodeHeight(true)
+                                .taxaId(taxa.getId()).isStatistic(true).isNodeHeight(true)
                                 .partitionOptions(treeModel).initial(Double.NaN).isNonNegative(true).build();
+                        statistic.setPrefix(treeModel.getPrefix());
 
                         statistics.put(taxa, statistic);
 
                     } else {
                         statistic.setOptions(treeModel); // keep consistent to taxonSetsTreeModel
+                        statistic.setPrefix(treeModel.getPrefix()); // keep prefix consistent after link/unlink tree
                         PartitionTreePrior treePrior = treeModel.getPartitionTreePrior();
                         statistic.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION
                                 && taxonSetsMono.get(taxa);

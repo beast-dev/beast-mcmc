@@ -84,8 +84,11 @@ public class MarginalLikelihoodAnalysis {
         if (analysisType.equals("aicm")) {
             return logMarginalLikelihoodAICM(sample);
         }
-        else {
+        else if (analysisType.equals("smoothed")) {
             return logMarginalLikelihoodSmoothed(sample);
+        }
+        else {
+            return logMarginalLikelihoodHarmonic(sample);
         }
     }
 
@@ -148,12 +151,12 @@ public class MarginalLikelihoodAnalysis {
             double progress = 0.0;
             double delta = 1.0 / bootstrapLength;
             
-            System.out.println("HME = " + logMarginalLikelihood);
+            //System.err.println("HME = " + logMarginalLikelihood);
 
             for (int i = 0; i < bootstrapLength; i++) {
-            	if (i % 10 == 0) {
-            		System.out.println((i+1) + "/" + bootstrapLength);
-            	}
+            //	if (i % 10 == 0) {
+            //		System.err.println((i+1) + "/" + bootstrapLength);
+            //	}
             	
                 fireProgress(progress);
                 progress += delta;

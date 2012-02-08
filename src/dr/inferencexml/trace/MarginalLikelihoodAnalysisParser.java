@@ -19,9 +19,9 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
     public static final String COLUMN_NAME = "likelihoodColumn";
-    //public static final String DO_BOOTSTRAP = "bootstrap";
     public static final String ANALYSIS_TYPE = "analysisType";
     public static final String BOOTSTRAP_LENGTH = "bootstrapLength";
+    public static final String ONLY_HARMONIC = "harmonicOnly";
 
     public String getParserName() {
         return ML_ANALYSIS;
@@ -77,6 +77,14 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
             String analysisType = "harmonic";
             if (cxo.hasAttribute(ANALYSIS_TYPE)) {
                 analysisType = cxo.getStringAttribute(ANALYSIS_TYPE);
+            }
+
+            boolean harmonicOnly = false;
+            if (cxo.hasAttribute(ONLY_HARMONIC)) {
+                harmonicOnly = cxo.getBooleanAttribute(ONLY_HARMONIC);
+            }
+            if (harmonicOnly) {
+                analysisType = "harmonic";
             }
 
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);

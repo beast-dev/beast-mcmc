@@ -13,15 +13,13 @@ import java.util.List;
 /**
  *
  */
-public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
+public class aicmAnalysisParser extends AbstractXMLObjectParser {
 
-    public static final String ML_ANALYSIS = "marginalLikelihoodAnalysis";
+    public static final String ML_ANALYSIS = "aicmAnalysis";
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
     public static final String COLUMN_NAME = "likelihoodColumn";
-    public static final String ANALYSIS_TYPE = "analysisType";
     public static final String BOOTSTRAP_LENGTH = "bootstrapLength";
-    public static final String ONLY_HARMONIC = "harmonicOnly";
 
     public String getParserName() {
         return ML_ANALYSIS;
@@ -74,21 +72,8 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
             }
 
-            String analysisType = "smoothed";
-            if (cxo.hasAttribute(ANALYSIS_TYPE)) {
-                analysisType = cxo.getStringAttribute(ANALYSIS_TYPE);
-            }
-
-            boolean harmonicOnly = false;
-            if (cxo.hasAttribute(ONLY_HARMONIC)) {
-                harmonicOnly = cxo.getBooleanAttribute(ONLY_HARMONIC);
-            }
-            if (harmonicOnly) {
-                analysisType = "harmonic";
-            }
-
+            String analysisType = "aicm";
             int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
-
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,

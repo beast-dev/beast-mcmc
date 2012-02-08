@@ -147,8 +147,14 @@ public class MarginalLikelihoodAnalysis {
 
             double progress = 0.0;
             double delta = 1.0 / bootstrapLength;
+            
+            System.out.println("HME = " + logMarginalLikelihood);
 
             for (int i = 0; i < bootstrapLength; i++) {
+            	if (i % 10 == 0) {
+            		System.out.println((i+1) + "/" + bootstrapLength);
+            	}
+            	
                 fireProgress(progress);
                 progress += delta;
 
@@ -221,25 +227,26 @@ public class MarginalLikelihoodAnalysis {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("log P(Data|")
+        
+        if (analysisType.equals("smoothed")) {
+            sb.append("log marginal likelihood (using smoothed harmonic mean)");
+        }
+        else if (analysisType.equals("aicm")) {
+            sb.append("AICM");
+        }
+        else {
+            sb.append("log marginal likelihood (using harmonic mean)");
+        }
+        
+        sb.append(" from ")
                 .append(traceName)
-                .append(") = ")
+                .append(" = ")
                 .append(String.format("%5.4f", getLogMarginalLikelihood()));
         if (bootstrapLength > 1) {
             sb.append(" +/- ")
                     .append(String.format("%5.4f", getBootstrappedSE()));
         } else {
             sb.append("           ");
-        }
-
-        if (analysisType.equals("smoothed")) {
-            sb.append(" (smoothed)");
-        }
-        else if (analysisType.equals("aicm")) {
-            sb.append(" (AICM)");
-        }
-        else {
-            sb.append(" (harmonic)");
         }
 
         sb.append(" burnin=").append(burnin);

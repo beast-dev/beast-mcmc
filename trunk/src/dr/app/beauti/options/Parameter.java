@@ -337,7 +337,7 @@ public class Parameter implements Serializable {
 
     public String getName() {
         if (taxaId != null) {
-            return "tmrca(" + taxaId + ")";
+            return "tmrca(" + getFullName() + ")";
         } else {
             return getFullName();
         }
@@ -345,13 +345,16 @@ public class Parameter implements Serializable {
 
     public String getXMLName() { // only for BeautiTemplate
         if (taxaId != null) {
-            return "tmrca_" + taxaId;
+            return "tmrca_" + getFullName();
         } else {
             return getFullName();
         }
     }
 
     public String getDescription() {
+        if (taxaId != null && options != null) {
+            return description + " on tree " + options.getName();
+        }
         return description;
     }
 

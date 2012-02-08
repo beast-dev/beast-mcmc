@@ -13,18 +13,16 @@ import java.util.List;
 /**
  *
  */
-public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
+public class AICMAnalysisParser extends AbstractXMLObjectParser {
 
-    public static final String ML_ANALYSIS = "marginalLikelihoodAnalysis";
+    public static final String AICM_ANALYSIS = "aicmAnalysis";
     public static final String FILE_NAME = "fileName";
     public static final String BURN_IN = "burnIn";
     public static final String COLUMN_NAME = "likelihoodColumn";
-    //public static final String DO_BOOTSTRAP = "bootstrap";
-    public static final String ONLY_HARMONIC = "harmonicOnly";
     public static final String BOOTSTRAP_LENGTH = "bootstrapLength";
 
     public String getParserName() {
-        return ML_ANALYSIS;
+        return AICM_ANALYSIS;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
@@ -32,26 +30,27 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
         String fileName = xo.getStringAttribute(FILE_NAME);
         try {
 
+            // Open file
             File file = new File(fileName);
             String name = file.getName();
             String parent = file.getParent();
-
             if (!file.isAbsolute()) {
                 parent = System.getProperty("user.dir");
             }
-
             file = new File(parent, name);
-
             fileName = file.getAbsolutePath();
 
-            XMLObject cxo = xo.getChild(COLUMN_NAME);
-            String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
+            // Set analysisType
+            String analysisType = "aicm";
 
+            // Set bootstrapLength
+            int bootstrapLength = xo.getAttribute(BOOTSTRAP_LENGTH, 1000);
+
+            // Load traces and remove burnin
             LogFileTraces traces = new LogFileTraces(fileName, file);
             traces.loadTraces();
             int maxState = traces.getMaxState();
 
-            // leaving the burnin attribute off will result in 10% being used
             int burnin = xo.getAttribute(BURN_IN, maxState / 10);
 
             if (burnin < 0 || burnin >= maxState) {
@@ -61,7 +60,11 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
             traces.setBurnIn(burnin);
 
+            // Find likelihood column
+            XMLObject cxo = xo.getChild(COLUMN_NAME);
+            String likelihoodName = cxo.getStringAttribute(Attribute.NAME);
             int traceIndex = -1;
+
             for (int i = 0; i < traces.getTraceCount(); i++) {
                 String traceName = traces.getTraceName(i);
                 if (traceName.equals(likelihoodName)) {
@@ -74,17 +77,7 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("Column '" + likelihoodName + "' can not be found for " + getParserName() + " element.");
             }
 
-            // Set analysisType
-            String analysisType = "smoothed";
-            boolean harmonicOnly = false;
-            if (xo.hasAttribute(ONLY_HARMONIC))
-                harmonicOnly = xo.getBooleanAttribute(ONLY_HARMONIC);
-            if (harmonicOnly)
-                analysisType = "harmonic";
-
-
-            int bootstrapLength = cxo.getAttribute(BOOTSTRAP_LENGTH, 1000);
-
+            // Get samples and perform analysis
             List<Double> sample = traces.getValues(traceIndex);
 
             MarginalLikelihoodAnalysis analysis = new MarginalLikelihoodAnalysis(sample,
@@ -121,7 +114,8 @@ public class MarginalLikelihoodAnalysisParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             new StringAttributeRule(FILE_NAME, "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
-            AttributeRule.newIntegerRule("burnIn", true),
+            AttributeRule.newIntegerRule(BURN_IN, true),
+            AttributeRule.newIntegerRule(BOOTSTRAP_LENGTH, true),
             //, "The number of states (not sampled states, but actual states) that are discarded from the beginning of the trace before doing the analysis" ),
             new ElementRule(COLUMN_NAME, new XMLSyntaxRule[] {
                     new StringAttributeRule(Attribute.NAME,"The column name")}),

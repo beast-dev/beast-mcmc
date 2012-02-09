@@ -364,6 +364,9 @@
 				<normalPrior mean="6.0" stdev="0.5">
 					<statistic idref="tmrca(Human-Chimp)"/>
 				</normalPrior>
+                <normalPrior mean="24.0" stdev="0.5">
+					<statistic idref="tmrca(HomiCerco)"/>
+				</normalPrior>
 				<logNormalPrior mean="1.0" stdev="1.25" offset="0.0" meanInRealSpace="false">
 					<parameter idref="firsthalf.kappa"/>
 				</logNormalPrior>

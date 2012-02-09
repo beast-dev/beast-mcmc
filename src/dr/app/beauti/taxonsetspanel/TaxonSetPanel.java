@@ -526,15 +526,17 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             taxonSetCount++;
 
             String newTaxonSetName = "untitled" + taxonSetCount;
-            currentTaxonSet = new Taxa(newTaxonSetName); // cannot use currentTaxonSet
+            Taxa newTaxonSet = new Taxa(newTaxonSetName); // cannot use currentTaxonSet
 
-            options.taxonSets.add(currentTaxonSet);
+            options.taxonSets.add(newTaxonSet);
             Collections.sort(options.taxonSets);
 
-            options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
-            options.taxonSetsIncludeStem.put(currentTaxonSet, Boolean.FALSE);
+            options.taxonSetsMono.put(newTaxonSet, Boolean.FALSE);
+            options.taxonSetsIncludeStem.put(newTaxonSet, Boolean.FALSE);
             // initialize currentTaxonSet with 1st PartitionTreeModel
-            options.taxonSetsTreeModel.put(currentTaxonSet, options.getPartitionTreeModels().get(0));
+            options.taxonSetsTreeModel.put(newTaxonSet, options.getPartitionTreeModels().get(0));
+
+            setCurrentTaxonSet(newTaxonSet);
 
             taxonSetChanged();
 

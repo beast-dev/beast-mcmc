@@ -92,9 +92,6 @@ public class SpeciesSetPanel extends TaxonSetPanel {
         } else {
             addSpeciesSetAction.setEnabled(true);
         }
-
-        taxonSetsTableSelectionChanged();
-        taxonSetsTableModel.fireTableDataChanged();
     }
     
     protected void taxonSetsTableSelectionChanged() {
@@ -203,19 +200,26 @@ public class SpeciesSetPanel extends TaxonSetPanel {
         public void actionPerformed(ActionEvent ae) {
             taxonSetCount++;
 
-            currentTaxonSet = new Taxa("untitled" + taxonSetCount);
+            String newSpeciesSetName = "untitled" + taxonSetCount;
+            Taxa newSpeciesSet = new Taxa(newSpeciesSetName); // cannot use currentTaxonSet
 
-            options.speciesSets.add(currentTaxonSet);
+            options.speciesSets.add(newSpeciesSet);
             Collections.sort(options.speciesSets);
 
-            options.speciesSetsMono.put(currentTaxonSet, Boolean.FALSE);
+            options.speciesSetsMono.put(newSpeciesSet, Boolean.FALSE);
+
+            setCurrentTaxonSet(newSpeciesSet);
+
+            taxonSetChanged();
 
             speciesSetsTableModel.fireTableDataChanged();
 
-            int sel = options.speciesSets.indexOf(currentTaxonSet);
-            taxonSetsTable.setRowSelectionInterval(sel, sel);
-
-            taxonSetChanged();
+            int sel = options.getSpeciesIndex(newSpeciesSetName);
+            if (sel < 0) {
+                taxonSetsTable.setRowSelectionInterval(0, 0);
+            } else {
+                taxonSetsTable.setRowSelectionInterval(sel, sel);
+            }
         }
     };
 

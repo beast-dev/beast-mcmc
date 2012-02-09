@@ -476,8 +476,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             addTaxonSetAction.setEnabled(options.hasData());
         }
 
-        taxonSetsTableSelectionChanged();
-        taxonSetsTableModel.fireTableDataChanged();
+//        taxonSetsTableSelectionChanged(); // These 2 lines code massed up table selection
+//        taxonSetsTableModel.fireTableDataChanged();
     }
 
     public void getOptions(BeautiOptions options) {
@@ -524,22 +524,28 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         public void actionPerformed(ActionEvent ae) {
             taxonSetCount++;
-            // initialize currentTaxonSet with 1st PartitionTreeModel
-            currentTaxonSet = new Taxa("untitled" + taxonSetCount);
+
+            String newTaxonSetName = "untitled" + taxonSetCount;
+            currentTaxonSet = new Taxa(newTaxonSetName); // cannot use currentTaxonSet
 
             options.taxonSets.add(currentTaxonSet);
             Collections.sort(options.taxonSets);
 
             options.taxonSetsMono.put(currentTaxonSet, Boolean.FALSE);
             options.taxonSetsIncludeStem.put(currentTaxonSet, Boolean.FALSE);
+            // initialize currentTaxonSet with 1st PartitionTreeModel
             options.taxonSetsTreeModel.put(currentTaxonSet, options.getPartitionTreeModels().get(0));
+
+            taxonSetChanged();
 
             taxonSetsTableModel.fireTableDataChanged();
 
-            int sel = options.taxonSets.indexOf(currentTaxonSet);
-            taxonSetsTable.setRowSelectionInterval(sel, sel);
-
-            taxonSetChanged();
+            int sel = options.getTaxaIndex(newTaxonSetName);
+            if (sel < 0) {
+                taxonSetsTable.setRowSelectionInterval(0, 0);
+            } else {
+                taxonSetsTable.setRowSelectionInterval(sel, sel);
+            }
         }
     };
 

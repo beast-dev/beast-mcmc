@@ -79,8 +79,8 @@ import java.util.Set;
 public class BeastGenerator extends Generator {
 
     private final static Version version = new BeastVersion();
-    private static final String MESSAGE_CAL_YULE = "Calibrated Yule requires 1 calibrated internal node\n" +
-            "with monophyly enforced for each tree.";
+    private static final String MESSAGE_CAL_YULE = "Calibrated Yule requires 1 calibrated internal node \n" +
+            "with a proper prior and monophyly enforced for each tree.";
     private final String MESSAGE_CAL = "\nas another element (taxon, sequence, taxon set, species, etc.):\nAll ids should be unique.";
 
     private final AlignmentGenerator alignmentGenerator;
@@ -152,14 +152,14 @@ public class BeastGenerator extends Generator {
 
         //++++++++++++++++ Taxon Sets ++++++++++++++++++
         for (PartitionTreeModel model : options.getPartitionTreeModels()) {
-            // should be only 1 calibrated internal node with monophyletic for each tree at moment
+            // should be only 1 calibrated internal node with a proper prior and monophyletic for each tree at moment
             if (model.getPartitionTreePrior().getNodeHeightPrior() == TreePriorType.YULE_CALIBRATION) {
-                if (options.treeModelOptions.isNodeCalibrated(model) < 0)
+                if (options.treeModelOptions.isNodeCalibrated(model) < 0) // invalid node calibration
                     throw new GeneratorException(MESSAGE_CAL_YULE);
 
-                if (options.treeModelOptions.isNodeCalibrated(model) > 0) {
-                    if (options.getKeysFromValue(options.taxonSetsTreeModel, model).size() != 1
-                            || !options.taxonSetsMono.get(options.getKeysFromValue(options.taxonSetsTreeModel, model).get(0))) {
+                if (options.treeModelOptions.isNodeCalibrated(model) > 0) { // internal node calibration
+                    List taxonSetsList = options.getKeysFromValue(options.taxonSetsTreeModel, model);
+                    if (taxonSetsList.size() != 1 || !options.taxonSetsMono.get(taxonSetsList.get(0))) { // 1 tmrca per tree && monophyletic
                         throw new GeneratorException(MESSAGE_CAL_YULE, BeautiFrame.TAXON_SETS);
                     }
                 }

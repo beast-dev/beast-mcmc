@@ -94,10 +94,15 @@ public class TreeModelOptions extends ModelOptions {
     }
 
     public int isNodeCalibrated(PartitionTreeModel treeModel) {
-        if (options.treeModelOptions.isNodeCalibrated(treeModel.getParameter("treeModel.rootHeight"))) {
+        if (isNodeCalibrated(treeModel.getParameter("treeModel.rootHeight"))) {
             return 0; // root node
         } else if (options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).size() > 0) {
-            return 1; // internal node (tmrca)
+            Taxa taxonSet = (Taxa) options.getKeysFromValue(options.taxonSetsTreeModel, treeModel).get(0);
+            Parameter tmrca = options.statistics.get(taxonSet);
+            if (tmrca != null && isNodeCalibrated(tmrca)) {
+                return 1; // internal node (tmrca) with a proper prior
+            }
+            return -1;
         } else {
             return -1;
         }

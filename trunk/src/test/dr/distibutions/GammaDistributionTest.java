@@ -2,13 +2,14 @@ package test.dr.distibutions;
 
 import dr.math.distributions.GammaDistribution;
 import dr.math.functionEval.GammaFunction;
-import jebl.math.Random;
 import junit.framework.TestCase;
 import org.apache.commons.math.ConvergenceException;
 import org.apache.commons.math.FunctionEvaluationException;
 import org.apache.commons.math.analysis.UnivariateRealFunction;
 import org.apache.commons.math.analysis.integration.RombergIntegrator;
 import org.apache.commons.math.analysis.integration.UnivariateRealIntegrator;
+
+import java.util.Random;
 
 
 public class GammaDistributionTest extends TestCase{
@@ -31,9 +32,11 @@ public class GammaDistributionTest extends TestCase{
         double ptotErr = 0; int np = 0;
         double qtotErr = 0;
 
+        Random random = new Random(37);
+
         for(int i = 0; i < numberOfTests; i++){
-            final double mean = .01 + (3-0.01) * Random.nextDouble();
-            final double var = .01 + (3-0.01) * Random.nextDouble();
+            final double mean = .01 + (3-0.01) * random.nextDouble();
+            final double var = .01 + (3-0.01) * random.nextDouble();
 
             final double scale = var / mean;
             final double shape = mean / scale;

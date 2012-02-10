@@ -30,7 +30,6 @@ import dr.app.gui.components.WholeNumberField;
 import dr.app.gui.util.LongTask;
 import dr.inference.trace.TraceDistribution;
 import dr.inference.trace.TraceList;
-import dr.math.Integral;
 import dr.stats.Variate;
 import jam.framework.DocumentFrame;
 import jam.panels.OptionsPanel;
@@ -619,6 +618,25 @@ public class BayesianSkylineDialog {
                     importer = new NewickImporter(reader, false);
                 }
 
+                int treeTotalStates = importer.importTrees().size();
+                int logTotalStates = traceList.getStateCount() + traceList.getBurninStateCount();
+
+                if (treeTotalStates != logTotalStates) {
+                    throw new IllegalArgumentException("BEAST log states (" + logTotalStates
+                            + ") does not match tree log states (" + treeTotalStates + ")"
+                            + "\nPlease check both log files.");
+                }
+
+                // importer.importTrees() makes point to the end of file, and reader.mark(?) not working for large file
+                reader = new BufferedReader(new FileReader(treeFile));
+
+                line = reader.readLine();
+                if (line.toUpperCase().startsWith("#NEXUS")) {
+                    importer = new NexusImporter(reader);
+                } else {
+                    importer = new NewickImporter(reader, false);
+                }
+
                 int burnin = traceList.getBurnIn();
                 int skip = burnin / traceList.getStepSize();
                 int state = 0;
@@ -844,6 +862,10 @@ public class BayesianSkylineDialog {
                 JOptionPane.showMessageDialog(frame, "Error reading file: " + ioe.getMessage(),
                         "Error reading file",
                         JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ile) {
+                JOptionPane.showMessageDialog(frame, ile.getMessage(),
+                            "Invalid log file",
+                            JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Fatal exception during plot:" + ex.getMessage(),
                         "Fatal exception",

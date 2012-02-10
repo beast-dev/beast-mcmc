@@ -554,6 +554,25 @@ public class GMRFSkyrideDialog {
                     importer = new NewickImporter(reader, false);
                 }
 
+                int treeTotalStates = importer.importTrees().size();
+                int logTotalStates = traceList.getStateCount() + traceList.getBurninStateCount();
+
+                if (treeTotalStates != logTotalStates) {
+                    throw new IllegalArgumentException("BEAST log states (" + logTotalStates
+                            + ") does not match tree log states (" + treeTotalStates + ")"
+                            + "\nPlease check both log files.");
+                }
+
+                // importer.importTrees() makes point to the end of file, and reader.mark(?) not working for large file
+                reader = new BufferedReader(new FileReader(treeFile));
+
+                line = reader.readLine();
+                if (line.toUpperCase().startsWith("#NEXUS")) {
+                    importer = new NexusImporter(reader);
+                } else {
+                    importer = new NewickImporter(reader, false);
+                }
+
                 int burnin = traceList.getBurnIn();
                 int skip = burnin / traceList.getStepSize();
                 int state = 0;
@@ -688,6 +707,10 @@ public class GMRFSkyrideDialog {
                 JOptionPane.showMessageDialog(frame, "Error reading file: " + ioe.getMessage(),
                         "Error reading file",
                         JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ile) {
+                JOptionPane.showMessageDialog(frame, ile.getMessage(),
+                            "Invalid log file",
+                            JOptionPane.ERROR_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(frame, "Fatal exception (email the authors):" + ex.getMessage(),
                         "Fatal exception",

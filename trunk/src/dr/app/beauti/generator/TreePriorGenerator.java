@@ -237,7 +237,7 @@ public class TreePriorGenerator extends Generator {
             case YULE:
             case YULE_CALIBRATION:
                 if (nodeHeightPrior == TreePriorType.YULE_CALIBRATION) {
-                    writer.writeComment("Calibrated Yule --- Heled J, Drummond AJ (2011), Syst Biol, doi: " +
+                    writer.writeComment("Calibrated Yule: Heled J, Drummond AJ (2011), Syst Biol, doi: " +
                             "10.1093/sysbio/syr087");
                 } else {
                     writer.writeComment("A prior on the distribution node heights defined given",
@@ -338,7 +338,7 @@ public class TreePriorGenerator extends Generator {
                 writer.writeComment("A prior assumption that the population size has remained constant");
                 writer.writeComment("throughout the time spanned by the genealogy.");
                 if (nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION)
-                    writer.writeComment("Calibrated Yule --- Heled J, Drummond AJ (2011), Syst Biol, doi: " +
+                    writer.writeComment("Calibrated Yule: Heled J, Drummond AJ (2011), Syst Biol, doi: " +
                             "10.1093/sysbio/syr087");
 
                 writer.writeOpenTag(

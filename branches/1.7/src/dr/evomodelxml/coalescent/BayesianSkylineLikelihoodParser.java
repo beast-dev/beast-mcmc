@@ -55,6 +55,11 @@ public class BayesianSkylineLikelihoodParser extends AbstractXMLObjectParser {
             } else throw new XMLParseException("Unknown Bayesian Skyline type: " + xo.getStringAttribute(TYPE));
         }
 
+        if (param2.getDimension() > (treeModel.getExternalNodeCount()-1)) {
+            throw new XMLParseException("There are more groups (" + param2.getDimension()
+                    + ") than coalescent nodes in the tree (" + (treeModel.getExternalNodeCount()-1) + ").");
+        }
+
         Logger.getLogger("dr.evomodel").info("Bayesian skyline plot: " + param.getDimension() + " " + typeName + " control points");
 
         return new BayesianSkylineLikelihood(treeModel, param, param2, type);

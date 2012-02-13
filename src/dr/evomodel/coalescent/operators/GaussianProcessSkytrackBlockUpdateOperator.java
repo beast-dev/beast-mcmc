@@ -80,20 +80,15 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     }
 
     //change mixing values to parameters - see Eq. 7
-    private double getPriorLambda(Parameter lambdaMean){
-     return 0.0;
+    private double getPriorLambda(double lambdaMean, double epsilon, double lambdaValue){
+        double res;
+        if (lambdaValue < lambdaMean) {res=epsilon*(1/lambdaMean);}
+        else {res=(1-epsilon)*(1/lambdaMean)*Math.exp(-(1/lambdaMean)*(lambdaValue-lambdaMean)); }
+        return res;
     }
 
-    private double getNewLambda_Bound(double currentValue, double lambdaScale) {
-        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
-        double b = currentValue + a;
-        if (b > 1)
-            b = 2 - b;
-        if (b < 0)
-            b = -b;
 
-        return b;
-    }
+    //Old function -delete
 
     private double getNewLambda(double currentValue, double lambdaScale) {
         double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
@@ -106,6 +101,24 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         return b;
     }
 
+    private double getPrecision(double currentValue, double alpha, double beta) {
+            double length = scaleFactor - 1 / scaleFactor;
+            double returnValue;
+
+
+            if (scaleFactor == 1)
+                return currentValue;
+            if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
+                returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
+            } else {
+                returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+            }
+
+            return returnValue;
+        }
+
+
+    //Old function -delete
     private double getNewPrecision(double currentValue, double scaleFactor) {
         double length = scaleFactor - 1 / scaleFactor;
         double returnValue;

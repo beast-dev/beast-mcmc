@@ -34,7 +34,9 @@ import dr.util.MessageLogHandler;
 import dr.util.Version;
 import dr.xml.XMLParser;
 import jam.console.ConsoleApplication;
+import jam.util.IconUtils;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -45,6 +47,8 @@ import java.util.logging.*;
 public class BeastMC3 {
 
     public final static int HOT_CHAIN_COUNT = 2;
+    public static final double DELTA = 1.0;
+    public static final int SWAP_CHAIN_EVERY = 100;
 
     private final static Version version = new dr.app.beast.BeastVersion();
 
@@ -106,7 +110,7 @@ public class BeastMC3 {
 
             FileReader fileReader = new FileReader(inputFile);
 
-	        XMLParser parser = new BeastParser(new String[] {fileName}, null, verbose, parserWarning, strictXML);
+            XMLParser parser = new BeastParser(new String[]{fileName}, null, verbose, parserWarning, strictXML);
 
             if (consoleApp != null) {
                 consoleApp.parser = parser;
@@ -119,7 +123,7 @@ public class BeastMC3 {
 
             Logger.getLogger("dr.apps.beast").info("Parsing XML file: " + fileName);
 
-            chains[0] = (MCMC)parser.parse(fileReader, MCMC.class);
+            chains[0] = (MCMC) parser.parse(fileReader, MCMC.class);
             if (chains[0] == null) {
                 throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
             }
@@ -131,9 +135,9 @@ public class BeastMC3 {
                 fileReader = new FileReader(inputFile);
 
                 messageHandler.setLevel(Level.OFF);
-                parser = new BeastParser(new String[] {fileName}, null, verbose, parserWarning, strictXML);
+                parser = new BeastParser(new String[]{fileName}, null, verbose, parserWarning, strictXML);
 
-                chains[i] = (MCMC)parser.parse(fileReader, MCMC.class);
+                chains[i] = (MCMC) parser.parse(fileReader, MCMC.class);
                 if (chains[i] == null) {
                     throw new dr.xml.XMLParseException("BEAST XML file is missing an MCMC element");
                 }
@@ -207,7 +211,7 @@ public class BeastMC3 {
 
         System.out.println("+-----------------------------------------------\\");
 
-        String versionString = "BEAST " + version.getVersionString() + " 2002-2004";
+        String versionString = "BEAST " + version.getVersionString() + " " + version.getDateString();
         System.out.print("|");
         int n = 47 - versionString.length();
         int n1 = n / 2;
@@ -287,6 +291,7 @@ public class BeastMC3 {
                         new Arguments.Option("window", "provide a console window"),
                         new Arguments.Option("working", "change working directory to input file's directory"),
                         new Arguments.Option("overwrite", "Allow overwriting of log files"),
+                        new Arguments.Option("options", "Display an options dialog"),
                         new Arguments.Option("help", "option to print this message")
                 });
 
@@ -307,21 +312,14 @@ public class BeastMC3 {
             System.exit(0);
         }
 
-        {
-            boolean allowOverwrite = arguments.hasOption("overwrite");
-            if (allowOverwrite) {
-                System.setProperty("log.allow.overwrite", "true");
-            }
-        }
-
         int chainCount = HOT_CHAIN_COUNT + 1;
         if (arguments.hasOption("chains")) {
             chainCount = arguments.getIntegerOption("chains");
-        } else if( arguments.hasOption("temperatures") ) {
-           chainCount = 1 + arguments.getRealArrayOption("temperatures").length;
+        } else if (arguments.hasOption("temperatures")) {
+            chainCount = 1 + arguments.getRealArrayOption("temperatures").length;
         }
 
-        double delta = 1.0;
+        double delta = DELTA;
         if (arguments.hasOption("delta")) {
             if (arguments.hasOption("temperatures")) {
                 System.err.println("Either the -delta or the -temperatures option should be used, not both");
@@ -336,8 +334,8 @@ public class BeastMC3 {
         chainTemperatures[0] = 1.0;
         if (arguments.hasOption("temperatures")) {
             double[] hotChainTemperatures = arguments.getRealArrayOption("temperatures");
-            assert  hotChainTemperatures.length == chainCount - 1;
-            
+            assert hotChainTemperatures.length == chainCount - 1;
+
             System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
         } else {
             for (int i = 1; i < chainCount; i++) {
@@ -345,7 +343,7 @@ public class BeastMC3 {
             }
         }
 
-        int swapChainsEvery = 100;
+        int swapChainsEvery = SWAP_CHAIN_EVERY;
         if (arguments.hasOption("swap")) {
             swapChainsEvery = arguments.getIntegerOption("swap");
         }
@@ -355,12 +353,16 @@ public class BeastMC3 {
         final boolean parserWarning = arguments.hasOption("pwarning"); // if dev, then auto turn on, otherwise default to turn off
         final boolean window = arguments.hasOption("window");
         final boolean working = arguments.hasOption("working");
+        final boolean options = arguments.hasOption("options");
+        boolean allowOverwrite = arguments.hasOption("overwrite");
 
 //		if (System.getProperty("dr.app.beast.main.window", "false").toLowerCase().equals("true")) {
 //			window = true;
 //		}
 
         BeastConsoleApp consoleApp = null;
+
+        String nameString = "BEAST " + version.getVersionString();
 
         if (window) {
             System.setProperty("com.apple.macos.useScreenMenuBar", "true");
@@ -374,7 +376,6 @@ public class BeastMC3 {
                 icon = new javax.swing.ImageIcon(url);
             }
 
-            String nameString = "BEAST " + version.getVersionString();
             String aboutString = "<html><div style=\"font-family:sans-serif;\"><center>" +
                     "<div style=\"font-size:12;\"><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
                     "Version " + version.getVersionString() + ", " + version.getDateString() + "</p>" +
@@ -384,28 +385,69 @@ public class BeastMC3 {
             consoleApp = new BeastConsoleApp(nameString, aboutString, icon);
         }
 
-        String inputFileName = null;
-
-        String[] args2 = arguments.getLeftoverArguments();
-
-        if (args2.length > 1) {
-            System.err.println("Unknown option: " + args2[1]);
-            System.err.println();
-            printUsage(arguments);
-            System.exit(1);
-        }
-
         File inputFile = null;
 
-        if (args2.length > 0) {
-            inputFileName = args2[0];
-            inputFile = new File(inputFileName);
+        if (options) {
+
+            String titleString = "<html><center><p>Bayesian Evolutionary Analysis Sampling Trees<br>" +
+                    "Metropolis-coupled version<br>" +
+                    "Version " + version.getVersionString() + ", " + version.getDateString() + "</p></center></html>";
+            javax.swing.Icon icon = IconUtils.getIcon(BeastMC3.class, "images/beast.png");
+
+            BeastMC3Dialog dialog = new BeastMC3Dialog(new JFrame(), titleString, icon);
+
+            if (!dialog.showDialog(nameString)) {
+                return;
+            }
+
+            if (dialog.allowOverwrite()) {
+                allowOverwrite = true;
+            }
+
+            chainCount = dialog.getChains();
+
+            delta = dialog.getDelta();
+
+            chainTemperatures = dialog.getTemperaturesArray();
+
+            swapChainsEvery = dialog.getSwap();
+
+            inputFile = dialog.getInputFile();
+
+            if (inputFile == null) {
+                System.err.println("No input file specified");
+                return;
+            }
+
         }
 
-        if (inputFileName == null) {
-            // No input file name was given so throw up a dialog box...
-            inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+
+        if (allowOverwrite) {
+            System.setProperty("log.allow.overwrite", "true");
         }
+
+        if (inputFile == null) {
+            String[] args2 = arguments.getLeftoverArguments();
+
+            if (args2.length > 1) {
+                System.err.println("Unknown option: " + args2[1]);
+                System.err.println();
+                printUsage(arguments);
+                System.exit(1);
+            }
+
+            String inputFileName = null;
+
+            if (args2.length > 0) {
+                inputFileName = args2[0];
+                inputFile = new File(inputFileName);
+            }
+            if (inputFileName == null) {
+                // No input file name was given so throw up a dialog box...
+                inputFile = Utils.getLoadFile("BEAST " + version.getVersionString() + " - Select XML input file");
+            }
+        }
+
 
         if (inputFile != null && working) {
             System.setProperty("user.dir", inputFile.getParent());
@@ -413,7 +455,22 @@ public class BeastMC3 {
 
         printTitle();
         printHeader();
-        new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, parserWarning, strictXML);
+
+        try {
+            new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, parserWarning, strictXML);
+        } catch (RuntimeException rte) {
+            if (window) {
+                System.out.println();
+                System.out.println("BEAST has terminated with an error. Please select QUIT from the menu.");
+                // logger.severe will throw a RTE but we want to keep the console visible
+            } else {
+                System.exit(1);
+            }
+        }
+
+        if (!window) {
+            System.exit(0);
+        }
     }
 }
 

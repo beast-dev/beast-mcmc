@@ -12,6 +12,7 @@
     <property name="dist" location="${build}/dist"/>
 
     <property name="main_class_BEAST" value="dr.app.beast.BeastMain"/>
+    <property name="main_class_BEASTMC3" value="dr.app.beast.BeastMC3"/>
     <property name="main_class_BEAUTI" value="dr.app.beauti.BeautiApp"/>
     <property name="main_class_TRACER" value="dr.app.tracer.application.TracerApp"/>
     <property name="main_class_Annotator" value="dr.app.tools.TreeAnnotator"/>
@@ -267,6 +268,7 @@
     <property name="version_number" value="1.7.0"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
+    <property name="BEASTMC3_name" value="BEASTMC3"/>
     <property name="BEAUti_name" value="BEAUti"/>
     <property name="TreeAnnotator_name" value="TreeAnnotator"/>
     <property name="LogCombiner_name" value="LogCombiner"/>
@@ -332,6 +334,15 @@
         <launch4j configFile="${Windows_dir}/BEAST_launch4j.xml"
                   jar="${dist}/beast.jar"
                   outfile="${Windows_package_dir}/${BEAST_name} v${version}.exe"
+                  fileVersion="${version_number}.0"
+                  txtFileVersion="${version}"
+                  productVersion="${version_number}.0"
+                  txtProductVersion="${version}"/>
+
+        <!-- BEAST MC3 v?.?.?.exe -->
+        <launch4j configFile="${Windows_dir}/BEASTMC3_launch4j.xml"
+                  jar="${dist}/beast.jar"
+                  outfile="${Windows_package_dir}/${BEASTMC3_name} v${version}.exe"
                   fileVersion="${version_number}.0"
                   txtFileVersion="${version}"
                   productVersion="${version_number}.0"
@@ -472,6 +483,27 @@
                     arguments="-window -working -options"
                     version="${version}"
                     infostring="${BEAST_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
+                    bundleid="dr.app.beast">
+            <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
+            <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="**/beast.jar"/>
+                <include name="**/beast-beagle.jar"/>
+            </jarfileset>
+            <jarfileset dir="${Mac_package_dir}/lib">
+                <include name="libNucleotideLikelihoodCore.jnilib"/>
+            </jarfileset>
+        </jarbundler>
+
+        <jarbundler dir="${Mac_package_dir}"
+                    name="${BEASTMC3_name} v${version}"
+                    mainclass="dr.app.beast.BeastMC3"
+                    icon="${common_dir}/icons/beast.icns"
+                    jvmversion="1.5+"
+                    vmoptions="-Xmx1024M"
+                    arguments="-window -working -options"
+                    version="${version}"
+                    infostring="${BEASTMC3_name} v${version}, Copyright 2002-2012, Alexei Drummond, Andrew Rambaut, Marc Suchard and Walter Xie"
                     bundleid="dr.app.beast">
             <javaproperty name="apple.laf.useScreenMenuBar" value="true"/>
             <javaproperty name="java.library.path" value="$JAVAROOT:/usr/local/lib"/>

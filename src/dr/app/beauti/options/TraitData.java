@@ -1,7 +1,8 @@
 package dr.app.beauti.options;
 
-import dr.evolution.continuous.Continuous;
-import dr.evolution.datatype.*;
+import dr.evolution.datatype.ContinuousDataType;
+import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 
@@ -122,6 +123,24 @@ public class TraitData implements Serializable {
 
 
         return states;
+    }
+
+    public static int getEmptyStateIndex(Taxa taxonList, String traitName) {
+        if (taxonList == null) {
+            throw new IllegalArgumentException("taxon list is null");
+        }
+
+        for (int i = 0; i < taxonList.getTaxonCount(); i++) {
+            Taxon taxon = taxonList.getTaxon(i);
+            String attr = (String) taxon.getAttribute(traitName);
+
+            // ? is used to denote missing data so is not a state...
+            if (attr == null || attr.equals("?")) {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     public String toString() {

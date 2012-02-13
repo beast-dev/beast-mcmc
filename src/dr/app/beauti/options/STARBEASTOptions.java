@@ -177,6 +177,10 @@ public class STARBEASTOptions extends ModelOptions {
         return new ArrayList<String>(TraitData.getStatesListOfTrait(options.taxonList, TraitData.TRAIT_SPECIES));
     }
 
+    public int getEmptySpeciesIndex() {
+        return TraitData.getEmptyStateIndex(options.taxonList, TraitData.TRAIT_SPECIES);
+    }
+
     public String getDescription() {
         return "Species definition: binds taxa, species and gene trees";
     }

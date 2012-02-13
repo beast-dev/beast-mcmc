@@ -89,7 +89,7 @@ public class SpeciesSetPanel extends TaxonSetPanel {
         if (options.speciesSets == null) {
             addSpeciesSetAction.setEnabled(false);
             removeSpeciesSetAction.setEnabled(false);
-        } else {
+        } else if (options.starBEASTOptions.getEmptySpeciesIndex() < 0) {
             addSpeciesSetAction.setEnabled(true);
         }
     }

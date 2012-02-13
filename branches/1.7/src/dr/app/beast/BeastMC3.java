@@ -407,29 +407,8 @@ public class BeastMC3 {
             chainCount = dialog.getChains();
 
             delta = dialog.getDelta();
-//            if (arguments.hasOption("delta")) {
-//                if (arguments.hasOption("temperatures")) {
-//                    System.err.println("Either the -delta or the -temperatures option should be used, not both");
-//                    System.err.println();
-//                    printUsage(arguments);
-//                    System.exit(1);
-//                }
-//                delta = arguments.getRealOption("delta");
-//            }
 
             chainTemperatures = dialog.getTemperaturesArray();
-//            double[] chainTemperatures = new double[chainCount];
-//            chainTemperatures[0] = 1.0;
-//            if (arguments.hasOption("temperatures")) {
-//                double[] hotChainTemperatures = arguments.getRealArrayOption("temperatures");
-//                assert hotChainTemperatures.length == chainCount - 1;
-//
-//                System.arraycopy(hotChainTemperatures, 0, chainTemperatures, 1, chainCount - 1);
-//            } else {
-//                for (int i = 1; i < chainCount; i++) {
-//                    chainTemperatures[i] = 1.0 / (1.0 + (delta * i));
-//                }
-//            }
 
             swapChainsEvery = dialog.getSwap();
 

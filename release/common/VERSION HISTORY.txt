@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 8th February 2012
+Last updated: a.rambaut@ed.ac.uk - 13th February 2012
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.0 released 8th February 2012
+Version 1.7.0 released xxxth February 2012
 
 	New Features:
 		New Birth-Death speciation and epidemiological tree models. See citation
@@ -51,6 +51,10 @@ Version 1.7.0 released 8th February 2012
 
         More prior probability options for parameters and updated prior dialog
         box.
+
+        Species tree calibration for *BEAST in BEAUti.
+
+        Added Metropolis-coupled "BEAST MC3" into BEAST release.
 
 	Bug Fixes:
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation

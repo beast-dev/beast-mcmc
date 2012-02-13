@@ -209,59 +209,13 @@ public class BeastMC3 {
 
     public static void printTitle() {
 
-        System.out.println("+-----------------------------------------------\\");
-
-        String versionString = "BEAST " + version.getVersionString() + " " + version.getDateString();
-        System.out.print("|");
-        int n = 47 - versionString.length();
-        int n1 = n / 2;
-        int n2 = n1 + (n % 2);
-        for (int i = 0; i < n1; i++) {
-            System.out.print(" ");
-        }
-        System.out.print(versionString);
-        for (int i = 0; i < n2; i++) {
-            System.out.print(" ");
-        }
-        System.out.println("|\\");
-
-        System.out.println("| Bayesian Evolutionary Analysis Sampling Trees ||");
-        System.out.println("|           Metropolis-coupled version          ||");
-
-        String buildString = "BEAST Library: " + version.getBuildString();
-        System.out.print("|");
-        n = 47 - buildString.length();
-        n1 = n / 2;
-        n2 = n1 + (n % 2);
-        for (int i = 0; i < n1; i++) {
-            System.out.print(" ");
-        }
-        System.out.print(buildString);
-        for (int i = 0; i < n2; i++) {
-            System.out.print(" ");
-        }
-        System.out.println("||");
-
-        System.out.println("|       Alexei Drummond and Andrew Rambaut      ||");
-        System.out.println("|              University of Oxford             ||");
-        System.out.println("|      http://evolve.zoo.ox.ac.uk/Beast/        ||");
-        System.out.println("\\-----------------------------------------------\\|");
-        System.out.println(" \\-----------------------------------------------\\");
-    }
-
-    public static void printHeader() {
-        System.out.println(" +-----------------------------------------------+");
-        System.out.println(" | Components created by:                        |");
-        System.out.println(" |       Alexei Drummond                         |");
-        System.out.println(" |       Roald Forsberg                          |");
-        System.out.println(" |       Oliver Pybus                            |");
-        System.out.println(" |       Andrew Rambaut                          |");
-        System.out.println(" | Thanks to (for use of their code):            |");
-        System.out.println(" |       Korbinian Strimmer                      |");
-        System.out.println(" |       Oliver Pybus                            |");
-        System.out.println(" +-----------------------------------------------+");
         System.out.println();
-
+        BeastMain.centreLine("BEAST " + version.getVersionString() + ", " + version.getDateString(), 60);
+        BeastMain.centreLine("Bayesian Evolutionary Analysis Sampling Trees", 60);
+        for (String creditLine : version.getCredits()) {
+            BeastMain.centreLine(creditLine, 60);
+        }
+        System.out.println();
     }
 
     public static void printUsage(Arguments arguments) {
@@ -454,7 +408,6 @@ public class BeastMC3 {
         }
 
         printTitle();
-        printHeader();
 
         try {
             new BeastMC3(chainTemperatures, swapChainsEvery, inputFile, consoleApp, verbose, parserWarning, strictXML);

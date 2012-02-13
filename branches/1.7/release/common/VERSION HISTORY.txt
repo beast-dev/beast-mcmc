@@ -52,6 +52,10 @@ Version 1.7.0 released ??? February 2012
         More prior probability options for parameters and updated prior dialog
         box.
 
+        Species tree calibration for *BEAST in BEAUti.
+
+        Add BEAST MC3 into BEAST release.
+
 	Bug Fixes:
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation
         Issue 85: 	Add search filter above Included and Excluded taxa in Taxon

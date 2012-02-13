@@ -203,6 +203,12 @@ public class BeastGenerator extends Generator {
                 }
                 ids.add(species.getId());
             }
+
+            int tId = options.starBEASTOptions.getEmptySpeciesIndex();
+            if (tId >= 0) {
+                throw new GeneratorException("The taxon " + options.taxonList.getTaxonId(tId) +
+                            " has NULL value for \"species\" trait", BeautiFrame.TRAITS);
+            }
         }
 
         //++++++++++++++++ Traits ++++++++++++++++++

@@ -32,7 +32,6 @@ import dr.evomodel.tree.TreeModel;
 //import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
-import org.apache.commons.math.special.Beta;
 
 import java.util.ArrayList;
 import java.util.List;

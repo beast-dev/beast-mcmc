@@ -32,6 +32,7 @@ import dr.evomodel.tree.TreeModel;
 //import dr.inference.model.MatrixParameter;
 import dr.inference.model.Parameter;
 import dr.xml.*;
+import org.apache.commons.math.special.Beta;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,11 +48,13 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
     public static final String LAMBDA_BOUND_PARAMETER = "lambdaBoundParameter";
 	public static final String POPULATION_PARAMETER = "populationSizes";
+    public static final String CHANGE_POINTS="changePoints";
 //	public static final String GROUP_SIZES = "groupSizes";
 	public static final String PRECISION_PARAMETER = "precisionParameter";
 	public static final String POPULATION_TREE = "populationTree";
 	public static final String LAMBDA_PARAMETER = "lambdaParameter";
-//	public static final String BETA_PARAMETER = "betaParameter";
+	public static final String BETA_PARAMETER = "betaParameter";
+    public static final String ALPHA_PARAMETER = "alphaParameter";
 //	public static final String COVARIATE_MATRIX = "covariateMatrix";
 	public static final String RANDOMIZE_TREE = "randomizeTree";
 //	public static final String TIME_AWARE_SMOOTHING = "timeAwareSmoothing";
@@ -124,7 +127,34 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
         } else {
             lambda_bound = new Parameter.Default(1.0);
         }
+
+        Parameter alpha_parameter;
+        if (xo.getChild(ALPHA_PARAMETER) != null) {
+            cxo = xo.getChild(ALPHA_PARAMETER);
+            alpha_parameter = (Parameter) cxo.getChild(Parameter.class);
+        } else {
+            alpha_parameter = new Parameter.Default(0.001);
+        }
+
+        Parameter beta_parameter;
+               if (xo.getChild(BETA_PARAMETER) != null) {
+                   cxo = xo.getChild(BETA_PARAMETER);
+                   beta_parameter = (Parameter) cxo.getChild(Parameter.class);
+               } else {
+                   beta_parameter = new Parameter.Default(0.001);
+               }
+
+        Parameter change_points;
+               if (xo.getChild(CHANGE_POINTS) != null) {
+                   cxo = xo.getChild(CHANGE_POINTS);
+                   change_points = (Parameter) cxo.getChild(Parameter.class);
+               } else {
+                   change_points = new Parameter.Default(0,1);
+               }
+
                 /*
+
+
         Parameter gridPoints = null;
         if (xo.getChild(GRID_POINTS) != null) {
             cxo = xo.getChild(GRID_POINTS);
@@ -201,7 +231,7 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
 
 
              return new GaussianProcessSkytrackLikelihood(treeList, precParameter,
-                 rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter);
+                 rescaleByRootHeight, numGridPoints, lambda_bound, lambda_parameter, popParameter,alpha_parameter,beta_parameter, change_points);
 
     }
 
@@ -225,6 +255,9 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
             new ElementRule(POPULATION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
+            new ElementRule(CHANGE_POINTS, new XMLSyntaxRule[]{
+                              new ElementRule(Parameter.class)
+            }),
             new ElementRule(PRECISION_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
@@ -235,6 +268,12 @@ public class GaussianProcessSkytrackLikelihoodParser extends AbstractXMLObjectPa
                     new ElementRule(Parameter.class)
             }),
             new ElementRule(LAMBDA_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(ALPHA_PARAMETER, new XMLSyntaxRule[]{
+                    new ElementRule(Parameter.class)
+            }),
+            new ElementRule(BETA_PARAMETER, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }),
 //            new ElementRule(PHI_PARAMETER, new XMLSyntaxRule[]{

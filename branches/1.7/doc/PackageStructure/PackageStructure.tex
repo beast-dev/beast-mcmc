@@ -1,0 +1,61 @@
+\documentclass[11pt]{article}
+
+\usepackage{graphicx,pgf}
+\usepackage{tikz}
+
+\begin{document}
+
+\section*{Package structure}
+
+The BEAST software is organized hierarchically into java packages.
+All BEAST classes exist in packages under the dr package. Within this
+namespace, there are about a dozen top-level packages:
+\begin{description}
+\item [{dr.app.{*}}] Application-specific code, including main class for
+BEAST, BEAUti and all application specific GUI code.
+\item [{dr.evolution.{*}}] Library of classes and routines describing all
+the basic objects needed in import, export and manipulation of molecular
+evolution data structures. No reference to XML parsing or statistical
+inference procedures like MCMC. Classes in the dr.evolution.{*} packages
+do not depend on classes in dr.inference.{*}, dr.evomodel.{*}, dr.evomodelxml
+or dr.geo.{*}.
+\item [{dr.evomodel.{*}}] Library of classes for MCMC inference on molecular
+evolutionary data. This package primarily brings together the dr.evolution.{*}
+and dr.inference.{*} packages.
+\item [{dr.evomodelxml}] Contains XMLObjectParsers for objects in dr.evomodel.{*}
+packages.
+\item [{dr.evoxml}] Contains XMLObjectParsers for objects in dr.evolution.{*}
+packages.
+\item [{dr.geo.{*}}] Contains classes for geographical modeling.
+\item [{dr.gui.{*}}] Contains classes for generic GUI objects and tasks.
+Classes in the dr.gui.{*} packages do not depend on classes in dr.app.{*},
+dr.inference.{*}, dr.evomodel.{*}, dr.evomodelxml or dr.geo.{*}.
+\item [{dr.inference.{*}}] Contains classes for statistical inference,
+\emph{without specific reference to probablistic models of molecular
+evolution. }Classes in the dr.inference.{*} packages do not depend
+on classes in dr.app.{*}, dr.evolution.{*}, dr.evomodel.{*}, dr.evomodelxml
+or dr.geo.{*}.
+\item [{dr.java16compat}]~
+\item [{dr.math.{*}}] Basic numerical computing classes including mathematical
+functions and optimization algorithms. Classes in this package do
+not depend on classes in any other packages in BEAST.
+\item [{dr.matrix}] Basic Matrix and Vector support. Classes in this package
+do not depend on classes in any other packages in BEAST.
+\item [{dr.stats}] A couple of basic statistics classes. Depends only on
+dr.util package. 
+\item [{dr.util}] Basic utility classes. Depends on no other packages.
+\item [{dr.xml}] Basic XML parsing classes, \emph{without specific reference
+to molecular evolution}. Depends only on dr.util package. 
+\end{description}
+%
+\begin{figure}
+\input{./dependencies.tex}
+\caption{The dependency structure among the top-level package namespaces}
+\end{figure}
+
+\begin{figure}
+\input{./dependencies_tracer.tex}
+\caption{The dependency structure of tracer}
+\end{figure}
+
+\end{document}

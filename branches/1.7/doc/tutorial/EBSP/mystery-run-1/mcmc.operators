@@ -1,0 +1,34 @@
+
+Operator analysis
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
+scale(mt.nex.kappa)                               0.231   19856      2050     0.1      0.314       good	
+scale(nuclear.nex.kappa)                          0.186   19937      2074     0.1      0.3188      good	
+scale(X.nex.kappa)                                0.192   20309      2316     0.11     0.3498      good	
+scale(nuclear.nex.clock.rate)                     0.253   30176      3057     0.1      0.3277      good	
+scale(X.nex.clock.rate)                           0.179   29854      2810     0.09     0.308       good	
+up:nuclear.nex.clock.rate X.nex.clock.rate down:demographic.popSize nodeHeights(mt.nex.treeModel) nodeHeights(nuclear.nex.treeModel) nodeHeights(X.nex.treeModel) 0.551   299515     88904    0.3      0.2373      slightly high	Try setting scaleFactor to about 0.5462
+subtreeSlide(mt.nex.treeModel)                    0.02    151326     11258    0.07     0.2392      good	
+Narrow Exchange(mt.nex.treeModel)                         150780     9220     0.06     0.4942      slightly high	
+Wide Exchange(mt.nex.treeModel)                           30029      1428     0.05     0.1841      good	
+wilsonBalding(mt.nex.treeModel)                           30011      2504     0.08     0.1951      good	
+scale(mt.nex.treeModel.rootHeight)                0.389   30039      2075     0.07     0.2487      good	
+uniform(nodeHeights(mt.nex.treeModel))                    301861     27481    0.09     0.707       high	
+subtreeSlide(nuclear.nex.treeModel)               0.068   150414     10556    0.07     0.2022      good	
+Narrow Exchange(nuclear.nex.treeModel)                    150454     8857     0.06     0.5517      high	
+Wide Exchange(nuclear.nex.treeModel)                      29798      1409     0.05     0.091       good	
+wilsonBalding(nuclear.nex.treeModel)                      29766      2339     0.08     0.0808      slightly low	
+scale(nuclear.nex.treeModel.rootHeight)           0.348   29918      2279     0.08     0.3125      good	
+uniform(nodeHeights(nuclear.nex.treeModel))               300248     28052    0.09     0.6373      high	
+subtreeSlide(X.nex.treeModel)                     0.046   150493     10657    0.07     0.2365      good	
+Narrow Exchange(X.nex.treeModel)                          150348     8719     0.06     0.6218      high	
+Wide Exchange(X.nex.treeModel)                            29995      1323     0.04     0.2397      good	
+wilsonBalding(X.nex.treeModel)                            30439      2413     0.08     0.2046      good	
+scale(X.nex.treeModel.rootHeight)                 0.31    30121      2230     0.07     0.2708      good	
+uniform(nodeHeights(X.nex.treeModel))                     300381     26745    0.09     0.6756      high	
+SampleNonActive(demographic.indicators)                   400164     23987    0.06     1.0         none (Gibbs operator)
+bitFlip(demographic.indicators)                           1002118    71017    0.07     0.0038      very low	no performance suggestion
+scale(demographic.popSize)                        0.362   599753     35431    0.06     0.2459      good	
+up:down:nodeHeights(mt.nex.treeModel)             0.666   150584     21490    0.14     0.2084      slightly high	Try setting scaleFactor to about 0.6966
+up:nuclear.nex.clock.rate down:nodeHeights(nuclear.nex.treeModel) 0.605   150796     21455    0.14     0.2053      slightly high	Try setting scaleFactor to about 0.6434
+up:X.nex.clock.rate down:nodeHeights(X.nex.treeModel) 0.624   150517     19402    0.13     0.2046      slightly high	Try setting scaleFactor to about 0.6621
+

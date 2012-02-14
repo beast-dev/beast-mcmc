@@ -32,6 +32,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -162,7 +163,7 @@ public class ExternalInternalBranchSubstitutionModel extends AbstractModel imple
     }
 
 	@Override
-	public int getExtraBufferCount() {
+	public int getExtraBufferCount(TreeModel treeModel) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

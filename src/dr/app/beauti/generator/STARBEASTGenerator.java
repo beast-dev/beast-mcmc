@@ -30,13 +30,16 @@ import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.Parameter;
 import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.options.TraitData;
-import dr.app.beauti.types.*;
+import dr.app.beauti.types.PopulationSizeModelType;
+import dr.app.beauti.types.PriorType;
+import dr.app.beauti.types.TreePriorType;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.PloidyType;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.Units;
+import dr.evomodel.speciation.CalibrationPoints;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
@@ -50,7 +53,6 @@ import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.model.ParameterParser;
 import dr.inferencexml.distribution.DistributionModelParser;
 import dr.inferencexml.distribution.MixedDistributionLikelihoodParser;
-import dr.inferencexml.distribution.UniformDistributionModelParser;
 import dr.util.Attribute;
 import dr.xml.AttributeParser;
 import dr.xml.XMLParser;
@@ -261,7 +263,9 @@ public class STARBEASTGenerator extends Generator {
     private void writeSpeciesTreePrior(XMLWriter writer) {
         Parameter para;
 
-        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
+        TreePriorType nodeHeightPrior = options.getPartitionTreePriors().get(0).getNodeHeightPrior();
+
+        if (nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species tree prior: Birth Death Model");
 
             writer.writeOpenTag(BirthDeathModelParser.BIRTH_DEATH_MODEL, new Attribute[]{
@@ -289,7 +293,8 @@ public class STARBEASTGenerator extends Generator {
             writer.writeCloseTag(BirthDeathModelParser.RELATIVE_DEATH_RATE);
 
             writer.writeCloseTag(BirthDeathModelParser.BIRTH_DEATH_MODEL);
-        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
+        } else if (nodeHeightPrior == TreePriorType.SPECIES_YULE ||
+                nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION) {
             writer.writeComment("Species tree prior: Yule Model");
 
             writer.writeOpenTag(YuleModelParser.YULE_MODEL, new Attribute[]{
@@ -307,8 +312,10 @@ public class STARBEASTGenerator extends Generator {
             writer.writeCloseTag(YuleModelParser.BIRTH_RATE);
 
             writer.writeCloseTag(YuleModelParser.YULE_MODEL);
+        } else if (nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION) {
+
         } else {
-            throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
+            throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : " + nodeHeightPrior.toString());
         }
 
     }
@@ -316,7 +323,9 @@ public class STARBEASTGenerator extends Generator {
 
     private void writeSpeciesTreeLikelihood(XMLWriter writer) {
 
-        if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_BIRTH_DEATH) {
+        TreePriorType nodeHeightPrior = options.getPartitionTreePriors().get(0).getNodeHeightPrior();
+
+        if (nodeHeightPrior == TreePriorType.SPECIES_BIRTH_DEATH) {
             writer.writeComment("Species Tree Likelihood: Birth Death Model");
 
             writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -326,7 +335,8 @@ public class STARBEASTGenerator extends Generator {
             writer.writeIDref(BirthDeathModelParser.BIRTH_DEATH_MODEL, BirthDeathModelParser.BIRTH_DEATH);
             writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
 
-        } else if (options.getPartitionTreePriors().get(0).getNodeHeightPrior() == TreePriorType.SPECIES_YULE) {
+        } else if (nodeHeightPrior == TreePriorType.SPECIES_YULE ||
+                nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION) {
             writer.writeComment("Species Tree Likelihood: Yule Model");
 
             writer.writeOpenTag(SpeciationLikelihoodParser.SPECIATION_LIKELIHOOD, new Attribute[]{
@@ -335,9 +345,37 @@ public class STARBEASTGenerator extends Generator {
             writer.writeOpenTag(SpeciationLikelihoodParser.MODEL);
             writer.writeIDref(YuleModelParser.YULE_MODEL, YuleModelParser.YULE);
             writer.writeCloseTag(SpeciationLikelihoodParser.MODEL);
+
+            if (nodeHeightPrior == TreePriorType.SPECIES_YULE_CALIBRATION) {
+                // should be only 1 calibrated node with monophyletic for species tree at moment
+                if (options.speciesSets.size() == 1 && options.speciesSetsMono.size() == 1) {
+                    Taxa t = options.speciesSets.get(0);
+                    Parameter nodeCalib = options.getStatistic(t);
+
+                    writer.writeOpenTag(SpeciationLikelihoodParser.CALIBRATION,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(SpeciationLikelihoodParser.CORRECTION, CalibrationPoints.CorrectionType.EXACT.toString())
+                            });
+                    writer.writeOpenTag(SpeciationLikelihoodParser.POINT);
+
+                    writer.writeIDref(TaxaParser.TAXA, t.getId());
+                    writeDistribution(nodeCalib, true, writer);
+
+                    writer.writeCloseTag(SpeciationLikelihoodParser.POINT);
+                    writer.writeCloseTag(SpeciationLikelihoodParser.CALIBRATION);
+
+                    if (!options.treeModelOptions.isNodeCalibrated(nodeCalib)) {
+
+                    }
+                } else {
+                    throw new IllegalArgumentException("Calibrated Yule model is only applied to 1 calibrated node with monophyletic for species tree at moment !");
+                }
+
+            }
+
         } else {
             throw new IllegalArgumentException("Get wrong species tree prior using *BEAST : "
-                    + options.getPartitionTreePriors().get(0).getNodeHeightPrior().toString());
+                    + nodeHeightPrior.toString());
         }
 
         // <sp> tree

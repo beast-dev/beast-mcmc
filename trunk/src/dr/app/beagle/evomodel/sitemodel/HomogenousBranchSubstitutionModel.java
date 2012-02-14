@@ -149,16 +149,16 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
         
         //////////////////////////////////////////////////////
         
-		for(int k =0;k<probabilityIndices.length;k++){
-		
-		double tmp[] = new double[4 * 4 * 4];
-		beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
-				tmp // outMatrix
-				);
-		
-		System.out.println(probabilityIndices[k]);
-		EpochBranchSubstitutionModel.printMatrix(tmp, 4, 4);
-		}
+//		for(int k =0;k<probabilityIndices.length;k++){
+//		
+//		double tmp[] = new double[4 * 4 * 4];
+//		beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
+//				tmp // outMatrix
+//				);
+//		
+//		System.out.println(probabilityIndices[k]);
+//		EpochBranchSubstitutionModel.printMatrix(tmp, 4, 4);
+//		}
         
        //////////////////////////////////////////////////////
 		

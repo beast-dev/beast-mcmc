@@ -32,6 +32,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -94,9 +95,34 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	/**
 	 * @return number of extra transition matrices buffers to allocate
 	 */
-	public int getExtraBufferCount() {
-		//TODO: count * 4
-		return 100*4;
+	public int getExtraBufferCount(TreeModel treeModel) {
+
+		// loop over the tree to determine the count
+		double[] transitionTimes = epochTimes.getParameterValues();
+		int rootId = treeModel.getRoot().getNumber();
+		int count = 0;
+		for (NodeRef node : treeModel.getNodes()) {
+
+			if (node.getNumber() != rootId) {
+
+				double nodeHeight = treeModel.getNodeHeight(node);
+				double parentHeight = treeModel.getNodeHeight(treeModel
+						.getParent(node));
+
+				for (int i = 0; i < transitionTimes.length; i++) {
+
+					if (nodeHeight <= transitionTimes[i] && transitionTimes[i] < parentHeight) {
+						count++;
+						break;
+					}// END: transition time check check
+
+				}// END: transition times loop
+			}// END: root check
+		}// END: nodes loop
+
+//		System.err.println(count);
+
+		return count * 4;
 	}// END: getBufferCount
 
 	public void setFirstBuffer(int firstBufferCount) {
@@ -171,7 +197,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		int nModels = substModelList.size();
 		int lastTransitionTime = nModels - 2;
 
-		double[] weights = new double[nModels + 0];
+		double[] weights = new double[nModels];
 		double[] transitionTimes = epochTimes.getParameterValues();
 		double parentHeight = tree.getNodeHeight(tree.getParent(node));
 		double nodeHeight = tree.getNodeHeight(node);
@@ -192,7 +218,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 				weights[0] = transitionTimes[0] - nodeHeight;
 				returnValue = nModels;
-
+				
 			} else {
 
 				weights[0] = 0;
@@ -224,7 +250,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 							weights[i] = (endTime - startTime);
 							returnValue = nModels;
-
+							
 						}// END: negative weights check
 
 					}// END: full branch in middle epoch check
@@ -242,12 +268,12 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 				weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
 				returnValue = nModels;
-
+				
 			} else if (nodeHeight > transitionTimes[lastTransitionTime]) {
 
 				weights[lastTransitionTime + 1] = branchLength;
 				returnValue = nModels - 1;
-
+				
 			} else {
 
 				weights[lastTransitionTime + 1] = 0;
@@ -306,7 +332,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 			
 		} else {
 
-//			System.err.println(count);
+//			System.err.println("count: " + count);
 //			Scanner sc = new Scanner(System.in);
 //			System.out.println("Press Enter to continue");
 //			sc.nextLine();
@@ -340,7 +366,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				int eigenBuffer = bufferHelper.getOffsetIndex(i);
 				double[] weights = new double[count];
 				
-				System.out.println("\ni: " + i + ", eigenBuffer: " + eigenBuffer + "\n");
+//				System.out.println("\ni: " + i + ", eigenBuffer: " + eigenBuffer + "\n");
 
 				for (int j = 0; j < count; j++) {
 
@@ -412,10 +438,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 				}// END: first-last buffer check
 
-				System.out.println("Populating buffers: ");
-				printArray(probabilityBuffers, probabilityBuffers.length);
-				System.out.println("for weights: ");
-				printArray(weights, weights.length);
+//				System.out.println("Populating buffers: ");
+//				printArray(probabilityBuffers, probabilityBuffers.length);
+//				System.out.println("for weights: ");
+//				printArray(weights, weights.length);
 				
 				beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
 						probabilityBuffers, // probabilityIndices
@@ -427,12 +453,12 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				
 				if (i != 0) {
 
-					System.out.println("convolving buffers: ");
-					printArray(firstConvolutionBuffers, firstConvolutionBuffers.length);
-					System.out.println("with buffers: ");
-					printArray(secondConvolutionBuffers, secondConvolutionBuffers.length);
-					System.out.println("into buffers: ");
-					printArray(resultConvolutionBuffers, resultConvolutionBuffers.length);
+//					System.out.println("convolving buffers: ");
+//					printArray(firstConvolutionBuffers, firstConvolutionBuffers.length);
+//					System.out.println("with buffers: ");
+//					printArray(secondConvolutionBuffers, secondConvolutionBuffers.length);
+//					System.out.println("into buffers: ");
+//					printArray(resultConvolutionBuffers, resultConvolutionBuffers.length);
 					
 					beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
 							secondConvolutionBuffers, // B
@@ -458,6 +484,16 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		return citations;
 	}// END: getCitations
 
+	private int accumulate(boolean[] array) {
+		int sum = 0;
+		for (int i = 0; i < array.length; i++) {
+			if (array[i]) {
+				sum++;
+			}
+		}
+		return sum;
+	}// END: accumulate
+	
 	// /////////////
 	// ---DEBUG---//
 	// /////////////

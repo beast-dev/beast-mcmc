@@ -65,7 +65,8 @@ import java.util.List;
 public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLikelihood {
 
 //    protected Parameter groupSizeParameter;
-    protected Parameter precisionParameter;
+    public static final double LOG_TWO_TIMES_PI = 1.837877;
+	protected Parameter precisionParameter;
     protected Parameter lambda_boundParameter;
     protected Parameter numGridPoints;
     protected Parameter lambdaParameter;    //prior for lambda_bound, will be used in operators only
@@ -270,9 +271,50 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 //        return 0.0;
 	}
 
-    private double calculateLogGP() {
-        return 0;
-    }
+
+    protected double calculateLogGP() {
+
+           if (!intervalsKnown) {
+               // intervalsKnown -> false when handleModelChanged event occurs in super.
+               wrapSetupIntervals();
+               setupQmatrix(precisionParameter.getParameterValue(0));
+               intervalsKnown = true;
+           }
+
+           double currentLike = 0;
+           DenseVector diagonal1 = new DenseVector(numcoalpoints);
+           DenseVector currentGamma = new DenseVector(popSizeParameter.getParameterValues());
+
+           SymmTridiagMatrix currentQ = weightMatrix;
+           currentQ.mult(currentGamma, diagonal1);
+
+           currentLike = -0.5 * logGeneralizedDeterminant(currentQ) - 0.5 * currentGamma.dot(diagonal1) - 0.5 * (numcoalpoints - 1) * LOG_TWO_TIMES_PI;
+           return currentLike;
+       }
+
+
+    //log pseudo-determinant
+       public static double logGeneralizedDeterminant(SymmTridiagMatrix X) {
+           //Set up the eigenvalue solver
+           SymmTridiagEVD eigen = new SymmTridiagEVD(X.numRows(), false);
+           //Solve for the eigenvalues
+           try {
+               eigen.factor(X);
+           } catch (NotConvergedException e) {
+               throw new RuntimeException("Not converged error in generalized determinate calculation.\n" + e.getMessage());
+           }
+
+           //Get the eigenvalues
+           double[] x = eigen.getEigenvalues();
+
+           double a = 0;
+           for (double d : x) {
+               if (d > 0.00001)
+                   a += Math.log(d);
+           }
+
+           return a;
+       }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type){
 		likelihoodKnown = false;

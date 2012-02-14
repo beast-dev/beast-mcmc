@@ -22,7 +22,7 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.0 released xxxth February 2012
+Version 1.7.0 released 17th February 2012
 
 	New Features:
 		New Birth-Death speciation and epidemiological tree models. See citation
@@ -57,13 +57,18 @@ Version 1.7.0 released xxxth February 2012
         Added Metropolis-coupled "BEAST MC3" into BEAST release.
 
 	Bug Fixes:
+	    Issue 43:	treeTraceAnalysis fails due to comment in newick importer
+	    Issue 46:	BSP solid interval broken
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation
         Issue 85: 	Add search filter above Included and Excluded taxa in Taxon
                     Sets panel of BEAUti
+        Issue 86:	Missing validation in BayesianSkylineLikelihoodParser
         Issue 88:	LogCombiner should not allow thinning that is not compatible
                     with the original sampling rate
         Issue 189:	Gamma quantile fails on values close to 0 or 1
         Issue 228:	LogCombiner mishandles trees with attributes
+        Issue 284:	Tracer doing BSP will throw an exception if the log file/tree
+                    file are out of sync
         Issue 312:	BEAST continues to run (inappropriately) when sequence contains
                     invalid character
         Issue 397: 	*BEAST in BEAUti is broken
@@ -101,6 +106,8 @@ Version 1.7.0 released xxxth February 2012
         Issue 426: 	BEAUti does not preserve model settings when re-linking
         Issue 427: 	BEAUti generates a mergePatterns even when it is enclosing
                     a single patterns element
+        Issue 429:	Specifying more than 2 -temperatures on the command line
+                    fails in parsing arguments
         Issue 432: 	More detail for error message: *BEAST special part
                     generation has failed.
         Issue 433: 	Typo in BEAUTi and example files
@@ -167,6 +174,14 @@ Version 1.7.0 released xxxth February 2012
         Issue 568:	same pattern id given to two different partitions
         Issue 569:	BirthDeathEpidemiologyModel bug
         Issue 570:	bug of unique attribute in pattern lists
+        Issue 572:	BEAUti tmrca gives wrong prefix
+        Issue 573:	BEAUti taxon set panel taxon set table incorrectly auto selection
+        Issue 575:	BEUAti should check for '--' in generated XML comments.
+        Issue 576:	BEAUti calibrated Yule validation is missing one logic
+        Issue 577:	BEAUti generator for *BEAST + calibrated Yule is broken
+        Issue 578:	Add BEAST MC3 dialog and make it available in BEAST release package
+        Issue 579:	BEAUti : empty species set is created in *BEAST
+        Issue 580:	BEAUti *BEAST did not check the empty species value
 
 
 ================================================================================

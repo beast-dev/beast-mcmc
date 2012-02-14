@@ -32,6 +32,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -145,10 +146,26 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
             int count) {
         beagle.updateTransitionMatrices(eigenIndex, probabilityIndices, firstDerivativeIndices,
                 secondDervativeIndices, edgeLengths, count);
+        
+        //////////////////////////////////////////////////////
+        
+		for(int k =0;k<probabilityIndices.length;k++){
+		
+		double tmp[] = new double[4 * 4 * 4];
+		beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
+				tmp // outMatrix
+				);
+		
+		System.out.println(probabilityIndices[k]);
+		EpochBranchSubstitutionModel.printMatrix(tmp, 4, 4);
+		}
+        
+       //////////////////////////////////////////////////////
+		
     }
 
 	@Override
-	public int getExtraBufferCount() {
+	public int getExtraBufferCount(TreeModel treeModel) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

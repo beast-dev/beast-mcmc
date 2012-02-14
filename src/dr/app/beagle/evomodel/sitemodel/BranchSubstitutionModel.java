@@ -31,6 +31,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 
 /**
@@ -63,7 +64,7 @@ public interface BranchSubstitutionModel extends Model {
             final double[] edgeLengths,
             int count);
 
-	int getExtraBufferCount();
+	int getExtraBufferCount(TreeModel treeModel);
 
 	void setFirstBuffer(int bufferCount);
 

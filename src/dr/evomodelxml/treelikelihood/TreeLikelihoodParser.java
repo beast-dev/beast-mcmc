@@ -34,7 +34,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         boolean storePartials = xo.getAttribute(STORE_PARTIALS, true);
         boolean forceJavaCore = xo.getAttribute(FORCE_JAVA_CORE, false);
 
-        if (Boolean.valueOf(System.getProperty("java_only"))) {
+        if (Boolean.valueOf(System.getProperty("java.only"))) {
             forceJavaCore = true;
         }
 

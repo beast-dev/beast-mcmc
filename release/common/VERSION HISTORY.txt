@@ -58,7 +58,6 @@ Version 1.7.0 released 17th February 2012
 
 	Bug Fixes:
 	    Issue 43:	treeTraceAnalysis fails due to comment in newick importer
-	    Issue 46:	BSP solid interval broken
 	    Issue 51: 	log-normal prior in beauti not that usefull presentation
         Issue 85: 	Add search filter above Included and Excluded taxa in Taxon
                     Sets panel of BEAUti
@@ -67,8 +66,6 @@ Version 1.7.0 released 17th February 2012
                     with the original sampling rate
         Issue 189:	Gamma quantile fails on values close to 0 or 1
         Issue 228:	LogCombiner mishandles trees with attributes
-        Issue 284:	Tracer doing BSP will throw an exception if the log file/tree
-                    file are out of sync
         Issue 312:	BEAST continues to run (inappropriately) when sequence contains
                     invalid character
         Issue 397: 	*BEAST in BEAUti is broken

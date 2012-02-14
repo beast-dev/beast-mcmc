@@ -25,7 +25,11 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import beagle.*;
+import beagle.Beagle;
+import beagle.BeagleFactory;
+import beagle.BeagleFlag;
+import beagle.InstanceDetails;
+import beagle.ResourceDetails;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
@@ -45,7 +49,11 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.Citable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -57,6 +65,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
+@SuppressWarnings("serial")
 public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
@@ -234,8 +243,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     compactPartialsCount,
                     stateCount,
                     patternCount,
-                    eigenBufferHelper.getBufferCount(),            // eigenBufferCount
-                    matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(),
+                    eigenBufferHelper.getBufferCount(), // eigenBufferCount
+                    matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(treeModel),
                     categoryCount,
                     scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
                     resourceList,
@@ -1070,9 +1079,29 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                     }
                 }
+                
+				// //////////////////
+				// ---TODO:DEBUG---//
+				// //////////////////
+
+//				double tmp[] = new double[stateCount * patternCount * categoryCount];
+//				System.out.println(nodeNum);
+//				getPartials(nodeNum, tmp);
+//
+//				for (int i = 0; i < 4; i++) {
+////					if (tmp[i] != 0) {
+//						System.out.println(Math.log(tmp[i]));
+////					}
+//				}
+
+				// //////////////////
+				// ---END: DEBUG---//
+				// //////////////////
+
             }
         }
 
+//        EpochBranchSubstitutionModel.printArray(branchUpdateCount, branchUpdateCount.length);
         return update;
 
     }

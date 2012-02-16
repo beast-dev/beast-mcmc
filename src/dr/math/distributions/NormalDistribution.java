@@ -144,9 +144,10 @@ public class NormalDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double m, double sd) {
-        double a = (x - m) / (Math.sqrt(2.0) * sd);
-
-        return 0.5 * (1.0 + ErrorFunction.erf(a));
+        return cdf(x, m, sd, false);
+//        double a = (x - m) / (Math.sqrt(2.0) * sd);
+//
+//        return 0.5 * (1.0 + ErrorFunction.erf(a));
     }
 
     /**

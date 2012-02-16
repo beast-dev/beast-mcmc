@@ -383,6 +383,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
             // all data partitions removed so reset the taxa
             options.reset();
             useStarBEASTCheck.setSelected(false);
+            frame.setupStarBEAST(false);
             frame.statusLabel.setText("");
             frame.setAllOptions();
             frame.getExportAction().setEnabled(false);

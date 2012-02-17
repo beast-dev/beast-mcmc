@@ -32,11 +32,7 @@ import dr.app.beauti.options.PartitionTreeModel;
 import dr.app.beauti.types.FixRateType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.util.PanelUtils;
-import dr.app.beauti.util.TextUtil;
 import dr.app.gui.components.RealNumberField;
-import dr.app.gui.tree.JTreeDisplay;
-import dr.app.gui.tree.JTreePanel;
-import dr.app.gui.tree.SquareTreePainter;
 import dr.app.util.OSType;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.PloidyType;
@@ -45,8 +41,6 @@ import dr.evolution.tree.Tree;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -84,7 +78,7 @@ public class PartitionTreeModelPanel extends OptionsPanel {
 //    private JButton treeDisplayButton = new JButton("Display selected tree");
 //    private JButton correctBranchLengthButton = new JButton("Correct branch lengths to get ultrametric tree");
 
-    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+    private RealNumberField initRootHeightField = new RealNumberField(Double.MIN_VALUE, Double.POSITIVE_INFINITY, "Init root height");
 
     private BeautiOptions options = null;
     private final BeautiFrame parent;

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -31,15 +32,17 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
 		XMLObject cxo = xo.getChild(MODELS);
 		
+//		BranchSubstitutionModel siteModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
+		
 		for (int i = 0; i < cxo.getChildCount(); i++) {
 			
-			SubstitutionModel model = (SubstitutionModel) cxo.getChild(i);
+			SubstitutionModel substModel = (SubstitutionModel) cxo.getChild(i);
 
 			if (dataType == null) {
 				
-				dataType = model.getDataType();
+				dataType = substModel.getDataType();
 				
-			} else if (dataType != model.getDataType()) {
+			} else if (dataType != substModel.getDataType()) {
 				
 				throw new XMLParseException(
 						"Substitution models across epoches must use the same data type.");
@@ -48,16 +51,16 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 
 			if (frequencyModelList.size() == 0) {
 
-				frequencyModelList.add(model.getFrequencyModel());
+				frequencyModelList.add(substModel.getFrequencyModel());
 
-			} else if (frequencyModelList.get(0) != model.getFrequencyModel()) {
+			} else if (frequencyModelList.get(0) != substModel.getFrequencyModel()) {
 				
 				throw new XMLParseException(
 						"Substitution models across epoches must currently use the same frequency model.\n Harass Marc to fix this.");
 
 			}//END: freqModels no check
 				
-			substModelList.add(model);
+			substModelList.add(substModel);
 		}//END: i loop
 
 		Parameter epochTransitionTimes = (Parameter) xo
@@ -73,11 +76,8 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 	    // quietly sort in increasing order
 		double sortedEpochTransitionTimes[] = epochTransitionTimes.getAttributeValue();
 		Arrays.sort(sortedEpochTransitionTimes);
-
 		for(int i = 0; i < epochTransitionTimes.getDimension(); i ++) {
-			
 			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
-			
 		}//END: i loop
 		
 		return new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);

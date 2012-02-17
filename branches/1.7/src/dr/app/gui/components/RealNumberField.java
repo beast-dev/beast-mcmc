@@ -34,15 +34,24 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     protected double max;
     protected boolean range_check = false;
     protected boolean range_checked = false;
+    public boolean isValueValid = true;
+
+    protected String label; // make sensible error message
 
     public RealNumberField() {
         super();
+        setLabel("Value");
     }
 
     public RealNumberField(double min, double max) {
-        this();
+        this(min, max, "Value");
+    }
+
+    public RealNumberField(double min, double max, String label) {
+        super();
         this.min = min;
         this.max = max;
+        setLabel(label);
         range_check = true;
         this.addFocusListener(this);
     }
@@ -92,7 +101,8 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         setText(obj.toString()); // where used?
     }
 
-    protected void displayErrorMessage() {
+    public void displayErrorMessage() {
+        isValueValid = false;
         String message = "";
         if (min == Double.MIN_VALUE) {
             message = " greater than 0";
@@ -109,7 +119,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         }
 
         JOptionPane.showMessageDialog(this,
-                "Value must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
+                label + " must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
     }
 
     public void setRange(double min, double max) {
@@ -126,6 +136,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             }
         }
         setText(value);
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     public Double getValue() {
@@ -162,17 +176,14 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public void insertUpdate(DocumentEvent e) {
-        range_checked = false;
         fireChanged();
     }
 
     public void removeUpdate(DocumentEvent e) {
-        range_checked = false;
         fireChanged();
     }
 
     public void changedUpdate(DocumentEvent e) {
-        range_checked = false;
         fireChanged();
     }
 
@@ -251,6 +262,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     protected void fireChanged() {
+        range_checked = false;
+        isValueValid = true;
+
         ChangeEvent c = new ChangeEvent(this);
         Object[] listeners = changeListeners.getListenerList();
         for (int i = listeners.length - 2; i >= 0; i -= 2) {

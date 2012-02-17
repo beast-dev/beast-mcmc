@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 
 /**
  * @author Filip Bielejec
@@ -56,6 +55,8 @@ import java.util.Scanner;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
 		BranchSubstitutionModel, Citable {
 
+    public static final boolean TRY_EPOCH = false;
+	
 	private final List<SubstitutionModel> substModelList;
 	private final List<FrequencyModel> frequencyModelList;
 	private final Parameter epochTimes;
@@ -484,16 +485,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		return citations;
 	}// END: getCitations
 
-	private int accumulate(boolean[] array) {
-		int sum = 0;
-		for (int i = 0; i < array.length; i++) {
-			if (array[i]) {
-				sum++;
-			}
-		}
-		return sum;
-	}// END: accumulate
-	
 	// /////////////
 	// ---DEBUG---//
 	// /////////////

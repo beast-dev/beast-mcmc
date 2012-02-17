@@ -32,6 +32,7 @@ import beagle.InstanceDetails;
 import beagle.ResourceDetails;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
@@ -84,8 +85,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
-
-    private static final boolean TRY_EPOCH = false;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -724,7 +723,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             // we are currently assuming a no-category model...
             for (int i = 0; i < eigenCount; i++) {
-            	if (TRY_EPOCH) {
+            	if (EpochBranchSubstitutionModel.TRY_EPOCH) {
             		  eigenBufferHelper.flipOffset(i);
             		  
             		  branchSubstitutionModel.setEigenDecomposition(
@@ -755,7 +754,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
 
-                if (TRY_EPOCH) {
+                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
                     branchSubstitutionModel.updateTransitionMatrices(
                             beagle,
                             i,

@@ -37,6 +37,7 @@ import dr.stats.DiscreteStatistics;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 
@@ -359,6 +360,7 @@ public class ClockModelOptions extends ModelOptions {
 
                 case NODE_CALIBRATED:
                     avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
                     avgInitialRate = avgMeanDistance / avgInitialRootHeight;//TODO
                     break;
 
@@ -415,6 +417,7 @@ public class ClockModelOptions extends ModelOptions {
                         avgMeanDistance = options.getAveWeightedMeanDistance(partitions);
                     }
                     avgInitialRootHeight = getCalibrationEstimateOfRootTime(partitions);
+                    if (avgInitialRootHeight < 0) avgInitialRootHeight = 1; // no leaf nodes
                     selectedRate = avgMeanDistance / avgInitialRootHeight;//TODO
                     break;
 
@@ -474,7 +477,13 @@ public class ClockModelOptions extends ModelOptions {
                 for (AbstractPartitionData partition : partitions) {
                     Tree tree = new UPGMATree(partition.getDistances());
 
-                    NodeRef node = Tree.Utils.getCommonAncestorNode(tree, Taxa.Utils.getTaxonListIdSet(taxa));
+                    Set<String> leafNodes = Taxa.Utils.getTaxonListIdSet(taxa);
+
+                    if (leafNodes.size() < 1) {
+                        return -1;
+                    }
+
+                    NodeRef node = Tree.Utils.getCommonAncestorNode(tree, leafNodes);
 
                     calibrationDistance += tree.getNodeHeight(node);
                     rootDistance += tree.getNodeHeight(tree.getRoot());

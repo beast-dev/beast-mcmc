@@ -4,10 +4,7 @@ import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.TreeTrait;
 import dr.evolution.tree.TreeTraitProvider;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.ContinuousTraitBranchRateModel;
 import dr.evomodel.branchratemodel.DiscreteTraitBranchRateModel;
-import dr.evomodel.continuous.SampledMultivariateTraitLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.evoxml.util.DataTypeUtils;
 import dr.inference.model.Parameter;
@@ -49,7 +46,7 @@ public class DiscreteTraitBranchRateModelParser extends AbstractXMLObjectParser 
         }
 
         int traitIndex = xo.getAttribute(TRAIT_INDEX, 1) - 1;
-        String traitName = null;
+        String traitName = "states";
 
         Logger.getLogger("dr.evomodel").info("Using discrete trait branch rate model.\n" +
                 "\tIf you use this model, please cite:\n" +

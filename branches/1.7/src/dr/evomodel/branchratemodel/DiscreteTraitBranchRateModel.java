@@ -37,7 +37,6 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.math.matrixAlgebra.Vector;
 
 /**
  * This Branch Rate Model takes a ancestral state likelihood and
@@ -123,12 +122,14 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
         if (trait.getTraitName().equals("states")) {
             // Assume the trait is one or more discrete traits reconstructed at nodes
             mode = Mode.NODE_STATES;
+            rateParameter.setDimension(dataType.getStateCount());
         } else /*if (double[].class.isAssignableFrom(trait.getClass()))*/ {
             // Assume the trait itself is the dwell times for the individual states on the branch above the node
             mode = Mode.MARKOV_JUMP_PROCESS;
         } /* else {
             throw new IllegalArgumentException("The trait class type is not suitable for use in this class.");
         } */
+
 
         if (traitProvider instanceof Model) {
             addModel((Model)traitProvider);
@@ -334,22 +335,18 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
                 processValues[i] /= (states.length + parentStates.length) / 2;
             }
         } else if (mode == Mode.NODE_STATES) {
-              processValues = new double[dataType.getStateCount()];
-//            if (indicatorParameter != null) {
-//                // this array should be size #states NOT #rates
-//                processValues = new double[indicatorParameter.getDimension()];
-//            } else {
-//                // this array should be size #states NOT #rates
-//                processValues = new double[rateParameter.getDimension()];
-//            }
+            processValues = new double[dataType.getStateCount()];
 
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
             int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-            processValues[state] += branchTime / 2;
-            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
-            processValues[parentState] += branchTime / 2;
-        }
+//            processValues[state] += branchTime / 2;
+//            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
+//            processValues[parentState] += branchTime / 2;
+
+            processValues[state] = 1;
+     }
+
 
         return processValues;
     }

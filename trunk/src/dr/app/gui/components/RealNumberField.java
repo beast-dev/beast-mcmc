@@ -66,26 +66,28 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     public void validateField() {
         if (range_check && !range_checked) {
             range_checked = true;
-            try {
-                double value = getValue();
-                if (value < min || value > max) {
-                    isValueValid = false;
-                    displayErrorMessage();
-                    // regain focus for this component
-                    this.requestFocus();
-                }
-            } catch (NumberFormatException e) {
-                isValueValid = false;
+            isValueValid = isValueValid();
+            if (!isValueValid) {
                 displayErrorMessage();
                 // regain focus for this component
                 this.requestFocus();
             }
         }
+
     }
 
     public boolean isValueValid() {
-        validateField();
-        return isValueValid;
+        if (range_check) {
+            try {
+                double value = getValue();
+                if (value < min || value > max) {
+                    return false;
+                }
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void setText(double value) {

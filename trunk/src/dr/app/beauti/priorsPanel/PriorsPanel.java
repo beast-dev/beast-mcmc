@@ -258,7 +258,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (continueButton != null) {
             continueButton.setEnabled(!hasUndefinedPrior);
         }
- }
+    }
 
     private void hierarchicalButtonPressed(int[] rows) {
 
@@ -393,23 +393,22 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         }
 
         int result;
-//        if (param.isDiscrete) {
-//            if (discretePriorDialog == null) {
-//                discretePriorDialog = new DiscretePriorDialog(frame);
-//            }
-//            result = discretePriorDialog.showDialog(param);
-//        } else {
         if (priorDialog == null) {
             priorDialog = new PriorDialog(frame);
         }
 
+        priorDialog.setParameter(param);
+
+        boolean isInvalid;
         do {
-            result = priorDialog.showDialog(param);
-        } while (result == JOptionPane.OK_OPTION && priorDialog.hasInvalidInput());
+            result = priorDialog.showDialog();
+
+            isInvalid = priorDialog.hasInvalidInput();
+        } while (result == JOptionPane.OK_OPTION && isInvalid);
 
         if (result == JOptionPane.OK_OPTION) {
             // move to individual Dialog, otherwise it will change if Cancel
-            priorDialog.getArguments();
+            priorDialog.getArguments(param);
             // Only do this if OK button is pressed (not cancel):
 
             if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {

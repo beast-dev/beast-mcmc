@@ -1,5 +1,7 @@
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -17,6 +19,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";
     public static final String SUBSTITUTION_RATE = "mutationRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
@@ -30,9 +33,21 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         String msg = "";
+        SubstitutionModel substitutionModel = null;
+        
+        boolean EPOCH_MODEL = false;
+		if (xo.getElementFirstChild(SUBSTITUTION_MODEL) instanceof EpochBranchSubstitutionModel) {
 
-        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
+			EPOCH_MODEL = true;
 
+		}
+		
+		if(!EPOCH_MODEL) {
+			
+         substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
+        
+		}
+		
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
             muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
@@ -68,9 +83,11 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
+        if(!EPOCH_MODEL) {
         // set this to pass it along to the TreeLikelihoodParser...
         siteRateModel.setSubstitutionModel(substitutionModel);
-
+        }
+        
         return siteRateModel;
     }
 
@@ -91,9 +108,20 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                    new ElementRule(SubstitutionModel.class)
-            }),
+    		
+//            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+//                    new ElementRule(SubstitutionModel.class)
+//            }),
+            
+          new XORRule(
+          new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                  new ElementRule(SubstitutionModel.class)
+                  }),
+          new ElementRule(SUBSTITUTION_EPOCH_MODEL, new XMLSyntaxRule[]{
+                  new ElementRule(BranchSubstitutionModel.class)
+                  }), true
+           ),
+    		
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
@@ -102,12 +130,16 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class)
                     }), true
             ),
+            
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                     new ElementRule(Parameter.class)
             }, true),
+            
             new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true)
+            
     };
-}
+    
+}//END: class

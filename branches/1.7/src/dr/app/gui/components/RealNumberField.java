@@ -34,9 +34,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     protected double max;
     protected boolean range_check = false;
     protected boolean range_checked = false;
-    public boolean isValueValid = true;
-
     protected String label; // make sensible error message
+
+    private boolean isValueValid = true;
 
     public RealNumberField() {
         super();
@@ -60,21 +60,32 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public void focusLost(FocusEvent evt) {
+        validateField();
+    }
+
+    public void validateField() {
         if (range_check && !range_checked) {
             range_checked = true;
             try {
                 double value = getValue();
                 if (value < min || value > max) {
+                    isValueValid = false;
                     displayErrorMessage();
                     // regain focus for this component
                     this.requestFocus();
                 }
             } catch (NumberFormatException e) {
+                isValueValid = false;
                 displayErrorMessage();
                 // regain focus for this component
                 this.requestFocus();
             }
         }
+    }
+
+    public boolean isValueValid() {
+        validateField();
+        return isValueValid;
     }
 
     public void setText(double value) {
@@ -102,7 +113,6 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public void displayErrorMessage() {
-        isValueValid = false;
         String message = "";
         if (min == Double.MIN_VALUE) {
             message = " greater than 0";

@@ -25,7 +25,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     public boolean hasInvalidInput() {
         for (JComponent component : argumentFields) {
-            if (component instanceof RealNumberField && !((RealNumberField) component).isValueValid) {
+            if (component instanceof RealNumberField && !((RealNumberField) component).isValueValid()) {
                 return true;
             }
         }

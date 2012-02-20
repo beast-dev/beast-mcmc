@@ -118,7 +118,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             message = " less than " + max;
         }
 
-        JOptionPane.showMessageDialog(this,
+        JOptionPane.showMessageDialog(null,
                 label + " must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
     }
 
@@ -162,9 +162,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
                 return new Double(getText());
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Unable to parse number correctly",
+            JOptionPane.showMessageDialog(null, "Unable to parse number correctly",
                     "Number Format Exception",
                     JOptionPane.ERROR_MESSAGE);
+            isValueValid = false;
             return null;
         }
     }

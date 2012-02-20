@@ -39,8 +39,7 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.*;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -128,8 +127,11 @@ public class PriorDialog {
                         "(it doesn't integrate to 1). This choice is not recommended.</html>");
     }
 
-    public int showDialog(final Parameter parameter) {
-
+    /**
+     * Set the parameter to be controlled
+     * @param parameter
+     */
+    public void setParameter(final Parameter parameter) {
         this.parameter = parameter;
 
         priorCombo = new JComboBox();
@@ -140,6 +142,12 @@ public class PriorDialog {
         if (parameter.priorType != null) {
             priorCombo.setSelectedItem(parameter.priorType);
         }
+
+        PriorOptionsPanel panel = optionsPanels.get(parameter.priorType);
+        if (panel != null) panel.setArguments(parameter, parameter.priorType);
+    }
+
+    public int showDialog() {
 
         contentPanel = new JPanel(new GridBagLayout());
 
@@ -213,12 +221,7 @@ public class PriorDialog {
         return result;
     }
 
-    private void setArguments(PriorType priorType) {
-        PriorOptionsPanel panel = optionsPanels.get(priorType);
-        if (panel != null) panel.setArguments(parameter, priorType);
-    }
-
-    public void getArguments() {
+    public void getArguments(Parameter parameter) {
 //        if (parameter.isNodeHeight || parameter.isStatistic) {
 //            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
 //            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
@@ -264,13 +267,7 @@ public class PriorDialog {
 
         optionsPanel.addSpanningComponent(new JLabel("Select prior distribution for " + parameter.getName()));
 
-        PriorType priorType;
-        priorType = (PriorType) priorCombo.getSelectedItem();
-
-        if (priorType == null) {
-            priorType = parameter.priorType;
-            priorCombo.setSelectedItem(priorType);
-        }
+        PriorType priorType = (PriorType) priorCombo.getSelectedItem();
 
         if (!parameter.isPriorFixed) {
             optionsPanel.addComponentWithLabel("Prior Distribution: ", priorCombo);
@@ -322,7 +319,7 @@ public class PriorDialog {
             contentPanel.add(quantilePanel, gbc);
 
         }
-        setArguments(priorType);
+
         contentPanel.repaint();
     }
 
@@ -330,6 +327,10 @@ public class PriorDialog {
 
     void setupChart() {
         chart.removeAllPlots();
+
+        if (hasInvalidInput()) {
+            return;
+        }
 
         PriorType priorType = (PriorType) priorCombo.getSelectedItem();
 
@@ -362,7 +363,9 @@ public class PriorDialog {
         if (panel != null) {
             return panel.hasInvalidInput();
         } else {
-            throw new IllegalComponentStateException("Cannot get PriorOptionsPanel");
+            // if there is no panel for this prior type then assume it is valid
+            return false;
+//            throw new IllegalComponentStateException("Cannot get PriorOptionsPanel");
         }
     }
 }

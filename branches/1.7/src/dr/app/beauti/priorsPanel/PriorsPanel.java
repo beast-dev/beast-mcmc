@@ -402,14 +402,14 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         if (priorDialog == null) {
             priorDialog = new PriorDialog(frame);
         }
-        result = priorDialog.showDialog(param);
-//        }
 
-//        if (result == JOptionPane.CANCEL_OPTION) {
-//            return;
-//        }
+        do {
+            result = priorDialog.showDialog(param);
+        } while (result == JOptionPane.OK_OPTION && priorDialog.hasInvalidInput());
 
         if (result == JOptionPane.OK_OPTION) {
+            // move to individual Dialog, otherwise it will change if Cancel
+            priorDialog.getArguments();
             // Only do this if OK button is pressed (not cancel):
 
             if (HIERARCHICAL_ENABLED && hierarchicalPriorDialog != null) {

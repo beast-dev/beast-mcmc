@@ -32,14 +32,15 @@ import dr.app.gui.chart.JChart;
 import dr.app.gui.chart.LinearAxis;
 import dr.app.gui.chart.PDFPlot;
 import dr.app.util.OSType;
-import dr.math.distributions.*;
+import dr.math.distributions.Distribution;
 import dr.util.NumberFormatter;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -205,9 +206,9 @@ public class PriorDialog {
             result = value;
         }
 
-        if (result == JOptionPane.OK_OPTION) {
-            getArguments();
-        }
+//        if (result == JOptionPane.OK_OPTION) {
+//            getArguments(); // move to individual Dialog, otherwise it will change if Cancel
+//        }
 
         return result;
     }
@@ -217,7 +218,7 @@ public class PriorDialog {
         if (panel != null) panel.setArguments(parameter, priorType);
     }
 
-    private void getArguments() {
+    public void getArguments() {
 //        if (parameter.isNodeHeight || parameter.isStatistic) {
 //            parameter.priorType = (PriorType) priorCombo.getSelectedItem();
 //            if (parameter.priorType == PriorType.NONE_TREE_PRIOR || parameter.priorType == PriorType.NONE_STATISTIC) {
@@ -355,5 +356,13 @@ public class PriorDialog {
     }
 
 
-
+    public boolean hasInvalidInput() {
+        parameter.priorType = (PriorType) priorCombo.getSelectedItem();
+        PriorOptionsPanel panel = optionsPanels.get(parameter.priorType);
+        if (panel != null) {
+            return panel.hasInvalidInput();
+        } else {
+            throw new IllegalComponentStateException("Cannot get PriorOptionsPanel");
+        }
+    }
 }

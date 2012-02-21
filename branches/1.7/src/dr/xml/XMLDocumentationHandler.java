@@ -25,12 +25,12 @@
 
 package dr.xml;
 
-import dr.app.tools.BeastParserDoc;
 import dr.app.beast.BeastParser;
+import dr.app.tools.BeastParserDoc;
 
 import java.io.PrintWriter;
-import java.util.*;
 import java.text.SimpleDateFormat;
+import java.util.*;
 
 public class XMLDocumentationHandler {
 
@@ -251,7 +251,7 @@ public class XMLDocumentationHandler {
             writer.println(spaces(level) + "foo");
         } else if (c == Double.class) {
             writer.println(spaces(level) + "1.0");
-        } else if (c == Integer.class) {
+        } else if (c == Integer.class || c == Long.class) {
             writer.println(spaces(level) + "1");
         } else if (c == Boolean.class) {
             writer.println(spaces(level) + "true");
@@ -283,7 +283,7 @@ public class XMLDocumentationHandler {
             writer.print("foo");
         } else if (c == Double.class) {
             writer.print("1.0");
-        } else if (c == Integer.class) {
+        } else if (c == Integer.class || c == Long.class) {
             writer.print("1");
         } else if (c == Boolean.class) {
             writer.print("true");

@@ -29,10 +29,7 @@ import dr.app.beast.BeastVersion;
 import dr.app.beauti.BeautiFrame;
 import dr.app.beauti.components.ComponentFactory;
 import dr.app.beauti.options.*;
-import dr.app.beauti.types.ClockType;
-import dr.app.beauti.types.FixRateType;
-import dr.app.beauti.types.StartingTreeType;
-import dr.app.beauti.types.TreePriorType;
+import dr.app.beauti.types.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.app.util.Arguments;
 import dr.evolution.alignment.Alignment;
@@ -279,6 +276,10 @@ public class BeastGenerator extends Generator {
                 if (param.isTruncated && (param.initial < param.truncationLower || param.initial > param.truncationUpper)) {
                     throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
                             "\ninitial value " + param.initial + " is NOT in the range [" + param.truncationLower + ", " + param.truncationUpper + "]," +
+                            "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
+                } else if (param.priorType == PriorType.UNIFORM_PRIOR && (param.initial < param.uniformLower || param.initial > param.uniformUpper)) {
+                    throw new GeneratorException("Parameter \"" + param.getName() + "\":" +
+                            "\ninitial value " + param.initial + " is NOT in the range [" + param.uniformLower + ", " + param.uniformUpper + "]," +
                             "\nor this range is wrong. Please check the Prior panel.", BeautiFrame.PRIORS);
                 }
                 if (param.isNonNegative && param.initial < 0.0) {

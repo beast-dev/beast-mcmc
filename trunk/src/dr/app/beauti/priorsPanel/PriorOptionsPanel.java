@@ -276,6 +276,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     void setArguments(Parameter parameter, PriorType priorType) {
         this.isCalibratedYule = parameter.isCalibratedYule;
+        this.isInitializable = !parameter.isStatistic;
         if (!parameter.isStatistic) {
             setFieldRange(initialField, parameter.isNonNegative, parameter.isZeroOne);
             initialField.setValue(parameter.initial);

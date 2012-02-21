@@ -39,7 +39,8 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -142,17 +143,12 @@ public class PriorDialog {
         if (parameter.priorType != null) {
             priorCombo.setSelectedItem(parameter.priorType);
         }
-
-        PriorOptionsPanel panel = optionsPanels.get(parameter.priorType);
-        if (panel != null) panel.setArguments(parameter, parameter.priorType);
     }
 
     public int showDialog() {
-
         contentPanel = new JPanel(new GridBagLayout());
 
-//        setArguments(priorType); // move to inside setupComponents()
-        setupComponents();
+        setupComponents(); // setArguments here
 
         JScrollPane scrollPane = new JScrollPane(contentPanel, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         scrollPane.setBorder(null);
@@ -283,6 +279,7 @@ public class PriorDialog {
         PriorOptionsPanel panel3 = optionsPanels.get(priorType);
 
         if (panel3 != null) {
+            panel3.setArguments(parameter, priorType); // important to make init field appear during switch
             optionsPanel.addSpanningComponent(panel3);
         }
 
@@ -358,8 +355,8 @@ public class PriorDialog {
 
 
     public boolean hasInvalidInput() {
-        parameter.priorType = (PriorType) priorCombo.getSelectedItem();
-        PriorOptionsPanel panel = optionsPanels.get(parameter.priorType);
+        PriorType priorType = (PriorType) priorCombo.getSelectedItem();
+        PriorOptionsPanel panel = optionsPanels.get(priorType);
         if (panel != null) {
             return panel.hasInvalidInput();
         } else {

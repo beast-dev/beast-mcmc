@@ -22,7 +22,7 @@ All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.0 released 17th February 2012
+Version 1.7.0 released 22nd February 2012
 
 	New Features:
 		New Birth-Death speciation and epidemiological tree models. See citation
@@ -155,6 +155,7 @@ Version 1.7.0 released 17th February 2012
         Issue 532:	compileNativeLinux.sh uses non-optimal / fixed compile settings
         Issue 533:	Taxon set validation fires twice
         Issue 535:	SpeciesTreesPanel are not necessary
+        Issue 537:	Robust counting code generation not producing good XML
         Issue 538:	move tree prior panel to the right of table
         Issue 540:	MCMC chain limited to 2^31-1 (Integer.MAX_VALUE)
         Issue 541:	BEAUti generates wrong xml when enforcing a uniform prior on
@@ -184,6 +185,13 @@ Version 1.7.0 released 17th February 2012
         Issue 581:	BEAUti prior dialog cannot accept 0 for typing 0.???
         Issue 582:	BEAUti Species Set cannot revert back to Taxon Set if
                     uncheck *BEAST
+        Issue 584:	BEAUti prior dialog validation bugs
+        Issue 585:	BEAUti keep getting "No leaf nodes selected" error message
+        Issue 586:	BEAUti prior dialog Cancel not working
+        Issue 587:	BEAUti prior dialog ignores validation in the text field if
+                    pressing Enter key
+        Issue 589:	BEAUti lost Uniform bound validation
+        Issue 590:	BEAUti prior dialog GUI logic bug
 
 
 ================================================================================

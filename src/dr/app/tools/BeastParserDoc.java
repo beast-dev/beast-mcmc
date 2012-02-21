@@ -25,15 +25,17 @@
 
 package dr.app.tools;
 
-import dr.app.util.Arguments;
 import dr.app.beast.BeastParser;
 import dr.app.beast.BeastVersion;
-import dr.xml.*;
+import dr.app.util.Arguments;
 import dr.util.Version;
+import dr.xml.WikiDocumentationHandler;
+import dr.xml.XMLDocumentationHandler;
+import dr.xml.XMLParseException;
 
 import java.io.File;
-import java.io.PrintWriter;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 
 
 public class BeastParserDoc {
@@ -190,9 +192,11 @@ public class BeastParserDoc {
 
         if (outputDirectory == null) {
             // No input file name was given so throw up a dialog box...
-            outputDirectory = System.getProperty("user.dir") + "\\release\\common\\doc\\BEASTParserLibrary";
+            outputDirectory = System.getProperty("user.dir") + System.getProperty("file.separator") + "release"
+                    + System.getProperty("file.separator") + "common" + System.getProperty("file.separator")
+                    + "doc" + System.getProperty("file.separator");
         }
-
+        System.out.println("Output directory : " + outputDirectory);
         // BeastParserDoc(BeastParser parser, String directory, boolean wikiFormat)
         new BeastParserDoc(new BeastParser(new String[] {}, null, false, false, false), outputDirectory, true);
 

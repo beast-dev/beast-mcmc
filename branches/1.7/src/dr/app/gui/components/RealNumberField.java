@@ -38,7 +38,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     private boolean isValueValid = true;
 
-    public RealNumberField() {
+    public RealNumberField() { // no FocusListener
         super();
         setLabel("Value");
     }

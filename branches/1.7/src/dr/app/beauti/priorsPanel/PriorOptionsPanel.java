@@ -51,9 +51,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private final JButton positiveInfinityButton;
 
     private final JCheckBox isTruncatedCheck = new JCheckBox("Truncate to:");
-    private final RealNumberField lowerField = new RealNumberField();
+    // only this RealNumberField constructor adds FocusListener
+    private final RealNumberField lowerField = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "truncate lower");
     private final JLabel lowerLabel = new JLabel("Lower: ");
-    private final RealNumberField upperField = new RealNumberField();
+    private final RealNumberField upperField = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "truncate upper");
     private final JLabel upperLabel = new JLabel("Upper: ");
 
     protected final Set<Listener> listeners = new HashSet<Listener>();

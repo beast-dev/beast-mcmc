@@ -177,7 +177,6 @@ public class PriorDialog {
             optionsPanel.removeAllListeners();
             optionsPanel.addListener(new PriorOptionsPanel.Listener() {
                 public void optionsPanelChanged() {
-
                     setupChart();
                     dialog.validate();
                     dialog.repaint();

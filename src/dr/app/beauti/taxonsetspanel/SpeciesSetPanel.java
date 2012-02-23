@@ -289,7 +289,7 @@ public class SpeciesSetPanel extends TaxonSetPanel {
             switch (columnIndex) {
                 case 0:
                     taxonSet.setId(aValue.toString());
-                    options.renameTMRCAStatistic(taxonSet, aValue.toString());
+                    options.renameTMRCAStatistic(taxonSet);
                     setTaxonSetTitle();
                     break;
 

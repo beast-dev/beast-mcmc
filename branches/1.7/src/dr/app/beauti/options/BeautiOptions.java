@@ -196,7 +196,7 @@ public class BeautiOptions extends ModelOptions {
         }
     }
 
-    public boolean renameTMRCAStatistic(Taxa taxonSet, String newName) {
+    public boolean renameTMRCAStatistic(Taxa taxonSet) {
         Parameter statistic = statistics.get(taxonSet);
         if (statistic != null) {
             if (useStarBEAST) {

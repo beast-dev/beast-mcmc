@@ -327,11 +327,14 @@ public class Parameter implements Serializable {
     }
 
     private String getFullName() {
-        if (prefix != null) return prefix + baseName;
-        return baseName;
+        if (prefix != null) return prefix + getBaseName();
+        return getBaseName();
     }
 
     public String getBaseName() {
+        if (taxaId != null) {
+            return taxaId; // do not why use taxaId for tmrca, they seems duplicated
+        }
         return baseName;
     }
 

@@ -29,6 +29,9 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 return true;
             }
         }
+        if (isTruncatable && isTruncatedCheck.isSelected()) {
+            return !(lowerField.isValueValid() && upperField.isValueValid());
+        }
         return false;
     }
 
@@ -138,6 +141,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     void removeAllListeners() {
         listeners.clear();
     }
+
     protected void setFieldRange(RealNumberField field, boolean isNonNegative, boolean isZeroOne) {
         double lower = Double.NEGATIVE_INFINITY;
         double upper = Double.POSITIVE_INFINITY;
@@ -282,6 +286,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             initialField.setValue(parameter.initial);
         }
         isTruncatedCheck.setSelected(parameter.isTruncated);
+        setFieldRange(lowerField, parameter.isNonNegative, parameter.isZeroOne, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        setFieldRange(upperField, parameter.isNonNegative, parameter.isZeroOne, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+        lowerField.setLabel(parameter.getName() + " truncate lower");
+        upperField.setLabel(parameter.getName() + " truncate upper");
         lowerField.setValue(parameter.getLowerBound());
         upperField.setValue(parameter.getUpperBound());
 

@@ -1,10 +1,6 @@
 package dr.evomodelxml.coalescent.operators;
 
-//import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;           NOT DOING MULTILOCUS YET
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-//import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;          NOT DOING MULTILOCUS YET
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
-import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
@@ -18,8 +14,6 @@ import java.util.logging.*;
 /**
  *
  */
-
-//I don't really nead this Parser, but I'll leave it as with the GMRF
 public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXMLObjectParser {
 
     public static final String BLOCK_UPDATE_OPERATOR = "gpBlockUpdateOperator";
@@ -33,33 +27,32 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
         return BLOCK_UPDATE_OPERATOR;
     }
 
-   //I just updated the names
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         boolean logRecord = xo.getAttribute(KEEP_LOG_RECORD, false);
 
-        Handler gpHandler;
-        Logger gpLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator");
-        gpLogger.setUseParentHandlers(false);
+        Handler gmrfHandler;
+        Logger gmrfLogger = Logger.getLogger("dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator");
+        gmrfLogger.setUseParentHandlers(false);
 
         if (logRecord) {
-            gpLogger.setLevel(Level.FINE);
+            gmrfLogger.setLevel(Level.FINE);
 
             try {
-                gpHandler = new FileHandler("GPBlockUpdate.log." + MathUtils.getSeed());
+                gmrfHandler = new FileHandler("GPBlockUpdate.log." + MathUtils.getSeed());
             } catch (IOException e) {
                 throw new RuntimeException(e.getMessage());
             }
-            gpHandler.setLevel(Level.FINE);
+            gmrfHandler.setLevel(Level.FINE);
 
-            gpHandler.setFormatter(new XMLFormatter() {
+            gmrfHandler.setFormatter(new XMLFormatter() {
                 public String format(LogRecord record) {
                     return "<record>\n \t<message>\n\t" + record.getMessage()
                             + "\n\t</message>\n<record>\n";
                 }
             });
 
-            gpLogger.addHandler(gpHandler);
+            gmrfLogger.addHandler(gmrfHandler);
         }
 
         CoercionMode mode = CoercionMode.parseMode(xo);
@@ -70,17 +63,13 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
 
 //            if (scaleFactor <= 0.0) {
 //                throw new XMLParseException("scaleFactor must be greater than 0.0");
-//        if (scaleFactor < 1.0) {
-//            throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
-//        }
+        if (scaleFactor < 1.0) {
+            throw new XMLParseException("scaleFactor must be greater than or equal to 1.0");
+        }
 
         int maxIterations = xo.getAttribute(MAX_ITERATIONS, 200);
 
-        System.err.println("the interations is "+maxIterations);
-        System.exit(-1);
-
         double stopValue = xo.getAttribute(STOP_VALUE, 0.01);
-
 
 
         if (xo.getAttribute(OLD_SKYRIDE, true)) {
@@ -89,12 +78,8 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
             return new GaussianProcessSkytrackBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }else{
-//            GMRFMultilocusSkyrideLikelihood gmrfMultilocusLikelihood = (GMRFMultilocusSkyrideLikelihood) xo.getChild(GMRFMultilocusSkyrideLikelihood.class);
-//            return new GMRFMultilocusSkyrideBlockUpdateOperator(gmrfMultilocusLikelihood, weight, mode, scaleFactor,
-//                maxIterations, stopValue);
-            GaussianProcessSkytrackLikelihood gmrfLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
-
-             return new GaussianProcessSkytrackBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
+           GaussianProcessSkytrackLikelihood gmrfLikelihood = (GaussianProcessSkytrackLikelihood) xo.getChild(GaussianProcessSkytrackLikelihood.class);
+            return new GaussianProcessSkytrackBlockUpdateOperator(gmrfLikelihood, weight, mode, scaleFactor,
                 maxIterations, stopValue);
         }
 
@@ -104,12 +89,14 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
+
     public String getParserDescription() {
         return "This element returns a GMRF block-update operator for the joint distribution of the population sizes and precision parameter.";
     }
 
     public Class getReturnType() {
-        return MCMCOperator.class;
+         return GaussianProcessSkytrackBlockUpdateOperator.class;
+//        return MCMCOperator.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
@@ -123,7 +110,7 @@ public class GaussianProcessSkytrackBlockUpdateOperatorParser extends AbstractXM
             AttributeRule.newDoubleRule(STOP_VALUE, true),
             AttributeRule.newIntegerRule(MAX_ITERATIONS, true),
             AttributeRule.newBooleanRule(OLD_SKYRIDE, true),
-            new ElementRule(GaussianProcessSkytrackLikelihood.class)
+    new ElementRule(GaussianProcessSkytrackLikelihood.class)
     };
 
 }

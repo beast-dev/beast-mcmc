@@ -1,17 +1,13 @@
 package dr.evomodel.coalescent.operators;
 
-//import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
-import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
+
 import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
-//import dr.evomodelxml.coalescent.operators.GMRFSkyrideBlockUpdateOperatorParser;
 import dr.evomodelxml.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperatorParser;
 import dr.inference.model.Parameter;
-import dr.inference.operators.AbstractCoercableOperator;
-import dr.inference.operators.CoercionMode;
-import dr.inference.operators.OperatorFailedException;
-import dr.inference.operators.OperatorUtils;
+import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
+
 
 import java.util.logging.Logger;
 
@@ -28,7 +24,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
     private double scaleFactor;
     private double lambdaScaleFactor;
-    private int fieldLength;
+//    private int fieldLength;
 
     private int maxIterations;
     private double stopValue;
@@ -37,12 +33,23 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
     private Parameter lambdaBoundParameter;
+    private Parameter changePoints;
+    private int [] GPcounts;
+    private int [] GPtype;
+    private double [] intervals;
+    private double [] GPcoalfactor;
+    private double [] coalfactor;
+    private double alphaprior;
+    private double betaprior;
+    private SymmTridiagMatrix currentQ;
+    private int numberPoints;
+
 
 
 
 
     GaussianProcessSkytrackLikelihood GPvalue;
-    GMRFSkyrideLikelihood gmrfField;
+//    GMRFSkyrideLikelihood gmrfField;
 
     private double[] zeros;
 
@@ -52,27 +59,40 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         super(mode);
         GPvalue = GPLikelihood;     //before gmrfField
         popSizeParameter = GPLikelihood.getPopSizeParameter();
+        changePoints=GPLikelihood.getChangePoints();
+        GPcoalfactor=GPLikelihood.getGPcoalfactor();
+        coalfactor=GPLikelihood.getcoalfactor();
+        GPtype=GPLikelihood.getGPtype();
+        GPcounts=GPLikelihood.getGPcounts();
         precisionParameter = GPLikelihood.getPrecisionParameter();
         lambdaParameter = GPLikelihood.getLambdaParameter();
+        alphaprior=GPLikelihood.getAlphaParameter();
+        betaprior=GPLikelihood.getBetaParameter();
         lambdaBoundParameter=GPLikelihood.getLambdaBoundParameter();
+        currentQ=GPLikelihood.getWeightMatrix();
+        numberPoints=popSizeParameter.getSize();
 
         this.scaleFactor = scaleFactor;
         lambdaScaleFactor = 0.0;
-        fieldLength = popSizeParameter.getDimension();
+//        fieldLength = popSizeParameter.getDimension();
 
         this.maxIterations = maxIterations;
 
         this.stopValue = stopValue;
         setWeight(weight);
 
-        zeros = new double[fieldLength];
+        zeros = new double[numberPoints];
+
+
+
+
     }
 
 
     //change the 0.0005 to a parameter
     private double getProposalLambda(double currentValue) {
-        double proposal= MathUtils.uniform(currentValue-0.0005,currentValue+0.0005);
-        //Symmetric proposal
+        double proposal= MathUtils.uniform(currentValue-0.005,currentValue+0.005);
+                //Symmetric proposal
         if (proposal<0){
          proposal=-proposal;
         }
@@ -88,109 +108,379 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
     }
 
 
-    //Old function -delete
-
-    private double getNewLambda(double currentValue, double lambdaScale) {
-        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
-        double b = currentValue + a;
-        if (b > 1)
-            b = 2 - b;
-        if (b < 0)
-            b = -b;
-
-        return b;
+    private void getNewUpperBound(double currentValue){
+        double res;
+        double newLambda, lambdaMean;
+        newLambda = getProposalLambda(currentValue);
+        lambdaMean = lambdaParameter.getParameterValue(0);
+        double a=getPriorLambda(lambdaMean,0.01,newLambda)*(Math.pow(newLambda/currentValue,popSizeParameter.getSize()))*Math.exp((currentValue-newLambda)*GPvalue.getConstlik())/getPriorLambda(lambdaMean,0.01,currentValue);
+        if (a>MathUtils.nextDouble()) {this.lambdaBoundParameter.setParameterValue(0,newLambda);
+    }
     }
 
-    private double getPrecision(double currentValue, double alpha, double beta) {
-            double length = scaleFactor - 1 / scaleFactor;
-            double returnValue;
+//    private int getNumberPoints(){
+//        return numberPoints;
+//    }
+
+    private double getQuadraticForm(SymmTridiagMatrix currentQ, DenseVector x){
+        DenseVector diagonal1 = new DenseVector(x.size());
+        currentQ.mult(x, diagonal1);
+        return x.dot(diagonal1);
+    }
+// Assumes the input vector x is ordered
+    protected SymmTridiagMatrix getQmatrix(double precision, DenseVector x ) {
+            SymmTridiagMatrix res;
+            double trick=0.0;
+            double[] offdiag = new double[x.size() - 1];
+            double[] diag = new double[x.size()];
 
 
-            if (scaleFactor == 1)
-                return currentValue;
-            if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
-                returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
-            } else {
-                returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+
+             for (int i = 0; i < x.size() - 1; i++) {
+                    offdiag[i] = precision*(-1.0 / (x.get(i+1)-x.get(i)));
+                 if (i< x.size()-2){
+                    diag[i+1]= -offdiag[i]+precision*(1.0/(x.get(i+2)-x.get(i+1))+trick);
+                 }
+                }
+//              Diffuse prior correction - intrinsic
+             //Take care of the endpoints
+            diag[0] = -offdiag[0]+precision*trick;
+
+            diag[x.size() - 1] = -offdiag[x.size() - 2]+precision*(trick);
+            res = new SymmTridiagMatrix(diag, offdiag);
+        return res;
+        }
+
+
+
+
+
+     protected QuadupleGP sortUpdate(double [] sortedData, double [] newData){
+//         note that sortedData and newData are already ordered (minimum to maximum)
+//         and last(sortedData) > last(newData)
+          int newLength = sortedData.length + newData.length;
+          double [] newList = new double [newLength];
+          int [] newOrder = new int [newLength];
+
+//          indexNew contains the index where the newData is stored (index ordered) in newList
+//          indexOld contains the index where OldData is stored (index ordered) index newList
+          int [] indexNew =new int[newData.length];
+          int [] indexOld =new int[sortedData.length];
+
+          int index2=sortedData.length;
+          double pivot=newData[0];
+          int k = 0;
+          int k1 = 0;
+          int k2=0;
+
+          for (int j = 0; j < sortedData.length-1; j++){
+             if (sortedData[j]<pivot) {
+                 newOrder[k]=j;
+                 newList[k]=sortedData[j];
+                 indexOld[k2]=k;
+                 k2+=1;
+                 k+=1; }
+             else {
+                     if (index2<newLength){
+                     newOrder[k]=index2;
+                     index2+=1;
+                     newList[k]=pivot;
+                     indexNew[k1]=k;
+                     pivot=newData[index2-sortedData.length];
+                     k+=1;
+                     k1+=1;}
+                     else {
+                         newOrder[k]=j;
+                         newList[k]=sortedData[j];
+                         indexOld[k2]=k;
+                         k2+=1;
+                         k+=1;
+                     }
+
+                 }
+             }
+
+      return new QuadupleGP(newList,newOrder,indexNew,indexOld);
+     }
+
+
+
+    protected QuadupleGP Neighbors(double [] sortedData, int [] orderOfData, int numberOldData){
+//         sortedData is now the complete new data and orderOfData its order
+//         numberOldData is the number of observations in the original data
+//        Neighbors gives the subset of sortedData and orderOfData that contains newData and its neighbors
+        int newLength = sortedData.length;
+        int addLength=newLength-numberOldData;
+        int k=0;
+        int [] indicator = new int[newLength]; //indicator for neighbors
+        int sum=0;
+        int k1=0;
+        int k2=0;
+
+        if (orderOfData[0]>=numberOldData){indicator[0]=1; indicator[1]=0;}
+        for (int j =1; j<newLength-1;j++){
+
+          if (orderOfData[j]>=numberOldData){
+              indicator[j]=1;
+              indicator[j+1]=1;
+              indicator[j-1]=1;
+        }
+        }
+
+        for (int j=0;j<newLength;j++){
+         sum+=indicator[j];
+        }
+
+        double [] neighborData=new double[sum];
+        int [] neighborOrder=new int[sum];
+
+        int [] positionOld = new int[sum-addLength]; //indicator for OlData
+        int [] positionNew = new int[addLength]; //indicator for NewData
+
+
+        for (int j=0; j<newLength;j++){
+            if (indicator[j]==1){
+                neighborData[k]=sortedData[j];
+                neighborOrder[k]=orderOfData[j];
+                k+=1;
+                if (neighborOrder[k]>=numberOldData) {positionNew[k1]=k; k1+=1;} else {positionOld[k2]=k; k2+=1;}
             }
-
-            return returnValue;
         }
+
+        return new QuadupleGP(neighborData,neighborOrder,positionNew, positionOld);
+    }
+
+
+    public class PairGP{
+        private double[] array1;
+        private int[] array2;
+
+        public PairGP (double [] array1, int [] array2){
+            this.array1=array1;
+            this.array2=array2;
+
+        }
+        public double[] getData() {return array1;}
+        public int[] getOrder() {return array2;}
+    }
+
+    public class QuadupleGP{
+        private double[] array1;
+        private int[] array2;
+        private int[] array3;
+        private int[] array4;
+
+        public QuadupleGP (double [] array1, int [] array2, int [] array3, int[] array4){
+            this.array1=array1;
+            this.array2=array2;
+            this.array3=array3;
+            this.array4=array4;
+
+        }
+        public double[] getData() {return array1;}
+        public int[] getOrder() {return array2;}
+        public int [] getPositionNew() {return array3;}
+        public int [] getPositionOld() {return array4;}
+    }
+//    public class PairMatrices{
+//        private double[] array1;
+//        private int[] array2;
+//
+//        public PairMatrices (double [] array1, int [] array2){
+//            this.array1=array1;
+//            this.array2=array2;
+//
+//        }
+//        public double[] getData() {return array1;}
+//        public int[] getOrder() {return array2;}
+//    }
+
+    //Old function -delete
+
+//    private double getNewLambda(double currentValue, double lambdaScale) {
+//        double a = MathUtils.nextDouble() * lambdaScale - lambdaScale / 2;
+//        double b = currentValue + a;
+//        if (b > 1)
+//            b = 2 - b;
+//        if (b < 0)
+//            b = -b;
+//
+//        return b;
+//    }
+
+
+     private double getNewPrecision(double currentValue, double quadraticTerm) {
+//        double alphapost, betapost, alphaprior, betaprior;
+        double alphaPost=  alphaprior+popSizeParameter.getSize()*0.5;
+        double betaPost = betaprior+0.5*(1/currentValue)*quadraticTerm;
+        return MathUtils.nextGamma(alphaPost,betaPost);
+    }
+
+//    private double getPrecision(double currentValue, double alpha, double beta) {
+//            double length = scaleFactor - 1 / scaleFactor;
+//            double returnValue;
+//
+//
+//            if (scaleFactor == 1)
+//                return currentValue;
+//            if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
+//                returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
+//            } else {
+//                returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+//            }
+//
+//            return returnValue;
+//        }
 
 
     //Old function -delete
-    private double getNewPrecision(double currentValue, double scaleFactor) {
-        double length = scaleFactor - 1 / scaleFactor;
-        double returnValue;
+//    private double getNewPrecision(double currentValue, double scaleFactor) {
+//        double length = scaleFactor - 1 / scaleFactor;
+//        double returnValue;
+//
+//
+//        if (scaleFactor == 1)
+//            return currentValue;
+//        if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
+//            returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
+//        } else {
+//            returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
+//        }
+//
+//        return returnValue;
+//    }
+
+    public DenseVector getMultiNormalMean(DenseVector CanonVector, UpperTriangBandMatrix CholeskyUpper) {
+
+          DenseVector tempValue = new DenseVector(zeros);
+          DenseVector Mean = new DenseVector(zeros);
+
+//          UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+
+          // Assume Cholesky factorization of the precision matrix Q = LL^T
+
+          // 1. Solve L\omega = b
+
+          CholeskyUpper.transSolve(CanonVector, tempValue);
+
+          // 2. Solve L^T \mu = \omega
+
+          CholeskyUpper.solve(tempValue, Mean);
+
+          return Mean;
+      }
 
 
-        if (scaleFactor == 1)
-            return currentValue;
-        if (MathUtils.nextDouble() < length / (length + 2 * Math.log(scaleFactor))) {
-            returnValue = (1 / scaleFactor + length * MathUtils.nextDouble()) * currentValue;
-        } else {
-            returnValue = Math.pow(scaleFactor, 2.0 * MathUtils.nextDouble() - 1) * currentValue;
-        }
+//    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
+//
+//        DenseVector tempValue = new DenseVector(zeros);
+//        DenseVector Mean = new DenseVector(zeros);
+//
+//        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+//
+//        // Assume Cholesky factorization of the precision matrix Q = LL^T
+//
+//        // 1. Solve L\omega = b
+//
+//        CholeskyUpper.transSolve(CanonVector, tempValue);
+//
+//        // 2. Solve L^T \mu = \omega
+//
+//        CholeskyUpper.solve(tempValue, Mean);
+//
+//        return Mean;
+//    }
 
-        return returnValue;
-    }
 
-    public DenseVector getMultiNormalMean(DenseVector CanonVector, BandCholesky Cholesky) {
+    public DenseVector getMultiNormal(DenseVector Mean, UpperTriangBandMatrix CholeskyUpper) {
+        int length = Mean.size();
+        DenseVector tempValue = new DenseVector(length);
 
-        DenseVector tempValue = new DenseVector(zeros);
-        DenseVector Mean = new DenseVector(zeros);
-
-        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
-
-        // Assume Cholesky factorization of the precision matrix Q = LL^T
-
-        // 1. Solve L\omega = b
-
-        CholeskyUpper.transSolve(CanonVector, tempValue);
-
-        // 2. Solve L^T \mu = \omega
-
-        CholeskyUpper.solve(tempValue, Mean);
-
-        return Mean;
-    }
-
-    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
+        for (int i = 0; i < length; i++)
+           tempValue.set(i, MathUtils.nextGaussian());
 
         DenseVector returnValue = new DenseVector(zeros);
 
-        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
-
-        // 3. Solve L^T v = z
-
-        CholeskyUpper.solve(StandNorm, returnValue);
-
+//        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+       // 3. Solve L^T v = z
+        CholeskyUpper.solve(tempValue, returnValue);
         // 4. Return x = \mu + v
-
-        returnValue.add(Mean);
-
-        return returnValue;
-    }
-
-
-    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
-        int length = Mean.size();
-        DenseVector tempValue = new DenseVector(length);
-        DenseVector returnValue = new DenseVector(length);
-        UpperSPDDenseMatrix ab = Variance.copy();
-
-        for (int i = 0; i < returnValue.size(); i++)
-            tempValue.set(i, MathUtils.nextGaussian());
-
-        DenseCholesky chol = new DenseCholesky(length, true);
-        chol.factor(ab);
-
-        UpperTriangDenseMatrix x = chol.getU();
-
-        x.transMult(tempValue, returnValue);
         returnValue.add(Mean);
         return returnValue;
     }
+
+    public PairGP getGPvalues(double [] currentChangePoints, DenseVector currentGPvalues, double[] newChangePoints, double precision){
+        int currentLength=currentChangePoints.length;
+        int addLength=newChangePoints.length;
+        int newLength = currentLength+addLength;
+        DenseVector newGPvalues = new DenseVector(zeros);
+//        double [] totalChangePoints = new double [newLength];
+//        int [] index=new int[newLength];
+//       Takes the currentChangePoints and the newChangePoints into getData() but ordered and the order in getOrder()
+//        assumes that order numbers 0..currentLength are the positions of currentChangePoints
+//        and currentLength..newLength  - currentLentgth are the positions of newChangePoints
+        QuadupleGP tempQuad= sortUpdate(currentChangePoints, newChangePoints);
+//        index=tempPair.getOrder();
+//        totalChangePoints=tempPair.getData();
+//      This is a silly thing to only compute the Q.matrix for the neighbors of the newChangePoints -it is commented now
+//        don't know if it is worth doing since it involves indexing and getting subsets
+
+//        QuadupleGP tempNeighbor=Neighbors(tempPair.getData(),tempPair.getOrder(),currentLength);
+//        DenseVector tempData = new DenseVector(tempNeighbor.getData());
+        DenseVector tempData = new DenseVector(tempQuad.getData());
+        SymmTridiagMatrix Q = getQmatrix(precision, tempData);
+//        Matrix Qnew = Matrices.getSubMatrix(Q,tempNeighbor.getPositionNew(),tempNeighbor.getPositionNew());
+//        Matrix Qother=Matrices.getSubMatrix(Q,tempNeighbor.getPositionNew(),tempNeighbor.getPositionOld());
+        UpperSPDBandMatrix varf = new UpperSPDBandMatrix(Matrices.getSubMatrix(Q,tempQuad.getPositionNew(),tempQuad.getPositionNew()),1);
+        BandCholesky U1 = new BandCholesky(addLength,1,true);
+        U1.factor(varf);
+        DenseVector part = new DenseVector(zeros);
+        Matrices.getSubMatrix(Q,tempQuad.getPositionNew(),tempQuad.getPositionOld()).mult(currentGPvalues,part);
+        DenseVector mean = new DenseVector(getMultiNormalMean(part, U1.getU()));
+        double [] addGPvalues = getMultiNormal(mean,U1.getU()).getData();
+        return new PairGP(addGPvalues,tempQuad.getOrder());
+    }
+
+
+
+
+
+//    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
+//
+//        DenseVector returnValue = new DenseVector(zeros);
+//
+//        UpperTriangBandMatrix CholeskyUpper = Cholesky.getU();
+//
+//        // 3. Solve L^T v = z
+//
+//        CholeskyUpper.solve(StandNorm, returnValue);
+//
+//        // 4. Return x = \mu + v
+//
+//        returnValue.add(Mean);
+//
+//        return returnValue;
+//    }
+//
+
+//    public static DenseVector getMultiNormal(DenseVector Mean, UpperSPDDenseMatrix Variance) {
+//        int length = Mean.size();
+//        DenseVector tempValue = new DenseVector(length);
+//        DenseVector returnValue = new DenseVector(length);
+//        UpperSPDDenseMatrix ab = Variance.copy();
+//
+//        for (int i = 0; i < returnValue.size(); i++)
+//            tempValue.set(i, MathUtils.nextGaussian());
+//
+//        DenseCholesky chol = new DenseCholesky(length, true);
+//        chol.factor(ab);
+//
+//        UpperTriangDenseMatrix x = chol.getU();
+//
+//        x.transMult(tempValue, returnValue);
+//        returnValue.add(Mean);
+//        return returnValue;
+//    }
 
 
     public static double logGeneralizedDeterminant(UpperTriangBandMatrix Matrix) {
@@ -205,153 +495,182 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
         return returnValue;
     }
 
-    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
-        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
-    }
+//    public DenseVector newtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ) throws OperatorFailedException {
+//        return newNewtonRaphson(data, currentGamma, proposedQ, maxIterations, stopValue);
+//    }
 
-    public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
-                                               int maxIterations, double stopValue) throws OperatorFailedException {
-        DenseVector iterateGamma = currentGamma.copy();
-        DenseVector tempValue = currentGamma.copy();
+//    public static DenseVector newNewtonRaphson(double[] data, DenseVector currentGamma, SymmTridiagMatrix proposedQ,
+//                                               int maxIterations, double stopValue) throws OperatorFailedException {
+//        DenseVector iterateGamma = currentGamma.copy();
+//        DenseVector tempValue = currentGamma.copy();
+//
+//        int numberIterations = 0;
+//
+//
+//        while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
+//            try {
+//                jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
+//            } catch (MatrixNotSPDException e) {
+//                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+//                throw new OperatorFailedException("");
+//            } catch (MatrixSingularException e) {
+//                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+//
+//                throw new OperatorFailedException("");
+//            }
+//            iterateGamma.add(tempValue);
+//            numberIterations++;
+//
+//            if (numberIterations > maxIterations) {
+//                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
+//                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
+//                        "Try starting BEAST with a more accurate initial tree.");
+//            }
+//        }
+//
+//        Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson S");
+//        return iterateGamma;
+//
+//    }
 
-        int numberIterations = 0;
+//    private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+//
+//        DenseVector returnValue = new DenseVector(value.size());
+//        Q.mult(value, returnValue);
+//        for (int i = 0; i < value.size(); i++) {
+//            returnValue.set(i, -returnValue.get(i) - 1 + data[i] * Math.exp(-value.get(i)));
+//        }
+//        return returnValue;
+//    }
+//
+//
+//    private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
+//        SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
+//        for (int i = 0, n = value.size(); i < n; i++) {
+//            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
+//        }
+//        return jacobian;
+//    }
 
 
-        while (gradient(data, iterateGamma, proposedQ).norm(Vector.Norm.Two) > stopValue) {
-            try {
-                jacobian(data, iterateGamma, proposedQ).solve(gradient(data, iterateGamma, proposedQ), tempValue);
-            } catch (MatrixNotSPDException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("");
-            } catch (MatrixSingularException e) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-
-                throw new OperatorFailedException("");
-            }
-            iterateGamma.add(tempValue);
-            numberIterations++;
-
-            if (numberIterations > maxIterations) {
-                Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson F");
-                throw new OperatorFailedException("Newton Raphson algorithm did not converge within " + maxIterations + " step to a norm less than " + stopValue + "\n" +
-                        "Try starting BEAST with a more accurate initial tree.");
-            }
-        }
-
-        Logger.getLogger("dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator").fine("Newton-Raphson S");
-        return iterateGamma;
-
-    }
-
-    private static DenseVector gradient(double[] data, DenseVector value, SymmTridiagMatrix Q) {
-
-        DenseVector returnValue = new DenseVector(value.size());
-        Q.mult(value, returnValue);
-        for (int i = 0; i < value.size(); i++) {
-            returnValue.set(i, -returnValue.get(i) - 1 + data[i] * Math.exp(-value.get(i)));
-        }
-        return returnValue;
-    }
-
-
-    private static SPDTridiagMatrix jacobian(double[] data, DenseVector value, SymmTridiagMatrix Q) {
-        SPDTridiagMatrix jacobian = new SPDTridiagMatrix(Q, true);
-        for (int i = 0, n = value.size(); i < n; i++) {
-            jacobian.set(i, i, jacobian.get(i, i) + Math.exp(-value.get(i)) * data[i]);
-        }
-        return jacobian;
-    }
-
+    //In GMRF there is only one MH block proposing precision + GMRF jointly. Here we have : numberThinned,
+//    locationThinned, the GMRF (GP values), Gibbs sampling precision and the upper bound lambda
     public double doOperation() throws OperatorFailedException {
 
-        double currentPrecision = precisionParameter.getParameterValue(0);
+        double currentPrecision = this.precisionParameter.getParameterValue(0);
+        DenseVector currentPopsize = new DenseVector(popSizeParameter.getParameterValues());
+        double currentQuadratic = getQuadraticForm(currentQ, currentPopsize);
+
+//        getNewPrecision();
+
+//        double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
+
+        double currentLambda = this.lambdaBoundParameter.getParameterValue(0);
+        getNewUpperBound(currentLambda);
+//        currentLambda=this.lambdaBoundParameter.getParameterValue(0);
+        getNewPrecision(currentPrecision,currentQuadratic);
+//        currentPrecision=this.precisionParameter.getParameterValue(0);
+
+//        ArrayList<ComparableDouble> times = new ArrayList<ComparableDouble>();
+//                ArrayList<Integer> childs = new ArrayList<Integer>();
+//                collectAllTimes(tree, root, exclude, times, childs);
+//                int[] indices = new int[times.size()];
+
+
+
+//        double currentPrecision = precisionParameter.getParameterValue(0);
         double proposedPrecision = this.getNewPrecision(currentPrecision, scaleFactor);
 
-        double currentLambda = this.lambdaParameter.getParameterValue(0);
-        double proposedLambda = this.getNewLambda(currentLambda, lambdaScaleFactor);
+//        double currentLambda = this.lambdaParameter.getParameterValue(0);
+        double proposedLambda = currentLambda;
 
         precisionParameter.setParameterValue(0, proposedPrecision);
         lambdaParameter.setParameterValue(0, proposedLambda);
 
-        DenseVector currentGamma = new DenseVector(gmrfField.getPopSizeParameter().getParameterValues());
+        DenseVector currentGamma = new DenseVector(GPvalue.getPopSizeParameter().getParameterValues());
         DenseVector proposedGamma;
 
-        SymmTridiagMatrix currentQ = gmrfField.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
-        SymmTridiagMatrix proposedQ = gmrfField.getScaledWeightMatrix(proposedPrecision, proposedLambda);
+//        SymmTridiagMatrix currentQ = GPvalue.getStoredScaledWeightMatrix(currentPrecision, currentLambda);
+//        SymmTridiagMatrix proposedQ = GPvalue.getScaledWeightMatrix(proposedPrecision, proposedLambda);
 
 
-        double[] wNative = gmrfField.getSufficientStatistics();
-
-        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
-        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
-
-        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
-        BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
-
-        DenseVector diagonal1 = new DenseVector(fieldLength);
-        DenseVector diagonal2 = new DenseVector(fieldLength);
-        DenseVector diagonal3 = new DenseVector(fieldLength);
-
-        DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
-
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
-            diagonal2.set(i, modeForward.get(i) + 1);
-
-            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
-            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-        }
-
-        forwardCholesky.factor(forwardQW.copy());
-
-        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
-
-        DenseVector stand_norm = new DenseVector(zeros);
-
-        for (int i = 0; i < zeros.length; i++)
-            stand_norm.set(i, MathUtils.nextGaussian());
-
-        proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
 
 
-        for (int i = 0; i < fieldLength; i++)
-            popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
+//        double[] wNative = gmrfField.getSufficientStatistics();
 
-        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
-
+//        UpperSPDBandMatrix forwardQW = new UpperSPDBandMatrix(proposedQ, 1);
+//        UpperSPDBandMatrix backwardQW = new UpperSPDBandMatrix(currentQ, 1);
+//
+//        BandCholesky forwardCholesky = new BandCholesky(wNative.length, 1, true);
+//        BandCholesky backwardCholesky = new BandCholesky(wNative.length, 1, true);
+//
+//        DenseVector diagonal1 = new DenseVector(fieldLength);
+//        DenseVector diagonal2 = new DenseVector(fieldLength);
+//        DenseVector diagonal3 = new DenseVector(fieldLength);
+//
+//        DenseVector modeForward = newtonRaphson(wNative, currentGamma, proposedQ.copy());
+//
+//        for (int i = 0; i < fieldLength; i++) {
+//            diagonal1.set(i, wNative[i] * Math.exp(-modeForward.get(i)));
+//            diagonal2.set(i, modeForward.get(i) + 1);
+//
+//            forwardQW.set(i, i, diagonal1.get(i) + forwardQW.get(i, i));
+//            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+//        }
+//
+//        forwardCholesky.factor(forwardQW.copy());
+//
+//        DenseVector forwardMean = getMultiNormalMean(diagonal1, forwardCholesky);
+//
+//        DenseVector stand_norm = new DenseVector(zeros);
+//
+//        for (int i = 0; i < zeros.length; i++)
+//            stand_norm.set(i, MathUtils.nextGaussian());
+//
+//        proposedGamma = getMultiNormal(stand_norm, forwardMean, forwardCholesky);
+//
+//
+//        for (int i = 0; i < fieldLength; i++)
+//            popSizeParameter.setParameterValueQuietly(i, proposedGamma.get(i));
+//
+//        ((Parameter.Abstract) popSizeParameter).fireParameterChangedEvent();
+//
 
         double hRatio = 0;
 
-        diagonal1.zero();
-        diagonal2.zero();
-        diagonal3.zero();
+//        diagonal1.zero();
+//        diagonal2.zero();
+//        diagonal3.zero();
+//
+//        DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
+//
+//        for (int i = 0; i < fieldLength; i++) {
+//            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
+//            diagonal2.set(i, modeBackward.get(i) + 1);
+//
+//            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
+//            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
+//        }
+//
+//        backwardCholesky.factor(backwardQW.copy());
+//
+//        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
+//
+//        for (int i = 0; i < fieldLength; i++) {
+//            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
+//        }
+//
+//        backwardQW.mult(diagonal1, diagonal3);
+//
+//        // Removed 0.5 * 2
+//        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
+//        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
 
-        DenseVector modeBackward = newtonRaphson(wNative, proposedGamma, currentQ.copy());
 
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, wNative[i] * Math.exp(-modeBackward.get(i)));
-            diagonal2.set(i, modeBackward.get(i) + 1);
-
-            backwardQW.set(i, i, diagonal1.get(i) + backwardQW.get(i, i));
-            diagonal1.set(i, diagonal1.get(i) * diagonal2.get(i) - 1);
-        }
-
-        backwardCholesky.factor(backwardQW.copy());
-
-        DenseVector backwardMean = getMultiNormalMean(diagonal1, backwardCholesky);
-
-        for (int i = 0; i < fieldLength; i++) {
-            diagonal1.set(i, currentGamma.get(i) - backwardMean.get(i));
-        }
-
-        backwardQW.mult(diagonal1, diagonal3);
-
-        // Removed 0.5 * 2
-        hRatio += logGeneralizedDeterminant(backwardCholesky.getU()) - 0.5 * diagonal1.dot(diagonal3);
-        hRatio -= logGeneralizedDeterminant(forwardCholesky.getU() ) - 0.5 * stand_norm.dot(stand_norm);
-
-
-        return hRatio;
+//        return hRatio;
+//        System.err.println("Prueba");
+//        System.exit(-1);
+        return 0;
     }
 
     //MCMCOperator INTERFACE
@@ -400,7 +719,9 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
     public final String getPerformanceSuggestion() {
 
-        double prob = Utils.getAcceptanceProbability(this);
+        double prob = MCMCOperator.Utils.getAcceptanceProbability(this);
+
+//        double prob = Utils.getAcceptanceProbability(this);
         double targetProb = getTargetAcceptanceProbability();
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(5);
 

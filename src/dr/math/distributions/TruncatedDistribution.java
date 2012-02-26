@@ -1,6 +1,5 @@
 package dr.math.distributions;
 
-import dr.math.ErrorFunction;
 import dr.math.UnivariateFunction;
 import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.AbstractContinuousDistribution;
@@ -77,7 +76,7 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
             return source.quantile(y);
         }
 
-        try{
+        try {
             return super.inverseCumulativeProbability(y);
         } catch (MathException e) {
 //                throw MathRuntimeException.createIllegalArgumentException(                // AR - throwing exceptions deep in numerical code causes trouble. Catching runtime
@@ -94,7 +93,11 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
      * @return mean
      */
     public double mean() {
-        throw new UnsupportedOperationException("Not Implemented.");
+        if (source != null) {
+            return source.mean();
+        } else {
+            throw new IllegalArgumentException("Distribution is null");
+        }
     }
 
     /**
@@ -103,7 +106,12 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
      * @return variance
      */
     public double variance() {
-        throw new UnsupportedOperationException("Not Implemented.");
+        if (source != null) {
+            return source.variance();
+        } else {
+            throw new IllegalArgumentException("Distribution is null");
+        }
+
     }
 
     public UnivariateFunction getProbabilityDensityFunction() {

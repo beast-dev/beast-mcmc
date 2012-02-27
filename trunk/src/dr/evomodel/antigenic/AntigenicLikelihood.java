@@ -287,7 +287,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final Parameter mdsPrecisionParameter;
     private final MatrixParameter locationsParameter;
     private final TaxonList strains;
-    private final CompoundParameter tipTraitParameter;
+//    private final CompoundParameter tipTraitParameter;
     private final Parameter columnEffectsParameter;
     private final Parameter rowEffectsParameter;
 

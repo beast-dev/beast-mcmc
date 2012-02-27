@@ -51,9 +51,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     private final JButton positiveInfinityButton;
 
     private final JCheckBox isTruncatedCheck = new JCheckBox("Truncate to:");
-    private final RealNumberField lowerField = new RealNumberField();
+    // only this RealNumberField constructor adds FocusListener
+    private final RealNumberField lowerField = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "truncate lower");
     private final JLabel lowerLabel = new JLabel("Lower: ");
-    private final RealNumberField upperField = new RealNumberField();
+    private final RealNumberField upperField = new RealNumberField(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "truncate upper");
     private final JLabel upperLabel = new JLabel("Upper: ");
 
     protected final Set<Listener> listeners = new HashSet<Listener>();
@@ -177,8 +178,13 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         field.setRange(lower, upper);
     }
 
-    protected void addField(String name, double initialValue, double min, double max) {
+    protected void addField(String name, double initialValue, double min, boolean includeMin, double max, boolean includeMax) {
+        RealNumberField field = new RealNumberField(min, includeMin, max, includeMax, name);
+        field.setValue(initialValue);
+        addField(name, field);
+    }
 
+    protected void addField(String name, double initialValue, double min, double max) {
         RealNumberField field = new RealNumberField(min, max, name);
         field.setValue(initialValue);
         addField(name, field);
@@ -406,7 +412,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
         }
 
         public Distribution getDistribution() {

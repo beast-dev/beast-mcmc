@@ -32,15 +32,19 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     protected EventListenerList changeListeners = new EventListenerList();
     protected double min;
     protected double max;
+    protected final boolean includeMin;
+    protected final boolean includeMax;
     protected boolean range_check = false;
     protected boolean range_checked = false;
     protected String label; // make sensible error message
 
     private boolean isValueValid = true;
 
-    public RealNumberField() {
+    public RealNumberField() { // no FocusListener
         super();
         setLabel("Value");
+        includeMin = true;
+        includeMax = true;
     }
 
     public RealNumberField(double min, double max) {
@@ -48,9 +52,15 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public RealNumberField(double min, double max, String label) {
+        this(min, true, max, true, label);
+    }
+
+    public RealNumberField(double min, boolean includeMin, double max, boolean includeMax, String label) {
         super();
         this.min = min;
         this.max = max;
+        this.includeMin = includeMin;
+        this.includeMax = includeMax;
         setLabel(label);
         range_check = true;
         this.addFocusListener(this);
@@ -81,6 +91,12 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             try {
                 double value = getValue();
                 if (value < min || value > max) {
+                    return false;
+                }
+                if (!includeMin && value == min) {
+                    return false;
+                }
+                if (!includeMax && value == max) {
                     return false;
                 }
             } catch (NumberFormatException e) {
@@ -143,6 +159,14 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     public void setValue(double value) {
         if (range_check) {
             if (value < min || value > max) {
+                displayErrorMessage();
+                return;
+            }
+            if (!includeMin && value == min) {
+                displayErrorMessage();
+                return;
+            }
+            if (!includeMax && value == max) {
                 displayErrorMessage();
                 return;
             }
@@ -231,9 +255,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             }
 
             boolean period_found = (array.length > 0 && array[0] == PERIOD);
-            boolean exponent_found =  false;
+            boolean exponent_found = false;
             int exponent_index = -1;
-            boolean exponent_sign_found =  false;
+            boolean exponent_sign_found = false;
 
             for (int i = 1; i < array.length; i++) {
                 if (!member(array[i], numberSet)) {

@@ -145,7 +145,7 @@
 
     <!-- Need to either install Launch4j under {BEAST workspace}/${release}
                  or install it in the default directory and change the location of launch4j.dir -->
-    <target name="windows_Release" depends="dist" description="release Windows version of Tracer">
+    <target name="windows" depends="dist" description="release Windows version of Tracer">
 
         <delete dir="${Windows_package_dir}" />
         <!-- Create the release directory -->
@@ -176,7 +176,7 @@
         <echo message="Windows version release is finished." />
     </target>
 
-    <target name="linux_unix_Release" description="release Linux/Unix version of Tracer">
+    <target name="linux" description="release Linux/Unix version of Tracer">
         <delete dir="${Linux_package_dir}" />
         <!-- Create the release directory -->
         <mkdir dir="${Linux_package_dir}" />
@@ -199,7 +199,7 @@
         <echo message="Linux/Unix version release is finished." />
     </target>
 
-    <target name="mac_Release"
+    <target name="mac"
                                    description="release Mac version of Tracer">
         <delete dir="${Mac_package_dir}" />
         <!-- Create the release directory -->

@@ -30,7 +30,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             int mdsDimension,
             Parameter mdsPrecisionParameter,
             TaxonList strains,
-            CompoundParameter tipTraitParameter,
             MatrixParameter locationsParameter,
             Parameter columnEffectsParameter,
             Parameter rowEffectsParameter,
@@ -47,11 +46,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         addVariable(locationsParameter);
 
         this.strains = strains;
-
-        this.tipTraitParameter = tipTraitParameter;
-        if (tipTraitParameter != null) {
-            addVariable(tipTraitParameter);
-        }
 
         this.columnEffectsParameter = columnEffectsParameter;
         if (columnEffectsParameter != null) {
@@ -118,6 +112,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
             measurements.add(measurement);
         }
+
+        rowEffectsParameter.setDimension(rowLabels.size());
+        columnEffectsParameter.setDimension(columnLabels.size());
+        locationsParameter.setDimension(strains.getTaxonCount());
     }
 
     @Override
@@ -328,10 +326,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
 
-            CompoundParameter tipTraitParameter = null;
-            if (xo.hasChildNamed(TIP_TRAIT)) {
-                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
-            }
+//            CompoundParameter tipTraitParameter = null;
+//            if (xo.hasChildNamed(TIP_TRAIT)) {
+//                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
+//            }
 
             TaxonList strains = (TaxonList) xo.getElementFirstChild(STRAINS);
 
@@ -347,7 +345,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     mdsDimension,
                     mdsPrecision,
                     strains,
-                    tipTraitParameter,
                     locationsParameter,
                     columnEffectsParameter,
                     rowEffectsParameter,
@@ -376,8 +373,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
-                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
+//                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
+                new ElementRule(COLUMN_EFFECTS, Parameter.class),
+                new ElementRule(ROW_EFFECTS, Parameter.class),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

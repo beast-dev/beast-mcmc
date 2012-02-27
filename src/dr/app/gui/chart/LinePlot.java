@@ -25,7 +25,6 @@
 
 package dr.app.gui.chart;
 
-import com.sun.java.swing.plaf.nimbus.NimbusStyle;
 import dr.stats.Variate;
 
 import java.awt.*;

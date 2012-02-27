@@ -357,6 +357,7 @@ public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood
             return ((Pair)o).location1 == location1 && ((Pair)o).location2 == location2;
         }
     };
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************

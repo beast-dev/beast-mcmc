@@ -64,10 +64,16 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
     private Parameter relativeRatesParameter;
     private Parameter indicatorParameter;
     protected int traitIndex;
-    private boolean normKnown = false;
-    private boolean storedNormKnown = false;
-    private double norm = 1.0;
-    private double storedNorm = 1.0;
+
+    private double[] rates;
+    private double[] storedRates;
+    private boolean[] rateKnown;
+    private boolean[] storedRateKnown;
+
+//    private boolean normKnown = false;
+//    private boolean storedNormKnown = false;
+//    private double norm = 1.0;
+//    private double storedNorm = 1.0;
 
     private TreeTrait[] traits;
 
@@ -175,46 +181,46 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             addVariable(indicatorParameter);
         }
 
-//        double[] dwellTimes = getProcessValues(treeModel, treeModel.getExternalNode(0));
-//
-//        if (indicatorParameter != null) {
-//            if (dwellTimes.length != indicatorParameter.getDimension()) {
-//                throw new IllegalArgumentException("The dwell times must have same dimension as indicator parameter.");
-//            }
-//        } else {
-//            if (dwellTimes.length != rateParameter.getDimension()) {
-//                throw new IllegalArgumentException("The dwell times must have same dimension as rates parameter.");
-//            }
-//        }
+        rates = new double[treeModel.getNodeCount()];
+        storedRates = new double[treeModel.getNodeCount()];
+        rateKnown = new boolean[treeModel.getNodeCount()];
+        storedRateKnown = new boolean[treeModel.getNodeCount()];
+
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
         // TreeModel has changed...
-        normKnown = false;
-        if (model instanceof TreeModel) {
-            treeChanged = true;
-            shouldRestoreTree = true;
+        for (int i = 0; i < rateKnown.length; i++) {
+            rateKnown[i] = false;
         }
+        treeChanged = true;
         fireModelChanged();
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         // Rate Parameters have changed
-        //ratesCalculated = false;
-        normKnown = false;
+        for (int i = 0; i < rateKnown.length; i++) {
+            rateKnown[i] = false;
+        }
         fireModelChanged();
     }
 
     protected void storeState() {
-        storedNormKnown = normKnown;
-        storedNorm = norm;
-        shouldRestoreTree = false;
+        System.arraycopy(rates, 0, storedRates, 0, rates.length);
+//        System.arraycopy(rateKnown, 0, storedRateKnown, 0, rateKnown.length);
     }
 
     protected void restoreState() {
-        normKnown = storedNormKnown;
-        norm = storedNorm;
-        treeChanged = shouldRestoreTree;
+        double[] tmp = rates;
+        rates = storedRates;
+        storedRates = tmp;
+
+        for (int i = 0; i < rateKnown.length; i++) {
+            rateKnown[i] = true;
+        }
+//        boolean[] tmp1 = rateKnown;
+//        rateKnown = storedRateKnown;
+//        storedRateKnown = tmp1;
     }
 
     protected void acceptState() {
@@ -223,40 +229,33 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
 
     public double getBranchRate(final Tree tree, final NodeRef node) {
 
-        double rate = getRawBranchRate(tree, node);
-
-//        System.out.println("rate = " + rate);
-
-//        if (!normKnown) {
-//            norm = calculateNorm(tree);
-//            normKnown = true;
-//        }
-//        return getRawBranchRate(tree, node) / norm;
-
-        // AR - I am not sure the normalization is required here?
-
-        return rate;
-    }
-
-    double calculateNorm(Tree tree) {
-
-        double time = 0.0;
-        double rateTime = 0.0;
-        for (int i = 0; i < tree.getNodeCount(); i++) {
-
-            NodeRef node = tree.getNode(i);
-
-            if (!tree.isRoot(node)) {
-
-                double branchTime = tree.getBranchLength(node);
-
-                rateTime += getRawBranchRate(tree, node) * branchTime;
-                time += branchTime;
-            }
-
+        if (!rateKnown[node.getNumber()]) {
+            rates[node.getNumber()] = getRawBranchRate(tree, node);
+            rateKnown[node.getNumber()] = true;
         }
-        return rateTime / time;
+
+        return rates[node.getNumber()];
     }
+
+//    double calculateNorm(Tree tree) {
+//
+//        double time = 0.0;
+//        double rateTime = 0.0;
+//        for (int i = 0; i < tree.getNodeCount(); i++) {
+//
+//            NodeRef node = tree.getNode(i);
+//
+//            if (!tree.isRoot(node)) {
+//
+//                double branchTime = tree.getBranchLength(node);
+//
+//                rateTime += getRawBranchRate(tree, node) * branchTime;
+//                time += branchTime;
+//            }
+//
+//        }
+//        return rateTime / time;
+//    }
 
     protected double getRawBranchRate(final Tree tree, final NodeRef node) {
 
@@ -341,13 +340,12 @@ public class DiscreteTraitBranchRateModel extends AbstractBranchRateModel {
             // if the states are being sampled - then there is only one possible state at each
             // end of the branch.
             int state = ((int[])trait.getTrait(tree, node))[traitIndex];
-//            processValues[state] += branchTime / 2;
-//            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
-//            processValues[parentState] += branchTime / 2;
+            processValues[state] += branchTime / 2;
+            int parentState = ((int[])trait.getTrait(tree, tree.getParent(node)))[traitIndex];
+            processValues[parentState] += branchTime / 2;
 
-            processValues[state] = 1;
-     }
-
+//            processValues[state] = 1;
+        }
 
         return processValues;
     }

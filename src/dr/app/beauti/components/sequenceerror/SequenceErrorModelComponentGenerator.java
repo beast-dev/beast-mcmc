@@ -21,7 +21,7 @@ import dr.xml.XMLParser;
  */
 public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator {
 
-    public SequenceErrorModelComponentGenerator(final BeautiOptions options) {
+    SequenceErrorModelComponentGenerator(final BeautiOptions options) {
         super(options);
     }
 
@@ -57,7 +57,7 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                 AbstractPartitionData partition = (AbstractPartitionData) item;
                 SequenceErrorType errorType = component.getSequenceErrorType(partition);
                 if (errorType != SequenceErrorType.NO_ERROR) {
-                    writer.writeIDref(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, partition.getName() + ".errorModel");
+                    writer.writeIDref(SequenceErrorModelParser.SEQUENCE_ERROR_MODEL, partition.getPrefix() + "errorModel");
                 }
                 break;
             case IN_FILE_LOG_PARAMETERS:
@@ -89,10 +89,10 @@ public class SequenceErrorModelComponentGenerator extends BaseComponentGenerator
                         errorTypeName = HypermutantAlignment.APOBECType.BOTH.toString();
                         break;
                     case HYPERMUTATION_HA3F:
-                        errorTypeName = HypermutantAlignment.APOBECType.HA3G.toString();
+                        errorTypeName = HypermutantAlignment.APOBECType.HA3F.toString();
                         break;
                     case HYPERMUTATION_HA3G:
-                        errorTypeName = HypermutantAlignment.APOBECType.HA3F.toString();
+                        errorTypeName = HypermutantAlignment.APOBECType.HA3G.toString();
                         break;
                     default:
                         throw new RuntimeException("Unknown ErrorModelType: " + errorType.toString());

@@ -57,7 +57,7 @@ public class LogCombiner {
 
     private final static Version version = new BeastVersion();
 
-    public LogCombiner(int[] burnins, int resample, String[] inputFileNames, String outputFileName, boolean treeFiles,
+    public LogCombiner(long[] burnins, long resample, String[] inputFileNames, String outputFileName, boolean treeFiles,
                        boolean convertToDecimal,
                        boolean renumberOutput, boolean useScale, double scale) throws IOException {
 
@@ -70,7 +70,7 @@ public class LogCombiner {
         boolean firstFile = true;
         boolean firstTree = true;
         long stateCount = (renumberOutput ? -1 : 0);
-        int stateStep = -1;
+        long stateStep = -1;
         int columnCount = 0;
 
         String[] titles = null;
@@ -87,7 +87,7 @@ public class LogCombiner {
                 return;
             }
 
-            int burnin = burnins[0];
+            long burnin = burnins[0];
             if (burnins.length > i) {
                 burnin = burnins[i];
             }
@@ -120,15 +120,20 @@ public class LogCombiner {
                         }
 
                         String name = tree.getId();
+                        if (name == null) {
+                            System.err.println("ERROR: Trees do not give state numbers as tree attributes.");
+                            return;
+                        }
+
                         // split on underscore in STATE_xxxx
                         String[] bits = name.split("_");
-                        int state = Integer.parseInt(bits[1]);
+                        long state = Long.parseLong(bits[1]);
 
                         if (stateStep < 0 && state > 0) {
                             stateStep = state;
                         }
 
-                        if (state >= burnin * (stateStep>0?stateStep : 1)) {
+                        if (state >= burnin) {
                             if (stateStep > 0) {
                                 if (!renumberOutput) {
                                     stateCount += stateStep;
@@ -137,17 +142,35 @@ public class LogCombiner {
                                 }
                             }
 
-                            if (resample < 0) {
+                            if (resample >= 0) {
                                 if (resample % stateStep != 0) {
                                     System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
                                     return;
                                 }
-                                if (useScale) {
-                                    rescaleTree(tree, scale);
-                                }
-
-                                writeTree(stateCount, tree, convertToDecimal, writer);
                             }
+
+                            boolean logThis;
+                            if (resample < 0) {
+                                // not resampling, log every state
+                                logThis=true;
+                            } else if (!renumberOutput) {
+                                // resampling but not renumbering
+                                logThis=(stateCount % resample == 0);
+                            } else {
+                                logThis=(stateCount*stateStep % resample == 0);
+                            }
+
+                            long stateLineEntry;
+                            if (!renumberOutput){
+                                stateLineEntry=stateCount;
+                            } else {
+                                stateLineEntry=stateCount/(resample/stateStep);
+                            }
+
+                            if (logThis){
+                                writeTree(stateLineEntry, tree, convertToDecimal, writer);
+                            }
+
                         }
                     }
                 } catch (Importer.ImportException e) {
@@ -189,11 +212,11 @@ public class LogCombiner {
                 while (line != null) {
                     String[] parts = line.split("\\s");
 
-                    int state = -1;
+                    long state = -1;
 
                     boolean skip = false;
                     try {
-                        state = Integer.parseInt(parts[0]);
+                        state = Long.parseLong(parts[0]);
                     } catch (NumberFormatException nfe) {
                         skip = true;
                     }
@@ -217,6 +240,7 @@ public class LogCombiner {
                             }
 
                             if (!skip) {
+
                                 if (stateStep > 0) {
                                     if (!renumberOutput) {
                                         stateCount += stateStep;
@@ -224,13 +248,32 @@ public class LogCombiner {
                                         stateCount += 1;
                                     }
                                 }
-                                if (resample < 0) {
+
+                                if (resample >= 0) {
                                     if (resample % stateStep != 0) {
                                         System.err.println("ERROR: Resampling frequency is not a multiple of existing sampling frequency");
                                         return;
                                     }
+                                }
 
-                                    writer.print(stateCount);
+                                boolean logThis;
+                                if (resample < 0) {
+                                    logThis = true;
+                                } else if (!renumberOutput){
+                                    logThis = (stateCount % resample == 0);
+                                } else {
+                                    logThis = ((stateCount * stateStep) % resample == 0);
+                                }
+
+                                long stateLineEntry;
+                                if (!renumberOutput){
+                                    stateLineEntry = stateCount;
+                                } else {
+                                    stateLineEntry = stateCount / (resample / stateStep);
+                                }
+
+                                if (logThis) {
+                                    writer.print(stateLineEntry);
                                     for (int j = 1; j < parts.length; j++) {
                                         String value = parts[j];
 
@@ -248,6 +291,7 @@ public class LogCombiner {
                                     writer.println();
                                 }
                             }
+
                         }
                     }
                     line = reader.readLine();
@@ -359,11 +403,11 @@ public class LogCombiner {
         if( value instanceof String ) {
             return (String) value;
         } else if (value instanceof Object[] ) {
-           String val = "{";
-           for( Object v : (Object[]) value ) {
-               val += formatValue(v);
-               val += ',';
-           }
+            String val = "{";
+            for( Object v : (Object[]) value ) {
+                val += formatValue(v);
+                val += ',';
+            }
             return val.substring(0, val.length() - 1 ) + '}';
         }
         return value.toString();
@@ -498,8 +542,8 @@ public class LogCombiner {
         boolean convertToDecimal;
         boolean renumberOutput;
 
-        int burnin;
-        int resample = -1;
+        long burnin;
+        long resample = -1;
         double scale = 1.0;
         boolean useScale = false;
 
@@ -546,7 +590,7 @@ public class LogCombiner {
             }
 
             String[] inputFiles = dialog.getFileNames();
-            int[] burnins = dialog.getBurnins();
+            long[] burnins = dialog.getBurnins();
 
             String outputFileName = dialog.getOutputFileName();
 
@@ -634,7 +678,7 @@ public class LogCombiner {
             System.arraycopy(args2, 0, inputFileNames, 0, inputFileNames.length);
             String outputFileName = args2[args2.length - 1];
 
-            new LogCombiner(new int[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
+            new LogCombiner(new long[]{burnin}, resample, inputFileNames, outputFileName, treeFiles, convertToDecimal,
                     renumberOutput, useScale, scale);
 
             System.out.println("Finished.");

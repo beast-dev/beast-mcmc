@@ -26,7 +26,7 @@ public class SequenceErrorModelComponentOptions implements ComponentOptions {
     static public final String HYPERMUTANT_INDICATOR_PARAMETER = "hypermutant.indicator";
     static public final String HYPERMUTANT_COUNT_STATISTIC = "hypermutation.count";
 
-    public SequenceErrorModelComponentOptions() {
+    SequenceErrorModelComponentOptions() {
     }
 
     public void createParameters(final ModelOptions modelOptions) {

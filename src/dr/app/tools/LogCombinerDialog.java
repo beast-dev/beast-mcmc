@@ -196,8 +196,8 @@ public class LogCombinerDialog {
 		return fileArray;
 	}
 
-	public int[] getBurnins() {
-		int[] burnins = new int[files.size()];
+	public long[] getBurnins() {
+		long[] burnins = new long[files.size()];
 		for (int i = 0; i < files.size(); i++) {
 			FileInfo fileInfo = files.get(i);
 			burnins[i] = fileInfo.burnin;
@@ -221,7 +221,7 @@ public class LogCombinerDialog {
 		return resampleCheck.isSelected();
 	}
 
-	public int getResampleFrequency() {
+	public long getResampleFrequency() {
 		return resampleText.getValue();
 	}
 

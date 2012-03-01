@@ -81,12 +81,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR,
-            SequenceErrorType.BASE_ALL).toArray());//new JComboBox(SequenceErrorType.values());
-    JLabel errorModelLabel;
-    SequenceErrorModelComponentOptions comp;
-
-
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();
@@ -150,31 +144,10 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
 
-		PanelUtils.setupComponent(errorModelCombo);
-
-		errorModelCombo.addItemListener(new ItemListener() {
-            public void itemStateChanged(ItemEvent ev) {
-                fireModelsChanged();
-            }
-        });
-
-		comp = new SequenceErrorModelComponentOptions();
-
-        OptionsPanel panel1 = new OptionsPanel(12, 12);
-        errorModelLabel = panel1.addComponentWithLabel("Sequence Error Model:", errorModelCombo);
-
-
-        // The bottom panel is now small enough that this is not necessary
-//        JScrollPane scrollPane2 = new JScrollPane(panel);
-//        scrollPane2.setOpaque(false);
-//        scrollPane2.setPreferredSize(new Dimension(400, 150));
-
-
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));
         setLayout(new BorderLayout(0, 0));
         add(splitPane, BorderLayout.CENTER);
-        add(panel1, BorderLayout.SOUTH);
     }
 
     private void resetPanel() {

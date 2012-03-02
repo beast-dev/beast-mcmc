@@ -498,5 +498,5 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private DataType dataType = null;
     private int siteCount = 0;
     private boolean siteCountKnown = false;
-    private boolean countStatistics = true;
+    private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 }

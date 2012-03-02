@@ -435,12 +435,16 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    public void setReportCountStatistics(boolean report) {
+    	countStatistics = report;
+    }
+    
     public String toString() {
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
 
         StringBuffer buffer = new StringBuffer();
 
-        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+//        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 
         if (countStatistics) {
             buffer.append("Site count = ").append(getSiteCount()).append("\n");
@@ -494,4 +498,5 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private DataType dataType = null;
     private int siteCount = 0;
     private boolean siteCountKnown = false;
+    private boolean countStatistics = true;
 }

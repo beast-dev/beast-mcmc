@@ -1,7 +1,6 @@
 
 package dr.app.seqgen;
 
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;

@@ -43,27 +43,27 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
  */
-public class MarkovChain {
+public final class MarkovChain {
 
-    protected final static boolean DEBUG = false;
-    protected final static boolean PROFILE = true;
+    private final static boolean DEBUG = false;
+    private final static boolean PROFILE = true;
 
-    protected final OperatorSchedule schedule;
-    protected final Acceptor acceptor;
-    protected final Prior prior;
-    protected final Likelihood likelihood;
+    private final OperatorSchedule schedule;
+    private final Acceptor acceptor;
+    private final Prior prior;
+    private final Likelihood likelihood;
 
-    protected boolean pleaseStop = false;
-    protected boolean isStopped = false;
-    protected double bestScore, currentScore, initialScore;
-    protected long currentLength;
+    private boolean pleaseStop = false;
+    private boolean isStopped = false;
+    private double bestScore, currentScore, initialScore;
+    private long currentLength;
 
     private boolean useCoercion = true;
 
-    protected final int fullEvaluationCount;
-    protected final int minOperatorCountForFullEvaluation;
+    private final int fullEvaluationCount;
+    private final int minOperatorCountForFullEvaluation;
 
-    protected static final double EVALUATION_TEST_THRESHOLD = 1e-6;
+    private static final double EVALUATION_TEST_THRESHOLD = 1e-6;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -481,7 +481,7 @@ public class MarkovChain {
      * @param op   The operator
      * @param logr
      */
-    protected void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
+    private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
         if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
@@ -512,25 +512,25 @@ public class MarkovChain {
         listeners.remove(listener);
     }
 
-    protected void fireBestModel(long state, Model bestModel) {
+    private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
             listener.bestState(state, bestModel);
         }
     }
 
-    protected void fireCurrentModel(long state, Model currentModel) {
+    private void fireCurrentModel(long state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
     }
 
-    protected void fireFinished(long chainLength) {
+    private void fireFinished(long chainLength) {
 
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);
         }
     }
 
-    protected final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
+    private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 }

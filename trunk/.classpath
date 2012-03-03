@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="lib" path="lib/beagle.jar"/>
+	<classpathentry kind="lib" path="lib/blue-beast.jar"/>
 	<classpathentry kind="lib" path="lib/colt.jar"/>
 	<classpathentry kind="lib" path="lib/figtreepanel.jar"/>
 	<classpathentry kind="lib" path="lib/itext-1.4.5.jar"/>

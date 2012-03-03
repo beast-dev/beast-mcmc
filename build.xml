@@ -140,7 +140,6 @@
             <zipgroupfileset dir="${lib}" includes="JRI.jar"/>
             <zipgroupfileset dir="${lib}" includes="colt.jar"/>
             <zipgroupfileset dir="${lib}" includes="beagle.jar"/>
-            <zipgroupfileset dir="${lib}" includes="blue.jar"/>
         </jar>
 
         <!-- Put everything in ${build} into the beauti.jar file -->

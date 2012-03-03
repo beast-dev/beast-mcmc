@@ -120,7 +120,7 @@ public class BlueBeastMCMCParser extends AbstractXMLObjectParser {
             Object child = xo.getChild(i);
             if (child instanceof Logger) {
                 loggers.add((Logger) child);
-                // TODO Get file names
+                // TO DO Get file names
                 //Logger temp = (Logger) child;
                 //if(temp.)
                 //loggers.add(temp);

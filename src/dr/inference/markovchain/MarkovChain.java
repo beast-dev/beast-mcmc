@@ -43,27 +43,27 @@ import java.util.logging.Logger;
  * @author Andrew Rambaut
  * @version $Id: MarkovChain.java,v 1.10 2006/06/21 13:34:42 rambaut Exp $
  */
-public final class MarkovChain {
+public class MarkovChain {
 
-    private final static boolean DEBUG = false;
-    private final static boolean PROFILE = true;
+    protected final static boolean DEBUG = false;
+    protected final static boolean PROFILE = true;
 
-    private final OperatorSchedule schedule;
-    private final Acceptor acceptor;
-    private final Prior prior;
-    private final Likelihood likelihood;
+    protected final OperatorSchedule schedule;
+    protected final Acceptor acceptor;
+    protected final Prior prior;
+    protected final Likelihood likelihood;
 
-    private boolean pleaseStop = false;
-    private boolean isStopped = false;
-    private double bestScore, currentScore, initialScore;
-    private long currentLength;
+    protected boolean pleaseStop = false;
+    protected boolean isStopped = false;
+    protected double bestScore, currentScore, initialScore;
+    protected long currentLength;
 
     private boolean useCoercion = true;
 
-    private final int fullEvaluationCount;
-    private final int minOperatorCountForFullEvaluation;
+    protected final int fullEvaluationCount;
+    protected final int minOperatorCountForFullEvaluation;
 
-    private static final double EVALUATION_TEST_THRESHOLD = 1e-6;
+    protected static final double EVALUATION_TEST_THRESHOLD = 1e-6;
 
     public MarkovChain(Prior prior, Likelihood likelihood,
                        OperatorSchedule schedule, Acceptor acceptor,
@@ -447,7 +447,7 @@ public final class MarkovChain {
         return isStopped;
     }
 
-    private double evaluate(Likelihood likelihood, Prior prior) {
+    protected double evaluate(Likelihood likelihood, Prior prior) {
 
         double logPosterior = 0.0;
 
@@ -481,7 +481,7 @@ public final class MarkovChain {
      * @param op   The operator
      * @param logr
      */
-    private void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
+    protected void coerceAcceptanceProbability(CoercableMCMCOperator op, double logr) {
 
         if (isCoercable(op)) {
             final double p = op.getCoercableParameter();
@@ -512,25 +512,25 @@ public final class MarkovChain {
         listeners.remove(listener);
     }
 
-    private void fireBestModel(long state, Model bestModel) {
+    protected void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
             listener.bestState(state, bestModel);
         }
     }
 
-    private void fireCurrentModel(long state, Model currentModel) {
+    protected void fireCurrentModel(long state, Model currentModel) {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
     }
 
-    private void fireFinished(long chainLength) {
+    protected void fireFinished(long chainLength) {
 
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);
         }
     }
 
-    private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
+    protected final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
 }

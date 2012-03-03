@@ -13,9 +13,8 @@
     <path id="BEAST.classpath">
         <pathelement location="bin"/>
         <pathelement location="lib/beagle.jar"/>
-        <pathelement location="lib/blue.jar"/>
         <pathelement location="lib/colt.jar"/>
-        <pathelement location="lib/commons-math-2.0.jar"/>
+        <pathelement location="lib/commons-math-2.2.jar"/>
         <pathelement location="lib/figtreepanel.jar"/>
         <pathelement location="lib/itext-1.4.5.jar"/>
         <pathelement location="lib/jam.jar"/>

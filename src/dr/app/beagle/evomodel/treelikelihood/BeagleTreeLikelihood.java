@@ -1079,9 +1079,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     }
                 }
                 
-				// //////////////////
-				// ---TODO:DEBUG---//
-				// //////////////////
+				// /////////////
+				// ---DEBUG---//
+				// /////////////
 
 //				double tmp[] = new double[stateCount * patternCount * categoryCount];
 //				System.out.println(nodeNum);

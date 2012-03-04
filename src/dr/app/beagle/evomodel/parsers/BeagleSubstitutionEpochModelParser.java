@@ -4,16 +4,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
-import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
@@ -31,8 +27,6 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
 		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
 		XMLObject cxo = xo.getChild(MODELS);
-		
-//		BranchSubstitutionModel siteModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
 		
 		for (int i = 0; i < cxo.getChildCount(); i++) {
 			
@@ -104,7 +98,7 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 	}
 
 	@Override
-	public Class getReturnType() {
+	public Class<EpochBranchSubstitutionModel> getReturnType() {
 		return EpochBranchSubstitutionModel.class;
 	}
 

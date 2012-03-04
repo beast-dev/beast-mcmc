@@ -40,8 +40,8 @@ public class SequenceSimulator {
     /** nr of states in site model **/
     int m_stateCount;
 
-    static boolean has_ancestralSequence = false;
-Sequence ancestralSequence;
+	static boolean has_ancestralSequence = false;
+	protected Sequence ancestralSequence;
     
     /**
      * an array used to transfer transition probabilities
@@ -133,6 +133,7 @@ Sequence ancestralSequence;
 		}
 
 		SimpleAlignment alignment = new SimpleAlignment();
+		alignment.setReportCountStatistics(false);
 		alignment.setDataType(m_siteModel.getFrequencyModel().getDataType());
 
 		traverse(root, seq, category, alignment);

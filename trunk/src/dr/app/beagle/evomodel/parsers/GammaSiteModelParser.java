@@ -37,7 +37,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         
         boolean EPOCH_MODEL = false;
 		if (xo.getElementFirstChild(SUBSTITUTION_MODEL) instanceof EpochBranchSubstitutionModel) {
-
+ 
 			EPOCH_MODEL = true;
 
 		}
@@ -86,6 +86,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         if(!EPOCH_MODEL) {
         // set this to pass it along to the TreeLikelihoodParser...
         siteRateModel.setSubstitutionModel(substitutionModel);
+        
         }
         
         return siteRateModel;
@@ -99,7 +100,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         return "A SiteModel that has a gamma distributed rates across sites";
     }
 
-    public Class getReturnType() {
+    public Class<GammaSiteRateModel> getReturnType() {
         return GammaSiteRateModel.class;
     }
 

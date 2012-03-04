@@ -27,9 +27,20 @@ public class KernelDensityEstimate extends DensityEstimate {
                 throw new RuntimeException("Unknown type");
         }
     }
+    
+    public KernelDensityEstimate(String type, Double[] samples, int minimumBinCount) {
+        super(samples, minimumBinCount);
+       
+        this.kde = new NormalKDEDistribution(samples);
+
+    }
+    
+    public KernelDensityEstimatorDistribution getKernelDensityEstimatorDistribution() {
+    	return this.kde;
+    }
         
     protected void calculateDensity(Variate data, int minimumBinCount) {
-
+    	
         FrequencyDistribution frequency = calculateFrequencies(data, minimumBinCount);
 
         xCoordinates = new Variate.D();
@@ -80,4 +91,18 @@ public class KernelDensityEstimate extends DensityEstimate {
     private double upperBoundary = Double.POSITIVE_INFINITY;
     private static final double minDensity = 10E-6;
 
+    public static void main(String[] args) {
+    	Double[] samples = new Double[101];
+    	for (int i = 0; i <= 100; i++) {
+    		samples[i] = ((double)i)/100.0;
+    		System.out.println(samples[i]);
+    	}
+    	KernelDensityEstimate kdeTest = new KernelDensityEstimate("Gaussian", samples, 512);
+    	Variate.D samplesTwo = new Variate.D(samples);
+    	//kdeTest.calculateDensitykde(samplesTwo, 512);
+    	KernelDensityEstimatorDistribution kde = kdeTest.getKernelDensityEstimatorDistribution();
+    	System.out.println("Bandwidth: " + kde.getBandWidth());
+    	System.out.println();
+    }
+    
 }

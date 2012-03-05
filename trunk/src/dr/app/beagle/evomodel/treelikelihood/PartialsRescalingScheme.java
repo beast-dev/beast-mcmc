@@ -57,4 +57,8 @@ public enum PartialsRescalingScheme {
         return DEFAULT;
     }
 
+    @Override
+    public String toString() {
+        return text;
+    }
 }

@@ -27,20 +27,20 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
 		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
 		XMLObject cxo = xo.getChild(MODELS);
-		
+
 		for (int i = 0; i < cxo.getChildCount(); i++) {
-			
+
 			SubstitutionModel substModel = (SubstitutionModel) cxo.getChild(i);
 
 			if (dataType == null) {
-				
+
 				dataType = substModel.getDataType();
-				
+
 			} else if (dataType != substModel.getDataType()) {
-				
+
 				throw new XMLParseException(
 						"Substitution models across epoches must use the same data type.");
-				
+
 			}//END: dataType check
 
 			if (frequencyModelList.size() == 0) {
@@ -48,12 +48,12 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 				frequencyModelList.add(substModel.getFrequencyModel());
 
 			} else if (frequencyModelList.get(0) != substModel.getFrequencyModel()) {
-				
+
 				throw new XMLParseException(
 						"Substitution models across epoches must currently use the same frequency model.\n Harass Marc to fix this.");
 
 			}//END: freqModels no check
-				
+
 			substModelList.add(substModel);
 		}//END: i loop
 
@@ -65,21 +65,21 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 					"# of transition times must equal # of substitution models - 1\n"
 							+ epochTransitionTimes.getDimension() + "\n"
 							+ substModelList.size());
-		} 
-			
+		}
+
 	    // quietly sort in increasing order
 		double sortedEpochTransitionTimes[] = epochTransitionTimes.getAttributeValue();
 		Arrays.sort(sortedEpochTransitionTimes);
 		for(int i = 0; i < epochTransitionTimes.getDimension(); i ++) {
 			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
 		}//END: i loop
-		
+
 		return new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);
 	}// END: parseXMLObject
 
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
-		
+
 //        return new XMLSyntaxRule[]{
 //                new ElementRule(MODELS,
 //                        new XMLSyntaxRule[]{
@@ -88,7 +88,7 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 //                ),
 //                new ElementRule(Parameter.class),
 //        };
-		
+
 		return null;
 	}
 
@@ -102,7 +102,6 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		return EpochBranchSubstitutionModel.class;
 	}
 
-	@Override
 	public String getParserName() {
 		return SUBSTITUTION_EPOCH_MODEL;
 	}

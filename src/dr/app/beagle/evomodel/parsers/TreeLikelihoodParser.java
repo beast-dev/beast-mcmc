@@ -174,7 +174,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with BEAUti-selected codon partitioning.");
             }
 
-            if (!(tipStatesModel != null)) {
+            if (tipStatesModel != null) {
                 throw new XMLParseException("BEAGLE_INSTANCES option cannot be used with a TipStateModel (i.e., a sequence error model).");
             }
 

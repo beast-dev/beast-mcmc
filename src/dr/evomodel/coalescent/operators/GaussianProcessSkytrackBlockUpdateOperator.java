@@ -8,6 +8,7 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
+import org.apache.commons.math.linear.MatrixUtils;
 
 
 import java.util.logging.Logger;
@@ -29,7 +30,7 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
 
     private int maxIterations;
     private double stopValue;
-
+    public static final double TWO_TIMES_PI =6.283185;
     private Parameter popSizeParameter;
     private Parameter precisionParameter;
     private Parameter lambdaParameter;
@@ -157,6 +158,30 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
             res = new SymmTridiagMatrix(diag, offdiag);
         return res;
         }
+
+    protected SymmTridiagMatrix getQmatrix(double precision, double[] x ) {
+              SymmTridiagMatrix res;
+              double trick=0.0;
+              double[] offdiag = new double[x.length - 1];
+              double[] diag = new double[x.length];
+
+
+
+               for (int i = 0; i < x.length - 1; i++) {
+                      offdiag[i] = precision*(-1.0 / (x[i+1]-x[i]));
+                   if (i< x.length-2){
+                      diag[i+1]= -offdiag[i]+precision*(1.0/(x[i+2]-x[i+1])+trick);
+                   }
+                  }
+//              Diffuse prior correction - intrinsic
+               //Take care of the endpoints
+              diag[0] = -offdiag[0]+precision*trick;
+
+              diag[x.length - 1] = -offdiag[x.length - 2]+precision*(trick);
+              res = new SymmTridiagMatrix(diag, offdiag);
+          return res;
+          }
+
 
 
 
@@ -810,41 +835,101 @@ public class GaussianProcessSkytrackBlockUpdateOperator extends AbstractCoercabl
  }
 
     public void locationThinned(double [] currentChangePoints, DenseVector currentPopSize, double currentPrecision) {
-       double lowL = 0.0;
-       double uppL =0.0;
-       Trip1GP tempG;
-       double accept=0.0;
-       int where=0;
-       int who=0;
+//    Sample the interval
+        double where;
+        int who=0;
+        double lowL = 0.0;
+        double uppL =0.0;
+        double cum=0.0;
+        boolean got=false;
+        double Tlen=0.0;
+        for (int j=0; j<fixedNumberPoints; j++){
+            if (GPcounts[j]>0) {
+            Tlen+=GPvalue.getInterval(j);
+            }
+        }
+//        Need to only consider the intevals with latent points
+        int j=0;
+        double addPts;
+        int position = 0;
+        double accept;
+        where= MathUtils.uniform(0,Tlen);
+        while (got==false) {
+            position+=GPcounts[j];
+            cum+=GPvalue.getInterval(j);
+            if (GPcounts[j]>0){
+                 uppL+=GPvalue.getInterval(j);
+                 if (where>lowL & where<=uppL){
+                     who=j;
+                    got=true;
+                    position-=GPcounts[j]-1;}
+                 lowL=uppL;
+            }
+        j++;
+        }
+//Propose new points and get GPvalue
+        Trip1GP tempG;
+        for (int i=0; i<GPcounts[who]; i++){
+         addPts=MathUtils.uniform(cum-GPvalue.getInterval(who),cum);
+         tempG= getGPvalues(currentChangePoints, currentPopSize, addPts,currentPrecision);
+         accept=sigmoidal(-tempG.getData())/sigmoidal(currentPopSize.get(position+i));
+            if (MathUtils.nextDouble()<accept){
+                addOnePoint(tempG.getData(),addPts,tempG.getNewOrder(),j,tempG.getOrder());
+                delOnePoint(position+i,who);
+            }
+        }
+    }
 
-//         Proposes to add/delete and proposes location uniformly in each intercoalescent interval
-       for (int j=0; j<fixedNumberPoints; j++){
+    public double forLikelihood(double [] Gvalues, int [] Gtype){
+        double loglik=0.0;
+        for (int j=0;j<Gvalues.length;j++){
+          loglik-=Math.log(1+Math.exp(-Gtype[j]*Gvalues[j]));
+        }
+        return loglik;
+    }
 
-           if (MathUtils.nextDouble()<0.5) {
-            uppL+=GPvalue.getInterval(j);
-            addPoints[j]=MathUtils.uniform(lowL,uppL);
-            lowL=uppL;
-            tempG = getGPvalues(currentChangePoints, currentPopSize, addPoints[j],currentPrecision);
-            accept=lambdaBoundParameter.getParameterValue(0)*GPvalue.getInterval(j)*sigmoidal(addPoints[j])*GPcoalfactor[j]/(GPcounts[j]+1);
-               if (MathUtils.nextDouble()<accept) {
-                   addOnePoint(tempG.getData(),addPoints[j],tempG.getNewOrder(),j,tempG.getOrder());
-                   where+=1;
-               }
-           }
-           else {
-               if (GPcounts[j]>0) {
-                who=where+MathUtils.nextInt(GPcounts[j]);
-                accept=GPcounts[j]/(lambdaBoundParameter.getParameterValue(0)*GPvalue.getInterval(j)*sigmoidal(-popSizeParameter.getParameterValue(who))*coalfactor[who]);
-                if (MathUtils.nextDouble()<accept){
-                    delOnePoint(who,j);
-                }
-               }
-           }
+    public void sliceSampling(double [] currentChangePoints, DenseVector currentPopSize, double currentPrecision){
+        double theta;
+        double thetaPrime;
+        int keep = 1;
+        double [] zeross = new double[currentPopSize.size()];
+        DenseVector v= new DenseVector(zeross);
+        DenseVector v1 = new DenseVector(zeross);
+        DenseVector v2 = new DenseVector(zeross);
+        DenseVector proposal = new DenseVector(zeross);
+        currentQ=getQmatrix(currentPrecision,currentChangePoints);
 
-           where+=GPcounts[j];
-       }
- }
+        UpperSPDBandMatrix U = new UpperSPDBandMatrix(currentQ,1);
+        BandCholesky U1 = new BandCholesky(zeross.length,1,true);
+        U1.factor(U);
+        v= getMultiNormal(v1,U1.getU());
+        theta=MathUtils.uniform(0,TWO_TIMES_PI);
+        v1.add(Math.sin(theta),currentPopSize);
+        v1.add(Math.cos(theta),v);
+        v2.add(Math.cos(theta),currentPopSize);
+        v2.add(-Math.sin(theta),v);
 
+        double thetaMin=0.0;
+        double thetaMax=TWO_TIMES_PI;
+        double [] popSize = currentPopSize.getData();
+        double loglik=Math.log(MathUtils.nextDouble())+forLikelihood(popSize,GPtype);
+        double loglik2=0.0;
+        while (keep==1){
+            thetaPrime=MathUtils.uniform(thetaMin,thetaMax);
+            proposal.add(Math.sin(thetaPrime),v1);
+            proposal.add(Math.cos(thetaPrime),v2);
+            double [] popSize2 = proposal.getData();
+            loglik2-=forLikelihood(popSize2,GPtype);
+            if (loglik2>loglik) {keep=2;}
+            else {
+                if (thetaPrime>theta) {thetaMin=thetaPrime;} else {thetaMax=thetaPrime;}
+            }
+        }
+        for (int j=0; j<popSizeParameter.getSize();j++){
+            popSizeParameter.setParameterValue(j,proposal.get(j));
+        }
+
+    }
 
 //    public DenseVector getMultiNormal(DenseVector StandNorm, DenseVector Mean, BandCholesky Cholesky) {
 //

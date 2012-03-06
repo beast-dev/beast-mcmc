@@ -69,6 +69,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String SCALING_PROPERTY = "beagle.scaling";
 
+    // Which scheme to use if choice not specified (or 'default' is selected):
+    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
+
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
     private static List<Integer> preferredOrder = null;
@@ -202,11 +205,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (this.rescalingScheme == PartialsRescalingScheme.DEFAULT) {
                 //if GPU: the default is dynamic scaling in BEAST
                 if (resourceList != null && resourceList[0] > 1) {
-                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
+                    this.rescalingScheme = DEFAULT_RESCALING_SCHEME;
                 } else { // if CPU: just run as fast as possible
 //                    this.rescalingScheme = PartialsRescalingScheme.NONE;
                     // Dynamic should run as fast as none until first underflow
-                    this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
+                    this.rescalingScheme = DEFAULT_RESCALING_SCHEME;
                 }
             }
 
@@ -840,7 +843,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
-                if (firstRescaleAttempt && rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                if (firstRescaleAttempt && (rescalingScheme == PartialsRescalingScheme.DYNAMIC || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     // we have had a potential under/over flow so attempt a rescaling
                     useScaleFactors = true;
                     recomputeScaleFactors = true;

@@ -25,6 +25,12 @@
 
 package dr.inference.model;
 
+import java.io.File;
+import java.io.IOException;
+import java.util.List;
+
+import dr.inference.trace.LogFileTraces;
+import dr.inference.trace.TraceException;
 import dr.math.MathUtils;
 import dr.math.distributions.Distribution;
 import dr.xml.*;
@@ -45,6 +51,9 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
     public static final String VALUE = "value";
     public static final String PARAMETER = "parameter";
     public static final String RANDOMIZE = "randomize";
+    public static final String FILENAME = "fileName";
+    public static final String BURNIN = "burnin";
+    public static final String PARAMETERCOLUMN = "parameterColumn";
 
     public String getParserName() {
         return PARAMETER;
@@ -59,8 +68,59 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
         if( xo.hasAttribute(DIMENSION) ) {
             values = new double[xo.getIntegerAttribute(DIMENSION)];
         }
-
-        if( xo.hasAttribute(VALUE) ) {
+        
+        if ( xo.hasAttribute(FILENAME)) {
+        	//read samples from a file (used for a reference prior) and calculate the mean
+        	String fileName = xo.getStringAttribute(FILENAME);
+        	File file = new File(fileName);
+        	fileName = file.getName();
+        	String parent = file.getParent();
+        	if (!file.isAbsolute()) {
+				parent = System.getProperty("user.dir");
+			}
+        	file = new File(parent, fileName);
+        	fileName = file.getAbsolutePath();
+        	String columnName = "";
+        	if ( xo.hasAttribute(PARAMETERCOLUMN)) {
+        		columnName = xo.getStringAttribute(PARAMETERCOLUMN);
+        	} else {
+        		throw new XMLParseException("when providing a file name you must provide a parameter column as well");
+        	}
+        	//if a number for the burnin is not given, use 0 ...
+        	int burnin;
+        	if ( xo.hasAttribute(BURNIN)) {
+        		burnin = xo.getIntegerAttribute(BURNIN);
+        	} else {
+        		burnin = 0;
+        	}
+        	LogFileTraces traces = new LogFileTraces(fileName, file);
+        	List parameterSamples = null;
+			try {
+				traces.loadTraces();
+				traces.setBurnIn(burnin);
+				int traceIndexParameter = -1;
+				for (int i = 0; i < traces.getTraceCount(); i++) {
+					String traceName = traces.getTraceName(i);
+					if (traceName.trim().equals(columnName)) {
+						traceIndexParameter = i;
+					}
+				}
+				if (traceIndexParameter == -1) {
+					throw new XMLParseException("Column '" + columnName + "' can not be found for " + getParserName() + " element.");
+				}
+				parameterSamples = traces.getValues(traceIndexParameter);
+			} catch (TraceException e) {
+				throw new XMLParseException(e.getMessage());
+			} catch (IOException ioe) {
+				throw new XMLParseException(ioe.getMessage());
+			}
+        	values = new double[1];
+        	for (int i = 0, stop = parameterSamples.size(); i < stop; i++) {
+        		values[0] += ((Double)parameterSamples.get(i))/((double)stop);
+        	}
+        	System.out.println("Number of samples: " + parameterSamples.size());
+        	System.out.println("Parameter mean: " + values[0]);
+        } else if( xo.hasAttribute(VALUE) ) {
             if( values == null ) {
                 values = xo.getDoubleArrayAttribute(VALUE);
             } else {
@@ -178,6 +238,9 @@ public class ParameterParser extends dr.xml.AbstractXMLObjectParser {
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newDoubleArrayRule(VALUE, true),
             AttributeRule.newIntegerRule(DIMENSION, true),
+            AttributeRule.newStringRule(FILENAME, true),
+            AttributeRule.newStringRule(PARAMETERCOLUMN, true),
+            AttributeRule.newIntegerRule(BURNIN, true),
             AttributeRule.newDoubleArrayRule(UPPER, true),
             AttributeRule.newDoubleArrayRule(LOWER, true),
             new ElementRule(RANDOMIZE, new XMLSyntaxRule[] {

@@ -4,6 +4,7 @@ import dr.evomodel.coalescent.GMRFSkyrideLikelihood;
 import dr.evomodel.coalescent.GMRFMultilocusSkyrideLikelihood;
 import dr.evomodel.coalescent.operators.GMRFMultilocusSkyrideBlockUpdateOperator;
 import dr.evomodel.coalescent.operators.GMRFSkyrideBlockUpdateOperator;
+import dr.evomodel.coalescent.operators.GaussianProcessSkytrackBlockUpdateOperator;
 import dr.inference.operators.CoercableMCMCOperator;
 import dr.inference.operators.CoercionMode;
 import dr.inference.operators.MCMCOperator;
@@ -97,6 +98,7 @@ public class GMRFSkyrideBlockUpdateOperatorParser extends AbstractXMLObjectParse
     }
 
     public Class getReturnType() {
+//          return GaussianProcessSkytrackBlockUpdateOperator.class;
         return MCMCOperator.class;
     }
 

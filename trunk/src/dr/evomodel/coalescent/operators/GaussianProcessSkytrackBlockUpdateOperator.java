@@ -8,7 +8,6 @@ import dr.inference.model.Parameter;
 import dr.inference.operators.*;
 import dr.math.MathUtils;
 import no.uib.cipr.matrix.*;
-import org.apache.commons.math.linear.MatrixUtils;
 
 
 import java.util.logging.Logger;

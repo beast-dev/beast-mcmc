@@ -25,6 +25,7 @@
 
 package dr.xml;
 
+import dr.evomodel.coalescent.GaussianProcessSkytrackLikelihood;
 import org.w3c.dom.NamedNodeMap;
 
 import java.io.PrintWriter;
@@ -79,11 +80,15 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
             for (int k = 0; k < xo.getChildCount(); ++k) {
                 final Object child = xo.getChild(k);
+//                System.err.println("The child is"+child+"with class"+child.getClass());
                 String unexpectedName;
                 if (child instanceof XMLObject) {
                     final XMLObject ch = (XMLObject) child;
                     unexpectedName = !isAllowed(ch.getName()) ? ch.getName() : null;
                     final List<String> unexpected = isUnexpected(ch);
+//                    System.err.println("child is allowed? "+isAllowed(ch.getName())+ch.getName());
+//                    System.err.println(child+"prueba "+unexpectedName+"of"+xo+"with "+xo.getChildCount());
+//                    System.err.println(GaussianProcessSkytrackLikelihood.class);
                     if( unexpected != null ) {
                         String n = "";
                         for(int j = 0; j < unexpected.size(); j += 2) {
@@ -106,12 +111,17 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                 }
                 if( unexpectedName != null ) {
 
-                    String msg = "Unexpected element in " + xo + ": " + unexpectedName;
+//                    String msg = "Unexpected element in  " + xo + ": " + unexpectedName;
+                    String msg = "Unexpected element in  " + xo + ": " + unexpectedName;
+
+
                     if (strictXML) {
                         throw new XMLParseException(msg);
                     }
+
 //                    System.err.println("WARNING: " + msg);
                     java.util.logging.Logger.getLogger("dr.xml").warning(msg);
+                     System.exit(-1);
                 }
             }
         }
@@ -148,12 +158,17 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
      */
     public final boolean isAllowed(String elementName) {
         final XMLSyntaxRule[] rules = getSyntaxRules();
+//        System.err.println(rules.length+"of "+elementName);
         if (rules != null && rules.length > 0) {
             for (XMLSyntaxRule rule : rules) {
+//                System.err.println("the "+rule+"is "+rule.isLegalElementName(elementName)+" of "+elementName);
                 if (rule.isLegalElementName(elementName)) {
+//                    System.err.println("the soln is: "+rule.isLegalElementName(elementName)+elementName);
                     return true;
                 }
+//            System.err.println("? legal is "+rule.isLegalElementName(elementName)+rule.toString()+" of "+elementName);
             }
+
         }
 
         return false;

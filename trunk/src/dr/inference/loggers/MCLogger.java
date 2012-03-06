@@ -184,14 +184,17 @@ public class MCLogger implements Logger {
             logHeading(title);
         }
 
+//        System.err.println("MCLogger part");
         if (logEvery > 0) {
             final int columnCount = getColumnCount();
+//            System.err.println("columnCount is:"+columnCount);
             String[] labels = new String[columnCount + 1];
 
             labels[0] = "state";
 
             for (int i = 0; i < columnCount; i++) {
                 labels[i + 1] = getColumnLabel(i);
+//                System.err.println("column label:"+labels[i+1]);
             }
 
             logLabels(labels);

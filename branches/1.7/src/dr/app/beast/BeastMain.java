@@ -27,6 +27,7 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
@@ -247,6 +248,11 @@ public class BeastMain {
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
 
+        String[] scalingValues = new String[PartialsRescalingScheme.values().length];
+        for (int i = 0; i < PartialsRescalingScheme.values().length; i++) {
+            scalingValues[i] = PartialsRescalingScheme.values()[i].toString();
+        }
+
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
@@ -274,8 +280,9 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "none", "dynamic", "always"},
-                                false, "BEAGLE: specify scaling scheme to use"),
+                        new Arguments.StringOption("beagle_scaling", scalingValues, false, "BEAGLE: specify scaling scheme to use"),
+//                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "none", "dynamic", "always"},
+//                                false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 

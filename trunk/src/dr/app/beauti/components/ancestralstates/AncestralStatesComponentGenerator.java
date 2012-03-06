@@ -46,6 +46,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_PARAMETERS:
                 return countingStates || dNdSRobustCounting;
 
+            case IN_TREE_LIKELIHOOD:
+                return countingStates;
+
             case IN_TREES_LOG:
                 return reconstructAtNodes || countingStates || dNdSRobustCounting;
 
@@ -73,6 +76,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             case IN_OPERATORS:
                 writeCodonPartitionedRobustCounting(writer, component);
                 break;
+            case IN_TREE_LIKELIHOOD:
+                writeCountingParameter(writer, (AbstractPartitionData)item);
+
             case IN_FILE_LOG_PARAMETERS:
                 writeLogs(writer, component);
                 break;
@@ -92,6 +98,26 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         }
 
     }// END: generate
+
+    private void writeCountingParameter(XMLWriter writer, AbstractPartitionData partition) {
+        StringBuilder matrix = new StringBuilder();
+
+        for (int i = 0; i < partition.getDataType().getStateCount(); i++) {
+            for (int j = 0; j < partition.getDataType().getStateCount(); j++) {
+                if (i == j) {
+                    matrix.append(" 0.0");
+                } else {
+                    matrix.append(" 1.0");
+                }
+            }
+        }
+        writer.writeTag("parameter",
+                new Attribute[] {
+                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),
+                        new Attribute.Default<String>("value", matrix.toString()) },
+                true);
+
+  }
 
     protected String getCommentLabel() {
         return "Ancestral state reconstruction";
@@ -200,8 +226,28 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
-            } else if (component.reconstructAtNodes(partition)) {
+            }
+
+            if (component.reconstructAtNodes(partition)) {
+                writer.writeOpenTag("trait",
+                        new Attribute[] {
+                                new Attribute.Default<String>("name", "states"),
+                                new Attribute.Default<String>("tag", partition.getPrefix() + "state")
+                        }
+                );
                 writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
+                writer.writeCloseTag("trait");
+            }
+
+            if (component.isCountingStates(partition)) {
+                writer.writeOpenTag("trait",
+                        new Attribute[] {
+                                new Attribute.Default<String>("name", partition.getPrefix() + "count"),
+                                new Attribute.Default<String>("tag", partition.getPrefix() + "count")
+                        }
+                );
+                writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
+                writer.writeCloseTag("trait");
             }
         }
     }

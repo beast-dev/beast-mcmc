@@ -81,9 +81,8 @@ public class TreeLikelihoodGenerator extends Generator {
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-//            if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-//                treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-//            }
+        } if (ancestralStatesOptions.isCountingStates(partition)) {
+            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
         }
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
@@ -114,21 +113,29 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeComment("Likelihood for tree given sequence data");
 
+        String idString;
         if (num > 0) {
-            writer.writeOpenTag(
-                    tag,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix(num) + partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
-            );
+            idString = substModel.getPrefix(num) + partition.getPrefix() + id;
         } else {
-            writer.writeOpenTag(
-                    tag,
-                    new Attribute[]{
-                            new Attribute.Default<String>(XMLParser.ID, partition.getPrefix() + id),
-                            new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())}
-            );
+            idString = partition.getPrefix() + id;
         }
+
+        Attribute[] attributes;
+        if (tag.equals(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD)) {
+            attributes = new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, idString),
+                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
+                    new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
+                    new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1)
+            };
+        } else {
+            attributes = new Attribute[]{
+                    new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix(num) + partition.getPrefix() + id),
+                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+            };
+        }
+
+        writer.writeOpenTag(tag, attributes);
 
         if (!options.samplePriorOnly) {
             if (num > 0) {
@@ -148,7 +155,6 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
-
 
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:

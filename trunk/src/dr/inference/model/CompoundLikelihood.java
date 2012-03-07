@@ -240,6 +240,11 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 }
             }
         }
+        message += "\n";
+        for (int i = 0; i < indent; i++) {
+            message += " ";
+        }
+        message += "Total = " + this.getLogLikelihood();
 
         return message;
     }
@@ -340,9 +345,9 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     }
                 } else {
                     double secs = (double)evaluationTimes[index] / 1.0E9;
-                        message += evaluationCounts[index] + " evaluations in " +
-                                nf.format(secs) + " secs (" +
-                                nf.format(secs / evaluationCounts[index]) + " secs/eval)";
+                    message += evaluationCounts[index] + " evaluations in " +
+                            nf.format(secs) + " secs (" +
+                            nf.format(secs / evaluationCounts[index]) + " secs/eval)";
                 }
                 index++;
             }

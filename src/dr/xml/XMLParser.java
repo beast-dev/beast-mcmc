@@ -185,13 +185,13 @@ public class XMLParser {
         }
 
         public void fatalError(SAXParseException e) throws SAXException {
-            System.out.println("Fattal error: ");
+            System.out.println("Fatal error: ");
             printInfo(e);
         }
 
         private void printInfo(SAXParseException e) {
-            System.out.println("\tPublic ID: " + e.getPublicId());
-            System.out.println("\tSystem ID: " + e.getSystemId());
+//            System.out.println("\tPublic ID: " + e.getPublicId());
+//            System.out.println("\tSystem ID: " + e.getSystemId());
             System.out.println("\tLine number: " + e.getLineNumber());
             System.out.println("\tColumn number: " + e.getColumnNumber());
             System.out.println("\tError message: " + e.getMessage());

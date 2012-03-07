@@ -18,6 +18,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
 
+    // column indices in table
+    private static final int COLUMN_LABEL = 0;
+    private static final int SERUM_STRAIN = 2;
+    private static final int ROW_LABEL = 1;
+    private static final int VIRUS_STRAIN = 3;
+    private static final int SERUM_DATE = 4;
+    private static final int VIRUS_DATE = 5;
+    private static final int RAW_TITRE = 6;
+    private static final int MIN_TITRE = 7;
+    private static final int MAX_TITRE = 8;
+
     public enum MeasurementType {
         INTERVAL,
         POINT,
@@ -29,7 +40,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     public AntigenicLikelihood(
             int mdsDimension,
             Parameter mdsPrecisionParameter,
-            TaxonList strains,
+            TaxonList strainTaxa,
             MatrixParameter locationsParameter,
             Parameter columnEffectsParameter,
             Parameter rowEffectsParameter,
@@ -38,61 +49,66 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         super(ANTIGENIC_LIKELIHOOD);
 
-        this.mdsDimension = mdsDimension;
-        this.mdsPrecisionParameter = mdsPrecisionParameter;
-        addVariable(mdsPrecisionParameter);
-
-        this.locationsParameter = locationsParameter;
-        addVariable(locationsParameter);
-
-        this.strains = strains;
-
-        this.columnEffectsParameter = columnEffectsParameter;
-        if (columnEffectsParameter != null) {
-            addVariable(columnEffectsParameter);
-        }
-
-        this.rowEffectsParameter = rowEffectsParameter;
-        if (rowEffectsParameter != null) {
-            addVariable(rowEffectsParameter);
-        }
+        List<String> strainNames = new ArrayList<String>();
+        Map<String, Double> strainDateMap = new HashMap<String, Double>();
 
         for (int i = 0; i < dataTable.getRowCount(); i++) {
             String[] values = dataTable.getRow(i);
-            int column = columnLabels.indexOf(values[0]);
+            int column = columnLabels.indexOf(values[COLUMN_LABEL]);
             if (column == -1) {
                 columnLabels.add(values[0]);
                 column = columnLabels.size() - 1;
             }
 
-            int columnStrain = strains.getTaxonIndex(values[1]);
-            if (columnStrain == -1) {
-                throw new IllegalArgumentException("Error reading data table: Unrecognized column strain name, " + values[1] + ", in row " + (i+1));
+            int columnStrain = -1;
+            if (strainTaxa != null) {
+                columnStrain = strainTaxa.getTaxonIndex(values[SERUM_STRAIN]);
+            } else {
+                columnStrain = strainNames.indexOf(values[SERUM_STRAIN]);
+                if (columnStrain == -1) {
+                    strainNames.add(values[SERUM_STRAIN]);
+                    columnStrain = strainNames.size() - 1;
+                }
             }
 
-            int row = rowLabels.indexOf(values[2]);
+            if (columnStrain == -1) {
+                throw new IllegalArgumentException("Error reading data table: Unrecognized serum strain name, " + values[SERUM_STRAIN] + ", in row " + (i+1));
+            }
+
+            int row = rowLabels.indexOf(values[ROW_LABEL]);
             if (row == -1) {
-                rowLabels.add(values[2]);
+                rowLabels.add(values[ROW_LABEL]);
                 row = rowLabels.size() - 1;
             }
 
-            int rowStrain = strains.getTaxonIndex(values[3]);
+            int rowStrain = -1;
+            if (strainTaxa != null) {
+                rowStrain = strainTaxa.getTaxonIndex(values[VIRUS_STRAIN]);
+            } else {
+                rowStrain = strainNames.indexOf(values[VIRUS_STRAIN]);
+                if (rowStrain == -1) {
+                    strainNames.add(values[VIRUS_STRAIN]);
+                    rowStrain = strainNames.size() - 1;
+                }
+            }
             if (rowStrain == -1) {
-                throw new IllegalArgumentException("Error reading data table: Unrecognized row strain name, " + values[3] + ", in row " + (i+1));
+                throw new IllegalArgumentException("Error reading data table: Unrecognized virus strain name, " + values[VIRUS_STRAIN] + ", in row " + (i+1));
             }
 
+            // ignoring strain dates for the moment
+
             double minTitre = Double.NaN;
-            if (values[4].length() > 0) {
+            if (values[MIN_TITRE].length() > 0) {
                 try {
-                    minTitre = Double.parseDouble(values[4]);
+                    minTitre = Double.parseDouble(values[MIN_TITRE]);
                 } catch (NumberFormatException nfe) {
                     // do nothing
                 }
             }
             double maxTitre = Double.NaN;
-            if (values[5].length() > 0) {
+            if (values[MAX_TITRE].length() > 0) {
                 try {
-                    maxTitre = Double.parseDouble(values[5]);
+                    maxTitre = Double.parseDouble(values[MAX_TITRE]);
                 } catch (NumberFormatException nfe) {
                     // do nothing
                 }
@@ -103,20 +119,68 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 type = MeasurementType.POINT;
             }
 
-            if (Double.isNaN(maxTitre)) {
+            if (Double.isNaN(minTitre) || minTitre == 0.0) {
+                if (Double.isNaN(maxTitre)) {
+                    throw new IllegalArgumentException("Error in measurement: both min and max titre are at bounds in row " + (i+1));
+                }
+
                 type = MeasurementType.UPPER_BOUND;
-            } else if (Double.isNaN(minTitre)) {
+            } else if (Double.isNaN(maxTitre)) {
                 type = MeasurementType.LOWER_BOUND;
             }
 
-            Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
+                Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
             measurements.add(measurement);
         }
 
-        rowEffectsParameter.setDimension(rowLabels.size());
+        if (strainTaxa != null) {
+            this.strains = strainTaxa;
+        } else {
+            Taxa taxa = new Taxa();
+            for (String strain : strainNames) {
+                taxa.addTaxon(new Taxon(strain));
+            }
+            this.strains = taxa;
+        }
+
+
+        this.mdsDimension = mdsDimension;
+        this.mdsPrecisionParameter = mdsPrecisionParameter;
+        addVariable(mdsPrecisionParameter);
+
+        this.locationsParameter = locationsParameter;
+        setupLocationsParameter(locationsParameter, strains);
+        addVariable(locationsParameter);
+
         columnEffectsParameter.setDimension(columnLabels.size());
-        locationsParameter.setDimension(strains.getTaxonCount());
+        this.columnEffectsParameter = columnEffectsParameter;
+        if (columnEffectsParameter != null) {
+            addVariable(columnEffectsParameter);
+        }
+
+        rowEffectsParameter.setDimension(rowLabels.size());
+        this.rowEffectsParameter = rowEffectsParameter;
+        if (rowEffectsParameter != null) {
+            addVariable(rowEffectsParameter);
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("\tAntigenicLikelihood:\n");
+        sb.append("\t\t" + this.strains.getTaxonCount() + " strains\n");
+        sb.append("\t\t" + columnLabels.size() + " unique columns\n");
+        sb.append("\t\t" + rowLabels.size() + " unique rows\n");
+        sb.append("\t\t" + measurements.size() + " assay measurements\n");
+        Logger.getLogger("dr.evomodel").info(sb.toString());
     }
+
+    protected void setupLocationsParameter(MatrixParameter locationsParameter, TaxonList strains) {
+        locationsParameter.setColumnDimension(mdsDimension);
+        locationsParameter.setRowDimension(strains.getTaxonCount());
+        for (int i = 0; i < strains.getTaxonCount(); i++) {
+            locationsParameter.getParameter(i).setId(strains.getTaxon(i).getId());
+        }
+    }
+
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -141,6 +205,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     protected void restoreState() {
+        likelihoodKnown = false;
     }
 
     @Override
@@ -183,11 +248,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row);
                     logLikelihood += computeMeasurementLikelihood(distance, titre, sd) - logNormalization;
                 } break;
-                case UPPER_BOUND: {
+                case LOWER_BOUND: {
                     double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row);
                     logLikelihood += computeMeasurementUpperTailLikelihood(distance, minTitre, sd) - logNormalization;
                 } break;
-                case LOWER_BOUND: {
+                case UPPER_BOUND: {
                     double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row);
                     logLikelihood += computeMeasurementLowerTailLikelihood(distance, maxTitre, sd) - logNormalization;
                 } break;
@@ -220,32 +285,50 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         double rowEffect = rowEffectsParameter.getParameterValue(row);
         double columnEffect = columnEffectsParameter.getParameterValue(column);
 
-        return (Math.log(Math.sqrt(rowEffect * columnEffect)) - Math.log(titre)) / Math.log(2);
+        double t = ((rowEffect + columnEffect) * 0.5) - (Math.log(titre) / Math.log(2));
+        return t;
     }
 
     private double computeMeasurementIntervalLikelihood(double distance, double minTitre, double maxTitre, double sd) {
         double cdf1 = NormalDistribution.cdf(minTitre, distance, sd, false);
         double cdf2 = NormalDistribution.cdf(maxTitre, distance, sd, false);
 
-        return Math.log(cdf2 - cdf1);
+        double lnL = Math.log(cdf1 - cdf2);
+         if (cdf1 == cdf2) {
+            lnL = Math.log(cdf1);
+        }
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
     }
 
     private double computeMeasurementLikelihood(double distance, double titre, double sd) {
-        return Math.log(NormalDistribution.pdf(titre, distance, sd));
-    }
+        double lnL = Math.log(NormalDistribution.pdf(titre, distance, sd));
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+ }
 
-    private double computeMeasurementLowerTailLikelihood(double distance, double maxTitre, double sd) {
-        double cdf = NormalDistribution.cdf(maxTitre, distance, sd, false);
-        return Math.log(cdf);
-    }
-
-    private double computeMeasurementUpperTailLikelihood(double distance, double minTitre, double sd) {
-//        double cdf = NormalDistribution.cdf(maxTitre, distance, sd, false);
-//        double tail = 1.0 - cdf;
+    private double computeMeasurementLowerTailLikelihood(double distance, double minTransformedTitre, double sd) {
         // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
-        double tail = NormalDistribution.tailCDF(minTitre, distance, sd);
-        return Math.log(tail);
-    }
+        double tail = NormalDistribution.tailCDF(minTransformedTitre, distance, sd);
+        double lnL = Math.log(tail);
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+   }
+
+    private double computeMeasurementUpperTailLikelihood(double distance, double maxTransformedTitre, double sd) {
+        double cdf = NormalDistribution.cdf(maxTransformedTitre, distance, sd, false);
+        double lnL = Math.log(cdf);
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+   }
 
     private double calculateTruncationNormalization(double distance, double sd) {
         return NormalDistribution.cdf(distance, 0.0, sd, true);
@@ -287,7 +370,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final Parameter mdsPrecisionParameter;
     private final MatrixParameter locationsParameter;
     private final TaxonList strains;
-//    private final CompoundParameter tipTraitParameter;
+    //    private final CompoundParameter tipTraitParameter;
     private final Parameter columnEffectsParameter;
     private final Parameter rowEffectsParameter;
 
@@ -319,7 +402,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             String fileName = xo.getStringAttribute(FILE_NAME);
             DataTable<String[]> assayTable;
             try {
-                assayTable = DataTable.Text.parse(new FileReader(fileName));
+                assayTable = DataTable.Text.parse(new FileReader(fileName), true, false);
             } catch (IOException e) {
                 throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
@@ -331,7 +414,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 //                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
 //            }
 
-            TaxonList strains = (TaxonList) xo.getElementFirstChild(STRAINS);
+            TaxonList strains = null;
+            if (xo.hasChildNamed(STRAINS)) {
+                strains = (TaxonList) xo.getElementFirstChild(STRAINS);
+            }
 
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
@@ -392,6 +478,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         new Author("T", "Bedford"),
                         new Author("MA", "Suchard"),
                         new Author("P", "Lemey"),
+                        new Author("G", "Dudas"),
                         new Author("C", "Russell"),
                         new Author("D", "Smith"),
                         new Author("A", "Rambaut")

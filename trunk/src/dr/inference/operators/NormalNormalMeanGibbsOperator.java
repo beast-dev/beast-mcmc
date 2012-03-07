@@ -129,7 +129,7 @@ public class NormalNormalMeanGibbsOperator extends SimpleMCMCOperator implements
             DistributionLikelihood likelihood = (DistributionLikelihood) ((XMLObject) xo.getChild(LIKELIHOOD)).getChild(DistributionLikelihood.class);
             DistributionLikelihood prior = (DistributionLikelihood) ((XMLObject) xo.getChild(PRIOR)).getChild(DistributionLikelihood.class);
 
-            System.err.println("class: " + prior.getDistribution().getClass());
+//            System.err.println("class: " + prior.getDistribution().getClass());
 
             if (!((prior.getDistribution() instanceof NormalDistribution) ||
                     (prior.getDistribution() instanceof NormalDistributionModel)

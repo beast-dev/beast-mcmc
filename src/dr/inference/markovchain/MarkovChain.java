@@ -295,12 +295,15 @@ public final class MarkovChain {
 
                 final String d1 = likelihood instanceof CompoundLikelihood ?
                         ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
+                final String d2 = likelihood instanceof CompoundLikelihood ?
+                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+
                 if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
 
-                    final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
 
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"

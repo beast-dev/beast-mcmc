@@ -1,7 +1,7 @@
 /*
  * MCLogger.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -184,17 +184,14 @@ public class MCLogger implements Logger {
             logHeading(title);
         }
 
-//        System.err.println("MCLogger part");
         if (logEvery > 0) {
             final int columnCount = getColumnCount();
-//            System.err.println("columnCount is:"+columnCount);
             String[] labels = new String[columnCount + 1];
 
             labels[0] = "state";
 
             for (int i = 0; i < columnCount; i++) {
                 labels[i + 1] = getColumnLabel(i);
-//                System.err.println("column label:"+labels[i+1]);
             }
 
             logLabels(labels);
@@ -233,7 +230,7 @@ public class MCLogger implements Logger {
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
                     String hpm = formatter.format(hoursPerMillionStates);
-                    if( hpm.equals("0") ) {
+                    if (hpm.equals("0")) {
                         // test cases can run fast :)
                         hpm = formatter.format(1000 * hoursPerMillionStates);
                         values[columnCount + 1] = hpm + " hours/billion states";

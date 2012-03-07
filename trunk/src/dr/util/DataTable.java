@@ -22,7 +22,7 @@ public interface DataTable<T> {
 
     public class Double implements DataTable<double[]> {
 
-        private Double(Reader source) throws IOException {
+        private Double(Reader source, boolean hasColumnLabels, boolean hasRowLabels) throws IOException {
             BufferedReader reader = new BufferedReader(source);
 
             String line = reader.readLine();
@@ -30,34 +30,52 @@ public interface DataTable<T> {
                 throw new IllegalArgumentException("Empty file");
             }
 
-            List<String> columnLabels = new ArrayList<String>();
+            int columnCount = -1;
 
-            StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+            if (hasColumnLabels) {
+                List<String> columnLabels = new ArrayList<String>();
 
-            // potentially the first token is the name of the row labels
-            String name = tokenizer.nextToken();
+                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
 
-            while (tokenizer.hasMoreTokens()) {
-                String label = tokenizer.nextToken();
-                columnLabels.add(label);
+                if (hasRowLabels && !line.startsWith("\t")) {
+                    // potentially the first token is the name of the row labels
+                    String name = tokenizer.nextToken();
+                }
+
+                while (tokenizer.hasMoreTokens()) {
+                    String label = tokenizer.nextToken();
+                    columnLabels.add(label);
+                }
+
+                this.columnLabels = new String[columnLabels.size()];
+                columnLabels.toArray(this.columnLabels);
+
+                columnCount = columnLabels.size();
+
+                line = reader.readLine();
             }
-
-            this.columnLabels = new String[columnLabels.size()];
-            columnLabels.toArray(this.columnLabels);
 
             List<String> rowLabels = new ArrayList<String>();
             List<double[]> rows = new ArrayList<double[]>();
 
             int rowIndex = 1;
 
-            line = reader.readLine();
             while (line != null) {
-                tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
 
-                String label = tokenizer.nextToken();
-                rowLabels.add(label);
+                if (columnCount == -1) {
+                    columnCount = tokenizer.countTokens();
+                    if (hasRowLabels) {
+                        columnCount --;
+                    }
+                }
 
-                double[] row = new double[this.columnLabels.length];
+                if (hasRowLabels) {
+                    String label = tokenizer.nextToken();
+                    rowLabels.add(label);
+                }
+
+                double[] row = new double[columnCount];
 
                 int columnIndex = 0;
                 while (tokenizer.hasMoreTokens()) {
@@ -72,9 +90,9 @@ public interface DataTable<T> {
 
                     columnIndex ++;
                 }
-                if (columnIndex != this.columnLabels.length) {
+                if (columnIndex != columnCount) {
                     throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
-                            ", expecting " + this.columnLabels.length + " but actually " + columnIndex);
+                            ", expecting " + columnCount + " but actually " + columnIndex);
                 }
 
                 rows.add(row);
@@ -83,8 +101,10 @@ public interface DataTable<T> {
                 rowIndex++;
             }
 
-            this.rowLabels = new String[rowLabels.size()];
-            rowLabels.toArray(this.rowLabels);
+            if (hasRowLabels) {
+                this.rowLabels = new String[rowLabels.size()];
+                rowLabels.toArray(this.rowLabels);
+            }
 
             data = new double[rows.size()][];
             rows.toArray(data);
@@ -129,13 +149,17 @@ public interface DataTable<T> {
         private double[][] data;
 
         public static DataTable<double []> parse(Reader source) throws IOException {
-            return new DataTable.Double(source);
+            return new DataTable.Double(source, true, true);
+        }
+
+        public static DataTable<double []> parse(Reader source, boolean columnLabels, boolean rowLabels) throws IOException {
+            return new DataTable.Double(source, columnLabels, rowLabels);
         }
     }
 
     class Text implements DataTable<String[]> {
 
-        private Text(Reader source) throws IOException {
+        private Text(Reader source, boolean hasColumnLabels, boolean hasRowLabels) throws IOException {
             BufferedReader reader = new BufferedReader(source);
 
             String line = reader.readLine();
@@ -143,36 +167,51 @@ public interface DataTable<T> {
                 throw new IllegalArgumentException("Empty file");
             }
 
-            List<String> columnLabels = new ArrayList<String>();
+            int columnCount = -1;
 
-            StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+            if (hasColumnLabels) {
+                List<String> columnLabels = new ArrayList<String>();
 
-            if (!line.startsWith("\t")) {
-                // potentially the first token is the name of the row labels
-                String name = tokenizer.nextToken();
+                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
+
+                if (hasRowLabels && !line.startsWith("\t")) {
+                    // potentially the first token is the name of the row labels
+                    String name = tokenizer.nextToken();
+                }
+
+                while (tokenizer.hasMoreTokens()) {
+                    String label = tokenizer.nextToken();
+                    columnLabels.add(label);
+                }
+
+                this.columnLabels = new String[columnLabels.size()];
+                columnLabels.toArray(this.columnLabels);
+
+                columnCount = columnLabels.size();
+
+                line = reader.readLine();
             }
-
-            while (tokenizer.hasMoreTokens()) {
-                String label = tokenizer.nextToken();
-                columnLabels.add(label);
-            }
-
-            this.columnLabels = new String[columnLabels.size()];
-            columnLabels.toArray(this.columnLabels);
 
             List<String> rowLabels = new ArrayList<String>();
             List<String[]> rows = new ArrayList<String[]>();
-
             int rowIndex = 1;
 
-            line = reader.readLine();
             while (line != null) {
-                tokenizer = new StringTokenizer(line, "\t");
+                StringTokenizer tokenizer = new StringTokenizer(line, "\t");
 
-                String label = tokenizer.nextToken();
-                rowLabels.add(label);
+                if (columnCount == -1) {
+                    columnCount = tokenizer.countTokens();
+                    if (hasRowLabels) {
+                        columnCount --;
+                    }
+                }
 
-                String[] row = new String [this.columnLabels.length];
+                if (hasRowLabels) {
+                    String label = tokenizer.nextToken();
+                    rowLabels.add(label);
+                }
+
+                String[] row = new String [columnCount];
 
                 int columnIndex = 0;
                 while (tokenizer.hasMoreTokens()) {
@@ -180,9 +219,9 @@ public interface DataTable<T> {
 
                     columnIndex ++;
                 }
-                if (columnIndex != this.columnLabels.length) {
+                if (columnIndex != columnCount) {
                     throw new IllegalArgumentException("Wrong number of values on row " + (rowIndex + 1) +
-                            ", expecting " + this.columnLabels.length + " but actually " + columnIndex);
+                            ", expecting " + columnCount + " but actually " + columnIndex);
                 }
 
                 rows.add(row);
@@ -191,8 +230,10 @@ public interface DataTable<T> {
                 rowIndex++;
             }
 
-            this.rowLabels = new String[rowLabels.size()];
-            rowLabels.toArray(this.rowLabels);
+            if (hasRowLabels) {
+                this.rowLabels = new String[rowLabels.size()];
+                rowLabels.toArray(this.rowLabels);
+            }
 
             data = new String[rows.size()][];
             rows.toArray(data);
@@ -200,11 +241,11 @@ public interface DataTable<T> {
         }
 
         public int getColumnCount() {
-            return columnLabels.length;
+            return data[0].length;
         }
 
         public int getRowCount() {
-            return rowLabels.length;
+            return data.length;
         }
 
         public String[] getColumnLabels() {
@@ -237,7 +278,11 @@ public interface DataTable<T> {
         private String[][] data;
 
         public static DataTable<String []> parse(Reader source) throws IOException {
-            return new DataTable.Text(source);
+            return new DataTable.Text(source, true, true);
+        }
+
+        public static DataTable<String []> parse(Reader source, boolean columnLabels, boolean rowLabels) throws IOException {
+            return new DataTable.Text(source, columnLabels, rowLabels);
         }
     }
 

@@ -448,6 +448,11 @@ public class NormalDistribution implements Distribution {
         return standardTail((x - mu) / sigma, true);
     }
 
+    public static double tailCDF(double x, double mu, double sigma, boolean isUpper)
+    {
+        return standardTail((x - mu) / sigma, isUpper);
+    }
+
 
     public double tailCDF(double x)
     {

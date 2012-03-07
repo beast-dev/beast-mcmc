@@ -1,7 +1,7 @@
 /*
  * MCMCParser.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -78,9 +78,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         options.setChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
         options.setUseCoercion(xo.getAttribute(COERCION, true));
         if (xo.hasAttribute(PRE_BURNIN)) {
-            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int)(options.getChainLength() / 100)));
+            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int) (options.getChainLength() / 100)));
         }
-        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int)(options.getChainLength() / 100)));
+        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int) (options.getChainLength() / 100)));
         options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
         options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
         options.setMinOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
@@ -100,14 +100,12 @@ public class MCMCParser extends AbstractXMLObjectParser {
         Logger[] loggerArray = new Logger[loggers.size()];
         loggers.toArray(loggerArray);
 
-        System.err.println("at dr.inferencexml.MCMCParser");
-
         java.util.logging.Logger.getLogger("dr.inference").info("Creating the MCMC chain:" +
                 "\n  chainLength=" + options.getChainLength() +
                 "\n  autoOptimize=" + options.useCoercion() +
                 (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
                 (options.fullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
-                );
+        );
 
         mcmc.init(options, likelihood, opsched, loggerArray);
 

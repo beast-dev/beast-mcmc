@@ -129,7 +129,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 type = MeasurementType.LOWER_BOUND;
             }
 
-                Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
+            Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
             measurements.add(measurement);
         }
 
@@ -143,7 +143,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.strains = taxa;
         }
 
-
         this.mdsDimension = mdsDimension;
         this.mdsPrecisionParameter = mdsPrecisionParameter;
         addVariable(mdsPrecisionParameter);
@@ -152,15 +151,15 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         setupLocationsParameter(locationsParameter, strains);
         addVariable(locationsParameter);
 
-        columnEffectsParameter.setDimension(columnLabels.size());
         this.columnEffectsParameter = columnEffectsParameter;
         if (columnEffectsParameter != null) {
+            columnEffectsParameter.setDimension(columnLabels.size());
             addVariable(columnEffectsParameter);
         }
 
-        rowEffectsParameter.setDimension(rowLabels.size());
         this.rowEffectsParameter = rowEffectsParameter;
         if (rowEffectsParameter != null) {
+            rowEffectsParameter.setDimension(rowLabels.size());
             addVariable(rowEffectsParameter);
         }
 
@@ -219,9 +218,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     public double getLogLikelihood() {
-        if (!likelihoodKnown) {
+//        if (!likelihoodKnown) {
             logLikelihood = computeLogLikelihood();
-        }
+//        }
 
         return logLikelihood;
     }
@@ -240,21 +239,21 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             switch (measurement.type) {
                 case INTERVAL: {
-                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row);
-                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row);
-                    logLikelihood += computeMeasurementIntervalLikelihood(distance, minTitre, maxTitre, sd) - logNormalization;
+                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
+                    logLikelihood += computeMeasurementIntervalLikelihood(minTitre, maxTitre) - logNormalization;
                 } break;
                 case POINT: {
-                    double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row);
-                    logLikelihood += computeMeasurementLikelihood(distance, titre, sd) - logNormalization;
+                    double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                    logLikelihood += computeMeasurementLikelihood(titre) - logNormalization;
                 } break;
                 case LOWER_BOUND: {
-                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row);
-                    logLikelihood += computeMeasurementUpperTailLikelihood(distance, minTitre, sd) - logNormalization;
+                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                    logLikelihood += computeMeasurementLowerBoundLikelihood(minTitre) - logNormalization;
                 } break;
                 case UPPER_BOUND: {
-                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row);
-                    logLikelihood += computeMeasurementLowerTailLikelihood(distance, maxTitre, sd) - logNormalization;
+                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
+                    logLikelihood += computeMeasurementUpperBoundLikelihood(maxTitre) - logNormalization;
                 } break;
                 case MISSING:
                     break;
@@ -281,20 +280,29 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return Math.sqrt(sum);
     }
 
-    private double transformTitre(double titre, int column, int row) {
+    /**
+     * Transforms a titre into log2 space and normalizes it with respect to a unit normal
+     * @param titre
+     * @param column
+     * @param row
+     * @param mean
+     * @param sd
+     * @return
+     */
+    private double transformTitre(double titre, int column, int row, double mean, double sd) {
         double rowEffect = rowEffectsParameter.getParameterValue(row);
         double columnEffect = columnEffectsParameter.getParameterValue(column);
 
         double t = ((rowEffect + columnEffect) * 0.5) - (Math.log(titre) / Math.log(2));
-        return t;
+        return (t - mean) / sd;
     }
 
-    private double computeMeasurementIntervalLikelihood(double distance, double minTitre, double maxTitre, double sd) {
-        double cdf1 = NormalDistribution.cdf(minTitre, distance, sd, false);
-        double cdf2 = NormalDistribution.cdf(maxTitre, distance, sd, false);
+    private double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre) {
+        double cdf1 = NormalDistribution.standardCDF(minTitre, false);
+        double cdf2 = NormalDistribution.standardCDF(maxTitre, false);
 
         double lnL = Math.log(cdf1 - cdf2);
-         if (cdf1 == cdf2) {
+        if (cdf1 == cdf2) {
             lnL = Math.log(cdf1);
         }
         if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
@@ -303,27 +311,30 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return lnL;
     }
 
-    private double computeMeasurementLikelihood(double distance, double titre, double sd) {
-        double lnL = Math.log(NormalDistribution.pdf(titre, distance, sd));
+    private double computeMeasurementLikelihood(double titre) {
+        double lnL = Math.log(NormalDistribution.pdf(titre, 0.0, 1.0));
         if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
- }
+    }
 
-    private double computeMeasurementLowerTailLikelihood(double distance, double minTransformedTitre, double sd) {
-        // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
-        double tail = NormalDistribution.tailCDF(minTransformedTitre, distance, sd);
-        double lnL = Math.log(tail);
-        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
-        }
-        return lnL;
-   }
-
-    private double computeMeasurementUpperTailLikelihood(double distance, double maxTransformedTitre, double sd) {
-        double cdf = NormalDistribution.cdf(maxTransformedTitre, distance, sd, false);
+    private double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
+        // a lower bound in non-transformed titre so the bottom tail of the distribution
+        double cdf = NormalDistribution.standardTail(transformedMinTitre, true);
         double lnL = Math.log(cdf);
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+    }
+
+    private double computeMeasurementUpperBoundLikelihood(double transformedMaxTitre) {
+        // a upper bound in non-transformed titre so the upper tail of the distribution
+
+        // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
+        double tail = NormalDistribution.standardTail(transformedMaxTitre, false);
+        double lnL = Math.log(tail);
         if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }

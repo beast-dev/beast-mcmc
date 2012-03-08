@@ -2,6 +2,7 @@ package dr.evomodel.antigenic;
 
 import dr.evolution.util.*;
 import dr.inference.model.*;
+import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
 import dr.util.*;
 import dr.xml.*;
@@ -148,8 +149,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         addVariable(mdsPrecisionParameter);
 
         this.locationsParameter = locationsParameter;
-        setupLocationsParameter(locationsParameter, strains);
-        addVariable(locationsParameter);
+        setupLocationsParameter(this.locationsParameter, strains);
+        addVariable(this.locationsParameter);
 
         this.columnEffectsParameter = columnEffectsParameter;
         if (columnEffectsParameter != null) {
@@ -170,6 +171,23 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         sb.append("\t\t" + rowLabels.size() + " unique rows\n");
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
+
+        // some random initial locations
+        for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
+            for (int j = 0; j < mdsDimension; j++) {
+                //   double r = MathUtils.nextGaussian();
+                double r = 0.0;
+                if (j == 0) {
+                    r = (double) i * 0.05;
+                }
+                else {
+                    r = MathUtils.nextGaussian();
+                }
+                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+            }
+        }
+
+        likelihoodKnown = false;
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter, TaxonList strains) {
@@ -200,7 +218,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     protected void storeState() {
-    }
+      }
 
     @Override
     protected void restoreState() {
@@ -209,18 +227,18 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     protected void acceptState() {
-    }
+   }
 
     @Override
     public Model getModel() {
-        return null;
+        return this;
     }
 
     @Override
     public double getLogLikelihood() {
-//        if (!likelihoodKnown) {
+        if (!likelihoodKnown) {
             logLikelihood = computeLogLikelihood();
-//        }
+        }
 
         return logLikelihood;
     }
@@ -339,7 +357,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             throw new RuntimeException("infinite");
         }
         return lnL;
-   }
+    }
 
     private double calculateTruncationNormalization(double distance, double sd) {
         return NormalDistribution.cdf(distance, 0.0, sd, true);
@@ -347,6 +365,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     public void makeDirty() {
+        likelihoodKnown = false;
     }
 
     private class Measurement {

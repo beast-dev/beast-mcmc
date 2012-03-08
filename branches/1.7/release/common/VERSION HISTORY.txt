@@ -42,7 +42,8 @@ Version 1.7.1 released 9th March 2012
 	   Issue 599:	Robust counting of dN/dS was producing incorrect XML
        Issue 600:	Truncation of prior distribution not interoperating with
                         offset prior distribution
-
+       Issue 601:	Markov Jumps counting of state changes wasn't generating
+                        correct XML
 ================================================================================
 
 

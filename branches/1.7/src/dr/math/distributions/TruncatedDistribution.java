@@ -55,7 +55,7 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
     public double cdf(double x) {
         double cdf;
         if (x < lower)
-            cdf = 0.;
+            cdf = 0.0;
         else if (x >= lower && x < upper)
             cdf = (source.cdf(x) - lowerCDF) / normalization;
         else

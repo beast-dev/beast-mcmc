@@ -1,7 +1,7 @@
 /*
  * TN93.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -32,22 +32,21 @@ import dr.inference.model.Variable;
 /**
  * Tamura and Nei model of nucleotide evolution.
  * <p/>
- * Most general model which has an analytical solution (i.e. that I personally know how to solve).
+ * <p/>
+ * <p/>
+ * pr = p[0]+p[1]
+ * py = 1 - pr
+ * <p/>
+ * eigen values
+ * <p/>
+ * [0, -1, -(k[0]*pr + py), -(k[1]*py + pr)]
+ * <p/>
+ * unnormalized eigen vectors
+ * [1,1,1,1],
+ * [1,1,-pr/py,-pr/py],
+ * [1, -p[0]/p[1], 0, 0],
+ * [0, 0, 1,-p[2]/p[3]]
  *
- *
- *  pr = p[0]+p[1]
-    py = 1 - pr
-
-    eigen values
-
-   [0, -1, -(k[0]*pr + py), -(k[1]*py + pr)]
-
-   unnormalized eigen vectors
-   [1,1,1,1],
-   [1,1,-pr/py,-pr/py],
-   [1, -p[0]/p[1], 0, 0],
-   [0, 0, 1,-p[2]/p[3]]
-
  * @author Joseph Heled
  */
 public class TN93 extends AbstractNucleotideModel {
@@ -83,6 +82,7 @@ public class TN93 extends AbstractNucleotideModel {
 
     /**
      * TN93
+     *
      * @param kappa1Variable
      * @param kappa2Variable
      * @param freqModel
@@ -122,9 +122,9 @@ public class TN93 extends AbstractNucleotideModel {
     // I am not sure how HKY works without this
     // Comment this function out to get bug 138
     protected void ratesChanged() {
-           // frequencyModel changed
-           updateIntermediates = true;
-       }
+        // frequencyModel changed
+        updateIntermediates = true;
+    }
 
     private void calculateIntermediates() {
 

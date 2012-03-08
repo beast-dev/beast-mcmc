@@ -267,11 +267,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         if (parameter.isZeroOne) {
             lower = 0.0;
             upper = 1.0;
-            isBounded = true;
+//            isBounded = true;
         } else if (parameter.isNonNegative) {
             lower = 0.0;
 
-            isBounded = true;
+//            isBounded = true;
         }
 
         if (dist != null && isTruncatable && isBounded) {

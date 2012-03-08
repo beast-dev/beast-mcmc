@@ -35,7 +35,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.reconstructAtNodes(partition)) reconstructAtNodes = true;
             if (component.reconstructAtMRCA(partition)) reconstructAtMRCA = true;
             if (component.isCountingStates(partition)) countingStates = true;
-            if (countingStates && component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
+            if (component.dNdSRobustCounting(partition)) dNdSRobustCounting = true;
         }
 
         if (!reconstructAtNodes && !reconstructAtMRCA && !countingStates && !dNdSRobustCounting) {
@@ -52,7 +52,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             case IN_TREES_LOG:
                 return reconstructAtNodes || countingStates || dNdSRobustCounting;
 
-            case IN_OPERATORS:
+            case AFTER_OPERATORS:
                 return dNdSRobustCounting;
 
             case AFTER_TREES_LOG:
@@ -73,7 +73,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 .getComponentOptions(AncestralStatesComponentOptions.class);
 
         switch (point) {
-            case IN_OPERATORS:
+            case AFTER_OPERATORS:
                 writeCodonPartitionedRobustCounting(writer, component);
                 break;
             case IN_TREE_LIKELIHOOD:

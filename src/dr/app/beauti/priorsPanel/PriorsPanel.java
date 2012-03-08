@@ -516,15 +516,17 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
                 setBackground(UIManager.getColor("Button.background"));
             }
 
-            if (value.toString().startsWith("?")) {
+            String text = (value == null) ? "" : value.toString();
+            if (text.toString().startsWith("?")) {
                 setForeground(undefinedColour);
-            } else if (value.toString().startsWith("!")) {
+            } else if (text.toString().startsWith("!")) {
                 setForeground(improperColour);
             } else {
                 setForeground(UIManager.getColor("Button.foreground"));
             }
 
-            setText((value == null) ? "" : value.toString());
+            setText(text);
+
             return this;
         }
     }

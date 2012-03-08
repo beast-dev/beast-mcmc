@@ -100,7 +100,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 upperField.setEnabled(isTruncatedCheck.isSelected());
                 upperLabel.setEnabled(isTruncatedCheck.isSelected());
                 positiveInfinityButton.setEnabled(isTruncatedCheck.isSelected());
-            }
+                for (Listener listener : listeners) {
+                    listener.optionsPanelChanged();
+                }
+      }
         });
 
         KeyListener listener = new KeyAdapter() {

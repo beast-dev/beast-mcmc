@@ -24,6 +24,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.types.OperatorType;
+import dr.app.beauti.types.PriorType;
 import dr.app.beauti.types.StartingTreeType;
 import dr.app.beauti.types.TreePriorType;
 import dr.evolution.datatype.DataType;
@@ -120,11 +121,12 @@ public class PartitionTreeModel extends PartitionOptions {
         getParameter("treeModel.allInternalNodeHeights");
 
         Parameter rootHeightParameter = getParameter("treeModel.rootHeight");
-    	rootHeightParameter.initial = getInitialRootHeight();
-        rootHeightParameter.truncationLower = options.maximumTipHeight;
-        rootHeightParameter.uniformLower = options.maximumTipHeight;
-        rootHeightParameter.isTruncated = true;
-//        rootHeightPara.upper = MathUtils.round(getInitialRootHeight() * 1000.0, 2);
+        if (rootHeightParameter.priorType == PriorType.NONE_TREE_PRIOR || !rootHeightParameter.isPriorEdited()) {
+            rootHeightParameter.initial = getInitialRootHeight();
+            rootHeightParameter.truncationLower = options.maximumTipHeight;
+            rootHeightParameter.uniformLower = options.maximumTipHeight;
+            rootHeightParameter.isTruncated = true;
+        }
 
         if (options.useStarBEAST) {
             rootHeightParameter.isCalibratedYule = treePrior.getNodeHeightPrior() == TreePriorType.SPECIES_YULE_CALIBRATION;
@@ -134,7 +136,7 @@ public class PartitionTreeModel extends PartitionOptions {
         }
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
-             getParameter("treeModel.microsatellite.internalNodesParameter");
+            getParameter("treeModel.microsatellite.internalNodesParameter");
         }
     }
 
@@ -163,7 +165,7 @@ public class PartitionTreeModel extends PartitionOptions {
         operators.add(getOperator("uniformHeights"));
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
-             operators.add(getOperator("microsatInternalNodesParameter"));
+            operators.add(getOperator("microsatInternalNodesParameter"));
         }
     }
 
@@ -232,6 +234,6 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public int getDimension() { // n-1
-       return options.getTaxonCount(options.getDataPartitions(this)) - 1;
+        return options.getTaxonCount(options.getDataPartitions(this)) - 1;
     }
 }

@@ -101,7 +101,7 @@ public class LogNormalDistribution implements Distribution {
         }
 
         public final double getLowerBound() {
-            return Double.NEGATIVE_INFINITY;
+            return 0.0;
         }
 
         public final double getUpperBound() {

@@ -240,6 +240,11 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 }
             }
         }
+        message += "\n";
+        for (int i = 0; i < indent; i++) {
+            message += " ";
+        }
+        message += "Total = " + this.getLogLikelihood();
 
         return message;
     }

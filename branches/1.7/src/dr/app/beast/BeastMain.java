@@ -27,7 +27,6 @@ package dr.app.beast;
 
 import beagle.BeagleFlag;
 import beagle.BeagleInfo;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.plugin.Plugin;
 import dr.app.plugin.PluginLoader;
 import dr.app.util.Arguments;
@@ -248,11 +247,6 @@ public class BeastMain {
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
 
-        String[] scalingValues = new String[PartialsRescalingScheme.values().length];
-        for (int i = 0; i < PartialsRescalingScheme.values().length; i++) {
-            scalingValues[i] = PartialsRescalingScheme.values()[i].toString();
-        }
-
         Arguments arguments = new Arguments(
                 new Arguments.Option[]{
 
@@ -280,9 +274,9 @@ public class BeastMain {
                         new Arguments.Option("beagle_SSE", "BEAGLE: use SSE extensions if available"),
                         new Arguments.Option("beagle_single", "BEAGLE: use single precision if available"),
                         new Arguments.Option("beagle_double", "BEAGLE: use double precision if available"),
-                        new Arguments.StringOption("beagle_scaling", scalingValues, false, "BEAGLE: specify scaling scheme to use"),
-//                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "none", "dynamic", "always"},
-//                                false, "BEAGLE: specify scaling scheme to use"),
+                        new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
+                                false, "BEAGLE: specify scaling scheme to use"),
+                        new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
@@ -336,6 +330,7 @@ public class BeastMain {
                 arguments.hasOption("beagle_single") ||
                 arguments.hasOption("beagle_order") ||
                 arguments.hasOption("beagle_scaling") ||
+                arguments.hasOption("beagle_rescale") ||
                 arguments.hasOption("beagle_instances");
 
         boolean beagleShowInfo = arguments.hasOption("beagle_info");
@@ -367,6 +362,10 @@ public class BeastMain {
 
         if (arguments.hasOption("beagle_scaling")) {
             System.setProperty("beagle.scaling", arguments.getStringOption("beagle_scaling"));
+        }
+
+        if (arguments.hasOption("beagle_rescale")) {
+            System.setProperty("beagle.rescale", Integer.toString(arguments.getIntegerOption("beagle_rescale")));
         }
 
         if (arguments.hasOption("threads")) {
@@ -456,6 +455,7 @@ public class BeastMain {
                 if (dialog.preferBeagleSingle()) {
                     beagleFlags |= BeagleFlag.PRECISION_SINGLE.getMask();
                 }
+                System.setProperty("beagle.scaling", dialog.scalingScheme());
             }
 
             inputFile = dialog.getInputFile();

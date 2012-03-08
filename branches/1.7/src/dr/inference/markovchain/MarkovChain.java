@@ -139,6 +139,8 @@ public final class MarkovChain {
         pleaseStop = false;
         isStopped = false;
 
+        String diagnostic = "";
+
         //int otfcounter = onTheFlyOperatorWeights > 0 ? onTheFlyOperatorWeights : 0;
 
         double[] logr = {0.0};
@@ -227,6 +229,7 @@ public final class MarkovChain {
                 // assert Profiler.stopProfile("Evaluate");
 
                 if (usingFullEvaluation) {
+
                     // This is a test that the state is correctly restored. The
                     // restored state is fully evaluated and the likelihood compared with
                     // that before the operation was made.
@@ -273,7 +276,11 @@ public final class MarkovChain {
 //                    }
 //                }
 
-                oldScore = score; // for the usingFullEvaluation test
+                if (usingFullEvaluation) {
+                    oldScore = score; // for the usingFullEvaluation test
+                    diagnostic = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+                }
             } else {
                 if (DEBUG) {
                     System.out.println("** Move rejected: new score = " + score
@@ -293,14 +300,14 @@ public final class MarkovChain {
                 // restored state is fully evaluated and the likelihood compared with
                 // that before the operation was made.
 
-                final String d1 = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
                 likelihood.makeDirty();
                 final double testScore = evaluate(likelihood, prior);
 
+                final String d2 = likelihood instanceof CompoundLikelihood ?
+                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+
                 if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
 
-                    final String d2 = ((CompoundLikelihood)likelihood).getDiagnosis();
 
                     final Logger logger = Logger.getLogger("error");
                     logger.severe("State was not correctly restored after reject step.\n"
@@ -308,7 +315,7 @@ public final class MarkovChain {
                             + " Likelihood after: " + testScore
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName()
-                            + ( d1.length() > 0 ? "\n\nDetails\nBefore: " + d1 + "\nAfter: " + d2 : "")
+                            + ( diagnostic.length() > 0 ? "\n\nDetails\nBefore: " + diagnostic + "\nAfter: " + d2 : "")
                     );
                     fullEvaluationError = true;
                 }

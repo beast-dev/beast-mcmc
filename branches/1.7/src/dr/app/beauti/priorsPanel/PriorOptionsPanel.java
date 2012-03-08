@@ -100,7 +100,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 upperField.setEnabled(isTruncatedCheck.isSelected());
                 upperLabel.setEnabled(isTruncatedCheck.isSelected());
                 positiveInfinityButton.setEnabled(isTruncatedCheck.isSelected());
-            }
+                for (Listener listener : listeners) {
+                    listener.optionsPanelChanged();
+                }
+      }
         });
 
         KeyListener listener = new KeyAdapter() {
@@ -178,8 +181,13 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         field.setRange(lower, upper);
     }
 
-    protected void addField(String name, double initialValue, double min, double max) {
+    protected void addField(String name, double initialValue, double min, boolean includeMin, double max, boolean includeMax) {
+        RealNumberField field = new RealNumberField(min, includeMin, max, includeMax, name);
+        field.setValue(initialValue);
+        addField(name, field);
+    }
 
+    protected void addField(String name, double initialValue, double min, double max) {
         RealNumberField field = new RealNumberField(min, max, name);
         field.setValue(initialValue);
         addField(name, field);
@@ -262,11 +270,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         if (parameter.isZeroOne) {
             lower = 0.0;
             upper = 1.0;
-            isBounded = true;
+//            isBounded = true;
         } else if (parameter.isNonNegative) {
             lower = 0.0;
 
-            isBounded = true;
+//            isBounded = true;
         }
 
         if (dist != null && isTruncatable && isBounded) {
@@ -407,7 +415,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Stdev", 1.0, 0.0, Double.POSITIVE_INFINITY);
+            addField("Stdev", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
         }
 
         public Distribution getDistribution() {

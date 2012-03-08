@@ -25,11 +25,7 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import beagle.Beagle;
-import beagle.BeagleFactory;
-import beagle.BeagleFlag;
-import beagle.InstanceDetails;
-import beagle.ResourceDetails;
+import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
@@ -75,6 +71,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String PREFERRED_FLAGS_PROPERTY = "beagle.preferred.flags";
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String SCALING_PROPERTY = "beagle.scaling";
+    private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
@@ -166,7 +163,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
             scaleBufferHelper = new BufferIndexHelper(getScaleBufferCount(), 0);
-            
+
             this.branchSubstitutionModel.setFirstBuffer(matrixBufferHelper.getBufferCount());
 
             // Attempt to get the resource order from the System Property
@@ -227,6 +224,13 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 useAutoScaling = true;
             } else {
 //                preferenceFlags |= BeagleFlag.SCALING_MANUAL.getMask();
+            }
+            String r = System.getProperty(RESCALE_FREQUENCY_PROPERTY);
+            if (r != null) {
+                rescalingFrequency = Integer.parseInt(r);
+                if (rescalingFrequency < 1) {
+                    rescalingFrequency = RESCALE_FREQUENCY;
+                }
             }
 
             if (preferenceFlags == 0 && resourceList == null) { // else determine dataset characteristics
@@ -346,18 +350,21 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             beagle.setPatternWeights(patternWeights);
 
+            String rescaleMessage = "  Using rescaling scheme : " + this.rescalingScheme.getText();
             if (this.rescalingScheme == PartialsRescalingScheme.AUTO &&
                     resourceDetails != null &&
                     (resourceDetails.getFlags() & BeagleFlag.SCALING_AUTO.getMask()) == 0) {
                 // If auto scaling in BEAGLE is not supported then do it here
                 this.rescalingScheme = PartialsRescalingScheme.DYNAMIC;
-                logger.info("  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText());
-            } else {
-                logger.info("  Using rescaling scheme : " + this.rescalingScheme.getText());
+                rescaleMessage = "  Auto rescaling not supported in BEAGLE, using : " + this.rescalingScheme.getText();
             }
+            if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                rescaleMessage += " (rescaling every " + rescalingFrequency + " evaluations)";
+            }
+            logger.info(rescaleMessage);
 
             if (this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
-//                everUnderflowed = true; // If commented out, BEAST does not rescale until first under-/over-flow.
+                everUnderflowed = false; // If false, BEAST does not rescale until first under-/over-flow.
             }
 
             updateSubstitutionModel = true;
@@ -687,7 +694,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             rescalingCountInner++;
             rescalingCount++;
-            if (rescalingCount > RESCALE_FREQUENCY) {
+            if (rescalingCount > rescalingFrequency) {
                 rescalingCount = 0;
                 rescalingCountInner = 0;
             }
@@ -1146,6 +1153,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     protected final int internalNodeCount;
 
     private PartialsRescalingScheme rescalingScheme;
+    private int rescalingFrequency = RESCALE_FREQUENCY;
+
     protected boolean useScaleFactors = false;
     private boolean useAutoScaling = false;
     private boolean recomputeScaleFactors = false;

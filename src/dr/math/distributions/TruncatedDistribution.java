@@ -28,7 +28,7 @@ public class TruncatedDistribution extends AbstractContinuousDistribution implem
             lower = source.getProbabilityDensityFunction().getLowerBound();
         }
 
-        if (source.getProbabilityDensityFunction().getUpperBound() > upper) {
+        if (source.getProbabilityDensityFunction().getUpperBound() < upper) {
             upper = source.getProbabilityDensityFunction().getUpperBound();
         }
 

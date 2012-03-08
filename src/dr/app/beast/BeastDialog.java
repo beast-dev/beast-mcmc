@@ -25,6 +25,7 @@
 
 package dr.app.beast;
 
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.gui.FileDrop;
 import dr.app.gui.components.WholeNumberField;
 import jam.html.SimpleLinkListener;
@@ -54,6 +55,7 @@ public class BeastDialog {
     private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "CPU", "GPU" });
     private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions");
     private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Double", "Single"});
+    private final JComboBox beagleScalingCombo = new JComboBox(new Object[] { "Default", "Dynamic", "Delayed", "Always", "Never"});
 
     private final JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
 
@@ -134,6 +136,7 @@ public class BeastDialog {
 //        optionPanel2.addComponent(beagleSSECheckBox);
         beagleSSECheckBox.setSelected(true);
         final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
+        final JLabel label3 = optionPanel2.addComponentWithLabel("Rescaling scheme: ", beagleScalingCombo);
         optionPanel2.addComponent(beagleInfoCheckBox);
 
         optionPanel1.addComponent(optionPanel2);
@@ -160,6 +163,8 @@ public class BeastDialog {
                 beagleSSECheckBox.setEnabled(beagleCheckBox.isSelected());
                 label2.setEnabled(beagleCheckBox.isSelected());
                 beaglePrecisionCombo.setEnabled(beagleCheckBox.isSelected());
+                label3.setEnabled(beagleCheckBox.isSelected());
+                beagleScalingCombo.setEnabled(beagleCheckBox.isSelected());
             }
         });
 
@@ -209,7 +214,7 @@ public class BeastDialog {
     }
 
     public boolean preferBeagleSSE() {
-        // for the moment we will alway use SSE if CPU is selected...
+        // for the moment we will always use SSE if CPU is selected...
         return preferBeagleCPU();
     }
 
@@ -219,6 +224,10 @@ public class BeastDialog {
 
     public boolean preferBeagleDouble() {
         return beaglePrecisionCombo.getSelectedItem().equals("Double");
+    }
+
+    public String scalingScheme() {
+        return ((String)beagleScalingCombo.getSelectedItem()).toLowerCase();
     }
 
     public boolean showBeagleInfo() {

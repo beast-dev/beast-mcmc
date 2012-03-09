@@ -46,8 +46,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             TaxonList strainTaxa,
             MatrixParameter locationsParameter,
             Parameter datesParameter,
-            Parameter columnEffectsParameter,
-            Parameter rowEffectsParameter,
+            Parameter columnParameter,
+            Parameter rowParameter,
             DataTable<String[]> dataTable,
             List<String> virusLocationStatisticList) {
 
@@ -144,6 +144,21 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             measurements.add(measurement);
         }
 
+        double[] maxColumnTitre = new double[columnLabels.size()];
+        double[] maxRowTitre = new double[rowLabels.size()];
+        for (Measurement measurement : measurements) {
+            double titre = measurement.maxTitre;
+            if (Double.isNaN(titre)) {
+                titre = measurement.minTitre;
+            }
+            if (titre > maxColumnTitre[measurement.column]) {
+                maxColumnTitre[measurement.column] = titre;
+            }
+            if (titre > maxRowTitre[measurement.row]) {
+                maxRowTitre[measurement.row] = titre;
+            }
+        }
+
         if (strainTaxa != null) {
             this.strains = strainTaxa;
 
@@ -178,22 +193,34 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
         }
 
-        this.columnEffectsParameter = columnEffectsParameter;
-        if (columnEffectsParameter != null) {
-            columnEffectsParameter.setDimension(columnLabels.size());
-            addVariable(columnEffectsParameter);
-            String[] labelArray = new String[columnLabels.size()];
-            columnLabels.toArray(labelArray);
-            ((Parameter.Abstract)columnEffectsParameter).setDimensionNames(labelArray);
+        if (columnParameter == null) {
+            this.columnEffectsParameter = new Parameter.Default("columnEffects");
+        } else {
+            this.columnEffectsParameter = columnParameter;
         }
 
-        this.rowEffectsParameter = rowEffectsParameter;
-        if (rowEffectsParameter != null) {
-            rowEffectsParameter.setDimension(rowLabels.size());
-            addVariable(rowEffectsParameter);
-            String[] labelArray = new String[rowLabels.size()];
-            rowLabels.toArray(labelArray);
-            ((Parameter.Abstract)rowEffectsParameter).setDimensionNames(labelArray);
+        this.columnEffectsParameter.setDimension(columnLabels.size());
+        addVariable(this.columnEffectsParameter);
+        String[] labelArray = new String[columnLabels.size()];
+        columnLabels.toArray(labelArray);
+        ((Parameter.Abstract)this.columnEffectsParameter).setDimensionNames(labelArray);
+        for (int i = 0; i < maxColumnTitre.length; i++) {
+            this.columnEffectsParameter.setParameterValue(i, maxColumnTitre[i]);
+        }
+
+        if (rowParameter == null) {
+            this.rowEffectsParameter = new Parameter.Default("rowEffects");
+        } else {
+            this.rowEffectsParameter = rowParameter;
+        }
+
+        this.rowEffectsParameter.setDimension(rowLabels.size());
+        addVariable(this.rowEffectsParameter);
+         labelArray = new String[rowLabels.size()];
+        rowLabels.toArray(labelArray);
+        ((Parameter.Abstract)this.rowEffectsParameter).setDimensionNames(labelArray);
+        for (int i = 0; i < maxRowTitre.length; i++) {
+            this.rowEffectsParameter.setParameterValue(i, maxRowTitre[i]);
         }
 
         StringBuilder sb = new StringBuilder();

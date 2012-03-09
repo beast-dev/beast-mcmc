@@ -241,6 +241,21 @@ public interface Parameter extends Statistic, Variable<Double> {
             return getParameterValue(dim);
         }
 
+        @Override
+        public String getDimensionName(int dim) {
+            if (dimensionNames == null) {
+                return super.getDimensionName(dim);
+            }
+            return dimensionNames[dim];
+        }
+
+        public final void setDimensionNames(String[] names) {
+            if (names != null && names.length != getDimension()) {
+                throw new IllegalArgumentException("Length of dimension name array doesn't match the number of dimensions");
+            }
+            dimensionNames = names;
+        }
+
         public void setDimension(int dim) {
             throw new UnsupportedOperationException();
         }
@@ -421,6 +436,8 @@ public interface Parameter extends Statistic, Variable<Double> {
         private boolean isValid = true;
 
         private ArrayList<VariableListener> listeners;
+
+        private String[] dimensionNames = null;
     }
 
 
@@ -560,7 +577,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         public void setDimension(int dim) {
             final int oldDim = getDimension();
             if( oldDim == dim ) {
-               return;
+                return;
             }
 
             assert storedValues == null :

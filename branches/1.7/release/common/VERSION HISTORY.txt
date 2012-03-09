@@ -44,6 +44,8 @@ Version 1.7.1 released 9th March 2012
                         offset prior distribution
        Issue 601:	Markov Jumps counting of state changes wasn't generating
                         correct XML
+
+
 ================================================================================
 
 

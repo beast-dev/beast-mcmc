@@ -151,6 +151,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             if (Double.isNaN(titre)) {
                 titre = measurement.minTitre;
             }
+            titre = Math.log(titre) / Math.log(2);
             if (titre > maxColumnTitre[measurement.column]) {
                 maxColumnTitre[measurement.column] = titre;
             }
@@ -393,7 +394,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         double rowEffect = rowEffectsParameter.getParameterValue(row);
         double columnEffect = columnEffectsParameter.getParameterValue(column);
 
-        double t = ((rowEffect + columnEffect) * 0.5) - (Math.log(titre) / Math.log(2));
+        double t = ((rowEffect + columnEffect) * 0.5) - titre;
         return (t - mean) / sd;
     }
 
@@ -458,8 +459,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.rowStrain = rowStrain;
 
             this.type = type;
-            this.minTitre = minTitre;
-            this.maxTitre = maxTitre;
+            this.minTitre = Math.log(minTitre) / Math.log(2);
+            this.maxTitre = Math.log(maxTitre) / Math.log(2);
         }
 
         final int column;

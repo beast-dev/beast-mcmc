@@ -33,17 +33,22 @@ Version 1.7.1 released 9th March 2012
 	   Issue 71:    Reflected exponentials (or lognormals) as priors?
 	   Issue 571:	TN93 substitution model
        Issue 594:	BEAUti 1.7 has a redundant and non-functional Sequence Error
-                        Model popup menu in SiteModelPanel
+                    Model popup menu in SiteModelPanel
        Issue 595:	BEAUti: Markov jump state reconstruction not pushed to XML
        Issue 596:	BEAGLE performance has been degraded by choice of default
-                        scaling option
+                    scaling option
        Issue 597:   Use of -beagle_instances is broken in BEAST 1.7
        Issue 598:	BEAUti prior plot crashes given offset
 	   Issue 599:	Robust counting of dN/dS was producing incorrect XML
        Issue 600:	Truncation of prior distribution not interoperating with
-                        offset prior distribution
+                    offset prior distribution
        Issue 601:	Markov Jumps counting of state changes wasn't generating
-                        correct XML
+                    correct XML
+       Issue 602:	BEAUti prior dialog crashes if choose Laplace
+       Issue 603:	BEAUti prior dialog not validate truncation and uniform
+                    bound and offset
+       Issue 604:	RealNumberField FocusListener in prior dialog makes
+                    many popups
 
 
 ================================================================================

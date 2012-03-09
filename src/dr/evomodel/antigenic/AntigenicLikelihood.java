@@ -205,7 +205,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         columnLabels.toArray(labelArray);
         ((Parameter.Abstract)this.columnEffectsParameter).setDimensionNames(labelArray);
         for (int i = 0; i < maxColumnTitre.length; i++) {
-            this.columnEffectsParameter.setParameterValue(i, maxColumnTitre[i]);
+            this.columnEffectsParameter.setParameterValueQuietly(i, maxColumnTitre[i]);
         }
 
         if (rowParameter == null) {
@@ -220,7 +220,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         rowLabels.toArray(labelArray);
         ((Parameter.Abstract)this.rowEffectsParameter).setDimensionNames(labelArray);
         for (int i = 0; i < maxRowTitre.length; i++) {
-            this.rowEffectsParameter.setParameterValue(i, maxRowTitre[i]);
+            this.rowEffectsParameter.setParameterValueQuietly(i, maxRowTitre[i]);
         }
 
         StringBuilder sb = new StringBuilder();
@@ -249,7 +249,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         locationChanged = new boolean[this.locationsParameter.getRowDimension()];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
-        likelihoodKnown = false;
+
+        makeDirty();
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter, List<String> strains) {
@@ -270,8 +271,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (variable == locationsParameter) {
             locationChanged[index / mdsDimension] = true;
         } else if (variable == mdsPrecisionParameter) {
+            setLocationChangedFlags(true);
         } else if (variable == columnEffectsParameter) {
+            setLocationChangedFlags(true);
         } else if (variable == rowEffectsParameter) {
+            setLocationChangedFlags(true);
         } else {
             // could be a derived class's parameter
 //            throw new IllegalArgumentException("Unknown parameter");
@@ -354,14 +358,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         likelihoodKnown = true;
 
-        clearLocationChangedFlags();
+        setLocationChangedFlags(false);
 
         return logLikelihood;
     }
 
-    private void clearLocationChangedFlags() {
+    private void setLocationChangedFlags(boolean flag) {
         for (int i = 0; i < locationChanged.length; i++) {
-            locationChanged[i] = false;
+            locationChanged[i] = flag;
         }
     }
 
@@ -448,7 +452,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
-    }
+        setLocationChangedFlags(true);
+   }
 
     private class Measurement {
         private Measurement(final int column, final int columnStrain, final int row, final int rowStrain, final MeasurementType type, final double minTitre, final double maxTitre) {

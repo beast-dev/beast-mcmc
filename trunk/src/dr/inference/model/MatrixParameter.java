@@ -68,12 +68,12 @@ public class MatrixParameter extends CompoundParameter {
     }
 
     public int getColumnDimension() {
-        return getParameterCount();
+        return getParameter(0).getDimension();
     }
 
     public int getRowDimension() {
-        return getParameter(0).getDimension();
-    }
+        return getParameterCount();
+   }
 
     public String toSymmetricString() {
         StringBuffer sb = new StringBuffer("{");

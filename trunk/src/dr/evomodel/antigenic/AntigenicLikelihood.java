@@ -182,7 +182,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (columnEffectsParameter != null) {
             columnEffectsParameter.setDimension(columnLabels.size());
             addVariable(columnEffectsParameter);
-            String[] labelArray = (String[])columnLabels.toArray();
+            String[] labelArray = new String[columnLabels.size()];
+            columnLabels.toArray(labelArray);
             ((Parameter.Abstract)columnEffectsParameter).setDimensionNames(labelArray);
         }
 
@@ -190,7 +191,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (rowEffectsParameter != null) {
             rowEffectsParameter.setDimension(rowLabels.size());
             addVariable(rowEffectsParameter);
-            String[] labelArray = (String[])rowLabels.toArray();
+            String[] labelArray = new String[rowLabels.size()];
+            rowLabels.toArray(labelArray);
             ((Parameter.Abstract)rowEffectsParameter).setDimensionNames(labelArray);
         }
 
@@ -217,6 +219,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
         }
 
+        locationChanged = new boolean[this.locationsParameter.getRowDimension()];
+        logLikelihoods = new double[measurements.size()];
+        storedLogLikelihoods = new double[measurements.size()];
         likelihoodKnown = false;
     }
 
@@ -236,6 +241,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter) {
+            locationChanged[index / mdsDimension] = true;
         } else if (variable == mdsPrecisionParameter) {
         } else if (variable == columnEffectsParameter) {
         } else if (variable == rowEffectsParameter) {
@@ -248,10 +254,15 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     @Override
     protected void storeState() {
+        System.arraycopy(logLikelihoods, 0, storedLogLikelihoods, 0, logLikelihoods.length);
     }
 
     @Override
     protected void restoreState() {
+        double[] tmp = logLikelihoods;
+        logLikelihoods = storedLogLikelihoods;
+        storedLogLikelihoods = tmp;
+
         likelihoodKnown = false;
     }
 
@@ -280,37 +291,51 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         double sd = 1.0 / Math.sqrt(precision);
 
         logLikelihood = 0.0;
+        int i = 0;
         for (Measurement measurement : measurements) {
-            double distance = computeDistance(measurement.rowStrain, measurement.columnStrain);
 
-            double logNormalization = calculateTruncationNormalization(distance, sd);
+            if (locationChanged[measurement.rowStrain] || locationChanged[measurement.columnStrain]) {
+                double distance = computeDistance(measurement.rowStrain, measurement.columnStrain);
 
-            switch (measurement.type) {
-                case INTERVAL: {
-                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
-                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
-                    logLikelihood += computeMeasurementIntervalLikelihood(minTitre, maxTitre) - logNormalization;
-                } break;
-                case POINT: {
-                    double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
-                    logLikelihood += computeMeasurementLikelihood(titre) - logNormalization;
-                } break;
-                case LOWER_BOUND: {
-                    double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
-                    logLikelihood += computeMeasurementLowerBoundLikelihood(minTitre) - logNormalization;
-                } break;
-                case UPPER_BOUND: {
-                    double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
-                    logLikelihood += computeMeasurementUpperBoundLikelihood(maxTitre) - logNormalization;
-                } break;
-                case MISSING:
-                    break;
+                double logNormalization = calculateTruncationNormalization(distance, sd);
+
+                switch (measurement.type) {
+                    case INTERVAL: {
+                        double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                        double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
+                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre) - logNormalization;
+                    } break;
+                    case POINT: {
+                        double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                        logLikelihoods[i] = computeMeasurementLikelihood(titre) - logNormalization;
+                    } break;
+                    case LOWER_BOUND: {
+                        double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                        logLikelihoods[i] = computeMeasurementLowerBoundLikelihood(minTitre) - logNormalization;
+                    } break;
+                    case UPPER_BOUND: {
+                        double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
+                        logLikelihoods[i] = computeMeasurementUpperBoundLikelihood(maxTitre) - logNormalization;
+                    } break;
+                    case MISSING:
+                        break;
+                }
             }
+            logLikelihood += logLikelihoods[i];
+            i++;
         }
 
         likelihoodKnown = true;
 
+        clearLocationChangedFlags();
+
         return logLikelihood;
+    }
+
+    private void clearLocationChangedFlags() {
+        for (int i = 0; i < locationChanged.length; i++) {
+            locationChanged[i] = false;
+        }
     }
 
     protected double computeDistance(int rowStrain, int columnStrain) {
@@ -437,6 +462,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private double logLikelihood = 0.0;
     private boolean likelihoodKnown = false;
 
+    private final boolean[] locationChanged;
+    private double[] logLikelihoods;
+    private double[] storedLogLikelihoods;
+
     // **************************************************************
     // XMLObjectParser
     // **************************************************************
@@ -482,7 +511,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
-            Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
+            Parameter datesParameter = null;
+            if (xo.hasChildNamed(STRAINS)) {
+                datesParameter = (Parameter) xo.getElementFirstChild(DATES);
+            }
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 

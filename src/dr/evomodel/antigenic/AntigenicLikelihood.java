@@ -151,7 +151,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             if (Double.isNaN(titre)) {
                 titre = measurement.minTitre;
             }
-            titre = Math.log(titre) / Math.log(2);
             if (titre > maxColumnTitre[measurement.column]) {
                 maxColumnTitre[measurement.column] = titre;
             }

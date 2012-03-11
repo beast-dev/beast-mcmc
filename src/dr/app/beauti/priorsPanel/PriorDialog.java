@@ -108,17 +108,17 @@ public class PriorDialog {
         citationText.setFont(quantileLabels.getFont().deriveFont(11.0f));
         citationText.setOpaque(false);
         citationText.setText(
-              "<html>Approximate continuous time Markov chain rate <br>" +
-                    "reference prior developed in Ferreira & Suchard (2008).<br>" +
-                    "Use when explicit prior information is unavailable</html>");
+                "<html>Approximate continuous time Markov chain rate <br>" +
+                        "reference prior developed in Ferreira & Suchard (2008).<br>" +
+                        "Use when explicit prior information is unavailable</html>");
 
         oneOverXCaution = new JLabel();
         oneOverXCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
         oneOverXCaution.setOpaque(false);
         oneOverXCaution.setText(
                 "<html>This improper distribution often leads to an improper posterior. <br>" +
-                      "This distribution is likely appropriate when used for the <br>" +
-                      "constant population size under the Coalescent.</html>");
+                        "This distribution is likely appropriate when used for the <br>" +
+                        "constant population size under the Coalescent.</html>");
 
         improperCaution = new JLabel();
         improperCaution.setFont(quantileLabels.getFont().deriveFont(11.0f));
@@ -130,6 +130,7 @@ public class PriorDialog {
 
     /**
      * Set the parameter to be controlled
+     *
      * @param parameter
      */
     public void setParameter(final Parameter parameter) {
@@ -325,7 +326,8 @@ public class PriorDialog {
     void setupChart() {
         chart.removeAllPlots();
 
-        if (hasInvalidInput()) {
+        if (hasInvalidInput(false)) {
+            quantileText.setText("Invalid input");
             return;
         }
 
@@ -339,8 +341,11 @@ public class PriorDialog {
         // ExponentialDistribution(1.0 / mean)
 //        if (priorType == PriorType.EXPONENTIAL_PRIOR && parameter.mean == 0) parameter.mean = 1;
 
-        double offset = 0.0;
-        Distribution distribution = optionsPanels.get(priorType).getDistribution(parameter);
+        PriorOptionsPanel priorOptionsPanel = optionsPanels.get(priorType);
+
+        double offset = 0.0; // TODO is this used or duplicated to OffsetPositiveDistribution?
+        // this does not refresh dist from parameter truncation lower/upper, it get them from GUI
+        Distribution distribution = priorOptionsPanel.getDistribution(parameter);
 
         chart.addPlot(new PDFPlot(distribution, offset));
         if (distribution != null) {
@@ -353,16 +358,20 @@ public class PriorDialog {
 
     }
 
-
-    public boolean hasInvalidInput() {
+    public boolean hasInvalidInput(boolean showError) {
         PriorType priorType = (PriorType) priorCombo.getSelectedItem();
         PriorOptionsPanel panel = optionsPanels.get(priorType);
         if (panel != null) {
-            return panel.hasInvalidInput();
-        } else {
-            // if there is no panel for this prior type then assume it is valid
-            return false;
-//            throw new IllegalComponentStateException("Cannot get PriorOptionsPanel");
+            if (panel.hasInvalidInput(priorType)) {
+                if (showError)
+                    JOptionPane.showMessageDialog(frame, panel.error, "Invalid input", JOptionPane.ERROR_MESSAGE);
+                return true;
+            } else {
+                return false;
+            }
         }
+        // if there is no panel for this prior type then assume it is valid
+        return false;
+//            throw new IllegalComponentStateException("Cannot get PriorOptionsPanel");
     }
 }

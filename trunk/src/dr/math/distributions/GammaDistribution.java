@@ -131,8 +131,8 @@ public class GammaDistribution implements Distribution {
     public static double pdf(double x, double shape, double scale) {
         // return Math.pow(scale,-shape)*Math.pow(x, shape-1.0)/
         // Math.exp(x/scale + GammaFunction.lnGamma(shape));
-        if (x < 0)
-            throw new IllegalArgumentException();
+        if (x < 0)  return 0; // to make BEAUti plot continue
+//            throw new IllegalArgumentException();
         if (x == 0) {
             if (shape == 1.0)
                 return 1.0 / scale;
@@ -198,6 +198,9 @@ public class GammaDistribution implements Distribution {
      * @return cdf value
      */
     public static double cdf(double x, double shape, double scale) {
+        if (x < 0.0 || shape <= 0.0) {
+            return 0;
+        }
         return GammaFunction.incompleteGammaP(shape, x / scale);
     }
 

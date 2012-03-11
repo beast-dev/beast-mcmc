@@ -23,17 +23,41 @@ import java.util.Set;
  */
 abstract class PriorOptionsPanel extends OptionsPanel {
 
-    public boolean hasInvalidInput() {
+    // this not throw exception, exception thrown by FocusListener in RealNumberField
+    public boolean hasInvalidInput(PriorType priorType) { // TODO move all validation here
         for (JComponent component : argumentFields) {
             if (component instanceof RealNumberField && !((RealNumberField) component).isValueValid()) {
+                error = ((RealNumberField) component).getErrorMessage();
                 return true;
             }
         }
-        if (isTruncatable && isTruncatedCheck.isSelected()) {
-            return !(lowerField.isValueValid() && upperField.isValueValid());
+        if (priorType == PriorType.UNIFORM_PRIOR && !isInputValid()) {
+            error = "Invalid uniform bound !";
+            return true;
         }
+        if (isTruncatable && isTruncatedCheck.isSelected()) {
+            if (!lowerField.isValueValid()) {
+                error = lowerField.getErrorMessage();
+                return true;
+            } else if (!upperField.isValueValid()) {
+                error = upperField.getErrorMessage();
+                return true;
+            } else if (lowerField.getValue() >= upperField.getValue()) {
+                error = "Invalid truncation bound !";
+                return true;
+            } else if (getValue(OFFSET) > -1 && lowerField.getValue() < getValue(OFFSET)) {
+                error = "Offset cannot be smaller than truncation lower !";
+                return true;
+            } else {
+                error = "";
+                return false;
+            }
+        }
+        error = "";
         return false;
     }
+
+    public String error = "";
 
     interface Listener {
         void optionsPanelChanged();
@@ -103,7 +127,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 for (Listener listener : listeners) {
                     listener.optionsPanelChanged();
                 }
-      }
+            }
         });
 
         KeyListener listener = new KeyAdapter() {
@@ -218,6 +242,12 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         return ((RealNumberField) argumentFields.get(i)).getValue();
     }
 
+    protected double getValue(String fieldName) {
+        int i = argumentNames.indexOf(fieldName);
+        if (i < 0) return -1; // has no offset field
+        return ((RealNumberField) argumentFields.get(i)).getValue();
+    }
+
     protected String getArguName(int i) {
         return argumentNames.get(i);
     }
@@ -328,6 +358,10 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
     abstract void getArguments(Parameter parameter);
 
+    abstract boolean isInputValid();
+
+    private static final String OFFSET = "Offset";
+
     static final PriorOptionsPanel UNIFORM = new PriorOptionsPanel(false) {
         void setup() {
             addField("Upper", 1.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
@@ -357,13 +391,18 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.uniformUpper = getValue(0);
             parameter.uniformLower = getValue(1);
         }
+
+        @Override
+        boolean isInputValid() {
+            return getValue(0) > getValue(1);
+        }
     };
 
     static final PriorOptionsPanel EXPONENTIAL = new PriorOptionsPanel(true) {
 
         void setup() {
             addField("Mean", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -383,6 +422,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         public void getArguments(Parameter parameter) {
             parameter.mean = getValue(0);
             parameter.offset = getValue(1);
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
         }
     };
 
@@ -409,6 +453,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.mean = getValue(0);
             parameter.scale = getValue(1);
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     };
 
     static final PriorOptionsPanel NORMAL = new PriorOptionsPanel(true) {
@@ -434,6 +483,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.mean = getValue(0);
             parameter.stdev = getValue(1);
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     };
 
     static final PriorOptionsPanel LOG_NORMAL = new PriorOptionsPanel(true) {
@@ -447,7 +501,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
                 addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
             addField("Log(Stdev)", 1.0, 0.0, Double.POSITIVE_INFINITY);
-            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
             addCheckBox("Mean In Real Space", meanInRealSpaceCheck);
 
             meanInRealSpaceCheck.addItemListener(new ItemListener() {
@@ -501,6 +555,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.setMeanInRealSpace(meanInRealSpaceCheck.isSelected());
         }
 
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
+
     };
 
     static final PriorOptionsPanel GAMMA = new PriorOptionsPanel(true) {
@@ -508,7 +567,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         void setup() {
             addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
             addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -531,6 +590,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     };
 
     static final PriorOptionsPanel INVERSE_GAMMA = new PriorOptionsPanel(true) {
@@ -538,7 +602,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         void setup() {
             addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
             addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -560,6 +624,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.shape = getValue(0);
             parameter.scale = getValue(1);
             parameter.offset = getValue(2);
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
         }
     };
 
@@ -591,7 +660,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         void setup() {
             addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
             addField("ShapeB", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Offset", 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
         public Distribution getDistribution() {
@@ -614,6 +683,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
             parameter.shapeB = getValue(1);
             parameter.offset = getValue(2);
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     };
 
     static final PriorOptionsPanel CTMC_RATE_REFERENCE = new PriorOptionsPanel(false) {
@@ -630,6 +704,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
 
         public void getArguments(Parameter parameter) {
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     };
 
     static final PriorOptionsPanel ONE_OVER_X = new PriorOptionsPanel(false) {
@@ -645,6 +724,11 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         }
 
         public void getArguments(Parameter parameter) {
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
         }
     };
 

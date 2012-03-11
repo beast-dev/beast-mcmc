@@ -118,6 +118,8 @@ public class LogNormalDistribution implements Distribution {
      * @return pdf at x
      */
     public static double pdf(double x, double M, double S) {
+        if (x <= 0) return 0; // no density for x<=0
+
         return NormalDistribution.pdf(Math.log(x), M, S) / x;
     }
 
@@ -130,6 +132,8 @@ public class LogNormalDistribution implements Distribution {
      * @return log pdf at x
      */
     public static double logPdf(double x, double M, double S) {
+        if (x < 0) return Double.NEGATIVE_INFINITY; // no density for x<0
+
         return NormalDistribution.logPdf(Math.log(x), M, S) - Math.log(x);
     }
 
@@ -142,6 +146,8 @@ public class LogNormalDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double M, double S) {
+        if (x < 0) return 0; // no density for x<0
+
         return NormalDistribution.cdf(Math.log(x), M, S, false);
         //return NormalDistribution.cdf(Math.log(x), M, S);
     }

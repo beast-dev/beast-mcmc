@@ -27,8 +27,8 @@ import jam.panels.OptionsPanel;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.awt.event.*;
-import java.util.EnumSet;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,7 +51,7 @@ public class HierarchicalPriorDialog {
     private JTextField nameField;
     private JPanel panel;
 
-//    private final SpecialNumberPanel specialNumberPanel;
+    //    private final SpecialNumberPanel specialNumberPanel;
     private JChart[] chart;
     private JPanel[] quantilePanel;
     private JTextArea[] quantileText;
@@ -172,18 +172,18 @@ public class HierarchicalPriorDialog {
 
         priorCombo.setSelectedItem(priorType);
 
-            double lower = Double.NEGATIVE_INFINITY;
-            double upper = Double.POSITIVE_INFINITY;
+        double lower = Double.NEGATIVE_INFINITY;
+        double upper = Double.POSITIVE_INFINITY;
 
-            if (parameter.isZeroOne) {
-                lower = 0.0;
-                upper = 1.0;
-            } else if (parameter.isNonNegative) {
-                lower = 0.0;
-            }
+        if (parameter.isZeroOne) {
+            lower = 0.0;
+            upper = 1.0;
+        } else if (parameter.isNonNegative) {
+            lower = 0.0;
+        }
 
-            initialField.setRange(lower, upper);
-            initialField.setValue(parameter.initial);
+        initialField.setRange(lower, upper);
+        initialField.setValue(parameter.initial);
 
         panel = new JPanel(new GridBagLayout());
 
@@ -407,6 +407,11 @@ public class HierarchicalPriorDialog {
             hpmMeanMean = getValue(0);
             hpmMeanStDev = getValue(1);
         }
+
+        @Override
+        boolean isInputValid() {
+            return true;
+        }
     }
 
     class GammaOptionsPanel extends PriorOptionsPanel {
@@ -436,6 +441,11 @@ public class HierarchicalPriorDialog {
             hpmPrecInitial = getInitialField().getValue();
             parameter.shape = hpmPrecShape = getValue(0);
             parameter.scale = hpmPrecScale = getValue(1);
+        }
+
+        @Override
+        boolean isInputValid() {
+            return true;
         }
     }
 }

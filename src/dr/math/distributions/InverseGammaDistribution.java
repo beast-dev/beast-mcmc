@@ -122,7 +122,7 @@ public class InverseGammaDistribution implements Distribution {
      */
     static double pdf(double x, double shape, double scale, double factor) {
         if (x <= 0)
-            throw new IllegalArgumentException();
+            return 0.0;
 
         final double a = Math.exp(-scale/x) / Math.pow(x, shape+1);
 
@@ -138,7 +138,6 @@ public class InverseGammaDistribution implements Distribution {
      * @return log pdf value
      */
     static double logPdf(double x, double shape, double scale, double factor) {
-
         if (x <= 0)
             return Double.NEGATIVE_INFINITY;
 
@@ -154,7 +153,7 @@ public class InverseGammaDistribution implements Distribution {
      * @return cdf value
      */
     public static double cdf(double x, double shape, double scale) {        
-        if (x == 0.0) {
+        if (x <= 0.0 || shape <= 0.0) {
             return 0.0;
         }
         return GammaFunction.incompleteGammaQ(shape, scale/x);

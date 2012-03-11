@@ -403,7 +403,7 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
         do {
             result = priorDialog.showDialog();
 
-            isInvalid = priorDialog.hasInvalidInput();
+            isInvalid = priorDialog.hasInvalidInput(true);
         } while (result == JOptionPane.OK_OPTION && isInvalid);
 
         if (result == JOptionPane.OK_OPTION) {

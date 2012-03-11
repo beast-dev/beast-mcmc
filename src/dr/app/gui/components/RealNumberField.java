@@ -49,13 +49,14 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public RealNumberField(double min, double max) {
         this(min, max, "Value");
+        this.addFocusListener(this);
     }
 
-    public RealNumberField(double min, double max, String label) {
+    public RealNumberField(double min, double max, String label) { // no FocusListener
         this(min, true, max, true, label);
     }
 
-    public RealNumberField(double min, boolean includeMin, double max, boolean includeMax, String label) {
+    public RealNumberField(double min, boolean includeMin, double max, boolean includeMax, String label) { // no FocusListener
         super();
         this.min = min;
         this.max = max;
@@ -63,7 +64,6 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         this.includeMax = includeMax;
         setLabel(label);
         range_check = true;
-        this.addFocusListener(this);
     }
 
     public void focusGained(FocusEvent evt) {
@@ -130,7 +130,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         setText(obj.toString()); // where used?
     }
 
-    public void displayErrorMessage() {
+    public String getErrorMessage() {
         String message = "";
         if (min == Double.MIN_VALUE) {
             message = " greater than 0";
@@ -146,8 +146,12 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
             message = " less than " + max;
         }
 
+        return label + " must be" + message;
+    }
+
+    private void displayErrorMessage() {
         JOptionPane.showMessageDialog(null,
-                label + " must be" + message, "Invalid value", JOptionPane.ERROR_MESSAGE);
+                getErrorMessage(), "Invalid value", JOptionPane.ERROR_MESSAGE);
     }
 
     public void setRange(double min, double max) {

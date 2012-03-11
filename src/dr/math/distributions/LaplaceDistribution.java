@@ -106,6 +106,20 @@ public class LaplaceDistribution implements Distribution {
     }
 
     public UnivariateFunction getProbabilityDensityFunction() {
-        throw new UnsupportedOperationException();
+        return pdfFunction;
     }
+
+    private final UnivariateFunction pdfFunction = new UnivariateFunction() {
+        public final double evaluate(double x) {
+            return pdf(x);
+        }
+
+        public final double getLowerBound() {
+            return Double.NEGATIVE_INFINITY;
+        }
+
+        public final double getUpperBound() {
+            return Double.POSITIVE_INFINITY;
+        }
+    };
 }

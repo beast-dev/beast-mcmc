@@ -321,6 +321,10 @@ public class BEAUTiImporter {
         }
     }
 
+    private boolean isMissingValue(String value) {
+        return (value.equals("?") || value.equals("NA") || value.length() == 0);
+    }
+
     public void importTraits(final File file) throws Exception {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
         Taxa taxa = options.taxonList;
@@ -336,17 +340,33 @@ public class BEAUTiImporter {
             String traitName = traitNames[i];
 
             String[] values = dataTable.getColumn(i);
-            final Class c = Utils.detectType(values[0]);
+            Class c = null;
+            if (!isMissingValue(values[0])) {
+                c = Utils.detectType(values[0]);
+            }
             for (int j = 1; j < values.length; j++) {
-                final Class c1 = Utils.detectType(values[j]);
-                if (c != c1 && !warningGiven) {
-                    JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
-                            "Incompatible values", JOptionPane.WARNING_MESSAGE);
-                    warningGiven = true;
+                if (!isMissingValue(values[j])) {
+                    if (c == null) {
+                        c = Utils.detectType(values[j]);
+                    } else {
+                        Class c1 = Utils.detectType(values[j]);
+                        if (c == Integer.class && c1 == Double.class) {
+                            // change the type to double
+                            c = Double.class;
+                        }
+
+                        if (c1 != c &&
+                                !(c == Double.class && c1 == Integer.class) &&
+                                !warningGiven ) {
+                            JOptionPane.showMessageDialog(frame, "Not all values of same type for trait" + traitName,
+                                    "Incompatible values", JOptionPane.WARNING_MESSAGE);
+                            warningGiven = true;
+                        }
+                    }
                 }
             }
 
-            TraitData.TraitType t = (c == Boolean.class || c == String.class) ? TraitData.TraitType.DISCRETE :
+            TraitData.TraitType t = (c == Boolean.class || c == String.class || c == null) ? TraitData.TraitType.DISCRETE :
                     (c == Integer.class) ? TraitData.TraitType.INTEGER : TraitData.TraitType.CONTINUOUS;
             TraitData newTrait = new TraitData(options, traitName, file.getName(), t);
 
@@ -365,7 +385,11 @@ public class BEAUTiImporter {
                     taxon = new Taxon(taxonName);
                     taxa.addTaxon(taxon);
                 }
-                taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                if (!isMissingValue(values[j])) {
+                    taxon.setAttribute(traitName, Utils.constructFromString(c, values[j]));
+                } else {
+                    taxon.setAttribute(traitName, "?");
+                }
                 j++;
             }
         }

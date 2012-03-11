@@ -28,7 +28,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
 
         switch (point) {
-            case IN_TAXON:
+//            case IN_TAXON:
             case AFTER_SITE_MODEL:
             case AFTER_TREE_LIKELIHOOD:
             case IN_OPERATORS:
@@ -50,10 +50,11 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 .getComponentOptions(ContinuousComponentOptions.class);
 
         switch (point) {
-            case IN_TAXON:
-                Taxon taxon = (Taxon)item;
-                writeTaxonTraits(taxon, writer);
-                break;
+//          Don't need this because all traits are written for all taxa:
+//            case IN_TAXON:
+//                Taxon taxon = (Taxon)item;
+//                writeTaxonTraits(taxon, writer);
+//                break;
             case AFTER_SITE_MODEL:
                 writeMultivariateDiffusionModels(writer, component);
                 break;

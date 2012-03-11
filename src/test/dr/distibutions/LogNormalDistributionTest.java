@@ -31,6 +31,7 @@ public class LogNormalDistributionTest extends TestCase {
             logNormal.setS(S);
 
             double pdf = 1.0 / (x * S * Math.sqrt(2 * Math.PI)) * Math.exp(-Math.pow(Math.log(x) - M, 2) / (2 * S * S));
+            if (x <= 0) pdf = 0; // see logNormal.pdf(x)
 
             //System.out.println("Testing logNormal[M=" + M + " S=" + S + "].pdf(" + x + ")");
 

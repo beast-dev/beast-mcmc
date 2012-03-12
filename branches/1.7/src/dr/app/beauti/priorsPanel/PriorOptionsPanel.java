@@ -401,8 +401,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel EXPONENTIAL = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Mean", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
+            addField("Mean", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField(OFFSET, 0.0, 0.0, true, Double.POSITIVE_INFINITY, true);
         }
 
         public Distribution getDistribution() {
@@ -433,7 +433,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel LAPLACE = new PriorOptionsPanel(true) {
         void setup() {
             addField("Mean", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Scale", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
         }
 
         public Distribution getDistribution() {
@@ -496,7 +496,7 @@ abstract class PriorOptionsPanel extends OptionsPanel {
         void setup() {
             meanInRealSpaceCheck = new JCheckBox();
             if (meanInRealSpaceCheck.isSelected()) {
-                addField("Mean", 0.01, 0.0, Double.POSITIVE_INFINITY);
+                addField("Mean", 0.01, 0.0, false, Double.POSITIVE_INFINITY, true);
             } else {
                 addField("Log(Mean)", 0.0, Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
             }
@@ -565,8 +565,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel GAMMA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Shape", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField("Scale", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
             addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
@@ -600,8 +600,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel INVERSE_GAMMA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("Scale", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Shape", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField("Scale", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
             addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 
@@ -658,8 +658,8 @@ abstract class PriorOptionsPanel extends OptionsPanel {
     static final PriorOptionsPanel BETA = new PriorOptionsPanel(true) {
 
         void setup() {
-            addField("Shape", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
-            addField("ShapeB", 1.0, Double.MIN_VALUE, Double.POSITIVE_INFINITY);
+            addField("Shape", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
+            addField("ShapeB", 1.0, 0.0, false, Double.POSITIVE_INFINITY, true);
             addField(OFFSET, 0.0, 0.0, Double.POSITIVE_INFINITY);
         }
 

@@ -32,7 +32,9 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     public AntigenicDistancePrior(
             MatrixParameter locationsParameter,
-            Parameter datesParameter
+            Parameter datesParameter,
+            Parameter regressionSlopeParameter,
+            Parameter regressionPrecisionParameter
     ) {
 
         super(ANTIGENIC_DISTANCE_PRIOR);
@@ -44,6 +46,14 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         addVariable(this.datesParameter);
 
         dimension = locationsParameter.getColumnDimension();
+
+        this.regressionSlopeParameter = regressionSlopeParameter;
+        addVariable(regressionSlopeParameter);
+        regressionSlopeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+
+        this.regressionPrecisionParameter = regressionPrecisionParameter;
+        addVariable(regressionPrecisionParameter);
+        regressionPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
         likelihoodKnown = false;
     }
@@ -121,6 +131,8 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     private final int dimension;
     private final Parameter datesParameter;
     private final MatrixParameter locationsParameter;
+    private final Parameter regressionSlopeParameter;
+    private final Parameter regressionPrecisionParameter;
 
     private double logLikelihood = 0.0;
     private boolean likelihoodKnown = false;
@@ -130,8 +142,11 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     // **************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
         public final static String LOCATIONS = "locations";
         public final static String DATES = "dates";
+        public final static String REGRESSIONSLOPE = "regressionSlope";
+        public final static String REGRESSIONPRECISION = "regressionPrecision";
 
         public String getParserName() {
             return ANTIGENIC_DISTANCE_PRIOR;
@@ -140,12 +155,15 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
-
             Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
+            Parameter regressionSlopeParameter = (Parameter) xo.getElementFirstChild(REGRESSIONSLOPE);
+            Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
 
             AntigenicDistancePrior AGDP = new AntigenicDistancePrior(
-                    locationsParameter,
-                    datesParameter);
+                locationsParameter,
+                datesParameter,
+                regressionSlopeParameter,
+                regressionPrecisionParameter);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -167,6 +185,8 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class),
+                new ElementRule(REGRESSIONSLOPE, Parameter.class),
+                new ElementRule(REGRESSIONPRECISION, Parameter.class)
         };
 
         public Class getReturnType() {

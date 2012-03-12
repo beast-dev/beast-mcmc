@@ -544,7 +544,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
             Parameter datesParameter = null;
-            if (xo.hasChildNamed(STRAINS)) {
+            if (xo.hasChildNamed(DATES)) {
                 datesParameter = (Parameter) xo.getElementFirstChild(DATES);
             }
 

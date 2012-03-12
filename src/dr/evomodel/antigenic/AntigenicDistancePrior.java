@@ -6,6 +6,7 @@ import dr.evolution.util.TaxonList;
 import dr.inference.model.*;
 import dr.math.MathUtils;
 import dr.math.distributions.NormalDistribution;
+import dr.stats.Regression;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
@@ -103,6 +104,17 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
         logLikelihood = 0.0;
 
+        double slope = regressionSlopeParameter.getParameterValue(0);
+        double stdev = 1.0 / Math.sqrt(regressionPrecisionParameter.getParameterValue(0));
+
+        for (int i = 0; i < locationsParameter.getRowDimension(); i++) {
+            for (int j = i + 1; j < locationsParameter.getRowDimension(); j++) {
+                double distance = computeDistance(i, j);
+                double timeDiff = Math.abs(datesParameter.getParameterValue(i) - datesParameter.getParameterValue(j));
+
+                logLikelihood += computeDateLikelihood(distance, timeDiff, slope, stdev);
+            }
+        }
         likelihoodKnown = true;
 
         return logLikelihood;
@@ -123,6 +135,14 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         return Math.sqrt(sum);
     }
 
+    private double computeDateLikelihood(double distance, double timeDiff, double slope, double stdev) {
+        double mean = slope * timeDiff;
+        double lnL = Math.log(NormalDistribution.pdf(distance, mean, stdev));
+        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+    }
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
@@ -160,10 +180,10 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
             Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
 
             AntigenicDistancePrior AGDP = new AntigenicDistancePrior(
-                locationsParameter,
-                datesParameter,
-                regressionSlopeParameter,
-                regressionPrecisionParameter);
+                    locationsParameter,
+                    datesParameter,
+                    regressionSlopeParameter,
+                    regressionPrecisionParameter);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 

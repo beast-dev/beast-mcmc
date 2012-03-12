@@ -49,9 +49,6 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         dimension = locationsParameter.getColumnDimension();
         count = locationsParameter.getRowDimension();
 
-        System.err.println("Location count " + count);
-        System.err.println("Date count " + datesParameter.getDimension());
-
         this.regressionSlopeParameter = regressionSlopeParameter;
         addVariable(regressionSlopeParameter);
         regressionSlopeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
@@ -62,13 +59,13 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
         likelihoodKnown = false;
 
-//        earliestDate = datesParameter.getParameterValue(0);
-//        for (int i=0; i<count; i++) {
-//            double date = datesParameter.getParameterValue(i);
-//            if (earliestDate > date) {
-//                earliestDate = date;
-//            }
-//        }
+        earliestDate = datesParameter.getParameterValue(0);
+        for (int i=0; i<count; i++) {
+            double date = datesParameter.getParameterValue(i);
+            if (earliestDate > date) {
+                earliestDate = date;
+            }
+        }
 
     }
 
@@ -79,19 +76,20 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == locationsParameter) {
-            likelihoodKnown = false;
-        } else if (variable == datesParameter) {
+        if (variable == locationsParameter || variable == datesParameter
+            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
             likelihoodKnown = false;
         }
     }
 
     @Override
     protected void storeState() {
+        storedLogLikelihood = logLikelihood;
     }
 
     @Override
     protected void restoreState() {
+        logLikelihood = storedLogLikelihood;
         likelihoodKnown = false;
     }
 
@@ -107,9 +105,8 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     @Override
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
-  //          logLikelihood = computeLogLikelihood();
+            logLikelihood = computeLogLikelihood();
         }
-        logLikelihood = 0.0;
         return logLikelihood;
     }
 
@@ -177,6 +174,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     private double earliestDate;
     private double logLikelihood = 0.0;
+    private double storedLogLikelihood = 0.0;
     private boolean likelihoodKnown = false;
 
     // **************************************************************

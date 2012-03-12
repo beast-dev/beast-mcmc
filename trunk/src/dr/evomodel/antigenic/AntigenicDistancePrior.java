@@ -47,6 +47,10 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         addVariable(this.datesParameter);
 
         dimension = locationsParameter.getColumnDimension();
+        count = locationsParameter.getRowDimension();
+
+        System.err.println("Location count " + count);
+        System.err.println("Date count " + datesParameter.getDimension());
 
         this.regressionSlopeParameter = regressionSlopeParameter;
         addVariable(regressionSlopeParameter);
@@ -57,6 +61,15 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         regressionPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
         likelihoodKnown = false;
+
+//        earliestDate = datesParameter.getParameterValue(0);
+//        for (int i=0; i<count; i++) {
+//            double date = datesParameter.getParameterValue(i);
+//            if (earliestDate > date) {
+//                earliestDate = date;
+//            }
+//        }
+
     }
 
 
@@ -94,19 +107,45 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     @Override
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
-            logLikelihood = computeLogLikelihood();
+  //          logLikelihood = computeLogLikelihood();
         }
-
+        logLikelihood = 0.0;
         return logLikelihood;
     }
 
     private double computeLogLikelihood() {
 
-        logLikelihood = 0.0;
-
+        double precision = regressionPrecisionParameter.getParameterValue(0);
+        double logLikelihood = (0.5 * Math.log(precision) * count) - (0.5 * precision * sumOfSquaredResiduals());
         likelihoodKnown = true;
-
         return logLikelihood;
+
+    }
+
+    // go through each location and compute sum of squared residuals from regression line
+    protected double sumOfSquaredResiduals() {
+
+        double ssr = 0.0;
+
+        for (int i=0; i < count; i++) {
+
+            Parameter loc = locationsParameter.getParameter(i);
+            double date = datesParameter.getParameterValue(i);
+            double beta = regressionSlopeParameter.getParameterValue(0);
+            double x = loc.getParameterValue(0);
+
+            double y = (date-earliestDate) * beta;
+
+            ssr += (x - y) * (x - y);
+
+            for (int j=1; j < dimension; j++) {
+                x = loc.getParameterValue(j);
+                ssr += x*x;
+            }
+
+        }
+
+        return ssr;
     }
 
     protected double computeDistance(int rowStrain, int columnStrain) {
@@ -130,11 +169,13 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     }
 
     private final int dimension;
+    private final int count;
     private final Parameter datesParameter;
     private final MatrixParameter locationsParameter;
     private final Parameter regressionSlopeParameter;
     private final Parameter regressionPrecisionParameter;
 
+    private double earliestDate;
     private double logLikelihood = 0.0;
     private boolean likelihoodKnown = false;
 

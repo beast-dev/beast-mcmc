@@ -73,7 +73,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     strainNames.add(values[SERUM_STRAIN]);
 
                     Double date = Double.parseDouble(values[VIRUS_DATE]);
-                    strainDateMap.put(values[VIRUS_STRAIN], date);
+                    strainDateMap.put(values[SERUM_STRAIN], date);
 
                     columnStrain = strainNames.size() - 1;
                 }
@@ -186,9 +186,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (datesParameter != null) {
             // this parameter is not used in this class but is setup to be used in other classes
             datesParameter.setDimension(strainNames.size());
-            ((Parameter.Abstract)datesParameter).setDimensionNames((String[])strainNames.toArray());
+            String[] labelArray = new String[strainNames.size()];
+            strainNames.toArray(labelArray);
+            datesParameter.setDimensionNames(labelArray);
             for (int i = 0; i < strainNames.size(); i++) {
-                double date = strainDateMap.get(strainNames.get(i));
+                Double date = strainDateMap.get(strainNames.get(i));
+                if (date == null) {
+                    throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
+                }
                 datesParameter.setParameterValue(i, date);
             }
         }
@@ -203,7 +208,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         addVariable(this.columnEffectsParameter);
         String[] labelArray = new String[columnLabels.size()];
         columnLabels.toArray(labelArray);
-        ((Parameter.Abstract)this.columnEffectsParameter).setDimensionNames(labelArray);
+        this.columnEffectsParameter.setDimensionNames(labelArray);
         for (int i = 0; i < maxColumnTitre.length; i++) {
             this.columnEffectsParameter.setParameterValueQuietly(i, maxColumnTitre[i]);
         }
@@ -216,9 +221,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         this.rowEffectsParameter.setDimension(rowLabels.size());
         addVariable(this.rowEffectsParameter);
-         labelArray = new String[rowLabels.size()];
+        labelArray = new String[rowLabels.size()];
         rowLabels.toArray(labelArray);
-        ((Parameter.Abstract)this.rowEffectsParameter).setDimensionNames(labelArray);
+        this.rowEffectsParameter.setDimensionNames(labelArray);
         for (int i = 0; i < maxRowTitre.length; i++) {
             this.rowEffectsParameter.setParameterValueQuietly(i, maxRowTitre[i]);
         }
@@ -453,7 +458,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     public void makeDirty() {
         likelihoodKnown = false;
         setLocationChangedFlags(true);
-   }
+    }
 
     private class Measurement {
         private Measurement(final int column, final int columnStrain, final int row, final int rowStrain, final MeasurementType type, final double minTitre, final double maxTitre) {

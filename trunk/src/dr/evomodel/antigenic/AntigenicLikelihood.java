@@ -236,19 +236,28 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        // some random initial locations
+        // initial locations
+
+        double earliestDate = datesParameter.getParameterValue(0);
+        for (int i=0; i<datesParameter.getDimension(); i++) {
+            double date = datesParameter.getParameterValue(i);
+            if (earliestDate > date) {
+                earliestDate = date;
+            }
+        }
+
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-            for (int j = 0; j < mdsDimension; j++) {
-                //   double r = MathUtils.nextGaussian();
-                double r = 0.0;
-                if (j == 0) {
-                    r = (double) i * 0.05;
-                }
-                else {
-                    r = MathUtils.nextGaussian();
-                }
+
+            String name = strainNames.get(i);
+            double date = (double) strainDateMap.get(strainNames.get(i));
+            double diff = (date-earliestDate);
+            locationsParameter.getParameter(i).setParameterValueQuietly(0, diff + MathUtils.nextGaussian());
+
+            for (int j = 1; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
             }
+
         }
 
         locationChanged = new boolean[this.locationsParameter.getRowDimension()];

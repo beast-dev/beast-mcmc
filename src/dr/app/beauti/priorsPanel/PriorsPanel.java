@@ -399,12 +399,9 @@ public class PriorsPanel extends BeautiPanel implements Exportable {
 
         priorDialog.setParameter(param);
 
-        boolean isInvalid;
         do {
             result = priorDialog.showDialog();
-
-            isInvalid = priorDialog.hasInvalidInput(true);
-        } while (result == JOptionPane.OK_OPTION && isInvalid);
+        } while (result == JOptionPane.OK_OPTION && priorDialog.hasInvalidInput(true));
 
         if (result == JOptionPane.OK_OPTION) {
             // move to individual Dialog, otherwise it will change if Cancel

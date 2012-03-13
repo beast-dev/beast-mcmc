@@ -107,25 +107,57 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 throw new IllegalArgumentException("Error reading data table: Unrecognized virus strain name, " + values[VIRUS_STRAIN] + ", in row " + (i+1));
             }
 
-
             double minTitre = Double.NaN;
-            if (values[MIN_TITRE].length() > 0) {
-                try {
-                    minTitre = Double.parseDouble(values[MIN_TITRE]);
-                } catch (NumberFormatException nfe) {
-                    // do nothing
+            try {
+                if (values[MIN_TITRE].length() > 0) {
+                    try {
+                        minTitre = Double.parseDouble(values[MIN_TITRE]);
+                    } catch (NumberFormatException nfe) {
+                        // do nothing
+                    }
                 }
+            } catch (ArrayIndexOutOfBoundsException e)  {
+                 // do nothing
             }
+
             double maxTitre = Double.NaN;
-            if (values[MAX_TITRE].length() > 0) {
+            try {
+                if (values[MAX_TITRE].length() > 0) {
+                    try {
+                        maxTitre = Double.parseDouble(values[MAX_TITRE]);
+                    } catch (NumberFormatException nfe) {
+                        // do nothing
+                    }
+                }
+            } catch (ArrayIndexOutOfBoundsException e)  {
+                 // do nothing
+            }
+
+            // use this if minTitre and maxTitre are not defined in HI file
+            double rawTitre = Double.NaN;
+            if (values[RAW_TITRE].length() > 0) {
                 try {
-                    maxTitre = Double.parseDouble(values[MAX_TITRE]);
+                    rawTitre = Double.parseDouble(values[RAW_TITRE]);
+                    maxTitre = rawTitre;
+                    minTitre = rawTitre;
                 } catch (NumberFormatException nfe) {
-                    // do nothing
+                    // check if threshold below
+                    if (values[RAW_TITRE].contains("<")) {
+                        rawTitre = Double.parseDouble(values[RAW_TITRE].replace("<",""));
+                        maxTitre = rawTitre;
+                        minTitre = 0.0;
+                    }
+                    // check if threshold above
+                    if (values[RAW_TITRE].contains(">")) {
+                        rawTitre = Double.parseDouble(values[RAW_TITRE].replace(">",""));
+                        minTitre = rawTitre;
+                        maxTitre = Double.NaN;
+                    }
                 }
             }
 
             MeasurementType type = MeasurementType.INTERVAL;
+
             if (minTitre == maxTitre) {
                 type = MeasurementType.POINT;
             }
@@ -134,7 +166,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 if (Double.isNaN(maxTitre)) {
                     throw new IllegalArgumentException("Error in measurement: both min and max titre are at bounds in row " + (i+1));
                 }
-
                 type = MeasurementType.UPPER_BOUND;
             } else if (Double.isNaN(maxTitre)) {
                 type = MeasurementType.LOWER_BOUND;

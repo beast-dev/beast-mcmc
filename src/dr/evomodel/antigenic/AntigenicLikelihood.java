@@ -444,7 +444,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         double rowEffect = rowEffectsParameter.getParameterValue(row);
         double columnEffect = columnEffectsParameter.getParameterValue(column);
 
-        double t = ((rowEffect + columnEffect) * 0.5) - titre;
+        //double t = ((rowEffect + columnEffect) * 0.5) - titre;
+        double t = columnEffect - titre;
         return (t - mean) / sd;
     }
 
@@ -463,7 +464,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private double computeMeasurementLikelihood(double titre) {
-        double lnL = Math.log(NormalDistribution.pdf(titre, 0.0, 1.0));
+        double lnL = NormalDistribution.logPdf(titre, 0.0, 1.0);
         if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }

@@ -135,23 +135,25 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             // use this if minTitre and maxTitre are not defined in HI file
             double rawTitre = Double.NaN;
-            if (values[RAW_TITRE].length() > 0) {
-                try {
-                    rawTitre = Double.parseDouble(values[RAW_TITRE]);
-                    maxTitre = rawTitre;
-                    minTitre = rawTitre;
-                } catch (NumberFormatException nfe) {
-                    // check if threshold below
-                    if (values[RAW_TITRE].contains("<")) {
-                        rawTitre = Double.parseDouble(values[RAW_TITRE].replace("<",""));
+            if (Double.isNaN(minTitre) && Double.isNaN(maxTitre)) {
+                if (values[RAW_TITRE].length() > 0) {
+                    try {
+                        rawTitre = Double.parseDouble(values[RAW_TITRE]);
                         maxTitre = rawTitre;
-                        minTitre = 0.0;
-                    }
-                    // check if threshold above
-                    if (values[RAW_TITRE].contains(">")) {
-                        rawTitre = Double.parseDouble(values[RAW_TITRE].replace(">",""));
                         minTitre = rawTitre;
-                        maxTitre = Double.NaN;
+                    } catch (NumberFormatException nfe) {
+                        // check if threshold below
+                        if (values[RAW_TITRE].contains("<")) {
+                            rawTitre = Double.parseDouble(values[RAW_TITRE].replace("<",""));
+                            maxTitre = rawTitre;
+                            minTitre = 0.0;
+                        }
+                        // check if threshold above
+                        if (values[RAW_TITRE].contains(">")) {
+                            rawTitre = Double.parseDouble(values[RAW_TITRE].replace(">",""));
+                            minTitre = rawTitre;
+                            maxTitre = Double.NaN;
+                        }
                     }
                 }
             }

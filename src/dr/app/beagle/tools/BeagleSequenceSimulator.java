@@ -3,9 +3,8 @@ package dr.app.beagle.tools;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
-import dr.evolution.datatype.Codons;
-import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -13,14 +12,18 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.inference.markovjumps.StateHistory;
+import dr.evomodel.substmodel.SubstitutionEpochModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
-@SuppressWarnings("serial")
-public class BeagleSequenceSimulator extends SimpleAlignment {
+/**
+ * Class for performing random sequence generation for a given site model.
+ * Sequences for the leave nodes in the tree are returned as an alignment.
+ */
 
-	/** number of replications **/
+public class BeagleSequenceSimulator {
+
+	/** nr of samples to generate **/
 	private int nReplications;
 	/** tree used for generating samples **/
 	private Tree tree;
@@ -29,12 +32,15 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 	/** branch rate model used for generating samples **/
 	private BranchRateModel branchRateModel;
 	/** nr of categories in site model **/
-	 int categoryCount;
+	private int categoryCount;
 	/** nr of states in site model **/
-	 int stateCount;
+	private int stateCount;
 
-	private boolean has_ancestralSequence = false;
+	private static boolean has_ancestralSequence = false;
 	private Sequence ancestralSequence;
+
+	/** an array used to transfer transition probabilities **/
+	private double[][] m_probabilities;
 
 	/**
 	 * Constructor
@@ -42,64 +48,56 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 	 * @param tree
 	 * @param siteModel
 	 * @param branchRateModel
-	 * @param nReplications: nr of sites to generate
+	 * @param sequenceLength: nr of sites to generate
 	 */
-	public BeagleSequenceSimulator(Tree tree, GammaSiteRateModel siteModel,
-			BranchRateModel branchRateModel, int nReplications) {
+	BeagleSequenceSimulator(Tree tree, GammaSiteRateModel siteModel,
+			BranchRateModel branchRateModel, int sequenceLength) {
 		this.tree = tree;
 		this.siteModel = siteModel;
 		this.branchRateModel = branchRateModel;
-		this.nReplications = nReplications;
-		stateCount = this.siteModel.getSubstitutionModel().getDataType().getStateCount();
-		categoryCount = this.siteModel.getCategoryCount();
+		this.nReplications = sequenceLength;
+		this.stateCount = siteModel.getSubstitutionModel().getDataType().getStateCount();
+		this.categoryCount = siteModel.getCategoryCount();
+		this.m_probabilities = new double[categoryCount][stateCount * stateCount];
 	} // END: Constructor
 
 	/**
 	 * Convert integer representation of sequence into a Sequence
 	 * 
-	 * @param seq integer representation of the sequence
-	 * @param node used to determine taxon for sequence
+	 * @param seq: integer representation of the sequence
+	 * @param node: used to determine taxon for sequence
 	 * @return Sequence
 	 */
 	Sequence intArray2Sequence(int[] seq, NodeRef node) {
-		String sSeq = "";
-		DataType dataType = siteModel.getSubstitutionModel().getDataType();
+		
+		StringBuilder sSeq = new StringBuilder();
+		
 		for (int i = 0; i < nReplications; i++) {
-			if (dataType instanceof Codons) {
-				String s = dataType.getTriplet(seq[i]);
-				sSeq += s;
-			} else {
-				String c = dataType.getCode(seq[i]);
-				sSeq += c;
-			}
+			sSeq.append(siteModel.getSubstitutionModel().getDataType().getCode(seq[i]));
 		}
-		return new Sequence(tree.getNodeTaxon(node), sSeq);
-	}// END: intArray2Sequence
+		
+		return new Sequence(tree.getNodeTaxon(node), sSeq.toString());
+	} // intArray2Sequence
 
 	void setAncestralSequence(Sequence seq) {
 		ancestralSequence = seq;
 		has_ancestralSequence = true;
-	}// END: setAncestralSequence
+	}
 
 	int[] sequence2intArray(Sequence seq) {
 
-		int array[] = new int[nReplications];
-
 		if (seq.getLength() != nReplications) {
-
 			throw new RuntimeException("Ancestral sequence length has "
 					+ seq.getLength() + " characters " + "expecting "
 					+ nReplications + " characters");
-
-		} else {
-
-			for (int i = 0; i < nReplications; i++) {
-				array[i] = siteModel.getSubstitutionModel().getDataType()
-						.getState(seq.getChar(i));
-			}
-
 		}
 
+		int array[] = new int[nReplications];
+		for (int i = 0; i < nReplications; i++) {
+			array[i] = siteModel.getSubstitutionModel().getDataType().getState(
+					seq.getChar(i));
+		}
+		
 		return array;
 	}// END: sequence2intArray
 
@@ -109,9 +107,7 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 	 * @return alignment containing randomly generated sequences for the nodes
 	 *         in the leaves of the tree
 	 */
-	public void simulate() {
-
-		double[] lambda = new double[stateCount * stateCount];
+	public Alignment simulate() {
 
 		NodeRef root = tree.getRoot();
 
@@ -136,51 +132,53 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 						.getFrequencies());
 			}
 
-		}
+		}// END: ancestral sequence check
 
-		this.setReportCountStatistics(true);
-		setDataType(siteModel.getSubstitutionModel().getDataType());
+		SimpleAlignment alignment = new SimpleAlignment();
+		alignment.setReportCountStatistics(true);
+		alignment.setDataType(siteModel.getSubstitutionModel().getDataType());
 
-		traverse(root, seq, category, this, lambda);
-	}//END: simulate
+		traverse(root, seq, category, alignment);
+
+		return alignment;
+	} // END: simulate
 
 	/**
 	 * recursively walk through the tree top down, and add sequence to alignment
 	 * whenever a leave node is reached.
 	 * 
-	 * @param node
-	 *            reference to the current node, for which we visit all children
-	 * @param parentSequence
-	 *            randomly generated sequence of the parent node
-	 * @param category
-	 *            array of categories for each of the sites
+	 * @param node: reference to the current node, for which we visit all children
+	 * @param parentSequence: randomly generated sequence of the parent node
+	 * @param category: array of categories for each of the sites
 	 * @param alignment
 	 */
-	private void traverse(NodeRef node, int[] parentSequence, int[] category,
-			SimpleAlignment alignment, double[] lambda) {
+	void traverse(NodeRef node, int[] parentSequence, int[] category,
+			SimpleAlignment alignment) {
 
 		for (int iChild = 0; iChild < tree.getChildCount(node); iChild++) {
 
 			NodeRef child = tree.getChild(node, iChild);
-			int[] seq = new int[nReplications];
-			StateHistory[] histories = new StateHistory[nReplications];
+			for (int i = 0; i < categoryCount; i++) {
+				getTransitionProbabilities(tree, child, i, m_probabilities[i]);
+			}
 
+			int[] seq = new int[nReplications];
+			double[] cProb = new double[stateCount];
 			for (int i = 0; i < nReplications; i++) {
-				histories[i] = simulateAlongBranch(tree, child, category[i],
-						parentSequence[i], lambda);
-				seq[i] = histories[i].getEndingState();
+				System.arraycopy(m_probabilities[category[i]],
+						parentSequence[i] * stateCount, cProb, 0, stateCount);
+				seq[i] = MathUtils.randomChoicePDF(cProb);
 			}
 
 			if (tree.getChildCount(child) == 0) {
 				alignment.addSequence(intArray2Sequence(seq, child));
 			}
-			traverse(tree.getChild(node, iChild), seq, category, alignment,
-					lambda);
+			traverse(tree.getChild(node, iChild), seq, category, alignment);
 		}
-	}// END: traverse
+	} // END: traverse
 
-	private StateHistory simulateAlongBranch(Tree tree, NodeRef node,
-			int rateCategory, int startingState, double[] lambda) {
+	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
+			double[] probs) {
 
 		NodeRef parent = tree.getParent(node);
 
@@ -197,18 +195,17 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 		double branchLength = siteModel.getRateForCategory(rateCategory)
 				* branchTime;
 
-		return StateHistory.simulateUnconditionalOnEndingState(0.0,
-				startingState, branchLength, lambda, stateCount);
-	}// END: simulateAlongBranch
+		// TODO Hack until SiteRateModel issue is resolved
+		if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+			((SubstitutionEpochModel) siteModel.getSubstitutionModel())
+					.getTransitionProbabilities(tree.getNodeHeight(node), tree
+							.getNodeHeight(parent), branchLength, probs);
+			return;
+		}
 
-	public String toString() {
-		StringBuffer sb = new StringBuffer();
-		// alignment output
-		sb.append("alignment\n");
-		sb.append(super.toString());
-		sb.append("\n");
-		return sb.toString();
-	}// END: toString
+		siteModel.getSubstitutionModel().getTransitionProbabilities(
+				branchLength, probs);
+	} // END: getTransitionProbabilities
 
 	/** generate simple site model, for testing purposes **/
 	static GammaSiteRateModel getDefaultGammaSiteRateModel() {
@@ -219,9 +216,9 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 		HKY hky = new HKY(kappa, fm);
 		GammaSiteRateModel gsrm = new GammaSiteRateModel(hky.getModelName());
 		gsrm.setSubstitutionModel(hky);
-		
+
 		return gsrm;
-	} // getDefaultSiteModel
+	} // END: getDefaultSiteModel
 
 	public static void main(String[] args) {
 
@@ -248,7 +245,7 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 			ancestralSequence.appendSequenceString("TCAGGTCAAG");
 			treeSimulator.setAncestralSequence(ancestralSequence);
 
-			System.out.println(treeSimulator.toString());
+			System.out.println(treeSimulator.simulate().toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -256,4 +253,4 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 
 	} // END: main
 
-}// END: class
+} // class SequenceSimulator

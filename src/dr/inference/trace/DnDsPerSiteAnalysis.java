@@ -1,6 +1,7 @@
 package dr.inference.trace;
 
 import dr.inferencexml.trace.MarginalLikelihoodAnalysisParser;
+import dr.stats.DiscreteStatistics;
 import dr.util.*;
 import dr.xml.*;
 
@@ -27,6 +28,7 @@ public class DnDsPerSiteAnalysis implements Citable {
     public static final String SEPARATOR_STRING = "separator";
     public static final String INCLUDE_SIMULATION_OUTCOME = "simulationOutcome";
     public static final String INCLUDE_HPD = "includeHPD";
+    public static final String INCLUDE_CPD = "includeCPD";
     public static final String SITE_SIMULATION = "siteSimulation";
 
     public DnDsPerSiteAnalysis(TraceList traceList) {
@@ -48,6 +50,10 @@ public class DnDsPerSiteAnalysis implements Citable {
 
     public void setIncludeHPD(boolean b) {
         format.includeHPD = b;
+    }
+
+    public void setIncludeCPD(boolean b) {
+        format.includeCPD = b;
     }
 
     public void setIncludeSignificanceLevel(boolean b) {
@@ -97,17 +103,23 @@ public class DnDsPerSiteAnalysis implements Citable {
         sb.append(numberFormatter.formatToFieldWidth(Integer.toString(index + 1), firstField));
 
         double[] hpd = new double[2];
+        double[] cpd = new double[2];
+
         if (format.proportion == 0.95){
             hpd[0] = distribution.getLowerHPD();
             hpd[1] = distribution.getUpperHPD();
-        // this is weird, yes. But we used these 'HPD's to obtain the ROC curves for different cut-offs
+            cpd[0] = distribution.getLowerCPD();
+            cpd[1] = distribution.getUpperCPD();
+            // this is weird, yes. But we used these 'HPD's/CPDs to obtain the ROC curves for different cut-offs
         }  else if (format.proportion >= 1.0) {
-            hpd[0] = distribution.getMinimum() - (distribution.getMinimum()*(format.proportion - 1.0));
-            hpd[1] = distribution.getMaximum() + (distribution.getMaximum()*(format.proportion - 1.0));
-            System.out.println("hpd = "+hpd[0]+" - "+hpd[1]);
+            hpd[0] = cpd[0] = distribution.getMinimum() - (distribution.getMinimum()*(format.proportion - 1.0));
+            hpd[1] = cpd[1] = distribution.getMaximum() + (distribution.getMaximum()*(format.proportion - 1.0));
         } else {
 //                distribution does not allow to specify proportion
-            hpd = getHPDInterval(format.proportion,traceList.getValues(index));
+            hpd = getCustomHPDInterval(format.proportion,traceList.getValues(index));
+            double[] proportions = new double[]{((1.0-format.proportion)/2.0),(format.proportion+((1.0-format.proportion)/2.0))};
+            cpd = getCustomCPDInterval(proportions,traceList.getValues(index));
+
 //                    System.out.println("HPD proportion is "+format.proportion);
         }
 
@@ -121,16 +133,34 @@ public class DnDsPerSiteAnalysis implements Citable {
             sb.append(format.separator);
             sb.append(numberFormatter.format(hpd[1]));
         }
+        if (format.includeCPD) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.format(cpd[0]));
+            sb.append(format.separator);
+            sb.append(numberFormatter.format(cpd[1]));
+        }
         if (format.includeSignificanceLevel || format.includeSignificantSymbol || format.includeSiteClassification || format.includeSimulationOutcome) {
             boolean isSignificant = false;
             String classification = "0";
             String level;
-            if (format.test == SignificanceTest.NOT_EQUAL) {
+            if (format.test == SignificanceTest.NOT_EQUAL_HPD) {
                 if (hpd[0] < format.cutoff && hpd[1] < format.cutoff) {
                     level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "-";
                 } else if (hpd[0] > format.cutoff && hpd[1] > format.cutoff) {
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
+                    isSignificant = true;
+                    classification = "+";
+                } else {
+                    level = numberFormatter.formatToFieldWidth("<="+format.proportion, fieldWidth);
+                }
+            } else if(format.test == SignificanceTest.NOT_EQUAL_CPD) {
+                if (cpd[0] < format.cutoff && cpd[1] < format.cutoff) {
+                    level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
+                    isSignificant = true;
+                    classification = "-";
+                } else if (cpd[0] > format.cutoff && cpd[1] > format.cutoff) {
                     level = numberFormatter.formatToFieldWidth(">"+format.proportion, fieldWidth);
                     isSignificant = true;
                     classification = "+";
@@ -231,9 +261,16 @@ public class DnDsPerSiteAnalysis implements Citable {
 
         if (format.includeHPD) {
             sb.append(format.separator);
-            sb.append(numberFormatter.formatToFieldWidth("Lower", fieldWidth));
+            sb.append(numberFormatter.formatToFieldWidth("HPD Low", fieldWidth));
             sb.append(format.separator);
-            sb.append(numberFormatter.formatToFieldWidth("Upper", fieldWidth));
+            sb.append(numberFormatter.formatToFieldWidth("HPD Up", fieldWidth));
+        }
+
+        if (format.includeCPD) {
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("CPD Low", fieldWidth));
+            sb.append(format.separator);
+            sb.append(numberFormatter.formatToFieldWidth("CPD Up", fieldWidth));
         }
 
         if (format.includeSignificanceLevel) {
@@ -289,6 +326,7 @@ public class DnDsPerSiteAnalysis implements Citable {
     private class OutputFormat {
         boolean includeMean;
         boolean includeHPD;
+        boolean includeCPD;
         boolean includeSignificanceLevel;
         boolean includeSignificantSymbol;
         boolean includeSiteClassification;
@@ -300,11 +338,12 @@ public class DnDsPerSiteAnalysis implements Citable {
         String separator;
 
         OutputFormat() {
-            this(true, true, true, true, true, false, null, 1.0, 0.95, SignificanceTest.NOT_EQUAL, "\t");
+            this(true, false, true, true, true, true, false, null, 1.0, 0.95, SignificanceTest.NOT_EQUAL_CPD, "\t");
         }
 
         OutputFormat(boolean includeMean,
                      boolean includeHPD,
+                     boolean includeCPD,
                      boolean includeSignificanceLevel,
                      boolean includeSignificantSymbol,
                      boolean includeSiteClassification,
@@ -316,6 +355,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                      String separator) {
             this.includeMean = includeMean;
             this.includeHPD = includeHPD;
+            this.includeCPD = includeCPD;
             this.includeSignificanceLevel = includeSignificanceLevel;
             this.includeSignificantSymbol = includeSignificantSymbol;
             this.includeSiteClassification = includeSiteClassification;
@@ -331,7 +371,8 @@ public class DnDsPerSiteAnalysis implements Citable {
     public enum SignificanceTest {
         GREATER_THAN("gt"),    //>
         LESS_THAN("lt"),       //<
-        NOT_EQUAL("ne"),       //!=
+        NOT_EQUAL_HPD("ne_HPD"),       //!=
+        NOT_EQUAL_CPD("ne_CPD"),       //!=
         LESS_OR_GREATER_THAN("logt"); //<>
 
         private SignificanceTest(String text) {
@@ -353,7 +394,7 @@ public class DnDsPerSiteAnalysis implements Citable {
         private final String text;
     }
 
-    private static double[] getHPDInterval(double proportion, List list) {
+    private static double[] getCustomHPDInterval(double proportion, List list) {
 
         double returnArray[] = new double[2];
         int length = list.size();
@@ -380,7 +421,22 @@ public class DnDsPerSiteAnalysis implements Citable {
         return returnArray;
     }
 
-    private static double[] toPrimitiveDoubleArray(Double[] array){
+    private static double[] getCustomCPDInterval(double[] proportions, List list) {
+
+        double returnArray[] = new double[2];
+        int length = list.size();
+        int[] indices = new int[length];
+        Double[] resultObjArray = (Double[]) list.toArray( new Double[0] );
+        double[] result = toPrimitiveDoubleArray(resultObjArray);
+        HeapSort.sort(result, indices);
+
+        returnArray[0] = DiscreteStatistics.quantile(proportions[0], result, indices);
+        returnArray[1] = DiscreteStatistics.quantile(proportions[1], result, indices);
+
+        return returnArray;
+    }
+
+   private static double[] toPrimitiveDoubleArray(Double[] array){
         double[] returnArray = new double[array.length];
         for(int i = 0; i < array.length; i++ ){
             returnArray[i] = array[i].doubleValue();
@@ -448,13 +504,14 @@ public class DnDsPerSiteAnalysis implements Citable {
 
                 analysis.setSignificanceTest(
                         SignificanceTest.parseFromString(
-                                xo.getAttribute(SIGNIFICANCE_TEST, SignificanceTest.NOT_EQUAL.getText())
+                                xo.getAttribute(SIGNIFICANCE_TEST, SignificanceTest.NOT_EQUAL_CPD.getText())
                         )
                 );
                 analysis.setCutoff(xo.getAttribute(CUTOFF, 1.0));
                 analysis.setProportion(xo.getAttribute(PROPORTION, 0.95));
                 analysis.setSeparator(xo.getAttribute(SEPARATOR_STRING, "\t"));
-                analysis.setIncludeHPD(xo.getAttribute(INCLUDE_HPD, true));
+                analysis.setIncludeHPD(xo.getAttribute(INCLUDE_HPD, false));
+                analysis.setIncludeCPD(xo.getAttribute(INCLUDE_HPD, true));
                 analysis.setIncludeSignificanceLevel(xo.getAttribute(INCLUDE_SIGNIFICANCE_LEVEL, false));
                 analysis.setIncludeSignificantSymbol(xo.getAttribute(INCLUDE_SIGNIFICANT_SYMBOL, true));
                 analysis.setIncludeSiteClassification(xo.getAttribute(INCLUDE_SITE_CLASSIFICATION, true));
@@ -502,6 +559,7 @@ public class DnDsPerSiteAnalysis implements Citable {
                 AttributeRule.newDoubleRule(PROPORTION, true),
                 AttributeRule.newIntegerRule(BURN_IN,true),
                 AttributeRule.newBooleanRule(INCLUDE_HPD, true),
+                AttributeRule.newBooleanRule(INCLUDE_CPD, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANT_SYMBOL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SIGNIFICANCE_LEVEL, true),
                 AttributeRule.newBooleanRule(INCLUDE_SITE_CLASSIFICATION, true),

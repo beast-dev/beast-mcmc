@@ -215,10 +215,12 @@ public class BeagleSequenceSimulator extends SimpleAlignment {
 		Parameter kappa = new Parameter.Default(1, 2);
 		Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
 				0.25, 0.25 });
-		FrequencyModel f = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-		HKY hky = new HKY(kappa, f);
-		// TODO
-		return new GammaSiteRateModel(hky.getModelName());
+		FrequencyModel fm = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+		HKY hky = new HKY(kappa, fm);
+		GammaSiteRateModel gsrm = new GammaSiteRateModel(hky.getModelName());
+		gsrm.setSubstitutionModel(hky);
+		
+		return gsrm;
 	} // getDefaultSiteModel
 
 	public static void main(String[] args) {

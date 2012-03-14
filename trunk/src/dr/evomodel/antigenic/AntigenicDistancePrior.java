@@ -47,8 +47,8 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         this.datesParameter = datesParameter;
         addVariable(this.datesParameter);
 
-        dimension = locationsParameter.getColumnDimension();
-        count = locationsParameter.getRowDimension();
+        count = locationsParameter.getColumnDimension();
+        dimension = locationsParameter.getRowDimension();
 
         this.regressionSlopeParameter = regressionSlopeParameter;
         addVariable(regressionSlopeParameter);
@@ -122,7 +122,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
         double ssr = 0.0;
 
-        for (int i=0; i < count; i++) {
+        for (int i=0; i < count-1; i++) {
             for (int j=i+1; j < count; j++) {
 
             // observed pairwise distance
@@ -144,6 +144,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     }
 
     protected double computeDistance(int rowStrain, int columnStrain) {
+
         if (rowStrain == columnStrain) {
             return 0.0;
         }

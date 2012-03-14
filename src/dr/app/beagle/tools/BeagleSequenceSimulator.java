@@ -1,8 +1,13 @@
 package dr.app.beagle.tools;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -12,7 +17,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.substmodel.SubstitutionEpochModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
@@ -195,13 +199,12 @@ public class BeagleSequenceSimulator {
 		double branchLength = siteModel.getRateForCategory(rateCategory)
 				* branchTime;
 
-		// TODO Hack until SiteRateModel issue is resolved
-		if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
-			((SubstitutionEpochModel) siteModel.getSubstitutionModel())
-					.getTransitionProbabilities(tree.getNodeHeight(node), tree
-							.getNodeHeight(parent), branchLength, probs);
-			return;
-		}
+//		if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+//			((SubstitutionEpochModel) siteModel.getSubstitutionModel())
+//					.getTransitionProbabilities(tree.getNodeHeight(node), tree
+//							.getNodeHeight(parent), branchLength, probs);
+//			return;
+//		}
 
 		siteModel.getSubstitutionModel().getTransitionProbabilities(
 				branchLength, probs);
@@ -209,16 +212,34 @@ public class BeagleSequenceSimulator {
 
 	/** generate simple site model, for testing purposes **/
 	static GammaSiteRateModel getDefaultGammaSiteRateModel() {
-		Parameter kappa = new Parameter.Default(1, 2);
+		
+		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+		Parameter epochTransitionTimes = new Parameter.Default(1, 20);
+		
 		Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
 				0.25, 0.25 });
-		FrequencyModel fm = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-		HKY hky = new HKY(kappa, fm);
-		GammaSiteRateModel gsrm = new GammaSiteRateModel(hky.getModelName());
-		gsrm.setSubstitutionModel(hky);
+		FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+		
+		Parameter kappa1 = new Parameter.Default(1, 1);
+		Parameter kappa2 = new Parameter.Default(10, 1);
+		
+		HKY hky1 = new HKY(kappa1, freqModel);
+		HKY hky2 = new HKY(kappa2, freqModel);
+		
+		substModelList.add((SubstitutionModel) hky1);
+		substModelList.add((SubstitutionModel) hky2);
+		
+		frequencyModelList.add(freqModel);
+		
+		EpochBranchSubstitutionModel beagleSubstitutionEpochModel =	new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);
+		
+		//TODO: pass epoch model to site model
+		GammaSiteRateModel gsrm = new GammaSiteRateModel("dupa");
+		gsrm.setSubstitutionModel(hky1);
 
 		return gsrm;
-	} // END: getDefaultSiteModel
+	} // END: getDefaultGammaSiteRateModel
 
 	public static void main(String[] args) {
 

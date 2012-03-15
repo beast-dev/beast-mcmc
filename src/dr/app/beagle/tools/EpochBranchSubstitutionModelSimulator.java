@@ -263,7 +263,7 @@ public class EpochBranchSubstitutionModelSimulator {
         	int nReplications = xo.getIntegerAttribute(REPLICATIONS);
 
             Tree tree = (Tree) xo.getChild(Tree.class);
-            GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(SiteModel.class);
+            GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
             EpochBranchSubstitutionModel epochModel = (EpochBranchSubstitutionModel)xo.getChild(EpochBranchSubstitutionModel.class);
             
             Sequence ancestralSequence = (Sequence)xo.getChild(Sequence.class);
@@ -295,7 +295,8 @@ public class EpochBranchSubstitutionModelSimulator {
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
-                new ElementRule(SiteModel.class),
+                new ElementRule(GammaSiteRateModel.class),
+                new ElementRule(BranchRateModel.class, true),
                 new ElementRule(EpochBranchSubstitutionModel.class, true),
                 new ElementRule(Sequence.class, true),
                 AttributeRule.newIntegerRule(REPLICATIONS)

@@ -41,6 +41,9 @@ public class EpochBranchSubstitutionModelSimulator {
 	private int nReplications;
 	/** tree used for generating samples **/
 	private Tree tree;
+	private List<SubstitutionModel> substModelList;
+//	private List<FrequencyModel> frequencyModelList;
+	private Parameter epochTimes;
 	/** site model used for generating samples **/
 	private GammaSiteRateModel siteModel;
 	/** branch rate model used for generating samples **/
@@ -54,8 +57,11 @@ public class EpochBranchSubstitutionModelSimulator {
 	private Sequence ancestralSequence;
 
 	/** an array used to transfer transition probabilities **/
-	private double[][] m_probabilities;
+	private double[][] transitionProbabilities;
 
+	
+	private EpochBranchSubstitutionModel epochModel;
+	
 	/**
 	 * Constructor
 	 * 
@@ -64,15 +70,26 @@ public class EpochBranchSubstitutionModelSimulator {
 	 * @param branchRateModel
 	 * @param sequenceLength: nr of sites to generate
 	 */
-	EpochBranchSubstitutionModelSimulator(Tree tree, List<SubstitutionModel> substModelList,
-			List<FrequencyModel> frequencyModelList, Parameter epochTimes, int sequenceLength) {
+	EpochBranchSubstitutionModelSimulator(Tree tree,
+			EpochBranchSubstitutionModel epochModel,
+			List<SubstitutionModel> substModelList,
+//			List<FrequencyModel> frequencyModelList, 
+			Parameter epochTimes,
+			GammaSiteRateModel siteModel, 
+			BranchRateModel branchRateModel,
+			int sequenceLength) {
+
 		this.tree = tree;
+		this.epochModel = epochModel;
+		this.substModelList = substModelList;
+//		this.frequencyModelList = frequencyModelList;
+		this.epochTimes = epochTimes;
 		this.siteModel = siteModel;
 		this.branchRateModel = branchRateModel;
 		this.nReplications = sequenceLength;
-		this.stateCount = siteModel.getSubstitutionModel().getDataType().getStateCount();
+		this.stateCount = substModelList.get(0).getDataType().getStateCount();
 		this.categoryCount = siteModel.getCategoryCount();
-		this.m_probabilities = new double[categoryCount][stateCount * stateCount];
+		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
 	} // END: Constructor
 	
 	//suggestion: use this type of constructor
@@ -85,7 +102,7 @@ public class EpochBranchSubstitutionModelSimulator {
 		this.stateCount = epochModel.getSubstitutionModel(0,0).getDataType().getStateCount();
 		//don't like this categoryCount though, does require a siteModel
 		this.categoryCount = siteModel.getCategoryCount();
-		this.m_probabilities = new double[categoryCount][stateCount * stateCount];
+		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
 	} //end suggestion
 
 	/**
@@ -104,7 +121,7 @@ public class EpochBranchSubstitutionModelSimulator {
 		}
 		
 		return new Sequence(tree.getNodeTaxon(node), sSeq.toString());
-	} // intArray2Sequence
+	} // END: intArray2Sequence
 
 	void setAncestralSequence(Sequence seq) {
 		ancestralSequence = seq;
@@ -178,13 +195,13 @@ public class EpochBranchSubstitutionModelSimulator {
 
 			NodeRef child = tree.getChild(node, iChild);
 			for (int i = 0; i < categoryCount; i++) {
-				getTransitionProbabilities(tree, child, i, m_probabilities[i]);
+				getTransitionProbabilities(tree, child, i, transitionProbabilities[i]);
 			}
 
 			int[] seq = new int[nReplications];
 			double[] cProb = new double[stateCount];
 			for (int i = 0; i < nReplications; i++) {
-				System.arraycopy(m_probabilities[category[i]],
+				System.arraycopy(transitionProbabilities[category[i]],
 						parentSequence[i] * stateCount, cProb, 0, stateCount);
 				seq[i] = MathUtils.randomChoicePDF(cProb);
 			}
@@ -192,10 +209,14 @@ public class EpochBranchSubstitutionModelSimulator {
 			if (tree.getChildCount(child) == 0) {
 				alignment.addSequence(intArray2Sequence(seq, child));
 			}
+			
 			traverse(tree.getChild(node, iChild), seq, category, alignment);
-		}
+
+		}// END: iChild loop
+
 	} // END: traverse
 
+	// TODO: getTransitionProbabilities for epoch model
 	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
 			double[] probs) {
 
@@ -322,24 +343,40 @@ public class EpochBranchSubstitutionModelSimulator {
 
 			// create tree
 			NewickImporter importer = new NewickImporter(
-					"((A:1.0,B:1.0)AB:1.0,(C:1.0,D:1.0)CD:1.0)ABCD;");
+					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);;");
 			Tree tree = importer.importTree(null);
 
+			// create list of substitution models
+			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+			
+			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
+					0.25, 0.25 });
+			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+			
+			Parameter kappa1 = new Parameter.Default(1, 1);
+			Parameter kappa2 = new Parameter.Default(10, 1);
+			
+			HKY hky1 = new HKY(kappa1, freqModel);
+			HKY hky2 = new HKY(kappa2, freqModel);
+			
+			substModelList.add((SubstitutionModel) hky1);
+			substModelList.add((SubstitutionModel) hky2);
+			
+			// create list of frequency models
+//			List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+//			frequencyModelList.add(freqModel);
+			
+			// create epochTimes
+			Parameter epochTimes = new Parameter.Default(20, 1);
+			
 			// create site model
-			GammaSiteRateModel siteModel = getDefaultGammaSiteRateModel();
-
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
-
-			// feed to sequence simulator and generate leaves
-//			EpochBranchSubstitutionModelSimulator treeSimulator = new EpochBranchSubstitutionModelSimulator(
-//					tree, siteModel, branchRateModel, nReplications);
-
-			Sequence ancestralSequence = new Sequence();
-			ancestralSequence.appendSequenceString("TCAGGTCAAG");
-//			treeSimulator.setAncestralSequence(ancestralSequence);
-
-//			System.out.println(treeSimulator.simulate().toString());
+			GammaSiteRateModel gsrm = new GammaSiteRateModel("dupa");
+			
+    		// create branch rate model
+    		BranchRateModel branchRateModel = new DefaultBranchRateModel();
+			
+    		
+//			System.out.println(gsrm.getCategoryCount());
 
 		} catch (Exception e) {
 			e.printStackTrace();

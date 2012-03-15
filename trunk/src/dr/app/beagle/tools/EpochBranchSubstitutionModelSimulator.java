@@ -97,6 +97,7 @@ public class EpochBranchSubstitutionModelSimulator {
 		this.tree = tree;
 		this.siteModel = siteModel;
 		this.nReplications = sequenceLength;
+		this.epochModel = epochModel;
 		//don't really need a siteModel to get the stateCount
 		//too bad the siteModel only functions as a container with respect to the substitutionModel
 		this.stateCount = epochModel.getSubstitutionModel(0,0).getDataType().getStateCount();
@@ -169,18 +170,17 @@ public class EpochBranchSubstitutionModelSimulator {
 
 		} else {
 
-			FrequencyModel frequencyModel = siteModel.getSubstitutionModel()
-					.getFrequencyModel();
+			//FrequencyModel frequencyModel = siteModel.getSubstitutionModel().getFrequencyModel();
+			FrequencyModel frequencyModel = epochModel.getSubstitutionModel(0,0).getFrequencyModel();
 			for (int i = 0; i < nReplications; i++) {
-				seq[i] = MathUtils.randomChoicePDF(frequencyModel
-						.getFrequencies());
+				seq[i] = MathUtils.randomChoicePDF(frequencyModel.getFrequencies());
 			}
 
 		}// END: ancestral sequence check
 
 		SimpleAlignment alignment = new SimpleAlignment();
 		alignment.setReportCountStatistics(true);
-		alignment.setDataType(siteModel.getSubstitutionModel().getDataType());
+		alignment.setDataType(epochModel.getSubstitutionModel(0,0).getDataType());
 
 		traverse(root, seq, category, alignment);
 

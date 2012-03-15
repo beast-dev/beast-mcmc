@@ -8,7 +8,6 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.seqgen.SequenceSimulator;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -17,9 +16,7 @@ import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
-import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 import dr.xml.AbstractXMLObjectParser;
@@ -37,66 +34,27 @@ import dr.xml.XMLSyntaxRule;
 
 public class EpochBranchSubstitutionModelSimulator {
 
-	/** nr of samples to generate **/
-	private int nReplications;
-	/** tree used for generating samples **/
 	private Tree tree;
-//	private List<SubstitutionModel> substModelList;
-//	private List<FrequencyModel> frequencyModelList;
-//	private Parameter epochTimes;
-	/** site model used for generating samples **/
+	private EpochBranchSubstitutionModel epochModel;
 	private GammaSiteRateModel siteModel;
-	/** branch rate model used for generating samples **/
-	private BranchRateModel branchRateModel;
-	/** nr of categories in site model **/
+	private int nReplications;
+//	private BranchRateModel branchRateModel;
+	
 	private int categoryCount;
-	/** nr of states in site model **/
 	private int stateCount;
-
+	private double[][] transitionProbabilities;
+	
 	private static boolean has_ancestralSequence = false;
 	private Sequence ancestralSequence;
-
-	/** an array used to transfer transition probabilities **/
-	private double[][] transitionProbabilities;
-
-	
-	private EpochBranchSubstitutionModel epochModel;
 	
 	/**
 	 * Constructor
-	 * 
-	 * @param tree
-	 * @param siteModel
-	 * @param branchRateModel
-	 * @param sequenceLength: nr of sites to generate
 	 */
-//	EpochBranchSubstitutionModelSimulator(Tree tree,
-//			EpochBranchSubstitutionModel epochModel,
-//			List<SubstitutionModel> substModelList,
-////			List<FrequencyModel> frequencyModelList, 
-//			Parameter epochTimes,
-//			GammaSiteRateModel siteModel, 
-//			BranchRateModel branchRateModel,
-//			int sequenceLength) {
-//
-//		this.tree = tree;
-//		this.epochModel = epochModel;
-//		this.substModelList = substModelList;
-////		this.frequencyModelList = frequencyModelList;
-//		this.epochTimes = epochTimes;
-//		this.siteModel = siteModel;
-//		this.branchRateModel = branchRateModel;
-//		this.nReplications = sequenceLength;
-//		this.stateCount = substModelList.get(0).getDataType().getStateCount();
-//		this.categoryCount = siteModel.getCategoryCount();
-//		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
-//	} // END: Constructor
-	
-	//suggestion: use this type of constructor
-	EpochBranchSubstitutionModelSimulator(Tree tree, EpochBranchSubstitutionModel epochModel, GammaSiteRateModel siteModel, int sequenceLength) {
+	EpochBranchSubstitutionModelSimulator(Tree tree, EpochBranchSubstitutionModel epochModel, GammaSiteRateModel siteModel, int nReplications) {
 		this.tree = tree;
+		this.epochModel = epochModel;
 		this.siteModel = siteModel;
-		this.nReplications = sequenceLength;
+		this.nReplications = nReplications;
 		this.epochModel = epochModel;
 		//don't really need a siteModel to get the stateCount
 		//too bad the siteModel only functions as a container with respect to the substitutionModel
@@ -104,6 +62,9 @@ public class EpochBranchSubstitutionModelSimulator {
 		//don't like this categoryCount though, does require a siteModel
 		this.categoryCount = siteModel.getCategoryCount();
 		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
+		
+//		System.out.println(categoryCount);
+		
 	} // END: Constructor
 	
 	/**
@@ -187,7 +148,6 @@ public class EpochBranchSubstitutionModelSimulator {
 		return alignment;
 	} // END: simulate
 
-	// TODO: traverse for Epoch model
 	void traverse(NodeRef node, int[] parentSequence, int[] category,
 			SimpleAlignment alignment) {
 
@@ -222,28 +182,39 @@ public class EpochBranchSubstitutionModelSimulator {
 
 		NodeRef parent = tree.getParent(node);
 
-		final double branchRate = branchRateModel.getBranchRate(tree, node);
-
-		// Get the operational time of the branch
-		final double branchTime = branchRate
-				* (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
-
-		if (branchTime < 0.0) {
-			throw new RuntimeException("Negative branch length: " + branchTime);
-		}
-
-		double branchLength = siteModel.getRateForCategory(rateCategory)
-				* branchTime;
-
-//		if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
-//			((SubstitutionEpochModel) siteModel.getSubstitutionModel())
-//					.getTransitionProbabilities(tree.getNodeHeight(node), tree
-//							.getNodeHeight(parent), branchLength, probs);
-//			return;
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+//		final double branchRate = branchRateModel.getBranchRate(tree, node);
+//
+//		// Get the operational time of the branch
+//		final double branchTime = branchRate
+//				* (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+//
+//		if (branchTime < 0.0) {
+//			throw new RuntimeException("Negative branch length: " + branchTime);
 //		}
-
-		siteModel.getSubstitutionModel().getTransitionProbabilities(
-				branchLength, probs);
+//
+//		double branchLength = siteModel.getRateForCategory(rateCategory)
+//				* branchTime;
+//
+////		if (siteModel.getSubstitutionModel() instanceof SubstitutionEpochModel) {
+////			((SubstitutionEpochModel) siteModel.getSubstitutionModel())
+////					.getTransitionProbabilities(tree.getNodeHeight(node), tree
+////							.getNodeHeight(parent), branchLength, probs);
+////			return;
+////		}
+//
+//		siteModel.getSubstitutionModel().getTransitionProbabilities(
+//				branchLength, probs);
 	} // END: getTransitionProbabilities
 
 	public static final String EPOCH_SEQUENCE_SIMULATOR = "epochSequenceSimulator";
@@ -368,7 +339,6 @@ public class EpochBranchSubstitutionModelSimulator {
 			// create site model
 			GammaSiteRateModel siteModel = new GammaSiteRateModel("siteModel");
 			siteModel.setSubstitutionModel(hky1);
-    		System.out.println(siteModel.getCategoryCount());
 			
 			// create branch rate model
 //			BranchRateModel branchRateModel = new DefaultBranchRateModel();

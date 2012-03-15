@@ -258,7 +258,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         }
 
-        locationChanged = new boolean[this.locationsParameter.getRowDimension()];
+        locationChanged = new boolean[this.locationsParameter.getParameterCount()];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 

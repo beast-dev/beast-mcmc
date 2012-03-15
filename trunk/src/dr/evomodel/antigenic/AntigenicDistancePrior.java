@@ -119,30 +119,26 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     }
 
-    // go through each location and compute sum of squared residuals
-    // distance from origin increases linearly with time
+    // go through each location and compute sum of squared residuals from regression line
     protected double sumOfSquaredResiduals() {
 
         double ssr = 0.0;
 
         for (int i=0; i < count; i++) {
 
-            // expectation of distance with time
-            double date = datesParameter.getParameterValue(i);
-            double time = (date-earliestDate);
-            double beta = regressionSlopeParameter.getParameterValue(0);
-            double expectedDistance = time * beta;
-
-            // observed Euclidean distance from origin
             Parameter loc = locationsParameter.getParameter(i);
-            double observedDistance = 0;
-            for (int j=0; j < dimension; j++) {
-                double x = loc.getParameterValue(j);
-                observedDistance += x * x;
-            }
-            observedDistance = Math.sqrt(observedDistance);
+            double date = datesParameter.getParameterValue(i);
+            double beta = regressionSlopeParameter.getParameterValue(0);
+            double x = loc.getParameterValue(0);
 
-            ssr += (expectedDistance - observedDistance) * (expectedDistance - observedDistance);
+            double y = (date-earliestDate) * beta;
+
+            ssr += (x - y) * (x - y);
+
+            for (int j=1; j < dimension; j++) {
+                x = loc.getParameterValue(j);
+                ssr += x*x;
+            }
 
         }
 

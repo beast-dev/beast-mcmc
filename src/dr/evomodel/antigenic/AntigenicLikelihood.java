@@ -29,15 +29,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private static final int VIRUS_STRAIN = 3;
     private static final int SERUM_DATE = 4;
     private static final int VIRUS_DATE = 5;
-    private static final int RAW_TITRE = 6;
-    private static final int MIN_TITRE = 7;
-    private static final int MAX_TITRE = 8;
+    private static final int TITRE = 6;
 
     public enum MeasurementType {
         INTERVAL,
         POINT,
-        UPPER_BOUND,
-        LOWER_BOUND,
+        THRESHOLD,
         MISSING
     }
 
@@ -50,12 +47,18 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
+            double intervalWidth,
             List<String> virusLocationStatisticList) {
 
         super(ANTIGENIC_LIKELIHOOD);
 
         List<String> strainNames = new ArrayList<String>();
         Map<String, Double> strainDateMap = new HashMap<String, Double>();
+
+        this.intervalWidth = intervalWidth;
+        boolean useIntervals = intervalWidth > 0.0;
+
+        int thresholdCount = 0;
 
         for (int i = 0; i < dataTable.getRowCount(); i++) {
             String[] values = dataTable.getRow(i);
@@ -108,82 +111,37 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 throw new IllegalArgumentException("Error reading data table: Unrecognized virus strain name, " + values[VIRUS_STRAIN] + ", in row " + (i+1));
             }
 
-            double minTitre = Double.NaN;
-            try {
-                if (values[MIN_TITRE].length() > 0) {
-                    try {
-                        minTitre = Double.parseDouble(values[MIN_TITRE]);
-                    } catch (NumberFormatException nfe) {
-                        // do nothing
-                    }
-                }
-            } catch (ArrayIndexOutOfBoundsException e)  {
-                 // do nothing
-            }
-
-            double maxTitre = Double.NaN;
-            try {
-                if (values[MAX_TITRE].length() > 0) {
-                    try {
-                        maxTitre = Double.parseDouble(values[MAX_TITRE]);
-                    } catch (NumberFormatException nfe) {
-                        // do nothing
-                    }
-                }
-            } catch (ArrayIndexOutOfBoundsException e)  {
-                 // do nothing
-            }
-
-            // use this if minTitre and maxTitre are not defined in HI file
+            boolean isThreshold = false;
             double rawTitre = Double.NaN;
-            if (Double.isNaN(minTitre) && Double.isNaN(maxTitre)) {
-                if (values[RAW_TITRE].length() > 0) {
-                    try {
-                        rawTitre = Double.parseDouble(values[RAW_TITRE]);
-                        maxTitre = rawTitre;
-                        minTitre = rawTitre;
-                    } catch (NumberFormatException nfe) {
-                        // check if threshold below
-                        if (values[RAW_TITRE].contains("<")) {
-                            rawTitre = Double.parseDouble(values[RAW_TITRE].replace("<",""));
-                            maxTitre = rawTitre;
-                            minTitre = 0.0;
-                        }
-                        // check if threshold above
-                        if (values[RAW_TITRE].contains(">")) {
-                            rawTitre = Double.parseDouble(values[RAW_TITRE].replace(">",""));
-                            minTitre = rawTitre;
-                            maxTitre = Double.NaN;
-                        }
+            if (values[TITRE].length() > 0) {
+                try {
+                    rawTitre = Double.parseDouble(values[TITRE]);
+                } catch (NumberFormatException nfe) {
+                    // check if threshold below
+                    if (values[TITRE].contains("<")) {
+                        rawTitre = Double.parseDouble(values[TITRE].replace("<",""));
+                        isThreshold = true;
+                        thresholdCount++;
+                    }
+                    // check if threshold above
+                    if (values[TITRE].contains(">")) {
+                        throw new IllegalArgumentException("Error in measurement: unsupported greater than threshold at row " + (i+1));
                     }
                 }
             }
 
-            MeasurementType type = MeasurementType.INTERVAL;
+            MeasurementType type = (isThreshold ? MeasurementType.THRESHOLD : (useIntervals ? MeasurementType.INTERVAL : MeasurementType.POINT));
 
-            if (minTitre == maxTitre) {
-                type = MeasurementType.POINT;
-            }
-
-            if (Double.isNaN(minTitre) || minTitre == 0.0) {
-                if (Double.isNaN(maxTitre)) {
-                    throw new IllegalArgumentException("Error in measurement: both min and max titre are at bounds in row " + (i+1));
-                }
-                type = MeasurementType.UPPER_BOUND;
-            } else if (Double.isNaN(maxTitre)) {
-                type = MeasurementType.LOWER_BOUND;
-            }
-
-            Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, minTitre, maxTitre);
+            Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, rawTitre);
             measurements.add(measurement);
         }
 
         double[] maxColumnTitre = new double[columnLabels.size()];
         double[] maxRowTitre = new double[rowLabels.size()];
         for (Measurement measurement : measurements) {
-            double titre = measurement.maxTitre;
+            double titre = measurement.log2Titre;
             if (Double.isNaN(titre)) {
-                titre = measurement.minTitre;
+                titre = measurement.log2Titre;
             }
             if (titre > maxColumnTitre[measurement.column]) {
                 maxColumnTitre[measurement.column] = titre;
@@ -268,6 +226,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         sb.append("\t\t" + columnLabels.size() + " unique columns\n");
         sb.append("\t\t" + rowLabels.size() + " unique rows\n");
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
+
+        sb.append("\t\t" + thresholdCount + " thresholded measurements\n");
+
+        if (useIntervals) {
+            sb.append("\n\t\tAssuming a log 2 measurement interval width of " + intervalWidth + "\n");
+        }
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
         // initial locations
@@ -380,21 +344,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
                 switch (measurement.type) {
                     case INTERVAL: {
-                        double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
-                        double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
+                        double minTitre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
+                        double maxTitre = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row, distance, sd);
                         logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre) - logNormalization;
                     } break;
                     case POINT: {
-                        double titre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
+                        double titre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
                         logLikelihoods[i] = computeMeasurementLikelihood(titre) - logNormalization;
                     } break;
-                    case LOWER_BOUND: {
-                        double minTitre = transformTitre(measurement.minTitre, measurement.column, measurement.row, distance, sd);
-                        logLikelihoods[i] = computeMeasurementLowerBoundLikelihood(minTitre) - logNormalization;
-                    } break;
-                    case UPPER_BOUND: {
-                        double maxTitre = transformTitre(measurement.maxTitre, measurement.column, measurement.row, distance, sd);
-                        logLikelihoods[i] = computeMeasurementUpperBoundLikelihood(maxTitre) - logNormalization;
+                    case THRESHOLD: {
+                        double maxTitre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
+                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(maxTitre) - logNormalization;
                     } break;
                     case MISSING:
                         break;
@@ -488,17 +448,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return lnL;
     }
 
-    private static double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
-        // a lower bound in non-transformed titre so the bottom tail of the distribution
-        double cdf = NormalDistribution.standardTail(transformedMinTitre, false);
-        double lnL = Math.log(cdf);
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
-        }
-        return lnL;
-    }
+//    private static double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
+//        // a lower bound in non-transformed titre so the bottom tail of the distribution
+//        double cdf = NormalDistribution.standardTail(transformedMinTitre, false);
+//        double lnL = Math.log(cdf);
+//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+//            throw new RuntimeException("infinite");
+//        }
+//        return lnL;
+//    }
 
-    private static double computeMeasurementUpperBoundLikelihood(double transformedMaxTitre) {
+    private static double computeMeasurementThresholdLikelihood(double transformedMaxTitre) {
         // a upper bound in non-transformed titre so the upper tail of the distribution
 
         // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
@@ -521,15 +481,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private class Measurement {
-        private Measurement(final int column, final int columnStrain, final int row, final int rowStrain, final MeasurementType type, final double minTitre, final double maxTitre) {
+        private Measurement(final int column, final int columnStrain, final int row, final int rowStrain, final MeasurementType type, final double titre) {
             this.column = column;
             this.columnStrain = columnStrain;
             this.row = row;
             this.rowStrain = rowStrain;
 
             this.type = type;
-            this.minTitre = Math.log(minTitre) / Math.log(2);
-            this.maxTitre = Math.log(maxTitre) / Math.log(2);
+            this.log2Titre = Math.log(titre) / Math.log(2);
         }
 
         final int column;
@@ -538,8 +497,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         final int rowStrain;
 
         final MeasurementType type;
-        final double minTitre;
-        final double maxTitre;
+        final double log2Titre;
 
     };
 
@@ -549,6 +507,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
 
     private final int mdsDimension;
+    private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final MatrixParameter locationsParameter;
     private final TaxonList strains;
@@ -563,9 +522,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private double[] logLikelihoods;
     private double[] storedLogLikelihoods;
 
-    // **************************************************************
-    // XMLObjectParser
-    // **************************************************************
+// **************************************************************
+// XMLObjectParser
+// **************************************************************
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public final static String FILE_NAME = "fileName";
@@ -574,6 +533,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public final static String LOCATIONS = "locations";
         public final static String DATES = "dates";
         public static final String MDS_DIMENSION = "mdsDimension";
+        public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String COLUMN_EFFECTS = "columnEffects";
         public static final String ROW_EFFECTS = "rowEffects";
@@ -595,6 +555,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
+            double intervalWidth = 0.0;
+            if (xo.hasAttribute(INTERVAL_WIDTH)) {
+                intervalWidth = xo.getDoubleAttribute(INTERVAL_WIDTH);
+            }
 
 //            CompoundParameter tipTraitParameter = null;
 //            if (xo.hasChildNamed(TIP_TRAIT)) {
@@ -628,6 +592,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
+                    intervalWidth,
                     null);
 
             Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
@@ -635,9 +600,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             return AGL;
         }
 
-        //************************************************************************
-        // AbstractXMLObjectParser implementation
-        //************************************************************************
+//************************************************************************
+// AbstractXMLObjectParser implementation
+//************************************************************************
 
         public String getParserDescription() {
             return "Provides the likelihood of immunological assay data such as Hemagglutinin inhibition (HI) given vectors of coordinates" +
@@ -651,6 +616,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
+                AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
 //                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
@@ -685,15 +651,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     public static void main(String[] args) {
         double[] titres = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0};
 
-        System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tlower\tupper");
+        System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tthreshold");
         for (double titre : titres) {
             double point = AntigenicLikelihood.computeMeasurementLikelihood(titre);
             double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre);
             double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre);
-            double lower = AntigenicLikelihood.computeMeasurementLowerBoundLikelihood(titre);
-            double upper = AntigenicLikelihood.computeMeasurementUpperBoundLikelihood(titre);
+            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre);
 
-            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + lower + "\t" + upper);
-      }
+            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + threshold);
+        }
     }
 }

@@ -8,6 +8,7 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.app.seqgen.SequenceSimulator;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
@@ -17,9 +18,17 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 /**
  * Class for performing random sequence generation for a given site model.
@@ -65,6 +74,19 @@ public class EpochBranchSubstitutionModelSimulator {
 		this.categoryCount = siteModel.getCategoryCount();
 		this.m_probabilities = new double[categoryCount][stateCount * stateCount];
 	} // END: Constructor
+	
+	//suggestion: use this type of constructor
+	EpochBranchSubstitutionModelSimulator(Tree tree, EpochBranchSubstitutionModel epochModel, GammaSiteRateModel siteModel, int sequenceLength) {
+		this.tree = tree;
+		this.siteModel = siteModel;
+		this.nReplications = sequenceLength;
+		//don't really need a siteModel to get the stateCount
+		//too bad the siteModel only functions as a container with respect to the substitutionModel
+		this.stateCount = epochModel.getSubstitutionModel(0,0).getDataType().getStateCount();
+		//don't like this categoryCount though, does require a siteModel
+		this.categoryCount = siteModel.getCategoryCount();
+		this.m_probabilities = new double[categoryCount][stateCount * stateCount];
+	} //end suggestion
 
 	/**
 	 * Convert integer representation of sequence into a Sequence
@@ -235,6 +257,62 @@ public class EpochBranchSubstitutionModelSimulator {
 
 		return gsrm;
 	} // END: getDefaultGammaSiteRateModel
+	
+	public static final String EPOCH_SEQUENCE_SIMULATOR = "epochSequenceSimulator";
+    public static final String SITE_MODEL = SiteModel.SITE_MODEL;
+    public static final String TREE = "tree";
+    public static final String EPOCH_BRANCH_SUBSTITUTION_MODEL = "epochBranchSubstitutionModel";
+    public static final String REPLICATIONS = "replications";
+
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return EPOCH_SEQUENCE_SIMULATOR;
+        }
+
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        	int nReplications = xo.getIntegerAttribute(REPLICATIONS);
+
+            Tree tree = (Tree) xo.getChild(Tree.class);
+            GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(SiteModel.class);
+            EpochBranchSubstitutionModel epochModel = (EpochBranchSubstitutionModel)xo.getChild(EpochBranchSubstitutionModel.class);
+            
+            Sequence ancestralSequence = (Sequence)xo.getChild(Sequence.class);
+            
+            EpochBranchSubstitutionModelSimulator s = new EpochBranchSubstitutionModelSimulator(tree, epochModel, siteModel, nReplications);
+
+            if(ancestralSequence != null) {
+                s.setAncestralSequence(ancestralSequence);
+            }
+            
+            return s.simulate();
+        }
+
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "An EpochSequenceSimulator that generates random sequences for a given tree, sitemodel and epoch substitution model";
+        }
+
+        public Class getReturnType() {
+            return Alignment.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
+                new ElementRule(Tree.class),
+                new ElementRule(SiteModel.class),
+                new ElementRule(EpochBranchSubstitutionModel.class, true),
+                new ElementRule(Sequence.class, true),
+                AttributeRule.newIntegerRule(REPLICATIONS)
+        };
+    };
 
 	public static void main(String[] args) {
 

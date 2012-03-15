@@ -584,9 +584,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
-            Parameter columnEffectsParameter = (Parameter) xo.getElementFirstChild(COLUMN_EFFECTS);
-
-            Parameter rowEffectsParameter = (Parameter) xo.getElementFirstChild(ROW_EFFECTS);
+            Parameter columnEffectsParameter = null;
+            if (xo.hasChildNamed(COLUMN_EFFECTS)) {
+                columnEffectsParameter = (Parameter) xo.getElementFirstChild(COLUMN_EFFECTS);
+            }
+            Parameter rowEffectsParameter = null;
+            if (xo.hasChildNamed(ROW_EFFECTS)) {
+                rowEffectsParameter = (Parameter) xo.getElementFirstChild(ROW_EFFECTS);
+            }
 
             AntigenicLikelihood AGL = new AntigenicLikelihood(
                     mdsDimension,
@@ -626,8 +631,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 //                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
-                new ElementRule(COLUMN_EFFECTS, Parameter.class),
-                new ElementRule(ROW_EFFECTS, Parameter.class),
+                new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
+                new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
                 new ElementRule(MDS_PRECISION, Parameter.class)
         };
 

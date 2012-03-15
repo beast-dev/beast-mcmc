@@ -41,9 +41,9 @@ public class EpochBranchSubstitutionModelSimulator {
 	private int nReplications;
 	/** tree used for generating samples **/
 	private Tree tree;
-	private List<SubstitutionModel> substModelList;
+//	private List<SubstitutionModel> substModelList;
 //	private List<FrequencyModel> frequencyModelList;
-	private Parameter epochTimes;
+//	private Parameter epochTimes;
 	/** site model used for generating samples **/
 	private GammaSiteRateModel siteModel;
 	/** branch rate model used for generating samples **/
@@ -70,27 +70,27 @@ public class EpochBranchSubstitutionModelSimulator {
 	 * @param branchRateModel
 	 * @param sequenceLength: nr of sites to generate
 	 */
-	EpochBranchSubstitutionModelSimulator(Tree tree,
-			EpochBranchSubstitutionModel epochModel,
-			List<SubstitutionModel> substModelList,
-//			List<FrequencyModel> frequencyModelList, 
-			Parameter epochTimes,
-			GammaSiteRateModel siteModel, 
-			BranchRateModel branchRateModel,
-			int sequenceLength) {
-
-		this.tree = tree;
-		this.epochModel = epochModel;
-		this.substModelList = substModelList;
-//		this.frequencyModelList = frequencyModelList;
-		this.epochTimes = epochTimes;
-		this.siteModel = siteModel;
-		this.branchRateModel = branchRateModel;
-		this.nReplications = sequenceLength;
-		this.stateCount = substModelList.get(0).getDataType().getStateCount();
-		this.categoryCount = siteModel.getCategoryCount();
-		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
-	} // END: Constructor
+//	EpochBranchSubstitutionModelSimulator(Tree tree,
+//			EpochBranchSubstitutionModel epochModel,
+//			List<SubstitutionModel> substModelList,
+////			List<FrequencyModel> frequencyModelList, 
+//			Parameter epochTimes,
+//			GammaSiteRateModel siteModel, 
+//			BranchRateModel branchRateModel,
+//			int sequenceLength) {
+//
+//		this.tree = tree;
+//		this.epochModel = epochModel;
+//		this.substModelList = substModelList;
+////		this.frequencyModelList = frequencyModelList;
+//		this.epochTimes = epochTimes;
+//		this.siteModel = siteModel;
+//		this.branchRateModel = branchRateModel;
+//		this.nReplications = sequenceLength;
+//		this.stateCount = substModelList.get(0).getDataType().getStateCount();
+//		this.categoryCount = siteModel.getCategoryCount();
+//		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
+//	} // END: Constructor
 	
 	//suggestion: use this type of constructor
 	EpochBranchSubstitutionModelSimulator(Tree tree, EpochBranchSubstitutionModel epochModel, GammaSiteRateModel siteModel, int sequenceLength) {
@@ -103,8 +103,8 @@ public class EpochBranchSubstitutionModelSimulator {
 		//don't like this categoryCount though, does require a siteModel
 		this.categoryCount = siteModel.getCategoryCount();
 		this.transitionProbabilities = new double[categoryCount][stateCount * stateCount];
-	} //end suggestion
-
+	} // END: Constructor
+	
 	/**
 	 * Convert integer representation of sequence into a Sequence
 	 * 
@@ -246,39 +246,6 @@ public class EpochBranchSubstitutionModelSimulator {
 				branchLength, probs);
 	} // END: getTransitionProbabilities
 
-	/** generate simple site model, for testing purposes **/
-	static GammaSiteRateModel getDefaultGammaSiteRateModel() {
-		
-		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
-		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-		Parameter epochTransitionTimes = new Parameter.Default(1, 20);
-		
-		Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
-				0.25, 0.25 });
-		FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-		
-		Parameter kappa1 = new Parameter.Default(1, 1);
-		Parameter kappa2 = new Parameter.Default(10, 1);
-		
-		HKY hky1 = new HKY(kappa1, freqModel);
-		HKY hky2 = new HKY(kappa2, freqModel);
-		
-		substModelList.add((SubstitutionModel) hky1);
-		substModelList.add((SubstitutionModel) hky2);
-		
-		frequencyModelList.add(freqModel);
-		
-		EpochBranchSubstitutionModel beagleSubstitutionEpochModel =	new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);
-		
-		Model model = (Model)beagleSubstitutionEpochModel;
-		
-		//TODO: pass epoch model to site model
-		GammaSiteRateModel gsrm = new GammaSiteRateModel("dupa");
-		gsrm.setSubstitutionModel(hky1);
-
-		return gsrm;
-	} // END: getDefaultGammaSiteRateModel
-	
 	public static final String EPOCH_SEQUENCE_SIMULATOR = "epochSequenceSimulator";
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String TREE = "tree";
@@ -318,7 +285,7 @@ public class EpochBranchSubstitutionModelSimulator {
             return "An EpochSequenceSimulator that generates random sequences for a given tree, sitemodel and epoch substitution model";
         }
 
-        public Class getReturnType() {
+        public Class<Alignment> getReturnType() {
             return Alignment.class;
         }
 
@@ -335,6 +302,33 @@ public class EpochBranchSubstitutionModelSimulator {
         };
     };
 
+//	/** generate simple site model, for testing purposes **/
+//	static GammaSiteRateModel getDefaultGammaSiteRateModel() {
+//		
+//		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+//		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+//		Parameter epochTransitionTimes = new Parameter.Default(1, 20);
+//		
+//		Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
+//				0.25, 0.25 });
+//		FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+//		
+//		Parameter kappa1 = new Parameter.Default(1, 1);
+//		Parameter kappa2 = new Parameter.Default(10, 1);
+//		
+//		HKY hky1 = new HKY(kappa1, freqModel);
+//		HKY hky2 = new HKY(kappa2, freqModel);
+//		
+//		substModelList.add((SubstitutionModel) hky1);
+//		substModelList.add((SubstitutionModel) hky2);
+//		frequencyModelList.add(freqModel);
+//		
+//		GammaSiteRateModel gsrm = new GammaSiteRateModel("dupa");
+//		gsrm.setSubstitutionModel(hky1);
+//
+//		return gsrm;
+//	} // END: getDefaultGammaSiteRateModel
+    
 	public static void main(String[] args) {
 
 		try {
@@ -348,36 +342,44 @@ public class EpochBranchSubstitutionModelSimulator {
 
 			// create list of substitution models
 			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-			
+
 			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25,
 					0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-			
+			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+					freqs);
+
 			Parameter kappa1 = new Parameter.Default(1, 1);
 			Parameter kappa2 = new Parameter.Default(10, 1);
-			
+
 			HKY hky1 = new HKY(kappa1, freqModel);
 			HKY hky2 = new HKY(kappa2, freqModel);
-			
+
 			substModelList.add((SubstitutionModel) hky1);
 			substModelList.add((SubstitutionModel) hky2);
-			
-			// create list of frequency models
-//			List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
-//			frequencyModelList.add(freqModel);
-			
-			// create epochTimes
-			Parameter epochTimes = new Parameter.Default(20, 1);
-			
-			// create site model
-			GammaSiteRateModel gsrm = new GammaSiteRateModel("dupa");
-			
-    		// create branch rate model
-    		BranchRateModel branchRateModel = new DefaultBranchRateModel();
-			
-    		
-//			System.out.println(gsrm.getCategoryCount());
 
+			// create list of frequency models
+			List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+			frequencyModelList.add(freqModel);
+
+			// create epochTimes
+			Parameter epochTransitionTimes = new Parameter.Default(20, 1);
+
+			// create site model
+			GammaSiteRateModel siteModel = new GammaSiteRateModel("siteModel");
+			siteModel.setSubstitutionModel(hky1);
+    		System.out.println(siteModel.getCategoryCount());
+			
+			// create branch rate model
+//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+			EpochBranchSubstitutionModel epochModel = new EpochBranchSubstitutionModel(
+					substModelList, frequencyModelList, epochTransitionTimes);
+
+			EpochBranchSubstitutionModelSimulator epochSimulator = new EpochBranchSubstitutionModelSimulator(
+					tree, epochModel, siteModel, nReplications);
+
+			System.out.println(epochSimulator.simulate().toString());
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 		}// END: try-catch block

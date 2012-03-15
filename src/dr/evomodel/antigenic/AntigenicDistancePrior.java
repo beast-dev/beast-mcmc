@@ -35,8 +35,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
             MatrixParameter locationsParameter,
             Parameter datesParameter,
             Parameter regressionSlopeParameter,
-            Parameter regressionPrecisionParameter,
-            Parameter regressionInterceptParameter
+            Parameter regressionPrecisionParameter
     ) {
 
         super(ANTIGENIC_DISTANCE_PRIOR);
@@ -58,11 +57,15 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         addVariable(regressionPrecisionParameter);
         regressionPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
-        this.regressionInterceptParameter = regressionInterceptParameter;
-        addVariable(regressionInterceptParameter);
-        regressionInterceptParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
-
         likelihoodKnown = false;
+
+        earliestDate = datesParameter.getParameterValue(0);
+        for (int i=0; i<count; i++) {
+            double date = datesParameter.getParameterValue(i);
+            if (earliestDate > date) {
+                earliestDate = date;
+            }
+        }
 
     }
 
@@ -74,8 +77,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter || variable == datesParameter
-            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter
-            || variable == regressionInterceptParameter) {
+            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
             likelihoodKnown = false;
         }
     }
@@ -124,21 +126,24 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         double ssr = 0.0;
 
         for (int i=0; i < count; i++) {
-            for (int j=i+1; j < count; j++) {
-
-            // observed pairwise distance
-            double observedDistance = computeDistance(i, j);
 
             // expectation of distance with time
-            double timeDiff = Math.abs(datesParameter.getParameterValue(i) - datesParameter.getParameterValue(j));
-            double slope = regressionSlopeParameter.getParameterValue(0);
-            double intercept = regressionInterceptParameter.getParameterValue(0);
-            double expectedDistance = intercept + timeDiff * slope;
+            double date = datesParameter.getParameterValue(i);
+            double time = (date-earliestDate);
+            double beta = regressionSlopeParameter.getParameterValue(0);
+            double expectedDistance = time * beta;
 
-            // incrementing ssr
+            // observed Euclidean distance from origin
+            Parameter loc = locationsParameter.getParameter(i);
+            double observedDistance = 0;
+            for (int j=0; j < dimension; j++) {
+                double x = loc.getParameterValue(j);
+                observedDistance += x * x;
+            }
+            observedDistance = Math.sqrt(observedDistance);
+
             ssr += (expectedDistance - observedDistance) * (expectedDistance - observedDistance);
 
-            }
         }
 
         return ssr;
@@ -170,8 +175,8 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     private final MatrixParameter locationsParameter;
     private final Parameter regressionSlopeParameter;
     private final Parameter regressionPrecisionParameter;
-    private final Parameter regressionInterceptParameter;
 
+    private double earliestDate;
     private double logLikelihood = 0.0;
     private double storedLogLikelihood = 0.0;
     private boolean likelihoodKnown = false;
@@ -186,7 +191,6 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         public final static String DATES = "dates";
         public final static String REGRESSIONSLOPE = "regressionSlope";
         public final static String REGRESSIONPRECISION = "regressionPrecision";
-        public final static String REGRESSIONINTERCEPT = "regressionIntercept";
 
         public String getParserName() {
             return ANTIGENIC_DISTANCE_PRIOR;
@@ -198,14 +202,12 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
             Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
             Parameter regressionSlopeParameter = (Parameter) xo.getElementFirstChild(REGRESSIONSLOPE);
             Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
-            Parameter regressionInterceptParameter = (Parameter) xo.getElementFirstChild(REGRESSIONINTERCEPT);
 
             AntigenicDistancePrior AGDP = new AntigenicDistancePrior(
                 locationsParameter,
                 datesParameter,
                 regressionSlopeParameter,
-                regressionPrecisionParameter,
-                regressionInterceptParameter);
+                regressionPrecisionParameter);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -228,8 +230,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class),
                 new ElementRule(REGRESSIONSLOPE, Parameter.class),
-                new ElementRule(REGRESSIONPRECISION, Parameter.class),
-                new ElementRule(REGRESSIONINTERCEPT, Parameter.class)
+                new ElementRule(REGRESSIONPRECISION, Parameter.class)
         };
 
         public Class getReturnType() {

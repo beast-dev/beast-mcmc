@@ -190,12 +190,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
         }
 
+        // If no column parameter is given, make one to hold maximum values for scaling titres...
         if (columnParameter == null) {
             this.columnEffectsParameter = new Parameter.Default("columnEffects");
         } else {
             this.columnEffectsParameter = columnParameter;
         }
 
+        this.columnEffectsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
         this.columnEffectsParameter.setDimension(columnLabels.size());
         addVariable(this.columnEffectsParameter);
         String[] labelArray = new String[columnLabels.size()];
@@ -205,19 +207,18 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.columnEffectsParameter.setParameterValueQuietly(i, maxColumnTitre[i]);
         }
 
-        if (rowParameter == null) {
-            this.rowEffectsParameter = new Parameter.Default("rowEffects");
-        } else {
-            this.rowEffectsParameter = rowParameter;
-        }
-
-        this.rowEffectsParameter.setDimension(rowLabels.size());
-        addVariable(this.rowEffectsParameter);
-        labelArray = new String[rowLabels.size()];
-        rowLabels.toArray(labelArray);
-        this.rowEffectsParameter.setDimensionNames(labelArray);
-        for (int i = 0; i < maxRowTitre.length; i++) {
-            this.rowEffectsParameter.setParameterValueQuietly(i, maxRowTitre[i]);
+        // If no row parameter is given, then we will only use the column effects
+        this.rowEffectsParameter = rowParameter;
+        if (this.rowEffectsParameter != null) {
+            this.rowEffectsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+            this.rowEffectsParameter.setDimension(rowLabels.size());
+            addVariable(this.rowEffectsParameter);
+            labelArray = new String[rowLabels.size()];
+            rowLabels.toArray(labelArray);
+            this.rowEffectsParameter.setDimensionNames(labelArray);
+            for (int i = 0; i < maxRowTitre.length; i++) {
+                this.rowEffectsParameter.setParameterValueQuietly(i, maxRowTitre[i]);
+            }
         }
 
         StringBuilder sb = new StringBuilder();
@@ -402,11 +403,15 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
      * @return
      */
     private double transformTitre(double titre, int column, int row, double mean, double sd) {
-        double rowEffect = rowEffectsParameter.getParameterValue(row);
+        double t;
         double columnEffect = columnEffectsParameter.getParameterValue(column);
+        if (rowEffectsParameter != null) {
+            double rowEffect = rowEffectsParameter.getParameterValue(row);
 
-        //double t = ((rowEffect + columnEffect) * 0.5) - titre;
-        double t = columnEffect - titre;
+            t = ((rowEffect + columnEffect) * 0.5) - titre;
+        } else {
+            t = columnEffect - titre;
+        }
         return (t - mean) / sd;
     }
 

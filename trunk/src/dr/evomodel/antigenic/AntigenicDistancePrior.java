@@ -47,7 +47,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         addVariable(this.datesParameter);
 
         dimension = locationsParameter.getColumnDimension();
-        count = locationsParameter.getRowDimension();
+        count = locationsParameter.getParameter(0).getDimension();
 
         this.regressionSlopeParameter = regressionSlopeParameter;
         addVariable(regressionSlopeParameter);

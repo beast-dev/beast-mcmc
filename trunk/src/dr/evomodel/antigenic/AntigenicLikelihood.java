@@ -18,6 +18,7 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
+    public final static boolean CHECK_INFINITE = false;
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
 
@@ -449,7 +450,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return (t - mean) / sd;
     }
 
-    private double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre) {
+    private static double computeMeasurementIntervalLikelihood_CDF(double minTitre, double maxTitre) {
+        // once transformed, the minTitre will be the greater value
         double cdf1 = NormalDistribution.standardCDF(minTitre, false);
         double cdf2 = NormalDistribution.standardCDF(maxTitre, false);
 
@@ -457,43 +459,58 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (cdf1 == cdf2) {
             lnL = Math.log(cdf1);
         }
-        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
     }
 
-    private double computeMeasurementLikelihood(double titre) {
+    private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre) {
+        // once transformed, the minTitre will be the greater value
+        double cdf1 = NormalDistribution.standardTail(minTitre, true);
+        double cdf2 = NormalDistribution.standardTail(maxTitre, true);
+
+        double lnL = Math.log(cdf2 - cdf1);
+        if (cdf1 == cdf2) {
+            lnL = Math.log(cdf1);
+        }
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+    }
+
+    private static double computeMeasurementLikelihood(double titre) {
         double lnL = NormalDistribution.logPdf(titre, 0.0, 1.0);
-        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
     }
 
-    private double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
+    private static double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
         // a lower bound in non-transformed titre so the bottom tail of the distribution
-        double cdf = NormalDistribution.standardTail(transformedMinTitre, true);
+        double cdf = NormalDistribution.standardTail(transformedMinTitre, false);
         double lnL = Math.log(cdf);
-        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
     }
 
-    private double computeMeasurementUpperBoundLikelihood(double transformedMaxTitre) {
+    private static double computeMeasurementUpperBoundLikelihood(double transformedMaxTitre) {
         // a upper bound in non-transformed titre so the upper tail of the distribution
 
         // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
-        double tail = NormalDistribution.standardTail(transformedMaxTitre, false);
+        double tail = NormalDistribution.standardTail(transformedMaxTitre, true);
         double lnL = Math.log(tail);
-        if (Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
     }
 
-    private double calculateTruncationNormalization(double distance, double sd) {
+    private static double calculateTruncationNormalization(double distance, double sd) {
         return NormalDistribution.cdf(distance, 0.0, sd, true);
     }
 
@@ -663,5 +680,20 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 Citation.Status.IN_PREPARATION
         ));
         return citations;
+    }
+
+    public static void main(String[] args) {
+        double[] titres = {0.0, 2.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0};
+
+        System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tlower\tupper");
+        for (double titre : titres) {
+            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre);
+            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre);
+            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre);
+            double lower = AntigenicLikelihood.computeMeasurementLowerBoundLikelihood(titre);
+            double upper = AntigenicLikelihood.computeMeasurementUpperBoundLikelihood(titre);
+
+            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + lower + "\t" + upper);
+      }
     }
 }

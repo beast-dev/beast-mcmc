@@ -2,6 +2,7 @@ package dr.app.tools;
 
 
 import dr.app.beagle.evomodel.parsers.GammaSiteModelParser;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
@@ -12,7 +13,10 @@ import dr.evolution.alignment.SimpleAlignment;
 //import dr.evolution.datatype.AminoAcids;
 //import dr.evolution.datatype.GeneralDataType;
 import dr.evolution.datatype.*;
-import dr.evolution.io.*;
+import dr.evolution.io.Importer;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.io.TreeExporter;
+import dr.evolution.io.TreeImporter;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
@@ -25,6 +29,7 @@ import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.substmodel.JTT;
 import dr.evomodel.substmodel.WAG;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.treelikelihood.AncestralStateTreeLikelihood;
 import dr.evomodelxml.substmodel.GeneralSubstitutionModelParser;
 import dr.inference.model.Parameter;
 import dr.stats.DiscreteStatistics;
@@ -72,12 +77,12 @@ public class AncestralSequenceAnnotator {
                                       String targetTreeFileName,
                                       String inputFileName,
                                       String outputFileName,
-                                      String kalignExecutable
+                                      String clustalExecutable
     ) throws IOException {
 
         this.posteriorLimit = posteriorLimit;
 
-        this.kalignExecutable = kalignExecutable;
+        this.clustalExecutable = clustalExecutable;
 
         attributeNames.add("height");
         attributeNames.add("length");
@@ -183,6 +188,7 @@ public class AncestralSequenceAnnotator {
 
         System.out.println("Processing ended.");
 
+//		System.exit(-1);
         System.out.println("Writing annotated tree....");
         if (outputFileName != null) {
             exporter = new NexusExporter(new PrintStream(new FileOutputStream(outputFileName)));
@@ -200,8 +206,9 @@ public class AncestralSequenceAnnotator {
     private abstract class SubstitutionModelLoader {
 
 
-        public final char[] AA_ORDER = AminoAcids.AMINOACID_CHARS;
-        public final char[] NUCLEOTIDE_ORDER = Nucleotides.NUCLEOTIDE_CHARS;
+        public final char[] AA_ORDER = AminoAcids.AMINOACID_CHARS; //"ACDEFGHIKLMNPQRSTVWY";
+        //public static final String AA_ORDER = "ACDEFGHIKLMNPQRSTVWY";
+        public final char[] NUCLEOTIDE_ORDER = Nucleotides.NUCLEOTIDE_CHARS; //"ACGU";
         public final String[] CODON_ORDER = Codons.CODON_TRIPLETS;
 
         protected SubstitutionModel substModel;
@@ -255,6 +262,7 @@ public class AncestralSequenceAnnotator {
             substModelName = modelType.replaceFirst("\\*.+","").replaceFirst("\\+.+","").trim();
 
             loadFrequencyModel(tree);
+            //System.out.println("Frequency model datatype: " + getDataType());  //dd
 
             modelSpecifics(tree, modelType);
             printLogLikelihood(tree);
@@ -1171,6 +1179,10 @@ public class AncestralSequenceAnnotator {
                         value = tree.getNodeAttribute(node, attributeName);
                     }
 
+                    //if (value == null) {
+                    //    System.out.println("attribute " + attributeNames[i] + " is null.");
+                    //}
+
                     if (value != null) {
                         clade.attributeLists[i].add(value);
                     }
@@ -1299,9 +1311,12 @@ public class AncestralSequenceAnnotator {
 
             for (int i = 0; i < attributeNames.size(); i++) {
                 String attributeName = attributeNames.get(i);
+//				System.err.println(attributeName);
 
                 double[] values = new double[clade.attributeLists[i].size()];
                 HashMap<String, Integer> hashMap = new HashMap<String, Integer>(clade.attributeLists[i].size());
+//				Hashtable hashMap = new Hashtable(clade.attributeLists[i].size());
+
 
                 if (values.length > 0) {
                     Object v = clade.attributeLists[i].get(0);
@@ -1330,6 +1345,10 @@ public class AncestralSequenceAnnotator {
                                 hashMap.put(value, 1);
 
                             }
+//							if( tree.getNodeTaxon(node) != null &&
+//									tree.getNodeTaxon(node).getId().compareTo("Calanus") == 0) {
+//									System.err.println(value);
+//								}
                         } else if (isBoolean) {
                             values[j] = (((Boolean) clade.attributeLists[i].get(j)) ? 1.0 : 0.0);
                         } else {
@@ -1393,6 +1412,10 @@ public class AncestralSequenceAnnotator {
 
         private void annotateModeAttribute(MutableTree tree, NodeRef node, String label, HashMap<String, Integer> values) {
             if (label.equals(NEW_SEQ)) {
+//				if( tree.isExternal(node) ) {
+//
+//					return;
+//				}
                 String consensusSeq = null;
                 double[] support = null;
                 int numElements = values.keySet().size();
@@ -1416,14 +1439,13 @@ public class AncestralSequenceAnnotator {
                         }
                         pw.close();
 
-                        //Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -OUTPUT=NEXUS");
-                        Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -fmsf -o"+fileName + ".fasta");
+                        Process p = Runtime.getRuntime().exec(clustalExecutable + " " + fileName + " -OUTPUT=NEXUS");
                         BufferedReader input =
                                 new BufferedReader
                                         (new InputStreamReader(p.getInputStream()));
                         {
+                            //String line;
 
-//                            String line;
                             while ((/*line = */input.readLine()) != null) {
 //							System.out.println(line);
                             }
@@ -1433,10 +1455,7 @@ public class AncestralSequenceAnnotator {
                         externalCalls++;
 //						System.err.println("clustal call #" + externalCalls);
 
-                        //NexusImporter importer = new NexusImporter(new FileReader(fileName + ".nxs"));
-                        //TODO not sure if right
-                        FastaImporter importer = new FastaImporter(new FileReader(new File(fileName + ".fasta")), new GeneralDataType(new String[0]));//AminoAcids.INSTANCE);
-                                //new FastaImporter(new FileReader(), new AminoAcids.INSTANCE);
+                        NexusImporter importer = new NexusImporter(new FileReader(fileName + ".nxs"));
 
                         Alignment alignment = importer.importAlignment();
                         // build index
@@ -1658,7 +1677,7 @@ public class AncestralSequenceAnnotator {
     int totalTrees = 0;
     int totalTreesUsed = 0;
     double posteriorLimit = 0.0;
-    String kalignExecutable = null;
+    String clustalExecutable = null;
 
     List<String> attributeNames = new ArrayList<String>();
     List<String> treeAttributeNames = new ArrayList<String>();
@@ -1723,7 +1742,7 @@ public class AncestralSequenceAnnotator {
                         new Arguments.RealOption("limit", "the minimum posterior probability for a node to be annotated"),
                         new Arguments.StringOption("target", "target_file_name", "specifies a user target tree to be annotated"),
                         new Arguments.Option("help", "option to print this message"),
-                        new Arguments.StringOption("kalign", "full_path_to_kalign", "specifies full path to the kalign executable file")
+                        new Arguments.StringOption("clustal", "full_path_to_clustal", "specifies full path to the clustal executable file")
                 });
 
         try {
@@ -1769,10 +1788,9 @@ public class AncestralSequenceAnnotator {
             targetTreeFileName = arguments.getStringOption("target");
         }
 
-        // String kalignExecutable = "/usr/local/bin/clustalw";
-        String kalignExecutable = "/usr/local/bin/kalign";
-        if (arguments.hasOption("kalign")) {
-            kalignExecutable = arguments.getStringOption("kalign");
+        String clustalExecutable = "/usr/local/bin/clustalw";
+        if (arguments.hasOption("clustal")) {
+            clustalExecutable = arguments.getStringOption("clustal");
         }
 
         String[] args2 = arguments.getLeftoverArguments();
@@ -1813,7 +1831,7 @@ public class AncestralSequenceAnnotator {
                 targetTreeFileName,
                 inputFileName,
                 outputFileName,
-                kalignExecutable);
+                clustalExecutable);
 
         System.exit(0);
     }

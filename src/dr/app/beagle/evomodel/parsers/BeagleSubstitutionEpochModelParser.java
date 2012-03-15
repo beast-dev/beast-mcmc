@@ -8,8 +8,11 @@ import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
@@ -27,34 +30,34 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
 		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
 		XMLObject cxo = xo.getChild(MODELS);
-
+		
 		for (int i = 0; i < cxo.getChildCount(); i++) {
-
-			SubstitutionModel substModel = (SubstitutionModel) cxo.getChild(i);
+			
+			SubstitutionModel model = (SubstitutionModel) cxo.getChild(i);
 
 			if (dataType == null) {
-
-				dataType = substModel.getDataType();
-
-			} else if (dataType != substModel.getDataType()) {
-
+				
+				dataType = model.getDataType();
+				
+			} else if (dataType != model.getDataType()) {
+				
 				throw new XMLParseException(
 						"Substitution models across epoches must use the same data type.");
-
+				
 			}//END: dataType check
 
 			if (frequencyModelList.size() == 0) {
 
-				frequencyModelList.add(substModel.getFrequencyModel());
+				frequencyModelList.add(model.getFrequencyModel());
 
-			} else if (frequencyModelList.get(0) != substModel.getFrequencyModel()) {
-
+			} else if (frequencyModelList.get(0) != model.getFrequencyModel()) {
+				
 				throw new XMLParseException(
 						"Substitution models across epoches must currently use the same frequency model.\n Harass Marc to fix this.");
 
 			}//END: freqModels no check
-
-			substModelList.add(substModel);
+				
+			substModelList.add(model);
 		}//END: i loop
 
 		Parameter epochTransitionTimes = (Parameter) xo
@@ -65,21 +68,24 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 					"# of transition times must equal # of substitution models - 1\n"
 							+ epochTransitionTimes.getDimension() + "\n"
 							+ substModelList.size());
-		}
-
+		} 
+			
 	    // quietly sort in increasing order
 		double sortedEpochTransitionTimes[] = epochTransitionTimes.getAttributeValue();
 		Arrays.sort(sortedEpochTransitionTimes);
-		for(int i = 0; i < epochTransitionTimes.getDimension(); i ++) {
-			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
-		}//END: i loop
 
+		for(int i = 0; i < epochTransitionTimes.getDimension(); i ++) {
+			
+			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
+			
+		}//END: i loop
+		
 		return new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);
 	}// END: parseXMLObject
 
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
-
+		
 //        return new XMLSyntaxRule[]{
 //                new ElementRule(MODELS,
 //                        new XMLSyntaxRule[]{
@@ -88,7 +94,7 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 //                ),
 //                new ElementRule(Parameter.class),
 //        };
-
+		
 		return null;
 	}
 
@@ -98,10 +104,11 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 	}
 
 	@Override
-	public Class<EpochBranchSubstitutionModel> getReturnType() {
+	public Class getReturnType() {
 		return EpochBranchSubstitutionModel.class;
 	}
 
+	@Override
 	public String getParserName() {
 		return SUBSTITUTION_EPOCH_MODEL;
 	}

@@ -78,9 +78,9 @@ public class MCMCParser extends AbstractXMLObjectParser {
         options.setChainLength(xo.getLongIntegerAttribute(CHAIN_LENGTH));
         options.setUseCoercion(xo.getAttribute(COERCION, true));
         if (xo.hasAttribute(PRE_BURNIN)) {
-            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int) (options.getChainLength() / 100)));
+            options.setCoercionDelay(xo.getAttribute(PRE_BURNIN, (int)(options.getChainLength() / 100)));
         }
-        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int) (options.getChainLength() / 100)));
+        options.setCoercionDelay(xo.getAttribute(COERCION_DELAY, (int)(options.getChainLength() / 100)));
         options.setTemperature(xo.getAttribute(TEMPERATURE, 1.0));
         options.setFullEvaluationCount(xo.getAttribute(FULL_EVALUATION, 2000));
         options.setMinOperatorCountForFullEvaluation(xo.getAttribute(MIN_OPS_EVALUATIONS, 1));
@@ -105,7 +105,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
                 "\n  autoOptimize=" + options.useCoercion() +
                 (options.useCoercion() ? "\n  autoOptimize delayed for " + options.getCoercionDelay() + " steps" : "") +
                 (options.fullEvaluationCount() == 0 ? "\n  full evaluation test off" : "")
-        );
+                );
 
         mcmc.init(options, likelihood, opsched, loggerArray);
 

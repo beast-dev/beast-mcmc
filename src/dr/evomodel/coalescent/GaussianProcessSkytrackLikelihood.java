@@ -25,7 +25,6 @@
 
 package dr.evomodel.coalescent;
 
-//import com.lowagie.text.Paragraph;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.TreeTrait;
@@ -156,7 +155,6 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
                 setTree(treeList);
 
                 wrapSetupIntervals();
-
 //        intervalCount = the size for constant vectors
 
 
@@ -181,9 +179,9 @@ public class GaussianProcessSkytrackLikelihood extends OldAbstractCoalescentLike
 
                 initializationReport();
                 setupSufficientStatistics();
-
                 setupGPvalues();
 
+//                weightMatrix = new SymmTridiagMatrix(numintervals);
 
 
          }
@@ -423,7 +421,6 @@ protected void storeState() {
 
 
             //Set up the weight Matrix
-            double trick=0.000001;
             double[] offdiag = new double[getCorrectFieldLength() - 1];
             double[] diag = new double[getCorrectFieldLength()];
 
@@ -431,35 +428,31 @@ protected void storeState() {
              for (int i = 0; i < getCorrectFieldLength() - 1; i++) {
                     offdiag[i] = precision*(-1.0 / (changePoints.getParameterValue(i+1)-changePoints.getParameterValue(i)));
                  if (i<getCorrectFieldLength()-2){
-                    diag[i+1]= -offdiag[i]+precision*(1.0/(changePoints.getParameterValue(i+2)-changePoints.getParameterValue(i+1))+trick);
-
+                    diag[i+1]= -offdiag[i]+precision*(1.0/(changePoints.getParameterValue(i+2)-changePoints.getParameterValue(i+1))+.000001);
                  }
                 }
 //              Diffuse prior correction - intrinsic
              //Take care of the endpoints
-            diag[0] = -offdiag[0]+precision*trick;
+            diag[0] = -offdiag[0]+precision*.000001;
 
-            diag[getCorrectFieldLength() - 1] = -offdiag[getCorrectFieldLength() - 2]+precision*(trick);
+            diag[getCorrectFieldLength() - 1] = -offdiag[getCorrectFieldLength() - 2]+precision*(.000001);
             weightMatrix = new SymmTridiagMatrix(diag, offdiag);
         }
 
 
 
     protected void setupGPvalues() {
-
         setupQmatrix(precisionParameter.getParameterValue(0));
         int length = getCorrectFieldLength();
         DenseVector StandNorm = new DenseVector(length);
         DenseVector MultiNorm = new DenseVector(length);
         for (int i=0; i<length;i++){
             StandNorm.set(i,MathUtils.nextGaussian());
-//            StandNorm.set(i,0.1);
-                      }
+         }
         UpperSPDBandMatrix Qcurrent = new UpperSPDBandMatrix(weightMatrix, 1);
         BandCholesky U = new BandCholesky(length,1,true);
         U.factor(Qcurrent);
         UpperTriangBandMatrix CholeskyUpper = U.getU();
-
         CholeskyUpper.solve(StandNorm,MultiNorm);
         for (int i=0; i<length;i++){
             popSizeParameter.setParameterValue(i,MultiNorm.get(i));
@@ -486,38 +479,6 @@ protected void storeState() {
             return changePoints;
         }
 
-        public double getAlphaParameter(){
-            return alphaParameter.getParameterValue(0);
-        }
-
-        public double getBetaParameter(){
-            return betaParameter.getParameterValue(0);
-        }
-
-
-        public double [] getGPcoalfactor(){
-            return GPcoalfactor;
-        }
-
-
-        public double [] getcoalfactor(){
-            return coalfactor;
-        }
-
-
-        public int [] getGPtype(){
-            return GPtype;
-        }
-
-
-        public int [] getGPcounts(){
-            return GPcounts;
-        }
-
-
-	    public SymmTridiagMatrix getWeightMatrix() {
-		    return weightMatrix.copy();
-	}
 
 //    Methods needed for GP-based
 

@@ -174,6 +174,7 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
                 }
 
                 addModel(tipStatesModel);
+                //useAmbiguities = true;
             } else {
                 for (int i = 0; i < extNodeCount; i++) {
                     // Find the id of tip i in the patternList

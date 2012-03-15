@@ -198,7 +198,7 @@ public class MCMC implements Identifiable, Spawnable {
         timer.stop();
     }
 
-    protected final MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -451,7 +451,7 @@ public class MCMC implements Identifiable, Spawnable {
 
 
     //PRIVATE METHODS *****************************************
-    protected int getCoercionDelay() {
+    private int getCoercionDelay() {
 
         int delay = options.getCoercionDelay();
         if (delay < 0) {
@@ -489,27 +489,27 @@ public class MCMC implements Identifiable, Spawnable {
     // PRIVATE TRANSIENTS
 
     //private FileLogger operatorLogger = null;
-    protected final boolean isAdapting = true;
-    protected boolean stopping = false;
-    protected boolean showOperatorAnalysis = true;
-    protected String operatorAnalysisFileName = null;
-    protected final dr.util.Timer timer = new dr.util.Timer();
-    protected long currentState = 0;
+    private final boolean isAdapting = true;
+    private boolean stopping = false;
+    private boolean showOperatorAnalysis = true;
+    private String operatorAnalysisFileName = null;
+    private final dr.util.Timer timer = new dr.util.Timer();
+    private long currentState = 0;
     //private int stepsPerReport = 1000;
-    protected final NumberFormatter formatter = new NumberFormatter(8);
+    private final NumberFormatter formatter = new NumberFormatter(8);
 
     /**
      * this markov chain does most of the work.
      */
-    protected MarkovChain mc;
+    private MarkovChain mc;
 
     /**
      * the options of this MCMC analysis
      */
-    protected MCMCOptions options;
+    private MCMCOptions options;
 
-    protected Logger[] loggers;
-    protected OperatorSchedule schedule;
+    private Logger[] loggers;
+    private OperatorSchedule schedule;
 
     private String id = null;
 }

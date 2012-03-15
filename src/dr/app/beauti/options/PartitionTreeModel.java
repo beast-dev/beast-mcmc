@@ -136,7 +136,7 @@ public class PartitionTreeModel extends PartitionOptions {
         }
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
-            getParameter("treeModel.microsatellite.internalNodesParameter");
+             getParameter("treeModel.microsatellite.internalNodesParameter");
         }
     }
 
@@ -165,7 +165,7 @@ public class PartitionTreeModel extends PartitionOptions {
         operators.add(getOperator("uniformHeights"));
 
         if (getDataType().getType() == DataType.MICRO_SAT) {
-            operators.add(getOperator("microsatInternalNodesParameter"));
+             operators.add(getOperator("microsatInternalNodesParameter"));
         }
     }
 
@@ -234,6 +234,6 @@ public class PartitionTreeModel extends PartitionOptions {
     }
 
     public int getDimension() { // n-1
-        return options.getTaxonCount(options.getDataPartitions(this)) - 1;
+       return options.getTaxonCount(options.getDataPartitions(this)) - 1;
     }
 }

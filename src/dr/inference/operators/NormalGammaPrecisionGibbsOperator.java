@@ -151,7 +151,7 @@ public class NormalGammaPrecisionGibbsOperator extends SimpleMCMCOperator implem
             DistributionLikelihood likelihood = (DistributionLikelihood) ((XMLObject) xo.getChild(LIKELIHOOD)).getChild(DistributionLikelihood.class);
             DistributionLikelihood prior = (DistributionLikelihood) ((XMLObject) xo.getChild(PRIOR)).getChild(DistributionLikelihood.class);
 
-//            System.err.println("class: " + prior.getDistribution().getClass());
+            System.err.println("class: " + prior.getDistribution().getClass());
 
             if (!((prior.getDistribution() instanceof GammaDistribution) ||
                     (prior.getDistribution() instanceof GammaDistributionModel)

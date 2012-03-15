@@ -454,7 +454,7 @@ public final class MarkovChain {
         return isStopped;
     }
 
-    protected double evaluate(Likelihood likelihood, Prior prior) {
+    private double evaluate(Likelihood likelihood, Prior prior) {
 
         double logPosterior = 0.0;
 

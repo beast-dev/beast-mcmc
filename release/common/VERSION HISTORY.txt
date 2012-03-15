@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 8th March 2012
+Last updated: a.rambaut@ed.ac.uk - 16th March 2012
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.1 released 9th March 2012
+Version 1.7.1 released 16th March 2012
 
     New Features:
        TN93 added to BEAGLE BEAST interface
@@ -30,7 +30,6 @@ Version 1.7.1 released 9th March 2012
        Added BEAGLE rescaling frequency commandline option
 
 	Bug Fixes:
-	   Issue 71:    Reflected exponentials (or lognormals) as priors?
 	   Issue 571:	TN93 substitution model
        Issue 594:	BEAUti 1.7 has a redundant and non-functional Sequence Error
                     Model popup menu in SiteModelPanel
@@ -49,6 +48,8 @@ Version 1.7.1 released 9th March 2012
                     bound and offset
        Issue 604:	RealNumberField FocusListener in prior dialog makes
                     many popups
+       Issue 605:	BEAUti complains about missing values in traits files
+
 
 
 ================================================================================

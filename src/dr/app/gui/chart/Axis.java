@@ -26,7 +26,6 @@
 package dr.app.gui.chart;
 
 import dr.util.NumberFormatter;
-import mpjbuf.*;
 
 import java.lang.IllegalArgumentException;
 

@@ -25,7 +25,6 @@
 
 package dr.app.beast;
 
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.gui.FileDrop;
 import dr.app.gui.components.WholeNumberField;
 import jam.html.SimpleLinkListener;

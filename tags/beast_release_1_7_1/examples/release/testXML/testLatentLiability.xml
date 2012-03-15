@@ -1,0 +1,239 @@
+<?xml version="1.0" standalone="yes"?>
+
+<beast>
+
+    <!-- The list of taxa analyse (can also include dates/ages).                 -->
+    <!-- ntax=6                                                                  -->
+    <taxa id="taxa1">
+        <taxon id="human">
+            <attr name="latent"> 1  2</attr></taxon>
+        <taxon id="chimp">
+            <attr name="latent"> 3  4</attr></taxon>
+        <taxon id="bonobo">
+            <attr name="latent">-1  6</attr></taxon>
+        <taxon id="gorilla">
+            <attr name="latent">-1 -2</attr></taxon>
+        <taxon id="orangutan">
+            <attr name="latent">-1 -2</attr></taxon>
+        <taxon id="siamang">
+            <attr name="latent">-1 -2</attr></taxon>
+    </taxa>
+
+    <!-- The sequence alignment (each sequence refers to a taxon above).         -->
+    <!-- ntax=6 nchar=1                                                          -->
+    <alignment id="alignment" dataType="binary">
+        <sequence>
+            <taxon idref="human"/>
+            11
+        </sequence>
+        <sequence>
+            <taxon idref="chimp"/>
+            11
+        </sequence>
+        <sequence>
+            <taxon idref="bonobo"/>
+            01
+        </sequence>
+        <sequence>
+            <taxon idref="gorilla"/>
+            00
+        </sequence>
+        <sequence>
+            <taxon idref="orangutan"/>
+            00
+        </sequence>
+        <sequence>
+            <taxon idref="siamang"/>
+            00
+        </sequence>
+    </alignment>
+
+    <!-- The unique patterns                                                     -->
+    <!-- npatterns=69                                                            -->
+    <patterns id="patterns" from="1" unique="false">
+        <alignment idref="alignment"/>
+    </patterns>
+
+    <tree id="treeML" units="years">
+        <node height="0.099582">
+            <node height="0.069125">
+                <node height="0.036038">
+                    <node height="0.024003">
+                        <node height="0.000000">
+                            <taxon idref="human"/>
+                        </node>
+                        <node height="0.010772">
+                            <node height="0.000000">
+                                <taxon idref="chimp"/>
+                            </node>
+                            <node height="0.000000">
+                                <taxon idref="bonobo"/>
+                            </node>
+                        </node>
+                    </node>
+                    <node height="0.000000">
+                        <taxon idref="gorilla"/>
+                    </node>
+                </node>
+                <node height="0.000000">
+                    <taxon idref="orangutan"/>
+                </node>
+            </node>
+            <node height="0.000000">
+                <taxon idref="siamang"/>
+            </node>
+        </node>
+    </tree>
+
+    <treeModel id="treeModel">
+        <tree idref="treeML"/>
+        <rootHeight>
+            <parameter id="treeModel.rootHeight"/>
+        </rootHeight>
+        <nodeHeights internalNodes="true">
+            <parameter id="treeModel.internalNodeHeights"/>
+        </nodeHeights>
+        <nodeHeights internalNodes="true" rootNode="true">
+            <parameter id="treeModel.allInternalNodeHeights"/>
+        </nodeHeights>
+
+		<nodeTraits rootNode="false" internalNodes="false" leafNodes="true" traitDimension="2" name="latent">
+			<parameter id="leafTraits"/>
+		</nodeTraits>
+
+    </treeModel>
+
+    <report>
+        Newick Tree:
+        <tree idref="treeML"/>
+    </report>
+    
+	<multivariateDiffusionModel id="diffusionModel">
+		<precisionMatrix>
+			<matrixParameter id="precisionMatrix">
+				<parameter id="col1" value="+2.00 -1.25"/>
+				<parameter id="col2" value="-1.25 +2.00"/>
+			</matrixParameter>
+		</precisionMatrix>
+	</multivariateDiffusionModel>
+
+	<multivariateWishartPrior id="precisionPrior" df="2">
+		<scaleMatrix>
+			<matrixParameter>
+				<parameter value="1.0 0.0"/>
+				<parameter value="0.0 1.0"/>
+			</matrixParameter>
+		</scaleMatrix>
+		<data>
+			<matrixParameter idref="precisionMatrix"/>
+		</data>
+	</multivariateWishartPrior>
+
+	 <multivariateNormalPrior id="rootPrior">
+	   <meanParameter>
+		 <parameter value="0.0 0.0"/>
+		   </meanParameter>
+	   	 <precisionParameter>
+	 		<matrixParameter>
+				<parameter value="+2.00 -1.25"/>
+				<parameter value="-1.25 +2.00"/>
+	 		</matrixParameter>
+	   	</precisionParameter>
+	 </multivariateNormalPrior>    
+
+	<multivariateTraitLikelihood id="traitLikelihood" traitName="latent"
+	 						     useTreeLength="true" scaleByTime="true"
+                                 cacheBranches="true"
+                                 reportAsMultivariate="true" reciprocalRates="true" integrateInternalTraits="true">
+		<multivariateDiffusionModel idref="diffusionModel"/>
+		<treeModel idref="treeModel"/>
+		<traitParameter>
+			<parameter idref="leafTraits"/>
+		</traitParameter>
+        <!--<conjugateRootPrior>-->
+            <!--<meanParameter>-->
+                <!--<parameter value="0.0 0.0"/>-->
+            <!--</meanParameter>-->
+            <!--<priorSampleSize>-->
+                <!--<parameter value="1.0"/> &lt;!&ndash; 1 is probably a good number &ndash;&gt;-->
+            <!--</priorSampleSize>-->
+        <!--</conjugateRootPrior>-->
+         <multivariateNormalPrior idref="rootPrior"/>   <!-- Semi-conjugate prior -->
+    </multivariateTraitLikelihood>
+
+    <latentLiabilityLikelihood id="liabilityLikelihood">
+        <patterns idref="patterns"/>
+        <treeModel idref="treeModel"/>
+        <multivariateTraitLikelihood idref="traitLikelihood"/>
+        <tipTrait>
+            <parameter idref="leafTraits"/>
+        </tipTrait>
+    </latentLiabilityLikelihood>
+
+    <operators id="operators" optimizationSchedule="log">
+
+        <randomWalkOperator windowSize="1.0" weight="10">
+		    <parameter idref="leafTraits"/>
+		</randomWalkOperator>
+<!--
+        <precisionGibbsOperator weight="1">
+            <multivariateTraitLikelihood idref="traitLikelihood"/>
+            <multivariateWishartPrior idref="precisionPrior"/>
+        </precisionGibbsOperator>
+-->        
+        
+    </operators>
+
+	<mcmc id="mcmc" chainLength="20000000" autoOptimize="true" autoOptimizeDelay="10000">
+		<posterior id="posterior">
+			<prior id="prior">
+				<multivariateWishartPrior idref="precisionPrior"/>
+			</prior>
+			<likelihood id="likelihood">
+	            <multivariateTraitLikelihood idref="traitLikelihood"/>
+				<latentLiabilityLikelihood idref="liabilityLikelihood"/>
+			</likelihood>
+		</posterior>
+
+		<operators idref="operators"/>
+
+		<log id="screenLog" logEvery="100000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+			<column label="Prior" dp="4" width="12">
+				<prior idref="prior"/>
+			</column>
+			<column label="Likelihood" dp="4" width="12">
+				<likelihood idref="likelihood"/>
+			</column>
+
+			<column label="leafTraits" sf="6" width="12">
+				<parameter idref="leafTraits"/>
+			</column>
+		</log>
+
+		<log id="fileLog1" logEvery="10000" fileName="testLatentLiability.log">
+			<posterior idref="posterior"/>
+			<prior idref="prior"/>
+			<likelihood idref="likelihood"/>
+
+			<matrixParameter idref="precisionMatrix"/>
+			<parameter idref="leafTraits"/>
+		</log>
+
+		<logTree id="treeFileLog" logEvery="10000" nexusFormat="true" fileName="testLatentLiability.trees" sortTranslationTable="true">
+			<treeModel idref="treeModel"/>
+			<posterior idref="posterior"/>
+			<multivariateDiffusionModel idref="diffusionModel"/>   <!-- reports info about diffusion model -->
+            <multivariateTraitLikelihood idref="traitLikelihood"/>
+		</logTree>
+	</mcmc>
+
+    <traceAnalysis fileName="testLatentLiability.log"/>    
+    
+
+</beast>
+
+
+     

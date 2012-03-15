@@ -1,0 +1,195 @@
+<beast>
+    <taxa id="taxa">
+
+    <taxon id="Agta">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            18.19804 121.95923
+        </attr>
+    </taxon>
+
+
+    <taxon id="AklanonBisayan">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            11.53385 122.36572
+        </attr>
+    </taxon>
+
+
+    <taxon id="Alune">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -3.10042 128.17446
+        </attr>
+    </taxon>
+
+
+    <taxon id="AmbaiYapen">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -1.83 136.5
+        </attr>
+    </taxon>
+
+
+    <taxon id="AmbrymSouthEast">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -16.3096 168.25562
+        </attr>
+    </taxon>
+
+
+    <taxon id="Anakalang">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -9.71989 119.67407
+        </attr>
+    </taxon>
+
+
+    <taxon id="AnejomAneityum">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -20.19004 169.82666
+        </attr>
+    </taxon>
+
+
+    <taxon id="Anuta">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -11.61083 169.85028
+        </attr>
+    </taxon>
+
+
+    <taxon id="Aputai">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -7.86338 126.51855
+        </attr>
+    </taxon>
+
+
+    <taxon id="ArakiSouthwestSanto">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -15.67 166.92
+        </attr>
+    </taxon>
+
+
+    <taxon id="Aria">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -5.64879 149.23828
+        </attr>
+    </taxon>
+
+
+    <taxon id="As">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -0.79099 131.69312
+        </attr>
+    </taxon>
+
+
+    <taxon id="Asumboa">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -11.24845 166.47583
+        </attr>
+    </taxon>
+
+
+    <taxon id="Atoni">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -9.88228 124.05762
+        </attr>
+    </taxon>
+
+
+    <taxon id="AttaPamplona">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            18.12497 120.91553
+        </attr>
+    </taxon>
+
+
+    <taxon id="Avava">
+
+
+        <date direction="backwards" units="years" value="0.0"/>
+
+
+        <attr name="location">
+            -16.24368 167.47009
+        </attr>
+    </taxon>
+</taxa>
+ </beast>

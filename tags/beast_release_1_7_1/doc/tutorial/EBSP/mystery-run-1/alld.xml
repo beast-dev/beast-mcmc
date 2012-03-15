@@ -1,0 +1,38 @@
+<beast>
+  <VDAnalysis id="demographic.analysis" burnIn="0.1" useMidpoints="true" nBins="200">
+		<logFileName>
+			mystery.log
+		</logFileName>
+		<treeFileNames>
+			<treeOfLoci>
+				mystery.mt.nex.trees
+			</treeOfLoci>
+			<treeOfLoci>
+				mystery.nuclear.nex.trees
+			</treeOfLoci>
+			<treeOfLoci>
+				mystery.X.nex.trees
+			</treeOfLoci>
+		</treeFileNames>
+		<populationModelType>
+			linear
+		</populationModelType>
+		<populationFirstColumn>
+			demographic.popSize1
+		</populationFirstColumn>
+		<indicatorsFirstColumn>
+			demographic.indicators1
+		</indicatorsFirstColumn>
+		<allDemographicsFileName>
+		  mystery.alld.txt
+		</allDemographicsFileName>
+		<rootheightColumn>
+		  nuclear.nex.treeModel.rootHeight
+		</rootheightColumn>
+	</VDAnalysis>
+	<CSVexport fileName="mystery.csv" separator=",">
+		<columns>
+			<VDAnalysis idref="demographic.analysis"/>
+		</columns>
+	</CSVexport>
+</beast>

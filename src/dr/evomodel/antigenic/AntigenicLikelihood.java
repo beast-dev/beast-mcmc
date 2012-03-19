@@ -667,10 +667,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tthreshold");
         for (double titre : titres) {
-            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre);
-            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre);
-            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre);
-            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre);
+            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre, 0.0, 1.0);
+            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0.0, 1.0);
+            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre, 0.0, 1.0);
+            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0.0, 1.0);
 
             System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + threshold);
         }

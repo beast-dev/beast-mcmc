@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;
-    private static final boolean USE_THRESHOLDS = false;
+    private static final boolean USE_THRESHOLDS = true;
     private static final boolean USE_INTERVALS = true;
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
@@ -400,7 +400,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     /**
-     * Transforms a titre into log2 space and takes distance row/column homologous titres
+     * Transforms a titre into log2 space and normalizes it with respect to a unit normal
      * @param titre
      * @param column
      * @param row
@@ -667,10 +667,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         System.out.println("titre\tpoint\tinterval(tail)\tinterval(cdf)\tthreshold");
         for (double titre : titres) {
-            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre, 0, 1);
-            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0, 1);
-            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre, 0, 1);
-            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0, 1);
+            double point = AntigenicLikelihood.computeMeasurementLikelihood(titre);
+            double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre);
+            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre);
+            double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre);
 
             System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + threshold);
         }

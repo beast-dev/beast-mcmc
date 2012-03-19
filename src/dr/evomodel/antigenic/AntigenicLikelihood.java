@@ -319,12 +319,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     protected void acceptState() {
     }
 
-    @Override
     public Model getModel() {
         return this;
     }
 
-    @Override
     public double getLogLikelihood() {
         if (!likelihoodKnown) {
             logLikelihood = computeLogLikelihood();
@@ -482,7 +480,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         return NormalDistribution.cdf(distance, 0.0, sd, true);
     }
 
-    @Override
     public void makeDirty() {
         likelihoodKnown = false;
         setLocationChangedFlags(true);

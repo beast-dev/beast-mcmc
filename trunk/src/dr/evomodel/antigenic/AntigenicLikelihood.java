@@ -19,8 +19,8 @@ import java.util.logging.Logger;
  */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;
-    private static final boolean USE_THRESHOLDS = true;
-    private static final boolean USE_INTERVALS = true;
+    private static final boolean USE_THRESHOLDS = false;
+    private static final boolean USE_INTERVALS = false;
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
 
@@ -356,8 +356,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                         logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre) - logNormalization;
                     } break;
                     case POINT: {
-                        double titre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
-                        logLikelihoods[i] = computeMeasurementLikelihood(titre) - logNormalization;
+                  //      double titre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
+                        double titre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, 0, 1);
+                        logLikelihoods[i] = computeMeasurementLikelihood(titre, distance, sd) - logNormalization;
                     } break;
                     case THRESHOLD: {
                         double maxTitre = transformTitre(measurement.log2Titre, measurement.column, measurement.row, distance, sd);
@@ -453,6 +454,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
     private static double computeMeasurementLikelihood(double titre) {
         double lnL = NormalDistribution.logPdf(titre, 0.0, 1.0);
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+    }
+
+    private static double computeMeasurementLikelihood(double titre, double mean, double sd) {
+        double lnL = NormalDistribution.logPdf(titre, mean, sd);
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }

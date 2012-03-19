@@ -18,8 +18,8 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
-    private static final boolean CHECK_INFINITE = true;
-    private static final boolean USE_THRESHOLDS = false;
+    private static final boolean CHECK_INFINITE = false;
+    private static final boolean USE_THRESHOLDS = true;
     private static final boolean USE_INTERVALS = false;
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
@@ -78,7 +78,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 if (columnStrain == -1) {
                     strainNames.add(values[SERUM_STRAIN]);
 
-                    Double date = Double.parseDouble(values[VIRUS_DATE]);
+                    Double date = Double.parseDouble(values[SERUM_DATE]);
                     strainDateMap.put(values[SERUM_STRAIN], date);
 
                     columnStrain = strainNames.size() - 1;

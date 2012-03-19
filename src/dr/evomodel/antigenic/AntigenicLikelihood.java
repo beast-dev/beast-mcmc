@@ -18,7 +18,9 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
-    public final static boolean CHECK_INFINITE = false;
+    private static final boolean CHECK_INFINITE = true;
+    private static final boolean USE_THRESHOLDS = false;
+    private static final boolean USE_INTERVALS = false;
 
     public final static String ANTIGENIC_LIKELIHOOD = "antigenicLikelihood";
 
@@ -56,7 +58,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         Map<String, Double> strainDateMap = new HashMap<String, Double>();
 
         this.intervalWidth = intervalWidth;
-        boolean useIntervals = intervalWidth > 0.0;
+        boolean useIntervals = USE_INTERVALS && intervalWidth > 0.0;
 
         int thresholdCount = 0;
 
@@ -120,8 +122,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     // check if threshold below
                     if (values[TITRE].contains("<")) {
                         rawTitre = Double.parseDouble(values[TITRE].replace("<",""));
-                        isThreshold = true;
-                        thresholdCount++;
+                        if (USE_THRESHOLDS) {
+                            isThreshold = true;
+                            thresholdCount++;
+                        }
                     }
                     // check if threshold above
                     if (values[TITRE].contains(">")) {
@@ -195,11 +199,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.columnEffectsParameter = new Parameter.Default("columnEffects");
         } else {
             this.columnEffectsParameter = columnParameter;
+            addVariable(this.columnEffectsParameter);
         }
 
         this.columnEffectsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
         this.columnEffectsParameter.setDimension(columnLabels.size());
-        addVariable(this.columnEffectsParameter);
         String[] labelArray = new String[columnLabels.size()];
         columnLabels.toArray(labelArray);
         this.columnEffectsParameter.setDimensionNames(labelArray);
@@ -223,7 +227,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
-        sb.append("\t\t" + this.strains.getTaxonCount() + " strains\n");
+       sb.append("\t\t" + this.strains.getTaxonCount() + " strains\n");
         sb.append("\t\t" + columnLabels.size() + " unique columns\n");
         sb.append("\t\t" + rowLabels.size() + " unique rows\n");
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
@@ -342,6 +346,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 double distance = computeDistance(measurement.rowStrain, measurement.columnStrain);
 
                 double logNormalization = calculateTruncationNormalization(distance, sd);
+//                double logNormalization = 0.0;
 
                 switch (measurement.type) {
                     case INTERVAL: {
@@ -558,6 +563,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             } catch (IOException e) {
                 throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
+            System.out.println("Loaded HI table file: " + fileName);
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
             double intervalWidth = 0.0;

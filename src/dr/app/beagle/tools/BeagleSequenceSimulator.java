@@ -86,7 +86,21 @@ public class BeagleSequenceSimulator {
 );
 
 		
-		
+//        for (int i = 0; i < eigenCount; i++) {
+//            if (branchUpdateCount[i] > 0) {
+//
+//                    branchSubstitutionModel.updateTransitionMatrices(
+//                            beagle, //
+//                            i, //
+//                            eigenBufferHelper, //
+//                            matrixUpdateIndices[i],
+//                            null, //
+//                            null, //
+//                            branchLengths[i],
+//                            branchUpdateCount[i]);
+//                    
+//            }//END: branchUpdateCount check
+//        } //END: i loop
 		
 		
 		

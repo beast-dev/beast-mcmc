@@ -57,7 +57,7 @@ import java.util.Map;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
 		BranchSubstitutionModel, Citable {
 
-    public static final boolean TRY_EPOCH = false;
+    public static final boolean TRY_EPOCH = true;
 	
 	private final List<SubstitutionModel> substModelList;
 	private final List<FrequencyModel> frequencyModelList;
@@ -445,100 +445,117 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 			}// END: eigen indices loop
 
-			// ////////////////////////////////////////////////////
-
-//			for (int k = 0; k < probabilityIndices.length; k++) {
-//
-//				double tmp[] = new double[4 * 4 * 4];
-//				beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
-//						tmp // outMatrix
-//						);
-//
-//				System.out.println(probabilityIndices[k]);
-//				printMatrix(tmp, 4, 4);
-//			}
-
-			// ////////////////////////////////////////////////////
 			
 		}// END: eigenIndex check
+		
+		// ////////////////////////////////////////////////////
+
+//		for (int k = 0; k < probabilityIndices.length; k++) {
+//
+//			double tmp[] = new double[4 * 4 * 4];
+//			beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
+//					tmp // outMatrix
+//					);
+//
+//			System.out.println(probabilityIndices[k]);
+//			printMatrix(tmp, 4, 4);
+//		}
+
+		// ////////////////////////////////////////////////////
+		
+		
 	}// END: updateTransitionMatrices
 
-	public void getTransitionProbabilities(Tree tree, //
-			NodeRef node, //
-			int rateCategory, //
-			BranchRateModel branchRateModel, //
-			GammaSiteRateModel siteModel, //
-			FrequencyModel frequModel, //
-			double[] matrix //
-			) {
-		
-		NodeRef parent = tree.getParent(node);
-		
-		int numberModels = substModelList.size();
-		int stateCount = frequModel.getDataType().getStateCount();
-		int nodeCount = tree.getNodeCount();
-		int nodeNum = node.getNumber();
-		
-		double branchRate = branchRateModel.getBranchRate(tree, node);
-		double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
-		double distance = siteModel.getRateForCategory(rateCategory) * branchTime;
-		
-//		System.out.println(distance);
-		
-		double[] stepMatrix = new double[stateCount * stateCount];
-		double[] productMatrix = new double[stateCount * stateCount];
-		double[] resultMatrix = new double[stateCount * stateCount];
-		
-		BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
-		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
-		
-		boolean oneMatrix = (getBranchIndex( tree, node, bufferIndex) == 1);
-		double[] weights = convolutionMatricesMap.get(bufferIndex);
-		
-		int matrixCount = 0;
-		for (int m = 0; m < numberModels; m++) {
-			if (weights[m] > 0) {
-				SubstitutionModel model = substModelList.get(m);
-				if (matrixCount == 0) {
-					if (oneMatrix) {
-						model.getTransitionProbabilities(distance, matrix);
-						break;
-					} else {
-						model.getTransitionProbabilities(distance * weights[m], resultMatrix);
-					}
-					matrixCount++;
-
-				} else {
-
-					model.getTransitionProbabilities(distance * weights[m], stepMatrix);
-
-					// Sum over unobserved state
-					int index = 0;
-					for (int i = 0; i < stateCount; i++) {
-						for (int j = 0; j < stateCount; j++) {
-							productMatrix[index] = 0;
-							for (int k = 0; k < stateCount; k++) {
-								productMatrix[index] += stepMatrix[k * stateCount + j] * resultMatrix[i * stateCount + k];
-							}
-							index++;
-						}
-					}
-
-					// Swap pointers
-					double[] tmpMatrix = resultMatrix;
-					resultMatrix = productMatrix;
-					productMatrix = tmpMatrix;
-				}
-			}
-		}
-
-		if (!oneMatrix) {
-			System.arraycopy(productMatrix, 0, matrix, 0, stateCount * stateCount);
-		}
-
-		printMatrix(matrix, stateCount, stateCount);
-	        
-	}//END: getTransitionProbabilities
+//	public void getTransitionProbabilities(Tree tree, //
+//			NodeRef node, //
+//			int rateCategory, //
+//			BranchRateModel branchRateModel, //
+//			SiteRateModel siteModel, //
+//			FrequencyModel frequModel, //
+//			double[] matrix //
+//			) {
+//		
+//		NodeRef parent = tree.getParent(node);
+//		
+//		int numberModels = substModelList.size();
+//		int stateCount = frequModel.getDataType().getStateCount();
+//		int nodeCount = tree.getNodeCount();
+//		int nodeNum = node.getNumber();
+//		
+//		double branchRate = branchRateModel.getBranchRate(tree, node);
+//		double branchTime = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+//		double distance = siteModel.getRateForCategory(rateCategory) * branchTime;
+//		
+////		System.out.println(distance);
+//		
+//		double[] stepMatrix = new double[stateCount * stateCount];
+//		double[] productMatrix = new double[stateCount * stateCount];
+//		double[] resultMatrix = new double[stateCount * stateCount];
+//		
+//		BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+//		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+//		
+//		boolean oneMatrix = (getBranchIndex(tree, node, bufferIndex) == 1);
+//		double[] weights = convolutionMatricesMap.get(bufferIndex);
+//	
+////		for(int i=0;i<weights.length;i++) {
+////			weights[i]=weights[i]/branchTime;
+////		}
+//		
+//		// ////////////////////////////////////////////////////
+//		
+////		printArray(weights, weights.length);
+//
+//		// ////////////////////////////////////////////////////
+//		
+//		int matrixCount = 0;
+//		for (int m = 0; m < numberModels; m++) {
+////			if (weights[m] > 0) {
+//				SubstitutionModel model = substModelList.get(m);
+//				if (matrixCount == 0) {
+//					if (oneMatrix) {
+//						model.getTransitionProbabilities(distance, matrix);
+//						break;
+//					} else {
+//						model.getTransitionProbabilities(distance * weights[m], resultMatrix);
+//					}
+//					matrixCount++;
+//
+//				} else {
+//
+//					model.getTransitionProbabilities(distance * weights[m], stepMatrix);
+//
+//					// Sum over unobserved state
+//					int index = 0;
+//					for (int i = 0; i < stateCount; i++) {
+//						for (int j = 0; j < stateCount; j++) {
+//							productMatrix[index] = 0;
+//							for (int k = 0; k < stateCount; k++) {
+//								productMatrix[index] += stepMatrix[k * stateCount + j] * resultMatrix[i * stateCount + k];
+//							}
+//							index++;
+//						}
+//					}
+//
+//					// Swap pointers
+//					double[] tmpMatrix = resultMatrix;
+//					resultMatrix = productMatrix;
+//					productMatrix = tmpMatrix;
+//				}
+////			}// END: weights check
+//		}
+//
+//		if (!oneMatrix) {
+//			System.arraycopy(productMatrix, 0, matrix, 0, stateCount * stateCount);
+//		}
+//
+//		// ////////////////////////////////////////////////////
+//		
+////		printMatrix(matrix, stateCount, stateCount);
+//
+//		// ////////////////////////////////////////////////////		
+//		
+//	}//END: getTransitionProbabilities
 	
 	/**
 	 * @return a list of citations associated with this object
@@ -558,9 +575,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 	public static void printMatrix(double[][] matrix, int nrow, int ncol) {
 		for (int row = 0; row < nrow; row++) {
 			for (int col = 0; col < nrow; col++)
-				System.out.print(String
-						.format(Locale.US, "%.5f", matrix[col + row * nrow])
-						+ " ");
+				System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
+//				System.out.print(matrix[col + row * nrow] + " ");
 			System.out.print("\n");
 		}
 		System.out.print("\n");

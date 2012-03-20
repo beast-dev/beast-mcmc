@@ -50,7 +50,6 @@ public class EasyPeasy {
 				rescalingScheme //
 		);
 
-		Beagle beagle = treeLikelihood.getBeagleInstance();
 //		branchSubstitutionModel.updateTransitionMatrices(beagle, 
 //				eigenIndex, 
 //				bufferHelper, 

@@ -45,6 +45,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter mdsPrecisionParameter,
             TaxonList strainTaxa,
             MatrixParameter locationsParameter,
+            CompoundParameter tipTraitParameter,
             Parameter datesParameter,
             Parameter columnParameter,
             Parameter rowParameter,
@@ -178,53 +179,22 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         this.locationsParameter = locationsParameter;
         setupLocationsParameter(this.locationsParameter, strainNames);
-        addVariable(this.locationsParameter);
+
+        this.tipTraitParameter = tipTraitParameter;
+        if (tipTraitParameter != null) {
+            setupTipTraitsParameter(this.tipTraitParameter, strainNames);
+        }
 
         if (datesParameter != null) {
             // this parameter is not used in this class but is setup to be used in other classes
-            datesParameter.setDimension(strainNames.size());
-            String[] labelArray = new String[strainNames.size()];
-            strainNames.toArray(labelArray);
-            datesParameter.setDimensionNames(labelArray);
-            for (int i = 0; i < strainNames.size(); i++) {
-                Double date = strainDateMap.get(strainNames.get(i));
-                if (date == null) {
-                    throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
-                }
-                datesParameter.setParameterValue(i, date);
-            }
+            setupDatesParameter(datesParameter, strainNames, strainDateMap);
         }
 
-        // If no column parameter is given, make one to hold maximum values for scaling titres...
-        if (columnParameter == null) {
-            this.columnEffectsParameter = new Parameter.Default("columnEffects");
-        } else {
-            this.columnEffectsParameter = columnParameter;
-            this.columnEffectsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
-            addVariable(this.columnEffectsParameter);
-        }
+        this.columnEffectsParameter = setupColumnEffectsParameter(columnParameter, maxColumnTitre);
 
-        this.columnEffectsParameter.setDimension(columnLabels.size());
-        String[] labelArray = new String[columnLabels.size()];
-        columnLabels.toArray(labelArray);
-        this.columnEffectsParameter.setDimensionNames(labelArray);
-        for (int i = 0; i < maxColumnTitre.length; i++) {
-            this.columnEffectsParameter.setParameterValueQuietly(i, maxColumnTitre[i]);
-        }
+        this.rowEffectsParameter = setupRowEffectsParameter(rowParameter, maxRowTitre);
 
-        // If no row parameter is given, then we will only use the column effects
-        this.rowEffectsParameter = rowParameter;
-        if (this.rowEffectsParameter != null) {
-            this.rowEffectsParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
-            this.rowEffectsParameter.setDimension(rowLabels.size());
-            addVariable(this.rowEffectsParameter);
-            labelArray = new String[rowLabels.size()];
-            rowLabels.toArray(labelArray);
-            this.rowEffectsParameter.setDimensionNames(labelArray);
-            for (int i = 0; i < maxRowTitre.length; i++) {
-                this.rowEffectsParameter.setParameterValueQuietly(i, maxRowTitre[i]);
-            }
-        }
+        setupInitialLocations(strainNames, strainDateMap);
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
@@ -240,35 +210,47 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
-        // initial locations
-
-        double earliestDate = datesParameter.getParameterValue(0);
-        for (int i=0; i<datesParameter.getDimension(); i++) {
-            double date = datesParameter.getParameterValue(i);
-            if (earliestDate > date) {
-                earliestDate = date;
-            }
-        }
-
-        for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-
-            String name = strainNames.get(i);
-            double date = (double) strainDateMap.get(strainNames.get(i));
-            double diff = (date-earliestDate);
-            locationsParameter.getParameter(i).setParameterValueQuietly(0, diff + MathUtils.nextGaussian());
-
-            for (int j = 1; j < mdsDimension; j++) {
-                double r = MathUtils.nextGaussian();
-                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
-            }
-
-        }
-
         locationChanged = new boolean[this.locationsParameter.getParameterCount()];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 
         makeDirty();
+    }
+
+    private Parameter setupRowEffectsParameter(Parameter rowParameter, double[] maxRowTitre) {
+        // If no row parameter is given, then we will only use the column effects
+        if (rowParameter != null) {
+            rowParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+            rowParameter.setDimension(rowLabels.size());
+            addVariable(rowParameter);
+            String[] labelArray = new String[rowLabels.size()];
+            rowLabels.toArray(labelArray);
+            rowParameter.setDimensionNames(labelArray);
+            for (int i = 0; i < maxRowTitre.length; i++) {
+                rowParameter.setParameterValueQuietly(i, maxRowTitre[i]);
+            }
+        }
+        return rowParameter;
+    }
+
+    private Parameter setupColumnEffectsParameter(Parameter columnParameter, double[] maxColumnTitre) {
+        // If no column parameter is given, make one to hold maximum values for scaling titres...
+        if (columnParameter == null) {
+            columnParameter = new Parameter.Default("columnEffects");
+        } else {
+            columnParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+            addVariable(columnParameter);
+        }
+
+        columnParameter.setDimension(columnLabels.size());
+        String[] labelArray = new String[columnLabels.size()];
+        columnLabels.toArray(labelArray);
+        columnParameter.setDimensionNames(labelArray);
+        for (int i = 0; i < maxColumnTitre.length; i++) {
+            columnParameter.setParameterValueQuietly(i, maxColumnTitre[i]);
+        }
+
+        return columnParameter;
     }
 
     protected void setupLocationsParameter(MatrixParameter locationsParameter, List<String> strains) {
@@ -277,8 +259,69 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         for (int i = 0; i < strains.size(); i++) {
             locationsParameter.getParameter(i).setId(strains.get(i));
         }
+        addVariable(this.locationsParameter);
+  }
+
+    private void setupDatesParameter(Parameter datesParameter, List<String> strainNames, Map<String, Double> strainDateMap) {
+        datesParameter.setDimension(strainNames.size());
+        String[] labelArray = new String[strainNames.size()];
+        strainNames.toArray(labelArray);
+        datesParameter.setDimensionNames(labelArray);
+        for (int i = 0; i < strainNames.size(); i++) {
+            Double date = strainDateMap.get(strainNames.get(i));
+            if (date == null) {
+                throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
+            }
+            datesParameter.setParameterValue(i, date);
+        }
     }
 
+    private void setupTipTraitsParameter(CompoundParameter tipTraitsParameter, List<String> strainNames) {
+        tipIndices = new int[strainNames.size()];
+
+        for (int i = 0; i < strainNames.size(); i++) {
+           tipIndices[i] = -1;
+        }
+
+       for (int i = 0; i < tipTraitsParameter.getParameterCount(); i++) {
+            String label = tipTraitsParameter.getParameter(i).getParameterName();
+            if (label.endsWith(".antigenic")) {
+                label = label.substring(0, label.indexOf(".antigenic"));
+            }
+            int index = strainNames.indexOf(label);
+            if (index != -1) {
+                if (tipIndices[index] != -1) {
+                    throw new IllegalArgumentException("Duplicated tip name: " + label);
+                }
+
+                tipIndices[index] = i;
+            } else {
+                throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
+            }
+        }
+        // we are only setting this parameter not listening to it:
+//        addVariable(this.tipTraitParameter);
+}
+
+    private void setupInitialLocations(List<String> strainNames, Map<String,Double> strainDateMap) {
+        double earliestDate = Double.POSITIVE_INFINITY;
+        for (double date : strainDateMap.values()) {
+            if (earliestDate > date) {
+                earliestDate = date;
+            }
+        }
+
+        for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
+            double date = (double) strainDateMap.get(strainNames.get(i));
+            double diff = (date-earliestDate);
+            locationsParameter.getParameter(i).setParameterValueQuietly(0, diff + MathUtils.nextGaussian());
+
+            for (int j = 1; j < mdsDimension; j++) {
+                double r = MathUtils.nextGaussian();
+                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+            }
+        }
+    }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
@@ -287,7 +330,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter) {
-            locationChanged[index / mdsDimension] = true;
+            int loc = index / mdsDimension;
+            locationChanged[loc] = true;
+            if (tipTraitParameter != null && tipIndices[loc] != -1) {
+                Parameter location = locationsParameter.getParameter(loc);
+                Parameter tip = tipTraitParameter.getParameter(tipIndices[loc]);
+                int dim = index % mdsDimension;
+                tip.setParameterValue(dim, location.getParameterValue(dim));
+            }
         } else if (variable == mdsPrecisionParameter) {
             setLocationChangedFlags(true);
         } else if (variable == columnEffectsParameter) {
@@ -515,8 +565,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final MatrixParameter locationsParameter;
+    private final CompoundParameter tipTraitParameter;
     private final TaxonList strains;
-    //    private final CompoundParameter tipTraitParameter;
+
+    private int[] tipIndices;
+
     private final Parameter columnEffectsParameter;
     private final Parameter rowEffectsParameter;
 
@@ -566,10 +619,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 intervalWidth = xo.getDoubleAttribute(INTERVAL_WIDTH);
             }
 
-//            CompoundParameter tipTraitParameter = null;
-//            if (xo.hasChildNamed(TIP_TRAIT)) {
-//                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
-//            }
+            CompoundParameter tipTraitParameter = null;
+            if (xo.hasChildNamed(TIP_TRAIT)) {
+                tipTraitParameter = (CompoundParameter) xo.getElementFirstChild(TIP_TRAIT);
+            }
 
             TaxonList strains = null;
             if (xo.hasChildNamed(STRAINS)) {
@@ -599,6 +652,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     mdsPrecision,
                     strains,
                     locationsParameter,
+                    tipTraitParameter,
                     datesParameter,
                     columnEffectsParameter,
                     rowEffectsParameter,
@@ -629,7 +683,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
-//                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
+                new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),

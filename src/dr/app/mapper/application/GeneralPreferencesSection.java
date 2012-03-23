@@ -8,7 +8,7 @@ import java.util.prefs.Preferences;
 
 /**
  * @author Andrew Rambaut
- * @version $Id: GeneralPreferencesSection.java,v 1.1 2006/09/09 15:23:33 rambaut Exp $
+ * @version $Id$
  */
 public class GeneralPreferencesSection implements PreferencesSection {
 	Icon projectToolIcon = IconUtils.getIcon(MapperApp.class, "images/prefsGeneral.png");

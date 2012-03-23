@@ -10,11 +10,8 @@ import dr.app.gui.FileDrop;
 import dr.app.gui.chart.ChartRuntimeException;
 import dr.app.gui.table.TableEditorStopper;
 import dr.app.gui.util.LongTask;
-import dr.app.tracer.analysis.*;
-import dr.app.tracer.traces.CombinedTraces;
-import dr.app.tracer.traces.FilterDialog;
-import dr.app.tracer.traces.FilterListPanel;
-import dr.app.tracer.traces.TracePanel;
+import dr.app.mapper.application.mapper.Layer;
+import dr.app.mapper.application.mapper.MapperPanel;
 import dr.inference.trace.*;
 import jam.framework.DocumentFrame;
 import jam.panels.ActionPanel;
@@ -34,65 +31,36 @@ import java.awt.geom.Rectangle2D;
 import java.io.*;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Andrew Rambaut
+ * @version $Id$
  */
-public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler, AnalysisMenuHandler {
-    private final static boolean CONFIRM_BUTTON_PRESSES = false;
+public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler {
+    private final String[] columnToolTips = {"", "", ""};
 
-    private final String[] columnToolTips = {null, null, null,
-            "Trace Type: real(R), integer(I) or categorical(C)"};
-
-    private TracePanel tracePanel = null;
+    private MapperPanel mapperPanel = null;
 
     private JTable traceTable = null;
     private TraceTableModel traceTableModel = null;
     private JSplitPane splitPane1 = null;
     private JPanel topPanel = null;
 
-    private JTable statisticTable = null;
-    private StatisticTableModel statisticTableModel = null;
+    private JTable layerTable = null;
+    private LayerTableModel layerTableModel = null;
 
-    private JScrollPane scrollPane1 = null;
+
+    private JScrollPane scrollPane1;
 
     private JLabel progressLabel;
     private JProgressBar progressBar;
 
     private final List<LogFileTraces> traceLists = new ArrayList<LogFileTraces>();
-    private final List<TraceList> currentTraceLists = new ArrayList<TraceList>();
-    private final List<TraceList> allTraceLists = new ArrayList<TraceList>();
-    private CombinedTraces combinedTraces = null;
+    private final List<Layer> layers = new ArrayList<Layer>();
 
-    private final List<String> commonTraceNames = new ArrayList<String>();
-    private boolean homogenousTraceFiles = true;
-
-    private JButton realButton;
-    private JButton integerButton;
-    private JButton categoryButton;
-
-//    private final List<FilterListPanel> filterListPanelList = new ArrayList<FilterListPanel>();
-
-    //    private final JComboBox filterCombo = new JComboBox(new String[]{"None"});
-    private final JLabel filterStatus = new JLabel();
     String message = "";
     private int dividerLocation = -1;
-
-    private DemographicDialog demographicDialog = null;
-    private BayesianSkylineDialog bayesianSkylineDialog = null;
-    private ExtendedBayesianSkylineDialog extendedBayesianSkylineDialog = null;
-    private GMRFSkyrideDialog gmrfSkyrideDialog = null;
-    private TimeDensityDialog timeDensityDialog = null;
-    private LineagesThroughTimeDialog lineagesThroughTimeDialog = null;
-    private TraitThroughTimeDialog traitThroughTimeDialog = null;
-    private NewTemporalAnalysisDialog createTemporalAnalysisDialog = null;
-
-    private BayesFactorsDialog bayesFactorsDialog = null;
-
-//    private FilterDialog filterDialog;
 
     public MapperFrame(String title) {
         super();
@@ -127,8 +95,8 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
 
         setSize(new java.awt.Dimension(1200, 800));
 
-        tracePanel = new TracePanel(this);
-        tracePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 6, 12, 12)));
+        mapperPanel = new MapperPanel(this);
+        mapperPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 6, 12, 12)));
 
         traceTableModel = new TraceTableModel();
         traceTable = new JTable(traceTableModel);
@@ -163,8 +131,8 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         topPanel.add(scrollPane1, BorderLayout.CENTER);
         topPanel.add(controlPanel1, BorderLayout.SOUTH);
 
-        statisticTableModel = new StatisticTableModel();
-        statisticTable = new JTable(statisticTableModel) {
+        layerTableModel = new LayerTableModel();
+        layerTable = new JTable(layerTableModel) {
             //Implement table header tool tips.
             protected JTableHeader createDefaultTableHeader() {
                 return new JTableHeader(columnModel) {
@@ -177,80 +145,32 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
                 };
             }
         };
-        statisticTable.getColumnModel().getColumn(0).setPreferredWidth(150);
-        statisticTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
-        statisticTable.getColumnModel().getColumn(1).setPreferredWidth(70);
-        statisticTable.getColumnModel().getColumn(1).setCellRenderer(renderer);
-        statisticTable.getColumnModel().getColumn(2).setPreferredWidth(70);
-        statisticTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
+        layerTable.getColumnModel().getColumn(0).setPreferredWidth(150);
+        layerTable.getColumnModel().getColumn(0).setCellRenderer(renderer);
+        layerTable.getColumnModel().getColumn(1).setPreferredWidth(70);
+        layerTable.getColumnModel().getColumn(1).setCellRenderer(renderer);
+//        layerTable.getColumnModel().getColumn(2).setPreferredWidth(70);
+//        layerTable.getColumnModel().getColumn(2).setCellRenderer(renderer);
 //        ComboBoxRenderer comboBoxRenderer = new ComboBoxRenderer(TraceFactory.TraceType.values());
 //        comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
-        statisticTable.getColumnModel().getColumn(3).setPreferredWidth(20);
-        statisticTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
-        statisticTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+//        layerTable.getColumnModel().getColumn(3).setPreferredWidth(20);
+//        layerTable.getColumnModel().getColumn(3).setCellRenderer(renderer);
+        layerTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-        statisticTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        layerTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent evt) {
-                statisticTableSelectionChanged();
+                layerTableSelectionChanged();
             }
         });
 
-        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(statisticTable);
+        TableEditorStopper.ensureEditingStopWhenTableLosesFocus(layerTable);
 
-        JScrollPane scrollPane2 = new JScrollPane(statisticTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+        JScrollPane scrollPane2 = new JScrollPane(layerTable, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
                 JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
         JPanel bottomPanel = new JPanel(new BorderLayout(0, 0));
-//        bottomPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(6, 0, 0, 0)));
-        bottomPanel.add(new JLabel("Traces:"), BorderLayout.NORTH);
+        bottomPanel.add(new JLabel("Layers:"), BorderLayout.NORTH);
         bottomPanel.add(scrollPane2, BorderLayout.CENTER);
-        JPanel changeTraceTypePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        changeTraceTypePanel.add(new JLabel("Change type to:"));
-
-        realButton = new JButton("(R)eal");
-        realButton.setToolTipText(TraceFactory.TraceType.DOUBLE.toString());
-        // Only affect Mac OS X - nicer GUI
-        realButton.putClientProperty("Quaqua.Button.style", "placard");
-        realButton.setFont(UIManager.getFont("SmallSystemFont"));
-        realButton.setEnabled(false);
-
-        integerButton = new JButton("(I)nt");
-        integerButton.setToolTipText(TraceFactory.TraceType.INTEGER.toString());
-        // Only affect Mac OS X - nicer GUI
-        integerButton.putClientProperty("Quaqua.Button.style", "placard");
-        integerButton.setFont(UIManager.getFont("SmallSystemFont"));
-        integerButton.setEnabled(false);
-
-        categoryButton = new JButton("(C)at");
-        categoryButton.setToolTipText(TraceFactory.TraceType.STRING.toString());
-        // Only affect Mac OS X - nicer GUI
-        categoryButton.putClientProperty("Quaqua.Button.style", "placard");
-        categoryButton.setFont(UIManager.getFont("SmallSystemFont"));
-        categoryButton.setEnabled(false);
-
-        realButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.DOUBLE);
-            }
-        });
-        integerButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.INTEGER);
-            }
-        });
-        categoryButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                changeTraceType(TraceFactory.TraceType.STRING);
-            }
-        });
-
-        changeTraceTypePanel.add(realButton);
-        changeTraceTypePanel.add(integerButton);
-        changeTraceTypePanel.add(categoryButton);
-        changeTraceTypePanel.setToolTipText("<html> Alternatively use key word double, integer, string " +
-                "followed by tab delimited column names <br> in the beginning of the log file, " +
-                "to define the trace type. For example: <br> # integer columnName1 columnName2 ... </html>");
-        bottomPanel.add(changeTraceTypePanel, BorderLayout.SOUTH);
 
         JPanel leftPanel = new JPanel(new BorderLayout(0, 0));
         leftPanel.setPreferredSize(new Dimension(400, 300));
@@ -268,7 +188,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         leftPanel.add(progressPanel, BorderLayout.SOUTH);
         leftPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(new java.awt.Insets(12, 12, 12, 6)));
 
-        JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, leftPanel, tracePanel);
+        JSplitPane splitPane2 = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, true, leftPanel, mapperPanel);
         splitPane2.setBorder(null);
         splitPane2.setDividerLocation(350);
 
@@ -286,93 +206,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
 
         splitPane1.setDividerLocation(2000);
 
-    }
-
-    private void changeTraceType(TraceFactory.TraceType newType) {
-        int[] selectedTraces = traceTable.getSelectedRows();
-        int[] selectedStatistics = statisticTable.getSelectedRows();
-        String m = "Are you going to change trace type into " + newType.toString() + " for\n";
-
-        if (combinedTraces != null) {
-            if (selectedTraces[0] > traceLists.size()) selectedTraces[0] = 0; // user may only select combinedTraces
-            for (int row : selectedStatistics) {
-                int id = traceLists.get(selectedTraces[0]).getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + traceLists.get(selectedTraces[0]).getTrace(id).getTraceType().toString() + "), ";
-            }
-
-            int result = JOptionPane.YES_OPTION;
-
-            if (CONFIRM_BUTTON_PRESSES) {
-                result = JOptionPane.showConfirmDialog(this, "Because Combined Traces exists, change type function\n" +
-                        "will apply to all files including Combined Traces.\n" + m + "\n in all files including Combined Traces ?",
-                        "Change Trace Type including Combined Traces", JOptionPane.YES_NO_OPTION);
-            }
-
-            if (result == JOptionPane.YES_OPTION) {
-                for (LogFileTraces tl : traceLists) {
-                    for (int row : selectedStatistics) {
-                        int id = tl.getTraceIndex(commonTraceNames.get(row));
-
-                        try {
-                            tl.changeTraceType(id, newType);
-                        } catch (TraceException e) {
-                            JOptionPane.showMessageDialog(this, e,
-                                    "Trace Type Exception in " + tl.getName(), JOptionPane.ERROR_MESSAGE);
-                        }
-                        tl.analyseTrace(id);
-                    }
-                }
-                updateCombinedTraces();
-                statisticTableModel.fireTableDataChanged();
-
-                // selection will be lost by fireTableDataChanged so reselect them
-                for (int row : selectedStatistics) {
-                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
-                }
-            }
-
-        } else if (selectedTraces[selectedTraces.length - 1] >= traceLists.size()) {
-            // I take it this should never happen... why not just throw an exception?
-            JOptionPane.showMessageDialog(this, "Selected traces are more than stored traces.",
-                    "Trace Type Exception", JOptionPane.ERROR_MESSAGE);
-        } else {
-            LogFileTraces selectedTraceList = traceLists.get(selectedTraces[0]);
-            for (int row : selectedStatistics) {
-                int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
-                m += commonTraceNames.get(row) + "(" + selectedTraceList.getTrace(id).getTraceType().toString() + "), ";
-            }
-
-            int result = JOptionPane.YES_OPTION;
-
-            if (CONFIRM_BUTTON_PRESSES) {
-                result = JOptionPane.showConfirmDialog(this, m + "\nin file " + selectedTraceList.getName() + " ?",
-                        "Change Trace Type", JOptionPane.YES_NO_OPTION);
-            }
-
-            if (result == JOptionPane.YES_OPTION) {
-                for (int row : selectedStatistics) {
-                    int id = selectedTraceList.getTraceIndex(commonTraceNames.get(row));
-
-                    try {
-                        selectedTraceList.changeTraceType(id, newType);
-                    } catch (TraceException e) {
-                        JOptionPane.showMessageDialog(this, e,
-                                "Trace Type Exception in " + selectedTraceList.getName(), JOptionPane.ERROR_MESSAGE);
-//        } catch (IOException e) {
-//            System.err.println("selRow = " + selRow + "; new type = " + newType);
-//            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-                    }
-                    selectedTraceList.analyseTrace(id);
-                }
-
-                statisticTableModel.fireTableDataChanged();
-
-                // selection will be lost by fireTableDataChanged so reselect them
-                for (int row : selectedStatistics) {
-                    statisticTable.getSelectionModel().addSelectionInterval(row, row);
-                }
-            }
-        }
     }
 
     public void setVisible(boolean b) {
@@ -397,16 +230,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
     }
 
     public void setAnalysesEnabled(boolean enabled) {
-        getDemographicAction().setEnabled(enabled);
-        getBayesianSkylineAction().setEnabled(enabled);
-        getGMRFSkyrideAction().setEnabled(enabled);
-        getLineagesThroughTimeAction().setEnabled(enabled);
-        getBayesFactorsAction().setEnabled(enabled);
-        getCreateTemporalAnalysisAction().setEnabled(enabled);
-        getAddDemographicAction().setEnabled(enabled && temporalAnalysisFrame != null);
-        getAddBayesianSkylineAction().setEnabled(enabled && temporalAnalysisFrame != null);
-        getAddTimeDensityAction().setEnabled(enabled && temporalAnalysisFrame != null);
-
         getExportAction().setEnabled(enabled);
         getExportDataAction().setEnabled(enabled);
         getExportPDFAction().setEnabled(enabled);
@@ -418,8 +241,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         int[] selRows = traceTable.getSelectedRows();
 
         traceLists.add(traceList);
-
-        updateCombinedTraces();
 
         setAnalysesEnabled(true);
 
@@ -437,9 +258,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         }
 
         setupDividerLocation();
-
-        allTraceLists.add(traceList);
-
     }
 
     private void removeTraceList() {
@@ -453,22 +271,17 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         }
         for (LogFileTraces tl : tls) {
             traceLists.remove(tl);
-            allTraceLists.remove(tl);
         }
 
-        updateCombinedTraces();
-
         traceTableModel.fireTableDataChanged();
-        statisticTableModel.fireTableDataChanged();
+        layerTableModel.fireTableDataChanged();
 
         if (traceLists.size() == 0) {
             getRemoveTraceAction().setEnabled(false);
 
             setAnalysesEnabled(false);
 
-            currentTraceLists.clear();
-            allTraceLists.clear();
-            statisticTableModel.fireTableDataChanged();
+            layerTableModel.fireTableDataChanged();
         }
 
 
@@ -486,48 +299,24 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         LogFileTraces trace = traceLists.get(index);
         trace.setBurnIn(burnIn);
         analyseTraceList(trace);
-        updateCombinedTraces();
         updateTraceTables();
-    }
-
-    public void updateCombinedTraces() {
-        if (traceLists.size() > 1) {
-            LogFileTraces[] traces = new LogFileTraces[traceLists.size()];
-            try {
-                traceLists.toArray(traces);
-            } catch (ArrayStoreException ase) {
-                combinedTraces = null;
-//                JOptionPane.showMessageDialog(this, "",
-//                        "Trace Type Exception",
-//                        JOptionPane.WARNING_MESSAGE);
-            }
-            try {
-                combinedTraces = new CombinedTraces("Combined", traces);
-
-                analyseTraceList(combinedTraces);
-            } catch (TraceException te) {
-                combinedTraces = null; // validations in CombinedTraces()
-            }
-        } else {
-            combinedTraces = null;
-        }
     }
 
     public void updateTraceTables() {
         int[] selectedTraces = traceTable.getSelectedRows();
-        int[] selectedStatistics = statisticTable.getSelectedRows();
+        int[] selectedStatistics = layerTable.getSelectedRows();
 
         traceTableModel.fireTableDataChanged();
-        statisticTableModel.fireTableDataChanged();
+        layerTableModel.fireTableDataChanged();
 
         traceTable.getSelectionModel().clearSelection();
         for (int row : selectedTraces) {
             traceTable.getSelectionModel().addSelectionInterval(row, row);
         }
 
-        statisticTable.getSelectionModel().clearSelection();
+        layerTable.getSelectionModel().clearSelection();
         for (int row : selectedStatistics) {
-            statisticTable.getSelectionModel().addSelectionInterval(row, row);
+            layerTable.getSelectionModel().addSelectionInterval(row, row);
         }
     }
 
@@ -544,203 +333,21 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
 
         getRemoveTraceAction().setEnabled(true);
 
-        currentTraceLists.clear();
-
-        for (int row : selRows) {
-            if (row == traceLists.size()) {
-                // Combined is include in the selection so disable remove
-                getRemoveTraceAction().setEnabled(false);
-                currentTraceLists.add(combinedTraces);
-            }
-        }
-
-        // Get the common set of trace names. This is slightly more complicated
-        // that it may seem because we want to keep them in order of the first
-        // selected trace file (i.e., as a list). So we populate the list with the
-        // first trace file, collect the common set, and then retain only those in
-        // the set.
-        commonTraceNames.clear();
-        homogenousTraceFiles = true;
-        Set<String> commonSet = new HashSet<String>();
-        boolean isFirst = true;
-        for (int row : selRows) {
-            if (row < traceLists.size()) {
-                TraceList tl = traceLists.get(row);
-                Set<String> nameSet = new HashSet<String>();
-                for (int i = 0; i < tl.getTraceCount(); i++) {
-                    String traceName = tl.getTraceName(i);
-                    nameSet.add(traceName);
-                    if (isFirst) {
-                        // add them in order of the first trace file
-                        commonTraceNames.add(traceName);
-                    }
-                }
-
-                if (isFirst) {
-                    commonSet.addAll(nameSet);
-                    isFirst = false;
-                } else {
-                    if (nameSet.size() != commonSet.size()) {
-                        homogenousTraceFiles = false;
-                    }
-                    commonSet.retainAll(nameSet);
-                }
-
-                currentTraceLists.add(tl);
-            } else if (isFirst) {
-                // if the 'Combined' trace is selected but no other trace files, then add all traces
-                TraceList tl = traceLists.get(0);
-                Set<String> nameSet = new HashSet<String>();
-                for (int i = 0; i < tl.getTraceCount(); i++) {
-                    String traceName = tl.getTraceName(i);
-                    nameSet.add(traceName);
-                    commonTraceNames.add(traceName);
-                }
-                commonSet.addAll(nameSet);
-            }
-        }
-        commonTraceNames.retainAll(commonSet);
-
-        int[] rows = statisticTable.getSelectedRows();
-        statisticTableModel.fireTableDataChanged();
+        int[] rows = layerTable.getSelectedRows();
+        layerTableModel.fireTableDataChanged();
 
         if (rows.length > 0) {
             for (int row : rows) {
-                statisticTable.getSelectionModel().addSelectionInterval(row, row);
+                layerTable.getSelectionModel().addSelectionInterval(row, row);
             }
         } else {
-            statisticTable.getSelectionModel().setSelectionInterval(0, 0);
+            layerTable.getSelectionModel().setSelectionInterval(0, 0);
         }
-
-//        getIntersectionOfSelectedTraceLists();
-
-//        message = "  " + updateStatusMessage(currentTraceLists);
-
-        filterStatus.setText(message);
     }
 
-//    private String updateStatusMessage(List<TraceList> currentTraceLists) {
-//        String message = "";
-//        List<String> traceNameList = new ArrayList<String>();
-//        List<String> messageList = new ArrayList<String>();
-//
-////        for (int i = 0; i < currentTraceLists.size(); i++) {
-////            FilteredTraceList fTL = (FilteredTraceList) currentTraceLists.get(i);
-////            Filter f = ).getTraceName();
-////
-////            if (f != null) {
-////                String tN = f.getTraceName();
-////                if (!traceNameList.contains(tN)) {
-////                    traceNameList.add(tN);
-////                    message = f.getStatusMessage() + " in file(s) " + "\'" + fTL.getName() + "\'";
-////                    messageList.add(message);
-////                } else {
-////                    int id = traceNameList.indexOf(tN);
-////                    message = messageList.get(id) + " and \'" + fTL.getName() + "\'";
-////                    messageList.set(id, message);
-////                }
-////
-////                filterCombo.setSelectedItem(tN);  // todo
-////            }
-////        }
-//
-//
-//        message = "";
-//
-//        for (String s : messageList) {
-//            message += s + "; ";
-//        }
-//
-//        return message;
-//    }
 
-//    private void getIntersectionOfSelectedTraceLists() {
-//        filterCombo.removeAllItems();
-//        filterCombo.addItem("None");
-//
-////        Map<String, Class> tracesIntersection = new HashMap<String, Class>(); //names have no order
-//        List<String> tracesIntersection = Collections.synchronizedList(new ArrayList<String>());
-//        List<TraceFactory.TraceType> tracesIntersectionClass = Collections.synchronizedList(new ArrayList<TraceFactory.TraceType>());
-//        List<String> incompatibleTrace = Collections.synchronizedList(new ArrayList<String>());
-//        for (TraceList tl : currentTraceLists) {
-//            List<String> currentTrace = new ArrayList<String>();
-//            for (int i = 0; i < tl.getTraceCount(); i++) {
-//                String traceName = tl.getTraceName(i);
-//                currentTrace.add(traceName);
-//                if (!incompatibleTrace.contains(traceName)) {
-//                    TraceFactory.TraceType traceType = tl.getTrace(i).getTraceType();
-//                    if (traceType == null) {
-//                        incompatibleTrace.add(traceName);
-//                        break;
-//                    }
-//
-//                    if (tracesIntersection.contains(traceName)) {
-//                        if (traceType != tracesIntersectionClass.get(tracesIntersection.indexOf(traceName))) {
-//                            tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-//                            tracesIntersection.remove(traceName);
-//                            incompatibleTrace.add(traceName);
-//                            break;
-//                        }
-//
-//                    } else if (currentTraceLists.indexOf(tl) == 0) {
-//
-//                        tracesIntersection.add(traceName);
-//                        tracesIntersectionClass.add(traceType);
-//                    }
-//                }
-//            } // end i loop
-//
-//            for (String traceName : tracesIntersection) {
-//                if (!currentTrace.contains(traceName)) {
-//                    tracesIntersectionClass.remove(tracesIntersection.indexOf(traceName));
-//                    tracesIntersection.remove(traceName);
-//                    incompatibleTrace.add(traceName);
-//                }
-//            }
-//
-//        }
-//
-//        assert (tracesIntersection.size() == tracesIntersectionClass.size());
-//
-//        if (!tracesIntersection.isEmpty()) {
-//            for (String traceName : tracesIntersection) {
-//                filterCombo.addItem(traceName);
-//            }
-//        }
-//    }
+    public void layerTableSelectionChanged() {
 
-    public void statisticTableSelectionChanged() {
-
-        int[] selRows = statisticTable.getSelectedRows();
-
-        boolean isIncomplete = false;
-        for (TraceList tl : currentTraceLists) {
-            if (tl == null || tl.getTraceCount() == 0 || tl.getStateCount() == 0)
-                isIncomplete = true;
-        }
-
-        java.util.List<String> selectedTraces = new ArrayList<String>();
-        for (int selRow : selRows) {
-            selectedTraces.add(commonTraceNames.get(selRow));
-        }
-
-        if (currentTraceLists.size() == 0 || isIncomplete) {
-            tracePanel.setTraces(null, selectedTraces);
-        } else {
-            TraceList[] tl = new TraceList[currentTraceLists.size()];
-            currentTraceLists.toArray(tl);
-            try {
-                tracePanel.setTraces(tl, selectedTraces);
-            } catch (ChartRuntimeException cre) {
-                JOptionPane.showMessageDialog(this, "One or more traces contain invalid values and \rare not able to be displayed.",
-                        "Problem with tree file",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        }
-
-        realButton.setEnabled(selRows.length > 0);
-        integerButton.setEnabled(selRows.length > 0);
-        categoryButton.setEnabled(selRows.length > 0);
     }
 
     public void analyseTraceList(TraceList job) {
@@ -887,7 +494,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
 
             try {
                 FileWriter writer = new FileWriter(file);
-                writer.write(tracePanel.getExportText());
+                writer.write(mapperPanel.getExportText());
                 writer.close();
 
 
@@ -909,7 +516,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         if (dialog.getFile() != null) {
             File file = new File(dialog.getDirectory(), dialog.getFile());
 
-            Rectangle2D bounds = tracePanel.getExportableComponent().getBounds();
+            Rectangle2D bounds = mapperPanel.getExportableComponent().getBounds();
             Document document = new Document(new com.lowagie.text.Rectangle((float) bounds.getWidth(), (float) bounds.getHeight()));
             try {
                 // step 2
@@ -921,7 +528,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
                 PdfContentByte cb = writer.getDirectContent();
                 PdfTemplate tp = cb.createTemplate((float) bounds.getWidth(), (float) bounds.getHeight());
                 Graphics2D g2d = tp.createGraphics((float) bounds.getWidth(), (float) bounds.getHeight(), new DefaultFontMapper());
-                tracePanel.getExportableComponent().print(g2d);
+                mapperPanel.getExportableComponent().print(g2d);
                 g2d.dispose();
                 cb.addTemplate(tp, 0, 0);
             }
@@ -1122,244 +729,16 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
     }
 
     public void doCopy() {
-        tracePanel.doCopy();
-    }
-
-    private TemporalAnalysisFrame temporalAnalysisFrame = null;
-
-    private void doCreateTemporalAnalysis() {
-        if (createTemporalAnalysisDialog == null) {
-            createTemporalAnalysisDialog = new NewTemporalAnalysisDialog(this);
-        }
-
-        if (createTemporalAnalysisDialog.showDialog() == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
-
-        temporalAnalysisFrame = createTemporalAnalysisDialog.createTemporalAnalysisFrame(this);
-
-        createTemporalAnalysisAction.setEnabled(false);
-
-        addExtendedBayesianSkylineAction.setEnabled(true);
-        addBayesianSkylineAction.setEnabled(true);
-        addDemographicAction.setEnabled(true);
-        addTimeDensity.setEnabled(true);
-
-        temporalAnalysisFrame.addWindowListener(new WindowAdapter() {
-
-            public void windowClosing(WindowEvent event) {
-                temporalAnalysisFrame = null;
-                createTemporalAnalysisAction.setEnabled(true);
-                addBayesianSkylineAction.setEnabled(false);
-                addDemographicAction.setEnabled(false);
-                addTimeDensity.setEnabled(false);
-            }
-        });
-    }
-
-    public void doDemographic(boolean add) {
-        if (demographicDialog == null) {
-            demographicDialog = new DemographicDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, or select the Combined trace.",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-
-        if (add) {
-            if (demographicDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            demographicDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (demographicDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            demographicDialog.createDemographicFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-    public void doBayesianSkyline(boolean add) {
-        if (bayesianSkylineDialog == null) {
-            bayesianSkylineDialog = new BayesianSkylineDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (bayesianSkylineDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            bayesianSkylineDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (bayesianSkylineDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            bayesianSkylineDialog.createBayesianSkylineFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-    public void doExtendedBayesianSkyline(boolean add) {
-        if (extendedBayesianSkylineDialog == null) {
-            extendedBayesianSkylineDialog = new ExtendedBayesianSkylineDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            extendedBayesianSkylineDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (extendedBayesianSkylineDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            extendedBayesianSkylineDialog.createExtendedBayesianSkylineFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-    public void doGMRFSkyride(boolean add) {
-        if (gmrfSkyrideDialog == null) {
-            gmrfSkyrideDialog = new GMRFSkyrideDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            gmrfSkyrideDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (gmrfSkyrideDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            gmrfSkyrideDialog.createGMRFSkyrideFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-
-    public void doLineagesThroughTime(boolean add) {
-        if (lineagesThroughTimeDialog == null) {
-            lineagesThroughTimeDialog = new LineagesThroughTimeDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            lineagesThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (lineagesThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            lineagesThroughTimeDialog.createLineagesThroughTimeFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-    public void doTraitThroughTime(boolean add) {
-        if (traitThroughTimeDialog == null) {
-            traitThroughTimeDialog = new TraitThroughTimeDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (but not the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (add) {
-            if (traitThroughTimeDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            traitThroughTimeDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-        } else {
-            if (traitThroughTimeDialog.showDialog(currentTraceLists.get(0), null) == JOptionPane.CANCEL_OPTION) {
-                return;
-            }
-
-            traitThroughTimeDialog.createTraitThroughTimeFrame(currentTraceLists.get(0), this);
-        }
-    }
-
-    private void doAddTimeDensity() {
-        if (timeDensityDialog == null) {
-            timeDensityDialog = new TimeDensityDialog(this);
-        }
-
-        if (currentTraceLists.size() != 1) {
-            JOptionPane.showMessageDialog(this, "Please select exactly one trace to do\n" +
-                    "this analysis on, (or the Combined trace).",
-                    "Unable to perform analysis",
-                    JOptionPane.INFORMATION_MESSAGE);
-        }
-
-        if (timeDensityDialog.showDialog(currentTraceLists.get(0), temporalAnalysisFrame) == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
-
-        timeDensityDialog.addToTemporalAnalysis(currentTraceLists.get(0), temporalAnalysisFrame);
-    }
-
-    private void doCalculateBayesFactors() {
-        if (bayesFactorsDialog == null) {
-            bayesFactorsDialog = new BayesFactorsDialog(this);
-        }
-
-        if (bayesFactorsDialog.showDialog(allTraceLists) == JOptionPane.CANCEL_OPTION) {
-            return;
-        }
-
-        bayesFactorsDialog.createBayesFactorsFrame(allTraceLists, this);
-
+        mapperPanel.doCopy();
     }
 
 
     public JComponent getExportableComponent() {
-        return tracePanel.getExportableComponent();
+        return mapperPanel.getExportableComponent();
     }
 
     class TraceTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Tree File", "States", "Burn-In"};
+        final String[] columnNames = {"Trace File", "States", "Burn-In"};
 
         public int getColumnCount() {
             return columnNames.length;
@@ -1367,7 +746,7 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
 
         public int getRowCount() {
             int n = traceLists.size();
-            if (n == 0 || combinedTraces != null) n++;
+            if (n == 0) n++;
             return n;
         }
 
@@ -1386,16 +765,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
                         return "";
                     case 2:
                         return "";
-                }
-            } else if (row == traceLists.size()) {
-                traceList = combinedTraces;
-                switch (col) {
-                    case 0:
-                        return traceList.getName();
-                    case 1:
-                        return traceList.getMaxState();
-                    case 2:
-                        return "-";
                 }
             } else {
                 traceList = traceLists.get(row);
@@ -1427,19 +796,15 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         }
     }
 
-    class StatisticTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Statistic", "Mean", "ESS", "Type"};
-
-        private final DecimalFormat formatter = new DecimalFormat("0.###E0");
-        private final DecimalFormat formatter2 = new DecimalFormat("####0.###");
+    class LayerTableModel extends AbstractTableModel {
+        final String[] columnNames = {"Layer", "Type"};
 
         public int getColumnCount() {
             return columnNames.length;
         }
 
         public int getRowCount() {
-            if (currentTraceLists.size() == 0 || currentTraceLists.get(0) == null) return 0;
-            return commonTraceNames.size();
+            return layers.size();
         }
 
         public String getColumnName(int col) {
@@ -1447,48 +812,12 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
         }
 
         public Object getValueAt(int row, int col) {
-            String traceName = commonTraceNames.get(row);
+            Layer layer = layers.get(row);
 
-            if (col == 0) return traceName;
+            if (col == 0) return layer.getName();
+            if (col == 1) return layer.getType().toString();
 
-            if (!homogenousTraceFiles) {
-                return "n/a";
-            }
-
-            TraceDistribution td = currentTraceLists.get(0).getDistributionStatistics(row);
-            if (td == null) return "-";
-            if (col == 3) return td.getTraceType().getBrief();
-
-            double value = 0.0;
-            boolean warning = false;
-            boolean extremeWarning = false;
-            switch (col) {
-                case 1:
-                    value = td.getMean();
-                    break;
-                case 2:
-                    if (!td.isValid()) return "-";
-                    value = td.getESS();
-                    if (Double.isNaN(value) || value < 1) {
-                        // assume not applicable; should be tested in the computation
-                        return "-";
-                    }
-                    if (value < 200.0) warning = true;
-                    if (value < 100.0) extremeWarning = true;
-                    value = Math.round(value);
-                    break;
-            }
-
-            String string;
-            if (Math.abs(value) < 0.1 || Math.abs(value) >= 100000.0) {
-                string = formatter.format(value);
-            } else string = formatter2.format(value);
-
-            if (warning) {
-                return "<html><font color=\"" + (extremeWarning ? "#EE0000" : "#EEAA00") + "\">" + string + "</font></html> ";
-            }
-
-            return string;
+            return "";
         }
 
         public boolean isCellEditable(int row, int col) {
@@ -1516,126 +845,6 @@ public class MapperFrame extends DocumentFrame implements MapperFileMenuHandler,
     public Action getRemoveTraceAction() {
         return removeTraceAction;
     }
-
-    public Action getDemographicAction() {
-        return demographicAction;
-    }
-
-    public Action getBayesianSkylineAction() {
-        return bayesianSkylineAction;
-    }
-
-    public Action getExtendedBayesianSkylineAction() {
-        return extendedBayesianSkylineAction;
-    }
-
-    public Action getGMRFSkyrideAction() {
-        return gmrfSkyrideAction;
-    }
-
-    public Action getLineagesThroughTimeAction() {
-        return lineagesThroughTimeAction;
-    }
-
-    public Action getTraitThroughTimeAction() {
-        return traitThroughTimeAction;
-    }
-
-    public Action getCreateTemporalAnalysisAction() {
-        return createTemporalAnalysisAction;
-    }
-
-    public Action getAddDemographicAction() {
-        return addDemographicAction;
-    }
-
-    public Action getAddBayesianSkylineAction() {
-        return addBayesianSkylineAction;
-    }
-
-    public Action getAddExtendedBayesianSkylineAction() {
-        return addExtendedBayesianSkylineAction;
-    }
-
-    public Action getAddTimeDensityAction() {
-        return addTimeDensity;
-    }
-
-    public Action getBayesFactorsAction() {
-        return bayesFactorsAction;
-    }
-
-    private final AbstractAction demographicAction = new AbstractAction(AnalysisMenuFactory.DEMOGRAPHIC_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doDemographic(false);
-        }
-    };
-
-    private final AbstractAction bayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doBayesianSkyline(false);
-        }
-    };
-
-    private final AbstractAction extendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doExtendedBayesianSkyline(false);
-        }
-    };
-
-    private final AbstractAction gmrfSkyrideAction = new AbstractAction(AnalysisMenuFactory.GMRF_SKYRIDE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doGMRFSkyride(false);
-        }
-    };
-
-    private final AbstractAction lineagesThroughTimeAction = new AbstractAction(AnalysisMenuFactory.LINEAGES_THROUGH_TIME) {
-        public void actionPerformed(ActionEvent ae) {
-            doLineagesThroughTime(false);
-        }
-    };
-
-    private final AbstractAction traitThroughTimeAction = new AbstractAction(AnalysisMenuFactory.TRAIT_THROUGH_TIME) {
-        public void actionPerformed(ActionEvent ae) {
-            doTraitThroughTime(false);
-        }
-    };
-
-    private final AbstractAction createTemporalAnalysisAction = new AbstractAction(AnalysisMenuFactory.CREATE_TEMPORAL_ANALYSIS) {
-        public void actionPerformed(ActionEvent ae) {
-            doCreateTemporalAnalysis();
-        }
-    };
-
-    private final AbstractAction addDemographicAction = new AbstractAction(AnalysisMenuFactory.ADD_DEMOGRAPHIC_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doDemographic(true);
-        }
-    };
-
-    private final AbstractAction addBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doBayesianSkyline(true);
-        }
-    };
-
-    private final AbstractAction addExtendedBayesianSkylineAction = new AbstractAction(AnalysisMenuFactory.ADD_EXTENDED_BAYESIAN_SKYLINE_RECONSTRUCTION) {
-        public void actionPerformed(ActionEvent ae) {
-            doExtendedBayesianSkyline(true);
-        }
-    };
-
-    private final AbstractAction addTimeDensity = new AbstractAction(AnalysisMenuFactory.ADD_TIME_DENSITY) {
-        public void actionPerformed(ActionEvent ae) {
-            doAddTimeDensity();
-        }
-    };
-
-    private final AbstractAction bayesFactorsAction = new AbstractAction(AnalysisMenuFactory.MODEL_COMPARISON) {
-        public void actionPerformed(ActionEvent ae) {
-            doCalculateBayesFactors();
-        }
-    };
 
     private final AbstractAction removeTraceAction = new AbstractAction() {
         public void actionPerformed(ActionEvent ae) {

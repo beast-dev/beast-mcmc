@@ -4,6 +4,7 @@ import javax.swing.*;
 
 /**
  * @author Andrew Rambaut
+ * @version $Id$
  */
 public interface MapperFileMenuHandler {
 

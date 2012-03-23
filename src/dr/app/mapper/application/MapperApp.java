@@ -70,13 +70,13 @@ public class MapperApp extends MultiDocApplication {
                 icon = new ImageIcon(url);
             }
 
-            final String nameString = "Tracer";
-            final String versionString = "v1.6.0pre";
+            final String nameString = "Mapper";
+            final String versionString = "v1.0pre";
             String aboutString = "<html><center><p>MCMC Trace Analysis Tool<br>" +
-                    "Version " + versionString + ", 2003-2011</p>" +
+                    "Version " + versionString + ", 2003-2012</p>" +
                     "<p>by<br>" +
 
-                    "Andrew Rambaut, Marc A. Suchard, Walter Xie and Alexei J. Drummond</p>" +
+                    "Andrew Rambaut, Trevor Bedford & Marc A. Suchard</p>" +
 
                     "<p>Institute of Evolutionary Biology, University of Edinburgh<br>" +
                     "<a href=\"mailto:a.rambaut@ed.ac.uk\">a.rambaut@ed.ac.uk</a></p>" +
@@ -84,23 +84,19 @@ public class MapperApp extends MultiDocApplication {
                     "<p>Departments of Biomathematics, Biostatistics and Human Genetics, UCLA<br>" +
                     "<a href=\"mailto:msuchard@ucla.edu\">msuchard@ucla.edu</a></p>" +
 
-                    "<p>Department of Computer Science, University of Auckland<br>" +
-                    "<a href=\"mailto:alexei@cs.auckland.ac.nz\">alexei@cs.auckland.ac.nz</a></p>" +
-
                     "<p>Available from the BEAST site:<br>" +
                     "<a href=\"http://beast.bio.ed.ac.uk/\">http://beast.bio.ed.ac.uk/</a></p>" +
                     "<p>Source code distributed under the GNU LGPL:<br>" +
                     "<a href=\"http://code.google.com/p/beast-mcmc/\">http://code.google.com/p/beast-mcmc/</a></p>" +
-                    "<p>Thanks for contributions to: Joseph Heled, Oliver Pybus & Benjamin Redelings</p>" +
                     "</center></html>";
 
             String websiteURLString = "http://beast.bio.ed.ac.uk/";
-            String helpURLString = "http://beast.bio.ed.ac.uk/Tracer";
+            String helpURLString = "http://beast.bio.ed.ac.uk/Mapper";
 
             MapperApp app = new MapperApp(nameString, aboutString, icon, websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
                 public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                    return new MapperFrame("Tracer");
+                    return new MapperFrame("Mapper");
                 }
             });
             app.initialize();

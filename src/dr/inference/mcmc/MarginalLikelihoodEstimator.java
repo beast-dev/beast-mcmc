@@ -168,6 +168,8 @@ MCLogger logger) {
     	}
 
     	double nextPathParameter() {
+    		if (step > pathSteps)
+                return -1;
     		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
     		step++;
     		return result;
@@ -482,7 +484,9 @@ MCLogger logger) {
                     "\n  pathSteps=" + pathSteps +
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
-                    "\n    Alekseyenko, Rambaut, Lemey and Suchard (in preparation)");
+                    "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
+                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
+                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. (in press).");
             return mle;
         }
 

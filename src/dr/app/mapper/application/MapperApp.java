@@ -1,4 +1,4 @@
-package dr.app.tracer.application;
+package dr.app.mapper.application;
 
 import dr.app.util.OSType;
 import dr.inference.trace.LogFileTraces;
@@ -9,11 +9,14 @@ import java.awt.*;
 import java.io.File;
 import java.util.Locale;
 
-public class TracerApp extends MultiDocApplication {
+/**
+ * @author Andrew Rambaut
+ */
+public class MapperApp extends MultiDocApplication {
 
-    public TracerApp(String nameString, String aboutString, Icon icon,
+    public MapperApp(String nameString, String aboutString, Icon icon,
                      String websiteURLString, String helpURLString) {
-        super(new TracerMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
+        super(new MapperMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
 
         addPreferencesSection(new GeneralPreferencesSection());
     }
@@ -60,7 +63,7 @@ public class TracerApp extends MultiDocApplication {
         }
 
         try {
-            java.net.URL url = TracerApp.class.getResource("images/Mapper.png");
+            java.net.URL url = MapperApp.class.getResource("images/Mapper.png");
             Icon icon = null;
 
             if (url != null) {
@@ -94,10 +97,10 @@ public class TracerApp extends MultiDocApplication {
             String websiteURLString = "http://beast.bio.ed.ac.uk/";
             String helpURLString = "http://beast.bio.ed.ac.uk/Tracer";
 
-            TracerApp app = new TracerApp(nameString, aboutString, icon, websiteURLString, helpURLString);
+            MapperApp app = new MapperApp(nameString, aboutString, icon, websiteURLString, helpURLString);
             app.setDocumentFrameFactory(new DocumentFrameFactory() {
                 public DocumentFrame createDocumentFrame(Application app, MenuBarFactory menuBarFactory) {
-                    return new TracerFrame("Tracer");
+                    return new MapperFrame("Tracer");
                 }
             });
             app.initialize();
@@ -105,7 +108,7 @@ public class TracerApp extends MultiDocApplication {
             app.doNew();
 
             if (args.length > 0) {
-                TracerFrame frame = (TracerFrame) app.getDefaultFrame();
+                MapperFrame frame = (MapperFrame) app.getDefaultFrame();
                 for (String fileName : args) {
 
                     File file = new File(fileName);

@@ -35,50 +35,50 @@ public class AnalysisMenuFactory implements MenuFactory {
         JMenuItem item;
 
         if (frame instanceof AnalysisMenuHandler) {
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getDemographicAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesianSkylineAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getExtendedBayesianSkylineAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getGMRFSkyrideAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getLineagesThroughTimeAction());
-            menu.add(item);
-//
-//            item = new JMenuItem(((AnalysisMenuHandler)frame).getTraitThroughTimeAction());
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getDemographicAction());
 //            menu.add(item);
 //
-            menu.addSeparator();
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getCreateTemporalAnalysisAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddDemographicAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddBayesianSkylineAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddExtendedBayesianSkylineAction());
-            menu.add(item);
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddTimeDensityAction());
-            menu.add(item);
-
-            menu.addSeparator();
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesFactorsAction());
-            menu.add(item);
-
-            menu.addSeparator();
-
-            item = new JMenuItem(((AnalysisMenuHandler) frame).getConditionalPosteriorDistAction());
-            menu.add(item);
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesianSkylineAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getExtendedBayesianSkylineAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getGMRFSkyrideAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getLineagesThroughTimeAction());
+//            menu.add(item);
+////
+////            item = new JMenuItem(((AnalysisMenuHandler)frame).getTraitThroughTimeAction());
+////            menu.add(item);
+////
+//            menu.addSeparator();
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getCreateTemporalAnalysisAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddDemographicAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddBayesianSkylineAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddExtendedBayesianSkylineAction());
+//            menu.add(item);
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getAddTimeDensityAction());
+//            menu.add(item);
+//
+//            menu.addSeparator();
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getBayesFactorsAction());
+//            menu.add(item);
+//
+//            menu.addSeparator();
+//
+//            item = new JMenuItem(((AnalysisMenuHandler) frame).getConditionalPosteriorDistAction());
+//            menu.add(item);
 
         } else {
             item = new JMenuItem(DEMOGRAPHIC_RECONSTRUCTION);

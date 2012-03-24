@@ -63,21 +63,17 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
     public EigenDecomposition getEigenDecomposition(int branchIndex, int categoryIndex) {
         return substModel.getEigenDecomposition();
     }
-    
-	@Override
-	public void setEigenDecomposition(Beagle beagle, int eigenIndex, BufferIndexHelper bufferHelper, int dummy) {
+
+    public void setEigenDecomposition(Beagle beagle, int eigenIndex, BufferIndexHelper bufferHelper, int dummy) {
         EigenDecomposition ed = getEigenDecomposition(eigenIndex, dummy);
 
-        
-        
         beagle.setEigenDecomposition(
-//                offsetIndex,
-        		eigenIndex,
+                bufferHelper.getOffsetIndex(eigenIndex),
                 ed.getEigenVectors(),
                 ed.getInverseEigenVectors(),
                 ed.getEigenValues());
-		
-	}   
+
+    }
 
     public SubstitutionModel getSubstitutionModel(int branchIndex, int categoryIndex) {
         return substModel;
@@ -136,19 +132,19 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
     protected void acceptState() {
     }
 
-    public void updateTransitionMatrices( Beagle beagle,
-            int eigenIndex,
-            BufferIndexHelper bufferHelper,
-            final int[] probabilityIndices,
-            final int[] firstDerivativeIndices,
-            final int[] secondDervativeIndices,
-            final double[] edgeLengths,
-            int count) {
-        beagle.updateTransitionMatrices(eigenIndex, probabilityIndices, firstDerivativeIndices,
+    public void updateTransitionMatrices(Beagle beagle,
+                                         int eigenIndex,
+                                         BufferIndexHelper bufferHelper,
+                                         final int[] probabilityIndices,
+                                         final int[] firstDerivativeIndices,
+                                         final int[] secondDervativeIndices,
+                                         final double[] edgeLengths,
+                                         int count) {
+        beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex), probabilityIndices, firstDerivativeIndices,
                 secondDervativeIndices, edgeLengths, count);
-        
+
         //////////////////////////////////////////////////////
-        
+
 //		for(int k =0;k<probabilityIndices.length;k++){
 //		
 //		double tmp[] = new double[4 * 4 * 4];
@@ -159,20 +155,20 @@ public class HomogenousBranchSubstitutionModel extends AbstractModel implements 
 //		System.out.println(probabilityIndices[k]);
 //		EpochBranchSubstitutionModel.printMatrix(tmp, 4, 4);
 //		}
-        
-       //////////////////////////////////////////////////////
-		
+
+        //////////////////////////////////////////////////////
+
     }
 
-	@Override
-	public int getExtraBufferCount(TreeModel treeModel) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
 
-	@Override
-	public void setFirstBuffer(int bufferCount) {
-		// TODO Auto-generated method stub
-		
-	}
+    public int getExtraBufferCount(TreeModel treeModel) {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+
+    public void setFirstBuffer(int bufferCount) {
+        // TODO Auto-generated method stub
+
+    }
 }

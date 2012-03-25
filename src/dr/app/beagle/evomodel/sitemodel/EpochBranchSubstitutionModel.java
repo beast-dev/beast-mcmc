@@ -56,7 +56,7 @@ import dr.util.Citation;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
 		BranchSubstitutionModel, Citable {
 
-    public static final boolean TRY_EPOCH = true;
+    public static final boolean TRY_EPOCH = false;
 	
 	private final List<SubstitutionModel> substModelList;
 	private final List<FrequencyModel> frequencyModelList;

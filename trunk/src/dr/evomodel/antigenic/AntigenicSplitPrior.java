@@ -23,7 +23,10 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
             MatrixParameter locationsParameter,
             Parameter datesParameter,
             Parameter regressionSlopeParameter,
-            Parameter regressionPrecisionParameter
+            Parameter regressionPrecisionParameter,
+            Parameter splitTimeParameter,
+            Parameter splitAngleParameter,
+            Parameter splitProportionParameter
     ) {
 
         super(ANTIGENIC_SPLIT_PRIOR);
@@ -45,6 +48,18 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         addVariable(regressionPrecisionParameter);
         regressionPrecisionParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
+        this.splitTimeParameter = splitTimeParameter;
+        addVariable(splitTimeParameter);
+        splitTimeParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
+
+        this.splitAngleParameter = splitAngleParameter;
+        addVariable(splitAngleParameter);
+        splitAngleParameter.addBounds(new Parameter.DefaultBounds(0.5*Math.PI, 0.0, 1));
+
+        this.splitProportionParameter = splitProportionParameter;
+        addVariable(splitProportionParameter);
+        splitProportionParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+
         likelihoodKnown = false;
 
         earliestDate = datesParameter.getParameterValue(0);
@@ -65,7 +80,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter || variable == datesParameter
-            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
+            || variable == regressionSlopeParameter || variable == regressionPrecisionParameter
+            || variable == splitTimeParameter || variable == splitAngleParameter
+            || variable == splitProportionParameter) {
             likelihoodKnown = false;
         }
     }
@@ -159,6 +176,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
     private final MatrixParameter locationsParameter;
     private final Parameter regressionSlopeParameter;
     private final Parameter regressionPrecisionParameter;
+    private final Parameter splitTimeParameter;
+    private final Parameter splitAngleParameter;
+    private final Parameter splitProportionParameter;
 
     private double earliestDate;
     private double logLikelihood = 0.0;
@@ -175,6 +195,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         public final static String DATES = "dates";
         public final static String REGRESSIONSLOPE = "regressionSlope";
         public final static String REGRESSIONPRECISION = "regressionPrecision";
+        public final static String SPLITTIME = "splitTime";
+        public final static String SPLITANGLE = "splitAngle";
+        public final static String SPLITPROPORTION = "splitProportion";
 
         public String getParserName() {
             return ANTIGENIC_SPLIT_PRIOR;
@@ -186,12 +209,18 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
             Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
             Parameter regressionSlopeParameter = (Parameter) xo.getElementFirstChild(REGRESSIONSLOPE);
             Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
+            Parameter splitTimeParameter = (Parameter) xo.getElementFirstChild(SPLITTIME);
+            Parameter splitAngleParameter = (Parameter) xo.getElementFirstChild(SPLITANGLE);
+            Parameter splitProportionParameter = (Parameter) xo.getElementFirstChild(SPLITPROPORTION);
 
             AntigenicSplitPrior AGDP = new AntigenicSplitPrior(
                 locationsParameter,
                 datesParameter,
                 regressionSlopeParameter,
-                regressionPrecisionParameter);
+                regressionPrecisionParameter,
+                splitTimeParameter,
+                splitAngleParameter,
+                splitProportionParameter);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -214,7 +243,10 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class),
                 new ElementRule(REGRESSIONSLOPE, Parameter.class),
-                new ElementRule(REGRESSIONPRECISION, Parameter.class)
+                new ElementRule(REGRESSIONPRECISION, Parameter.class),
+                new ElementRule(SPLITTIME, Parameter.class),
+                new ElementRule(SPLITANGLE, Parameter.class),
+                new ElementRule(SPLITPROPORTION, Parameter.class)
         };
 
         public Class getReturnType() {

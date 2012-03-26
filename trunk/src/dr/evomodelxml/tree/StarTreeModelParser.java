@@ -28,6 +28,7 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.StarTreeModel;
+import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
@@ -40,6 +41,8 @@ import java.util.logging.Logger;
 public class StarTreeModelParser extends AbstractXMLObjectParser {
 
     public static final String STAR_TREE_MODEL = "starTreeModel";
+
+    public static final String SHARE_ROOT = "sharedRootHeight";
 
     public static final String ROOT_HEIGHT = "rootHeight";
     public static final String LEAF_HEIGHT = "leafHeight";
@@ -62,35 +65,13 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
     public StarTreeModelParser() {
         rules = new XMLSyntaxRule[]{
                 new ElementRule(Tree.class),
-                new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
-//                new ElementRule(NODE_HEIGHTS,
-//                        new XMLSyntaxRule[]{
-//                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root height is included in the parameter"),
-//                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node heights (minus the root) are included in the parameter"),
-//                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-//                        }, 1, Integer.MAX_VALUE),
+                new XORRule(
+                        new ElementRule(ROOT_HEIGHT, Parameter.class, "A parameter definition with id only (cannot be a reference!)", false),
+                        new ElementRule(SHARE_ROOT, TreeModel.class)
+                ),
                 new ElementRule(LEAF_HEIGHT,
                         new XMLSyntaxRule[]{
                                 AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
-                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                        }, 0, Integer.MAX_VALUE),
-                new ElementRule(NODE_TRAITS,
-                        new XMLSyntaxRule[]{
-                                AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
-                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root trait is included in the parameter"),
-                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node traits (minus the root) are included in the parameter"),
-                                AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node traits are included in the parameter"),
-                                AttributeRule.newIntegerRule(MULTIVARIATE_TRAIT, true, "The number of dimensions (if multivariate)"),
-                                AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
-                                AttributeRule.newBooleanRule(FIRE_TREE_EVENTS, true, "Whether to fire tree events if the traits change"),
-                                new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                        }, 0, Integer.MAX_VALUE),
-                new ElementRule(NODE_RATES,
-                        new XMLSyntaxRule[]{
-                                AttributeRule.newBooleanRule(ROOT_NODE, true, "If true the root rate is included in the parameter"),
-                                AttributeRule.newBooleanRule(INTERNAL_NODES, true, "If true the internal node rate (minus the root) are included in the parameter"),
-                                AttributeRule.newBooleanRule(LEAF_NODES, true, "If true the leaf node rate are included in the parameter"),
-                                AttributeRule.newDoubleRule(INITIAL_VALUE, true, "The initial value(s)"),
                                 new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
                         }, 0, Integer.MAX_VALUE),
                 new ElementRule(LEAF_TRAIT,
@@ -125,11 +106,15 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
 
                     if (cxo.getRawChild(0) instanceof Reference) {
                         // Co-opt existing parameter
-                        treeModel.setRootHeightParameter((Parameter) cxo.getChild(Parameter.class));
+//                        treeModel.setRootHeightParameter((Parameter) cxo.getChild(Parameter.class));
+                        throw new XMLParseException("Can not provide idref to a new root height parameter");
                     } else {
                         ParameterParser.replaceParameter(cxo, treeModel.getRootHeightParameter());
                     }
 
+                } else if (cxo.getName().equals(SHARE_ROOT)) {
+                    TreeModel sharedRoot = (TreeModel) cxo.getChild(TreeModel.class);
+                    treeModel.setSharedRootHeightParameter(sharedRoot);
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 
                     String taxonName;

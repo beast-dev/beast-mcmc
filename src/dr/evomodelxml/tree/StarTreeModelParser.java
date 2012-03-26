@@ -1,7 +1,7 @@
 /*
  * StarTreeModelParser.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -28,7 +28,6 @@ package dr.evomodelxml.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.StarTreeModel;
-import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
@@ -46,7 +45,7 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
     public static final String LEAF_HEIGHT = "leafHeight";
     public static final String LEAF_TRAIT = "leafTrait";
 
-//    public static final String NODE_HEIGHTS = "nodeHeights";
+    //    public static final String NODE_HEIGHTS = "nodeHeights";
     public static final String NODE_RATES = "nodeRates";
     public static final String NODE_TRAITS = "nodeTraits";
     public static final String MULTIVARIATE_TRAIT = "traitDimension";
@@ -124,7 +123,12 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
 
                 if (cxo.getName().equals(ROOT_HEIGHT)) {
 
-                    ParameterParser.replaceParameter(cxo, treeModel.getRootHeightParameter());
+                    if (cxo.getRawChild(0) instanceof Reference) {
+                        // Co-opt existing parameter
+                        treeModel.setRootHeightParameter((Parameter) cxo.getChild(Parameter.class));
+                    } else {
+                        ParameterParser.replaceParameter(cxo, treeModel.getRootHeightParameter());
+                    }
 
                 } else if (cxo.getName().equals(LEAF_HEIGHT)) {
 
@@ -226,10 +230,6 @@ public class StarTreeModelParser extends AbstractXMLObjectParser {
                 throw new XMLParseException("illegal child element in  " + getParserName() + ": " + xo.getChildName(i) + " " + xo.getChild(i));
             }
         }
-
-        // AR this is doubling up the number of bounds on each node.
-//        treeModel.setupHeightBounds();
-        //System.err.println("done constructing treeModel");
 
         Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));

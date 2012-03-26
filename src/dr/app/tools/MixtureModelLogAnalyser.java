@@ -29,8 +29,19 @@ package dr.app.tools;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
 import dr.app.util.Utils;
+import dr.inference.trace.PathSamplingAnalysis;
 import dr.inference.trace.TraceException;
+import dr.util.Attribute;
+import dr.util.FileHelpers;
 import dr.util.Version;
+import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
+import dr.xml.StringAttributeRule;
+import dr.xml.XMLObject;
+import dr.xml.XMLObjectParser;
+import dr.xml.XMLParseException;
+import dr.xml.XMLSyntaxRule;
 
 import java.io.*;
 import java.util.*;
@@ -42,7 +53,10 @@ import java.util.*;
 public class MixtureModelLogAnalyser {
 
     private final static Version version = new BeastVersion();
-
+    
+    public static final String MIXTURE_MODEL_LOG_ANALYSER = "mixtureModelLogAnalyser";
+    public static final String BURNIN = "burnin";
+    public static final String DISCRETE_VARIABLE = "discreteVariable";
 
     public MixtureModelLogAnalyser(int burnin, String inputFileName, String outputFileName, String discreteVariableName
         ) throws IOException, TraceException {
@@ -141,8 +155,6 @@ public class MixtureModelLogAnalyser {
                     }
                 }
 
-
-
                 previousLine = line;
             }
 
@@ -172,6 +184,62 @@ public class MixtureModelLogAnalyser {
             System.err.println("Error Parsing Input log: " + e.getMessage());
         }
     }
+    
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+
+        public String getParserName() {
+            return MIXTURE_MODEL_LOG_ANALYSER;
+        }
+        
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        	
+        	try {
+        		
+        		String inputFileName = xo.getStringAttribute(FileHelpers.FILE_NAME);
+        		String discreteVariableName = xo.getStringAttribute(DISCRETE_VARIABLE);
+        	
+        		int burninLength = 0;
+        		if (xo.hasAttribute(BURNIN)) {
+        			burninLength = xo.getIntegerAttribute(BURNIN);
+        		}
+            
+        		MixtureModelLogAnalyser mixtureModel = new MixtureModelLogAnalyser(burninLength, inputFileName, null, discreteVariableName);
+            
+        		return mixtureModel;
+            
+        	} catch (IOException ioe) {
+        		throw new XMLParseException(ioe.getMessage());
+       		} catch (TraceException te) {
+       			throw new XMLParseException(te.getMessage());
+       		}
+
+        }
+        
+      //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "Performs posterior probabilities calculations.";
+        }
+
+        public Class getReturnType() {
+            return MixtureModelLogAnalyser.class;
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new StringAttributeRule(FileHelpers.FILE_NAME,
+                        "The traceName of a BEAST log file (can not include trees, which should be logged separately"),
+                new StringAttributeRule(DISCRETE_VARIABLE,
+                        "The tag name of the discrete variable"),       
+                AttributeRule.newIntegerRule(BURNIN, true),
+        };
+        
+    };
 
     public static void printTitle() {
         System.out.println();

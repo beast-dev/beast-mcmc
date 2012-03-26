@@ -28,6 +28,7 @@ package dr.evomodel.tree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.inference.model.Bounds;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
@@ -40,6 +41,7 @@ public class StarTreeModel extends TreeModel {
         super(id, tree);
         maxTipHeightKnown = false;
         rootHeightParameter = null;
+        sharedRoot = null;
     }
 
     @Override
@@ -67,13 +69,24 @@ public class StarTreeModel extends TreeModel {
 //        fixedInternalNodes = true;
 //    }
 
-    public void setRootHeightParameter(Parameter p) {
-        addVariable(p);
-        rootHeightParameter = p;
-    }
+//    public void setRootHeightParameter(Parameter p) {
+//        addVariable(p);
+//        rootHeightParameter = p;
+//    }
 
     private void setupHeightBounds(Node node) {
         node.heightParameter.addBounds(new StarTreeNodeHeightBounds(node.heightParameter));
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == sharedRoot) {
+            if (object instanceof TreeChangedEvent) {
+                TreeChangedEvent event = (TreeChangedEvent) object;
+                if (event.getParameter() == sharedRoot.getRootHeightParameter()) {
+                    pushTreeChangedEvent();
+                }
+            }
+        }
     }
 
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -91,10 +104,6 @@ public class StarTreeModel extends TreeModel {
             }
             super.handleVariableChangedEvent(variable, index, type);
         }
-
-//        if (node.isExternal()) {
-//            maxTipHeightKnown = false;
-//        }
     }
 
     public double getNodeHeight(final NodeRef nr) {
@@ -102,11 +111,18 @@ public class StarTreeModel extends TreeModel {
         if (!node.isExternal()) {
             if (rootHeightParameter != null) {
                 return rootHeightParameter.getParameterValue(0);
+            } else if (sharedRoot != null) {
+                return sharedRoot.getNodeHeight(sharedRoot.getRoot());
             } else {
                 return ((Node) getRoot()).getHeight();
             }
         }
         return node.getHeight();
+    }
+
+    public void setSharedRootHeightParameter(TreeModel sharedRoot) {
+        this.sharedRoot = sharedRoot;
+        addModel(sharedRoot);
     }
 
     private class StarTreeNodeHeightBounds implements Bounds<Double> {
@@ -175,4 +191,5 @@ public class StarTreeModel extends TreeModel {
     private double savedMaxTipHeight;
 
     private Parameter rootHeightParameter = null;
+    private TreeModel sharedRoot = null;
 }

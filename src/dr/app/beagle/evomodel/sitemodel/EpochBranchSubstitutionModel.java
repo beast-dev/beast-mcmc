@@ -25,12 +25,6 @@
 
 package dr.app.beagle.evomodel.sitemodel;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-
 import beagle.Beagle;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
@@ -47,6 +41,8 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 
+import java.util.*;
+
 /**
  * @author Filip Bielejec
  * @author Marc A. Suchard
@@ -54,263 +50,263 @@ import dr.util.Citation;
  */
 @SuppressWarnings("serial")
 public class EpochBranchSubstitutionModel extends AbstractModel implements
-		BranchSubstitutionModel, Citable {
-
-    public static final boolean TRY_EPOCH = false;
-	
-	private final List<SubstitutionModel> substModelList;
-	private final List<FrequencyModel> frequencyModelList;
-	private final Parameter epochTimes;
-	private int firstBuffer;
-	private Map<Integer, double[]> convolutionMatricesMap = new HashMap<Integer, double[]>();
-
-	public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
-			List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
-
-		super("EpochBranchSubstitutionModel");
-
-		if (frequencyModelList.size() != 1) {
-			throw new IllegalArgumentException(
-					"EpochBranchSubstitutionModel requires one FrequencyModel");
-		}
-
-		this.substModelList = substModelList;
-		this.frequencyModelList = frequencyModelList;
-		this.epochTimes = epochTimes;
-
-		for (SubstitutionModel model : substModelList) {
-			addModel(model);
-		}
-
-		for (FrequencyModel model : frequencyModelList) {
-			addModel(model);
-		}
-
-		addVariable(epochTimes);
-	}// END: Constructor
-
-	/**
-	 * @return number of extra transition matrices buffers to allocate
-	 */
-	public int getExtraBufferCount(TreeModel treeModel) {
-
-		// loop over the tree to determine the count
-		double[] transitionTimes = epochTimes.getParameterValues();
-		int rootId = treeModel.getRoot().getNumber();
-		int count = 0;
-		for (NodeRef node : treeModel.getNodes()) {
-
-			if (node.getNumber() != rootId) {
-
-				double nodeHeight = treeModel.getNodeHeight(node);
-				double parentHeight = treeModel.getNodeHeight(treeModel
-						.getParent(node));
-
-				for (int i = 0; i < transitionTimes.length; i++) {
-
-					if (nodeHeight <= transitionTimes[i] && transitionTimes[i] < parentHeight) {
-						count++;
-						break;
-					}// END: transition time check check
-
-				}// END: transition times loop
-			}// END: root check
-		}// END: nodes loop
-
-		return count * 4;
-	}// END: getBufferCount
-
-	public void setFirstBuffer(int firstBufferCount) {
-		firstBuffer = firstBufferCount;
-	}// END: setFirstBuffer
-
-	public EigenDecomposition getEigenDecomposition(int branchIndex,
-			int categoryIndex) {
-		return substModelList.get(branchIndex).getEigenDecomposition();
-	}// END: getEigenDecomposition
+        BranchSubstitutionModel, Citable {
 
-	public SubstitutionModel getSubstitutionModel(int branchIndex,
-			int categoryIndex) {
-		return substModelList.get(branchIndex);
-	}// END: getSubstitutionModel
+    public static final boolean TRY_EPOCH = true;
 
-	public double[] getStateFrequencies(int categoryIndex) {
-		return frequencyModelList.get(categoryIndex).getFrequencies();
-	}// END: getStateFrequencies
+    private final List<SubstitutionModel> substModelList;
+    private final List<FrequencyModel> frequencyModelList;
+    private final Parameter epochTimes;
+    private int firstBuffer;
+    private Map<Integer, double[]> convolutionMatricesMap = new HashMap<Integer, double[]>();
 
-	public int getEigenCount() {
-		// Use an extra eigenIndex to identify branches that need convolution
-		return substModelList.size() + 1;
-	}// END: getEigenCount
+    public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
+                                        List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
 
-	public void setEigenDecomposition(Beagle beagle, int eigenIndex,
-			BufferIndexHelper bufferHelper, int dummy) {
+        super("EpochBranchSubstitutionModel");
 
-		if (eigenIndex < substModelList.size()) {
+        if (frequencyModelList.size() != 1) {
+            throw new IllegalArgumentException(
+                    "EpochBranchSubstitutionModel requires one FrequencyModel");
+        }
 
-			EigenDecomposition ed = getEigenDecomposition(eigenIndex, dummy);
+        this.substModelList = substModelList;
+        this.frequencyModelList = frequencyModelList;
+        this.epochTimes = epochTimes;
 
-			beagle.setEigenDecomposition(bufferHelper.getOffsetIndex(eigenIndex), 
-					ed.getEigenVectors(), 
-					ed.getInverseEigenVectors(), 
-					ed.getEigenValues()
-					);
+        for (SubstitutionModel model : substModelList) {
+            addModel(model);
+        }
 
-		}// END: nModels check
-	}// END: setEigenDecomposition
+        for (FrequencyModel model : frequencyModelList) {
+            addModel(model);
+        }
 
-	public boolean canReturnComplexDiagonalization() {
-		for (SubstitutionModel model : substModelList) {
-			if (model.canReturnComplexDiagonalization()) {
-				return true;
-			}
-		}
-		
-		return false;
-	}// END: canReturnComplexDiagonalization
+        addVariable(epochTimes);
+    }// END: Constructor
 
-	protected void handleModelChangedEvent(Model model, Object object, int index) {
-		fireModelChanged();
-	}// END: handleModelChangedEvent
+    /**
+     * @return number of extra transition matrices buffers to allocate
+     */
+    public int getExtraBufferCount(TreeModel treeModel) {
 
-	@SuppressWarnings("unchecked")
-	protected void handleVariableChangedEvent(Variable variable, int index,
-			Parameter.ChangeType type) {
-	}// END: handleVariableChangedEvent
+        // loop over the tree to determine the count
+        double[] transitionTimes = epochTimes.getParameterValues();
+        int rootId = treeModel.getRoot().getNumber();
+        int count = 0;
+        for (NodeRef node : treeModel.getNodes()) {
+
+            if (node.getNumber() != rootId) {
 
-	protected void storeState() {
-	}// END: storeState
+                double nodeHeight = treeModel.getNodeHeight(node);
+                double parentHeight = treeModel.getNodeHeight(treeModel
+                        .getParent(node));
+
+                for (int i = 0; i < transitionTimes.length; i++) {
+
+                    if (nodeHeight <= transitionTimes[i] && transitionTimes[i] < parentHeight) {
+                        count++;
+                        break;
+                    }// END: transition time check check
 
-	protected void restoreState() {
-	}// END: restoreState
+                }// END: transition times loop
+            }// END: root check
+        }// END: nodes loop
 
-	protected void acceptState() {
-	}// END: acceptState
+        return count * 4;
+    }// END: getBufferCount
 
-	/**
-	 * Calculate weights that branch spends in each substitution model  
-	 * 
-	 * @param tree
-	 * @param node
-	 * @return nModels if branch needs convolution, subst model index if not
-	 */
-	public int getBranchIndex(final Tree tree, final NodeRef node,
-			int bufferIndex) {
+    public void setFirstBuffer(int firstBufferCount) {
+        firstBuffer = firstBufferCount;
+    }// END: setFirstBuffer
 
-		int nModels = substModelList.size();
-		int lastTransitionTime = nModels - 2;
+    public EigenDecomposition getEigenDecomposition(int branchIndex,
+                                                    int categoryIndex) {
+        return substModelList.get(branchIndex).getEigenDecomposition();
+    }// END: getEigenDecomposition
 
-		double[] weights = new double[nModels];
-		double[] transitionTimes = epochTimes.getParameterValues();
-		double parentHeight = tree.getNodeHeight(tree.getParent(node));
-		double nodeHeight = tree.getNodeHeight(node);
-		double branchLength = tree.getBranchLength(node);
+    public SubstitutionModel getSubstitutionModel(int branchIndex,
+                                                  int categoryIndex) {
+        return substModelList.get(branchIndex);
+    }// END: getSubstitutionModel
 
-		int returnValue = 0;
+    public double[] getStateFrequencies(int categoryIndex) {
+        return frequencyModelList.get(categoryIndex).getFrequencies();
+    }// END: getStateFrequencies
 
-		// TODO: simplify this logic, it's a mess
-		if (parentHeight <= transitionTimes[0]) {
+    public int getEigenCount() {
+        // Use an extra eigenIndex to identify branches that need convolution
+        return substModelList.size() + 1;
+    }// END: getEigenCount
 
-			weights[0] = branchLength;
-			returnValue = 0;
+    public void setEigenDecomposition(Beagle beagle, int eigenIndex,
+                                      BufferIndexHelper bufferHelper, int dummy) {
 
-		} else {
+        if (eigenIndex < substModelList.size()) {
 
-			// first case: 0th transition time
-			if (nodeHeight < transitionTimes[0] && transitionTimes[0] <= parentHeight) {
+            EigenDecomposition ed = getEigenDecomposition(eigenIndex, dummy);
 
-				weights[0] = transitionTimes[0] - nodeHeight;
-				returnValue = nModels;
-				
-			} else {
+            beagle.setEigenDecomposition(bufferHelper.getOffsetIndex(eigenIndex),
+                    ed.getEigenVectors(),
+                    ed.getInverseEigenVectors(),
+                    ed.getEigenValues()
+            );
 
-				weights[0] = 0;
+        }// END: nModels check
+    }// END: setEigenDecomposition
 
-			}// END: 0-th model check
+    public boolean canReturnComplexDiagonalization() {
+        for (SubstitutionModel model : substModelList) {
+            if (model.canReturnComplexDiagonalization()) {
+                return true;
+            }
+        }
 
-			// second case: i to i+1 transition times
-			for (int i = 1; i <= lastTransitionTime; i++) {
+        return false;
+    }// END: canReturnComplexDiagonalization
 
-				if (nodeHeight < transitionTimes[i]) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
+    }// END: handleModelChangedEvent
 
-					if (parentHeight <= transitionTimes[i] && transitionTimes[i - 1] < nodeHeight) {
+    @SuppressWarnings("unchecked")
+    protected void handleVariableChangedEvent(Variable variable, int index,
+                                              Parameter.ChangeType type) {
+    }// END: handleVariableChangedEvent
 
-						weights[i] = branchLength;
-						returnValue = i;
+    protected void storeState() {
+    }// END: storeState
 
-					} else {
+    protected void restoreState() {
+    }// END: restoreState
 
-						double startTime = Math.max(nodeHeight,
-								transitionTimes[i - 1]);
-						double endTime = Math.min(parentHeight,
-								transitionTimes[i]);
+    protected void acceptState() {
+    }// END: acceptState
 
-						if (endTime < startTime) {
+    /**
+     * Calculate weights that branch spends in each substitution model
+     *
+     * @param tree
+     * @param node
+     * @return nModels if branch needs convolution, subst model index if not
+     */
+    public int getBranchIndex(final Tree tree, final NodeRef node,
+                              int bufferIndex) {
 
-							weights[i] = 0;
+        int nModels = substModelList.size();
+        int lastTransitionTime = nModels - 2;
 
-						} else {
+        double[] weights = new double[nModels];
+        double[] transitionTimes = epochTimes.getParameterValues();
+        double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        double nodeHeight = tree.getNodeHeight(node);
+        double branchLength = tree.getBranchLength(node);
 
-							weights[i] = (endTime - startTime);
-							returnValue = nModels;
-							
-						}// END: negative weights check
+        int returnValue = 0;
 
-					}// END: full branch in middle epoch check
+        // TODO: simplify this logic, it's a mess
+        if (parentHeight <= transitionTimes[0]) {
 
-				} else {
+            weights[0] = branchLength;
+            returnValue = 0;
 
-					weights[i] = 0;
+        } else {
 
-				}// END: i-th model check
+            // first case: 0th transition time
+            if (nodeHeight < transitionTimes[0] && transitionTimes[0] <= parentHeight) {
 
-			}// END: i loop
+                weights[0] = transitionTimes[0] - nodeHeight;
+                returnValue = nModels;
 
-			// third case: last transition time
-			if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
+            } else {
 
-				weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
-				returnValue = nModels;
-				
-			} else if (nodeHeight > transitionTimes[lastTransitionTime]) {
+                weights[0] = 0;
 
-				weights[lastTransitionTime + 1] = branchLength;
-				returnValue = nModels - 1;
-				
-			} else {
+            }// END: 0-th model check
 
-				weights[lastTransitionTime + 1] = 0;
+            // second case: i to i+1 transition times
+            for (int i = 1; i <= lastTransitionTime; i++) {
 
-			}// END: last transition time check
+                if (nodeHeight < transitionTimes[i]) {
 
-		}// END: if branch below first transition time bail out
+                    if (parentHeight <= transitionTimes[i] && transitionTimes[i - 1] < nodeHeight) {
 
-		convolutionMatricesMap.put(bufferIndex, weights);
+                        weights[i] = branchLength;
+                        returnValue = i;
 
-		return returnValue;
-	}// END: getBranchIndex
+                    } else {
 
-	public void updateTransitionMatrices(Beagle beagle, 
-			int eigenIndex,
-			BufferIndexHelper bufferHelper, 
-			final int[] probabilityIndices,
-			final int[] firstDerivativeIndices,
-			final int[] secondDervativeIndices, 
-			final double[] edgeLengths,
-			int count // number of branches to update in paralell
-	) {
+                        double startTime = Math.max(nodeHeight,
+                                transitionTimes[i - 1]);
+                        double endTime = Math.min(parentHeight,
+                                transitionTimes[i]);
 
-		if (eigenIndex < substModelList.size()) {
+                        if (endTime < startTime) {
 
-			// Branches fall in a single category
-			beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex), 
-					probabilityIndices,
-					firstDerivativeIndices, 
-					secondDervativeIndices,
-					edgeLengths, 
-					count);
+                            weights[i] = 0;
 
-			// ////////////////////////////////////////////////////
+                        } else {
+
+                            weights[i] = (endTime - startTime);
+                            returnValue = nModels;
+
+                        }// END: negative weights check
+
+                    }// END: full branch in middle epoch check
+
+                } else {
+
+                    weights[i] = 0;
+
+                }// END: i-th model check
+
+            }// END: i loop
+
+            // third case: last transition time
+            if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
+
+                weights[lastTransitionTime + 1] = parentHeight - transitionTimes[lastTransitionTime];
+                returnValue = nModels;
+
+            } else if (nodeHeight > transitionTimes[lastTransitionTime]) {
+
+                weights[lastTransitionTime + 1] = branchLength;
+                returnValue = nModels - 1;
+
+            } else {
+
+                weights[lastTransitionTime + 1] = 0;
+
+            }// END: last transition time check
+
+        }// END: if branch below first transition time bail out
+
+        convolutionMatricesMap.put(bufferIndex, weights);
+
+        return returnValue;
+    }// END: getBranchIndex
+
+    public void updateTransitionMatrices(Beagle beagle,
+                                         int eigenIndex,
+                                         BufferIndexHelper bufferHelper,
+                                         final int[] probabilityIndices,
+                                         final int[] firstDerivativeIndices,
+                                         final int[] secondDervativeIndices,
+                                         final double[] edgeLengths,
+                                         int count // number of branches to update in paralell
+    ) {
+
+        if (eigenIndex < substModelList.size()) {
+
+            // Branches fall in a single category
+            beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
+                    probabilityIndices,
+                    firstDerivativeIndices,
+                    secondDervativeIndices,
+                    edgeLengths,
+                    count);
+
+            // ////////////////////////////////////////////////////
 
 //			for (int k = 0; k < probabilityIndices.length; k++) {
 //
@@ -323,131 +319,131 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //				printMatrix(tmp, 4, 4);
 //			}
 
-			// ////////////////////////////////////////////////////
-			
-		} else {
+            // ////////////////////////////////////////////////////
 
-			// Branches require convolution of two or more matrices
-			int[] firstBuffers = new int[count];
-			int[] secondBuffers = new int[count];
-			int[] firstExtraBuffers = new int[count];
-			int[] secondExtraBuffers = new int[count];
-			
-			int[] resultBranchBuffers = new int[count];
+        } else {
 
-			int[] probabilityBuffers = new int[count];
-			int[] firstConvolutionBuffers = new int[count];
-			int[] secondConvolutionBuffers = new int[count];
-			int[] resultConvolutionBuffers = new int[count];
-			
-			for (int i = 0; i < count; i++) {
+            // Branches require convolution of two or more matrices
+            int[] firstBuffers = new int[count];
+            int[] secondBuffers = new int[count];
+            int[] firstExtraBuffers = new int[count];
+            int[] secondExtraBuffers = new int[count];
 
-				firstBuffers[i] = firstBuffer + i;
-				secondBuffers[i] = (firstBuffer + count) + i;
-				firstExtraBuffers[i] = (firstBuffer + 2*count) + i;
-				secondExtraBuffers[i] = (firstBuffer + 3*count) + i;
-				
-				resultBranchBuffers[i] = probabilityIndices[i];
+            int[] resultBranchBuffers = new int[count];
 
-			}// END: count loop
+            int[] probabilityBuffers = new int[count];
+            int[] firstConvolutionBuffers = new int[count];
+            int[] secondConvolutionBuffers = new int[count];
+            int[] resultConvolutionBuffers = new int[count];
 
-			for (int i = 0; i < substModelList.size(); i++) {
+            for (int i = 0; i < count; i++) {
 
-				int eigenBuffer = bufferHelper.getOffsetIndex(i);
-				double[] weights = new double[count];
-				
-				for (int j = 0; j < count; j++) {
+                firstBuffers[i] = firstBuffer + i;
+                secondBuffers[i] = (firstBuffer + count) + i;
+                firstExtraBuffers[i] = (firstBuffer + 2 * count) + i;
+                secondExtraBuffers[i] = (firstBuffer + 3 * count) + i;
 
-					int index = probabilityIndices[j];
-					weights[j] = convolutionMatricesMap.get(index)[i];
+                resultBranchBuffers[i] = probabilityIndices[i];
 
-				}// END: count loop
+            }// END: count loop
 
-				if ((i == 1) && (i == (substModelList.size() - 1))) {
-					
-					probabilityBuffers = secondBuffers;
-					
-					firstConvolutionBuffers = firstBuffers;
-					secondConvolutionBuffers = probabilityBuffers;
-					resultConvolutionBuffers = resultBranchBuffers;
+            for (int i = 0; i < substModelList.size(); i++) {
 
-				} else if ((i == 1) && (i != (substModelList.size() - 1))) {
+                int eigenBuffer = bufferHelper.getOffsetIndex(i);
+                double[] weights = new double[count];
 
-					probabilityBuffers = secondBuffers;
-					
-					firstConvolutionBuffers = firstBuffers;
-					secondConvolutionBuffers = probabilityBuffers;
-					resultConvolutionBuffers = firstExtraBuffers;
-					
-				} else if ((i != 1) && (i == (substModelList.size() - 1))) {
-					
-					// even
-					if (i % 2 == 0) {
+                for (int j = 0; j < count; j++) {
 
-						probabilityBuffers = firstBuffers;
+                    int index = probabilityIndices[j];
+                    weights[j] = convolutionMatricesMap.get(index)[i];
 
-						firstConvolutionBuffers = firstExtraBuffers;
-						secondConvolutionBuffers = probabilityBuffers;
-						resultConvolutionBuffers = resultBranchBuffers;
-						
-						// odd
-					} else {
-						
-						probabilityBuffers = secondBuffers;
-						
-						firstConvolutionBuffers = secondExtraBuffers;
-						secondConvolutionBuffers = probabilityBuffers;
-						resultConvolutionBuffers = resultBranchBuffers;
-					}
-					
-				} else {
+                }// END: count loop
 
-					// even
-					if (i % 2 == 0) {
+                if ((i == 1) && (i == (substModelList.size() - 1))) {
 
-						probabilityBuffers = firstBuffers;
+                    probabilityBuffers = secondBuffers;
 
-						firstConvolutionBuffers = firstExtraBuffers;
-						secondConvolutionBuffers = probabilityBuffers;
-						resultConvolutionBuffers = secondExtraBuffers;
-						
-						// odd
-					} else {
-						
-						probabilityBuffers = secondBuffers;
-						
-						firstConvolutionBuffers = secondExtraBuffers;
-						secondConvolutionBuffers = probabilityBuffers;
-						resultConvolutionBuffers = firstExtraBuffers;
+                    firstConvolutionBuffers = firstBuffers;
+                    secondConvolutionBuffers = probabilityBuffers;
+                    resultConvolutionBuffers = resultBranchBuffers;
 
-					}// END: even-odd check
+                } else if ((i == 1) && (i != (substModelList.size() - 1))) {
 
-				}// END: first-last buffer check
-				
-				beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
-						probabilityBuffers, // probabilityIndices
-						null, // firstDerivativeIndices
-						null, // secondDerivativeIndices
-						weights, // edgeLengths
-						count // count
-						);
-				
-				if (i != 0) {
-					
-					beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
-							secondConvolutionBuffers, // B
-							resultConvolutionBuffers, // C
-							count // count
-							);
-					
-				}// END: 0 eigen index check
+                    probabilityBuffers = secondBuffers;
 
-			}// END: eigen indices loop
+                    firstConvolutionBuffers = firstBuffers;
+                    secondConvolutionBuffers = probabilityBuffers;
+                    resultConvolutionBuffers = firstExtraBuffers;
 
-			
-		}// END: eigenIndex check
-		
-		// ////////////////////////////////////////////////////
+                } else if ((i != 1) && (i == (substModelList.size() - 1))) {
+
+                    // even
+                    if (i % 2 == 0) {
+
+                        probabilityBuffers = firstBuffers;
+
+                        firstConvolutionBuffers = firstExtraBuffers;
+                        secondConvolutionBuffers = probabilityBuffers;
+                        resultConvolutionBuffers = resultBranchBuffers;
+
+                        // odd
+                    } else {
+
+                        probabilityBuffers = secondBuffers;
+
+                        firstConvolutionBuffers = secondExtraBuffers;
+                        secondConvolutionBuffers = probabilityBuffers;
+                        resultConvolutionBuffers = resultBranchBuffers;
+                    }
+
+                } else {
+
+                    // even
+                    if (i % 2 == 0) {
+
+                        probabilityBuffers = firstBuffers;
+
+                        firstConvolutionBuffers = firstExtraBuffers;
+                        secondConvolutionBuffers = probabilityBuffers;
+                        resultConvolutionBuffers = secondExtraBuffers;
+
+                        // odd
+                    } else {
+
+                        probabilityBuffers = secondBuffers;
+
+                        firstConvolutionBuffers = secondExtraBuffers;
+                        secondConvolutionBuffers = probabilityBuffers;
+                        resultConvolutionBuffers = firstExtraBuffers;
+
+                    }// END: even-odd check
+
+                }// END: first-last buffer check
+
+                beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
+                        probabilityBuffers, // probabilityIndices
+                        null, // firstDerivativeIndices
+                        null, // secondDerivativeIndices
+                        weights, // edgeLengths
+                        count // count
+                );
+
+                if (i != 0) {
+
+                    beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
+                            secondConvolutionBuffers, // B
+                            resultConvolutionBuffers, // C
+                            count // count
+                    );
+
+                }// END: 0 eigen index check
+
+            }// END: eigen indices loop
+
+
+        }// END: eigenIndex check
+
+        // ////////////////////////////////////////////////////
 
 //		for (int k = 0; k < probabilityIndices.length; k++) {
 //
@@ -460,72 +456,72 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //			printMatrix(tmp, 4, 4);
 //		}
 
-		// ////////////////////////////////////////////////////
-		
-		
-	}// END: updateTransitionMatrices
+        // ////////////////////////////////////////////////////
 
-	/**
-	 * @return a list of citations associated with this object
-	 */
-	public List<Citation> getCitations() {
-		List<Citation> citations = new ArrayList<Citation>();
-		citations.add(new Citation(new Author[] { new Author("F", "Bielejec"),
-				new Author("P", "Lemey"), new Author("G", "Baele"),
-				new Author("MA", "Suchard") }, Citation.Status.IN_PREPARATION));
-		return citations;
-	}// END: getCitations
 
-	// /////////////
-	// ---DEBUG---//
-	// /////////////
+    }// END: updateTransitionMatrices
 
-	public static void printMatrix(double[][] matrix, int nrow, int ncol) {
-		for (int row = 0; row < nrow; row++) {
-			for (int col = 0; col < nrow; col++)
-				System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
-			System.out.print("\n");
-		}
-		System.out.print("\n");
-	}// END: printMatrix
-	
-	public static void printMatrix(double[] matrix, int nrow, int ncol) {
-		for (int row = 0; row < nrow; row++) {
-			System.out.print("| ");
-			for (int col = 0; col < nrow; col++)
-				System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
+    /**
+     * @return a list of citations associated with this object
+     */
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(new Citation(new Author[]{new Author("F", "Bielejec"),
+                new Author("P", "Lemey"), new Author("G", "Baele"),
+                new Author("MA", "Suchard")}, Citation.Status.IN_PREPARATION));
+        return citations;
+    }// END: getCitations
+
+    // /////////////
+    // ---DEBUG---//
+    // /////////////
+
+    public static void printMatrix(double[][] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            for (int col = 0; col < nrow; col++)
+                System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
+            System.out.print("\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
+
+    public static void printMatrix(double[] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.print("| ");
+            for (int col = 0; col < nrow; col++)
+                System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
 //			System.out.print("\n");
-			System.out.print("|\n");
-		}
-		System.out.print("\n");
-	}// END: printMatrix
+            System.out.print("|\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
 
-	public static void printMatrix(int[] matrix, int nrow, int ncol) {
-		for (int row = 0; row < nrow; row++) {
-			System.out.print("| ");
-			for (int col = 0; col < nrow; col++)
-				System.out.print(matrix[col + row * nrow] + " ");
-			System.out.print("|\n");
-		}
-		System.out.print("\n");
-	}// END: printMatrix
+    public static void printMatrix(int[] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.print("| ");
+            for (int col = 0; col < nrow; col++)
+                System.out.print(matrix[col + row * nrow] + " ");
+            System.out.print("|\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
 
-	public static void printArray(double[] array, int ncol) {
-		for (int col = 0; col < ncol; col++) {
-			System.out.println(String.format(Locale.US, "%.20f", array[col]));
-		}
-		System.out.print("\n");
-	}// END: printArray
+    public static void printArray(double[] array, int ncol) {
+        for (int col = 0; col < ncol; col++) {
+            System.out.println(String.format(Locale.US, "%.20f", array[col]));
+        }
+        System.out.print("\n");
+    }// END: printArray
 
-	public static void printArray(int[] array, int nrow) {
-		for (int col = 0; col < nrow; col++) {
-			System.out.println(array[col]);
-		}
-		System.out.print("\n");
-	}// END: printArray
+    public static void printArray(int[] array, int nrow) {
+        for (int col = 0; col < nrow; col++) {
+            System.out.println(array[col]);
+        }
+        System.out.print("\n");
+    }// END: printArray
 
-	// //////////////////
-	// ---END: DEBUG---//
-	// //////////////////
+    // //////////////////
+    // ---END: DEBUG---//
+    // //////////////////
 
 }// END: class

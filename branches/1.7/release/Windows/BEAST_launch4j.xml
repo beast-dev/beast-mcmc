@@ -5,7 +5,7 @@
     <jre>
         <minVersion>1.5.0</minVersion>
         <initialHeapSize>256</initialHeapSize>
-        <maxHeapSize>1024</maxHeapSize>
+        <maxHeapSize>2048</maxHeapSize>
     </jre>
     <versionInfo>
         <fileDescription>BEAST</fileDescription>

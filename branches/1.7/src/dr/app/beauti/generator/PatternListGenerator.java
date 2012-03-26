@@ -47,16 +47,18 @@ public class PatternListGenerator extends Generator {
         SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
                 .getComponentOptions(SequenceErrorModelComponentOptions.class);
 
-        boolean unique = (!ancestralStatesOptions.usingAncestralStates(partition) &&
-                !sequenceErrorOptions.usingSequenceErrorModel(partition));
-
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         String codonHeteroPattern = model.getCodonHeteroPattern();
         int partitionCount = model.getCodonPartitionCount();
 
+        boolean isAncestralStatesModel =  (!ancestralStatesOptions.usingAncestralStates(partition) &&
+                !sequenceErrorOptions.usingSequenceErrorModel(partition));
         boolean isCovarionModel = model.getDataType().getType() == DataType.COVARION
                 && model.getBinarySubstitutionModel() == BinaryModelType.BIN_COVARION;
+
+        boolean unique = isAncestralStatesModel || isCovarionModel;
+        boolean strip = isAncestralStatesModel || isCovarionModel;
 
         if (model.getDataType() == Nucleotides.INSTANCE && codonHeteroPattern != null && partitionCount > 1) {
 
@@ -67,32 +69,29 @@ public class PatternListGenerator extends Generator {
                                 new Attribute.Default<String>(XMLParser.ID, model.getPrefix(1) + partition.getPrefix() + SitePatternsParser.PATTERNS),
                         }
                 );
-                writePatternList(partition, 0, 3, null, unique, isCovarionModel, writer);
-                writePatternList(partition, 1, 3, null, unique, isCovarionModel, writer);
+                writePatternList(partition, 0, 3, null, unique, strip, writer);
+                writePatternList(partition, 1, 3, null, unique, strip, writer);
 
                 writer.writeCloseTag(MergePatternsParser.MERGE_PATTERNS);
 
                 writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position 3");
-                writePatternList(partition, 2, 3, model.getPrefix(2), isCovarionModel, writer);
+                writePatternList(partition, 2, 3, model.getPrefix(2), unique, strip, writer);
 
             } else {
 
                 // pattern is 123
                 for (int i = 1; i <= 3; i++) {
                     writer.writeComment("The " + (unique ? "unique " : "") + "patterns for codon position " + i);
-                    writePatternList(partition, i - 1, 3, model.getPrefix(i), unique, isCovarionModel, writer);
+                    writePatternList(partition, i - 1, 3, model.getPrefix(i), unique, strip, writer);
                 }
 
             }// END: pattern is 123
 
         } else {
-            writePatternList(partition, 0, 1, "", unique, isCovarionModel, writer);
+            writePatternList(partition, 0, 1, "", unique, strip, writer);
         }
     }
 
-    private void writePatternList(PartitionData partition, int offset, int every, String codonPrefix, boolean isCovarionModel, XMLWriter writer) {
-        writePatternList(partition, offset, every, codonPrefix, true, isCovarionModel, writer);
-    }
     /**
      * Write a single pattern list
      *

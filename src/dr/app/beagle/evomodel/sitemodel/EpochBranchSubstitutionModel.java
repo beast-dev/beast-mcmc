@@ -59,6 +59,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     private final Parameter epochTimes;
     private int firstBuffer;
     private Map<Integer, double[]> convolutionMatricesMap = new HashMap<Integer, double[]>();
+    private int requestedBuffers;
 
     public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
                                         List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
@@ -73,6 +74,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         this.substModelList = substModelList;
         this.frequencyModelList = frequencyModelList;
         this.epochTimes = epochTimes;
+        this.requestedBuffers = 0;
 
         for (SubstitutionModel model : substModelList) {
             addModel(model);
@@ -113,7 +115,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             }// END: root check
         }// END: nodes loop
 
-        return count * 4;
+        requestedBuffers = count * 4; // A bad idea
+        return requestedBuffers;
     }// END: getBufferCount
 
     public void setFirstBuffer(int firstBufferCount) {
@@ -336,7 +339,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             int[] secondConvolutionBuffers = new int[count];
             int[] resultConvolutionBuffers = new int[count];
 
-            for (int i = 0; i < count; i++) {
+            for (int i = 0; i < count; i++) {  // TODO Add outer-loop to distribute work into limited space
 
                 firstBuffers[i] = firstBuffer + i;
                 secondBuffers[i] = (firstBuffer + count) + i;
@@ -420,6 +423,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
                 }// END: first-last buffer check
 
+                checkBuffers(probabilityBuffers);
+
                 beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
                         probabilityBuffers, // probabilityIndices
                         null, // firstDerivativeIndices
@@ -460,6 +465,17 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 
     }// END: updateTransitionMatrices
+
+    private void checkBuffers(int[] probabilityBuffers) {
+        for (int buffer : probabilityBuffers) {
+            if (buffer >= firstBuffer + requestedBuffers) {
+                System.err.println("Programming error: requesting use of BEAGLE transition matrix buffer not allocated.");
+                System.err.println("Allocated: 0 to " + (firstBuffer + requestedBuffers - 1));
+                System.err.println("Requested = " + buffer);
+                System.err.println("Please complain to Button-Boy");
+            }
+        }
+    }
 
     /**
      * @return a list of citations associated with this object

@@ -1,7 +1,7 @@
 /*
  * StarTreeModel.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -39,6 +39,7 @@ public class StarTreeModel extends TreeModel {
     public StarTreeModel(String id, Tree tree) {
         super(id, tree);
         maxTipHeightKnown = false;
+        rootHeightParameter = null;
     }
 
     @Override
@@ -66,30 +67,44 @@ public class StarTreeModel extends TreeModel {
 //        fixedInternalNodes = true;
 //    }
 
+    public void setRootHeightParameter(Parameter p) {
+        addVariable(p);
+        rootHeightParameter = p;
+    }
+
     private void setupHeightBounds(Node node) {
         node.heightParameter.addBounds(new StarTreeNodeHeightBounds(node.heightParameter));
     }
 
     public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        final Node node = getNodeOfParameter((Parameter) variable);
-        if (!node.isRoot() && !node.isExternal()) {
-            throw new IllegalArgumentException("Can not sample internal nodes in StarTree");
-        }
-        super.handleVariableChangedEvent(variable, index, type);
-
-        if (node.isRoot()) { // Root height changed
+        if (variable == rootHeightParameter) {
             pushTreeChangedEvent();
+        } else {
+            final Node node = getNodeOfParameter((Parameter) variable);
+            if (node.isRoot()) {
+                pushTreeChangedEvent();
+            } else if (node.isExternal()) {
+                maxTipHeightKnown = false;
+                pushTreeChangedEvent();
+            } else {
+                throw new IllegalArgumentException("Can not sample internal nodes in StarTree");
+            }
+            super.handleVariableChangedEvent(variable, index, type);
         }
 
-        if (node.isExternal()) {
-            maxTipHeightKnown = false;
-        }
+//        if (node.isExternal()) {
+//            maxTipHeightKnown = false;
+//        }
     }
 
     public double getNodeHeight(final NodeRef nr) {
         Node node = (Node) nr;
         if (!node.isExternal()) {
-            return ((Node) getRoot()).getHeight();
+            if (rootHeightParameter != null) {
+                return rootHeightParameter.getParameterValue(0);
+            } else {
+                return ((Node) getRoot()).getHeight();
+            }
         }
         return node.getHeight();
     }
@@ -158,4 +173,6 @@ public class StarTreeModel extends TreeModel {
     private boolean savedMaxTipHeightKnown;
     private double maxTipHeight = 5;
     private double savedMaxTipHeight;
+
+    private Parameter rootHeightParameter = null;
 }

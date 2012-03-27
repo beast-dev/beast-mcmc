@@ -7,6 +7,7 @@ import dr.util.Citation;
 import dr.xml.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,7 +27,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
             Parameter regressionPrecisionParameter,
             Parameter splitTimeParameter,
             Parameter splitAngleParameter,
-            Parameter splitAssignmentParameter
+            Parameter splitAssignmentParameter,
+            List<String> topBranchList,
+            List<String> bottomBranchList
     ) {
 
         super(ANTIGENIC_SPLIT_PRIOR);
@@ -72,17 +75,29 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         this.splitAssignmentParameter = splitAssignmentParameter;
         addVariable(splitAssignmentParameter);
         splitAssignmentParameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+
         String[] labelArray = new String[count];
         splitAssignmentParameter.setDimension(count);
+
         for (int i = 0; i < count; i++) {
-            labelArray[i] = datesParameter.getDimensionName(i);
+            String name = datesParameter.getDimensionName(i);
+            labelArray[i] = name;
             splitAssignmentParameter.setParameterValueQuietly(i, 0.0);
+            for (String topStrain : topBranchList) {
+                if (topStrain.equals(name)) {
+                    splitAssignmentParameter.setParameterValueQuietly(i, 1.0);
+                }
+            }
+            for (String bottomStrain : bottomBranchList) {
+                if (bottomStrain.equals(name)) {
+                    splitAssignmentParameter.setParameterValueQuietly(i, 0.0);
+                }
+            }
         }
+
         splitAssignmentParameter.setDimensionNames(labelArray);
 
         likelihoodKnown = false;
-
-
 
     }
 
@@ -249,6 +264,8 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         public final static String SPLITTIME = "splitTime";
         public final static String SPLITANGLE = "splitAngle";
         public final static String SPLITASSIGNMENT = "splitAssignment";
+        public static final String TOPBRANCH = "topBranch";
+        public static final String BOTTOMBRANCH = "bottomBranch";
 
         public String getParserName() {
             return ANTIGENIC_SPLIT_PRIOR;
@@ -262,7 +279,19 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
             Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
             Parameter splitTimeParameter = (Parameter) xo.getElementFirstChild(SPLITTIME);
             Parameter splitAngleParameter = (Parameter) xo.getElementFirstChild(SPLITANGLE);
-            Parameter splitAssignmentParameter = (Parameter) xo.getElementFirstChild(SPLITASSIGNMENT);
+            Parameter splitAssignmentParameter = (Parameter) xo.getElementFirstChild(SPLITASSIGNMENT);  List<String> virusLocationStatisticList = null;
+
+            List<String> topBranchList = null;
+            String[] topBranch = xo.getStringArrayAttribute(TOPBRANCH);
+            if (topBranch != null) {
+                topBranchList = Arrays.asList(topBranch);
+            }
+
+            List<String> bottomBranchList = null;
+            String[] bottomBranch = xo.getStringArrayAttribute(BOTTOMBRANCH);
+            if (bottomBranch != null) {
+                bottomBranchList = Arrays.asList(bottomBranch);
+            }
 
             AntigenicSplitPrior AGDP = new AntigenicSplitPrior(
                 locationsParameter,
@@ -271,7 +300,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
                 regressionPrecisionParameter,
                 splitTimeParameter,
                 splitAngleParameter,
-                splitAssignmentParameter);
+                splitAssignmentParameter,
+                topBranchList,
+                bottomBranchList);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
@@ -297,7 +328,9 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
                 new ElementRule(REGRESSIONPRECISION, Parameter.class),
                 new ElementRule(SPLITTIME, Parameter.class),
                 new ElementRule(SPLITANGLE, Parameter.class),
-                new ElementRule(SPLITASSIGNMENT, Parameter.class)
+                new ElementRule(SPLITASSIGNMENT, Parameter.class),
+                AttributeRule.newStringArrayRule(TOPBRANCH, true, "A list of virus names to assign to the top branch."),
+                AttributeRule.newStringArrayRule(BOTTOMBRANCH, true, "A list of virus names to assign to the bottom branch.")
         };
 
         public Class getReturnType() {

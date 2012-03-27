@@ -285,10 +285,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
        for (int i = 0; i < tipTraitsParameter.getParameterCount(); i++) {
             String label = tipTraitsParameter.getParameter(i).getParameterName();
-            if (label.endsWith(".antigenic")) {
-                label = label.substring(0, label.indexOf(".antigenic"));
-            }
-            int index = strainNames.indexOf(label);
+            int index = findStrain(label, strainNames);
             if (index != -1) {
                 if (tipIndices[index] != -1) {
                     throw new IllegalArgumentException("Duplicated tip name: " + label);
@@ -301,8 +298,20 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
         // we are only setting this parameter not listening to it:
 //        addVariable(this.tipTraitParameter);
-}
+    }
 
+    private final int findStrain(String label, List<String> strainNames) {
+        int index = 0;
+        for (String strainName : strainNames) {
+            if (label.startsWith(strainName)) {
+                return index;
+            }
+
+            index ++;
+        }
+        return -1;
+    }
+    
     private void setupInitialLocations(List<String> strainNames, Map<String,Double> strainDateMap) {
         double earliestDate = Double.POSITIVE_INFINITY;
         for (double date : strainDateMap.values()) {

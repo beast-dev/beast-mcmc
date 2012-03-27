@@ -70,7 +70,7 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
 
         this.splitAngleParameter = splitAngleParameter;
         addVariable(splitAngleParameter);
-        splitAngleParameter.addBounds(new Parameter.DefaultBounds(0.5*Math.PI, 0.5, 1));
+        splitAngleParameter.addBounds(new Parameter.DefaultBounds(0.5*Math.PI, 0.01, 1));
 
         this.splitAssignmentParameter = splitAssignmentParameter;
         addVariable(splitAssignmentParameter);
@@ -79,20 +79,32 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
         String[] labelArray = new String[count];
         splitAssignmentParameter.setDimension(count);
 
+        topBranchIndices = new int[topBranchList.size()];
+        bottomBranchIndices = new int[bottomBranchList.size()];
+
         for (int i = 0; i < count; i++) {
-            String name = datesParameter.getDimensionName(i);
-            labelArray[i] = name;
+            String iName = datesParameter.getDimensionName(i);
+            labelArray[i] = iName;
             splitAssignmentParameter.setParameterValueQuietly(i, 0.0);
-            for (String topStrain : topBranchList) {
-                if (topStrain.equals(name)) {
+
+            // top branch is 1
+            for (int j=0; j < topBranchList.size(); j++) {
+                String jName = topBranchList.get(j);
+                if (jName.equals(iName)) {
+                    topBranchIndices[j] = i;
                     splitAssignmentParameter.setParameterValueQuietly(i, 1.0);
                 }
             }
-            for (String bottomStrain : bottomBranchList) {
-                if (bottomStrain.equals(name)) {
+
+           // bottom branch is 0
+           for (int j=0; j < bottomBranchList.size(); j++) {
+                String jName = bottomBranchList.get(j);
+                if (jName.equals(iName)) {
+                    bottomBranchIndices[j] = i;
                     splitAssignmentParameter.setParameterValueQuietly(i, 0.0);
                 }
             }
+
         }
 
         splitAssignmentParameter.setDimensionNames(labelArray);
@@ -146,9 +158,40 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
 
     private double computeLogLikelihood() {
 
+        double logLikelihood = 0.0;
+
         double precision = regressionPrecisionParameter.getParameterValue(0);
-        double logLikelihood = (0.5 * Math.log(precision) * count) - (0.5 * precision * sumOfSquaredResiduals());
+        logLikelihood += (0.5 * Math.log(precision) * count) - (0.5 * precision * sumOfSquaredResiduals());
+        logLikelihood += assignmentLikelihood();
+
         likelihoodKnown = true;
+        return logLikelihood;
+
+    }
+
+    // set likelihood to negative infinity is an assignment is broken
+    protected double assignmentLikelihood() {
+
+        double logLikelihood = 0.0;
+
+        // these must be 1
+        for (int index : topBranchIndices) {
+            int assignment = (int) splitAssignmentParameter.getParameterValue(index);
+            if (assignment == 0) {
+            //    logLikelihood = Double.NEGATIVE_INFINITY;
+                logLikelihood -= 1000;
+            }
+        }
+
+        // these must be 0
+        for (int index : bottomBranchIndices) {
+            int assignment = (int) splitAssignmentParameter.getParameterValue(index);
+            if (assignment == 1) {
+            //    logLikelihood = Double.NEGATIVE_INFINITY;
+                logLikelihood -= 1000;
+            }
+        }
+
         return logLikelihood;
 
     }
@@ -245,6 +288,8 @@ public class AntigenicSplitPrior extends AbstractModelLikelihood implements Cita
     private final Parameter splitTimeParameter;
     private final Parameter splitAngleParameter;
     private final Parameter splitAssignmentParameter;
+    private final int[] topBranchIndices;
+    private final int[] bottomBranchIndices;
 
     private double earliestDate;
     private double logLikelihood = 0.0;

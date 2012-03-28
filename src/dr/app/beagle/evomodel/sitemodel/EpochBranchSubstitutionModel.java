@@ -115,7 +115,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             }// END: root check
         }// END: nodes loop
 
-        requestedBuffers = count * 4; // A bad idea
+        requestedBuffers = 20;//count * 4; // A bad idea
+        
+//        System.out.println("fixed count = " + count);
+        System.out.println("extra buffers = " + requestedBuffers);
+        
         return requestedBuffers;
     }// END: getBufferCount
 
@@ -207,7 +211,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         int returnValue = 0;
 
-        // TODO: simplify this logic, it's a mess
         if (parentHeight <= transitionTimes[0]) {
 
             weights[0] = branchLength;
@@ -327,41 +330,95 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         } else {
 
             // Branches require convolution of two or more matrices
-            int[] firstBuffers = new int[count];
-            int[] secondBuffers = new int[count];
-            int[] firstExtraBuffers = new int[count];
-            int[] secondExtraBuffers = new int[count];
+        	int stepSize = (requestedBuffers/4) ;// 2;
+        	
+//        	System.out.println("stepSize: " + stepSize);
+//            System.out.println("count from tree = " + count);
+        	
+//        	System.out.println("probabilityIndices ");
+//        	printArray(probabilityIndices, probabilityIndices.length);
+          
+        	int step = 0;
+        	int indexCount = 0;
+        	while(step < count) {
 
-            int[] resultBranchBuffers = new int[count];
+//				System.out.println("step: " + step);
+        		
+            int[] firstBuffers = new int[stepSize];
+            int[] secondBuffers = new int[stepSize];
+            int[] firstExtraBuffers = new int[stepSize];
+            int[] secondExtraBuffers = new int[stepSize];
 
-            int[] probabilityBuffers = new int[count];
-            int[] firstConvolutionBuffers = new int[count];
-            int[] secondConvolutionBuffers = new int[count];
-            int[] resultConvolutionBuffers = new int[count];
+            int[] resultBranchBuffers = new int[stepSize];
 
-            for (int i = 0; i < count; i++) {  // TODO Add outer-loop to distribute work into limited space
+            int[] probabilityBuffers = new int[stepSize];
+            int[] firstConvolutionBuffers = new int[stepSize];
+            int[] secondConvolutionBuffers = new int[stepSize];
+            int[] resultConvolutionBuffers = new int[stepSize];
+            
+            for (int i = 0; i < stepSize; i++) {  
 
                 firstBuffers[i] = firstBuffer + i;
-                secondBuffers[i] = (firstBuffer + count) + i;
-                firstExtraBuffers[i] = (firstBuffer + 2 * count) + i;
-                secondExtraBuffers[i] = (firstBuffer + 3 * count) + i;
+                secondBuffers[i] = (firstBuffer + stepSize) + i;
+                firstExtraBuffers[i] = (firstBuffer + 2 * stepSize) + i;
+                secondExtraBuffers[i] = (firstBuffer + 3 * stepSize) + i;
 
-                resultBranchBuffers[i] = probabilityIndices[i];
+					// TODO
+					if (i < count) {
+						resultBranchBuffers[i] = probabilityIndices[i + step];
+					}
+                
+            }// END: stepSize loop
 
-            }// END: count loop
+        	////////////////////////////////////////////////////////////
+            
+//        	System.out.println("firstBuffer = " + firstBuffer);
+//        	System.out.println("no extraBuffers = " + requestedBuffers);
+//        	
+//        	System.out.println("firstBuffers ");
+//        	printArray(firstBuffers, firstBuffers.length);
+//        	
+//        	System.out.println("secondBuffers ");
+//        	printArray(secondBuffers, secondBuffers.length);
+//        	
+//        	System.out.println("firstExtraBuffers ");
+//        	printArray(firstExtraBuffers, firstExtraBuffers.length);
+//        	
+//        	System.out.println("secondExtraBuffers ");
+//        	printArray(secondExtraBuffers, secondExtraBuffers.length);
+//
+//        	System.out.println("resultBranchBuffers ");
+//        	printArray(resultBranchBuffers, resultBranchBuffers.length);
+        	
+        	////////////////////////////////////////////////////////////
 
             for (int i = 0; i < substModelList.size(); i++) {
 
                 int eigenBuffer = bufferHelper.getOffsetIndex(i);
-                double[] weights = new double[count];
+                double[] weights = new double[stepSize];
 
-                for (int j = 0; j < count; j++) {
+					// TODO: take of the padding
+					for (int j = 0; j < stepSize; j++) {
 
-                    int index = probabilityIndices[j];
-                    weights[j] = convolutionMatricesMap.get(index)[i];
+						int index = probabilityIndices[j + step];
+						
+						if (j < count & index !=0) {
 
-                }// END: count loop
+//							int index = probabilityIndices[j + step];
 
+//							System.out.println("index: " + index);
+//							System.out.println("indexCount: " + indexCount);
+							indexCount++;
+							
+							weights[j] = convolutionMatricesMap.get(index)[i];
+
+						}
+
+					}// END: stepSize loop
+
+//             	System.out.println("weights ");
+//            	printArray(weights, weights.length);
+                
                 if ((i == 1) && (i == (substModelList.size() - 1))) {
 
                     probabilityBuffers = secondBuffers;
@@ -377,7 +434,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                     firstConvolutionBuffers = firstBuffers;
                     secondConvolutionBuffers = probabilityBuffers;
                     resultConvolutionBuffers = firstExtraBuffers;
-
+                    
                 } else if ((i != 1) && (i == (substModelList.size() - 1))) {
 
                     // even
@@ -423,6 +480,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
                 }// END: first-last buffer check
 
+//              System.out.println("Populating buffers: ");
+//              printArray(probabilityBuffers, probabilityBuffers.length);
+//              System.out.println("for weights: ");
+//              printArray(weights, weights.length);
+
                 checkBuffers(probabilityBuffers);
 
                 beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
@@ -430,23 +492,33 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                         null, // firstDerivativeIndices
                         null, // secondDerivativeIndices
                         weights, // edgeLengths
-                        count // count
+                        stepSize // count
                 );
 
                 if (i != 0) {
 
+//                  System.out.println("convolving buffers: ");
+//                  printArray(firstConvolutionBuffers, firstConvolutionBuffers.length);
+//                  System.out.println("with buffers: ");
+//                  printArray(secondConvolutionBuffers, secondConvolutionBuffers.length);
+//                  System.out.println("into buffers: ");
+//                  printArray(resultConvolutionBuffers, resultConvolutionBuffers.length);
+
+                	
                     beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                             secondConvolutionBuffers, // B
                             resultConvolutionBuffers, // C
-                            count // count
+                            stepSize // count
                     );
 
-                }// END: 0 eigen index check
+					}// END: 0-th eigen index check
 
-            }// END: eigen indices loop
-
-
-        }// END: eigenIndex check
+				}// END: eigen indices loop        	
+        	
+         	step += stepSize;
+        	}// END: step loop
+            
+		}// END: eigenIndex check
 
         // ////////////////////////////////////////////////////
 
@@ -473,6 +545,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 System.err.println("Allocated: 0 to " + (firstBuffer + requestedBuffers - 1));
                 System.err.println("Requested = " + buffer);
                 System.err.println("Please complain to Button-Boy");
+                
+                System.exit(-1);
+                
             }
         }
     }

@@ -304,10 +304,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         if (eigenIndex < substModelList.size()) {
         	
-//        	System.out.println("count from tree = " + count);
-//         	System.out.println("probabilityIndices ");
-//        	printArray(probabilityIndices, probabilityIndices.length);
-        	
             // Branches fall in a single category
             beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
                     probabilityIndices,
@@ -337,7 +333,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	int stepSize = requestedBuffers/4 ;
         	
 //        	System.out.println("stepSize: " + stepSize);
-//            System.out.println("count from tree = " + count);
+//          System.out.println("count from tree = " + count);
 //        	System.out.println("probabilityIndices ");
 //        	printArray(probabilityIndices, probabilityIndices.length);
           
@@ -373,21 +369,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         	////////////////////////////////////////////////////////////
             
-//        	System.out.println("firstBuffer = " + firstBuffer);
-//        	System.out.println("no extraBuffers = " + requestedBuffers);
-//        	
-//        	System.out.println("firstBuffers ");
-//        	printArray(firstBuffers, firstBuffers.length);
-//        	
-//        	System.out.println("secondBuffers ");
-//        	printArray(secondBuffers, secondBuffers.length);
-//        	
-//        	System.out.println("firstExtraBuffers ");
-//        	printArray(firstExtraBuffers, firstExtraBuffers.length);
-//        	
-//        	System.out.println("secondExtraBuffers ");
-//        	printArray(secondExtraBuffers, secondExtraBuffers.length);
-//
 //        	System.out.println("resultBranchBuffers ");
 //        	printArray(resultBranchBuffers, resultBranchBuffers.length);
         	
@@ -541,7 +522,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 
             }
         }
-    }
+    }//END: checkBuffers
 
 	private int countFilledWeights(double[] weights) {
 		int nonZero = 0;
@@ -552,7 +533,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		}
 
 		return nonZero;
-	}
+	}//END: countFilledWeights
     
     /**
      * @return a list of citations associated with this object

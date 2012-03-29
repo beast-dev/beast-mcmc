@@ -115,7 +115,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //            }// END: root check
 //        }// END: nodes loop
 
-        requestedBuffers = 100;
+        requestedBuffers = 20;
         
 //        System.out.println("fixed count = " + count);
 //        System.out.println("extra buffers = " + requestedBuffers);
@@ -289,6 +289,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         convolutionMatricesMap.put(bufferIndex, weights);
 
+//        System.out.println("bufferIndex: " + bufferIndex);
+//        printArray(weights, weights.length);
+        
+        
         return returnValue;
     }// END: getBranchIndex
 
@@ -330,17 +334,17 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         } else {
 
             // Branches require convolution of two or more matrices
-        	int stepSize = requestedBuffers/4 ;
+        	int stepSize = 1;//requestedBuffers/4 ;
         	
-//        	System.out.println("stepSize: " + stepSize);
-//          System.out.println("count from tree = " + count);
+          System.out.println("stepSize: " + stepSize);
+          System.out.println("count from tree = " + count);
 //        	System.out.println("probabilityIndices ");
 //        	printArray(probabilityIndices, probabilityIndices.length);
           
         	int step = 0;
-        	while(step <= count) {
+        	while(step < count) {
 
-//				System.out.println("step: " + step);
+				System.out.println("step: " + step);
         		
             int[] firstBuffers = new int[stepSize];
             int[] secondBuffers = new int[stepSize];
@@ -384,7 +388,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 						if ((step + j) < count) {
 
 							int index = probabilityIndices[j + step];
-//							System.out.println("step + j: " + (step + j));// + " index: " + index);
+//							System.out.println("step + j: " + (step + j) + " index: " + index);
 							weights[j] = convolutionMatricesMap.get(index)[i];
 
 						}// END: index padding check
@@ -453,34 +457,39 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 }// END: first-last buffer check
 
                 checkBuffers(probabilityBuffers);
-                int nonZeroBuffersCount = countFilledWeights(weights);
-
-//                System.out.println("Populating buffers: ");
-//                printArray(probabilityBuffers, nonZero);
-//                System.out.println("for weights: ");
-//                printArray(weights, nonZero);
+                
+                int nonZeroBuffersCount = countFilledBuffers(resultBranchBuffers);
+                int nonZeroWeightsCount = countFilledWeights(weights);
+     
+                int operationsCount = stepSize;
+//              System.out.println("operationsCount: " + operationsCount);
+                
+                System.out.println("Populating buffers: ");
+                printArray(probabilityBuffers, operationsCount);
+                System.out.println("for weights: ");
+                printArray(weights, operationsCount);
                 
                 beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
                         probabilityBuffers, // probabilityIndices
                         null, // firstDerivativeIndices
                         null, // secondDerivativeIndices
                         weights, // edgeLengths
-                        nonZeroBuffersCount // count
+                        stepSize // count
                 );
 
                 if (i != 0) {
 
-//						System.out.println("convolving buffers: ");
-//						printArray(firstConvolutionBuffers, nonZero);
-//						System.out.println("with buffers: ");
-//						printArray(secondConvolutionBuffers, nonZero);
-//						System.out.println("into buffers: ");
-//						printArray(resultConvolutionBuffers, nonZero);             	
-
+					System.out.println("convolving buffers: ");
+					printArray(firstConvolutionBuffers, operationsCount);
+					System.out.println("with buffers: ");
+					printArray(secondConvolutionBuffers, operationsCount);
+					System.out.println("into buffers: ");
+					printArray(resultConvolutionBuffers, operationsCount);    
+                	
                     beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                             secondConvolutionBuffers, // B
                             resultConvolutionBuffers, // C
-                            nonZeroBuffersCount // count
+                            stepSize // count
                     );
 
 					}// END: 0-th eigen index check
@@ -489,7 +498,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	
          	step += stepSize;
         	}// END: step loop
-            
+
+//        	System.exit(-1);
 		}// END: eigenIndex check
 
         // ////////////////////////////////////////////////////
@@ -516,13 +526,24 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 System.err.println("Programming error: requesting use of BEAGLE transition matrix buffer not allocated.");
                 System.err.println("Allocated: 0 to " + (firstBuffer + requestedBuffers - 1));
                 System.err.println("Requested = " + buffer);
-                System.err.println("Please complain to American-Dad");
+                System.err.println("Please complain to Button-Boy");
                 
 //                System.exit(-1);
                 
             }
         }
     }//END: checkBuffers
+    
+	private int countFilledBuffers(int[] buffers) {
+		int nonZero = 0;
+		for (int i = 0; i < buffers.length; i++) {
+			if (buffers[i] != 0) {
+				nonZero++;
+			}
+		}
+
+		return nonZero;
+	}// END: countFilledBuffers
 
 	private int countFilledWeights(double[] weights) {
 		int nonZero = 0;
@@ -533,7 +554,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		}
 
 		return nonZero;
-	}//END: countFilledWeights
+	}// END: countFilledWeights
     
     /**
      * @return a list of citations associated with this object

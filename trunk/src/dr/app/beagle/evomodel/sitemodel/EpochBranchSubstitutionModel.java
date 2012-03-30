@@ -292,7 +292,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 //        System.out.println("bufferIndex: " + bufferIndex);
 //        printArray(weights, weights.length);
         
-        
         return returnValue;
     }// END: getBranchIndex
 
@@ -334,10 +333,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         } else {
 
             // Branches require convolution of two or more matrices
-        	int stepSize = 1;//requestedBuffers/4 ;
+        	int stepSize = requestedBuffers/4 ;
         	
           System.out.println("stepSize: " + stepSize);
           System.out.println("count from tree = " + count);
+//          System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
 //        	System.out.println("probabilityIndices ");
 //        	printArray(probabilityIndices, probabilityIndices.length);
           
@@ -457,13 +457,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 }// END: first-last buffer check
 
                 checkBuffers(probabilityBuffers);
+                int operationsCount = Math.min(stepSize, (count - step));
                 
-                int nonZeroBuffersCount = countFilledBuffers(resultBranchBuffers);
-                int nonZeroWeightsCount = countFilledWeights(weights);
-     
-                int operationsCount = stepSize;
-//              System.out.println("operationsCount: " + operationsCount);
-                
+//              System.out.println("eigenBuffer: " + eigenBuffer);                
                 System.out.println("Populating buffers: ");
                 printArray(probabilityBuffers, operationsCount);
                 System.out.println("for weights: ");
@@ -474,7 +470,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                         null, // firstDerivativeIndices
                         null, // secondDerivativeIndices
                         weights, // edgeLengths
-                        stepSize // count
+                        operationsCount // count
                 );
 
                 if (i != 0) {
@@ -485,11 +481,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 					printArray(secondConvolutionBuffers, operationsCount);
 					System.out.println("into buffers: ");
 					printArray(resultConvolutionBuffers, operationsCount);    
-                	
+					
                     beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                             secondConvolutionBuffers, // B
                             resultConvolutionBuffers, // C
-                            stepSize // count
+                            operationsCount // count
                     );
 
 					}// END: 0-th eigen index check
@@ -500,6 +496,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	}// END: step loop
 
 //        	System.exit(-1);
+        	System.out.println("=========================================================");
 		}// END: eigenIndex check
 
         // ////////////////////////////////////////////////////
@@ -544,6 +541,21 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		return nonZero;
 	}// END: countFilledBuffers
+	
+	private int countTrueFilledBuffers(int[] buffers) {
+		int zero = 0;
+		for (int i = buffers.length - 1; i >= 0; i--) {
+
+			if (buffers[i] == 0) {
+				zero++;
+			} else {
+				break;
+			}
+
+		}
+
+		return buffers.length - zero;
+	}
 
 	private int countFilledWeights(double[] weights) {
 		int nonZero = 0;

@@ -45,7 +45,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter mdsPrecisionParameter,
             TaxonList strainTaxa,
             MatrixParameter locationsParameter,
-            CompoundParameter tipTraitParameter,
+            CompoundParameter tipTraitsParameter,
             Parameter datesParameter,
             Parameter columnParameter,
             Parameter rowParameter,
@@ -180,9 +180,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.locationsParameter = locationsParameter;
         setupLocationsParameter(this.locationsParameter, strainNames);
 
-        this.tipTraitParameter = tipTraitParameter;
-        if (tipTraitParameter != null) {
-            setupTipTraitsParameter(this.tipTraitParameter, strainNames);
+        setupInitialLocations(strainNames, strainDateMap);
+
+        this.tipTraitsParameter = tipTraitsParameter;
+        if (tipTraitsParameter != null) {
+            setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
         }
 
         if (datesParameter != null) {
@@ -193,8 +195,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.columnEffectsParameter = setupColumnEffectsParameter(columnParameter, maxColumnTitre);
 
         this.rowEffectsParameter = setupRowEffectsParameter(rowParameter, maxRowTitre);
-
-        setupInitialLocations(strainNames, strainDateMap);
 
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
@@ -260,7 +260,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             locationsParameter.getParameter(i).setId(strains.get(i));
         }
         addVariable(this.locationsParameter);
-  }
+    }
 
     private void setupDatesParameter(Parameter datesParameter, List<String> strainNames, Map<String, Double> strainDateMap) {
         datesParameter.setDimension(strainNames.size());
@@ -280,11 +280,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         tipIndices = new int[strainNames.size()];
 
         for (int i = 0; i < strainNames.size(); i++) {
-           tipIndices[i] = -1;
+            tipIndices[i] = -1;
         }
 
-       for (int i = 0; i < tipTraitsParameter.getParameterCount(); i++) {
-            String label = tipTraitsParameter.getParameter(i).getParameterName();
+        for (int i = 0; i < tipTraitsParameter.getParameterCount(); i++) {
+            Parameter tip = tipTraitsParameter.getParameter(i);
+            String label = tip.getParameterName();
             int index = findStrain(label, strainNames);
             if (index != -1) {
                 if (tipIndices[index] != -1) {
@@ -292,12 +293,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 }
 
                 tipIndices[index] = i;
+
+                Parameter location = locationsParameter.getParameter(index);
+                for (int dim = 0; dim < mdsDimension; dim++) {
+                    tip.setParameterValueQuietly(dim, location.getParameterValue(dim));
+                }
             } else {
                 throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
             }
         }
         // we are only setting this parameter not listening to it:
-//        addVariable(this.tipTraitParameter);
+//        addVariable(this.tipTraitsParameter);
     }
 
     private final int findStrain(String label, List<String> strainNames) {
@@ -311,7 +317,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
         return -1;
     }
-    
+
     private void setupInitialLocations(List<String> strainNames, Map<String,Double> strainDateMap) {
         double earliestDate = Double.POSITIVE_INFINITY;
         for (double date : strainDateMap.values()) {
@@ -341,9 +347,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         if (variable == locationsParameter) {
             int loc = index / mdsDimension;
             locationChanged[loc] = true;
-            if (tipTraitParameter != null && tipIndices[loc] != -1) {
+            if (tipTraitsParameter != null && tipIndices[loc] != -1) {
                 Parameter location = locationsParameter.getParameter(loc);
-                Parameter tip = tipTraitParameter.getParameter(tipIndices[loc]);
+                Parameter tip = tipTraitsParameter.getParameter(tipIndices[loc]);
                 int dim = index % mdsDimension;
                 tip.setParameterValue(dim, location.getParameterValue(dim));
             }
@@ -405,24 +411,26 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain);
                 double logNormalization = calculateTruncationNormalization(mapDistance, sd);
 
-                switch (measurement.type) {
-                    case INTERVAL: {
-                        // once transformed the lower titre becomes the higher distance
-                        double minHiDistance = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row);
-                        double maxHiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minHiDistance, maxHiDistance, mapDistance, sd) - logNormalization;
-                    } break;
-                    case POINT: {
-                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementLikelihood(hiDistance, mapDistance, sd) - logNormalization;
-                    } break;
-                    case THRESHOLD: {
-                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(hiDistance, mapDistance, sd) - logNormalization;
-                    } break;
-                    case MISSING:
-                        break;
-                }
+                logLikelihoods[i] = computeMeasurementLikelihood(measurement.titre, mapDistance, sd) - logNormalization;
+
+//                switch (measurement.type) {
+//                    case INTERVAL: {
+//                        // once transformed the lower titre becomes the higher distance
+//                        double minHiDistance = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row);
+//                        double maxHiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+//                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minHiDistance, maxHiDistance, mapDistance, sd) - logNormalization;
+//                    } break;
+//                    case POINT: {
+//                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+//                        logLikelihoods[i] = computeMeasurementLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+//                    } break;
+//                    case THRESHOLD: {
+//                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+//                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+//                    } break;
+//                    case MISSING:
+//                        break;
+//                }
             }
             logLikelihood += logLikelihoods[i];
             i++;
@@ -552,6 +560,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             this.rowStrain = rowStrain;
 
             this.type = type;
+            this.titre = titre;
             this.log2Titre = Math.log(titre) / Math.log(2);
         }
 
@@ -561,6 +570,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         final int rowStrain;
 
         final MeasurementType type;
+        final double titre;
         final double log2Titre;
 
     };
@@ -574,7 +584,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
     private final MatrixParameter locationsParameter;
-    private final CompoundParameter tipTraitParameter;
+    private final CompoundParameter tipTraitsParameter;
     private final TaxonList strains;
 
     private int[] tipIndices;

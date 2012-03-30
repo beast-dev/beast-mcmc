@@ -335,8 +335,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             // Branches require convolution of two or more matrices
         	int stepSize = requestedBuffers/4 ;
         	
-          System.out.println("stepSize: " + stepSize);
-          System.out.println("count from tree = " + count);
+//          System.out.println("stepSize: " + stepSize);
+//          System.out.println("count from tree = " + count);
 //          System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
 //        	System.out.println("probabilityIndices ");
 //        	printArray(probabilityIndices, probabilityIndices.length);
@@ -344,7 +344,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	int step = 0;
         	while(step < count) {
 
-				System.out.println("step: " + step);
+//				System.out.println("step: " + step);
         		
             int[] firstBuffers = new int[stepSize];
             int[] secondBuffers = new int[stepSize];
@@ -460,10 +460,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 int operationsCount = Math.min(stepSize, (count - step));
                 
 //              System.out.println("eigenBuffer: " + eigenBuffer);                
-                System.out.println("Populating buffers: ");
-                printArray(probabilityBuffers, operationsCount);
-                System.out.println("for weights: ");
-                printArray(weights, operationsCount);
+//                System.out.println("Populating buffers: ");
+//                printArray(probabilityBuffers, operationsCount);
+//                System.out.println("for weights: ");
+//                printArray(weights, operationsCount);
                 
                 beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
                         probabilityBuffers, // probabilityIndices
@@ -475,12 +475,12 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
                 if (i != 0) {
 
-					System.out.println("convolving buffers: ");
-					printArray(firstConvolutionBuffers, operationsCount);
-					System.out.println("with buffers: ");
-					printArray(secondConvolutionBuffers, operationsCount);
-					System.out.println("into buffers: ");
-					printArray(resultConvolutionBuffers, operationsCount);    
+//					System.out.println("convolving buffers: ");
+//					printArray(firstConvolutionBuffers, operationsCount);
+//					System.out.println("with buffers: ");
+//					printArray(secondConvolutionBuffers, operationsCount);
+//					System.out.println("into buffers: ");
+//					printArray(resultConvolutionBuffers, operationsCount);    
 					
                     beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                             secondConvolutionBuffers, // B
@@ -496,7 +496,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	}// END: step loop
 
 //        	System.exit(-1);
-        	System.out.println("=========================================================");
+//        	System.out.println("=========================================================");
 		}// END: eigenIndex check
 
         // ////////////////////////////////////////////////////

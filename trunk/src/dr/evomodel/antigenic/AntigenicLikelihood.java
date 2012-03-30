@@ -180,8 +180,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.locationsParameter = locationsParameter;
         setupLocationsParameter(this.locationsParameter, strainNames);
 
-        setupInitialLocations(strainNames, strainDateMap);
-
         this.tipTraitsParameter = tipTraitsParameter;
         if (tipTraitsParameter != null) {
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
@@ -213,6 +211,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         locationChanged = new boolean[this.locationsParameter.getParameterCount()];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
+
+        setupInitialLocations(strainNames, strainDateMap);
 
         makeDirty();
     }
@@ -294,10 +294,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
                 tipIndices[index] = i;
 
-                Parameter location = locationsParameter.getParameter(index);
-                for (int dim = 0; dim < mdsDimension; dim++) {
-                    tip.setParameterValueQuietly(dim, location.getParameterValue(dim));
-                }
+                // rather than setting these here, we set them when the locations are set so the changes propagate
+                // through to the diffusion model.
+//                Parameter location = locationsParameter.getParameter(index);
+//                for (int dim = 0; dim < mdsDimension; dim++) {
+//                    tip.setParameterValue(dim, location.getParameterValue(dim));
+//                }
             } else {
                 throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
             }
@@ -329,11 +331,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
             double date = (double) strainDateMap.get(strainNames.get(i));
             double diff = (date-earliestDate);
-            locationsParameter.getParameter(i).setParameterValueQuietly(0, diff + MathUtils.nextGaussian());
+            locationsParameter.getParameter(i).setParameterValue(0, diff + MathUtils.nextGaussian());
 
             for (int j = 1; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
-                locationsParameter.getParameter(i).setParameterValueQuietly(j, r);
+                locationsParameter.getParameter(i).setParameterValue(j, r);
             }
         }
     }

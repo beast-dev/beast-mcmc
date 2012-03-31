@@ -264,8 +264,8 @@
     </target>
 
 
-    <property name="version" value="1.7.1"/>
-    <property name="version_number" value="1.7.1"/>
+    <property name="version" value="1.7.2"/>
+    <property name="version_number" value="1.7.2"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEASTMC3_name" value="BEASTMC3"/>

@@ -28,7 +28,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         }
 
         switch (point) {
-//            case IN_TAXON:
+            case IN_TAXON:
             case AFTER_SITE_MODEL:
             case AFTER_TREE_LIKELIHOOD:
             case IN_OPERATORS:
@@ -50,11 +50,10 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
                 .getComponentOptions(ContinuousComponentOptions.class);
 
         switch (point) {
-//          Don't need this because all traits are written for all taxa:
-//            case IN_TAXON:
-//                Taxon taxon = (Taxon)item;
-//                writeTaxonTraits(taxon, writer);
-//                break;
+            case IN_TAXON:
+                Taxon taxon = (Taxon)item;
+                writeTaxonTraits(taxon, writer);
+                break;
             case AFTER_SITE_MODEL:
                 writeMultivariateDiffusionModels(writer, component);
                 break;
@@ -94,25 +93,30 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
 
     private void writeTaxonTraits(Taxon taxon, XMLWriter writer) {
         for (AbstractPartitionData partition : options.getDataPartitions(ContinuousDataType.INSTANCE)) {
-            writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                    new Attribute.Default<String>(Attribute.NAME, partition.getName())});
+            // If an attribute already exists with this name then we don't need to write it again
+            // (it is likely to be one of the original loaded traits).
+            if (!taxon.containsAttribute(partition.getName())) {
 
-            StringBuilder sb = new StringBuilder();
-            boolean first = true;
-            for (TraitData trait : partition.getTraits()) {
-                if (!first) {
-                    sb.append(" ");
-                }
+                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                        new Attribute.Default<String>(Attribute.NAME, partition.getName())});
 
-                if (taxon.containsAttribute(trait.getName())) {
-                    sb.append(taxon.getAttribute(trait.getName()).toString());
-                } else {
-                    sb.append("?");
+                StringBuilder sb = new StringBuilder();
+                boolean first = true;
+                for (TraitData trait : partition.getTraits()) {
+                    if (!first) {
+                        sb.append(" ");
+                    }
+
+                    if (taxon.containsAttribute(trait.getName())) {
+                        sb.append(taxon.getAttribute(trait.getName()).toString());
+                    } else {
+                        sb.append("?");
+                    }
+                    first = false;
                 }
-                first = false;
+                writer.writeText(sb.toString());
+                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
             }
-            writer.writeText(sb.toString());
-            writer.writeCloseTag(AttributeParser.ATTRIBUTE);
         }
     }
 
@@ -413,7 +417,7 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeMultivariatePriors(XMLWriter writer,
-                                                       ContinuousComponentOptions component) {
+                                         ContinuousComponentOptions component) {
 
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             writer.writeIDref("multivariateWishartPrior", partitionData.getName() + ".precisionPrior");

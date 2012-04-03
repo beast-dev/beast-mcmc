@@ -413,26 +413,26 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain);
                 double logNormalization = calculateTruncationNormalization(mapDistance, sd);
 
-                logLikelihoods[i] = computeMeasurementLikelihood(measurement.titre, mapDistance, sd) - logNormalization;
+//                logLikelihoods[i] = computeMeasurementLikelihood(measurement.titre, mapDistance, sd) - logNormalization;
 
-//                switch (measurement.type) {
-//                    case INTERVAL: {
-//                        // once transformed the lower titre becomes the higher distance
-//                        double minHiDistance = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row);
-//                        double maxHiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-//                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minHiDistance, maxHiDistance, mapDistance, sd) - logNormalization;
-//                    } break;
-//                    case POINT: {
-//                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-//                        logLikelihoods[i] = computeMeasurementLikelihood(hiDistance, mapDistance, sd) - logNormalization;
-//                    } break;
-//                    case THRESHOLD: {
-//                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-//                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(hiDistance, mapDistance, sd) - logNormalization;
-//                    } break;
-//                    case MISSING:
-//                        break;
-//                }
+                switch (measurement.type) {
+                    case INTERVAL: {
+                        // once transformed the lower titre becomes the higher distance
+                        double minHiDistance = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row);
+                        double maxHiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minHiDistance, maxHiDistance, mapDistance, sd) - logNormalization;
+                    } break;
+                    case POINT: {
+                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+                        logLikelihoods[i] = computeMeasurementLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+                    } break;
+                    case THRESHOLD: {
+                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
+                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+                    } break;
+                    case MISSING:
+                        break;
+                }
             }
             logLikelihood += logLikelihoods[i];
             i++;

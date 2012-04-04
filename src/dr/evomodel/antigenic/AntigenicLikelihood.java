@@ -48,7 +48,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             MatrixParameter serumLocationsParameter,
             MatrixParameter locationsParameter,
             CompoundParameter tipTraitsParameter,
-            Parameter datesParameter,
+            Parameter virusDatesParameter,
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
@@ -201,9 +201,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
         }
 
-        if (datesParameter != null) {
+        if (virusDatesParameter != null) {
             // this parameter is not used in this class but is setup to be used in other classes
-            setupDatesParameter(datesParameter, strainNames, strainDateMap);
+            setupDatesParameter(virusDatesParameter, virusNames, strainDateMap);
         }
 
         this.columnEffectsParameter = setupColumnEffectsParameter(columnParameter, maxColumnTitre);
@@ -643,7 +643,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public final static String LOCATIONS = "locations";
         public final static String VIRUS_LOCATIONS = "virusLocations";
         public final static String SERUM_LOCATIONS = "serumLocations";
-        public final static String DATES = "dates";
+        public final static String VIRUS_DATES = "virusDates";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
@@ -695,9 +695,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
-            Parameter datesParameter = null;
-            if (xo.hasChildNamed(DATES)) {
-                datesParameter = (Parameter) xo.getElementFirstChild(DATES);
+            Parameter virusDatesParameter = null;
+            if (xo.hasChildNamed(VIRUS_DATES)) {
+                virusDatesParameter = (Parameter) xo.getElementFirstChild(VIRUS_DATES);
             }
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
@@ -719,7 +719,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     serumLocationsParameter,
                     locationsParameter,
                     tipTraitParameter,
-                    datesParameter,
+                    virusDatesParameter,
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
@@ -754,7 +754,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "The parameter of locations of all virus", true),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "The parameter of locations of all sera", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
-                new ElementRule(DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
+                new ElementRule(VIRUS_DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
                 new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
                 new ElementRule(MDS_PRECISION, Parameter.class)

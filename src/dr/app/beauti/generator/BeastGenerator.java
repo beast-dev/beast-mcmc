@@ -710,14 +710,15 @@ public class BeastGenerator extends Generator {
             }
 
             for (TraitData trait : options.traits) {
-                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
+                    // there is no harm in allowing the species trait to be listed in the taxa
+//                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
                     writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
                             new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
                     // denotes missing data using '?'
                     writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
                     writer.writeCloseTag(AttributeParser.ATTRIBUTE);
-                }
+//                }
             }
 
             generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TAXON, taxon, writer);

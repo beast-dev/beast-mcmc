@@ -44,6 +44,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             int mdsDimension,
             Parameter mdsPrecisionParameter,
             TaxonList strainTaxa,
+            MatrixParameter virusLocationsParameter,
+            MatrixParameter serumLocationsParameter,
             MatrixParameter locationsParameter,
             CompoundParameter tipTraitsParameter,
             Parameter datesParameter,
@@ -56,6 +58,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         super(ANTIGENIC_LIKELIHOOD);
 
         List<String> strainNames = new ArrayList<String>();
+        List<String> virusNames = new ArrayList<String>();
+        List<String> serumNames = new ArrayList<String>();
         Map<String, Double> strainDateMap = new HashMap<String, Double>();
 
         this.intervalWidth = intervalWidth;
@@ -78,6 +82,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 columnStrain = strainNames.indexOf(values[SERUM_STRAIN]);
                 if (columnStrain == -1) {
                     strainNames.add(values[SERUM_STRAIN]);
+                    serumNames.add(values[SERUM_STRAIN]);
 
                     Double date = Double.parseDouble(values[SERUM_DATE]);
                     strainDateMap.put(values[SERUM_STRAIN], date);
@@ -103,6 +108,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 rowStrain = strainNames.indexOf(values[VIRUS_STRAIN]);
                 if (rowStrain == -1) {
                     strainNames.add(values[VIRUS_STRAIN]);
+                    virusNames.add(values[VIRUS_STRAIN]);
 
                     Double date = Double.parseDouble(values[VIRUS_DATE]);
                     strainDateMap.put(values[VIRUS_STRAIN], date);
@@ -180,6 +186,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         this.locationsParameter = locationsParameter;
         setupLocationsParameter(this.locationsParameter, strainNames);
 
+        this.virusLocationsParameter = virusLocationsParameter;
+        if (this.virusLocationsParameter != null) {
+            setupSubsetLocationsParameter(virusLocationsParameter, locationsParameter, virusNames);
+        }
+
+        this.serumLocationsParameter = serumLocationsParameter;
+        if (this.serumLocationsParameter != null) {
+            setupSubsetLocationsParameter(serumLocationsParameter, locationsParameter, serumNames);
+        }
+
         this.tipTraitsParameter = tipTraitsParameter;
         if (tipTraitsParameter != null) {
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
@@ -197,6 +213,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         StringBuilder sb = new StringBuilder();
         sb.append("\tAntigenicLikelihood:\n");
         sb.append("\t\t" + this.strains.getTaxonCount() + " strains\n");
+        sb.append("\t\t" + virusNames.size() + " viruses\n");
+        sb.append("\t\t" + serumNames.size() + " sera\n");
         sb.append("\t\t" + columnLabels.size() + " unique columns\n");
         sb.append("\t\t" + rowLabels.size() + " unique rows\n");
         sb.append("\t\t" + measurements.size() + " assay measurements\n");
@@ -260,6 +278,15 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             locationsParameter.getParameter(i).setId(strains.get(i));
         }
         addVariable(this.locationsParameter);
+    }
+
+    protected void setupSubsetLocationsParameter(MatrixParameter subsetLocationsParameter, MatrixParameter locationsParameter, List<String> strains) {
+        for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
+            Parameter parameter = locationsParameter.getParameter(i);
+            if (strains.contains(parameter.getId())) {
+                subsetLocationsParameter.addParameter(parameter);
+            }
+        }
     }
 
     private void setupDatesParameter(Parameter datesParameter, List<String> strainNames, Map<String, Double> strainDateMap) {
@@ -585,7 +612,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final int mdsDimension;
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
+
     private final MatrixParameter locationsParameter;
+    private final MatrixParameter virusLocationsParameter;
+    private final MatrixParameter serumLocationsParameter;
+
     private final CompoundParameter tipTraitsParameter;
     private final TaxonList strains;
 
@@ -610,6 +641,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         public final static String TIP_TRAIT = "tipTrait";
         public final static String LOCATIONS = "locations";
+        public final static String VIRUS_LOCATIONS = "virusLocations";
+        public final static String SERUM_LOCATIONS = "serumLocations";
         public final static String DATES = "dates";
         public static final String MDS_DIMENSION = "mdsDimension";
         public static final String INTERVAL_WIDTH = "intervalWidth";
@@ -650,6 +683,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 strains = (TaxonList) xo.getElementFirstChild(STRAINS);
             }
 
+            MatrixParameter virusLocationsParameter = null;
+            if (xo.hasChildNamed(VIRUS_LOCATIONS)) {
+                virusLocationsParameter = (MatrixParameter) xo.getElementFirstChild(VIRUS_LOCATIONS);
+            }
+
+            MatrixParameter serumLocationsParameter = null;
+            if (xo.hasChildNamed(SERUM_LOCATIONS)) {
+                serumLocationsParameter = (MatrixParameter) xo.getElementFirstChild(SERUM_LOCATIONS);
+            }
+
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
 
             Parameter datesParameter = null;
@@ -672,6 +715,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     mdsDimension,
                     mdsPrecision,
                     strains,
+                    virusLocationsParameter,
+                    serumLocationsParameter,
                     locationsParameter,
                     tipTraitParameter,
                     datesParameter,
@@ -705,6 +750,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),
+                new ElementRule(LOCATIONS, MatrixParameter.class, "The parameter for locations of all virus and sera"),
+                new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "The parameter of locations of all virus", true),
+                new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "The parameter of locations of all sera", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),

@@ -52,6 +52,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
+            boolean mergeColumnStrains,
             double intervalWidth,
             List<String> virusLocationStatisticList) {
 
@@ -76,16 +77,25 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             int columnStrain = -1;
-            if (strainTaxa != null) {
-                columnStrain = strainTaxa.getTaxonIndex(values[SERUM_STRAIN]);
+            String columnStrainName;
+            if (mergeColumnStrains) {
+                columnStrainName = values[SERUM_STRAIN];
             } else {
-                columnStrain = strainNames.indexOf(values[SERUM_STRAIN]);
+                columnStrainName = values[COLUMN_LABEL];
+            }
+
+            if (strainTaxa != null) {
+                columnStrain = strainTaxa.getTaxonIndex(columnStrainName);
+
+                throw new UnsupportedOperationException("Should extract dates from taxon list...");
+            } else {
+                columnStrain = strainNames.indexOf(columnStrainName);
                 if (columnStrain == -1) {
-                    strainNames.add(values[SERUM_STRAIN]);
-                    serumNames.add(values[SERUM_STRAIN]);
+                    strainNames.add(columnStrainName);
+                    serumNames.add(columnStrainName);
 
                     Double date = Double.parseDouble(values[SERUM_DATE]);
-                    strainDateMap.put(values[SERUM_STRAIN], date);
+                    strainDateMap.put(columnStrainName, date);
 
                     columnStrain = strainNames.size() - 1;
                 }
@@ -440,8 +450,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain);
                 double logNormalization = calculateTruncationNormalization(mapDistance, sd);
 
-//                logLikelihoods[i] = computeMeasurementLikelihood(measurement.titre, mapDistance, sd) - logNormalization;
-
                 switch (measurement.type) {
                     case INTERVAL: {
                         // once transformed the lower titre becomes the higher distance
@@ -645,6 +653,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public final static String SERUM_LOCATIONS = "serumLocations";
         public final static String VIRUS_DATES = "virusDates";
         public static final String MDS_DIMENSION = "mdsDimension";
+        public static final String MERGE_COLUMNS = "mergeColumns";
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
         public static final String COLUMN_EFFECTS = "columnEffects";
@@ -666,6 +675,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 throw new XMLParseException("Unable to read assay data from file: " + e.getMessage());
             }
             System.out.println("Loaded HI table file: " + fileName);
+
+            boolean mergeColumnStrains = xo.getAttribute(MERGE_COLUMNS, true);
 
             int mdsDimension = xo.getIntegerAttribute(MDS_DIMENSION);
             double intervalWidth = 0.0;
@@ -723,6 +734,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
+                    mergeColumnStrains,
                     intervalWidth,
                     null);
 
@@ -747,6 +759,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
+                AttributeRule.newBooleanRule(MERGE_COLUMNS, true, "Should columns with the same strain have their locations merged (default true)?"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

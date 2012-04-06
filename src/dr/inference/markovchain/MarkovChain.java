@@ -343,6 +343,8 @@ public final class MarkovChain {
                 }
             }
 
+            fireEndCurrentIteration(currentState);
+
             currentState += 1;
         }
 
@@ -519,6 +521,15 @@ public final class MarkovChain {
         listeners.remove(listener);
     }
 
+    public void addMarkovChainDelegate(MarkovChainDelegate delegate) {
+        delegates.add(delegate);
+    }
+
+    public void removeMarkovChainDelegate(MarkovChainDelegate delegate) {
+        delegates.remove(delegate);
+    }
+
+
     private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
@@ -530,6 +541,10 @@ public final class MarkovChain {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
+
+        for (MarkovChainDelegate delegate : delegates) {
+            delegate.currentState(state);
+        }
     }
 
     private void fireFinished(long chainLength) {
@@ -537,7 +552,18 @@ public final class MarkovChain {
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);
         }
+
+        for (MarkovChainDelegate delegate : delegates) {
+            delegate.finished(chainLength);
+        }
+    }
+
+    private void fireEndCurrentIteration(long state) {
+        for (MarkovChainDelegate delegate : delegates) {
+            delegate.currentStateEnd(state);
+        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
+    private final ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();
 }

@@ -6,7 +6,7 @@
 
 \title{Bayesian Inference of Species Trees from Multilocus Data using *BEAST }
 
-\author{Joseph Heled, Alexei J Drummond and Walter Xie}
+\author{Alexei J Drummond, Walter Xie and Joseph Heled}
 
 \date{\today{}}
 
@@ -24,7 +24,7 @@ You will need the following software at your disposal:
 
 \begin{itemize}
 
-\item {\bf BEAST} - this package contains the BEAST program, BEAUti, TreeAnnotator and other utility programs. This tutorial is written for BEAST v1.6.x, which is available for download from  \texttt{http://beast.bio.ed.ac.uk/}.
+\item {\bf BEAST} - this package contains the BEAST program, BEAUti, TreeAnnotator and other utility programs. This tutorial is written for BEAST v1.7.x, which is available for download from  \texttt{http://beast.bio.ed.ac.uk/}.
 \item {\bf Tracer} - this program is used to explore the output of BEAST (and other Bayesian MCMC programs). It graphically and
 quantitively summarizes the distributions of continuous parameters and provides diagnostic information. At the time of
 writing, the current version is v1.5. It is available for download from \texttt{http://beast.bio.ed.ac.uk/}.
@@ -100,7 +100,7 @@ Double click any alignment (partition) to show its detail:
 
 \subsubsection*{Import trait(s) from a mapping file to fire *BEAST}
 
-To enable *BEAST in BEAST v1.6.x, simply click the check box labelled \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel. Then, a {\bf Create or Import Trait(s)} dialog will pop up.   
+To enable *BEAST in BEAST v1.7.x, simply click the check box labelled \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel. Then, a {\bf Create or Import Trait(s)} dialog will pop up.   
 
 \medskip{}
 
@@ -147,7 +147,7 @@ For multi-locus analyses, BEAST can link or unlink substitutions models across t
 
 The advantage of using the {\bf Traits} panel is that we can extract species names from the taxa names if they already contain that information. Let's go to {\bf Data Partitions} panel and unselect the check box labelled \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010}. As we can see in the status bar on the bottom, the analysis has been reverted to a standard BEAST analysis.
 
-To enable *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Traits} panel and click on the \textbf{Guess trait values} at the top to pop out {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second from last} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
+To enable *BEAST again, click the \texttt{Use species tree ancestral reconstruction (*BEAST) Heled \& Drummond 2010} on the top of {\bf Data Partitions} panel, and then choose the second option in {\bf Create or Import Trait(s)} dialog this time. Click \textbf{OK} to continue, and then we will get to {\bf Traits} panel and click on the \textbf{Guess trait values} at the top to pop out {\bf Guess Trait Value for Taxa} dialog. Choose \textbf{second} in the drop list of \textbf{Defined by its order}, and input \textbf{\_} as separator. Click \textbf{OK}, and *BEAST is applied again.
 
 \medskip{}
 
@@ -173,7 +173,7 @@ be the default values so we need to make some changes.
 Most of the models should be familiar to you. For this analysis, we
 will select each substitution model listed on the 
 left side in turn to make the following change: select \textbf{Empirical} for the 
-\textbf{Base frequencies}. 
+\textbf{Base frequencies}. {\it Remember to do this for all site models.}
 \medskip{}
 
 \includegraphics[scale=0.4]{figures/BEAUti_SiteModel}
@@ -283,7 +283,7 @@ look something like this:
 
 
 
-                  BEAST v1.6.0, 2002-2010
+                   BEAST v1.7.1, 2002-2012
        Bayesian Evolutionary Analysis Sampling Trees
                  Designed and developed by
    Alexei J. Drummond, Andrew Rambaut and Marc A. Suchard
@@ -307,19 +307,20 @@ Source code distributed under the GNU Lesser General Public License:
             	http://code.google.com/p/beast-mcmc
                               
                      BEAST developers:
-	Alex Alekseyenko, Erik Bloomquist, Joseph Heled, Sebastian Hoehna, 
-	Philippe Lemey, Wai Lok Sibon Li, Gerton Lunter, Sidney Markowitz, 
-	Vladimir Minin, Michael Defoin Platel, Oliver Pybus, Chieh-Hsi Wu, Walter Xie
+	Alex Alekseyenko, Trevor Bedford, Erik Bloomquist, Joseph Heled, 
+	Sebastian Hoehna, Denise Kuehnert, Philippe Lemey, Wai Lok Sibon Li, 
+	Gerton Lunter, Sidney Markowitz, Vladimir Minin, Michael Defoin Platel, 
+          	Oliver Pybus, Chieh-Hsi Wu, Walter Xie
                               
                          Thanks to:
     	Roald Forsberg, Beth Shapiro and Korbinian Strimmer
 
 
-Random number seed: 1285907407029
+Random number seed: 1334282107812
+
 
 Parsing XML file: gopher.xml
   File encoding: MacRoman
-Looking for plugins in /Users/local/EC/dxie004/Desktop/BEAST v1.6.0/*BEAST/plugins
 Read alignment: alignment1
   Sequences = 26
       Sites = 614
@@ -339,26 +340,27 @@ Site patterns '29.patterns' created from positions 1-601 of alignment 'alignment
 Site patterns '47.patterns' created from positions 1-819 of alignment 'alignment3'
   pattern count = 153
 Creating the tree model, '26.treeModel'
-  initial tree topology = (((((((Thomomys_bottae_awahnee_b,Thomomys_bottae_laticeps),Thomomys_idahoensis_pygmaeus_b),(Thomomys_bottae_xerophilus,Thomomys_townsendii_townsendii)),Thomomys_talpoides_yakimensis),(Thomomys_bottae_ruidosae,Thomomys_bottae_saxatilis)),((((Thomomys_bottae_awahnee_a,Thomomys_umbrinus_atroavarius),Thomomys_monticola_b),Thomomys_monticola_a),(Orthogeomys_heterodus,Thomomys_idahoensis_pygmaeus_a))),(((((Thomomys_bottae_bottae,Thomomys_umbrinus_chihuahuae),Thomomys_bottae_albatus),Thomomys_bottae_alpinus),((Thomomys_bottae_cactophilus,Thomomys_talpoides_bridgeri),Thomomys_bottae_mewa)),(((Thomomys_talpoides_ocius,Thomomys_townsendii_relictus),Thomomys_mazama_nasicus),(Thomomys_bottae_riparius,Thomomys_mazama_mazama))))
+  initial tree topology = ((((((((((Thomomys_bottae_bottae,Thomomys_monticola_b),Orthogeomys_heterodus),(Thomomys_talpoides_yakimensis,Thomomys_umbrinus_chihuahuae)),Thomomys_bottae_saxatilis),(Thomomys_idahoensis_pygmaeus_a,Thomomys_talpoides_ocius)),Thomomys_townsendii_relictus),(((Thomomys_mazama_nasicus,Thomomys_umbrinus_atroavarius),Thomomys_bottae_laticeps),Thomomys_monticola_a)),((((Thomomys_bottae_alpinus,Thomomys_townsendii_townsendii),Thomomys_bottae_ruidosae),Thomomys_bottae_mewa),(Thomomys_bottae_cactophilus,Thomomys_talpoides_bridgeri))),(Thomomys_bottae_xerophilus,Thomomys_mazama_mazama)),((((Thomomys_bottae_awahnee_a,Thomomys_bottae_awahnee_b),Thomomys_idahoensis_pygmaeus_b),Thomomys_bottae_albatus),Thomomys_bottae_riparius))
   tree height = 0.017
 Creating the tree model, '29.treeModel'
-  initial tree topology = ((((((((((((Thomomys_idahoensis_pygmaeus_b,Thomomys_monticola_a),Thomomys_idahoensis_pygmaeus_a),Thomomys_bottae_xerophilus),Thomomys_bottae_ruidosae),Thomomys_bottae_laticeps),Thomomys_bottae_bottae),((Thomomys_bottae_awahnee_a,Thomomys_bottae_awahnee_b),(Thomomys_talpoides_bridgeri,Thomomys_townsendii_relictus))),(Thomomys_mazama_nasicus,Thomomys_umbrinus_atroavarius)),((Thomomys_bottae_alpinus,Thomomys_talpoides_yakimensis),Thomomys_bottae_albatus)),Thomomys_bottae_riparius),((((Thomomys_monticola_b,Thomomys_townsendii_townsendii),Thomomys_mazama_mazama),Thomomys_bottae_cactophilus),Thomomys_bottae_saxatilis)),((Orthogeomys_heterodus,Thomomys_bottae_mewa),(Thomomys_talpoides_ocius,Thomomys_umbrinus_chihuahuae)))
+  initial tree topology = (((((((((Thomomys_bottae_albatus,Thomomys_bottae_xerophilus),Thomomys_bottae_saxatilis),Thomomys_monticola_a),((Thomomys_talpoides_ocius,Thomomys_talpoides_yakimensis),Thomomys_townsendii_townsendii)),(Thomomys_bottae_awahnee_a,Thomomys_bottae_cactophilus)),Thomomys_umbrinus_chihuahuae),Thomomys_mazama_mazama),((((((Orthogeomys_heterodus,Thomomys_bottae_riparius),(Thomomys_bottae_ruidosae,Thomomys_umbrinus_atroavarius)),Thomomys_talpoides_bridgeri),Thomomys_monticola_b),Thomomys_bottae_laticeps),((Thomomys_bottae_alpinus,Thomomys_mazama_nasicus),Thomomys_bottae_bottae))),(((Thomomys_idahoensis_pygmaeus_b,Thomomys_townsendii_relictus),Thomomys_bottae_awahnee_b),(Thomomys_bottae_mewa,Thomomys_idahoensis_pygmaeus_a)))
   tree height = 0.016
 Creating the tree model, '47.treeModel'
-  initial tree topology = (((((((((Thomomys_bottae_awahnee_a,Thomomys_bottae_saxatilis),Thomomys_talpoides_yakimensis),((Thomomys_bottae_bottae,Thomomys_bottae_riparius),Thomomys_townsendii_townsendii)),(Thomomys_bottae_albatus,Thomomys_talpoides_bridgeri)),Thomomys_mazama_mazama),((((Thomomys_bottae_cactophilus,Thomomys_bottae_mewa),Thomomys_idahoensis_pygmaeus_b),((Thomomys_talpoides_ocius,Thomomys_umbrinus_chihuahuae),Thomomys_townsendii_relictus)),Thomomys_umbrinus_atroavarius)),Thomomys_bottae_ruidosae),(((Thomomys_bottae_awahnee_b,Thomomys_bottae_laticeps),Thomomys_monticola_b),(Thomomys_bottae_alpinus,Thomomys_bottae_xerophilus))),(((Thomomys_idahoensis_pygmaeus_a,Thomomys_monticola_a),Thomomys_mazama_nasicus),Orthogeomys_heterodus))
+  initial tree topology = (((((((((Thomomys_bottae_cactophilus,Thomomys_bottae_saxatilis),(Thomomys_bottae_mewa,Thomomys_townsendii_relictus)),((Thomomys_monticola_b,Thomomys_talpoides_ocius),Thomomys_umbrinus_atroavarius)),Thomomys_bottae_laticeps),(Thomomys_bottae_awahnee_a,Thomomys_townsendii_townsendii)),((Thomomys_bottae_xerophilus,Thomomys_idahoensis_pygmaeus_b),Thomomys_umbrinus_chihuahuae)),(((Orthogeomys_heterodus,Thomomys_mazama_nasicus),Thomomys_bottae_awahnee_b),(Thomomys_bottae_albatus,Thomomys_idahoensis_pygmaeus_a))),Thomomys_bottae_bottae),((((Thomomys_bottae_ruidosae,Thomomys_monticola_a),Thomomys_talpoides_yakimensis),Thomomys_bottae_alpinus),((Thomomys_mazama_mazama,Thomomys_talpoides_bridgeri),Thomomys_bottae_riparius)))
   tree height = 0.017
 Using strict molecular clock model.
 Using strict molecular clock model.
 Using strict molecular clock model.
-Creating state frequencies model: Using empirical frequencies from data = {0.40772, 0.20916, 0.19046, 0.19266}
+Creating state frequencies model '26.frequencies': Using empirical frequencies from data = {0.40772, 0.20916, 0.19046, 0.19266}
 Creating HKY substitution model. Initial kappa = 2.0
 Creating site model.
-Creating state frequencies model: Using empirical frequencies from data = {0.24545, 0.21384, 0.23701, 0.3037}
+Creating state frequencies model '29.frequencies': Using empirical frequencies from data = {0.24545, 0.21384, 0.23701, 0.3037}
 Creating HKY substitution model. Initial kappa = 2.0
 Creating site model.
-Creating state frequencies model: Using empirical frequencies from data = {0.2017, 0.21368, 0.21208, 0.37254}
+Creating state frequencies model '47.frequencies': Using empirical frequencies from data = {0.2017, 0.21368, 0.21208, 0.37254}
 Creating HKY substitution model. Initial kappa = 2.0
 Creating site model.
+Loading native NucleotideLikelihoodCore successfully 
 TreeLikelihood(26.treeModel) using native nucleotide likelihood core
   Ignoring ambiguities in tree likelihood.
   With 144 unique site patterns.
@@ -377,61 +379,59 @@ Creating the MCMC chain:
   chainLength=5000000
   autoOptimize=true
   autoOptimize delayed for 50000 steps
-# BEAST v1.6.0, Build r3554
-# Generated Fri Oct 01 17:30:48 NZDT 2010 [seed=1285907407029]
+# BEAST v1.7.1, r4860
+# Generated Fri Apr 13 16:02:42 NZST 2012 [seed=1334282107812]
 state	Posterior   	Prior       	Likelihood  	PopMean     	26.rootHeight	29.rootHeight	47.rootHeight	26.clock.rate	29.clock.rate	47.clock.rate
-0	-7327.1914  	284.5565    	-7611.7479  	0.0170      	1.7E-2      	1.6E-2      	1.7E-2      	1.00000     	1.00000     	1.00000     	-
-10000	-4039.0459  	398.7446    	-4437.7905  	0.0050      	2.13417E-2  	2.08796E-2  	1.44625E-2  	1.00000     	0.68149     	1.09129     	-
-20000	-3883.9551  	445.5451    	-4329.5002  	0.0024      	2.31188E-2  	2.00516E-2  	1.66494E-2  	1.00000     	0.88617     	1.55394     	0.26 hours/million states
-30000	-3862.4974  	449.2440    	-4311.7414  	0.0025      	3.19515E-2  	2.62574E-2  	2.31006E-2  	1.00000     	0.72893     	1.18735     	0.23 hours/million states
-40000	-3852.6398  	449.6922    	-4302.3320  	0.0019      	3.15963E-2  	2.50161E-2  	2.30687E-2  	1.00000     	0.83797     	1.11303     	0.17 hours/million states
-50000	-3824.9321  	471.8587    	-4296.7907  	0.0023      	2.19453E-2  	2.24944E-2  	1.71097E-2  	1.00000     	0.89729     	1.49081     	0.13 hours/million states
-60000	-3844.8398  	454.9870    	-4299.8269  	0.0012      	2.94943E-2  	3.32895E-2  	2.48704E-2  	1.00000     	0.74949     	1.45468     	0.16 hours/million states
-70000	-3832.1382  	461.6018    	-4293.7400  	0.0024      	2.59893E-2  	3.06152E-2  	1.79898E-2  	1.00000     	0.87217     	1.24871     	0.15 hours/million states
-80000	-3845.4199  	471.8890    	-4317.3089  	0.0020      	3.21837E-2  	2.01324E-2  	2.04069E-2  	1.00000     	0.85336     	1.46999     	0.13 hours/million states
-90000	-3817.7446  	489.1778    	-4306.9224  	0.0009      	2.74968E-2  	2.60995E-2  	1.78024E-2  	1.00000     	0.86640     	1.28536     	0.12 hours/million states
-100000	-3820.8950  	476.0313    	-4296.9263  	0.0014      	3.53535E-2  	2.65514E-2  	2.05705E-2  	1.00000     	0.73415     	1.40599     	0.11 hours/million states
+0	-8271.7599  	-408.9912   	-7862.7688  	1.0000      	1.7E-2      	1.6E-2      	1.7E-2      	1.00000     	1.00000     	1.00000     	-
+50000	-4402.6081  	-110.7170   	-4291.8911  	0.0093      	2.85227E-2  	2.66503E-2  	1.70572E-2  	1.00000     	0.83166     	1.48458     	0.05 hours/million states
+100000	-4282.8572  	5.5473      	-4288.4044  	0.0009      	2.49661E-2  	3.13122E-2  	1.68536E-2  	1.00000     	0.80206     	1.66186     	0.04 hours/million states
+150000	-4321.6989  	-32.7608    	-4288.9382  	0.0025      	3.17837E-2  	2.81154E-2  	1.88322E-2  	1.00000     	0.83429     	1.39937     	0.03 hours/million states
+200000	-4301.2881  	-12.5667    	-4288.7214  	0.0013      	2.32344E-2  	4.17748E-2  	1.82301E-2  	1.00000     	0.65006     	1.57575     	0.03 hours/million states
+250000	-4312.7097  	-9.6236     	-4303.0861  	0.0020      	3.12738E-2  	2.28171E-2  	1.84486E-2  	1.00000     	0.82719     	1.37213     	0.03 hours/million states
+300000	-4278.9322  	35.3165     	-4314.2487  	0.0008      	2.27743E-2  	2.26837E-2  	1.82648E-2  	1.00000     	1.19420     	1.46538     	0.03 hours/million states
 
 ... ...
 
-4990000	-3835.4728  	484.6381    	-4320.1110  	0.0014      	2.70561E-2  	2.86596E-2  	1.44919E-2  	1.00000     	0.75162     	1.34399     	0.04 hours/million states
-5000000	-3820.9055  	489.0983    	-4310.0037  	0.0014      	3.83597E-2  	3.22498E-2  	1.56354E-2  	1.00000     	0.83375     	1.45670     	0.04 hours/million states
+4900000	-4276.9360  	17.6994     	-4294.6354  	0.0018      	2.23113E-2  	1.66667E-2  	1.36587E-2  	1.00000     	0.91509     	1.68670     	0.02 hours/million states
+4950000	-4238.0976  	49.0728     	-4287.1704  	0.0008      	2.45626E-2  	1.28858E-2  	1.29766E-2  	1.00000     	1.24784     	2.22299     	0.02 hours/million states
+5000000	-4304.9506  	-17.2098    	-4287.7408  	0.0017      	2.47898E-2  	3.78072E-2  	2.25424E-2  	1.00000     	0.74967     	1.24236     	0.02 hours/million states
 
 Operator analysis
-Operator                                          Tuning   Count      Time     Time/Op  Pr(accept)  Performance suggestion
-scale(26.kappa)                                   0.344   1160       200      0.17     0.3207      good	
-scale(29.kappa)                                   0.346   1133       161      0.14     0.3786      good	
-scale(47.kappa)                                   0.437   1138       232      0.2      0.3805      good	
-scale(29.clock.rate)                              0.492   33065      4492     0.14     0.278       good	
-scale(47.clock.rate)                              0.57    33096      6467     0.2      0.2804      good	
-up:29.clock.rate 47.clock.rate species.yule.birthRate down:speciesTree species.popMean speciesTree.splitPopSize nodeHeights(26.treeModel) nodeHeights(29.treeModel) nodeHeights(47.treeModel) 0.481   330994     113093   0.34     0.234       slightly high	Try setting scaleFactor to about 0.4813
-subtreeSlide(26.treeModel)                        0.003   165032     16538    0.1      0.2607      good	
-Narrow Exchange(26.treeModel)                             165294     10898    0.07     0.2855      good	
-Wide Exchange(26.treeModel)                               32975      806      0.02     0.0213      good	
-wilsonBalding(26.treeModel)                               33122      1692     0.05     0.033       slightly low	
-scale(26.treeModel.rootHeight)                    0.504   33333      3108     0.09     0.2723      good	
-uniform(nodeHeights(26.treeModel))                        331392     39147    0.12     0.5474      high	
-subtreeSlide(29.treeModel)                        0.003   166117     15469    0.09     0.2592      good	
-Narrow Exchange(29.treeModel)                             166240     10407    0.06     0.3106      good	
-Wide Exchange(29.treeModel)                               33214      643      0.02     0.0428      good	
-wilsonBalding(29.treeModel)                               33091      1541     0.05     0.0471      slightly low	
-scale(29.treeModel.rootHeight)                    0.463   32870      2809     0.09     0.2929      good	
-uniform(nodeHeights(29.treeModel))                        331873     35779    0.11     0.5748      high	
-subtreeSlide(47.treeModel)                        0.003   165783     17558    0.11     0.225       good	
-Narrow Exchange(47.treeModel)                             165382     11719    0.07     0.2303      good	
-Wide Exchange(47.treeModel)                               33191      709      0.02     0.0128      good	
-wilsonBalding(47.treeModel)                               32745      1692     0.05     0.0177      slightly low	
-scale(47.treeModel.rootHeight)                    0.591   33096      2660     0.08     0.2303      good	
-uniform(nodeHeights(47.treeModel))                        331242     42940    0.13     0.5344      high	
-up:down:nodeHeights(26.treeModel)                 0.834   33125      4217     0.13     0.2202      slightly high	Try setting scaleFactor to about 0.8427
-up:29.clock.rate down:nodeHeights(29.treeModel)   0.807   33350      3364     0.1      0.2195      slightly high	Try setting scaleFactor to about 0.8177
-up:47.clock.rate down:nodeHeights(47.treeModel)   0.781   33332      4407     0.13     0.2304      slightly high	Try setting scaleFactor to about 0.7838
-scale(species.popMean)                            0.525   55356      2978     0.05     0.2895      good	
-scale(species.yule.birthRate)                     0.237   32988      1904     0.06     0.2911      good	
-scale(speciesTree.splitPopSize)                   0.168   1036951    72638    0.07     0.2547      good	
-nodeReHeight(sptree,species)                              1038320    73042    0.07     0.3012      good	none
+Operator                                          Tuning   Count      Time     Time/Op  Pr(accept) 
+scale(26.kappa)                                   0.36    1106       122      0.11     0.3698      
+scale(29.kappa)                                   0.383   1097       91       0.08     0.381       
+scale(47.kappa)                                   0.438   1143       131      0.11     0.3596      
+scale(29.clock.rate)                              0.485   33005      2668     0.08     0.2684      
+scale(47.clock.rate)                              0.568   33415      3546     0.11     0.2804      
+up:29.clock.rate 47.clock.rate species.yule.birthRate down:speciesTree species.popMean speciesTree.splitPopSize nodeHeights(26.treeModel) nodeHeights(29.treeModel) nodeHeights(47.treeModel) 0.476   332580     59573    0.18     0.236       
+subtreeSlide(26.treeModel)                        0.003   165916     7583     0.05     0.2326      
+Narrow Exchange(26.treeModel)                             165585     6047     0.04     0.2971      
+Wide Exchange(26.treeModel)                               33216      988      0.03     0.0263      
+wilsonBalding(26.treeModel)                               33151      1648     0.05     0.0379      
+scale(26.treeModel.rootHeight)                    0.511   33209      1527     0.05     0.2864      
+uniform(nodeHeights(26.treeModel))                        331028     17469    0.05     0.5605      
+subtreeSlide(29.treeModel)                        0.003   166248     7404     0.04     0.2201      
+Narrow Exchange(29.treeModel)                             165728     5610     0.03     0.3173      
+Wide Exchange(29.treeModel)                               33262      887      0.03     0.0428      
+wilsonBalding(29.treeModel)                               33206      1468     0.04     0.0473      
+scale(29.treeModel.rootHeight)                    0.447   33466      1530     0.05     0.2679      
+uniform(nodeHeights(29.treeModel))                        330344     16735    0.05     0.5782      
+subtreeSlide(47.treeModel)                        0.002   165265     7854     0.05     0.2449      
+Narrow Exchange(47.treeModel)                             165918     6217     0.04     0.2445      
+Wide Exchange(47.treeModel)                               33011      998      0.03     0.0141      
+wilsonBalding(47.treeModel)                               33105      1795     0.05     0.0186      
+scale(47.treeModel.rootHeight)                    0.61    33012      1317     0.04     0.2409      
+uniform(nodeHeights(47.treeModel))                        332093     17991    0.05     0.5415      
+up:down:nodeHeights(26.treeModel)                 0.782   32762      3383     0.1      0.1912      
+up:29.clock.rate down:nodeHeights(29.treeModel)   0.766   33152      2502     0.08     0.1841      
+up:47.clock.rate down:nodeHeights(47.treeModel)   0.713   32871      3484     0.11     0.1732      
+scale(species.popMean)                            0.495   54949      1784     0.03     0.2719      
+scale(species.yule.birthRate)                     0.24    33178      1132     0.03     0.3156      
+scale(speciesTree.splitPopSize)                   0.171   1037737    40459    0.04     0.2572      
+nodeReHeight(sptree,species)                              1036242    39954    0.04     0.295       
 
-12.4212 minutes 
+6.349283333333333 minutes 
+
 \end{verbatim}}
 
 \subsection*{Analyzing the results}
@@ -504,7 +504,7 @@ the \texttt{gopher.species.tree} file by using the Open command in the File menu
 You can now try selecting some of the options in the control panel on the left. Try selecting
 {\bf Node Bars} to get node age error bars. Also turn on {\bf Branch Labels} and select {\bf posterior} to get
 it to display the posterior probability for each node. Under {\bf Appearance} you can also tell FigTree
-to colour the branches by the rate.
+to colour the branches by the length.
 You should end up with something like this:
 
 \medskip{}

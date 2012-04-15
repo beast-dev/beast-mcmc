@@ -130,7 +130,7 @@ public class TreeLikelihoodGenerator extends Generator {
             };
         } else {
             attributes = new Attribute[]{
-                    new Attribute.Default<String>(XMLParser.ID, substModel.getPrefix(num) + partition.getPrefix() + id),
+                    new Attribute.Default<String>(XMLParser.ID, idString),
                     new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
             };
         }

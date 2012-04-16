@@ -37,6 +37,7 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
+import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -155,7 +156,19 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
+        
+		// TODO: search for other solution
+        // Ancestral state likelihood doesn't need the substitution model - it gets
+        // it from the siteModel.
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
+        .getComponentOptions(AncestralStatesComponentOptions.class);
+        if(ancestralStatesOptions.dNdSRobustCountingAvailable(partition) && ancestralStatesOptions.dNdSRobustCounting(partition) ) {
 
+        	writer.writeIDref(substModel.getNucSubstitutionModel().getXMLName(), substModel.getPrefix(num) + "hky");
+//        	writer.writeComment(substModel.getNucSubstitutionModel().getXMLName());
+        	
+        }
+        
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()
@@ -179,15 +192,6 @@ public class TreeLikelihoodGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
-
-        // Ancestral state likelihood doesn't need the substitution model - it gets
-        // it from the siteModel.
-
-//        if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-//
-//            writer.writeIDref(NucModelType.HKY.getXMLName(), substModel.getPrefix(num) + "hky");
-//
-//        }
 
         /*if (options.clockType == ClockType.STRICT_CLOCK) {
             writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);

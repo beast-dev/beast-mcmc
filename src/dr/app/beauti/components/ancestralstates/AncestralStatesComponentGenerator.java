@@ -140,7 +140,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                                                      AbstractPartitionData partition) {
 
         if (DEBUG) {
-            System.err.println("DEBUG: Writing RB for " + partition.getName());
+            System.err.println("DEBUG: Writing RC for " + partition.getName());
         }
 
         writer.writeComment("Robust counting for: " + partition.getName());
@@ -200,7 +200,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
 
-    }// END: writeCodonPartitionedRobustCounting()
+    }// END: writeCodonPartitionedRobustCounting
 
     private void writeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 
@@ -211,11 +211,12 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
+                
             } else {
 
             }
-        }
-    }
+		}
+	}// END: writeLogs
 
     private void writeTreeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 
@@ -302,9 +303,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX) });
 
-        writer
-                .writeOpenTag("dNdSLogger",
-                        new Attribute[]{new Attribute.Default<String>("id",
+        writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
                                 "dNdS")});
         writer.writeIDref("treeModel", "treeModel");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");

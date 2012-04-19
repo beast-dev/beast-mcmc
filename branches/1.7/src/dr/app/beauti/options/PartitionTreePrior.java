@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * PartitionTreePrior.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -110,8 +112,8 @@ public class PartitionTreePrior extends PartitionOptions {
                 PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyline.groupSize", "Bayesian Skyline group sizes");
         // skyride.logPopSize is log unit unlike other popSize
-        createNonNegativeParameterUniformPrior("skyride.logPopSize", "GMRF Bayesian skyride population sizes (log unit)",
-                PriorScaleType.TIME_SCALE, 1.0, 0.0, Parameter.UNIFORM_MAX_BOUND);
+        createParameterUniformPrior("skyride.logPopSize", "GMRF Bayesian skyride population sizes (log unit)",
+                PriorScaleType.LOG_TIME_SCALE, 1.0, -Parameter.UNIFORM_MAX_BOUND, Parameter.UNIFORM_MAX_BOUND);
         createParameter("skyride.groupSize", "GMRF Bayesian skyride group sizes (for backward compatibility)");
         createParameterGammaPrior("skyride.precision", "GMRF Bayesian skyride precision",
                 PriorScaleType.NONE, 1.0, 0.001, 1000, true);

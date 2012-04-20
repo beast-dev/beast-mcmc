@@ -191,7 +191,7 @@ public class LocalClockModel extends AbstractBranchRateModel {
         if (!tree.isExternal(node) && !excludeClade) {
             for (int i = 0; i < tree.getChildCount(node); i++) {
                 NodeRef child = tree.getChild(node, i);
-                setNodeClock(tree, child, localClock, true, true);
+                setNodeClock(tree, child, localClock, true, false);
             }
         }
 

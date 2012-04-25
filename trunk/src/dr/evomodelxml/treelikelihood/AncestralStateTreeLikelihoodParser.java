@@ -31,28 +31,30 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
-        boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);
+        throw new XMLParseException("Ancestral state functionality is only support under BEAGLE.");
 
-        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
-        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
-        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
-
-        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
-
-        DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
-
-        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
-        boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
-
-        // default tag is RECONSTRUCTION_TAG
-        String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
-
-        boolean forceRescaling = xo.getAttribute(TreeLikelihoodParser.FORCE_RESCALING, false);
-
-        return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
-                branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling,
-                useMAP, useMarginalLogLikelihood);
+//        boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
+//        boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);
+//
+//        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
+//        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
+//        SiteModel siteModel = (SiteModel) xo.getChild(SiteModel.class);
+//
+//        BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
+//
+//        DataType dataType = ((SubstitutionModel) xo.getChild(SubstitutionModel.class)).getDataType();
+//
+//        boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
+//        boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
+//
+//        // default tag is RECONSTRUCTION_TAG
+//        String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
+//
+//        boolean forceRescaling = xo.getAttribute(TreeLikelihoodParser.FORCE_RESCALING, false);
+//
+//        return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
+//                branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling,
+//                useMAP, useMarginalLogLikelihood);
     }
 
     //************************************************************************
@@ -81,7 +83,6 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
             new ElementRule(PatternList.class),
             new ElementRule(TreeModel.class),
             new ElementRule(SiteModel.class),
-            new ElementRule(BranchRateModel.class, true),
-            new ElementRule(SubstitutionModel.class)
+            new ElementRule(BranchRateModel.class, true)
     };
 }

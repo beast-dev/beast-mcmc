@@ -774,16 +774,20 @@ public class TreeAnnotator {
 //                                    if (name.equals(location1Attribute)) {
 //                                        name = locationOutputAttribute;
 //                                    }
+                                    boolean want2d = processBivariateAttributes && lenArray == 2;
+                                    if( name.equals("dmv" ) ) {  // terrible hack
+                                       want2d = false;
+                                    }
                                     for (int k = 0; k < lenArray; k++) {
                                         if (minValueArray[k] < maxValueArray[k]) {
                                             annotateMedianAttribute(tree, node, name + (k + 1) + "_median", valuesArray[k]);
                                             annotateRangeAttribute(tree, node, name + (k + 1) + "_range", valuesArray[k]);
-                                            if (!processBivariateAttributes || lenArray != 2)
+                                            if (!want2d)
                                                 annotateHPDAttribute(tree, node, name + (k + 1) + "_95%_HPD", 0.95, valuesArray[k]);
                                         }
                                     }
                                     // 2D contours
-                                    if (processBivariateAttributes && lenArray == 2) {
+                                    if (want2d) {
 
                                         boolean variationInFirst = (minValueArray[0] < maxValueArray[0]);
                                         boolean variationInSecond = (minValueArray[1] < maxValueArray[1]);

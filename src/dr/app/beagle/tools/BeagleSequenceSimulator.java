@@ -13,16 +13,43 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
+import dr.evolution.sequence.Sequence;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 
 public class BeagleSequenceSimulator {
 
+	private TreeModel treeModel;
+	private SiteRateModel siteRateModel;
+	private BranchSubstitutionModel branchSubstitutionModel;
+	private int sequenceLength;
+	private FrequencyModel freqModel;
+	private int categoryCount;
+	private int eigenCount;
+	private Beagle beagle;
+	private BufferIndexHelper eigenBufferHelper;
+	private  BufferIndexHelper matrixBufferHelper;
+	
+	private int stateCount;
+	
+	private boolean has_ancestralSequence = false;
+	private Sequence ancestralSequence = null;
+	private double[][] probabilities;
+	
+	
+	
+	
+	
+	
 	BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel, //
 			SiteRateModel siteRateModel, //
@@ -31,108 +58,195 @@ public class BeagleSequenceSimulator {
 			int sequenceLength //
 	) {
 
+		this.treeModel = treeModel;
+		this.siteRateModel = siteRateModel;
+		this.sequenceLength = sequenceLength;
+		this.freqModel = freqModel;
+		 this.branchSubstitutionModel = branchSubstitutionModel;
+		
 		  int tipCount = treeModel.getExternalNodeCount();
           int nodeCount = treeModel.getNodeCount();
           int eigenCount = branchSubstitutionModel.getEigenCount();
           int internalNodeCount = treeModel.getInternalNodeCount();
           int scaleBufferCount = internalNodeCount + 1;
 		
-        // TODO: useAmbiguities ?
         int compactPartialsCount = tipCount;
         
-        // TODO: do we need this when simulating?
         int patternCount = sequenceLength;
         
-        // TODO: don't really need a siteModel to get the stateCount
-        // too bad the siteModel only functions as a container with respect to the substitutionModel
-        // parse from BranchSubstitutionModel ?
         int stateCount = freqModel.getDataType().getStateCount();
         
-        // TODO: don't like this categoryCount though, does require a siteModel
-        int categoryCount = siteRateModel.getCategoryCount();
+        this.categoryCount = siteRateModel.getCategoryCount();
+        this.probabilities = new double[categoryCount][stateCount * stateCount];
+        this.eigenCount = eigenCount;
+        this.stateCount = stateCount;
         
         // one partials buffer for each tip and two for each internal node (for store restore)
         BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
         // two eigen buffers for each decomposition for store and restore.
-        BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+         eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 
         // two matrices for each node less the root
-        BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
 
         // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
         BufferIndexHelper scaleBufferHelper = new BufferIndexHelper(scaleBufferCount, 0);
         
         //null implies no restrictions
         int[] resourceList = null;
-        // TODO
         long preferenceFlags = 0; 
-        // TODO
         long requirementFlags = 0;
         
-        Beagle beagle = BeagleFactory.loadBeagleInstance(
-        tipCount,
-        partialBufferHelper.getBufferCount(),
-        compactPartialsCount,
-        stateCount,
-        patternCount,
+         beagle = BeagleFactory.loadBeagleInstance(
+        tipCount, //
+        partialBufferHelper.getBufferCount(), //
+        compactPartialsCount, //
+        stateCount, //
+        patternCount, //
         eigenBufferHelper.getBufferCount(), // eigenBufferCount
-        matrixBufferHelper.getBufferCount() + branchSubstitutionModel.getExtraBufferCount(treeModel),
-        categoryCount,
+        matrixBufferHelper.getBufferCount() + branchSubstitutionModel.getExtraBufferCount(treeModel), //
+        categoryCount, //
         scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
-        resourceList,
-        preferenceFlags,
-        requirementFlags
+        resourceList, //
+        preferenceFlags, //
+        requirementFlags 
 );
 
 		
-//        for (int i = 0; i < eigenCount; i++) {
-//            if (branchUpdateCount[i] > 0) {
-//
-//                    branchSubstitutionModel.updateTransitionMatrices(
-//                            beagle, //
-//                            i, //
-//                            eigenBufferHelper, //
-//                            matrixUpdateIndices[i],
-//                            null, //
-//                            null, //
-//                            branchLengths[i],
-//                            branchUpdateCount[i]);
-//                    
-//            }//END: branchUpdateCount check
-//        } //END: i loop
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-//		PatternList patternList = null;
-//		TipStatesModel tipStatesModel = null;
-//		boolean useAmbiguities = false;
-//		PartialsRescalingScheme rescalingScheme = null;
-//		
-//		BeagleTreeLikelihood treeLikelihood = new BeagleTreeLikelihood(
-//				patternList, //
-//				treeModel, //
-//				branchSubstitutionModel, //
-//				siteRateModel, //
-//				branchRateModel, //
-//				tipStatesModel, //
-//				useAmbiguities, //
-//				rescalingScheme //
-//		);
+        
 		
 	} // END: Constructor
+	
+	private void setAncestralSequence(Sequence seq) {
+		ancestralSequence = seq;
+		has_ancestralSequence = true;
+	}
+	
+	int[] sequence2intArray(Sequence seq) {
+
+		if(seq.getLength() != sequenceLength) {
+
+			throw new RuntimeException("Ancestral sequence length has "
+					+ seq.getLength() + " characters " + "expecting "
+					+ sequenceLength + " characters");
+
+		}
+		
+		int array[] = new int[sequenceLength];
+		for (int i = 0; i < sequenceLength; i++) {
+			array[i] = freqModel.getDataType().getState(
+					seq.getChar(i));
+		}
+		
+		return array;
+	}//END: sequence2intArray
+	
+	Sequence intArray2Sequence(int [] seq, NodeRef node) {
+    	StringBuilder sSeq = new StringBuilder();
+    	for (int i  = 0; i < sequenceLength; i++) {
+    		sSeq.append(freqModel.getDataType().getCode(seq[i]));
+    	}
+    	
+		return new Sequence(treeModel.getNodeTaxon(node), sSeq.toString());
+    } //END: intArray2Sequence
+	
+	public Alignment simulate() {
+
+		SimpleAlignment alignment = new SimpleAlignment();
+		NodeRef root = treeModel.getRoot();
+		double[] categoryProbs = siteRateModel.getCategoryProportions();
+		int[] category = new int[sequenceLength];
+		
+		for (int i = 0; i < sequenceLength; i++) {
+			category[i] = MathUtils.randomChoicePDF(categoryProbs);
+		}
+		
+//		printArray(category);
+		
+		int[] seq = new int[sequenceLength];
+		
+		if (has_ancestralSequence) {
+
+			seq = sequence2intArray(ancestralSequence);
+			
+		} else {
+
+			for (int i = 0; i < sequenceLength; i++) {
+				seq[i] = MathUtils.randomChoicePDF(freqModel
+						.getFrequencies());
+			}
+
+		}//END: ancestral sequence check
+		
+		alignment.setDataType(freqModel.getDataType());
+		alignment.setReportCountStatistics(true);
+		
+		traverse(root, seq, category, alignment);
+		
+		return alignment;
+	} // END: simulate
+	
+	void traverse(NodeRef node, int [] parentSequence, int [] category, SimpleAlignment alignment) {
+		
+		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
+	
+			NodeRef child = treeModel.getChild(node, iChild);
+	       	int [] sequence = new int[sequenceLength];
+    		double [] cProb = new double[stateCount];
+			
+		    for (int i = 0; i < categoryCount; i++) {
+            	getTransitionProbabilities(treeModel, child, i, probabilities[i]);
+            	
+            	printArray(probabilities[i]);
+            	
+            }
+		
+    		
+        	for (int i  = 0; i < sequenceLength; i++) {
+        		
+        		System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
+        		sequence[i] = MathUtils.randomChoicePDF(cProb);
+        		
+        	}
+
+            if (treeModel.getChildCount(child) == 0) {
+            	alignment.addSequence(intArray2Sequence(sequence, child));
+            }
+            
+			traverse(treeModel.getChild(node, iChild), sequence, category, alignment);
+		
+		}//END: child nodes loop
+	}//END: traverse
+	
+//	TODO: 
+	 void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probabilities) {
+		 
+		int nodeNum = node.getNumber();
+		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+	
+		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
+	
+		double edgeLengths[] = { tree.getBranchLength(node) };
+		int probabilityIndices[] = { bufferIndex };
+		
+//		 for (int i = 0; i < eigenCount; i++) {
+		
+       branchSubstitutionModel.updateTransitionMatrices(beagle, //
+    		 eigenIndex,  
+	    	 eigenBufferHelper, //
+	    	 probabilityIndices, //
+	    	 null, //
+	    	 null, //
+	    	 edgeLengths, //
+	    	 1 //
+	    	 );
+		 
+//	     }
+		
+		beagle.getTransitionMatrix(bufferIndex, probabilities);
+	    	 
+	 }//END: getTransitionProbabilities
 	
 	 public static void main(String [] args) {
 	    	
@@ -182,12 +296,37 @@ public class BeagleSequenceSimulator {
 	    		sequenceLength //
 	    		);
 
-//	    		System.out.println(treeSimulator.simulate().toString());
+	    		System.out.println(beagleSequenceSimulator.simulate().toString());
 
 			} catch (Exception e) {
 				e.printStackTrace();
 			}//END: try-catch block
 			
 		} // END: main
+	 
+		// /////////////////
+		// ---DEBUGGING---//
+		// /////////////////
+	 
+		private static void printArray(int[] category) {
+			for (int i = 0; i < category.length; i++) {
+				System.out.println(category[i]);
+			}
+		}// END: printArray
+		
+		private static void printArray(double[] category) {
+			for (int i = 0; i < category.length; i++) {
+				System.out.println(category[i]);
+			}
+		}// END: printArray
+		
+		public static void print2DArray(double[][] array) {
+			for (int row = 0; row < array.length; row++) {
+				for (int col = 0; col < array[row].length; col++) {
+					System.out.print(array[row][col] + " ");
+				}
+				System.out.print("\n");
+			}
+		}// END: print2DArray
 	
 } //END: class

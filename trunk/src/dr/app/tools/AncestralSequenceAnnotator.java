@@ -1410,14 +1410,28 @@ public class AncestralSequenceAnnotator {
                         for (String key : values.keySet()) {
                             int thisCount = values.get(key);
                             weight[i] = thisCount;
-                            pw.write(">" + i + " " + thisCount + "\n");
+                            //TODO I THINK I FIXED IT?!?!
+                            pw.write(">" + i+"\n");// + " " + thisCount + "\n");
                             pw.write(key + "\n");
                             i++;
                         }
                         pw.close();
 
                         //Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -OUTPUT=NEXUS");
-                        Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -fmsf -o"+fileName + ".fasta");
+                        //Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -fmsf -o"+fileName + ".fasta");
+//                        System.out.println("Command: " + kalignExecutable + " " + fileName + " -ffasta -o"+fileName + ".fasta");
+//                        Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -ffasta -o"+fileName + ".fasta");
+                        Process p = Runtime.getRuntime().exec(kalignExecutable + " " + fileName + " -ffasta -q -o"+fileName + ".fasta");
+
+//                        ByteArrayOutputStream kalignOutput = new ByteArrayOutputStream();
+//                        StreamGobbler errorGobbler = new StreamGobbler(p.getErrorStream(), "ERR");
+//                        StreamGobbler outputGobbler = new StreamGobbler(p.getInputStream(), "OUT", kalignOutput);
+//
+//                        errorGobbler.start();
+//                        outputGobbler.start();
+//
+//                        int exitVal = p.waitFor();
+
                         BufferedReader input =
                                 new BufferedReader
                                         (new InputStreamReader(p.getInputStream()));
@@ -1434,7 +1448,7 @@ public class AncestralSequenceAnnotator {
 //						System.err.println("clustal call #" + externalCalls);
 
                         //NexusImporter importer = new NexusImporter(new FileReader(fileName + ".nxs"));
-                        //TODO not sure if right
+//                        FastaImporter importer = new FastaImporter(new FileReader(new File(fileName + ".fasta")), Nucleotides.INSTANCE);
                         FastaImporter importer = new FastaImporter(new FileReader(new File(fileName + ".fasta")), new GeneralDataType(new String[0]));//AminoAcids.INSTANCE);
                                 //new FastaImporter(new FileReader(), new AminoAcids.INSTANCE);
 

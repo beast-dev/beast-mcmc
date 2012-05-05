@@ -205,6 +205,9 @@ public class BeagleSequenceSimulator {
         	for (int i  = 0; i < sequenceLength; i++) {
         		
         		System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
+        		
+//        		printArray(cProb);
+        		
         		sequence[i] = MathUtils.randomChoicePDF(cProb);
         		
         	}
@@ -334,6 +337,7 @@ public class BeagleSequenceSimulator {
 			for (int i = 0; i < category.length; i++) {
 				System.out.println(category[i]);
 			}
+			System.out.print("\n");
 		}// END: printArray
 		
 		public void print2DArray(double[][] array) {

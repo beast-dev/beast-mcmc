@@ -118,7 +118,7 @@ public class BeagleSequenceSimulator {
 		
 	} // END: Constructor
 	
-	private void setAncestralSequence(Sequence seq) {
+	public void setAncestralSequence(Sequence seq) {
 		ancestralSequence = seq;
 		has_ancestralSequence = true;
 	}
@@ -162,8 +162,6 @@ public class BeagleSequenceSimulator {
 			category[i] = MathUtils.randomChoicePDF(categoryProbs);
 		}
 		
-//		printArray(category);
-		
 		int[] seq = new int[sequenceLength];
 		
 		if (has_ancestralSequence) {
@@ -173,8 +171,8 @@ public class BeagleSequenceSimulator {
 		} else {
 
 			for (int i = 0; i < sequenceLength; i++) {
-				seq[i] = MathUtils.randomChoicePDF(freqModel
-						.getFrequencies());
+				seq[i] = MathUtils.randomChoicePDF(freqModel.getFrequencies());
+				
 			}
 
 		}//END: ancestral sequence check
@@ -196,9 +194,10 @@ public class BeagleSequenceSimulator {
     		double [] cProb = new double[stateCount];
 			
 		    for (int i = 0; i < categoryCount; i++) {
+		    	
             	getTransitionProbabilities(treeModel, child, i, probabilities[i]);
             	
-            	printArray(probabilities[i]);
+//            	printArray(probabilities[i]);
             	
             }
 		
@@ -219,34 +218,51 @@ public class BeagleSequenceSimulator {
 		}//END: child nodes loop
 	}//END: traverse
 	
-//	TODO: 
-	 void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory, double[] probabilities) {
-		 
+	// TODO:
+	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
+			double[] probabilities) {
+
+//	for (int j = 0; j < tree.getNodeCount(); j++) {
+//		
+//		 node = tree.getNode(j);
+//
+//				int nodeNum = node.getNumber();
+//				matrixBufferHelper.flipOffset(nodeNum);
+//				int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+//				int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
+//
+//				System.out.println("eigenIndex:" + eigenIndex);
+//				System.out.println("update indices:");
+//				System.out.println(bufferIndex);
+//				System.out.println("weights:");
+//				System.out.println(tree.getBranchLength(node));
+//				
+//		}
+//
+//		System.exit(-1);
+
 		int nodeNum = node.getNumber();
+		matrixBufferHelper.flipOffset(nodeNum);
 		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
-	
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
-	
 		double edgeLengths[] = { tree.getBranchLength(node) };
 		int probabilityIndices[] = { bufferIndex };
+		int count = 1;
 		
-//		 for (int i = 0; i < eigenCount; i++) {
-		
-       branchSubstitutionModel.updateTransitionMatrices(beagle, //
-    		 eigenIndex,  
-	    	 eigenBufferHelper, //
-	    	 probabilityIndices, //
-	    	 null, //
-	    	 null, //
-	    	 edgeLengths, //
-	    	 1 //
-	    	 );
-		 
-//	     }
-		
+	
+			branchSubstitutionModel.updateTransitionMatrices(beagle, //
+					eigenIndex, //
+					eigenBufferHelper, //
+					probabilityIndices, //
+					null, //
+					null, //
+					edgeLengths, //
+					count //
+					);
+			
 		beagle.getTransitionMatrix(bufferIndex, probabilities);
-	    	 
-	 }//END: getTransitionProbabilities
+
+	}// END: getTransitionProbabilities
 	
 	 public static void main(String [] args) {
 	    	
@@ -308,19 +324,28 @@ public class BeagleSequenceSimulator {
 		// ---DEBUGGING---//
 		// /////////////////
 	 
-		private static void printArray(int[] category) {
+		public static void printArray(int[] category) {
 			for (int i = 0; i < category.length; i++) {
 				System.out.println(category[i]);
 			}
 		}// END: printArray
 		
-		private static void printArray(double[] category) {
+		public static void printArray(double[] category) {
 			for (int i = 0; i < category.length; i++) {
 				System.out.println(category[i]);
 			}
 		}// END: printArray
 		
-		public static void print2DArray(double[][] array) {
+		public void print2DArray(double[][] array) {
+			for (int row = 0; row < array.length; row++) {
+				for (int col = 0; col < array[row].length; col++) {
+					System.out.print(array[row][col] + " ");
+				}
+				System.out.print("\n");
+			}
+		}// END: print2DArray
+		
+		public static void print2DArray(int[][] array) {
 			for (int row = 0; row < array.length; row++) {
 				for (int col = 0; col < array[row].length; col++) {
 					System.out.print(array[row][col] + " ");

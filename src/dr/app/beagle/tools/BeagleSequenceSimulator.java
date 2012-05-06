@@ -50,7 +50,7 @@ public class BeagleSequenceSimulator {
 	
 	
 	
-	BeagleSequenceSimulator(TreeModel treeModel, //
+	public BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel, //
 			SiteRateModel siteRateModel, //
 			BranchRateModel branchRateModel, //
@@ -206,7 +206,7 @@ public class BeagleSequenceSimulator {
         		
         		System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
         		
-//        		printArray(cProb);
+        		printArray(cProb);
         		
         		sequence[i] = MathUtils.randomChoicePDF(cProb);
         		
@@ -266,67 +266,68 @@ public class BeagleSequenceSimulator {
 		beagle.getTransitionMatrix(bufferIndex, probabilities);
 
 	}// END: getTransitionProbabilities
-	
-	 public static void main(String [] args) {
-	    	
-	    	try {
-	    	
-	    		int sequenceLength = 10;
 
-	    		// create tree
-	    		NewickImporter importer = new NewickImporter("(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-	    		Tree tree =  importer.importTree(null);
-	    		TreeModel treeModel = new TreeModel(tree);
-	    		
-	    		// create site model
-	    		GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-	    		
-	    		// create Frequency Model
-	            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
-	            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
-	            List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
-	            frequencyModelList.add(freqModel);
-	            
-	            // create Epoch Model
-	    		Parameter kappa1 = new Parameter.Default(1, 1);
-	    		Parameter kappa2 = new Parameter.Default(1, 10);
-	            HKY hky1 = new HKY(kappa1, freqModel);
-	            HKY hky2 = new HKY(kappa2, freqModel);
-	        	List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-				substModelList.add(hky1);
-				substModelList.add(hky2);
-				
-				Parameter epochTimes = new Parameter.Default(1, 20);
-				EpochBranchSubstitutionModel substitutionModel = new EpochBranchSubstitutionModel(
-						substModelList, //
-						frequencyModelList, //
-						epochTimes //
-				);
-	        	
-	    		// create branch rate model
-	    		BranchRateModel branchRateModel = new DefaultBranchRateModel();
-
-//	    		 feed to sequence simulator and generate leaves
-	    		BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(treeModel, //
-	    		substitutionModel, //		
-	    		siteRateModel, //
-	    		branchRateModel, //
-	    		freqModel, //
-	    		sequenceLength //
-	    		);
-
-	    		System.out.println(beagleSequenceSimulator.simulate().toString());
-
-			} catch (Exception e) {
-				e.printStackTrace();
-			}//END: try-catch block
-			
-		} // END: main
 	 
 		// /////////////////
 		// ---DEBUGGING---//
 		// /////////////////
-	 
+	
+    public static void main(String [] args) {
+    	
+    	try {
+    	
+    		int sequenceLength = 10;
+
+    		// create tree
+    		NewickImporter importer = new NewickImporter("(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+    		Tree tree =  importer.importTree(null);
+    		TreeModel treeModel = new TreeModel(tree);
+    		
+    		// create site model
+    		GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+    		
+    		// create Frequency Model
+            Parameter freqs = new Parameter.Default(new double[]{0.25, 0.25, 0.25, 0.25});
+            FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+            List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+            frequencyModelList.add(freqModel);
+            
+            // create Epoch Model
+    		Parameter kappa1 = new Parameter.Default(1, 1);
+    		Parameter kappa2 = new Parameter.Default(1, 10);
+            HKY hky1 = new HKY(kappa1, freqModel);
+            HKY hky2 = new HKY(kappa2, freqModel);
+        	List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+			substModelList.add(hky1);
+			substModelList.add(hky2);
+			
+			Parameter epochTimes = new Parameter.Default(1, 20);
+			EpochBranchSubstitutionModel substitutionModel = new EpochBranchSubstitutionModel(
+					substModelList, //
+					frequencyModelList, //
+					epochTimes //
+			);
+        	
+    		// create branch rate model
+    		BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+//    		 feed to sequence simulator and generate leaves
+    		BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(treeModel, //
+    		substitutionModel, //		
+    		siteRateModel, //
+    		branchRateModel, //
+    		freqModel, //
+    		sequenceLength //
+    		);
+
+    		System.out.println(beagleSequenceSimulator.simulate().toString());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}//END: try-catch block
+		
+	} // END: main
+    
 		public static void printArray(int[] category) {
 			for (int i = 0; i < category.length; i++) {
 				System.out.println(category[i]);

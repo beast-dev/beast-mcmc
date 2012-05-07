@@ -74,8 +74,6 @@ public class BeagleSequenceSimulator {
 		this.probabilities = new double[categoryCount][stateCount * stateCount];
 		this.stateCount = stateCount;
 
-//		print2DArray(probabilities);
-		
 		// one partials buffer for each tip and two for each internal node (for store restore)
 		BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
@@ -84,10 +82,6 @@ public class BeagleSequenceSimulator {
 
 		// two matrices for each node less the root
 		matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
-
-		// one scaling buffer for each internal node plus an extra for the
-		// accumulation, then doubled for store/restore
-		BufferIndexHelper scaleBufferHelper = new BufferIndexHelper(scaleBufferCount, 0);
 
 		// null implies no restrictions
 		int[] resourceList = null;
@@ -102,7 +96,7 @@ public class BeagleSequenceSimulator {
 				eigenBufferHelper.getBufferCount(), // 
 				matrixBufferHelper.getBufferCount() + branchSubstitutionModel.getExtraBufferCount(treeModel), //
 				categoryCount, //
-				scaleBufferHelper.getBufferCount(), // 
+				scaleBufferCount,//scaleBufferHelper.getBufferCount(), // 
 				resourceList, //
 				preferenceFlags, //
 				requirementFlags //
@@ -111,6 +105,11 @@ public class BeagleSequenceSimulator {
 		double[] categoryRates = gammaSiteRateModel.getCategoryRates();
 		beagle.setCategoryRates(categoryRates);
 		
+//	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
+//        double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
+//        beagle.setCategoryWeights(0, categoryWeights);
+//        beagle.setStateFrequencies(0, frequencies);
+        
 	}// END: Constructor
 
 	public void setAncestralSequence(Sequence seq) {
@@ -219,35 +218,33 @@ public class BeagleSequenceSimulator {
 		matrixBufferHelper.flipOffset(nodeNum);
 		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
-		double edgeLengths[] = { tree.getBranchLength(node) };
-		int probabilityIndices[] = { bufferIndex };
 		int count = 1;
 
         eigenBufferHelper.flipOffset(eigenIndex);
 
-        branchSubstitutionModel.setEigenDecomposition(
-                beagle, eigenIndex, eigenBufferHelper, 0
-        );
-
-//		 System.out.println("eigenIndex:" + eigenIndex);
-//		 System.out.println("update indices:");
-//		 System.out.println(probabilityIndices[0]);
-//		 System.out.println("weights:");
-//		 System.out.println(edgeLengths[0]);
-		
+		branchSubstitutionModel.setEigenDecomposition(beagle, //
+				eigenIndex, //
+				eigenBufferHelper, // 
+				0 //
+				);
+        
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
 				eigenIndex, //
 				eigenBufferHelper, //
-				probabilityIndices, //
+				new int[] { bufferIndex }, //
 				null, //
 				null, //
-				edgeLengths, //
+				new double[] { tree.getBranchLength(node) }, //
 				count //
 				);
 
-		beagle.getTransitionMatrix(bufferIndex, probabilities);
+		beagle.getTransitionMatrix(bufferIndex, //
+				probabilities //
+				);
 
+		System.out.println("eigenIndex:" + eigenIndex);
 		System.out.println("bufferIndex: " + bufferIndex);
+		System.out.println("weight: " + tree.getBranchLength(node));
 		printArray(probabilities);
 		
 	}// END: getTransitionProbabilities
@@ -258,8 +255,8 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
-//		simulateEpochModel();
-		simulateHKY();
+		simulateEpochModel();
+//		simulateHKY();
 
 	} // END: main
 

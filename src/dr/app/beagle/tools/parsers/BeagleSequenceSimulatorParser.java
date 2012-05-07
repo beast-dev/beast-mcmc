@@ -54,19 +54,21 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-		BranchSubstitutionModel substitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
 		int sequenceLength = xo.getIntegerAttribute(SEQUENCE_LENGTH);
 
+		//TODO from siteModel
+		BranchSubstitutionModel substitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
+		
 		if (rateModel == null) {
 			rateModel = new DefaultBranchRateModel();
 		}
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(tree, //
-				substitutionModel, //
+//				substitutionModel, //
 				siteModel, //
 				rateModel, //
 				freqModel, //

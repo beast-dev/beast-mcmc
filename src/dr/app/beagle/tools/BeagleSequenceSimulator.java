@@ -8,6 +8,7 @@ import beagle.BeagleFactory;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
@@ -34,7 +35,6 @@ public class BeagleSequenceSimulator {
 	private int sequenceLength;
 	private FrequencyModel freqModel;
 	private int categoryCount;
-//	private int eigenCount;
 	private Beagle beagle;
 	private BufferIndexHelper eigenBufferHelper;
 	private BufferIndexHelper matrixBufferHelper;
@@ -73,7 +73,6 @@ public class BeagleSequenceSimulator {
 
 		this.categoryCount = siteRateModel.getCategoryCount();
 		this.probabilities = new double[categoryCount][stateCount * stateCount];
-//		this.eigenCount = eigenCount;
 		this.stateCount = stateCount;
 
 		// one partials buffer for each tip and two for each internal node (for store restore)
@@ -108,7 +107,7 @@ public class BeagleSequenceSimulator {
 				requirementFlags //
 				);
 
-	} // END: Constructor
+	}// END: Constructor
 
 	public void setAncestralSequence(Sequence seq) {
 		ancestralSequence = seq;
@@ -172,7 +171,7 @@ public class BeagleSequenceSimulator {
 		traverse(root, seq, category, alignment);
 
 		return alignment;
-	} // END: simulate
+	}// END: simulate
 
 	void traverse(NodeRef node, int[] parentSequence, int[] category,
 			SimpleAlignment alignment) {
@@ -187,16 +186,15 @@ public class BeagleSequenceSimulator {
 
 				getTransitionProbabilities(treeModel, child, i, probabilities[i]);
 
-				// printArray(probabilities[i]);
+				 printArray(probabilities[i]);
 
 			}
 
 			for (int i = 0; i < sequenceLength; i++) {
 
-				System.arraycopy(probabilities[category[i]], parentSequence[i]
-						* stateCount, cProb, 0, stateCount);
+				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 
-				printArray(cProb);
+//				printArray(cProb);
 
 				sequence[i] = MathUtils.randomChoicePDF(cProb);
 
@@ -263,6 +261,61 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
+//		simulateEpochModel();
+		simulateHKY();
+
+	} // END: main
+
+	static void simulateHKY() {
+
+		try {
+
+			int sequenceLength = 10;
+
+			// create tree
+			NewickImporter importer = new NewickImporter("(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+			Tree tree = importer.importTree(null);
+			TreeModel treeModel = new TreeModel(tree);
+
+			// create site model
+			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+
+			// create Frequency Model
+			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25, 0.25, 0.25 });
+			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
+
+			// create substitution model
+			Parameter kappa = new Parameter.Default(1, 1);
+			HKY hky = new HKY(kappa, freqModel);
+			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(hky, freqModel);
+			
+			// create branch rate model
+			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+			// feed to sequence simulator and generate leaves
+			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+					treeModel, //
+					substitutionModel, //		
+					siteRateModel, //
+					branchRateModel, //
+					freqModel, //
+					sequenceLength //
+			);
+
+			Sequence ancestralSequence = new Sequence();
+			ancestralSequence.appendSequenceString("TCAGGTCAAG");
+			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
+
+			System.out.println(beagleSequenceSimulator.simulate().toString());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+	}// END: simulateHKY
+	
+	static void simulateEpochModel() {
+
 		try {
 
 			int sequenceLength = 10;
@@ -310,14 +363,18 @@ public class BeagleSequenceSimulator {
 					sequenceLength //
 			);
 
+			Sequence ancestralSequence = new Sequence();
+			ancestralSequence.appendSequenceString("TCAGGTCAAG");
+			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
+
 			System.out.println(beagleSequenceSimulator.simulate().toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}// END: try-catch block
 
-	} // END: main
-
+	}// END : simulateEpochModel
+	
 	public static void printArray(int[] category) {
 		for (int i = 0; i < category.length; i++) {
 			System.out.println(category[i]);

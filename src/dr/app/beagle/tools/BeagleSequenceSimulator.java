@@ -2,6 +2,7 @@ package dr.app.beagle.tools;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -106,8 +107,8 @@ public class BeagleSequenceSimulator {
 		beagle.setCategoryRates(categoryRates);
 		
 //	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
+//	    beagle.setCategoryWeights(0, categoryWeights);
 //        double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
-//        beagle.setCategoryWeights(0, categoryWeights);
 //        beagle.setStateFrequencies(0, frequencies);
         
 	}// END: Constructor
@@ -121,7 +122,9 @@ public class BeagleSequenceSimulator {
 
 		if (seq.getLength() != sequenceLength) {
 
-			throw new RuntimeException("Ancestral sequence length has " + seq.getLength() + " characters " + "expecting " + sequenceLength + " characters");
+			throw new RuntimeException("Ancestral sequence length has "
+					+ seq.getLength() + " characters " + "expecting "
+					+ sequenceLength + " characters");
 
 		}
 
@@ -153,9 +156,6 @@ public class BeagleSequenceSimulator {
 			category[i] = MathUtils.randomChoicePDF(categoryProbs);
 		}
 
-//		printArray(categoryProbs);
-//		 printArray(category);
-		
 		int[] seq = new int[sequenceLength];
 
 		if (has_ancestralSequence) {
@@ -216,10 +216,14 @@ public class BeagleSequenceSimulator {
 
 		int nodeNum = node.getNumber();
 		matrixBufferHelper.flipOffset(nodeNum);
-		int bufferIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
-		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, bufferIndex);
+		int branchIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
 		int count = 1;
 
+		if(eigenIndex > 1) {
+			eigenIndex = eigenIndex- 1;
+		} 
+		
         eigenBufferHelper.flipOffset(eigenIndex);
 
 		branchSubstitutionModel.setEigenDecomposition(beagle, //
@@ -231,19 +235,19 @@ public class BeagleSequenceSimulator {
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
 				eigenIndex, //
 				eigenBufferHelper, //
-				new int[] { bufferIndex }, //
+				new int[] { branchIndex }, //
 				null, //
 				null, //
 				new double[] { tree.getBranchLength(node) }, //
 				count //
 				);
 
-		beagle.getTransitionMatrix(bufferIndex, //
+		beagle.getTransitionMatrix(branchIndex, //
 				probabilities //
 				);
 
 		System.out.println("eigenIndex:" + eigenIndex);
-		System.out.println("bufferIndex: " + bufferIndex);
+		System.out.println("bufferIndex: " + branchIndex);
 		System.out.println("weight: " + tree.getBranchLength(node));
 		printArray(probabilities);
 		
@@ -276,12 +280,13 @@ public class BeagleSequenceSimulator {
 			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
 			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 1);
+			Parameter kappa = new Parameter.Default(1, 10);
 			HKY hky = new HKY(kappa, freqModel);
 			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(hky, freqModel);
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+//			System.err.println(siteRateModel.getCategoryCount());
 			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model
@@ -326,7 +331,7 @@ public class BeagleSequenceSimulator {
 			frequencyModelList.add(freqModel);
 
 			// create Epoch Model
-			Parameter kappa1 = new Parameter.Default(1, 1);
+			Parameter kappa1 = new Parameter.Default(1, 10);
 			Parameter kappa2 = new Parameter.Default(1, 10);
 			HKY hky1 = new HKY(kappa1, freqModel);
 			HKY hky2 = new HKY(kappa2, freqModel);
@@ -375,9 +380,10 @@ public class BeagleSequenceSimulator {
 		}
 	}// END: printArray
 
-	public static void printArray(double[] category) {
-		for (int i = 0; i < category.length; i++) {
-			System.out.println(category[i]);
+	public static void printArray(double[] matrix) {
+		for (int i = 0; i < matrix.length; i++) {
+//			System.out.println(matrix[i]);
+			System.out.println(String.format(Locale.US, "%.20f", matrix[i]));
 		}
 		System.out.print("\n");
 	}// END: printArray

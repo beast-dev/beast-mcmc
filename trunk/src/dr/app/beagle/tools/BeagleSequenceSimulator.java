@@ -56,7 +56,8 @@ public class BeagleSequenceSimulator {
 		this.treeModel = treeModel;
 		this.gammaSiteRateModel = gammaSiteRateModel;
 		this.sequenceLength = sequenceLength;
-		this.freqModel = freqModel; // gammaSiteRateModel.getSubstitutionModel().getFrequencyModel();
+		this.freqModel = freqModel;
+//		this.freqModel = gammaSiteRateModel.getSubstitutionModel().getFrequencyModel();
 		this.branchSubstitutionModel = (BranchSubstitutionModel) gammaSiteRateModel.getModel(0); // branchSubstitutionModel;
 
 		int tipCount = treeModel.getExternalNodeCount();
@@ -221,19 +222,17 @@ public class BeagleSequenceSimulator {
 		int count = 1;
 
 		if(eigenIndex > 1) {
-			eigenIndex = eigenIndex- 1;
+			eigenIndex = eigenIndex - 1;
 		} 
 		
-        eigenBufferHelper.flipOffset(eigenIndex);
-
 		branchSubstitutionModel.setEigenDecomposition(beagle, //
-				eigenIndex, //
+				eigenIndex, // eigenBufferHelper.getOffsetIndex(eigenIndex),
 				eigenBufferHelper, // 
 				0 //
 				);
         
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-				eigenIndex, //
+				eigenIndex, // eigenBufferHelper.getOffsetIndex(eigenIndex),
 				eigenBufferHelper, //
 				new int[] { branchIndex }, //
 				null, //

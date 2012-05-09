@@ -8,7 +8,6 @@ import dr.evolution.util.Units;
 import dr.evomodel.tree.TreeLogger;
 import dr.evomodelxml.speciation.AlloppSpeciesNetworkModelParser;
 import dr.inference.loggers.LogColumn;
-import dr.inference.loggers.Loggable;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -89,28 +88,29 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	public final static int DITREES = 0;
 	public final static int TETRATREES = 1;
 	public final static int NUMBEROFPLOIDYLEVELS = 2;
-
+	
+	
 	
 	/*
 	 * Constructors. 
 	 * 
-	 */
-	// This one only works for one tetra tree case. 
-	// 
+	 */ 
 	public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apspecies, double popvalue, boolean onehyb) {
 		super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
 		apsp = apspecies;
 		addModel(apsp);
 		
+		int ndips = apsp.SpeciesWithinPloidyLevel(2).length;
 		if (onehyb) {
-			if (apsp.SpeciesWithinPloidyLevel(2).length == 0) {
+			if (ndips == 0) {
 				makeInitialOneTetraTreeNetwork();	
-			} else if (apsp.SpeciesWithinPloidyLevel(2).length == 2) {
-				makeInitialOneTetraTreeTwoDiploidsNetwork(LegType.JOINED);
+			} else if (ndips == 2) {
+				makeInitialOneTetraTreeTwoDiploidsNetwork(LegType.JOINED); // soon ood 2012-05-07
+			} else if (ndips > 2){
+				makeInitialNTetsNDipsNetwork();
 			} else {
-				// the restriction to two diploids is to avoid the need for topology changes in diptree
-				assert false; // grjtodo tetraonly need to deal with other cases
-			}				
+				assert false; // ndips == 1 not allowed
+			}
 		} else {
 			assert false; // grjtodo morethanonetree need to deal with other cases
 		}
@@ -144,7 +144,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	 * This constructor is for testing.
 	 */
 	public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apsp, 
-			AlloppSpeciesNetworkModelTEST.NetworkToMulLabTreeTEST nmltTEST) {
+			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST nmltTEST) {
 		super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
 		this.apsp = apsp;
 		popvalues = null;
@@ -166,6 +166,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		mullabtree = new AlloppMulLabTree(trees, apsp, popvalues);
 	}
 
+	
+	
+
+	
 	
 	public List<Citation> getCitations() {
 		List<Citation> citations = new ArrayList<Citation>();
@@ -216,6 +220,18 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		return count;
 	}
 
+	
+	
+	public void replaceDiploidHistory(AlloppDiploidHistory adh) {
+		assert adh.diphistOK();
+		for (int i = 0; i < trees[TETRATREES].length; ++i) {
+			AlloppDiploidHistory.HybHistory hh = adh.extractHybHistory(i);
+			trees[TETRATREES][i].replaceLegs(hh);
+		}
+		assert adh.diphistOK();
+		trees[DITREES][0] = new AlloppLeggedTree(adh.ditreeFromDipHist());
+	}
+	
 
 	/*
 	 * Called from AlloppSpeciesBindings to check if a node in a gene tree
@@ -266,9 +282,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	 */
 	public double geneTreeInNetworkLogLikelihood() {
 		boolean noDiploids = trees[DITREES].length == 0;
-		boolean twoDiploids = (trees[DITREES].length > 0  &&  
-				               trees[DITREES][0].getExternalNodeCount() == 2);
-		return mullabtree.geneTreeInMULTreeLogLikelihood(noDiploids, twoDiploids);
+		return mullabtree.geneTreeInMULTreeLogLikelihood(noDiploids);
 	}	
 
 	
@@ -300,6 +314,16 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	public AlloppLeggedTree getHomoploidTree(int pl, int t) {
 		return trees[pl][t];
 	}
+	
+	AlloppLeggedTree[][] getAllHomoploidTrees() {
+		return trees;
+	}
+	
+	
+	 AlloppSpeciesBindings getSpeciesBindings() {
+		 return apsp;
+	 }
+	
 	
 	public double getMaxFootHeight() {
 		// grjtodo tetraonly
@@ -384,6 +408,13 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     // MCMC operator which moves the legs of a tetraploid subtree, 
     // ie, changes the way it joins the diploid tree
 	public void moveLegs() {
+		
+		
+		/*
+		2012-05-07 hope ood
+		
+		
+		
 		// grjtodo tetraonly morethanonetree
 		// 2011-08-31 For now, the new legs are chosen from the same distribution regardless of current state.
 		// I am not clear what this distribution should be. There are always two times,
@@ -411,6 +442,8 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 			// change topology but not times 
 			trees[TETRATREES][0].moveLegTopology(diploidtipbitset(0), diploidtipbitset(1));
 		}
+		
+		*/
 		
 	}    
 
@@ -587,6 +620,54 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		trees[TETRATREES] = new AlloppLeggedTree[1];
 		trees[TETRATREES][0] = tettree;
 	}
+	
+	
+	
+	
+	/*
+	 * Make a random initial starting network. 
+	 */
+	private void makeInitialNTetsNDipsNetwork() {
+		// grjtodo. This is crude. Only one tet tree, never LegType.JOINED,
+		// only ever joins to terminal branches, squashes tet tree to fit.
+		trees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
+		Taxon[] dipspp = apsp.SpeciesWithinPloidyLevel(2);
+		Taxon[] tetspp = apsp.SpeciesWithinPloidyLevel(4);
+		
+		// make diploid tree
+		AlloppLeggedTree diptree = new AlloppLeggedTree(dipspp, LegType.NONE);
+		trees[DITREES] = new AlloppLeggedTree[1];
+		trees[DITREES][0] = diptree;
+		
+		// choose random tips, decide legtype, find max height for tet tree
+		int d0 = MathUtils.nextInt(dipspp.length);
+		int d1 = MathUtils.nextInt(dipspp.length);
+		LegType legtype = LegType.TWOBRANCH;
+		if (d0 == d1) {
+			legtype = LegType.ONEBRANCH;
+		} else {
+			legtype = LegType.TWOBRANCH;
+		}
+		NodeRef d0anc = diptree.getParent(diptree.getNode(d0));
+		NodeRef d1anc = diptree.getParent(diptree.getNode(d1));
+		double d0hgt = diptree.getNodeHeight(d0anc);	
+		double d1hgt = diptree.getNodeHeight(d1anc);
+		double maxteth = Math.min(d0hgt, d1hgt);
+		
+		// make tet tree, squash to fit into diploid tree, join up legs
+		AlloppLeggedTree tettree = new AlloppLeggedTree(tetspp, legtype);
+		double teth = tettree.getMaxHeight();
+		tettree.scaleAllHeights(0.9 * maxteth / teth);
+		FixedBitSet dip0 = diploidtipbitset(d0);
+		FixedBitSet dip1 = diploidtipbitset(d1);
+		tettree.setFootUnion(0, dip0);
+		tettree.setFootUnion(1, dip1);
+		
+		// add tet tree
+		trees[TETRATREES] = new AlloppLeggedTree[1];
+		trees[TETRATREES][0] = tettree;		
+	}	
+	
 	
 	
 	private FixedBitSet diploidtipbitset(int i) {
@@ -913,26 +994,29 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	
 	
 	
+
+	
 	/*
 	 * Test of conversion from network to mullab tree
-	 * 
-	 * 2011-05-07 It is called from testAlloppSpeciesNetworkModel.java.
+	 * 	 * 2011-05-07 It is called from testAlloppSpeciesNetworkModel.java.
 	 * I don't know how to put the code in there without
 	 * making lots public here.
 	 */
 	// grjtodo. should be possible to pass stuff in nmltTEST. Currently
 	// it just signals that this is indeed a test.
+
+	
+
 	public String testExampleNetworkToMulLabTree(
-			AlloppSpeciesNetworkModelTEST.NetworkToMulLabTreeTEST nmltTEST) {
+			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST nmltTEST) {
 		AlloppLeggedTree[][] testtrees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
 		
-		Taxon[] spp = new Taxon[5];
-		spp[0] = new Taxon("a");
-		spp[1] = new Taxon("b");
-		spp[2] = new Taxon("c");
-		spp[3] = new Taxon("d");
-		spp[4] = new Taxon("e");
-		// 1,2,3, or b,c,d to be tets, 0 and 4 dips
+		int ntaxa = apsp.numberOfSpecies();
+		Taxon[] spp = new Taxon[ntaxa];
+		for (int tx = 0; tx < ntaxa; ++tx) {
+			spp[tx] = new Taxon(apsp.apspeciesName(tx));
+		}
+		// 1,2,3 (names b,c,d) are tets, 0,4 are dips (names a,e)
 
 		double tetheight = 0.0;
 		// case 1. one tettree with one foot in each diploid branch
@@ -1043,6 +1127,258 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	}
 
 	
+	
+	/*
+	 * Test of conversion from network to diploid history
+	 */
+	// grjtodo implementation issues same as testExampleNetworkToDipHist()	
+	public AlloppDiploidHistory testExampleNetworkToDipHist2d3t(
+			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST netconvTEST) {
+		AlloppLeggedTree[][] testtrees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
+		
+		int ntaxa = apsp.numberOfSpecies();
+		Taxon[] spp = new Taxon[ntaxa];
+		for (int tx = 0; tx < ntaxa; ++tx) {
+			spp[tx] = new Taxon(apsp.apspeciesName(tx));
+		}
+		// 1,2,3 (names z,y,x) are tets, 0,4 are dips (names a,b)
+
+		double tetheight = 0.0;
+		// case 1. one tettree with one foot in each diploid branch
+		// case 2. one tettree with both feet in one diploid branch
+		// case 3. one tettree with one joined
+		// case 4. two tettrees, 2+1, first with one foot in each diploid
+		// branch, second joined
+		// case 5. three tettrees, 1+1+1, one of each type of feet, as in cases 1-3
+
+		int ntettrees = 0;
+		switch (netconvTEST.testcase) {
+		case 1:
+		case 2:
+		case 3:
+			ntettrees = 1;
+			break;
+		case 4:
+			ntettrees = 2;
+			break;
+		case 5:
+			ntettrees = 3;
+			break;
+		}
+		AlloppLeggedTree tettrees[] = new AlloppLeggedTree[ntettrees];
+
+		Taxon[] tets123 = { spp[1], spp[2], spp[3] };
+		Taxon[] tets12 = { spp[1], spp[2] };
+		Taxon[] tets1 = { spp[1] };
+		Taxon[] tets2 = { spp[2] };
+		Taxon[] tets3 = { spp[3] };
+		switch (netconvTEST.testcase) {
+		case 1:
+			tettrees[0] = new AlloppLeggedTree(tets123, netconvTEST, LegType.TWOBRANCH, 0.0);
+			tetheight = tettrees[0].getMaxFootHeight();
+			break;
+		case 2:
+			tettrees[0] = new AlloppLeggedTree(tets123, netconvTEST, LegType.ONEBRANCH, 0.0);
+			tetheight = tettrees[0].getMaxFootHeight();
+			break;
+		case 3:
+			tettrees[0] = new AlloppLeggedTree(tets123, netconvTEST, LegType.JOINED, 0.0);
+			tetheight = tettrees[0].getMaxFootHeight();
+			break;
+		case 4:
+			tettrees[0] = new AlloppLeggedTree(tets12, netconvTEST, LegType.TWOBRANCH, 0.0);
+			tettrees[1] = new AlloppLeggedTree(tets3, netconvTEST, LegType.JOINED, 0.0);
+			tetheight = tettrees[0].getMaxFootHeight();
+			tetheight = Math.max(tetheight, tettrees[1].getMaxFootHeight());
+			break;
+		case 5:
+			tettrees[0] = new AlloppLeggedTree(tets1, netconvTEST, LegType.TWOBRANCH, 0.0);
+			tettrees[1] = new AlloppLeggedTree(tets2, netconvTEST, LegType.ONEBRANCH, 0.0);
+			tettrees[2] = new AlloppLeggedTree(tets3, netconvTEST, LegType.JOINED, 0.0);
+			tetheight = tettrees[0].getMaxFootHeight();
+			tetheight = Math.max(tetheight, tettrees[1].getMaxFootHeight());
+			tetheight = Math.max(tetheight, tettrees[2].getMaxFootHeight());
+			break;
+		}
+
+		AlloppLeggedTree ditrees[] = new AlloppLeggedTree[1];
+		Taxon[] dips = { spp[0], spp[4] };
+		ditrees[0] = new AlloppLeggedTree(dips, netconvTEST, LegType.NONE, tetheight + 4.0);
+
+		testtrees[0] = ditrees;
+		testtrees[1] = tettrees;
+
+
+		FixedBitSet a = new FixedBitSet(8);
+		a.set(0);
+		FixedBitSet b = new FixedBitSet(8);
+		b.set(7);
+		switch (netconvTEST.testcase) {
+		case 1:
+			// leg 0 to node a, leg to node e
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			testtrees[TETRATREES][0].setFootUnion(1, b);
+			break;
+		case 2:
+			// both legs to node a,
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			testtrees[TETRATREES][0].setFootUnion(1, a);
+			break;
+		case 3:
+			// only leg to node a
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			break;
+		case 4:
+			// first tet tree (with two tips): leg 0 to node a, leg to node e
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			testtrees[TETRATREES][0].setFootUnion(1, b);
+			// second tet tree, only leg to node a
+			testtrees[TETRATREES][1].setFootUnion(0, a);
+			break;
+		case 5:
+			// first tet tree. leg 0 to node a, leg to node e
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			testtrees[TETRATREES][0].setFootUnion(1, b);
+			// second tet tree. both legs to node a,
+			testtrees[TETRATREES][1].setFootUnion(0, a);
+			testtrees[TETRATREES][1].setFootUnion(1, a);
+			// third tet tree. only leg to node a
+			testtrees[TETRATREES][2].setFootUnion(0, a);
+			break;
+		}
+		AlloppDiploidHistory testdiphist = new AlloppDiploidHistory(testtrees, apsp);
+		return testdiphist;
+	}
+
+	
+	
+	/*
+	 * Test of conversion from network to diploid history
+	 */
+	// grjtodo implementation issues same as testExampleNetworkToDipHist()	
+	public AlloppDiploidHistory testExampleNetworkToDipHist3d1t(
+			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST netconvTEST) {
+		AlloppLeggedTree[][] testtrees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
+		
+		int ntaxa = apsp.numberOfSpecies();
+		Taxon[] spp = new Taxon[ntaxa];
+		for (int tx = 0; tx < ntaxa; ++tx) {
+			spp[tx] = new Taxon(apsp.apspeciesName(tx));
+		}
+		// 0,1,2 (names a,b,c) are dips, 3 is tet (name z)
+
+		FixedBitSet a = new FixedBitSet(5);
+		a.set(0);
+		FixedBitSet b = new FixedBitSet(5);
+		b.set(1);
+		FixedBitSet c = new FixedBitSet(5);
+		c.set(2);
+		FixedBitSet ab = new FixedBitSet(5);
+		ab.set(0);
+		ab.set(1);
+		
+		// case 1. ((a,b),c), tet from ab and c
+		// case 2. ((a,b),c), tet from a and a
+		// case 3. ((a,b),c), tet from ab split
+
+		int ntettrees = 1;
+		AlloppLeggedTree tettrees[] = new AlloppLeggedTree[ntettrees];
+
+		Taxon[] tets = { spp[3] };
+		switch (netconvTEST.testcase) {
+		case 1:
+			tettrees[0] = new AlloppLeggedTree(tets, netconvTEST, LegType.TWOBRANCH, 0.0);
+			break;
+		case 2:
+			tettrees[0] = new AlloppLeggedTree(tets, netconvTEST, LegType.ONEBRANCH, 0.0);
+			break;
+		case 3:
+			tettrees[0] = new AlloppLeggedTree(tets, netconvTEST, LegType.JOINED, 0.0);
+			break;
+		}
+
+		AlloppLeggedTree ditrees[] = new AlloppLeggedTree[1];
+		Taxon[] dips = { spp[0], spp[1], spp[2] };
+		ditrees[0] = new AlloppLeggedTree(dips, netconvTEST, LegType.NONE, 0.0);
+
+		testtrees[0] = ditrees;
+		testtrees[1] = tettrees;
+
+		switch (netconvTEST.testcase) {
+		case 1:
+			// leg 0 to node ab, leg 1 to node c
+			testtrees[TETRATREES][0].setFootUnion(0, ab);
+			testtrees[TETRATREES][0].setFootUnion(1, c);
+			break;
+		case 2:
+			// legs 0 and 1 to node a
+			testtrees[TETRATREES][0].setFootUnion(0, a);
+			testtrees[TETRATREES][0].setFootUnion(1, a);
+			break;
+		case 3:
+			// leg 0 to node ab, no leg 1
+			testtrees[TETRATREES][0].setFootUnion(0, ab);
+			break;
+		}
+		AlloppDiploidHistory testdiphist = new AlloppDiploidHistory(testtrees, apsp);
+		return testdiphist;
+	}
+	
+	
+	
+	
+	/*
+	 * Test of conversion from network to diploid history
+	 */
+	// grjtodo implementation issues same as testExampleNetworkToDipHist()	
+	public AlloppDiploidHistory testExampleNetworkToDipHist4d2t(
+			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST netconvTEST) {
+		AlloppLeggedTree[][] testtrees = new AlloppLeggedTree[NUMBEROFPLOIDYLEVELS][];
+		
+		int ntaxa = apsp.numberOfSpecies();
+		Taxon[] spp = new Taxon[ntaxa];
+		for (int tx = 0; tx < ntaxa; ++tx) {
+			spp[tx] = new Taxon(apsp.apspeciesName(tx));
+		}
+		assert(ntaxa==6);
+		// 0,1,2,3 (names a,b,c,d) are dips, 4,5 are tets (names z,y)
+		
+		FixedBitSet a =   new FixedBitSet(8);   a.set(0);
+		FixedBitSet b =   new FixedBitSet(8);   b.set(1);
+		FixedBitSet c =   new FixedBitSet(8);   c.set(2);
+		FixedBitSet d =   new FixedBitSet(8);   d.set(3);
+		FixedBitSet ab =  new FixedBitSet(8);  ab.set(0);  ab.set(1);
+		FixedBitSet abc = new FixedBitSet(8); abc.set(0); abc.set(1); abc.set(2);
+		
+		// case 1. (((a,b),c),d), tet from ab and d
+		int ntettrees = 1;
+		AlloppLeggedTree tettrees[] = new AlloppLeggedTree[ntettrees];
+
+		Taxon[] tets = { spp[4], spp[5] };
+		switch (netconvTEST.testcase) {
+		case 1:
+			tettrees[0] = new AlloppLeggedTree(tets, netconvTEST, LegType.TWOBRANCH, 0.0);
+			break;
+		}
+
+		AlloppLeggedTree ditrees[] = new AlloppLeggedTree[1];
+		Taxon[] dips = { spp[0], spp[1], spp[2], spp[3] };
+		ditrees[0] = new AlloppLeggedTree(dips, netconvTEST, LegType.NONE, 0.0);
+
+		testtrees[0] = ditrees;
+		testtrees[1] = tettrees;
+
+		switch (netconvTEST.testcase) {
+		case 1:
+			// leg 0 to node ab, leg 1 to node d
+			testtrees[TETRATREES][0].setFootUnion(0, ab);
+			testtrees[TETRATREES][0].setFootUnion(1, d);
+			break;
+		}
+		AlloppDiploidHistory testdiphist = new AlloppDiploidHistory(testtrees, apsp);
+		return testdiphist;
+	}
+
 	
 	/*
 	 * for testing

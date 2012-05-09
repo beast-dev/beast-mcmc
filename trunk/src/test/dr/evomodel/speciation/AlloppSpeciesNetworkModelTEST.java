@@ -6,11 +6,16 @@ import org.junit.Test;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Taxon;
+import dr.evomodel.speciation.AlloppDiploidHistory;
+import dr.evomodel.speciation.AlloppDiploidHistory.HybHistory;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
+import dr.evomodel.speciation.AlloppDiploidHistory.DipHistTESTINGNode;
 import dr.evomodel.speciation.AlloppSpeciesBindings.*;
 import dr.evomodel.speciation.AlloppMSCoalescent;
 import dr.evomodel.tree.TreeModel;
+import dr.math.MathUtils;
+import dr.util.AlloppMisc;
 
 
 /**
@@ -71,20 +76,22 @@ public class AlloppSpeciesNetworkModelTEST {
 	public void setUp() throws Exception {
 	}
 
-	/*
-	 * The test is too strict in that it tests against a specific newick 
-	 * string when there many (128) possible correct ones.
-	 */
+
+
+	
 	@Test
 	public void testAlloppSpeciesNetworkModel() {
 		testNetworkToMulLabTree();
+		testNetworkToDipHist2d3t();
+		testNetworkToDipHist3d1t();
+		testNetworkToDipHist4d2t();
 		testLogLhoodGTreeInNetwork2tets5indivs();
 	}
 	
 	
-	public class NetworkToMulLabTreeTEST {
+	public class NetworkConversionTEST {
 		public int testcase;
-		NetworkToMulLabTreeTEST(int testcase) {
+		NetworkConversionTEST(int testcase) {
 			this.testcase = testcase;
 		}
 	}
@@ -106,6 +113,12 @@ public class AlloppSpeciesNetworkModelTEST {
 
 	
 	
+	
+	/*
+	 *  ****************** TESTING MulLabTree conversion ******************
+	 * 
+	 */
+		
 	public void testNetworkToMulLabTree() {
 		ApSpInfo[] apspecies = new ApSpInfo[5];
 		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
@@ -114,25 +127,214 @@ public class AlloppSpeciesNetworkModelTEST {
 		apspecies[3] = new ApSpInfo("d", 4, new Individual[0]);
 		apspecies[4] = new ApSpInfo("e", 2, new Individual[0]);
 
-		NetworkToMulLabTreeTEST nmltTEST = new NetworkToMulLabTreeTEST(-1);
+		NetworkConversionTEST nmltTEST = new NetworkConversionTEST(-1);
 		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, nmltTEST);
 		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, nmltTEST);
+		
+		System.out.println("Tests of Network To MulLabTree conversion with dips a,e and tets b,c,d");   
 		String newick;
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMulLabTreeTEST(1));
-		assertEquals(0,  newick.compareTo("((a0,((b0,c0),d0)),(e0,((b1,c1),d1)))"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMulLabTreeTEST(2));
-		assertEquals(0,  newick.compareTo("(((a0,((b0,c0),d0)),((b1,c1),d1)),e0)"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMulLabTreeTEST(3));
-		assertEquals(0,  newick.compareTo("((a0,(((b0,c0),d0),((b1,c1),d1))),e0)"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMulLabTreeTEST(4));
-		assertEquals(0,  newick.compareTo("(((a0,(b0,c0)),(d0,d1)),(e0,(b1,c1)))"));
-		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkToMulLabTreeTEST(5));
-		assertEquals(0,  newick.compareTo("(((((a0,b0),c0),c1),(d0,d1)),(e0,b1))"));
+		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkConversionTEST(1));
+		System.out.println(newick);                             
+		assertEquals(0,  newick.compareTo("((((b0,c0),d0),a0),(((b1,c1),d1),e0))"));
+		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkConversionTEST(2));
+		System.out.println(newick);
+		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),a0),((b1,c1),d1)),e0)"));
+		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkConversionTEST(3));
+		System.out.println(newick);
+		assertEquals(0,  newick.compareTo("(((((b0,c0),d0),((b1,c1),d1)),a0),e0)"));
+		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkConversionTEST(4));
+		System.out.println(newick);
+		assertEquals(0,  newick.compareTo("((((b0,c0),a0),(d0,d1)),((b1,c1),e0))"));
+		newick = testASNM.testExampleNetworkToMulLabTree(new NetworkConversionTEST(5));
+		System.out.println(newick);
+		assertEquals(0,  newick.compareTo("(((((a0,b0),c0),c1),(d0,d1)),(b1,e0))"));
+		System.out.println("");
+		System.out.println("");
 		}
 	
 	
 	
+		
+	
+	/*
+	 *  ****************** TESTING DiploidHistory conversion ******************
+	 * 
+	 */
+	
+	public String DipHistTESTINGNodeAsText(DipHistTESTINGNode dhnode) {
+		String s =  dhnode.name + " ";
+		while (s.length() < 10) { s += " "; }
+		s += dhnode.num;
+		while (s.length() < 14) { s += " "; }
+		if ( dhnode.ch0 >= 0) { s += dhnode.ch0; }
+		while (s.length() < 18) { s += " "; }
+		if (dhnode.ch1 >= 0) { s +=  dhnode.ch1; }
+		while (s.length() < 22) { s += " "; }
+		s += "height " + dhnode.height;
+		while (s.length() < 40) { s += " "; }
+		s += "tt " + dhnode.tettree;
+		while (s.length() < 46) { s += " "; }
+		s += "leg " + dhnode.leg;
+		while (s.length() < 56) { s += " "; }
+		s += AlloppMisc.FixedBitSetasText(dhnode.union);
+		return s;
+	}
+	
+	
+	public String hybHistoryAsText(HybHistory hybhist) {
+		String s = "hybheight = " + hybhist.hybheight;
+		if (hybhist.legs.length == 2) {
+			s += " leg0 " + hybhist.legs[0].height + " " + AlloppMisc.FixedBitSetasText(hybhist.legs[0].footUnion);
+			s += " leg1 " + hybhist.legs[1].height + " " + AlloppMisc.FixedBitSetasText(hybhist.legs[1].footUnion);
+		} else {
+			s += " leg0 " + hybhist.legs[0].height + " " + AlloppMisc.FixedBitSetasText(hybhist.legs[0].footUnion);
+			s += " splitheight " + hybhist.splitheight;
+		}
+		return s;
+	}
+
+	
+
+	
+	public void printDipHist(AlloppDiploidHistory diphist) {
+		String s = diphist.diphistTreeAsUniqueNewick();
+		System.out.println(s);
+		DipHistTESTINGNode[] dhnodes = diphist.diphistTreeAsNodeList();
+		for (int n = 0; n < dhnodes.length; ++n) {
+			System.out.println(DipHistTESTINGNodeAsText(dhnodes[n]));
+		}
+		System.out.println("");
+
+		System.out.println("HybHistory");
+		int ntts = diphist.nofTettrees();
+		for (int tt = 0; tt < ntts; tt++) {
+			HybHistory hybhist = diphist.extractHybHistory(tt);
+			System.out.println("Tetree " + tt);
+			System.out.println(hybHistoryAsText(hybhist));
+		}
+
+		System.out.println("Ditree");
+		SimpleTree ditree = diphist.ditreeFromDipHist();
+		System.out.println(Tree.Utils.uniqueNewick(ditree, ditree.getRoot()));
+		System.out.println("");
+		System.out.println("");
+	}
+	
+	
+	
+	
+	public void testNetworkToDipHist2d3t() {
+		System.out.println("Tests of Network to DipHist with 2 dips and 3 tets");
+		ApSpInfo[] apspecies = new ApSpInfo[5];
+		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
+		apspecies[1] = new ApSpInfo("z", 4, new Individual[0]);
+		apspecies[2] = new ApSpInfo("y", 4, new Individual[0]);
+		apspecies[3] = new ApSpInfo("x", 4, new Individual[0]);
+		apspecies[4] = new ApSpInfo("b", 2, new Individual[0]);
+
+		NetworkConversionTEST netdhTEST = new NetworkConversionTEST(-1);
+		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, netdhTEST);
+		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
+		AlloppDiploidHistory diphist;
+		String newickcase[] = { "((a0,tt0leg0),(b0,tt0leg1))",
+								"(((a0,tt0leg0),tt0leg1),b0)",
+								"(((tt0leg0,tt0leg1),a0),b0)",
+								"(((a0,tt0leg0),(tt1leg0,tt1leg1)),(b0,tt0leg1))",
+								"(((((a0,tt0leg0),tt1leg0),tt1leg1),(tt2leg0,tt2leg1)),(b0,tt0leg1))"
+				              };
+		String casedescription[] = {
+				"(a,b), tet from a and b",
+				"(a,b), tet from a twice",
+				"(a,b), tet from a split",
+				"(a,b), tet 0 from a and b, tet 1 from a split",
+				"(a,b), tet 0 from a and b, tet 1 from a twice, tet 2 from a split"
+		};
+		for (int tst=1; tst <= 5; tst++) {
+			diphist = testASNM.testExampleNetworkToDipHist2d3t(new NetworkConversionTEST(tst));
+			String s = diphist.diphistTreeAsUniqueNewick();
+			System.out.println("Test with 2 dips, 3 tets, case " + tst + " " + casedescription[tst-1]);
+			System.out.println(s);
+			assertEquals(0, s.compareTo(newickcase[tst-1]));
+			printDipHist(diphist);
+		}
+	}	
+
+
+
+	public void testNetworkToDipHist3d1t() {
+		System.out.println("Tests of Network to DipHist with 3 dips a,b,c and 1 tet z");
+		ApSpInfo[] apspecies = new ApSpInfo[4];
+		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
+		apspecies[1] = new ApSpInfo("b", 2, new Individual[0]);
+		apspecies[2] = new ApSpInfo("c", 2, new Individual[0]);
+		apspecies[3] = new ApSpInfo("z", 4, new Individual[0]);
+
+		NetworkConversionTEST netdhTEST = new NetworkConversionTEST(-1);
+		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, netdhTEST);
+		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
+		AlloppDiploidHistory diphist;
+		String newickcase[] = {
+				"(((a0,b0),tt0leg0),(c0,tt0leg1))",
+				"((((a0,tt0leg0),tt0leg1),b0),c0)",
+				"(((a0,b0),(tt0leg0,tt0leg1)),c0)"
+		};
+		String casedescription[] = {
+				"((a,b),c), tet from ab and c",
+				"((a,b),c), tet from a and a",
+				"((a,b),c), tet from ab split"
+		};
+
+		for (int tst=1; tst <= 3; tst++) {
+			diphist = testASNM.testExampleNetworkToDipHist3d1t(new NetworkConversionTEST(tst));
+			String s = diphist.diphistTreeAsUniqueNewick();
+			System.out.println("Test with 3 dips 1 tet, case " + tst + " " + casedescription[tst-1]);
+			System.out.println(s);
+			assertEquals(0, s.compareTo(newickcase[tst-1]));
+			printDipHist(diphist);
+		}
+	}	
+	
+	
+
+	public void testNetworkToDipHist4d2t() {
+		System.out.println("Tests of Network to DipHist with 4 dips a,b,c,d and 2 tets z,y");
+		ApSpInfo[] apspecies = new ApSpInfo[6];
+		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);
+		apspecies[1] = new ApSpInfo("b", 2, new Individual[0]);
+		apspecies[2] = new ApSpInfo("c", 2, new Individual[0]);
+		apspecies[3] = new ApSpInfo("d", 2, new Individual[0]);
+		apspecies[4] = new ApSpInfo("z", 4, new Individual[0]);
+		apspecies[5] = new ApSpInfo("y", 4, new Individual[0]);
+
+		NetworkConversionTEST netdhTEST = new NetworkConversionTEST(-1);
+		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, netdhTEST);
+		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
+		AlloppDiploidHistory diphist;
+		String newickcase[] = { "((((a0,b0),tt0leg0),c0),(d0,tt0leg1))"
+		};
+		String casedescription[] = {
+				"(((a,b),c),d) tet from ab and c which speciates later",
+		};
+		for (int tst=1; tst <= 1; tst++) {
+			diphist = testASNM.testExampleNetworkToDipHist4d2t(new NetworkConversionTEST(tst));
+			String s = diphist.diphistTreeAsUniqueNewick();
+			System.out.println("Test with 4 dips 2 tets, case " + tst + " " + casedescription[tst-1]);
+			System.out.println(s);
+			assertEquals(0, s.compareTo(newickcase[tst-1]));
+			printDipHist(diphist);
+		}
+	}			
+		
+		
+		
+/*
+ *  ****************** TESTING LIKELIHOOD CALCULATION ******************
+ * 
+ */
+		
+		
 	public void testLogLhoodGTreeInNetwork2tets5indivs() {
+		System.out.println("Test of coalescent likelihood calculation with 0 dips, 2 tets, 5 individuals");
 		Taxon a1taxa[] = new Taxon[2];
 		Taxon a2taxa[] = new Taxon[2];
 		Taxon b1taxa[] = new Taxon[2];
@@ -192,22 +394,22 @@ last two cols are gene tree node times, and species tree node and hybridization 
 
 
 # 	 0   1   2   5   6   8   9  11  13  14
-#	 .01 2   #   .03 3   #  .03 3   #  .01 2  
-#		       #           #          #          0.01
-#		br1    #    br2    #    br6   #   br5
-#	         #           #         #           0.02
-#	 .02 2   #  .04 2    # .04 1   #  .02 1             0.03 tetra split
+#  .01 2   #   .03 3   #  .03 3   #  .01 2  
+#          #           #          #          0.01
+#   br1    #    br2    #    br6   #   br5
+#          #           #         #           0.02
+#  .02 2   #  .04 2    # .04 1   #  .02 1             0.03 tetra split
 #        .06 4         #      .06  2         0.04
-#		                    #          
-#		       br3          #       br7          0.05
-#		     .05,.06 2      +    .05,.06 2                0.06 hyb
-#		       br4          #       br8
-#		                    #                    0.08
-#		        .06  2      #   .06 1                     0.09 diploid split
-#		                 .12  3 
+#  	                    #          
+#          br3          #       br7          0.05
+#        .05,.06 2      +    .05,.06 2                0.06 hyb
+#          br4          #       br8
+#                       #                    0.08
+#           .06  2      #   .06 1                     0.09 diploid split
+#                    .12  3 
 #                                            0.11
-#		                   br9
-#		                 .12  1                  0.12
+#                      br9
+#                    .12  1                  0.12
 
 
 
@@ -320,6 +522,7 @@ llhood
 		AlloppMSCoalescent testASMSC = new AlloppMSCoalescent(testASB, testASNM, llgtnTEST);
 		double llhd = testASMSC.getLogLikelihood();
 		String mullabtext = testASNM.mullabTreeAsText();
+		System.out.println("MUL-tree produced by testLogLhoodGTreeInNetwork2tets5indivs()");
 		System.out.println(mullabtext);
 		assertEquals(17.87787855, llhd, 1e-6);
 	}

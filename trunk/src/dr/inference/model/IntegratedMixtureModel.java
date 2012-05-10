@@ -48,14 +48,14 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
     //    public static final String MIXTURE_WEIGHTS = "weights";
     public static final String NORMALIZE = "normalize";
 
-    public IntegratedMixtureModel(List<AbstractModelLikelihood> likelihoodList) {
+    public IntegratedMixtureModel(List<AbstractModelLikelihood> likelihoodList, Parameter weights) {
         super(MIXTURE_MODEL);
         this.likelihoodList = likelihoodList;
-//        this.mixtureWeights = mixtureWeights;
+        this.mixtureWeights = weights;
         for (AbstractModelLikelihood model : likelihoodList) {
             addModel(model);
         }
-//        addVariable(mixtureWeights);
+        addVariable(mixtureWeights);
 
         StringBuilder sb = new StringBuilder();
         sb.append("Constructing an integrated finite mixture model\n");
@@ -95,16 +95,28 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
 
     private double getLogLikelihoodSum() {
         double logSum = Double.NEGATIVE_INFINITY;
-        double pi = 1.0 / likelihoodList.size();
-
+        double bad = 0;
         for (int i = 0; i < likelihoodList.size(); ++i) {
-//            double pi = mixtureWeights.getParameterValue(i);
+            double pi = getWeight(i);
             if (pi > 0.0) {
                 logSum = LogTricks.logSum(logSum,
                         Math.log(pi) + likelihoodList.get(i).getLogLikelihood());
             }
+            bad += likelihoodList.get(i).getLogLikelihood() * pi;
         }
-        return logSum;
+        if (powerPrior) {
+            return bad;
+        } else {
+            return logSum;
+        }
+    }
+
+    private double getWeight(final int dim) {
+        if (useParameter) {
+            return mixtureWeights.getParameterValue(dim);
+        } else {
+            return 1.0 / likelihoodList.size();
+        }
     }
 
     public void makeDirty() {
@@ -130,11 +142,28 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
         @Override
         public double getDoubleValue() {
             double logSum = getLogLikelihoodSum();
-            return likelihoodList.get(dim).getLogLikelihood() - logSum;
+            double logLike = likelihoodList.get(dim).getLogLikelihood() +  Math.log(getWeight(dim));
+
+
+
+            double x =  logLike - logSum;
+
+            if (inProbSpace) {
+                x = Math.exp(x);
+            }
+
+//            System.err.println(logLike + " : " + logSum + " " + dim + " " + x);
+//            System.exit(-1);
+            return x;
         }
 
         private final int dim;
+        private final boolean inProbSpace = true;
     }
+
+
+    private static final boolean useParameter = true;
+     private static final boolean powerPrior = false;
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -169,7 +198,7 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
             if (!normalized(weights))
                 throw new XMLParseException("Parameter +" + weights.getId() + " must lie on the simplex");
 
-            return new IntegratedMixtureModel(likelihoodList);
+            return new IntegratedMixtureModel(likelihoodList, weights);
         }
 
         private boolean normalized(Parameter p) {
@@ -202,7 +231,7 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
         };
     };
 
-    //    private final Parameter mixtureWeights;
+        private final Parameter mixtureWeights;
     List<AbstractModelLikelihood> likelihoodList;
 
     public List<Citation> getCitations() {

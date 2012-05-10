@@ -113,7 +113,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
         }
         writer.writeTag("parameter",
                 new Attribute[] {
-                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),
+                        new Attribute.Default<String>("id", partition.getPrefix() + "count"),  // TODO Pass codon partition number, so can construct unique name
                         new Attribute.Default<String>("value", matrix.toString()) },
                 true);
 
@@ -139,9 +139,9 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     private void writeCodonPartitionedRobustCounting(XMLWriter writer,
                                                      AbstractPartitionData partition) {
 
-        if (DEBUG) {
-            System.err.println("DEBUG: Writing RC for " + partition.getName());
-        }
+//        if (DEBUG) {
+//            System.err.println("DEBUG: Writing RC for " + partition.getName());
+//        }
 
         writer.writeComment("Robust counting for: " + partition.getName());
 
@@ -230,25 +230,37 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             }
 
             if (component.reconstructAtNodes(partition)) {
-                writer.writeOpenTag("trait",
-                        new Attribute[] {
-                                new Attribute.Default<String>("name", "states"),
-                                new Attribute.Default<String>("tag", partition.getPrefix() + "state")
-                        }
-                );
-                writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
-                writer.writeCloseTag("trait");
+                int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
+                for (int i = 1; i <=cpCount; ++i) {
+                    String tagString = cpCount == 1 ? partition.getPrefix() + "state" :
+                            partition.getPrefix() + "CP" + i + ".state";
+                    String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
+                            partition.getPrefix() + "CP" + i + ".treeLikelihood";
+                    writer.writeOpenTag("trait",
+                            new Attribute[] {
+                                    new Attribute.Default<String>("name", "states"),
+                                    new Attribute.Default<String>("tag", tagString)
+                            }
+                    );
+                    writer.writeIDref("ancestralTreeLikelihood", likeString);
+                    writer.writeCloseTag("trait");
+                }
             }
 
             if (component.isCountingStates(partition)) {
-                writer.writeOpenTag("trait",
-                        new Attribute[] {
-                                new Attribute.Default<String>("name", partition.getPrefix() + "count"),
-                                new Attribute.Default<String>("tag", partition.getPrefix() + "count")
-                        }
-                );
-                writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
-                writer.writeCloseTag("trait");
+                int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
+                for (int i = 1; i <=cpCount; ++i) {
+                    String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
+                            partition.getPrefix() + "CP" + i + ".treeLikelihood";
+                    writer.writeOpenTag("trait",
+                            new Attribute[] {
+                                    new Attribute.Default<String>("name", partition.getPrefix() + "count"),
+                                    new Attribute.Default<String>("tag", partition.getPrefix() + "count")
+                            }
+                    );
+                    writer.writeIDref("ancestralTreeLikelihood", likeString);
+                    writer.writeCloseTag("trait");
+                }
             }
         }
     }
@@ -260,7 +272,8 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
             if (component.dNdSRobustCounting(partition)) {
                 writeDNdSLogger(writer, partition);
-            } else if (component.reconstructAtMRCA(partition)) {
+            }
+            if (component.reconstructAtMRCA(partition)) {
                 writeStateLogger(writer, partition, component.getMRCATaxonSet(partition));
             }
         }
@@ -275,18 +288,26 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>("logEvery", Integer.toString(options.logEvery)),
                 new Attribute.Default<String>("fileName", partition.getName() + STATE_LOG_SUFFIX) });
 
-        writer.writeOpenTag("ancestralTrait",
-                        new Attribute[]{new Attribute.Default<String>("name", partition.getName())});
-        writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
-        writer.writeIDref("ancestralTreeLikelihood", partition.getPrefix() + "treeLikelihood");
+        int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
+        for (int i = 1; i <=cpCount; ++i) {
+            String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
+                    partition.getPrefix() + "CP" + i + ".treeLikelihood";
 
-        if (mrcaId != null) {
-            writer.writeOpenTag("mrca");
-            writer.writeIDref("taxa", mrcaId);
-            writer.writeCloseTag("mrca");
+            String nameString = cpCount == 1 ? partition.getName() :
+                    "CP" + i + "." + partition.getName();
 
+            writer.writeOpenTag("ancestralTrait",
+                    new Attribute[]{new Attribute.Default<String>("name", nameString)});
+            writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
+            writer.writeIDref("ancestralTreeLikelihood", likeString);
+
+            if (mrcaId != null) {
+                writer.writeOpenTag("mrca");
+                writer.writeIDref("taxa", mrcaId);
+                writer.writeCloseTag("mrca");
+            }
+            writer.writeCloseTag("ancestralTrait");
         }
-        writer.writeCloseTag("ancestralTrait");
 
         writer.writeCloseTag("log");
 

@@ -40,7 +40,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.EnumSet;
 
 /**
  * @author Alexei Drummond
@@ -192,7 +191,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCombo.addItem("Tree Root");
         if (options.taxonSets.size() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
-                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")");
+//                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")"); // This causes an error because MRCA(*) is not a defined taxonSet
+                mrcaReconstructionCombo.addItem(taxonSet.getId());
             }
             if (selectedItem != null) {
                 mrcaReconstructionCombo.setSelectedItem(selectedItem);

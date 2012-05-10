@@ -74,6 +74,11 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
     private JCheckBox dNdSRobustCountingCheck = new JCheckBox(
             "Reconstruct synonymous/non-synonymous change counts");
 
+
+    private JTextArea dNnSText = new JTextArea(
+            "This model requires a 3-partition codon model to be selected in " +
+            "the Site model for this partition before it can be selected.");
+
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
 //    private JCheckBox dNdSCountingCheck = new JCheckBox(
@@ -143,6 +148,18 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             public void itemStateChanged(final ItemEvent itemEvent) {
                 optionsChanged();
                 ancestralStatesPanel.fireModelChanged();
+
+                // The following is only necessary is simpleCounting XOR robustCounting
+//                if (itemEvent.getItem() == countingCheck) {
+//                    boolean enableRC = !countingCheck.isSelected() && ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
+//                    dNdSRobustCountingCheck.setEnabled(enableRC);
+//                    dNnSText.setEnabled(enableRC);
+//                }
+//
+//                if (itemEvent.getItem() == dNdSRobustCountingCheck) {
+//                    boolean enableSimpleCounting = !dNdSRobustCountingCheck.isSelected();
+//                    countingCheck.setEnabled(enableSimpleCounting);
+//                }
             }
         };
 
@@ -254,6 +271,14 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addComponent(text);
 
             addComponent(countingCheck);
+            boolean enableSimpleCounting = true;
+
+            // TODO Simple counting is currently not available for codon partitioned models due to BEAUti limitation
+            if (ancestralStatesComponent.dNdSRobustCountingAvailable(partition)) {
+                enableSimpleCounting = false;
+                countingCheck.setSelected(false);
+            }
+            countingCheck.setEnabled(enableSimpleCounting);
 
             if (dNdSRobustCountingAvailable) {
                 addSeparator();
@@ -268,15 +293,18 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
                 addComponent(dNdSRobustCountingCheck);
 
-                text = new JTextArea(
-                        "This model requires a 3-partition codon model to be selected in " +
-                                "the Site model for this partition before it can be selected.");
-                text.setColumns(40);
-                text.setBorder(BorderFactory.createEmptyBorder(0, 32, 0, 0));
-                PanelUtils.setupComponent(text);
-                addComponent(text);
-                dNdSRobustCountingCheck.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
-                text.setEnabled(ancestralStatesComponent.dNdSRobustCountingAvailable(partition));
+                dNnSText.setColumns(40);
+                dNnSText.setBorder(BorderFactory.createEmptyBorder(0, 32, 0, 0));
+                PanelUtils.setupComponent(dNnSText);
+                addComponent(dNnSText);
+
+                boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
+                       // && !ancestralStatesComponent.isCountingStates(partition);
+                dNdSRobustCountingCheck.setEnabled(enableRC);
+                dNnSText.setEnabled(enableRC);
+                if (!enableRC) {
+                    dNdSRobustCountingCheck.setSelected(false);
+                }
             }
         }
 

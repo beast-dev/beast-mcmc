@@ -10,6 +10,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -35,6 +36,7 @@ public class BeagleSequenceSimulator {
 	private int replications;
 	private FrequencyModel freqModel;
 	private int categoryCount;
+	private int eigenCount;
 	private Beagle beagle;
 	private BufferIndexHelper eigenBufferHelper;
 	private BufferIndexHelper matrixBufferHelper;
@@ -61,10 +63,10 @@ public class BeagleSequenceSimulator {
 //		this.freqModel = gammaSiteRateModel.getSubstitutionModel().getFrequencyModel();
 		this.branchSubstitutionModel = branchSubstitutionModel;
 //		this.branchSubstitutionModel = (BranchSubstitutionModel) gammaSiteRateModel.getModel(0);
-
+		this.eigenCount = branchSubstitutionModel.getEigenCount();
+		
 		int tipCount = treeModel.getExternalNodeCount();
 		int nodeCount = treeModel.getNodeCount();
-		int eigenCount = branchSubstitutionModel.getEigenCount();
 		int internalNodeCount = treeModel.getInternalNodeCount();
 		int scaleBufferCount = internalNodeCount + 1;
 
@@ -98,7 +100,7 @@ public class BeagleSequenceSimulator {
 				stateCount, //
 				patternCount, //
 				eigenBufferHelper.getBufferCount(), // 
-				matrixBufferHelper.getBufferCount() + branchSubstitutionModel.getExtraBufferCount(treeModel), //
+				matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(treeModel), //
 				categoryCount, //
 				scaleBufferCount,//scaleBufferHelper.getBufferCount(), // 
 				resourceList, //
@@ -106,14 +108,6 @@ public class BeagleSequenceSimulator {
 				requirementFlags //
 				);
 
-		double[] categoryRates = gammaSiteRateModel.getCategoryRates();
-		beagle.setCategoryRates(categoryRates);
-		
-//	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
-//	    beagle.setCategoryWeights(0, categoryWeights);
-//        double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
-//        beagle.setStateFrequencies(0, frequencies);
-        
 	}// END: Constructor
 
 	public void setAncestralSequence(Sequence seq) {
@@ -177,6 +171,22 @@ public class BeagleSequenceSimulator {
 		alignment.setDataType(freqModel.getDataType());
 		alignment.setReportCountStatistics(false);
 
+        for (int i = 0; i < eigenCount; i++) {
+            eigenBufferHelper.flipOffset(i);
+
+            branchSubstitutionModel.setEigenDecomposition(
+                    beagle, i, eigenBufferHelper, 0
+            );
+
+    }
+		
+		double[] categoryRates = gammaSiteRateModel.getCategoryRates();
+		beagle.setCategoryRates(categoryRates);   
+//	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
+//	    beagle.setCategoryWeights(0, categoryWeights);
+//        double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
+//        beagle.setStateFrequencies(0, frequencies);
+		
 		traverse(root, seq, category, alignment);
 
 		return alignment;
@@ -223,19 +233,8 @@ public class BeagleSequenceSimulator {
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
 		int count = 1;
 
-		//TODO
-		if(eigenIndex > 1) {
-			eigenIndex = eigenIndex - 1;
-		} 
-		
-		branchSubstitutionModel.setEigenDecomposition(beagle, //
-				eigenIndex, // eigenBufferHelper.getOffsetIndex(eigenIndex),
-				eigenBufferHelper, // 
-				0 //
-				);
-        
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-				eigenIndex, // eigenBufferHelper.getOffsetIndex(eigenIndex),
+				eigenIndex,//eigenBufferHelper.getOffsetIndex(eigenIndex),
 				eigenBufferHelper, //
 				new int[] { branchIndex }, //
 				null, //
@@ -261,7 +260,7 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
-//		simulateEpochModel();
+		simulateEpochModel();
 		simulateHKY();
 
 	} // END: main

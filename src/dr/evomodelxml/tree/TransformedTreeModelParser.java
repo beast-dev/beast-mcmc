@@ -25,10 +25,7 @@
 
 package dr.evomodelxml.tree;
 
-import dr.evomodel.tree.SingleScalarTreeTransform;
-import dr.evomodel.tree.TransformedTreeModel;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.tree.TreeTransform;
+import dr.evomodel.tree.*;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -40,6 +37,7 @@ import java.util.logging.Logger;
 public class TransformedTreeModelParser extends AbstractXMLObjectParser {
 
     public static final String TRANSFORMED_TREE_MODEL = "transformedTreeModel";
+    public static final String VERSION = "version";
 
     public String getParserName() {
         return TRANSFORMED_TREE_MODEL;
@@ -64,7 +62,13 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
         }
         Logger.getLogger("dr.evomodel").info("Creating a transformed tree model, '" + id + "'");
 
-        TreeTransform transform = new SingleScalarTreeTransform(scale);
+        TreeTransform transform;
+
+        if (xo.getAttribute(VERSION, "generic").compareTo("new") == 0) {
+            transform = new ProgressiveScalarTreeTransform(scale);
+        } else {
+            transform = new SingleScalarTreeTransform(scale);
+        }
 
         return new TransformedTreeModel(id, tree, transform);
     }
@@ -89,5 +93,6 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
             new XMLSyntaxRule[]{
                     new ElementRule(TreeModel.class),
                     new ElementRule(Parameter.class),
+                    AttributeRule.newStringRule(VERSION, true),
             };
 }

@@ -32,7 +32,7 @@ public class BeagleSequenceSimulator {
 	private TreeModel treeModel;
 	private GammaSiteRateModel gammaSiteRateModel;
 	private BranchSubstitutionModel branchSubstitutionModel;
-	private int sequenceLength;
+	private int replications;
 	private FrequencyModel freqModel;
 	private int categoryCount;
 	private Beagle beagle;
@@ -45,20 +45,22 @@ public class BeagleSequenceSimulator {
 	private Sequence ancestralSequence = null;
 	private double[][] probabilities;
 
-	// TODO: get freqModel from branchSubstModel
+	// TODO: simplify parser
 	public BeagleSequenceSimulator(TreeModel treeModel, //
+			BranchSubstitutionModel branchSubstitutionModel,
 			GammaSiteRateModel gammaSiteRateModel, //
 			BranchRateModel branchRateModel, //
 			FrequencyModel freqModel, //
-			int sequenceLength //
+			int replications //
 	) {
 
 		this.treeModel = treeModel;
 		this.gammaSiteRateModel = gammaSiteRateModel;
-		this.sequenceLength = sequenceLength;
+		this.replications = replications;
 		this.freqModel = freqModel;
 //		this.freqModel = gammaSiteRateModel.getSubstitutionModel().getFrequencyModel();
-		this.branchSubstitutionModel = (BranchSubstitutionModel) gammaSiteRateModel.getModel(0); // branchSubstitutionModel;
+		this.branchSubstitutionModel = branchSubstitutionModel;
+//		this.branchSubstitutionModel = (BranchSubstitutionModel) gammaSiteRateModel.getModel(0);
 
 		int tipCount = treeModel.getExternalNodeCount();
 		int nodeCount = treeModel.getNodeCount();
@@ -68,7 +70,7 @@ public class BeagleSequenceSimulator {
 
 		int compactPartialsCount = tipCount;
 
-		int patternCount = sequenceLength;
+		int patternCount = replications;
 
 		int stateCount = freqModel.getDataType().getStateCount();
 
@@ -121,16 +123,16 @@ public class BeagleSequenceSimulator {
 
 	int[] sequence2intArray(Sequence seq) {
 
-		if (seq.getLength() != sequenceLength) {
+		if (seq.getLength() != replications) {
 
 			throw new RuntimeException("Ancestral sequence length has "
 					+ seq.getLength() + " characters " + "expecting "
-					+ sequenceLength + " characters");
+					+ replications + " characters");
 
 		}
 
-		int array[] = new int[sequenceLength];
-		for (int i = 0; i < sequenceLength; i++) {
+		int array[] = new int[replications];
+		for (int i = 0; i < replications; i++) {
 			array[i] = freqModel.getDataType().getState(seq.getChar(i));
 		}
 
@@ -139,7 +141,7 @@ public class BeagleSequenceSimulator {
 
 	Sequence intArray2Sequence(int[] seq, NodeRef node) {
 		StringBuilder sSeq = new StringBuilder();
-		for (int i = 0; i < sequenceLength; i++) {
+		for (int i = 0; i < replications; i++) {
 			sSeq.append(freqModel.getDataType().getCode(seq[i]));
 		}
 
@@ -151,13 +153,13 @@ public class BeagleSequenceSimulator {
 		SimpleAlignment alignment = new SimpleAlignment();
 		NodeRef root = treeModel.getRoot();
 		double[] categoryProbs = gammaSiteRateModel.getCategoryProportions();
-		int[] category = new int[sequenceLength];
+		int[] category = new int[replications];
 
-		for (int i = 0; i < sequenceLength; i++) {
+		for (int i = 0; i < replications; i++) {
 			category[i] = MathUtils.randomChoicePDF(categoryProbs);
 		}
 
-		int[] seq = new int[sequenceLength];
+		int[] seq = new int[replications];
 
 		if (has_ancestralSequence) {
 
@@ -165,7 +167,7 @@ public class BeagleSequenceSimulator {
 
 		} else {
 
-			for (int i = 0; i < sequenceLength; i++) {
+			for (int i = 0; i < replications; i++) {
 				seq[i] = MathUtils.randomChoicePDF(freqModel.getFrequencies());
 
 			}
@@ -173,7 +175,7 @@ public class BeagleSequenceSimulator {
 		}// END: ancestral sequence check
 
 		alignment.setDataType(freqModel.getDataType());
-		alignment.setReportCountStatistics(true);
+		alignment.setReportCountStatistics(false);
 
 		traverse(root, seq, category, alignment);
 
@@ -186,7 +188,7 @@ public class BeagleSequenceSimulator {
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
 
 			NodeRef child = treeModel.getChild(node, iChild);
-			int[] sequence = new int[sequenceLength];
+			int[] sequence = new int[replications];
 			double[] cProb = new double[stateCount];
 
 			for (int i = 0; i < categoryCount; i++) {
@@ -195,7 +197,7 @@ public class BeagleSequenceSimulator {
 				
 			}
 
-			for (int i = 0; i < sequenceLength; i++) {
+			for (int i = 0; i < replications; i++) {
 
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
 				sequence[i] = MathUtils.randomChoicePDF(cProb);
@@ -221,6 +223,7 @@ public class BeagleSequenceSimulator {
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
 		int count = 1;
 
+		//TODO
 		if(eigenIndex > 1) {
 			eigenIndex = eigenIndex - 1;
 		} 
@@ -258,8 +261,8 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
-		simulateEpochModel();
-//		simulateHKY();
+//		simulateEpochModel();
+		simulateHKY();
 
 	} // END: main
 
@@ -285,7 +288,6 @@ public class BeagleSequenceSimulator {
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-//			System.err.println(siteRateModel.getCategoryCount());
 			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model
@@ -294,6 +296,7 @@ public class BeagleSequenceSimulator {
 			// feed to sequence simulator and generate leaves
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					treeModel, //
+					substitutionModel,//
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
@@ -355,6 +358,7 @@ public class BeagleSequenceSimulator {
 			// feed to sequence simulator and generate leaves
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 					treeModel, //
+					substitutionModel,//
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //

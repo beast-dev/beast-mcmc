@@ -19,16 +19,16 @@ import dr.xml.XMLSyntaxRule;
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	public static final String SEQUENCE_LENGTH = "sequenceLength";
+	public static final String REPLICATIONS = "replications";
 
 	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new ElementRule(TreeModel.class),
-			new ElementRule(BranchSubstitutionModel.class, true),
+			new ElementRule(BranchSubstitutionModel.class),
 			new ElementRule(GammaSiteRateModel.class),
 			new ElementRule(BranchRateModel.class),
 			new ElementRule(FrequencyModel.class),
 			new ElementRule(Sequence.class, true),
-			AttributeRule.newIntegerRule(SEQUENCE_LENGTH) };
+			AttributeRule.newIntegerRule(REPLICATIONS) };
 
 	@Override
 	public String getParserName() {
@@ -54,21 +54,34 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
-		int sequenceLength = xo.getIntegerAttribute(SEQUENCE_LENGTH);
+		int sequenceLength = xo.getIntegerAttribute(REPLICATIONS);
 
-		//TODO from siteModel
-		BranchSubstitutionModel substitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
+		//TODO:
+		////////////////////////////////////////////////////////////
 		
+//        if (xo.hasChildNamed("siteModel")) {
+//        	
+//            XMLObject cxo = xo.getChild("siteModel");
+//    		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) cxo.getChild(BranchSubstitutionModel.class);
+//    		siteModel.addModel(branchSubstitutionModel);
+//    		
+//        } else {
+//        	System.err.println("FUBAR");
+//        }
+
+		////////////////////////////////////////////////////////////       
+        
 		if (rateModel == null) {
 			rateModel = new DefaultBranchRateModel();
 		}
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(tree, //
-//				substitutionModel, //
+				branchSubstitutionModel, //
 				siteModel, //
 				rateModel, //
 				freqModel, //

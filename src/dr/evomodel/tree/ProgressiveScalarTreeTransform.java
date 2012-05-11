@@ -1,5 +1,5 @@
 /*
- * SingleScalarTreeTransform.java
+ * ProgressiveScalarTreeTransform.java
  *
  * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -25,17 +25,19 @@
 
 package dr.evomodel.tree;
 
+import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
  */
-public class SingleScalarTreeTransform extends TreeTransform {
+public class ProgressiveScalarTreeTransform extends TreeTransform {
 
-    public SingleScalarTreeTransform(Parameter scale) {
-        super("singleScalarTreeTransform");
+    public ProgressiveScalarTreeTransform(Parameter scale) {
+        super("progressiveScalarTreeTransform");
         scale.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         this.scale = scale;
         addVariable(scale);
@@ -45,12 +47,16 @@ public class SingleScalarTreeTransform extends TreeTransform {
         if (tree.isExternal(node)) {
             return originalHeight;
         }
-        final double rootHeight = tree.getRootHeightParameter().getParameterValue(0);
-        return rootHeight - scale.getParameterValue(0) * (rootHeight - originalHeight);
+        if (tree.isRoot(node)) {
+            return tree.getRootHeightParameter().getParameterValue(0);
+        }
+
+        final double parentHeight = tree.getNodeHeight(tree.getParent(node));
+        return parentHeight - scale.getParameterValue(0) * (parentHeight - originalHeight);
     }
 
     public String getInfo() {
-        return "Linear transform by " + scale.getId();
+        return "Linear, progressive transform by " + scale.getId();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
@@ -58,4 +64,25 @@ public class SingleScalarTreeTransform extends TreeTransform {
     }
 
     private final Parameter scale;
+
+    // TODO Move to JUnitTest
+
+    public static void main(String[] args) {
+        try {
+            NewickImporter importer = new NewickImporter("(0:3.0,(1:2.0,(2:1.0,3:1):1.0):1.0);");
+            Tree tree = importer.importTree(null);
+
+            Parameter scale = new Parameter.Default(0.5);
+
+//            TreeTransform xform = new SingleScalarTreeTransform(scale);
+            TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
+
+            TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
+
+            System.err.println(model.toString());
+
+        } catch (Exception e) {
+
+        }
+    }
 }

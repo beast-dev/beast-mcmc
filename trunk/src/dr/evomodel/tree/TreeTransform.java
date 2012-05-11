@@ -39,7 +39,7 @@ public abstract class TreeTransform extends AbstractModel {
         super(name);
     }
 
-    public abstract double transform(TreeModel tree, NodeRef node, double originalHeight);
+    public abstract double transform(TransformedTreeModel tree, NodeRef node, double originalHeight);
 
     public abstract String getInfo();
 

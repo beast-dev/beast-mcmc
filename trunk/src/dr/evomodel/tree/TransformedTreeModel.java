@@ -27,8 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
-import dr.inference.model.Parameter;
-import dr.inference.model.Variable;
+import dr.inference.model.Model;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
@@ -44,36 +43,29 @@ import java.util.logging.Logger;
  */
 public class TransformedTreeModel extends TreeModel implements Citable {
 
-    public TransformedTreeModel(String id, Tree tree, Parameter scale) {
+    public TransformedTreeModel(String id, Tree tree, TreeTransform treeTransform) {
         super(id, tree);
-
-        scale.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
-        this.scale = scale;
-        addVariable(scale);
+        this.treeTransform = treeTransform;
+        addModel(treeTransform);
 
         Logger log = Logger.getLogger("dr.evomodel.tree");
-        log.info("Creating a transform tree. Linear scaling parameter: " + scale.getId() + "\n\tPlease cite:");
+        log.info("Creating a transform tree.");
+        log.info(treeTransform.getInfo() + "\n\tPlease cite:");
         log.info(Citable.Utils.getCitationString(this));
     }
 
     public double getNodeHeight(NodeRef node) {
-        return transform(node, super.getNodeHeight(node));
+        return treeTransform.transform(this, node, super.getNodeHeight(node));
     }
 
-    private double transform(NodeRef node, double originalHeight) {
-        if (isExternal(node)) {
-            return originalHeight;
-        }
-        final double rootHeight = getRootHeightParameter().getParameterValue(0);
-        return rootHeight - scale.getParameterValue(0) * (rootHeight - originalHeight);
-    }
+    // TODO 1. Reparameterize via parentNodeHeight
+    // TODO 2. Deal with branchRateModel issues and no values from external nodes
 
-
-    public void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        if (variable == scale) {
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        if (model == treeTransform) {
             pushTreeChangedEvent(); // All internal node heights have changed!
         } else {
-            super.handleVariableChangedEvent(variable, index, type);
+            super.handleModelChangedEvent(model, object, index);
         }
     }
 
@@ -85,5 +77,5 @@ public class TransformedTreeModel extends TreeModel implements Citable {
         return citations;
     }
 
-    Parameter scale;
+    private final TreeTransform treeTransform;
 }

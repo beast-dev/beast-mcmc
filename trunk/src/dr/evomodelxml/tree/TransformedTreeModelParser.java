@@ -25,8 +25,10 @@
 
 package dr.evomodelxml.tree;
 
+import dr.evomodel.tree.SingleScalarTreeTransform;
 import dr.evomodel.tree.TransformedTreeModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodel.tree.TreeTransform;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
@@ -37,10 +39,10 @@ import java.util.logging.Logger;
  */
 public class TransformedTreeModelParser extends AbstractXMLObjectParser {
 
-    public static final String STAR_TREE_MODEL = "transformedTreeModel";
+    public static final String TRANSFORMED_TREE_MODEL = "transformedTreeModel";
 
     public String getParserName() {
-        return STAR_TREE_MODEL;
+        return TRANSFORMED_TREE_MODEL;
     }
 
     /**
@@ -62,7 +64,9 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
         }
         Logger.getLogger("dr.evomodel").info("Creating a transformed tree model, '" + id + "'");
 
-        return new TransformedTreeModel(id, tree, scale);
+        TreeTransform transform = new SingleScalarTreeTransform(scale);
+
+        return new TransformedTreeModel(id, tree, transform);
     }
 
     //************************************************************************

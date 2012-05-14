@@ -64,8 +64,12 @@ public class TransformedTreeModelParser extends AbstractXMLObjectParser {
 
         TreeTransform transform;
 
-        if (xo.getAttribute(VERSION, "generic").compareTo("new") == 0) {
+        String version = xo.getAttribute(VERSION, "generic");
+
+        if (version.compareTo("new") == 0) {
             transform = new ProgressiveScalarTreeTransform(scale);
+        } else if (version.compareTo("branch") == 0) {
+            transform = new ProgressiveScalarTreeTransform(tree, scale);
         } else {
             transform = new SingleScalarTreeTransform(scale);
         }

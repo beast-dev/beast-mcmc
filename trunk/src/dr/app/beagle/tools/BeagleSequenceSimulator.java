@@ -201,12 +201,12 @@ public class BeagleSequenceSimulator {
 			int[] sequence = new int[replications];
 			double[] cProb = new double[stateCount];
 
-			for (int i = 0; i < categoryCount; i++) {
-				
-				getTransitionProbabilities(treeModel, child, i, probabilities[i]);
-				
-			}
+//			for (int i = 0; i < categoryCount; i++) {
+//				getTransitionProbabilities(treeModel, child, i, probabilities[i]);
+//			}
 
+			getTransitionProbabilities(treeModel, child, probabilities);
+			
 			for (int i = 0; i < replications; i++) {
 
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
@@ -223,9 +223,9 @@ public class BeagleSequenceSimulator {
 		}// END: child nodes loop
 	}// END: traverse
 
-	// TODO:
-	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
-			double[] probabilities) {
+	// TODO
+	void getTransitionProbabilities(Tree tree, NodeRef node,
+			double[][] probabilities) {
 
 		int nodeNum = node.getNumber();
 		matrixBufferHelper.flipOffset(nodeNum);
@@ -234,7 +234,7 @@ public class BeagleSequenceSimulator {
 		int count = 1;
 
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-				eigenIndex,//eigenBufferHelper.getOffsetIndex(eigenIndex),
+				eigenIndex, //
 				eigenBufferHelper, //
 				new int[] { branchIndex }, //
 				null, //
@@ -243,16 +243,50 @@ public class BeagleSequenceSimulator {
 				count //
 				);
 
+		
+		double tmp[] = new double[categoryCount * stateCount * stateCount];
+		
 		beagle.getTransitionMatrix(branchIndex, //
-				probabilities //
+				tmp //
 				);
 
-		System.out.println("eigenIndex:" + eigenIndex);
-		System.out.println("bufferIndex: " + branchIndex);
-		System.out.println("weight: " + tree.getBranchLength(node));
-		printArray(probabilities);
+		for (int i = 0; i < categoryCount; i++) {
+
+			System.arraycopy(tmp, i * stateCount, probabilities[i], 0, stateCount * stateCount);
 		
+		}
+
 	}// END: getTransitionProbabilities
+	
+//	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
+//			double[] probabilities) {
+//
+//		int nodeNum = node.getNumber();
+//		matrixBufferHelper.flipOffset(nodeNum);
+//		int branchIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
+//		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
+//		int count = 1;
+//
+//		branchSubstitutionModel.updateTransitionMatrices(beagle, //
+//				eigenIndex, //
+//				eigenBufferHelper, //
+//				new int[] { branchIndex }, //
+//				null, //
+//				null, //
+//				new double[] { tree.getBranchLength(node) }, //
+//				count //
+//				);
+//		
+//		beagle.getTransitionMatrix(branchIndex, //
+//				probabilities //
+//				);
+//
+//		System.out.println("eigenIndex:" + eigenIndex);
+//		System.out.println("bufferIndex: " + branchIndex);
+//		System.out.println("weight: " + tree.getBranchLength(node));
+//		printArray(probabilities);
+//		
+//	}// END: getTransitionProbabilities
 
 	// /////////////////
 	// ---DEBUGGING---//

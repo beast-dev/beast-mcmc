@@ -28,22 +28,42 @@ package dr.evomodel.tree;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeTrait;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
 /**
  * @author Marc A. Suchard
+ * @author Philippe Lemey
  */
 public class ProgressiveScalarTreeTransform extends TreeTransform {
 
     public ProgressiveScalarTreeTransform(Parameter scale) {
+        this(scale, null);
+    }
+
+    public ProgressiveScalarTreeTransform(TreeModel tree, Parameter scale) {
+        this(scale, new TrialTreeParameterModel(tree, scale, false, false, TreeTrait.Intent.BRANCH));
+    }
+
+    public ProgressiveScalarTreeTransform(Parameter scale, TrialTreeParameterModel treeParameterModel) {
         super("progressiveScalarTreeTransform");
-        scale.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+        int dim = 1;
+        this.treeParameterModel = treeParameterModel;
         this.scale = scale;
-        addVariable(scale);
+
+        if (treeParameterModel != null) {
+            dim = treeParameterModel.getParameterSize();
+            addModel(treeParameterModel);
+        } else {
+            addVariable(scale);
+        }
+        scale.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dim));
     }
 
     public double transform(TransformedTreeModel tree, NodeRef node, double originalHeight) {
+        // Early exit
         if (tree.isExternal(node)) {
             return originalHeight;
         }
@@ -51,12 +71,25 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
             return tree.getRootHeightParameter().getParameterValue(0);
         }
 
+        // Do recursive work
         final double parentHeight = tree.getNodeHeight(tree.getParent(node));
-        return parentHeight - scale.getParameterValue(0) * (parentHeight - originalHeight);
+        return parentHeight - getScaleForNode(tree, node) * (parentHeight - originalHeight);
+    }
+
+    private double getScaleForNode(TransformedTreeModel tree, NodeRef node) {
+        if (treeParameterModel != null) {
+            return treeParameterModel.getNodeValue(tree, node);
+        } else {
+            return scale.getParameterValue(0);
+        }
     }
 
     public String getInfo() {
         return "Linear, progressive transform by " + scale.getId();
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged(treeParameterModel);
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
@@ -64,25 +97,15 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
     }
 
     private final Parameter scale;
+    private final TrialTreeParameterModel treeParameterModel;
 
     // TODO Move to JUnitTest
-
-    public static void main(String[] args) {
-        try {
-            NewickImporter importer = new NewickImporter("(0:3.0,(1:2.0,(2:1.0,3:1):1.0):1.0);");
-            Tree tree = importer.importTree(null);
-
-            Parameter scale = new Parameter.Default(0.5);
-
-//            TreeTransform xform = new SingleScalarTreeTransform(scale);
-            TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
-
-            TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
-
-            System.err.println(model.toString());
-
-        } catch (Exception e) {
-
-        }
+    public static void main(String[] args) throws Exception {
+        NewickImporter importer = new NewickImporter("(0:3.0,(1:2.0,(2:1.0,3:1):1.0):1.0);");
+        Tree tree = importer.importTree(null);
+        Parameter scale = new Parameter.Default(0.5);
+        TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
+        TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
+        System.err.println(model.toString());
     }
 }

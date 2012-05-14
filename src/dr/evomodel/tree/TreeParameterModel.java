@@ -1,7 +1,7 @@
 /*
  * TreeParameterModel.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -44,7 +44,7 @@ import dr.inference.model.Variable;
  */
 public class TreeParameterModel extends AbstractModel implements TreeTrait<Double> {
 
-    private final TreeModel tree;
+    protected final TreeModel tree;
 
     // The tree parameter;
     private final Parameter parameter;
@@ -89,8 +89,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         this.intent = intent;
 
         int dim = parameter.getDimension();
-        int treeSize = tree.getNodeCount();
-        if (!includeRoot) treeSize -= 1;
+        int treeSize = getParameterSize();
         if (dim != treeSize) {
 //            System.err.println("WARNING: setting dimension of parameter to match tree branch count ("
 //                    + dim + " != " + treeSize + ")"); // http://code.google.com/p/beast-mcmc/issues/detail?id=385
@@ -102,6 +101,14 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
         rootNodeNumber = tree.getRoot().getNumber();
         storedRootNodeNumber = rootNodeNumber;
+    }
+
+    public int getParameterSize() {
+        int treeSize = tree.getNodeCount();
+        if (includeRoot) {
+            treeSize -= 1;
+        }
+        return treeSize;
     }
 
     public void handleModelChangedEvent(Model model, Object object, int index) {
@@ -153,12 +160,12 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
         parameter.setParameterValue(index, value);
     }
 
-    private int getNodeNumberFromParameterIndex(int parameterIndex) {
+    protected int getNodeNumberFromParameterIndex(int parameterIndex) {
         if (!includeRoot && parameterIndex >= tree.getRoot().getNumber()) return parameterIndex + 1;
         return parameterIndex;
     }
 
-    private int getParameterIndexFromNodeNumber(int nodeNumber) {
+    protected int getParameterIndexFromNodeNumber(int nodeNumber) {
         if (!includeRoot && nodeNumber > tree.getRoot().getNumber()) return nodeNumber - 1;
         return nodeNumber;
     }

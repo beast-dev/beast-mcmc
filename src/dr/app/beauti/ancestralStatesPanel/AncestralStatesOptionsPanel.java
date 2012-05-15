@@ -77,7 +77,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     private JTextArea dNnSText = new JTextArea(
             "This model requires a 3-partition codon model to be selected in " +
-            "the Site model for this partition before it can be selected.");
+                    "the Site model for this partition before it can be selected.");
 
     // dNdS robust counting is automatic if RC is turned on for a codon
     // partitioned data set.
@@ -86,7 +86,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     final BeautiOptions options;
 
-//    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR, SequenceErrorType.BASE_ALL).toArray());
+    //    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR, SequenceErrorType.BASE_ALL).toArray());
     JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
 
     AncestralStatesComponentOptions ancestralStatesComponent;
@@ -249,9 +249,12 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
 
             addComponent(ancestralReconstructionCheck);
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+            FlowLayout layout = new FlowLayout(FlowLayout.LEFT);
+            layout.setHgap(0);
+            JPanel panel = new JPanel(layout);
             panel.setOpaque(false);
-            panel.setBorder(BorderFactory.createEmptyBorder());
+            panel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
             panel.add(mrcaReconstructionCheck);
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);
@@ -271,6 +274,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addComponent(text);
 
             addComponent(countingCheck);
+
             boolean enableSimpleCounting = true;
 
             // TODO Simple counting is currently not available for codon partitioned models due to BEAUti limitation
@@ -299,7 +303,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
                 addComponent(dNnSText);
 
                 boolean enableRC = ancestralStatesComponent.dNdSRobustCountingAvailable(partition);
-                       // && !ancestralStatesComponent.isCountingStates(partition);
+                // && !ancestralStatesComponent.isCountingStates(partition);
                 dNdSRobustCountingCheck.setEnabled(enableRC);
                 dNnSText.setEnabled(enableRC);
                 if (!enableRC) {

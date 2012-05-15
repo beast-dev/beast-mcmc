@@ -105,7 +105,7 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
 
     public int getParameterSize() {
         int treeSize = tree.getNodeCount();
-        if (includeRoot) {
+        if (!includeRoot) {
             treeSize -= 1;
         }
         return treeSize;

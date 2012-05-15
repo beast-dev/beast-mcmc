@@ -137,10 +137,12 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
     }
 
     protected void storeState() {
-    } // no additional state needs storing
+        storedBetaDistribution = betaDistribution;
+    }
 
     protected void restoreState() {
-    } // no additional state needs restoring
+        betaDistribution = storedBetaDistribution;
+    }
 
     protected void acceptState() {
     } // no additional state needs accepting
@@ -175,6 +177,7 @@ public class BetaDistributionModel extends AbstractModel implements ParametricDi
     private double length = 0.0;
 
     private BetaDistribution betaDistribution = null;
+    private BetaDistribution storedBetaDistribution = null;
 
 }
 

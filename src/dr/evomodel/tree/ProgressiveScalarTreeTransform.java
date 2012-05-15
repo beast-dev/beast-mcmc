@@ -32,12 +32,18 @@ import dr.evolution.tree.TreeTrait;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
+import dr.util.Author;
+import dr.util.Citable;
+import dr.util.Citation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class ProgressiveScalarTreeTransform extends TreeTransform {
+public class ProgressiveScalarTreeTransform extends TreeTransform implements Citable {
 
     public ProgressiveScalarTreeTransform(Parameter scale) {
         this(scale, null);
@@ -60,6 +66,12 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
             addVariable(scale);
         }
         scale.addBounds(new Parameter.DefaultBounds(1.0, 0.0, dim));
+
+        StringBuilder sb = new StringBuilder("Creating a branch-specific phenotypic mixture model.\n");
+        sb.append("\tPlease cite:\n");
+        sb.append(Citable.Utils.getCitationString(this));
+
+        java.util.logging.Logger.getLogger("dr.evomodel.tree").info(sb.toString());
     }
 
     public double transform(TransformedTreeModel tree, NodeRef node, double originalHeight) {
@@ -107,5 +119,18 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
         TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
         TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
         System.err.println(model.toString());
+    }
+
+    public List<Citation> getCitations() {
+        List<Citation> citations = new ArrayList<Citation>();
+        citations.add(
+                new Citation(
+                        new Author[]{
+                                new Author("P", "Lemey"),
+                                new Author("MA", "Suchard"),
+                        },
+                        Citation.Status.IN_PREPARATION
+                ));
+        return citations;
     }
 }

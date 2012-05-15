@@ -1,3 +1,28 @@
+/*
+ * CompleteHistoryLogger.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.utilities;
 
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
@@ -40,7 +65,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     public static final String TOTAL_COUNT_NAME = "totalChangeCount";
     public static final String COMPLETE_HISTORY_NAME = "completeHistory";
 
-    public CompleteHistoryLogger(MarkovJumpsBeagleTreeLikelihood treeLikelihood) {
+    public CompleteHistoryLogger(MarkovJumpsBeagleTreeLikelihood treeLikelihood, HistoryFilter filter) {
         this.tree = treeLikelihood.getTreeModel();
         this.patternCount = treeLikelihood.getPatternCount();
 
@@ -61,6 +86,20 @@ public class CompleteHistoryLogger implements Loggable, Citable {
 
         Logger.getLogger("dr.app.beagle").info("\tConstructing a complete history logger;  please cite:\n"
                 + Citable.Utils.getCitationString(this));
+
+
+        if (filter == null) {
+            this.filter = new HistoryFilter.Default();
+        } else {
+            this.filter = filter;
+            Logger.getLogger("dr.app.beagle").info("\tWith filter: " + filter.getDescription() + "\n");
+        }
+
+
+    }
+
+    public void setFilter(HistoryFilter filter) {
+        this.filter = filter;
     }
 
     public LogColumn[] getColumns() {
@@ -98,9 +137,6 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                 trait = trait.substring(1, trait.length() - 1);
                                 StringTokenizer st = new StringTokenizer(trait, ",");
                                 while (st.hasMoreTokens()) {
-                                    if (!empty) {
-                                        bf.append(",");
-                                    }
                                     String event = st.nextToken();
                                     event = event.substring(1, event.length() - 1);
                                     StringTokenizer value = new StringTokenizer(event, ":");
@@ -114,10 +150,19 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                         throw new RuntimeException("Invalid simulation time");
                                     }
 
-                                    StateHistory.addEventToStringBuilder(bf, source, dest,
-                                            thisTime);
-                                    count++;
-                                    empty = false;
+                                    // TODO Delegate to Filter(source, dest, thisTime).  If filtered then
+                                    boolean filtered = filter.filter(source, dest, thisTime);
+                                    if (filtered) {
+                                        if (!empty) {
+                                            bf.append(",");
+                                        }
+                                        StateHistory.addEventToStringBuilder(bf, source, dest,
+                                                thisTime);
+                                        count++;
+                                        empty = false;
+                                    } else {
+                                        // Do nothing
+                                    }
                                 }
                             }
                         }
@@ -145,4 +190,6 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     final private TreeTrait[] treeTraitHistory;
     final private TreeTrait treeTraitCount;
     final private int patternCount;
+
+    private HistoryFilter filter;
 }

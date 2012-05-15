@@ -474,15 +474,12 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeDiscreteTraitFileLogger(XMLWriter writer,
                                               PartitionSubstitutionModel model) {
 
-        String prefix = model.getName() + ".";
-
-        String fileName = options.logFileName.substring(0, options.logFileName.indexOf(".log")) + model.getName();
-        fileName = (fileName.endsWith(".") ? "" : ".") + "rates.log";
+        String prefix = options.fileNameStem + "." + model.getName();
 
         writer.writeOpenTag(LoggerParser.LOG, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + "rateMatrixLog"),
                 new Attribute.Default<String>(LoggerParser.LOG_EVERY, options.logEvery + ""),
-                new Attribute.Default<String>(LoggerParser.FILE_NAME, fileName)});
+                new Attribute.Default<String>(LoggerParser.FILE_NAME, prefix + ".rates.log")});
 
         writeLogEntries(model, writer);
 

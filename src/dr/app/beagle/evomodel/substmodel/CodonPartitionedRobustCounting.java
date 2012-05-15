@@ -1,3 +1,28 @@
+/*
+ * CodonPartitionedRobustCounting.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
@@ -59,6 +84,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean includeExternalBranches,
                                           boolean includeInternalBranches,
                                           boolean doUnconditionalPerBranch,
+                                          boolean saveCompleteHistory,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -87,6 +113,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             }
         }
 
+        this.saveCompleteHistory = saveCompleteHistory;
+
         productChainModel =
                 new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
         addModel(productChainModel);
@@ -94,6 +122,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.useUniformization = useUniformization;
         if (useUniformization) {
             markovJumps = new UniformizedSubstitutionModel(productChainModel);
+            ((UniformizedSubstitutionModel) markovJumps).setSaveCompleteHistory(saveCompleteHistory);
         } else {
             markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
         }
@@ -188,12 +217,15 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
             if (DEBUG) {
 
-                System.err.println("Computing robust counts for " +
-                        parentSeq0[i] + parentSeq1[i] + parentSeq2[i] + " -> " +
-                        childSeq0[i] + childSeq1[i] + childSeq2[i] + " : " +
-//                        vParentState + " -> " + vChildState + " = " + codonCount);
-                        parentState + " -> " + childState + " = " + codonCount);
-                System.exit(-1);
+                if (useUniformization && saveCompleteHistory) {
+                    UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
+                    int historyCount = usModel.getNumberOfJumpsInCompleteHistory();
+                    if (historyCount > 0) {
+                        double parentTime = tree.getNodeHeight(tree.getParent(child));
+                        double childTime = tree.getNodeHeight(child);
+                        System.err.println("site " + (i + 1) + " : " + +usModel.getNumberOfJumpsInCompleteHistory() + " : " + usModel.getCompleteHistory(parentTime, childTime) + " " + codonLabeling.getText());
+                    }
+                }
             }
 
             count[i] = codonCount;
@@ -538,5 +570,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private final boolean doUnconditionedPerBranch;
 
     private static final boolean TRIAL = true;
+
+    private boolean saveCompleteHistory = false;
 
 }

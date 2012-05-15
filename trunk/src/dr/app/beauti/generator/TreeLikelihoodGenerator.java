@@ -156,19 +156,7 @@ public class TreeLikelihoodGenerator extends Generator {
         } else {
             writer.writeIDref(GammaSiteModel.SITE_MODEL, substModel.getPrefix() + SiteModel.SITE_MODEL);
         }
-        
-		// TODO: search for other solution
-        // Ancestral state likelihood doesn't need the substitution model - it gets
-        // it from the siteModel.
-        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions) options
-        .getComponentOptions(AncestralStatesComponentOptions.class);
-        if(ancestralStatesOptions.dNdSRobustCountingAvailable(partition) && ancestralStatesOptions.dNdSRobustCounting(partition) ) {
 
-        	writer.writeIDref(substModel.getNucSubstitutionModel().getXMLName(), substModel.getPrefix(num) + "hky");
-//        	writer.writeComment(substModel.getNucSubstitutionModel().getXMLName());
-        	
-        }
-        
         switch (clockModel.getClockType()) {
             case STRICT_CLOCK:
                 writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, clockModel.getPrefix()

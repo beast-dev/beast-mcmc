@@ -81,7 +81,7 @@ public class TreeLikelihoodGenerator extends Generator {
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-        } if (ancestralStatesOptions.isCountingStates(partition)) {
+        } else if (ancestralStatesOptions.isCountingStates(partition)) {
             treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
         }
 
@@ -179,21 +179,6 @@ public class TreeLikelihoodGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
-
-        // Ancestral state likelihood doesn't need the substitution model - it gets
-        // it from the siteModel.
-
-//        if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
-//
-//            writer.writeIDref(NucModelType.HKY.getXMLName(), substModel.getPrefix(num) + "hky");
-//
-//        }
-
-        /*if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        } else {
-           writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        }*/
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
 

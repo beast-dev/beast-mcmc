@@ -164,9 +164,12 @@ public class BeastGenerator extends Generator {
         }
 
         for (Taxa taxa : options.taxonSets) {
-            if (taxa.getTaxonCount() < 2) {
-                throw new GeneratorException("Taxon set, " + taxa.getId() + ",\n should contain" +
-                        "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.", BeautiFrame.TAXON_SETS);
+            // AR - we should allow single taxon taxon sets but only if include stem is on
+            if (taxa.getTaxonCount() < 2 && !options.taxonSetsIncludeStem.get(taxa)) {
+                throw new GeneratorException(
+                        "Taxon set, " + taxa.getId() + ", should contain \n" +
+                                "at least two taxa or 'include stem'. Please go \n" +
+                                "back to Taxon Sets panel to correct this.", BeautiFrame.TAXON_SETS);
             }
             if (ids.contains(taxa.getId())) {
                 throw new GeneratorException("A taxon set has the same id," + taxa.getId() +
@@ -204,7 +207,7 @@ public class BeastGenerator extends Generator {
             int tId = options.starBEASTOptions.getEmptySpeciesIndex();
             if (tId >= 0) {
                 throw new GeneratorException("The taxon " + options.taxonList.getTaxonId(tId) +
-                            " has NULL value for \"species\" trait", BeautiFrame.TRAITS);
+                        " has NULL value for \"species\" trait", BeautiFrame.TRAITS);
             }
         }
 
@@ -710,14 +713,14 @@ public class BeastGenerator extends Generator {
             }
 
             for (TraitData trait : options.traits) {
-                    // there is no harm in allowing the species trait to be listed in the taxa
+                // there is no harm in allowing the species trait to be listed in the taxa
 //                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-                    writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                            new Attribute.Default<String>(Attribute.NAME, trait.getName())});
+                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                    // denotes missing data using '?'
-                    writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
-                    writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+                // denotes missing data using '?'
+                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
+                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
 //                }
             }
 

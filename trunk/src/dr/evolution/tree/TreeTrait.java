@@ -1,3 +1,28 @@
+/*
+ * TreeTrait.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evolution.tree;
 
 /**
@@ -153,6 +178,37 @@ public interface TreeTrait<T> {
                 return sb.toString();
             } else {
                 return Double.toString(values[0]);
+            }
+        }
+    }
+
+    /**
+     * An abstract base class for String array implementations
+     */
+    public abstract class SA extends DefaultBehavior implements TreeTrait<String[]> {
+
+        public Class getTraitClass() {
+            return String[].class;
+        }
+
+        public String getTraitString(Tree tree, NodeRef node) {
+            return formatTrait(getTrait(tree, node));
+        }
+
+        public static String formatTrait(String[] values) {
+            if (values == null || values.length == 0) return null;
+            if (values.length > 1) {
+                StringBuilder sb = new StringBuilder("{");
+                sb.append(values[0]);
+                for (int i = 1; i < values.length; i++) {
+                    sb.append(",");
+                    sb.append(values[i]);
+                }
+                sb.append("}");
+
+                return sb.toString();
+            } else {
+                return values[0];
             }
         }
     }
@@ -577,7 +633,7 @@ public interface TreeTrait<T> {
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
-            return D.formatTrait(getTrait(tree,node));
+            return D.formatTrait(getTrait(tree, node));
         }
     }
 
@@ -605,7 +661,7 @@ public interface TreeTrait<T> {
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
-            return DA.formatTrait(getTrait(tree,node));
+            return DA.formatTrait(getTrait(tree, node));
         }
     }
 }

@@ -224,6 +224,11 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                         double parentTime = tree.getNodeHeight(tree.getParent(child));
                         double childTime = tree.getNodeHeight(child);
                         System.err.println("site " + (i + 1) + " : " + +usModel.getNumberOfJumpsInCompleteHistory() + " : " + usModel.getCompleteHistory(parentTime, childTime) + " " + codonLabeling.getText());
+
+                        if (completeHistoryPerNode == null) {
+                            completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
+                        }
+                        completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
                     }
                 }
             }
@@ -254,6 +259,29 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 return false;
             }
         };
+
+        if (saveCompleteHistory) {
+            TreeTrait stringTrait = new TreeTrait.SA() {
+
+                public String getTraitName() {
+                    return BASE_TRAIT_PREFIX + codonLabeling.getText();
+                }
+
+                public Intent getIntent() {
+                    return Intent.BRANCH;
+                }
+
+                public String[] getTrait(Tree tree, NodeRef node) {
+                    getExpectedCountsForBranch(node); // Lazy simulation of complete histories
+                    return completeHistoryPerNode[node.getNumber()];
+                }
+
+                public boolean getLoggable() {
+                    return true;
+                }
+            };
+            treeTraits.addTrait(stringTrait);
+        }
 
         TreeTrait unconditionedSum;
         if (!TRIAL) {
@@ -355,7 +383,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 }
 
                 public boolean getLoggable() {
-                    return false;
+                    return false;   // TODO Should be switched to true to log unconditioned values per branch
                 }
             };
 
@@ -561,6 +589,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private double[] unconditionedCounts;
     private double[][] unconditionedCountsPerBranch;
     private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
+
+    private String[][] completeHistoryPerNode;
 
     protected Helper treeTraits = new Helper();
     protected TreeTraitLogger treeTraitLogger;

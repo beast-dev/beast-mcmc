@@ -164,9 +164,12 @@ public class BeastGenerator extends Generator {
         }
 
         for (Taxa taxa : options.taxonSets) {
-            if (taxa.getTaxonCount() < 2) {
-                throw new GeneratorException("Taxon set, " + taxa.getId() + ",\n should contain" +
-                        "at least two taxa. \nPlease go back to Taxon Sets panel to select included taxa.", BeautiFrame.TAXON_SETS);
+            // AR - we should allow single taxon taxon sets but only if include stem is on
+            if (taxa.getTaxonCount() < 2 && !options.taxonSetsIncludeStem.get(taxa)) {
+                throw new GeneratorException(
+                        "Taxon set, " + taxa.getId() + ", should contain \n" +
+                                "at least two taxa or 'include stem'. Please go \n" +
+                                "back to Taxon Sets panel to correct this.", BeautiFrame.TAXON_SETS);
             }
             if (ids.contains(taxa.getId())) {
                 throw new GeneratorException("A taxon set has the same id," + taxa.getId() +

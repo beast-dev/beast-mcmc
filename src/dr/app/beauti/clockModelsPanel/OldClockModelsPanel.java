@@ -607,6 +607,7 @@ public class OldClockModelsPanel extends BeautiPanel implements Exportable {
                     String name = ((String) aValue).trim();
                     if (name.length() > 0) {
                         clockModelGroupList.get(row).setName(name);
+                        modelsChanged();
                     }
                     break;
                 case 1:

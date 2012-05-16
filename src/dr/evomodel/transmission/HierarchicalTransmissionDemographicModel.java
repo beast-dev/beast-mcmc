@@ -73,22 +73,22 @@ public class HierarchicalTransmissionDemographicModel extends TransmissionDemogr
 
         if (N0Parameter != null) {
             N0Parameter.setDimension(hostCount);
-            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
+//            N0Parameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
         }
 
         if (N1Parameter != null) {
             N1Parameter.setDimension(hostCount);
-            N1Parameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
+//            N1Parameter.addBounds(new Parameter.DefaultBounds(1.0, 0.0, 1));
         }
 
         if (growthRateParameter != null) {
             growthRateParameter.setDimension(hostCount);
-            growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
+//            growthRateParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
         }
 
         if (doublingTimeParameter != null) {
             doublingTimeParameter.setDimension(hostCount);
-            doublingTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
+//            doublingTimeParameter.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, hostCount));
         }
     }
 

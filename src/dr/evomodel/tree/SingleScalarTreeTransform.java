@@ -26,6 +26,7 @@
 package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
 
@@ -46,7 +47,11 @@ public class SingleScalarTreeTransform extends TreeTransform {
             return originalHeight;
         }
         final double rootHeight = tree.getRootHeightParameter().getParameterValue(0);
-        return rootHeight - scale.getParameterValue(0) * (rootHeight - originalHeight);
+        return rootHeight - getScaleForNode(tree, node) * (rootHeight - originalHeight);
+    }
+
+    protected double getScaleForNode(Tree tree, NodeRef node) {
+        return scale.getParameterValue(0);
     }
 
     public String getInfo() {

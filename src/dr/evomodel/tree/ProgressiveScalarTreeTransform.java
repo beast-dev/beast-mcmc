@@ -32,18 +32,13 @@ import dr.evolution.tree.TreeTrait;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
-import dr.util.Author;
 import dr.util.Citable;
-import dr.util.Citation;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * @author Marc A. Suchard
  * @author Philippe Lemey
  */
-public class ProgressiveScalarTreeTransform extends TreeTransform implements Citable {
+public class ProgressiveScalarTreeTransform extends TreeTransform {
 
     public ProgressiveScalarTreeTransform(Parameter scale) {
         this(scale, null);
@@ -88,7 +83,7 @@ public class ProgressiveScalarTreeTransform extends TreeTransform implements Cit
         return parentHeight - getScaleForNode(tree, node) * (parentHeight - originalHeight);
     }
 
-    private double getScaleForNode(TransformedTreeModel tree, NodeRef node) {
+    protected double getScaleForNode(Tree tree, NodeRef node) {
         if (treeParameterModel != null) {
             return treeParameterModel.getNodeValue(tree, node);
         } else {
@@ -119,18 +114,5 @@ public class ProgressiveScalarTreeTransform extends TreeTransform implements Cit
         TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
         TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
         System.err.println(model.toString());
-    }
-
-    public List<Citation> getCitations() {
-        List<Citation> citations = new ArrayList<Citation>();
-        citations.add(
-                new Citation(
-                        new Author[]{
-                                new Author("P", "Lemey"),
-                                new Author("MA", "Suchard"),
-                        },
-                        Citation.Status.IN_PREPARATION
-                ));
-        return citations;
     }
 }

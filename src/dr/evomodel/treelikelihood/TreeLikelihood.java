@@ -53,6 +53,8 @@ import java.util.logging.Logger;
  */
 
 public class TreeLikelihood extends AbstractTreeLikelihood {
+    private static final boolean DEBUG = false;
+
     /**
      * Constructor.
      */
@@ -252,6 +254,11 @@ public class TreeLikelihood extends AbstractTreeLikelihood {
             if (index == -1) {
                 updateAllNodes();
             } else {
+                if (DEBUG) {
+                if (index >= treeModel.getNodeCount()) {
+                    throw new IllegalArgumentException("Node index out of bounds");
+                }
+                }
                 updateNode(treeModel.getNode(index));
             }
 

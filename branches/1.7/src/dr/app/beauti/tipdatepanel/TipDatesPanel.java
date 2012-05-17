@@ -31,6 +31,7 @@ import dr.app.beauti.components.tipdatesampling.TipDateSamplingComponentOptions;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.ClockModelGroup;
 import dr.app.beauti.options.DateGuesser;
+import dr.app.beauti.traitspanel.TraitValueDialog;
 import dr.app.beauti.types.TipDateSamplingType;
 import dr.app.beauti.util.PanelUtils;
 import dr.app.gui.table.DateCellEditor;
@@ -63,10 +64,12 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
      *
      */
     private static final long serialVersionUID = 5283922195494563924L;
+
     JScrollPane scrollPane = new JScrollPane();
     JTable dataTable = null;
     DataTableModel dataTableModel = null;
 
+    SetDatesAction setDatesAction = new SetDatesAction();
     ClearDatesAction clearDatesAction = new ClearDatesAction();
     GuessDatesAction guessDatesAction = new GuessDatesAction();
 
@@ -75,7 +78,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
     JComboBox unitsCombo = new JComboBox(EnumSet.range(DateUnitsType.YEARS, DateUnitsType.DAYS).toArray());
     JComboBox directionCombo = new JComboBox(EnumSet.range(DateUnitsType.FORWARDS, DateUnitsType.BACKWARDS).toArray());
 
-    JComboBox tipDateSamplingCombo = new JComboBox(TipDateSamplingType.values());
+//    JComboBox tipDateSamplingCombo = new JComboBox( TipDateSamplingType.values() );
+    JComboBox tipDateSamplingCombo = new JComboBox(new TipDateSamplingType[] { TipDateSamplingType.NO_SAMPLING, TipDateSamplingType.SAMPLE_INDIVIDUALLY });
     JComboBox tipDateTaxonSetCombo = new JComboBox();
 
     BeautiFrame frame = null;
@@ -84,7 +88,8 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
 
     double[] heights = null;
 
-    GuessDatesDialog guessDatesDialog = null;
+    private GuessDatesDialog guessDatesDialog = null;
+    private DateValueDialog dateValueDialog = null;
 
     public TipDatesPanel(BeautiFrame parent) {
 
@@ -138,9 +143,15 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         JButton button = new JButton(guessDatesAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
+
+        button = new JButton(setDatesAction);
+        PanelUtils.setupComponent(button);
+        toolBar1.add(button);
+
         button = new JButton(clearDatesAction);
         PanelUtils.setupComponent(button);
         toolBar1.add(button);
+
         toolBar1.add(new JToolBar.Separator(new Dimension(12, 12)));
         final JLabel unitsLabel = new JLabel("Dates specified as ");
         toolBar1.add(unitsLabel);
@@ -330,6 +341,55 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         // nothing to do
     }
 
+    public void setDates() {
+        if (options.taxonList == null) { // validation of check empty taxonList
+            return;
+        }
+
+        int result;
+        do {
+            if (dateValueDialog == null) {
+                dateValueDialog = new DateValueDialog(frame);
+            }
+
+            int[] selRows = dataTable.getSelectedRows();
+
+            if (selRows.length > 0) {
+                dateValueDialog.setDescription("Set date values for selected taxa");
+            } else {
+                dateValueDialog.setDescription("Set date values for all taxa");
+            }
+
+            result = dateValueDialog.showDialog();
+
+            if (result == -1 || result == JOptionPane.CANCEL_OPTION) {
+                return;
+            }
+
+//            currentTrait.guessTrait = true; // ?? no use?
+            String value = dateValueDialog.getDateValue();
+
+            java.util.Date origin = new java.util.Date(0);
+            double d = Double.parseDouble(value);
+            Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
+
+            if (selRows.length > 0) {
+                for (int row : selRows) {
+                    options.taxonList.getTaxon(row).setAttribute("date", date);
+                }
+            } else {
+                for (Taxon taxon : options.taxonList) {
+                    taxon.setAttribute("date", date);
+                }
+            }
+
+            // adjust the dates to the current timescale...
+            timeScaleChanged();
+
+           dataTableModel.fireTableDataChanged();
+        } while (result < 0);
+    }
+
     public void clearDates() {
         for (int i = 0; i < options.taxonList.getTaxonCount(); i++) {
             java.util.Date origin = new java.util.Date(0);
@@ -377,6 +437,22 @@ public class TipDatesPanel extends BeautiPanel implements Exportable {
         timeScaleChanged();
 
         dataTableModel.fireTableDataChanged();
+    }
+
+    public class SetDatesAction extends AbstractAction {
+        /**
+         *
+         */
+        private static final long serialVersionUID = -7281309694753868635L;
+
+        public SetDatesAction() {
+            super("Set Dates");
+            setToolTipText("Use this tool to set sampling date values from selected taxa");
+        }
+
+        public void actionPerformed(ActionEvent ae) {
+            setDates();
+        }
     }
 
     public class ClearDatesAction extends AbstractAction {

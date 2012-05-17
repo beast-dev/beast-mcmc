@@ -27,6 +27,7 @@ package dr.evomodel.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.tree.TreeDoubleTraitProvider;
 import dr.evolution.tree.TreeTrait;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -42,7 +43,7 @@ import dr.inference.model.Variable;
  *
  * @author Alexei Drummond
  */
-public class TreeParameterModel extends AbstractModel implements TreeTrait<Double> {
+public class TreeParameterModel extends AbstractModel implements TreeTrait<Double>, TreeDoubleTraitProvider {
 
     protected final TreeModel tree;
 
@@ -134,6 +135,10 @@ public class TreeParameterModel extends AbstractModel implements TreeTrait<Doubl
     }
 
     protected void acceptState() {
+    }
+
+    public double getNodeDoubleValue(Tree tree, NodeRef node) {
+        return getNodeValue(tree, node);
     }
 
     public double getNodeValue(Tree tree, NodeRef node) {

@@ -49,9 +49,16 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     public final int[] evaluationCounts;
 
     public CompoundLikelihood(int threads, Collection<Likelihood> likelihoods) {
-        if (threads < 0 && likelihoods.size() > 1) {
+
+        int i = 0;
+        for (Likelihood l : likelihoods) {
+            addLikelihood(l, i);
+            i++;
+        }
+
+        if (threads <= 0) {
             // asking for an automatic threadpool size
-            threadCount = likelihoods.size();
+            threadCount = this.likelihoods.size();
         } else {
             threadCount = threads;
         }
@@ -63,12 +70,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 //            pool = Executors.newCachedThreadPool();
         } else {
             pool = null;
-        }
-
-        int i = 0;
-        for (Likelihood l : likelihoods) {
-            addLikelihood(l, i);
-            i++;
         }
 
         if (EVALUATION_TIMERS) {

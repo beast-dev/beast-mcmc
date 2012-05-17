@@ -633,11 +633,13 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
 
         comboBox.addItem(TAXON.toLowerCase() + "...");
         for (Taxa taxa : options.taxonSets) {
-            if (taxa != currentTaxonSet) {
-                if (isCompatible(taxa, availableTaxa)) {
+            // AR - as these comboboxes are just intended to be handy ways of selecting taxa, I have removed
+            // these requirements (it was just confusing why they weren't in the lists.
+//       if (taxa != currentTaxonSet) {
+//                if (isCompatible(taxa, availableTaxa)) {
                     comboBox.addItem(taxa.getId()); // have to add String, otherwise it will throw Exception to cast "taxa..." into Taxa
-                }
-            }
+//                }
+//            }
         }
     }
 

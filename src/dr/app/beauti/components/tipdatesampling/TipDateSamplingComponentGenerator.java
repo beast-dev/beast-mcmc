@@ -32,6 +32,7 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
             case IN_TREE_MODEL:
             case IN_FILE_LOG_PARAMETERS:
                 return true;
+            case AFTER_TREE_MODEL:
             case IN_MCMC_PRIOR:
                 return comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT;
             default:
@@ -42,30 +43,40 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
     protected void generate(final InsertionPoint point, final Object item, final XMLWriter writer) {
         TipDateSamplingComponentOptions comp = (TipDateSamplingComponentOptions)options.getComponentOptions(TipDateSamplingComponentOptions.class);
 
+        TaxonList taxa = comp.getTaxonSet();
+        if (taxa == null) { // all taxa...
+            taxa = options.taxonList;
+        }
+
         switch (point) {
             case IN_TREE_MODEL: {
-                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
-                    TaxonList taxa = comp.getTaxonSet();
+                for (int i = 0; i < taxa.getTaxonCount(); i++) {
+                    Taxon taxon = taxa.getTaxon(i);
+                    writer.writeOpenTag("leafHeight",
+                            new Attribute[]{
+                                    new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
+                            }
+                    );
+                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
+                    writer.writeCloseTag("leafHeight");
+                }
+
+            } break;
+            case AFTER_TREE_MODEL:
+                if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
+                    writer.writeOpenTag("compoundParameter",
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, "treeModel.tipDates"),
+                            }
+                    );
                     for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
-                        writer.writeOpenTag("leafHeight",
-                                new Attribute[]{
-                                        new Attribute.Default<String>(TaxonParser.TAXON, taxon.getId()),
-                                }
-                        );
-                        writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
-                        writer.writeCloseTag("leafHeight");
+                        writer.writeIDref(ParameterParser.PARAMETER, "age(" + taxon.getId() + ")");
                     }
-                } else if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
-//                    writer.writeOpenTag("nodeHeights",
-//                            new Attribute[]{
-//                                    new Attribute.Default<Boolean>("external", taxon.getId()),
-//                            }
-//                    );
-//                    writer.writeTag(ParameterParser.PARAMETER, new Attribute.Default<String>(XMLParser.ID, "age(" + taxon.getId() + ")"), true);
-//                    writer.writeCloseTag("leafHeight");
+
+                    writer.writeCloseTag("compoundParameter");
                 }
-            } break;
+                break;
             case IN_MCMC_PRIOR:
                 if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
                     // nothing to do - individual parameter priors are written automatically
@@ -75,13 +86,12 @@ public class TipDateSamplingComponentGenerator extends BaseComponentGenerator {
                 break;
             case IN_FILE_LOG_PARAMETERS:
                 if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_INDIVIDUALLY) {
-                    TaxonList taxa = comp.getTaxonSet();
                     for (int i = 0; i < taxa.getTaxonCount(); i++) {
                         Taxon taxon = taxa.getTaxon(i);
                         writer.writeIDref(ParameterParser.PARAMETER, "age(" + taxon.getId() + ")");
                     }
                 } else if (comp.tipDateSamplingType == TipDateSamplingType.SAMPLE_JOINT) {
-                	writer.writeIDref(ParameterParser.PARAMETER, "treeModel.tipDates");
+                    writer.writeIDref(ParameterParser.PARAMETER, "treeModel.tipDates");
                 }
                 break;
             default:

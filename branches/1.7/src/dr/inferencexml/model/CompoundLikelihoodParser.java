@@ -31,18 +31,18 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         int threads = xo.getAttribute(THREADS, 0);
 
 //        if (xo.getName().equalsIgnoreCase(LIKELIHOOD)) {
-            // if this is '<likelihood>' then the default is to use a cached thread pool...
-            threads = xo.getAttribute(THREADS, -1);
+        // if this is '<likelihood>' then the default is to use a cached thread pool...
+        threads = xo.getAttribute(THREADS, -1);
 
-            // both the XML attribute and a system property can override it
-            if (System.getProperty("thread.count") != null) {
+        // both the XML attribute and a system property can override it
+        if (System.getProperty("thread.count") != null) {
 
-                threads = Integer.parseInt(System.getProperty("thread.count"));
-                if (threads < -1 || threads > 1000) {
-                    // put an upper limit here - may be unnecessary?
-                    threads = -1;
-                }
+            threads = Integer.parseInt(System.getProperty("thread.count"));
+            if (threads < -1 || threads > 1000) {
+                // put an upper limit here - may be unnecessary?
+                threads = -1;
             }
+        }
 //        }
 
         List<Likelihood> likelihoods = new ArrayList<Likelihood>();
@@ -61,14 +61,19 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
         if (xo.getName().equalsIgnoreCase(POSTERIOR)) {
             compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
+            switch (threads) {
+                case 0:
+                    Logger.getLogger("dr.evomodel").info("Posterior computation is using an auto sizing thread pool.");
+                    break;
+                case 1:
+                    Logger.getLogger("dr.evomodel").info("Posterior computation is using a single thread.");
+                    break;
+                default:
+                    Logger.getLogger("dr.evomodel").info("Posterior computation is using a pool of " + threads + " threads.");
+                    break;
+            }
         } else {
-            compoundLikelihood = new CompoundLikelihood(0, likelihoods);
-        }
-
-        if (compoundLikelihood.getThreadCount() > 0) {
-            Logger.getLogger("dr.evomodel").info("Likelihood is using " + threads + " threads.");
-//            } else if (threads < 0) {
-//                Logger.getLogger("dr.evomodel").info("Likelihood is using a cached thread pool.");
+            compoundLikelihood = new CompoundLikelihood(likelihoods);
         }
 
         return compoundLikelihood;

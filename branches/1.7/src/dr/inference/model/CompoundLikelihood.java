@@ -52,7 +52,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         int i = 0;
         for (Likelihood l : likelihoods) {
-            addLikelihood(l, i);
+            addLikelihood(l, i, true);
             i++;
         }
 
@@ -81,12 +81,32 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         }
     }
 
-    protected void addLikelihood(Likelihood likelihood, int index) {
+    public CompoundLikelihood(Collection<Likelihood> likelihoods) {
+
+        pool = null;
+        threadCount = 0;
+
+        int i = 0;
+        for (Likelihood l : likelihoods) {
+            addLikelihood(l, i, false);
+            i++;
+        }
+
+        if (EVALUATION_TIMERS) {
+            evaluationTimes = new long[this.likelihoods.size()];
+            evaluationCounts = new int[this.likelihoods.size()];
+        } else {
+            evaluationTimes = null;
+            evaluationCounts = null;
+        }
+   }
+
+    protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
         if (UNROLL_COMPOUND && likelihood instanceof CompoundLikelihood) {
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
-                addLikelihood(l, index);
+                addLikelihood(l, index, addToPool);
             }
         } else {
             if (!likelihoods.contains(likelihood)) {
@@ -96,7 +116,9 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     compoundModel.addModel(likelihood.getModel());
                 }
 
-                likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+                if (addToPool) {
+                    likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+                }
             }
         }
     }
@@ -346,9 +368,9 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     }
                 } else {
                     double secs = (double)evaluationTimes[index] / 1.0E9;
-                        message += evaluationCounts[index] + " evaluations in " +
-                                nf.format(secs) + " secs (" +
-                                nf.format(secs / evaluationCounts[index]) + " secs/eval)";
+                    message += evaluationCounts[index] + " evaluations in " +
+                            nf.format(secs) + " secs (" +
+                            nf.format(secs / evaluationCounts[index]) + " secs/eval)";
                 }
                 index++;
             }

@@ -1,5 +1,5 @@
 /*
- * NewTreeParameterModel.java
+ * SlicedMultivariateTreeParameterModel.java
  *
  * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -33,7 +33,7 @@ import dr.inference.model.Parameter;
 /**
  * @author Marc A. Suchard
  */
-public class NewTreeParameterModel extends AbstractTreeParameterModel<Double> implements TreeDoubleTraitProvider {
+public class SlicedMultivariateTreeParameterModel extends MultivariateTreeParameterModel implements TreeDoubleTraitProvider {
 
     /**
      * This class constructs a tree parameter, and will set the dimension of the parameter
@@ -41,56 +41,30 @@ public class NewTreeParameterModel extends AbstractTreeParameterModel<Double> im
      *
      * @param tree        the tree that this parameter corresponds to
      * @param parameter   the parameter to keep in sync with tree topology moves.
-     * @param includeRoot tree if the parameter includes a value associated with the root node.
-     * @param includeTips
+     * @param includeRoot true if the parameter includes values associated with the root node.
+     * @param includeTips true if the parameter includes values associated with the tip nodes.
+     * @param dim         dimension of multivariate trait
+     * @param slice       specify which entry in multivariate trait to return
      */
-    public NewTreeParameterModel(TreeModel tree, Parameter parameter, boolean includeRoot, boolean includeTips) {
-        super(tree, parameter, includeRoot, includeTips);
+    public SlicedMultivariateTreeParameterModel(TreeModel tree, Parameter parameter,
+                                                boolean includeRoot, boolean includeTips, int dim, int slice) {
+        super(tree, parameter, includeRoot, includeTips, dim);
+        this.slice = slice;
     }
 
     @Override
-    public int getParameterSize() {
-        int treeSize = tree.getNodeCount();
-        if (!doesIncludeRoot()) {
-            treeSize -= 1;
-        }
-        if (!doesIncludeTips()) {
-            treeSize -= tree.getExternalNodeCount();
-        }
-        return treeSize;
-    }
-
-    public double getNodeDoubleValue(Tree tree, NodeRef node) {
-        return getNodeValue(tree, node);
-    }
-
-    @Override
-    public Double getNodeValue(Tree tree, NodeRef node) {
-
-        assert checkNode(tree, node);
-
-        int nodeNumber = node.getNumber();
-        int index = getParameterIndexFromNodeNumber(nodeNumber);
-        return parameter.getParameterValue(index);
-    }
-
-    @Override
-    public void setNodeValue(Tree tree, NodeRef node, Double value) {
-
-        assert checkNode(tree, node);
-
-        int nodeNumber = node.getNumber();
-        int index = getParameterIndexFromNodeNumber(nodeNumber);
-        parameter.setParameterValue(index, value);
-    }
-
-    @Override
-    public Double getTrait(Tree tree, NodeRef node) {
+    public double[] getTrait(Tree tree, NodeRef node) {
         return getNodeValue(tree, node);
     }
 
     @Override
     public String getTraitString(Tree tree, NodeRef node) {
-        return Double.toString(getNodeValue(tree, node));
+        return DA.formatTrait(getNodeValue(tree, node));
     }
+
+    public double getNodeDoubleValue(Tree tree, NodeRef node) {
+        return getNodeValue(tree, node)[slice];
+    }
+
+    private final int slice;
 }

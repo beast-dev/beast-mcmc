@@ -41,8 +41,13 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
 			XMLObject cxo = (XMLObject) xo.getChild(i);
 
-			if (cxo instanceof BranchSubstitutionModel) {
+//			System.err.println(cxo.toString());
+		
+//			if (BranchSubstitutionModel.class.isInstance(cxo)) {
+//			if (cxo instanceof BranchSubstitutionModel) {
+			if (cxo.toString().toLowerCase().equalsIgnoreCase("branchSubstitutionModel")) {
 
+				System.err.println("Found an instance of branch substitution model");
 				CHECK_BRANCH_SUBSTITUTION_MODEL = true;
 
 			}// END: BSM check
@@ -84,7 +89,11 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
         if(!CHECK_BRANCH_SUBSTITUTION_MODEL) {
+        
+        	System.err.println("Doing the substitution model stuff");
+        	
         // set this to pass it along to the TreeLikelihoodParser...
+        substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
         siteRateModel.setSubstitutionModel(substitutionModel);
         
         }

@@ -19,7 +19,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
-    public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";
+    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String SUBSTITUTION_RATE = "mutationRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
@@ -32,22 +32,22 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String msg = "";
-        SubstitutionModel substitutionModel = null;
-        
-        boolean EPOCH_MODEL = false;
-		if (xo.getElementFirstChild(SUBSTITUTION_MODEL) instanceof EpochBranchSubstitutionModel) {
- 
-			EPOCH_MODEL = true;
+		String msg = "";
+		SubstitutionModel substitutionModel = null;
 
-		}
-		
-		if(!EPOCH_MODEL) {
-			
-         substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
-        
-		}
-		
+		boolean CHECK_BRANCH_SUBSTITUTION_MODEL = false;
+
+		for (int i = 0; i < xo.getChildCount(); i++) {
+
+			XMLObject cxo = (XMLObject) xo.getChild(i);
+
+			if (cxo instanceof BranchSubstitutionModel) {
+
+				CHECK_BRANCH_SUBSTITUTION_MODEL = true;
+
+			}// END: BSM check
+		}// END: children loop
+
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
             muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
@@ -83,7 +83,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
-        if(!EPOCH_MODEL) {
+        if(!CHECK_BRANCH_SUBSTITUTION_MODEL) {
         // set this to pass it along to the TreeLikelihoodParser...
         siteRateModel.setSubstitutionModel(substitutionModel);
         
@@ -110,17 +110,13 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
     		
-//            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-//                    new ElementRule(SubstitutionModel.class)
-//            }),
-            
           new XORRule(
           new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                   new ElementRule(SubstitutionModel.class)
                   }),
-          new ElementRule(SUBSTITUTION_EPOCH_MODEL, new XMLSyntaxRule[]{
+          new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                   new ElementRule(BranchSubstitutionModel.class)
-                  }), true
+                  }), false
            ),
     		
             new XORRule(

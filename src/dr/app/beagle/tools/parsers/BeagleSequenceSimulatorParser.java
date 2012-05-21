@@ -20,11 +20,13 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
 	public static final String REPLICATIONS = "replications";
-
+	public static final String SITE_MODEL = "siteModel";
+	
 	private XMLSyntaxRule[] rules = new XMLSyntaxRule[] {
 			new ElementRule(TreeModel.class),
 			new ElementRule(BranchSubstitutionModel.class),
 			new ElementRule(GammaSiteRateModel.class),
+//			 new ElementRule(SITE_MODEL, new XMLSyntaxRule[]{new ElementRule(BranchSubstitutionModel.class)}, false),
 			new ElementRule(BranchRateModel.class),
 			new ElementRule(FrequencyModel.class),
 			new ElementRule(Sequence.class, true),
@@ -61,21 +63,6 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
 		int sequenceLength = xo.getIntegerAttribute(REPLICATIONS);
 
-		//TODO:
-		////////////////////////////////////////////////////////////
-		
-//        if (xo.hasChildNamed("siteModel")) {
-//        	
-//            XMLObject cxo = xo.getChild("siteModel");
-//    		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) cxo.getChild(BranchSubstitutionModel.class);
-//    		siteModel.addModel(branchSubstitutionModel);
-//    		
-//        } else {
-//        	System.err.println("FUBAR");
-//        }
-
-		////////////////////////////////////////////////////////////       
-        
 		if (rateModel == null) {
 			rateModel = new DefaultBranchRateModel();
 		}

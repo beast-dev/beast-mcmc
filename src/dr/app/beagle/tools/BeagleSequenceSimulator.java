@@ -10,7 +10,6 @@ import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -31,7 +30,7 @@ import dr.math.MathUtils;
 public class BeagleSequenceSimulator {
 
 	private TreeModel treeModel;
-	private GammaSiteRateModel gammaSiteRateModel;
+	private GammaSiteRateModel siteModel;
 	private BranchSubstitutionModel branchSubstitutionModel;
 	private int replications;
 	private FrequencyModel freqModel;
@@ -50,19 +49,19 @@ public class BeagleSequenceSimulator {
 	// TODO: simplify parser
 	public BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,
-			GammaSiteRateModel gammaSiteRateModel, //
+			GammaSiteRateModel siteModel, //
 			BranchRateModel branchRateModel, //
 			FrequencyModel freqModel, //
 			int replications //
 	) {
 
 		this.treeModel = treeModel;
-		this.gammaSiteRateModel = gammaSiteRateModel;
+		this.siteModel = siteModel;
 		this.replications = replications;
 		this.freqModel = freqModel;
-//		this.freqModel = gammaSiteRateModel.getSubstitutionModel().getFrequencyModel();
+//		this.freqModel = siteModel.getSubstitutionModel().getFrequencyModel();
 		this.branchSubstitutionModel = branchSubstitutionModel;
-//		this.branchSubstitutionModel = (BranchSubstitutionModel) gammaSiteRateModel.getModel(0);
+//		this.branchSubstitutionModel = (BranchSubstitutionModel) siteModel.getModel(0);
 		this.eigenCount = branchSubstitutionModel.getEigenCount();
 		
 		int tipCount = treeModel.getExternalNodeCount();
@@ -76,7 +75,7 @@ public class BeagleSequenceSimulator {
 
 		int stateCount = freqModel.getDataType().getStateCount();
 
-		this.categoryCount = gammaSiteRateModel.getCategoryCount();
+		this.categoryCount = siteModel.getCategoryCount();
 		this.probabilities = new double[categoryCount][stateCount * stateCount];
 		this.stateCount = stateCount;
 
@@ -102,7 +101,7 @@ public class BeagleSequenceSimulator {
 				eigenBufferHelper.getBufferCount(), // 
 				matrixBufferHelper.getBufferCount() + this.branchSubstitutionModel.getExtraBufferCount(treeModel), //
 				categoryCount, //
-				scaleBufferCount,//scaleBufferHelper.getBufferCount(), // 
+				scaleBufferCount, //
 				resourceList, //
 				preferenceFlags, //
 				requirementFlags //
@@ -146,7 +145,7 @@ public class BeagleSequenceSimulator {
 
 		SimpleAlignment alignment = new SimpleAlignment();
 		NodeRef root = treeModel.getRoot();
-		double[] categoryProbs = gammaSiteRateModel.getCategoryProportions();
+		double[] categoryProbs = siteModel.getCategoryProportions();
 		int[] category = new int[replications];
 
 		for (int i = 0; i < replications; i++) {
@@ -180,7 +179,7 @@ public class BeagleSequenceSimulator {
 
     }
 		
-		double[] categoryRates = gammaSiteRateModel.getCategoryRates();
+		double[] categoryRates = siteModel.getCategoryRates();
 		beagle.setCategoryRates(categoryRates);   
 //	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
 //	    beagle.setCategoryWeights(0, categoryWeights);
@@ -200,10 +199,6 @@ public class BeagleSequenceSimulator {
 			NodeRef child = treeModel.getChild(node, iChild);
 			int[] sequence = new int[replications];
 			double[] cProb = new double[stateCount];
-
-//			for (int i = 0; i < categoryCount; i++) {
-//				getTransitionProbabilities(treeModel, child, i, probabilities[i]);
-//			}
 
 			getTransitionProbabilities(treeModel, child, probabilities);
 			
@@ -243,51 +238,25 @@ public class BeagleSequenceSimulator {
 				count //
 				);
 
-		
-		double tmp[] = new double[categoryCount * stateCount * stateCount];
+		double transitionMatrix[] = new double[categoryCount * stateCount * stateCount];
 		
 		beagle.getTransitionMatrix(branchIndex, //
-				tmp //
+				transitionMatrix //
 				);
 
 		for (int i = 0; i < categoryCount; i++) {
 
-			System.arraycopy(tmp, i * stateCount, probabilities[i], 0, stateCount * stateCount);
+			System.arraycopy(transitionMatrix, i * stateCount, probabilities[i], 0, stateCount * stateCount);
 		
 		}
 
-	}// END: getTransitionProbabilities
-	
-//	void getTransitionProbabilities(Tree tree, NodeRef node, int rateCategory,
-//			double[] probabilities) {
-//
-//		int nodeNum = node.getNumber();
-//		matrixBufferHelper.flipOffset(nodeNum);
-//		int branchIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
-//		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
-//		int count = 1;
-//
-//		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-//				eigenIndex, //
-//				eigenBufferHelper, //
-//				new int[] { branchIndex }, //
-//				null, //
-//				null, //
-//				new double[] { tree.getBranchLength(node) }, //
-//				count //
-//				);
-//		
-//		beagle.getTransitionMatrix(branchIndex, //
-//				probabilities //
-//				);
-//
 //		System.out.println("eigenIndex:" + eigenIndex);
 //		System.out.println("bufferIndex: " + branchIndex);
 //		System.out.println("weight: " + tree.getBranchLength(node));
-//		printArray(probabilities);
-//		
-//	}// END: getTransitionProbabilities
-
+//		print2DArray(probabilities);
+		
+	}// END: getTransitionProbabilities
+	
 	// /////////////////
 	// ---DEBUGGING---//
 	// /////////////////
@@ -321,7 +290,7 @@ public class BeagleSequenceSimulator {
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-			siteRateModel.addModel(substitutionModel);
+//			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model
 			BranchRateModel branchRateModel = new DefaultBranchRateModel();

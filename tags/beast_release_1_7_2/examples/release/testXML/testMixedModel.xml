@@ -1,0 +1,148 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+    <designMatrix id="patientDesignMatrix">
+        <parameter id="designMatrix.offset" value="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/>  <!-- all patients have the same grand mean -->
+        <parameter id="designMatrix.wD32"   value="1 1 1 1 1 1 1 0 0 0 0 0 0 0 0 0 0"/>  <!-- Del32 effect (X1) -->
+        <parameter id="designMatrix.LTNP"   value="0 1 1 1 1 1 1 0 0 0 0 0 0 0 1 1 1"/>  <!-- Long-term progressor effect (X2) -->
+    </designMatrix>
+
+    <parameter id="scaleDesign" value="1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1"/> <!-- All subjects have the same error variance -->
+
+    <compoundParameter id="all.rates">
+        <parameter id="ucld172.mean" value="1"/>
+        <parameter id="ucld337.mean" value="2"/>
+        <parameter id="ucld78.mean" value="3"/>
+        <parameter id="ucld617.mean" value="4"/>
+        <parameter id="ucld434.mean" value="5"/>
+        <parameter id="ucld44.mean" value="6"/>
+        <parameter id="ucld16.mean" value="7"/>
+        <parameter id="ucld142.mean" value="8"/>
+        <parameter id="ucld424.mean" value="9"/>
+        <parameter id="ucld1.mean" value="10"/>
+        <parameter id="ucld232.mean" value="11"/>
+        <parameter id="ucld341.mean" value="12"/>
+        <parameter id="ucld458.mean" value="13"/>
+        <parameter id="ucld1031.mean" value="14"/>
+        <parameter id="ucld441.mean" value="15"/>
+        <parameter id="ucld583.mean" value="16"/>
+        <parameter id="ucld68.mean" value="17"/>
+    </compoundParameter>
+
+    <glmModel id="logNormalDistributionRate" family="logNormal">
+        <dependentVariables>
+            <parameter idref="all.rates"/>
+        </dependentVariables>
+        <independentVariables>
+            <parameter id="hRate.effects" value="1 0 0"/>
+            <designMatrix idref="patientDesignMatrix"/>
+            <indicator>
+                <parameter id="hRate.effectIndicators" value="1 0 0"/>
+            </indicator>
+        </independentVariables>
+        <scaleVariables>
+            <parameter id="hRate.precision" value="1"/>
+            <indicator>
+                <parameter idref="scaleDesign"/>
+            </indicator>          
+        </scaleVariables>
+    </glmModel>
+
+    <productStatistic id="hRate.effectsTimesIndicators" elementWise="false">
+        <parameter idref="hRate.effects"/>
+        <parameter idref="hRate.effectIndicators"/>
+    </productStatistic>
+
+    <multivariateNormalPrior id="hRate.prior.effects">
+        <data>
+            <parameter idref="hRate.effects"/>
+        </data>
+        <meanParameter>
+            <parameter value="0 0 0"/>
+        </meanParameter>
+        <precisionParameter>
+            <matrixParameter>
+                <parameter value="0.001 0 0"/>
+                <parameter value="0 1 0"/>
+                <parameter value="0 0 1"/>
+            </matrixParameter>
+        </precisionParameter>
+    </multivariateNormalPrior>
+
+    <gammaPrior id="hRate.prior.precision" shape="0.001" scale="1000" offset="0">
+        <parameter idref="hRate.precision"/>
+    </gammaPrior>
+
+    <operators id="operators">
+
+        <!-- Default MH Operators, just here for testing purposes -->
+
+        <!--<randomWalkOperator windowSize="2" weight="1" autoOptimizer="true">-->
+            <!--<parameter idref="hRate.effects"/>-->
+        <!--</randomWalkOperator>-->
+
+        <!--<scaleOperator scaleFactor="0.75" weight="1">-->
+            <!--<parameter idref="hRate.precision"/>-->
+        <!--</scaleOperator>-->
+
+        <!-- Gibbs Operators -->
+
+        <regressionGibbsEffectOperator weight="1">
+            <glmModel idref="logNormalDistributionRate"/>
+            <parameter idref="hRate.effects"/>
+            <indicator>
+                <parameter idref="hRate.effectIndicators"/>
+            </indicator>
+            <multivariateNormalPrior idref="hRate.prior.effects"/>
+        </regressionGibbsEffectOperator>
+
+
+        <regressionGibbsPrecisionOperator weight="1">
+            <glmModel idref="logNormalDistributionRate"/>
+            <parameter idref="hRate.precision"/>
+            <gammaPrior idref="hRate.prior.precision"/>
+        </regressionGibbsPrecisionOperator>
+
+        <!-- Model selection Operator -->
+
+         <bitFlipOperator weight="1" usesPriorOnSum="false">
+            <maskedParameter>
+                <parameter idref="hRate.effectIndicators"/>
+                <mask>
+                    <parameter value="0 1 1"/>  <!-- Do not flip intercept --> 
+                </mask>
+            </maskedParameter>
+        </bitFlipOperator>
+
+    </operators>
+
+    <mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+        <posterior id="posterior">
+            <likelihood id="likelihood">
+                <glmModel idref="logNormalDistributionRate"/>
+            </likelihood>
+            <prior id="prior">
+                <multivariateNormalPrior idref="hRate.prior.effects"/>
+                <gammaPrior idref="hRate.prior.precision"/>
+            </prior>
+        </posterior>
+        <operators idref="operators"/>
+        <log logEvery="10000">
+            <column dp="4" width="12">
+                <likelihood idref="likelihood"/>
+                <likelihood idref="prior"/>
+                <parameter idref="hRate.effectsTimesIndicators"/>
+                <parameter idref="hRate.precision"/>
+            </column>
+        </log>
+        <log logEvery="1000" fileName="testMixedModel.log">
+            <likelihood idref="posterior"/>
+            <parameter idref="hRate.effects"/>
+            <parameter idref="hRate.effectIndicators"/>
+            <parameter idref="hRate.precision"/>
+        </log>
+    </mcmc>
+
+    <traceAnalysis fileName="testMixedModel.log"/>
+
+</beast>

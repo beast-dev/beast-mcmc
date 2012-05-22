@@ -1,0 +1,126 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<designMatrix id="X">
+		<parameter id="X.col1" value="1.0 1.0 1.0 1.0"/>
+		<parameter id="X.col2" value="0.0 0.0 1.0 1.0"/>
+	</designMatrix>
+
+	<designMatrix id="scaleDesign">
+		<parameter id="scaleDesign.col1" value="1.0 1.0 1.0 1.0"/>
+	</designMatrix>
+
+	<parameter id="precision" value="2.0"/>
+
+	<parameter id="Y" value="0.0 4.0 4.0 6.0"/>
+
+	<parameter id="beta" value="4.0 2.0"/>
+
+	<parameter id="gamma" value="2.0"/>
+
+	<designMatrix id="Z">
+		<parameter id="Z.col1" value="0.0 1.0 0.0 0.0"/>
+	</designMatrix>
+
+	<multivariateNormalPrior id="beta.prior">
+		<data>
+			<parameter idref="beta"/>
+		</data>
+		<meanParameter>
+			<parameter id="beta.prior.mean" value="0.0 0.0"/>
+		</meanParameter>
+		<precisionParameter>
+			<matrixParameter id="beta.prior.precision">
+				<parameter value="4 0"/>
+				<parameter value="0 1"/>
+			</matrixParameter>
+		</precisionParameter>
+	</multivariateNormalPrior>
+
+	<multivariateNormalPrior id="gamma.prior">
+		<data>
+			<parameter idref="gamma"/>
+		</data>
+		<meanParameter>
+			<parameter id="gamma.prior.mean" value="5.0"/>
+		</meanParameter>
+		<precisionParameter>
+			<matrixParameter id="gamma.prior.precision">
+				<parameter value="10"/>
+			</matrixParameter>
+		</precisionParameter>
+	</multivariateNormalPrior>
+
+	<glmLikelihood id="linearModel" family="normal">
+		<dependentVariables>
+			<parameter idref="Y"/>
+		</dependentVariables>
+		<independentVariables>
+			<parameter idref="beta"/>
+			<designMatrix idref="X"/>
+		</independentVariables>
+		<independentVariables>
+			<parameter idref="gamma"/>
+			<designMatrix idref="Z"/>
+		</independentVariables>
+		<scaleVariables>
+			<parameter idref="precision"/>
+			<designMatrix idref="scaleDesign"/>
+		</scaleVariables>
+	</glmLikelihood>
+
+	<report>
+		ln L for
+		<glmLikelihood idref="linearModel"/>
+		ln Q for
+		<multivariateNormalPrior idref="beta.prior"/>
+	</report>
+
+	<operators id="operators">
+		<!--	<randomWalkOperator windowSize="2" weight="1" autoOptimizer="true">
+					<parameter idref="beta"/>
+				</randomWalkOperator>    -->
+		<regressionGibbsOperator weight="1">
+			<glmLikelihood idref="linearModel"/>
+			<parameter idref="beta"/>
+			<multivariateNormalPrior idref="beta.prior"/>
+		</regressionGibbsOperator>
+
+		<regressionGibbsOperator weight="1">
+			<glmLikelihood idref="linearModel"/>
+			<parameter idref="gamma"/>
+			<multivariateNormalPrior idref="gamma.prior"/>
+		</regressionGibbsOperator>
+
+
+	</operators>
+
+	<mcmc id="mcmc" chainLength="100000" autoOptimize="true">
+		<posterior id="posterior">
+			<likelihood id="likelihood">
+				<glmLikelihood idref="linearModel"/>
+			</likelihood>
+			<prior id="prior">
+				<multivariateNormalPrior idref="beta.prior"/>
+				<multivariateNormalPrior idref="gamma.prior"/>
+			</prior>
+		</posterior>
+		<operators idref="operators"/>
+		<log logEvery="1000">
+			<column dp="4" width="12">
+				<likelihood idref="likelihood"/>
+				<likelihood idref="prior"/>
+				<parameter idref="beta"/>
+				<parameter idref="gamma"/>
+			</column>
+		</log>
+		<log logEvery="100" fileName="testLinearModel.log">
+			<likelihood idref="posterior"/>
+			<parameter idref="beta"/>
+			<parameter idref="gamma"/>
+		</log>
+	</mcmc>
+
+	<traceAnalysis fileName="testLinearModel.log"/>
+
+</beast>

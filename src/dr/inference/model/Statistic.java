@@ -52,12 +52,6 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
     String getDimensionName(int dim);
 
     /**
-     * Set the names of the dimensions (optional, by default they are named after the statistic).
-     * @param names
-     */
-    void setDimensionNames(String[] names) ;
-
-    /**
      * @return the number of dimensions that this statistic has.
      */
     int getDimension();
@@ -102,11 +96,7 @@ public interface Statistic extends Attribute<double[]>, Identifiable, Loggable {
             }
         }
 
-        public void setDimensionNames(String[] names) {
-            // do nothing
-        }
-
-      public String toString() {
+        public String toString() {
             StringBuffer buffer = new StringBuffer(String.valueOf(getStatisticValue(0)));
 
             for (int i = 1; i < getDimension(); i++) {

@@ -76,7 +76,6 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
             compoundLikelihood = new CompoundLikelihood(likelihoods);
         }
 
-
         return compoundLikelihood;
     }
 

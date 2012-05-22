@@ -28,7 +28,6 @@ package dr.app.beagle.evomodel.treelikelihood;
 import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
@@ -46,7 +45,11 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.Citable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 /**
@@ -81,6 +84,8 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
+
+    private static final boolean TRY_EPOCH = false;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -732,26 +737,26 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             // we are currently assuming a no-category model...
             for (int i = 0; i < eigenCount; i++) {
-                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
-                    eigenBufferHelper.flipOffset(i);
+            	if (TRY_EPOCH) {
+            		  eigenBufferHelper.flipOffset(i);
+            		  
+            		  branchSubstitutionModel.setEigenDecomposition(
+            				  beagle, i, eigenBufferHelper, 0
+            				  );
+            		
+            		
+            	} else {
+            	
+                EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
 
-                    branchSubstitutionModel.setEigenDecomposition(
-                            beagle, i, eigenBufferHelper, 0
-                    );
+                eigenBufferHelper.flipOffset(i);
 
-
-                } else {
-
-                    EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
-
-                    eigenBufferHelper.flipOffset(i);
-
-                    beagle.setEigenDecomposition(
-                            eigenBufferHelper.getOffsetIndex(i),
-                            ed.getEigenVectors(),
-                            ed.getInverseEigenVectors(),
-                            ed.getEigenValues());
-                }
+                beagle.setEigenDecomposition(
+                        eigenBufferHelper.getOffsetIndex(i),
+                        ed.getEigenVectors(),
+                        ed.getInverseEigenVectors(),
+                        ed.getEigenValues());
+            	}
             }
         }
 
@@ -763,7 +768,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
 
-                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
+                if (TRY_EPOCH) {
                     branchSubstitutionModel.updateTransitionMatrices(
                             beagle,
                             i,
@@ -1088,10 +1093,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                     }
                 }
-
-                // /////////////
-                // ---DEBUG---//
-                // /////////////
+                
+				// //////////////////
+				// ---TODO:DEBUG---//
+				// //////////////////
 
 //				double tmp[] = new double[stateCount * patternCount * categoryCount];
 //				System.out.println(nodeNum);
@@ -1103,9 +1108,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 ////					}
 //				}
 
-                // //////////////////
-                // ---END: DEBUG---//
-                // //////////////////
+				// //////////////////
+				// ---END: DEBUG---//
+				// //////////////////
 
             }
         }

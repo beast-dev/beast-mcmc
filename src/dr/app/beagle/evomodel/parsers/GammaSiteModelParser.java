@@ -1,7 +1,5 @@
 package dr.app.beagle.evomodel.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -19,7 +17,6 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
-    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String SUBSTITUTION_RATE = "mutationRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
@@ -32,23 +29,9 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		String msg = "";
-		SubstitutionModel substitutionModel = null;
+        String msg = "";
 
-		boolean CHECK_BRANCH_SUBSTITUTION_MODEL = false;
-
-		for (int i = 0; i < xo.getChildCount(); i++) {
-
-			XMLObject cxo = (XMLObject) xo.getChild(i);
-
-			//TODO: very hack-ish
-			if (cxo.toString().toLowerCase().equalsIgnoreCase("branchSubstitutionModel")) {
-
-//				System.err.println("Found an instance of branch substitution model");
-				CHECK_BRANCH_SUBSTITUTION_MODEL = true;
-
-			}// END: BSM check
-		}// END: children loop
+        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
 
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
@@ -85,16 +68,9 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
-        if(!CHECK_BRANCH_SUBSTITUTION_MODEL) {
-        
-//        	System.err.println("Doing the substitution model stuff");
-        	
         // set this to pass it along to the TreeLikelihoodParser...
-        substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
         siteRateModel.setSubstitutionModel(substitutionModel);
-        
-        }
-        
+
         return siteRateModel;
     }
 
@@ -106,7 +82,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         return "A SiteModel that has a gamma distributed rates across sites";
     }
 
-    public Class<GammaSiteRateModel> getReturnType() {
+    public Class getReturnType() {
         return GammaSiteRateModel.class;
     }
 
@@ -115,16 +91,9 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-    		
-          new XORRule(
-          new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                  new ElementRule(SubstitutionModel.class)
-                  }),
-          new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                  new ElementRule(BranchSubstitutionModel.class)
-                  }), false
-           ),
-    		
+            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                    new ElementRule(SubstitutionModel.class)
+            }),
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
@@ -133,16 +102,12 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class)
                     }), true
             ),
-            
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                     new ElementRule(Parameter.class)
             }, true),
-            
             new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true)
-            
     };
-    
-}//END: class
+}

@@ -1,28 +1,3 @@
-/*
- * UniformizedSubstitutionModel.java
- *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.inference.markovjumps.MarkovJumpsType;
@@ -30,7 +5,6 @@ import dr.inference.markovjumps.StateHistory;
 import dr.inference.markovjumps.SubordinatedProcess;
 import dr.inference.markovjumps.UniformizedStateHistory;
 import dr.inference.model.Model;
-
 import java.util.logging.Logger;
 
 /**
@@ -91,7 +65,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         if (model == substModel) {
             updateSubordinator = true;
         }
-        super.handleModelChangedEvent(model, object, index);
+        super.handleModelChangedEvent(model, object, index);       
     }
 
     public void setSaveCompleteHistory(boolean in) {
@@ -138,13 +112,9 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         return completeHistory.toStringChanges(dataType); //, 0.0);
     }
 
-    public int getNumberOfJumpsInCompleteHistory() {
-        return completeHistory == null ? -1 : completeHistory.getNumberOfJumps();
-    }
-
     public double computeCondStatMarkovJumps(int startingState,
                                              int endingState,
-                                             double time,
+                                             double time,                                             
                                              double transitionProbability) {
 
         if (updateSubordinator) {
@@ -156,13 +126,13 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             StateHistory history;
             try {
                 history = UniformizedStateHistory.simulateConditionalOnEndingState(
-                        0.0,
-                        startingState,
-                        time,
-                        endingState,
-                        transitionProbability,
-                        stateCount,
-                        subordinator
+                    0.0,
+                    startingState,
+                    time,
+                    endingState,
+                    transitionProbability,
+                    stateCount,
+                    subordinator
                 );
             } catch (SubordinatedProcess.Exception e) {
 
@@ -192,7 +162,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     if (history.getEndingState() == endingState) {
                         success = true;
                     }
-
+                    
                     attempts++;
                 }
             }

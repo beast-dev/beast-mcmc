@@ -1,7 +1,7 @@
 /*
  * TransmissionLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -331,7 +331,7 @@ public class TransmissionLikelihood extends AbstractModelLikelihood implements U
 
         for (int i = 1; i < hostCount; i++) {
             double ds = getDonorSize(i);
-            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[i], ds, i);
+            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[i], ds);
             logL += Coalescent.calculateLogLikelihood(intervals[i], demoFunction);
 
         }
@@ -350,7 +350,7 @@ public class TransmissionLikelihood extends AbstractModelLikelihood implements U
             demoFunction = sourceDemographic.getDemographicFunction();
         } else {
             double ds = getDonorSize(donorHost[host]);
-            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[host], ds, host);
+            demoFunction = transmissionModel.getDemographicFunction(transmissionTime[host], ds);
         }
 
         donorSize[host] = demoFunction.getDemographic(transmissionTime[host]);

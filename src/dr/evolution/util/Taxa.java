@@ -299,7 +299,6 @@ public class Taxa implements MutableTaxonList, Identifiable, Comparable<Taxa> {
 
     @Override
     public boolean equals(final Object o) {
-        if (!(o instanceof TaxonList)) return false;
         return Utils.areTaxaIdentical(this, (TaxonList)o);
     }
 }

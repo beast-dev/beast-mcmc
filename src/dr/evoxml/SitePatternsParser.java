@@ -63,7 +63,7 @@ public class SitePatternsParser extends AbstractXMLObjectParser {
         int to = -1;
         int every = xo.getAttribute(EVERY, 1);
 
-        boolean strip = xo.getAttribute(STRIP, true);
+        boolean strip = xo.getAttribute(STRIP,true);
 
         boolean unique = xo.getAttribute(UNIQUE, true);
 

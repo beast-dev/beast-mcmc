@@ -37,7 +37,6 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
@@ -180,12 +179,6 @@ public class TreeLikelihoodGenerator extends Generator {
             default:
                 throw new IllegalArgumentException("Unknown clock model");
         }
-
-        /*if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        } else {
-           writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        }*/
 
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
 

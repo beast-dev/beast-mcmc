@@ -1,7 +1,7 @@
 /*
  * AbstractXMLObjectParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,14 @@
 
 package dr.xml;
 
-import dr.app.tools.BeastParserDoc;
 import org.w3c.dom.NamedNodeMap;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.List;
+
+import dr.app.tools.BeastParserDoc;
 
 public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
@@ -83,15 +84,15 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                     final XMLObject ch = (XMLObject) child;
                     unexpectedName = !isAllowed(ch.getName()) ? ch.getName() : null;
                     final List<String> unexpected = isUnexpected(ch);
-                    if (unexpected != null) {
+                    if( unexpected != null ) {
                         String n = "";
-                        for (int j = 0; j < unexpected.size(); j += 2) {
-                            n = n + ", " + unexpected.get(j) + " in " + unexpected.get(j + 1);
+                        for(int j = 0; j < unexpected.size(); j += 2) {
+                           n = n + ", " + unexpected.get(j) + " in " + unexpected.get(j+1);
                         }
-                        if (unexpectedName == null) {
-                            unexpectedName = n.substring(1, n.length());
+                        if( unexpectedName == null ) {
+                            unexpectedName = n.substring(1, n.length()) ;
                         } else {
-                            unexpectedName = unexpectedName + n;
+                           unexpectedName = unexpectedName + n;
                         }
                     }
                 } else {
@@ -103,7 +104,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
                         }
                     }
                 }
-                if (unexpectedName != null) {
+                if( unexpectedName != null ) {
 
                     String msg = "Unexpected element in " + xo + ": " + unexpectedName;
                     if (strictXML) {
@@ -142,8 +143,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
 
     /**
      * Allowed if any of the rules allows that element
-     *
-     * @param elementName String
+     * @param elementName  String
      * @return boolean isAllowed
      */
     public final boolean isAllowed(String elementName) {
@@ -165,12 +165,12 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         if (rules != null && rules.length > 0) {
             for (XMLSyntaxRule rule : rules) {
                 if (rule.isLegalElementName(element.getName())) {
-                    for (int nc = 0; nc < element.getChildCount(); ++nc) {
+                    for(int nc = 0; nc < element.getChildCount(); ++nc) {
                         final Object child = element.getChild(nc);
-                        if (child instanceof XMLObject) {
+                        if( child instanceof XMLObject ) {
                             final String name = ((XMLObject) child).getName();
-                            if (!rule.isLegalSubelementName(name)) {
-                                if (un == null) {
+                            if( ! rule.isLegalSubelementName(name) ) {
+                                if( un == null ) {
                                     un = new ArrayList<String>();
                                 }
                                 un.add(name);
@@ -210,7 +210,7 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
         buffer.append("  <div class=\"elementheader\">\n");
         buffer.append("    <span class=\"elementname\"><a href=\"").append(BeastParserDoc.INDEX_HTML)
                 .append("#").append(getParserName()).append("\"> <h3>&lt;").append(getParserName())
-                .append("&gt;</h3></a></span>\n");
+                .append("&gt;</h3></a></span>\n");         
         buffer.append("    <div class=\"description\"><b>Description:</b><br>\n");
         buffer.append("      ").append(getParserDescription()).append("\n");
         buffer.append("    </div>\n");
@@ -224,14 +224,14 @@ public abstract class AbstractXMLObjectParser implements XMLObjectParser {
             buffer.append("  </div>\n");
         }
         if (hasExample()) {
-            buffer.append("<div class=\"example\"><b>Example:</b>");
-            StringWriter sw = new StringWriter();
-            PrintWriter pw = new PrintWriter(sw);
-            handler.outputExampleXML(pw, this);
-            pw.flush();
-            pw.close();
-            buffer.append(sw.toString());
-            buffer.append("</div>\n");
+        buffer.append("<div class=\"example\"><b>Example:</b>");
+        StringWriter sw = new StringWriter();
+        PrintWriter pw = new PrintWriter(sw);
+        handler.outputExampleXML(pw, this);
+        pw.flush();
+        pw.close();
+        buffer.append(sw.toString());
+        buffer.append("</div>\n");
         }
         buffer.append("</div>\n");
         return buffer.toString();

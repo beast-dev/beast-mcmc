@@ -13,15 +13,12 @@ import java.util.Stack;
 import jebl.util.FixedBitSet;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.inference.model.Parameter;
 import dr.util.AlloppMisc;
 
 
 /**
- * An AlloppMulLabTree represents the species network as single 
- * binary tree with tips that can be multiply labelled with species. 
  * 
  * @author Graham Jones
  *         Date: 13/09/2011
@@ -47,16 +44,6 @@ import dr.util.AlloppMisc;
  */
 
 
-/* nodes[], rootn implement the tree; nextn is for building it
- * 
- * apsp references the (species, indivs, sequences) structure.
- * 
- * popvals references the population parameters. fillinpopvals() assigns
- * them to branches.
- * 
- * simptree is so that AlloppSpeciesNetworkModel, which contains a AlloppMulLabTree,
- * can implement the Tree interface.
- */
 public class AlloppMulLabTree  {
 	private MulLabNode[] nodes;
 	private int rootn;
@@ -64,7 +51,6 @@ public class AlloppMulLabTree  {
 	private AlloppSpeciesBindings apsp;
 	private Parameter popvals;
 	public SimpleTree simptree;
-	
 	/*
 	 * parent, child[] join the nodes into a binary tree.
 	 * 
@@ -76,7 +62,7 @@ public class AlloppMulLabTree  {
 	 * each individual of the species. There is one bit for each Taxon like 
 	 * "c0" or "c1"
 	 */	
-	private class MulLabNode extends AlloppNode.Abstract implements AlloppNode {
+	private class MulLabNode {
 		private MulLabNode parent;
 		private MulLabNode child[];
 		private double height;
@@ -85,20 +71,18 @@ public class AlloppMulLabTree  {
 		private FixedBitSet union;
 		private ArrayList<Double> coalheights;
 		private int nlineages;
-		private Taxon taxon;
+		private String name;
 		private int tippopindex;
 		private int hybpopindex;
 		private int rootpopindex;
 
 		// dud constuctor
 		MulLabNode() {
-			parent = null;
-			child = new MulLabNode[0];
 			height = -1.0;    
 			tetraroot = false;
 			hybridheight = -1.0;   
 			coalheights = new ArrayList<Double>();
-			taxon = new Taxon("");
+			name = "";
 			tippopindex = -1;
 			hybpopindex	= -1;
 			rootpopindex = -1;
@@ -122,7 +106,7 @@ public class AlloppMulLabTree  {
 			StringBuilder s = new StringBuilder();
 			Formatter formatter = new Formatter(s, Locale.US);
 			if (child.length == 0) {
-				formatter.format("%s ", taxon.getId());
+				formatter.format("%s ", name);
 			} else {
 				formatter.format("%s ", "+");
 			}
@@ -144,89 +128,38 @@ public class AlloppMulLabTree  {
 				formatter.format(AlloppMisc.nonnegIn8Chars(coalheights.get(c)) + ",");
 			}
 			return s.toString();
-		}
-
-
-		@Override
-		public int nofChildren() {
-			return child.length;
-		}
-
-
-		@Override
-		public AlloppNode getChild(int ch) {
-			return child[ch];
-		}
-
-
-		@Override
-		public AlloppNode getAnc() {
-			return parent;
-		}
-
-
-
-		@Override
-		public double getHeight() {
-			return height;
-		}
-
-
-		@Override
-		public FixedBitSet getUnion() {
-			return union;
-		}
-
-
-		@Override
-		public void setChild(int ch, AlloppNode newchild) {
-			child[ch] = (MulLabNode) newchild;
-			
-		}
-
-
-		@Override
-		public void setAnc(AlloppNode anc) {
-			parent = (MulLabNode) anc;
-		}
-
-		@Override
-		public Taxon getTaxon() {
-			return taxon;
-		}
-
-
-		@Override
-		public void setTaxon(String name) {
-			taxon = new Taxon(name);
-		}
-
-
-		@Override
-		public void setHeight(double height) {
-			this.height = height;
-		}
-
-
-		@Override
-		public void setUnion(FixedBitSet union) {
-			this.union = union;
-			
-		}
- 
-				
-		@Override
-		public void addChildren(AlloppNode c0, AlloppNode c1) {
-			child = new MulLabNode[2];
-			child[0] = (MulLabNode)c0;
-			child[0].setAnc(this);
-			child[1] = (MulLabNode)c1;
-			child[1].setAnc(this);
-			}
-		
-		
-	
+		}  
 	}
+
+	private class LegLink {
+		public MulLabNode foot;
+		public MulLabNode hip;
+		public double footheight;
+		private boolean done;
+
+		public LegLink(MulLabNode hip, MulLabNode foot, double footheight) {
+			this.hip = hip;
+			this.foot = foot;
+			this.footheight =  footheight;
+			done = false;
+		}
+	}
+
+	private class FootLinks {
+		public List<LegLink> hips;
+		public MulLabNode foot;
+
+		public FootLinks(List<LegLink> hips) {
+			this.hips = hips;
+			if (hips.size() > 0) {
+				foot = hips.get(0).foot;
+				for (LegLink x : hips) {
+					assert foot == x.foot;
+				}
+			}
+		}
+	}
+
 
 
 	private class SpSqUnion {
@@ -293,47 +226,114 @@ public class AlloppMulLabTree  {
 		MulLabNode diroot = null;
 		if (ditrees.length > 0) {
 			SimpleNode root = (SimpleNode) ditrees[0].getRoot();
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 0); // grjtodo better to use simpletree2ditree ?
+			simpletree2mullabtree(root, 0);
 			rootn = nextn - 1;
 			diroot = nodes[rootn];
 		}
 		if (diroot != null &&  diroot.height <= 0.0) {
 			System.err.println("AlloppMulLabTree constructor: bug");
 		}
+
 		assert (diroot != null  ||  tetratrees.length == 1);
-		if (diroot != null)
-		  { diroot.fillinUnionsInSubtree(apsp); }   // added 2012-03-22 when doing DipHist grjtodo test 
 
-
-		List<AlloppLegLink> leglinks = new ArrayList<AlloppLegLink>();
+		// Tetratrees. Two copies each.
+		// When there is one leg (JOINED case) make an extra node to join
+		// the two tetratrees into one.
+		// While doing this, make a list of LegLinks = roots and footUnion's
+		// which specify the join to diploid branch.
+		List<LegLink> leglinks = new ArrayList<LegLink>();
 		for (int i = 0; i < tetratrees.length; i++) {
-			// Tetratrees. Two copies each.
-			SimpleNode root = (SimpleNode)tetratrees[i].getRoot();
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 0);
+			SimpleNode root = (SimpleNode) tetratrees[i].getRoot();
+			simpletree2mullabtree(root, 0);
 			int r0 = nextn - 1;
 			nodes[r0].hybridheight = tetratrees[i].getHybridHeight();
 			nodes[r0].tetraroot = true;
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 1);
+			simpletree2mullabtree(root, 1);
 			int r1 = nextn - 1;
 			nodes[r1].hybridheight = tetratrees[i].getHybridHeight();
 			nodes[r1].tetraroot = true;
-			nextn = AlloppNode.Abstract.collectLegLinksAndMakeLegJoin(leglinks, tetratrees[i], diroot, nodes, nextn, r0, r1);
+			if (tetratrees[i].getNumberOfLegs() == 1) {
+				// in this case, the two tettrees just made join at
+				// another node (the root in no-diploid case, and a node
+				// which goes on join to diploid tree otherwise).
+				// grjtodo code shared here and in simpletree2mullabtree()
+				nodes[nextn].child = new MulLabNode[2];
+				nodes[nextn].child[0] = nodes[r0];
+				nodes[r0].parent = nodes[nextn];
+				nodes[nextn].child[1] = nodes[r1];
+				nodes[r1].parent = nodes[nextn];
+				nodes[nextn].height = tetratrees[i].getSplitHeight();
+				if (diroot != null) {
+					FixedBitSet u = tetratrees[i].getFootUnion(0);
+					double footheight = tetratrees[i].getFootHeight(0);
+					leglinks.add(new LegLink(nodes[nextn], nodeOfUnionInSubtree(diroot, u), footheight));
+				}
+				nextn++;
+			} else {
+				assert diroot != null;
+				FixedBitSet u0 = tetratrees[i].getFootUnion(0);
+				FixedBitSet u1 = tetratrees[i].getFootUnion(1);
+				double footheight0 = tetratrees[i].getFootHeight(0);
+				double footheight1 = tetratrees[i].getFootHeight(1);
+				leglinks.add(new LegLink(nodes[r0], nodeOfUnionInSubtree(diroot, u0), footheight0));
+				leglinks.add(new LegLink(nodes[r1], nodeOfUnionInSubtree(diroot, u1), footheight1));
+			}
 		}
 		if (diroot == null) {
 			rootn = nextn - 1;
 		}
-		AlloppNode.Abstract.convertLegLinks(nodes, nextn, leglinks);
-		nodes[rootn].fillinUnionsInSubtree(apsp);
+		// Re-organise the LegLinks into per-diploid-branch lists (FootLinks)
+		List<FootLinks> footlinkslist = new ArrayList<FootLinks>();
+		for (LegLink x : leglinks) {
+			if (!x.done) {
+				List<LegLink> hips = new ArrayList<LegLink>();
+				for (LegLink y : leglinks) {
+					if (y.foot == x.foot) {
+						hips.add(y);
+						y.done = true;
+					}
+				}
+				footlinkslist.add(new FootLinks(hips));
+			}
+		}
+		// sort the feet in time order.
+		for (FootLinks x : footlinkslist) {
+			Collections.sort(x.hips, FOOTHEIGHT_ORDER);
+		}
+
+		// For all x, add nodes down from x.foot for all x.hips
+		for (FootLinks x : footlinkslist) {
+			MulLabNode f = x.foot;
+			for (LegLink hip : x.hips) {
+				MulLabNode h = hip.hip;
+				nodes[nextn].parent = f.parent;
+				nodes[nextn].child = new MulLabNode[2];
+				nodes[nextn].child[0] = f;
+				nodes[nextn].child[0].parent = nodes[nextn]; 
+				nodes[nextn].child[1] = h;
+				nodes[nextn].child[1].parent = nodes[nextn]; 
+				if (nodes[nextn].parent.child[0] == f) {
+					nodes[nextn].parent.child[0] = nodes[nextn];
+				} else {
+					assert nodes[nextn].parent.child[1] == f;
+					nodes[nextn].parent.child[1] = nodes[nextn];
+				}
+				nodes[nextn].height = hip.footheight;
+				f = nodes[nextn]; 
+				nextn++;
+			}
+		}
+
+		fillinUnionsInSubtree(nodes[rootn]);
 		makesimpletree();
 	}
 
 	
-	
-	
 	public String mullabTreeAsNewick() {
-		String s = Tree.Utils.uniqueNewick(simptree, simptree.getRoot());
-		return s;
+		return mullabSubtreeAsNewick(nodes[rootn], new String(""));
 	}
+
+
 
 	public String asText() {
 		String header = "topology             height         union         []  tippop  []  hybpop  [] rootpop  tetroot   hybhgt nlin coalheights" + System.getProperty("line.separator");
@@ -374,8 +374,8 @@ public class AlloppMulLabTree  {
 	}
 
 
-	public double geneTreeInMULTreeLogLikelihood(boolean noDiploids) {
-		fillinpopvals(noDiploids);
+	public double geneTreeInMULTreeLogLikelihood(boolean noDiploids, boolean twoDiploids) {
+		fillinpopvals(noDiploids, twoDiploids);
 		//System.out.println(asText());
 		return geneTreeInMULSubtreeLogLikelihood(nodes[rootn]);
 	}
@@ -407,7 +407,7 @@ public class AlloppMulLabTree  {
 	
 	private int makesimplesubtree(SimpleNode[] snodes, int nextsn, MulLabNode mnode) {
 		if (mnode.child.length == 0) {
-			snodes[nextsn].setTaxon(new Taxon(mnode.taxon.getId()));
+			snodes[nextsn].setTaxon(new Taxon(mnode.name));
 		} else {
 			nextsn = makesimplesubtree(snodes, nextsn, mnode.child[0]);
 			int subtree0 = nextsn-1;
@@ -459,8 +459,11 @@ public class AlloppMulLabTree  {
 	private void simpletree2mullabtree(SimpleNode snode, int seq) {
 		if (snode.isExternal()) {
 			nodes[nextn].child = new MulLabNode[0];
-			nodes[nextn].union = apsp.speciesseqToTipUnion(snode.getTaxon(), seq);
-			nodes[nextn].taxon = new Taxon(snode.getTaxon().getId() + seq);
+			int sp = apsp.apspeciesId2index(snode.getTaxon().getId());
+			int spseq = apsp.spandseq2spseqindex(sp, seq);
+			nodes[nextn].union = new FixedBitSet(apsp.numberOfSpSeqs());
+			nodes[nextn].union.set(spseq);
+			nodes[nextn].name = snode.getTaxon().getId() + seq;
 		} else {
 			simpletree2mullabtree(snode.getChild(0), seq);
 			int c0 = nextn - 1;
@@ -478,12 +481,20 @@ public class AlloppMulLabTree  {
 
 
 
+	private void fillinUnionsInSubtree(MulLabNode node) {
+		if (node.child.length > 0) {
+			fillinUnionsInSubtree(node.child[0]);
+			fillinUnionsInSubtree(node.child[1]);
+			node.union = new FixedBitSet(apsp.numberOfSpSeqs());
+			node.union.union(node.child[0].union);
+			node.union.union(node.child[1].union);
+		}
+	}
 
 	private MulLabNode nodeOfUnion(FixedBitSet x) {
 		return nodeOfUnionInSubtree(nodes[rootn], x);
 	}
 
-	
 	/* Searches subtree rooted at node for most tipward node 
 	 * whose union contains x. If x is known to be a union of one of the nodes,
 	 * it finds that node, so acts as a map union -> node
@@ -501,6 +512,22 @@ public class AlloppMulLabTree  {
 		}
 	}
 
+
+
+	private String mullabSubtreeAsNewick(MulLabNode node, String newick) {
+		if (node.child.length == 0) {
+			int spseq = union2spseqindex(node.union);
+			int sp = apsp.spseqindex2sp(spseq);
+			int seq = apsp.spseqindex2seq(spseq);
+			newick += apsp.apspeciesName(sp);
+			assert seq < 10;
+			newick += "0123456789".charAt(seq);
+		} else {
+			newick = "(" + mullabSubtreeAsNewick(node.child[0], newick) + "," + 
+			mullabSubtreeAsNewick(node.child[1], newick) + ")";
+		}
+		return newick;
+	}
 
 
 
@@ -546,10 +573,10 @@ public class AlloppMulLabTree  {
 	 * species clade are treated the same.
 	 * 
 	 * fillinpopvalsforspunionNoDiploids() and
-	 * fillinpopvalsforspunion() deal with a set of nodes
+	 * fillinpopvalsforspunionTwoDiploids() deal with a set of nodes
 	 * with same species clade.
 	 */
-	private void fillinpopvals(boolean noDiploids) {
+	private void fillinpopvals(boolean noDiploids, boolean twoDiploids) {
 		ArrayList<SpSqUnion> unionarraylist = new ArrayList<SpSqUnion>();
 		for (int n = 0; n < nodes.length; n++) {
 			unionarraylist.add(new SpSqUnion(nodes[n].union));
@@ -563,15 +590,16 @@ public class AlloppMulLabTree  {
 			while (n1 < unionarray.length && unionarray[n1].spunion.equals(unionarray[n0].spunion)) {
 				n1++;
 			}
+
 			if (noDiploids) {
 				p = fillinpopvalsforspunionNoDiploids(unionarray, n0, n1, p);
+			} else if (twoDiploids) {
+				p = fillinpopvalsforspunionTwoDiploids(unionarray, n0, n1, p);
 			} else {
-				p = fillinpopvalsforspunion(unionarray, n0, n1, p);			
+				// grjtodo tetraonly Not sure if TwoDiploids code generalises (not sure of model either)
+				assert false;					
 			}
 			n0 = n1;
-		}
-		if ( p != popvals.getDimension()) {
-			System.out.println("BUG in fillinpopvals()");
 		}
 		assert p == popvals.getDimension();
 	}
@@ -579,16 +607,15 @@ public class AlloppMulLabTree  {
 		
 
 
-	private int fillinpopvalsforspunion(SpSqUnion[] unionarray, int n0, int n1, int p) {
+	private int fillinpopvalsforspunionTwoDiploids(SpSqUnion[] unionarray, int n0, int n1, int p) {
 		MulLabNode nodeset[] = new MulLabNode[3];
 		int n = n1-n0;
 		assert n == 1 || n==2 || n==3;
-		// Get one of:
+		// In two diploids case, get one of:
 		// one diploid node (tip or root)
 		// one foot node, where feet meet different diploid branches
 		// two nodes from different tettrees
 		// two nodes which are two feet of tettree meeting diploid branch
-		// two nodes where one is a foot of a tetratree other contains some diploids and the partner tetratree
 		// three nodes which are two tetroots and a leg-join.
 
 		// get set of nodes with same species clade
@@ -627,35 +654,30 @@ public class AlloppMulLabTree  {
 			// copy to leg-join
 			nodeset[2].rootpopindex = nodeset[0].rootpopindex;
 		} else if (n == 2) {
-			// either two nodes at the 'same place' in two matching tetratrees, or 
-			// the two feet of same tetratree joining same diploid branch
-			// one foot of a tetratree joining some diploids and the partner tetratree
+			// either two nodes at the 'same place' in two tetratrees, or two
+			// feet of a tetratree meeting same diploid branch
 			assert nodeset[0].parent != null;
 			assert nodeset[1].parent != null;
-			boolean [] isfoot = new boolean [2];
-			for (int i=0; i<2; i++) {
-				isfoot[i] = nodeset[i].child.length == 2  &&  (nodeset[i].child[0].tetraroot || nodeset[i].child[1].tetraroot);
-			}
-			if (isfoot[0]  || isfoot[1]) {
-				// one or two feet.
-				// assert that neither node has two tetraroot children (which is joined legs case with n== 3)
+			if (nodeset[0].child.length == 2 &&
+					(nodeset[0].child[0].tetraroot || nodeset[0].child[1].tetraroot)) {
+				// if one node has a tetraroot child, assert that it has only one
+				// such child (ie it is a foot) and that the other node is also a foot
 				assert !nodeset[0].child[0].tetraroot || !nodeset[0].child[1].tetraroot;
+				assert nodeset[1].child[0].tetraroot || nodeset[1].child[1].tetraroot;
 				assert !nodeset[1].child[0].tetraroot || !nodeset[1].child[1].tetraroot;
 				nodeset[0].rootpopindex = p;
 				nodeset[1].rootpopindex = p+1;
 				p += 2;
 				// For each foot, copy rootpop from non-tetraroot child to tetraroot child
-				for (int i=0; i<2; i++) {
-					if (isfoot[i]) {
-						if (nodeset[i].child[0].tetraroot) {
-							nodeset[i].child[0].rootpopindex = nodeset[i].child[1].rootpopindex;
-						} else {
-							nodeset[i].child[1].rootpopindex = nodeset[i].child[0].rootpopindex;
-						}
-					}					
+				for (int i = 0; i < 2; i++) {
+					if (nodeset[i].child[0].tetraroot) {
+						nodeset[i].child[0].rootpopindex = nodeset[i].child[1].rootpopindex;
+					} else {
+						nodeset[i].child[1].rootpopindex = nodeset[i].child[0].rootpopindex;
+					}						
 				}
 			} else {
-				// two nodes, neither a foot, so they are matching nodes in two tetratrees.
+				// two nodes, not two feet. 'normal' case of matching nodes in two tetratrees.
 				// If it is a tip, add tippop.
 				// Whether or not it is a tip, add one more param, as hybpop if it is
 				// a tetraroot, or rootpop if it isn't
@@ -964,11 +986,31 @@ public class AlloppMulLabTree  {
 
 
 
+
+
+
+
 	private static int union2spseqindex(FixedBitSet union) {
 		assert union.cardinality() == 1;
 		return union.nextOnBit(0);
 	}
 
+
+
+
+	/*
+	 * this is for sorting the links from higher ploidy tree  to a single
+	 * branch within a lower ploidy tree.
+	 */
+	static final Comparator<LegLink> FOOTHEIGHT_ORDER = new Comparator<LegLink>() {
+		public int compare(LegLink a, LegLink b) {
+			if (a.footheight == b.footheight) {
+				return 0;
+			} else {
+				return (a.footheight > b.footheight) ? 1 : -1;
+			}
+		}
+	};    
 
 
 

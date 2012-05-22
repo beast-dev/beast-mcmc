@@ -81,7 +81,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();
@@ -144,12 +143,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
         splitPane.setContinuousLayout(true);
         splitPane.setBorder(BorderFactory.createEmptyBorder());
         splitPane.setOpaque(false);
-
-        // The bottom panel is now small enough that this is not necessary
-//        JScrollPane scrollPane2 = new JScrollPane(panel);
-//        scrollPane2.setOpaque(false);
-//        scrollPane2.setPreferredSize(new Dimension(400, 150));
-
 
         setOpaque(false);
         setBorder(new BorderUIResource.EmptyBorderUIResource(new Insets(12, 12, 12, 12)));

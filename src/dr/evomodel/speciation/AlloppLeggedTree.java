@@ -15,7 +15,6 @@ import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.SlidableTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
@@ -28,7 +27,7 @@ import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 
 /**
  * 
- * A 'tree with legs' for a single ploidy level in an allopolyploid network.
+ * A tree for a single ploidy level in an allopolyploid network.
  * 
  * @author Graham Jones
  *         Date: 01/05/2011
@@ -68,16 +67,45 @@ import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 
 
 
-public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.LogUpon  {
+public class AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon  {
 	
     private  SimpleTree tree;
-    private  AlloppTreeLeg[] legs;
+    private  Leg[] legs;
     private double splitheight;
     private double hybridheight;
 
     
     
-   
+    private class Leg {
+    	/*
+    	 *  footUnion is the node in a lower ploidy tree Y whose branch 
+    	 *  contains the foot leading to this tree. footUnion specifies
+    	 *  the clade (of species) in Y at the node.
+    	 *  
+    	 *  grjtodo tetraonly. With hexaploids, etc, may need to identify Y?
+    	 *  Or clade is enough?
+    	 *  
+    	 *  height is the time during the branch of the foot. 
+    	 *  
+    	 *  grjtodo? footID identifies the foot - heights might be identical 
+    	 */
+    	public FixedBitSet footUnion;
+    	public double height;
+    	
+    	/**
+    	 * clone constructor
+    	 */
+    	public Leg(Leg leg) {
+    		this.height = leg.height;
+    		this.footUnion = new FixedBitSet(leg.footUnion);
+    	}
+    	
+    	// Partial constructor. The leg dangles, unattached
+    	public Leg(double height) {
+    		this.footUnion = new FixedBitSet(0);
+    		this.height = height;
+    	}
+    }
 
     
     
@@ -120,43 +148,31 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
     	case NODIPLOIDS:
     		hybridheight = treeheight + randomnodeheight(rate);
     		splitheight =  hybridheight + randomsplitheight(rate);
-    		legs = new AlloppTreeLeg[1];
-    		legs[0] = new AlloppTreeLeg(-1.0); // no foot
+    		legs = new Leg[1];
+    		legs[0] = new Leg(-1.0); // no foot
     		break;
     	case JOINED:
     		hybridheight = treeheight + randomnodeheight(rate);
     		splitheight =  hybridheight + randomsplitheight(rate);
-    		legs = new AlloppTreeLeg[1];
-    		legs[0] = new AlloppTreeLeg(splitheight + randomnodeheight(rate));
+    		legs = new Leg[1];
+    		legs[0] = new Leg(splitheight + randomnodeheight(rate));
     		break;
     	case ONEBRANCH: case TWOBRANCH:
     		hybridheight = treeheight + randomnodeheight(rate);
-    		legs = new AlloppTreeLeg[2];
-    		legs[0] = new AlloppTreeLeg(hybridheight + randomnodeheight(rate));
-    		legs[1] = new AlloppTreeLeg(legs[0].height + randomnodeheight(rate));
+    		legs = new Leg[2];
+    		legs[0] = new Leg(hybridheight + randomnodeheight(rate));
+    		legs[1] = new Leg(legs[0].height + randomnodeheight(rate));
     		break;
     	case NONE:
-    		legs = new AlloppTreeLeg[0];
+    		legs = new Leg[0];
     		break;
     	default:
     		assert false;
-    		legs = new AlloppTreeLeg[0];
+    		legs = new Leg[0];
     	}
     	root = nodes[nodes.length - 1];
     	tree = new SimpleTree(root);
     	tree.setUnits(Units.Type.SUBSTITUTIONS); 
-    }
-    
-    
-    /*
-     * Constructor for diploid tree with no legs. Used to convert
-     * DiploidHistory to network.
-     */
-    public AlloppLeggedTree(SimpleTree stree) {
-    	   this.tree = stree;
-    	   legs = new AlloppTreeLeg[0];
-    	   splitheight = -1.0;
-    	   hybridheight = -1.0;
     }
     
    
@@ -167,9 +183,9 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
     	this.tree = new SimpleTree(tree);
     	this.hybridheight = tree.hybridheight;
     	this.splitheight = tree.splitheight;
-    	this.legs = new AlloppTreeLeg[tree.legs.length];
+    	this.legs = new Leg[tree.legs.length];
     	for (int i = 0; i < legs.length; i++) {
-    		legs[i] = new AlloppTreeLeg(tree.legs[i]);
+    		legs[i] = new Leg(tree.legs[i]);
     	}
     }
      
@@ -177,10 +193,9 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
      /*
       * Constructor for testing. 
       */
-     public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModelTEST.NetworkConversionTEST netconvTEST,
+     public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModelTEST.NetworkToMulLabTreeTEST nmltTEST,
     		                       AlloppSpeciesNetworkModel.LegType legtype, double addheight) {
          int nTaxa = taxa.length;
-         assert(nTaxa <= 4);
          int nNodes = 2 * nTaxa - 1;
          SimpleNode[] nodes = new SimpleNode[nNodes];
          for (int n = 0; n < nNodes; n++) {
@@ -194,19 +209,12 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
          nodes[2].addChild(nodes[0]);
          nodes[2].addChild(nodes[1]);
          }
-         if (nTaxa >= 3) {
+         if (nTaxa == 3) {
              nodes[3].setTaxon(taxa[2]);
              nodes[4].setHeight(addheight + nodes[2].getHeight() + 1.0);
              nodes[4].addChild(nodes[2]);
              nodes[4].addChild(nodes[3]);            
          }
-         if (nTaxa == 4) {
-             nodes[5].setTaxon(taxa[3]);
-             nodes[6].setHeight(addheight + nodes[4].getHeight() + 1.0);
-             nodes[6].addChild(nodes[4]);
-             nodes[6].addChild(nodes[5]);            
-         }
-         
          root = nodes[nodes.length - 1];
          tree = new SimpleTree(root);
          tree.setUnits(Units.Type.YEARS);
@@ -214,23 +222,23 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
          double rootheight = root.getHeight();
          switch (legtype) {
          case NONE:
-        	 legs = new AlloppTreeLeg[0];
+        	 legs = new Leg[0];
         	 splitheight = -1.0;
         	 break;
          case TWOBRANCH: case ONEBRANCH:
-        	 legs = new AlloppTreeLeg[2];
-        	 legs[0] = new AlloppTreeLeg(rootheight+1.0);
-        	 legs[1] = new AlloppTreeLeg(rootheight+2.0);
+        	 legs = new Leg[2];
+        	 legs[0] = new Leg(rootheight+1.0);
+        	 legs[1] = new Leg(rootheight+2.0);
         	 splitheight = -1.0;
         	 break;
          case JOINED:
-        	 legs = new AlloppTreeLeg[1];
-        	 legs[0] = new AlloppTreeLeg(rootheight+2.0);
+        	 legs = new Leg[1];
+        	 legs[0] = new Leg(rootheight+2.0);
         	 splitheight = rootheight+1.0;
         	 break;
          default:
         	 assert false;
-        	 legs = new AlloppTreeLeg[0];
+        	 legs = new Leg[0];
          }
      }       
      
@@ -273,23 +281,13 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
          tree = new SimpleTree(root);
          tree.setUnits(Units.Type.SUBSTITUTIONS);
          
-    	 legs = new AlloppTreeLeg[1];
-    	 legs[0] = new AlloppTreeLeg(-1.0); // no foot
+    	 legs = new Leg[1];
+    	 legs[0] = new Leg(-1.0); // no foot
 
 	}
 
    
      
-     public void replaceLegs(AlloppDiploidHistory.HybHistory hh) {
-    	 int nlegs = hh.legs.length;
-    	 legs = new AlloppTreeLeg[nlegs];
-    	 for (int i = 0; i < nlegs; i++) {
-    		 legs[i] = new AlloppTreeLeg(hh.legs[i]);
-    	 }
-    	 hybridheight = hh.hybheight;
-    	 splitheight = hh.splitheight;
-     }
- 
      
      public int scaleAllHeights(double scale) {
     	beginTreeEdit();
@@ -500,20 +498,20 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
     	 switch (rnd) {
     	 case 0:  case 1:  case 2:  case 3:
     		 // TWOBRANCH, ONEBRANCH
-    		 legs = new AlloppTreeLeg[2];
+    		 legs = new Leg[2];
     		 if (MathUtils.nextBoolean()) {
-    		   legs[0] = new AlloppTreeLeg(t0);
-    		   legs[1] = new AlloppTreeLeg(t1);
+    		   legs[0] = new Leg(t0);
+    		   legs[1] = new Leg(t1);
     		 } else {
-    		   legs[0] = new AlloppTreeLeg(t1);
-    		   legs[1] = new AlloppTreeLeg(t0);
+    		   legs[0] = new Leg(t1);
+    		   legs[1] = new Leg(t0);
     		 }
     			 
     		 break;
     	 case 4: case 5:
     		 // JOINED
-    		 legs = new AlloppTreeLeg[1];
-    		 legs[0] = new AlloppTreeLeg(t1);
+    		 legs = new Leg[1];
+    		 legs[0] = new Leg(t1);
     		 setSplitHeight(t0);
     		 break;
     	 }
@@ -886,20 +884,6 @@ public class AlloppLeggedTree implements MutableTree, SlidableTree, TreeLogger.L
 	
 	public void setId(String id) {
 		tree.setId(id);
-		
-	}
-
-
-	@Override
-	public void replaceChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
-	   	final NodeRef lchild = tree.getChild(node, 0);
-        final NodeRef rchild = tree.getChild(node, 1);
-        if (lchild != lft) {
-            tree.replaceChild(node, lchild, lft);
-        }
-        if (rchild != rgt) {
-            tree.replaceChild(node, rchild, rgt);
-        }
 		
 	}
 

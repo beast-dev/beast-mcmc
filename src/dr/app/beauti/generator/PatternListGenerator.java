@@ -47,8 +47,6 @@ public class PatternListGenerator extends Generator {
         SequenceErrorModelComponentOptions sequenceErrorOptions = (SequenceErrorModelComponentOptions) options
                 .getComponentOptions(SequenceErrorModelComponentOptions.class);
 
-
-
         PartitionSubstitutionModel model = partition.getPartitionSubstitutionModel();
 
         String codonHeteroPattern = model.getCodonHeteroPattern();

@@ -200,7 +200,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         writer.writeCloseTag("codonPartitionedRobustCounting");
 
-    }// END: writeCodonPartitionedRobustCounting
+    }// END: writeCodonPartitionedRobustCounting()
 
     private void writeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 
@@ -211,12 +211,11 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
                 writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");
-                
             } else {
 
             }
-		}
-	}// END: writeLogs
+        }
+    }
 
     private void writeTreeLogs(XMLWriter writer, AncestralStatesComponentOptions component) {
 

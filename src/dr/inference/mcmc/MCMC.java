@@ -27,7 +27,6 @@ package dr.inference.mcmc;
 
 import dr.inference.loggers.Logger;
 import dr.inference.markovchain.MarkovChain;
-import dr.inference.markovchain.MarkovChainDelegate;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Model;
@@ -68,27 +67,9 @@ public class MCMC implements Identifiable, Spawnable {
             OperatorSchedule schedule,
             Logger[] loggers) {
 
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers, new MarkovChainDelegate[0]);
+        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers);
     }
 
-    /**
-     * Must be called before calling chain.
-     *
-     * @param options    the options for this MCMC analysis
-     * @param schedule   operator schedule to be used in chain.
-     * @param likelihood the likelihood for this MCMC
-     * @param loggers    an array of loggers to record output of this MCMC run
-     * @param delegates    an array of delegates to handle tasks related to the MCMC
-     */
-    public void init(
-            MCMCOptions options,
-            Likelihood likelihood,
-            OperatorSchedule schedule,
-            Logger[] loggers,
-            MarkovChainDelegate[] delegates) {
-
-        init(options, likelihood, Prior.UNIFORM_PRIOR, schedule, loggers, delegates);
-    }
 
     /**
      * Must be called before calling chain.
@@ -105,27 +86,6 @@ public class MCMC implements Identifiable, Spawnable {
             Prior prior,
             OperatorSchedule schedule,
             Logger[] loggers) {
-
-        init(options, likelihood, prior, schedule, loggers, new MarkovChainDelegate[0]);
-    }
-
-    /**
-     * Must be called before calling chain.
-     *
-     * @param options    the options for this MCMC analysis
-     * @param prior      the prior disitrbution on the model parameters.
-     * @param schedule   operator schedule to be used in chain.
-     * @param likelihood the likelihood for this MCMC
-     * @param loggers    an array of loggers to record output of this MCMC run
-     * @param delegates    an array of delegates to handle tasks related to the MCMC
-     */
-    public void init(
-            MCMCOptions options,
-            Likelihood likelihood,
-            Prior prior,
-            OperatorSchedule schedule,
-            Logger[] loggers,
-            MarkovChainDelegate[] delegates) {
 
         MCMCCriterion criterion = new MCMCCriterion();
         criterion.setTemperature(options.getTemperature());
@@ -146,11 +106,6 @@ public class MCMC implements Identifiable, Spawnable {
         while ((getChainLength() / stepsPerReport) > 1000) {
             stepsPerReport *= 2;
         }*/
-
-        for(MarkovChainDelegate delegate : delegates) {
-            delegate.setup(options, schedule);
-        }
-        this.delegates = delegates;
     }
 
     /**
@@ -219,10 +174,6 @@ public class MCMC implements Identifiable, Spawnable {
         if (!stopping) {
             mc.addMarkovChainListener(chainListener);
 
-            for(MarkovChainDelegate delegate : delegates) {
-                mc.addMarkovChainDelegate(delegate);
-            }
-
             long chainLength = getChainLength();
 
             final int coercionDelay = getCoercionDelay();
@@ -243,15 +194,11 @@ public class MCMC implements Identifiable, Spawnable {
             mc.terminateChain();
 
             mc.removeMarkovChainListener(chainListener);
-
-            for(MarkovChainDelegate delegate : delegates) {
-                mc.removeMarkovChainDelegate(delegate);
-            }
         }
         timer.stop();
     }
 
-    protected final MarkovChainListener chainListener = new MarkovChainListener() {
+    private final MarkovChainListener chainListener = new MarkovChainListener() {
 
         // MarkovChainListener interface *******************************************
         // for receiving messages from subordinate MarkovChain
@@ -504,7 +451,7 @@ public class MCMC implements Identifiable, Spawnable {
 
 
     //PRIVATE METHODS *****************************************
-    protected int getCoercionDelay() {
+    private int getCoercionDelay() {
 
         int delay = options.getCoercionDelay();
         if (delay < 0) {
@@ -542,28 +489,27 @@ public class MCMC implements Identifiable, Spawnable {
     // PRIVATE TRANSIENTS
 
     //private FileLogger operatorLogger = null;
-    protected final boolean isAdapting = true;
-    protected boolean stopping = false;
-    protected boolean showOperatorAnalysis = true;
-    protected String operatorAnalysisFileName = null;
-    protected final dr.util.Timer timer = new dr.util.Timer();
-    protected long currentState = 0;
+    private final boolean isAdapting = true;
+    private boolean stopping = false;
+    private boolean showOperatorAnalysis = true;
+    private String operatorAnalysisFileName = null;
+    private final dr.util.Timer timer = new dr.util.Timer();
+    private long currentState = 0;
     //private int stepsPerReport = 1000;
-    protected final NumberFormatter formatter = new NumberFormatter(8);
+    private final NumberFormatter formatter = new NumberFormatter(8);
 
     /**
      * this markov chain does most of the work.
      */
-    protected MarkovChain mc;
+    private MarkovChain mc;
 
     /**
      * the options of this MCMC analysis
      */
-    protected MCMCOptions options;
+    private MCMCOptions options;
 
-    protected Logger[] loggers;
-    protected OperatorSchedule schedule;
-    private MarkovChainDelegate[] delegates;
+    private Logger[] loggers;
+    private OperatorSchedule schedule;
 
     private String id = null;
 }

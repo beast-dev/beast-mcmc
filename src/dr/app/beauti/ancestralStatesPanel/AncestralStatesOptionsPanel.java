@@ -40,6 +40,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.EnumSet;
 
 /**
  * @author Alexei Drummond
@@ -86,8 +87,8 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
 
     final BeautiOptions options;
 
-    //    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR, SequenceErrorType.BASE_ALL).toArray());
-    JComboBox errorModelCombo = new JComboBox(SequenceErrorType.values());
+    JComboBox errorModelCombo = new JComboBox(EnumSet.range(SequenceErrorType.NO_ERROR,
+            SequenceErrorType.BASE_ALL).toArray());//new JComboBox(SequenceErrorType.values());
 
     AncestralStatesComponentOptions ancestralStatesComponent;
     SequenceErrorModelComponentOptions sequenceErrorComponent;
@@ -208,8 +209,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCombo.addItem("Tree Root");
         if (options.taxonSets.size() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
-//                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")"); // This causes an error because MRCA(*) is not a defined taxonSet
-                mrcaReconstructionCombo.addItem(taxonSet.getId());
+                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")");
             }
             if (selectedItem != null) {
                 mrcaReconstructionCombo.setSelectedItem(selectedItem);
@@ -249,12 +249,9 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
 
             addComponent(ancestralReconstructionCheck);
-
-            FlowLayout layout = new FlowLayout(FlowLayout.LEFT);
-            layout.setHgap(0);
-            JPanel panel = new JPanel(layout);
+            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
             panel.setOpaque(false);
-            panel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
+            panel.setBorder(BorderFactory.createEmptyBorder());
             panel.add(mrcaReconstructionCheck);
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);

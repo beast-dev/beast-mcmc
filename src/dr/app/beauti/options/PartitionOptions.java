@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -63,7 +63,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public abstract String getPrefix();
 
-    //    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
 //                                                          double initial, double truncationLower, double truncationUpper) { // it will change to Uniform
 //        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
 //                .isCMTCRate(true).isNonNegative(true)

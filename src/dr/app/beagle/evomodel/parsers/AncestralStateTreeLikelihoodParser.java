@@ -59,10 +59,10 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 		DataType dataType = null;
 		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 		
-		// TODO: hackish
+		// TODO
 		// both BSM and FM have to be specified, handle the exception
-		if (branchSubstitutionModel.getModelName().toLowerCase().equalsIgnoreCase(EpochBranchSubstitutionModel.EPOCH_BRANCH_SUBSTITUTION_MODEL)) {
-
+		if(branchSubstitutionModel instanceof EpochBranchSubstitutionModel) {
+		
 			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 			dataType = freqModel.getDataType();
 

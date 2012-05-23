@@ -1,6 +1,7 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -37,21 +38,46 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
-                                                        BranchRateModel branchRateModel,
-                                                        TipStatesModel tipStatesModel,
-                                                        boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
-                                                        Map<Set<String>, Parameter> partialsRestrictions,
-                                                        XMLObject xo) throws XMLParseException {
+	protected BeagleTreeLikelihood createTreeLikelihood(
+			PatternList patternList, //
+			TreeModel treeModel, //
+			BranchSubstitutionModel branchSubstitutionModel, //
+//			FrequencyModel freqModel,
+			GammaSiteRateModel siteRateModel, //
+			BranchRateModel branchRateModel, //
+			TipStatesModel tipStatesModel, //
+			boolean useAmbiguities, //
+			PartialsRescalingScheme scalingScheme, //
+			Map<Set<String>, //
+			Parameter> partialsRestrictions, //
+			XMLObject xo //
+	) throws XMLParseException {
 
-        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        if (substModel == null) {
-            substModel = siteRateModel.getSubstitutionModel();
-        }
+		
+//		System.err.println("XML object: " + xo.toString());
+	
+		DataType dataType = null;
+		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+		
+		// TODO: hackish
+		// both BSM and FM have to be specified, handle the exception
+		if (branchSubstitutionModel.getModelName().toLowerCase().equalsIgnoreCase("EpochBranchSubstitutionModel")) {
 
-        DataType dataType = substModel.getDataType();
+			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+			dataType = freqModel.getDataType();
 
+		} else {
+
+			if (substModel == null) {
+
+				substModel = siteRateModel.getSubstitutionModel();
+
+			}
+
+			 dataType = substModel.getDataType();
+
+		}
+		
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 

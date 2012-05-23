@@ -53,7 +53,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
     public static final boolean TRY_EPOCH = true;
-
+    public static final String EPOCH_BRANCH_SUBSTITUTION_MODEL = "EpochBranchSubstitutionModel";
+    
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
     private final Parameter epochTimes;
@@ -64,7 +65,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
                                         List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
 
-        super("EpochBranchSubstitutionModel");
+        super(EPOCH_BRANCH_SUBSTITUTION_MODEL);
 
         if (frequencyModelList.size() != 1) {
             throw new IllegalArgumentException(
@@ -92,7 +93,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
      */
     public int getExtraBufferCount(TreeModel treeModel) {
 
-//        // loop over the tree to determine the count
+        // loop over the tree to determine the count
         double[] transitionTimes = epochTimes.getParameterValues();
         int rootId = treeModel.getRoot().getNumber();
         int count = 0;
@@ -115,9 +116,9 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             }// END: root check
         }// END: nodes loop
 
-        requestedBuffers = count * 4;//100; //A bad idea
+        requestedBuffers = count * 4;
         
-//        System.out.println("fixed count = " + count);
+//      System.out.println("fixed count = " + count);
         System.out.println("Allocating " + requestedBuffers + " extra buffers.");
         
         return requestedBuffers;
@@ -309,6 +310,17 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         if (eigenIndex < substModelList.size()) {
         	
+        	////////////////////////////////////////////////////////////
+ 
+//        	  System.out.println("Branch falls in a single category");
+//            System.out.println("eigenBuffer: " + eigenIndex);                
+//            System.out.println("Populating buffers: ");
+//            printArray(probabilityIndices, count);
+//            System.out.println("for weights: ");
+//            printArray(edgeLengths, count);
+            
+        	//////////////////////////////////////////////////////////// 
+        
             // Branches fall in a single category
             beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
                     probabilityIndices,
@@ -338,7 +350,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         	int stepSize = requestedBuffers/4 ;
 
         	////////////////////////////////////////////////////////////
-        	
+ 
+//          System.out.println("Branch requires convolution");        	
 //          System.out.println("stepSize: " + stepSize);
 //          System.out.println("count from tree = " + count);
 //          System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
@@ -398,7 +411,13 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 						if ((step + j) < count) {
 
 							int index = probabilityIndices[j + step];
+							
+				        	////////////////////////////////////////////////////////////
+							
 //							System.out.println("step + j: " + (step + j) + " index: " + index);
+							
+				        	////////////////////////////////////////////////////////////
+							
 							weights[j] = convolutionMatricesMap.get(index)[i];
 
 						}// END: index padding check
@@ -513,13 +532,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
          	step += stepSize;
         	}// END: step loop
 
-        	////////////////////////////////////////////////////////////
-        	
-//        	System.exit(-1);
-//        	System.out.println("=========================================================");
-        	
-        	////////////////////////////////////////////////////////////
-        	
 		}// END: eigenIndex check
 
         // ////////////////////////////////////////////////////

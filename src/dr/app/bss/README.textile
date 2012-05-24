@@ -1,0 +1,26 @@
+h1. BSS 
+
+*Beagle Sequence Simulator*
+
+h1. LICENSE
+
+  This is free software; you can redistribute it and/or modify
+  it under the terms of the GNU Lesser General Public License as
+  published by the Free Software Foundation; either version 2
+  of the License, or (at your option) any later version.
+ 
+   This software is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   "GNU Lesser General Public License":http://www.gnu.org/licenses/lgpl.html for more details.
+   
+h1. PURPOSE
+
+A long overdue simulator in Beagle.  
+   
+h1. TODO
+* Read an existing XML (with Import... menu item), add the simulator part to it and export it
+* XML should appear in the text area
+* Syntax highlighting for XML?
+
+svn commit src/dr/app/bss src/dr/app/bss/HelpMenu.java src/dr/app/bss/BeagleSequenceSimulatorApp.java src/dr/app/bss/FileMenu.java src/dr/app/bss/README.textile src/dr/app/bss/EditMenu.java -m "working on bss UI"

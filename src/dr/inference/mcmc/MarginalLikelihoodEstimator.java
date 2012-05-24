@@ -469,15 +469,15 @@ MCLogger logger) {
                 mle.setBetaFactor(xo.getAttribute(BETA, 0.5));
             }
 
-            String alphaBetaText = "(";
+            String alphaBetaText = "";
             if (scheme == PathScheme.ONE_SIDED_BETA) {
-                alphaBetaText += "1," + mle.getBetaFactor() + ")";
+                alphaBetaText += "(1," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA) {
-                alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
+                alphaBetaText += "(" + mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA_QUANTILE) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
+            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             } else if (scheme == PathScheme.SIGMOID) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
+            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +

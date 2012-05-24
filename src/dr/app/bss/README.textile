@@ -23,4 +23,3 @@ h1. TODO
 * XML should appear in the text area
 * Syntax highlighting for XML?
 
-svn commit src/dr/app/bss src/dr/app/bss/HelpMenu.java src/dr/app/bss/BeagleSequenceSimulatorApp.java src/dr/app/bss/FileMenu.java src/dr/app/bss/README.textile src/dr/app/bss/EditMenu.java -m "working on bss UI"

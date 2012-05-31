@@ -854,9 +854,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
-                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
                 if (firstRescaleAttempt && (rescalingScheme == PartialsRescalingScheme.DYNAMIC || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     // we have had a potential under/over flow so attempt a rescaling
+                    Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
                     useScaleFactors = true;
                     recomputeScaleFactors = true;
 

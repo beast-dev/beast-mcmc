@@ -25,6 +25,7 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.substmodel.YangCodonModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -119,6 +120,7 @@ public class BeagleSequenceSimulator {
 		has_ancestralSequence = true;
 	}// END: setAncestralSequence
 
+	// TODO: get triplets
 	private int[] sequence2intArray(Sequence seq) {
 
 		if (seq.getLength() != replications) {
@@ -130,9 +132,20 @@ public class BeagleSequenceSimulator {
 		}
 
 		int array[] = new int[replications];
-		for (int i = 0; i < replications; i++) {
-			array[i] = dataType.getState(seq.getChar(i));
-		}
+
+		if (dataType instanceof Codons) {
+			
+//			for (int i = 0; i < replications; i++) {
+//				array[i] = dataType.getState(seq.getChar(i));
+//			}// END: replications loop
+			
+		} else {
+
+			for (int i = 0; i < replications; i++) {
+				array[i] = dataType.getState(seq.getChar(i));
+			}// END: replications loop
+
+		}// END: dataType check
 
 		return array;
 	}// END: sequence2intArray
@@ -148,8 +161,13 @@ public class BeagleSequenceSimulator {
 
 				sSeq.append(dataType.getTriplet(seq[i]));
 
+				System.err.println(sSeq);
+				
+				
 			}// END: replications loop
 
+//			System.exit(-1);
+			
 		} else {
 
 			for (int i = 0; i < replications; i++) {
@@ -285,11 +303,72 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
-		simulateEpochModel();
-		simulateHKY();
-
+//		simulateEpochModel();
+//		simulateHKY();
+		simulateCodon();
+		
 	} // END: main
 
+	static void simulateCodon() {
+
+		try {
+
+			int sequenceLength = 10;
+
+			// create tree
+			NewickImporter importer = new NewickImporter("(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+			Tree tree = importer.importTree(null);
+			TreeModel treeModel = new TreeModel(tree);
+
+			// create Frequency Model
+			Parameter freqs = new Parameter.Default(new double[] { 0.0163936, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 
+					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 
+					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 
+					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 
+					0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344, 0.01639344 });
+			
+			Codons codonDataType = Codons.UNIVERSAL;
+			
+			 dr.evomodel.substmodel.FrequencyModel freqModel = new  dr.evomodel.substmodel.FrequencyModel(codonDataType, freqs);
+
+			// create codon substitution model
+			Parameter kappa = new Parameter.Default(1, 10);
+			Parameter omega = new Parameter.Default(1, 10);
+			
+			YangCodonModel yangCodonModel = new YangCodonModel(codonDataType, omega, kappa, freqModel);
+			
+//			HKY hky = new HKY(kappa, freqModel);
+//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(hky, freqModel);
+			
+			// create site model
+//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+//			siteRateModel.addModel(substitutionModel);
+			
+			// create branch rate model
+//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+			// feed to sequence simulator and generate leaves
+//			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+//					treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					sequenceLength //
+//			);
+//
+//			Sequence ancestralSequence = new Sequence();
+//			ancestralSequence.appendSequenceString("AAAAAAAAAA");
+//			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
+//
+//			System.out.println(beagleSequenceSimulator.simulate().toString());
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+	}// END: simulateCodon
+	
 	static void simulateHKY() {
 
 		try {

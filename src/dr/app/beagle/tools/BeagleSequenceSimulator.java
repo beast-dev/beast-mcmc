@@ -16,6 +16,8 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.sequence.Sequence;
@@ -34,6 +36,7 @@ public class BeagleSequenceSimulator {
 	private BranchSubstitutionModel branchSubstitutionModel;
 	private int replications;
 	private FrequencyModel freqModel;
+	private DataType dataType;
 	private int categoryCount;
 	private int eigenCount;
 	private Beagle beagle;
@@ -59,6 +62,7 @@ public class BeagleSequenceSimulator {
 		this.siteModel = siteModel;
 		this.replications = replications;
 		this.freqModel = freqModel;
+		this.dataType = freqModel.getDataType();
 //		this.freqModel = siteModel.getSubstitutionModel().getFrequencyModel();
 		this.branchSubstitutionModel = branchSubstitutionModel;
 //		this.branchSubstitutionModel = (BranchSubstitutionModel) siteModel.getModel(0);
@@ -73,7 +77,8 @@ public class BeagleSequenceSimulator {
 
 		int patternCount = replications;
 
-		int stateCount = freqModel.getDataType().getStateCount();
+		
+		int stateCount = dataType.getStateCount();
 
 		this.categoryCount = siteModel.getCategoryCount();
 		this.probabilities = new double[categoryCount][stateCount * stateCount];
@@ -114,7 +119,7 @@ public class BeagleSequenceSimulator {
 		has_ancestralSequence = true;
 	}// END: setAncestralSequence
 
-	int[] sequence2intArray(Sequence seq) {
+	private int[] sequence2intArray(Sequence seq) {
 
 		if (seq.getLength() != replications) {
 
@@ -126,20 +131,37 @@ public class BeagleSequenceSimulator {
 
 		int array[] = new int[replications];
 		for (int i = 0; i < replications; i++) {
-			array[i] = freqModel.getDataType().getState(seq.getChar(i));
+			array[i] = dataType.getState(seq.getChar(i));
 		}
 
 		return array;
 	}// END: sequence2intArray
 
-	Sequence intArray2Sequence(int[] seq, NodeRef node) {
+	// TODO
+	private Sequence intArray2Sequence(int[] seq, NodeRef node) {
+
 		StringBuilder sSeq = new StringBuilder();
-		for (int i = 0; i < replications; i++) {
-			sSeq.append(freqModel.getDataType().getCode(seq[i]));
-		}
+
+		if (dataType instanceof Codons) {
+
+			for (int i = 0; i < replications; i++) {
+
+				sSeq.append(dataType.getTriplet(seq[i]));
+
+			}// END: replications loop
+
+		} else {
+
+			for (int i = 0; i < replications; i++) {
+
+				sSeq.append(freqModel.getDataType().getCode(seq[i]));
+
+			}// END: replications loop
+
+		}// END: dataType check
 
 		return new Sequence(treeModel.getNodeTaxon(node), sSeq.toString());
-	} // END: intArray2Sequence
+	}// END: intArray2Sequence
 
 	public Alignment simulate() {
 
@@ -167,7 +189,7 @@ public class BeagleSequenceSimulator {
 
 		}// END: ancestral sequence check
 
-		alignment.setDataType(freqModel.getDataType());
+		alignment.setDataType(dataType);
 		alignment.setReportCountStatistics(false);
 
         for (int i = 0; i < eigenCount; i++) {
@@ -191,7 +213,7 @@ public class BeagleSequenceSimulator {
 		return alignment;
 	}// END: simulate
 
-	void traverse(NodeRef node, int[] parentSequence, int[] category,
+	private void traverse(NodeRef node, int[] parentSequence, int[] category,
 			SimpleAlignment alignment) {
 
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
@@ -219,7 +241,7 @@ public class BeagleSequenceSimulator {
 	}// END: traverse
 
 	// TODO
-	void getTransitionProbabilities(Tree tree, NodeRef node,
+	private void getTransitionProbabilities(Tree tree, NodeRef node,
 			double[][] probabilities) {
 
 		int nodeNum = node.getNumber();

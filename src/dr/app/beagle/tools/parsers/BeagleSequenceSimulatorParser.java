@@ -5,6 +5,8 @@ import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
@@ -61,7 +63,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
-		int sequenceLength = xo.getIntegerAttribute(REPLICATIONS);
+		int replications = xo.getIntegerAttribute(REPLICATIONS);
 
 		if (rateModel == null) {
 			rateModel = new DefaultBranchRateModel();
@@ -72,11 +74,29 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 				siteModel, //
 				rateModel, //
 				freqModel, //
-				sequenceLength //
+				replications //
 		);
 
 		if (ancestralSequence != null) {
-			s.setAncestralSequence(ancestralSequence);
+
+			if (ancestralSequence.getLength() != 3*replications
+					&& freqModel.getDataType() instanceof Codons) {
+
+				throw new RuntimeException("Ancestral codon sequence has "
+						+ ancestralSequence.getLength() + " characters "
+						+ "expecting " + 3*replications + " characters");
+
+			} else if (ancestralSequence.getLength() != replications && freqModel.getDataType() instanceof Nucleotides) {
+
+				throw new RuntimeException("Ancestral nuleotide sequence has "
+						+ ancestralSequence.getLength() + " characters "
+						+ "expecting " + replications + " characters");
+
+			} else {
+
+				s.setAncestralSequence(ancestralSequence);
+
+			}// END: dataType check
 		}
 
 		return s.simulate();

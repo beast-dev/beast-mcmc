@@ -50,7 +50,6 @@ public class BeagleSequenceSimulator {
 	private Sequence ancestralSequence = null;
 	private double[][] probabilities;
 
-	// TODO: simplify parser
 	public BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,
 			GammaSiteRateModel siteModel, //
@@ -64,21 +63,17 @@ public class BeagleSequenceSimulator {
 		this.replications = replications;
 		this.freqModel = freqModel;
 		this.dataType = freqModel.getDataType();
-//		this.freqModel = siteModel.getSubstitutionModel().getFrequencyModel();
 		this.branchSubstitutionModel = branchSubstitutionModel;
-//		this.branchSubstitutionModel = (BranchSubstitutionModel) siteModel.getModel(0);
 		this.eigenCount = branchSubstitutionModel.getEigenCount();
+//		this.freqModel = siteModel.getSubstitutionModel().getFrequencyModel();
+//		this.branchSubstitutionModel = (BranchSubstitutionModel) siteModel.getModel(0);
 		
 		int tipCount = treeModel.getExternalNodeCount();
 		int nodeCount = treeModel.getNodeCount();
 		int internalNodeCount = treeModel.getInternalNodeCount();
 		int scaleBufferCount = internalNodeCount + 1;
-
 		int compactPartialsCount = tipCount;
-
 		int patternCount = replications;
-
-		
 		int stateCount = dataType.getStateCount();
 
 		this.categoryCount = siteModel.getCategoryCount();
@@ -120,25 +115,20 @@ public class BeagleSequenceSimulator {
 		has_ancestralSequence = true;
 	}// END: setAncestralSequence
 
-	// TODO: get triplets
 	private int[] sequence2intArray(Sequence seq) {
-
-		if (seq.getLength() != replications) {
-
-			throw new RuntimeException("Ancestral sequence length has "
-					+ seq.getLength() + " characters " + "expecting "
-					+ replications + " characters");
-
-		}
 
 		int array[] = new int[replications];
 
 		if (dataType instanceof Codons) {
-			
-//			for (int i = 0; i < replications; i++) {
-//				array[i] = dataType.getState(seq.getChar(i));
-//			}// END: replications loop
-			
+			int k = 0;
+			for (int i = 0; i < replications; i++) {
+
+				// System.err.println(i + ": " + seq.getChar(k) + "" + seq.getChar(k + 1) + "" + seq.getChar(k + 2));
+				array[i] = ((Codons) dataType).getState(seq.getChar(k), seq.getChar(k + 1), seq.getChar(k + 2));
+				k += 3;
+
+			}// END: replications loop
+
 		} else {
 
 			for (int i = 0; i < replications; i++) {
@@ -150,7 +140,7 @@ public class BeagleSequenceSimulator {
 		return array;
 	}// END: sequence2intArray
 
-	// TODO
+	// TODO:
 	private Sequence intArray2Sequence(int[] seq, NodeRef node) {
 
 		StringBuilder sSeq = new StringBuilder();
@@ -161,8 +151,7 @@ public class BeagleSequenceSimulator {
 
 				sSeq.append(dataType.getTriplet(seq[i]));
 
-				System.err.println(sSeq);
-				
+//				System.err.println(seq[i] + " " + dataType.getTriplet(seq[i]));
 				
 			}// END: replications loop
 
@@ -172,7 +161,7 @@ public class BeagleSequenceSimulator {
 
 			for (int i = 0; i < replications; i++) {
 
-				sSeq.append(freqModel.getDataType().getCode(seq[i]));
+				sSeq.append(dataType.getCode(seq[i]));
 
 			}// END: replications loop
 
@@ -184,6 +173,8 @@ public class BeagleSequenceSimulator {
 	public Alignment simulate() {
 
 		SimpleAlignment alignment = new SimpleAlignment();
+		alignment.setDataType(dataType);
+		alignment.setReportCountStatistics(false);
 		NodeRef root = treeModel.getRoot();
 		double[] categoryProbs = siteModel.getCategoryProportions();
 		int[] category = new int[replications];
@@ -207,9 +198,6 @@ public class BeagleSequenceSimulator {
 
 		}// END: ancestral sequence check
 
-		alignment.setDataType(dataType);
-		alignment.setReportCountStatistics(false);
-
         for (int i = 0; i < eigenCount; i++) {
             eigenBufferHelper.flipOffset(i);
 
@@ -223,8 +211,8 @@ public class BeagleSequenceSimulator {
 		beagle.setCategoryRates(categoryRates);   
 //	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
 //	    beagle.setCategoryWeights(0, categoryWeights);
-//        double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
-//        beagle.setStateFrequencies(0, frequencies);
+//      double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
+//      beagle.setStateFrequencies(0, frequencies);
 		
 		traverse(root, seq, category, alignment);
 
@@ -258,7 +246,6 @@ public class BeagleSequenceSimulator {
 		}// END: child nodes loop
 	}// END: traverse
 
-	// TODO
 	private void getTransitionProbabilities(Tree tree, NodeRef node,
 			double[][] probabilities) {
 
@@ -329,7 +316,7 @@ public class BeagleSequenceSimulator {
 			
 			Codons codonDataType = Codons.UNIVERSAL;
 			
-			 dr.evomodel.substmodel.FrequencyModel freqModel = new  dr.evomodel.substmodel.FrequencyModel(codonDataType, freqs);
+			dr.evomodel.substmodel.FrequencyModel freqModel = new  dr.evomodel.substmodel.FrequencyModel(codonDataType, freqs);
 
 			// create codon substitution model
 			Parameter kappa = new Parameter.Default(1, 10);

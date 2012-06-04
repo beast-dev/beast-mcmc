@@ -208,6 +208,10 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         return total / (double) numSimulants;
     }
 
+   public StateHistory getStateHistory() {
+       return completeHistory;
+   }
+
     private final int numSimulants;
     private boolean updateSubordinator;
     private SubordinatedProcess subordinator;

@@ -84,6 +84,10 @@ public class MarkovJumpsSubstitutionModel extends AbstractModel {
         regRateChanged = true;
     }
 
+    public double[] getRegistration() {
+        return registration;
+    }
+
     private void makeRateRegistrationMatrix(double[] registration,
                                             double[] rateReg,
                                             double[] ievcRateRegEvec) {

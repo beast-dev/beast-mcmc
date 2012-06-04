@@ -219,11 +219,23 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
                 if (useUniformization && saveCompleteHistory) {
                     UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
-                    int historyCount = usModel.getNumberOfJumpsInCompleteHistory();
+
+                    StateHistory history = usModel.getStateHistory();
+
+                    // Only report syn or nonsyn changes
+                    double[] register = usModel.getRegistration();
+                    history = history.filterChanges(register);
+
+                    int historyCount = history.getNumberOfJumps();
                     if (historyCount > 0) {
                         double parentTime = tree.getNodeHeight(tree.getParent(child));
                         double childTime = tree.getNodeHeight(child);
-                        System.err.println("site " + (i + 1) + " : " + +usModel.getNumberOfJumpsInCompleteHistory() + " : " + usModel.getCompleteHistory(parentTime, childTime) + " " + codonLabeling.getText());
+                        history.rescaleTimesOfEvents(parentTime, childTime);
+                        System.err.println("site " + (i + 1) + " : "
+                                + history.getNumberOfJumps()
+                                + " : "
+                                + history.toStringChanges(usModel.dataType)
+                                + " " + codonLabeling.getText());
 
                         if (completeHistoryPerNode == null) {
                             completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];

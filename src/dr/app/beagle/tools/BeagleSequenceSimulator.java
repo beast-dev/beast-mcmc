@@ -35,6 +35,7 @@ public class BeagleSequenceSimulator {
 	private TreeModel treeModel;
 	private GammaSiteRateModel siteModel;
 	private BranchSubstitutionModel branchSubstitutionModel;
+	private BranchRateModel branchRateModel;
 	private int replications;
 	private FrequencyModel freqModel;
 	private DataType dataType;
@@ -65,6 +66,7 @@ public class BeagleSequenceSimulator {
 		this.dataType = freqModel.getDataType();
 		this.branchSubstitutionModel = branchSubstitutionModel;
 		this.eigenCount = branchSubstitutionModel.getEigenCount();
+		this.branchRateModel = branchRateModel;
 //		this.freqModel = siteModel.getSubstitutionModel().getFrequencyModel();
 //		this.branchSubstitutionModel = (BranchSubstitutionModel) siteModel.getModel(0);
 		
@@ -120,13 +122,12 @@ public class BeagleSequenceSimulator {
 		int array[] = new int[replications];
 
 		if (dataType instanceof Codons) {
+			
 			int k = 0;
 			for (int i = 0; i < replications; i++) {
-
 				// System.err.println(i + ": " + seq.getChar(k) + "" + seq.getChar(k + 1) + "" + seq.getChar(k + 2));
 				array[i] = ((Codons) dataType).getState(seq.getChar(k), seq.getChar(k + 1), seq.getChar(k + 2));
 				k += 3;
-
 			}// END: replications loop
 
 		} else {
@@ -255,13 +256,15 @@ public class BeagleSequenceSimulator {
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
 		int count = 1;
 
+		double branchRate = branchRateModel.getBranchRate(tree, node);
+		
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
 				eigenIndex, //
 				eigenBufferHelper, //
 				new int[] { branchIndex }, //
 				null, //
 				null, //
-				new double[] { tree.getBranchLength(node) }, //
+				new double[] { tree.getBranchLength(node) * branchRate }, //
 				count //
 				);
 
@@ -328,7 +331,7 @@ public class BeagleSequenceSimulator {
 //			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(hky, freqModel);
 			
 			// create site model
-//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
 //			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model

@@ -5,6 +5,7 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -68,6 +69,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private boolean branchSpecificLambda = false;
     private Parameter branchVariableParameter = null;
     private Parameter branchPossibleValuesParameter = null;
+	private DataType dataType;
 
     protected List<double[]> registers;
     protected List<String> jumpTags;
@@ -103,13 +105,21 @@ public class CompleteHistorySimulator extends SimpleAlignment
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
                                     Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
-        this.tree = tree;
+    	
+    	
+        
+    	this.tree = tree;
         this.siteModel = siteModel;
         this.branchRateModel = branchRateModel;
         this.nReplications = nReplications;
         stateCount = this.siteModel.getSubstitutionModel().getDataType().getStateCount();
         categoryCount = this.siteModel.getCategoryCount();
 
+		dataType = siteModel.getSubstitutionModel().getDataType();
+		if (dataType instanceof Codons) {
+			this.setReportCountStatistics(false);
+		}
+         
         this.sumAcrossSites = sumAcrossSites;
 
         List<String> taxaIds = new ArrayList<String>();
@@ -158,7 +168,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
      */
     Sequence intArray2Sequence(int[] seq, NodeRef node) {
         String sSeq = "";
-        DataType dataType = siteModel.getSubstitutionModel().getDataType();
+//        DataType dataType = siteModel.getSubstitutionModel().getDataType();
         for (int i = 0; i < nReplications; i++) {
             if (dataType instanceof Codons) {
                 String s = dataType.getTriplet(seq[i]);
@@ -293,6 +303,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
         StringBuffer sb = new StringBuffer();
         //alignment output
         sb.append("alignment\n");
+        
+//        super.setDataType(Nucleotides.INSTANCE);
+        
         sb.append(super.toString());
         sb.append("\n");
         //tree output

@@ -190,6 +190,26 @@ public class StateHistory {
         System.err.println("Rescale history: " + stateHistory);
     }
 
+    public StateHistory filterChanges(double[] register) {
+
+        if (getNumberOfJumps() == 0) {
+            return this;
+        }
+
+        StateChange currentState = stateList.get(0);
+        StateHistory newHistory = new StateHistory(currentState.getTime(), currentState.getState(), stateCount);
+
+        for (int i = 1; i < stateList.size() - 1; ++i) {
+            StateChange nextState = stateList.get(i);
+            if (register[currentState.getState() * stateCount + nextState.getState()] == 1) {
+                newHistory.addChange(nextState);
+            }
+            currentState = nextState;
+        }
+        newHistory.addEndingState(stateList.get(stateList.size()-1));
+        return newHistory;
+    }
+
     public String toStringChanges(DataType dataType) { //}, double startTime) {
         StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();

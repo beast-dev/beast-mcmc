@@ -1,17 +1,19 @@
 package dr.app.beagle.evomodel.substmodel;
 
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.GeneralDataType;
+import dr.inference.model.Model;
 import dr.math.KroneckerOperation;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
-import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-//import dr.math.matrixAlgebra.Vector;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Logger;
+
+//import dr.math.matrixAlgebra.Vector;
 
 /**
  * @author Marc A. Suchard
@@ -58,9 +60,12 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
             DataType dataType = baseModels.get(i).getDataType();
             stateSizes[i] = dataType.getStateCount();
             stateCount *= dataType.getStateCount();
+            addModel(baseModels.get(i));
+            addModel(rateModels.get(i));
         }
 
         pcFreqModel = new ProductChainFrequencyModel("pc",freqModels);
+        addModel(pcFreqModel);
 
         String[] codeStrings = getCharacterStrings();
 
@@ -96,6 +101,12 @@ public class ProductChainSubstitutionModel extends BaseSubstitutionModel impleme
         }
 
         return strings;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        super.handleModelChangedEvent(model, object, index);
+        // Propogate change to higher models
+        fireModelChanged(model);
     }
 
     private String[] recursivelyAppendCharacterStates(DataType dataType, String[] inSubStates) {

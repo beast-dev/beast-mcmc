@@ -66,9 +66,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //    protected double[] lambda;
 //    protected double[][] probabilities;
 
-    private boolean branchSpecificLambda = false;
-    private Parameter branchVariableParameter = null;
-    private Parameter branchPossibleValuesParameter = null;
+	private boolean branchSpecificLambda = false;
+	private Parameter branchVariableParameter = null;
+	private Parameter branchPossibleValuesParameter = null;
 	private DataType dataType;
 
     protected List<double[]> registers;
@@ -105,8 +105,6 @@ public class CompleteHistorySimulator extends SimpleAlignment
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
                                     Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
-    	
-    	
         
     	this.tree = tree;
         this.siteModel = siteModel;
@@ -115,6 +113,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
         stateCount = this.siteModel.getSubstitutionModel().getDataType().getStateCount();
         categoryCount = this.siteModel.getCategoryCount();
 
+        // Codon models give exception when put inside report and when count statistics are done on them
 		dataType = siteModel.getSubstitutionModel().getDataType();
 		if (dataType instanceof Codons) {
 			this.setReportCountStatistics(false);
@@ -303,9 +302,6 @@ public class CompleteHistorySimulator extends SimpleAlignment
         StringBuffer sb = new StringBuffer();
         //alignment output
         sb.append("alignment\n");
-        
-//        super.setDataType(Nucleotides.INSTANCE);
-        
         sb.append(super.toString());
         sb.append("\n");
         //tree output

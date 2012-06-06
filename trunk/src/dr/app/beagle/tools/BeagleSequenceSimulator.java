@@ -141,7 +141,6 @@ public class BeagleSequenceSimulator {
 		return array;
 	}// END: sequence2intArray
 
-	// TODO:
 	private Sequence intArray2Sequence(int[] seq, NodeRef node) {
 
 		StringBuilder sSeq = new StringBuilder();
@@ -152,12 +151,8 @@ public class BeagleSequenceSimulator {
 
 				sSeq.append(dataType.getTriplet(seq[i]));
 
-//				System.err.println(seq[i] + " " + dataType.getTriplet(seq[i]));
-				
 			}// END: replications loop
 
-//			System.exit(-1);
-			
 		} else {
 
 			for (int i = 0; i < replications; i++) {
@@ -210,9 +205,11 @@ public class BeagleSequenceSimulator {
 		
 		double[] categoryRates = siteModel.getCategoryRates();
 		beagle.setCategoryRates(categoryRates);   
-//	    double[] categoryWeights = gammaSiteRateModel.getCategoryProportions();
+		
+//	    double[] categoryWeights = siteModel.getCategoryProportions();
 //	    beagle.setCategoryWeights(0, categoryWeights);
-//      double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
+
+//	    double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
 //      beagle.setStateFrequencies(0, frequencies);
 		
 		traverse(root, seq, category, alignment);
@@ -247,6 +244,7 @@ public class BeagleSequenceSimulator {
 		}// END: child nodes loop
 	}// END: traverse
 
+	// TODO
 	private void getTransitionProbabilities(Tree tree, NodeRef node,
 			double[][] probabilities) {
 
@@ -257,6 +255,12 @@ public class BeagleSequenceSimulator {
 		int count = 1;
 
 		double branchRate = branchRateModel.getBranchRate(tree, node);
+		double branchTime = tree.getBranchLength(node) * branchRate;
+//		double branchLength = siteModel.getRateForCategory(rateCategory) * branchTime;
+		
+        if (branchTime < 0.0) {
+            throw new RuntimeException("Negative branch length: " + branchTime);
+        }
 		
 		branchSubstitutionModel.updateTransitionMatrices(beagle, //
 				eigenIndex, //
@@ -264,7 +268,7 @@ public class BeagleSequenceSimulator {
 				new int[] { branchIndex }, //
 				null, //
 				null, //
-				new double[] { tree.getBranchLength(node) * branchRate }, //
+				new double[] { branchTime }, //
 				count //
 				);
 
@@ -293,12 +297,13 @@ public class BeagleSequenceSimulator {
 
 	public static void main(String[] args) {
 
-//		simulateEpochModel();
-//		simulateHKY();
-		simulateCodon();
+		simulateEpochModel();
+		simulateHKY();
+//		simulateCodon();
 		
 	} // END: main
 
+	@SuppressWarnings("unused")
 	static void simulateCodon() {
 
 		try {
@@ -327,8 +332,7 @@ public class BeagleSequenceSimulator {
 			
 			YangCodonModel yangCodonModel = new YangCodonModel(codonDataType, omega, kappa, freqModel);
 			
-//			HKY hky = new HKY(kappa, freqModel);
-//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(hky, freqModel);
+//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, freqModel);
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
@@ -470,16 +474,16 @@ public class BeagleSequenceSimulator {
 
 	}// END : simulateEpochModel
 	
-	public static void printArray(int[] category) {
-		for (int i = 0; i < category.length; i++) {
-			System.out.println(category[i]);
+	public static void printArray(int[] array) {
+		for (int i = 0; i < array.length; i++) {
+			System.out.println(array[i]);
 		}
 	}// END: printArray
 
-	public static void printArray(double[] matrix) {
-		for (int i = 0; i < matrix.length; i++) {
+	public static void printArray(double[] array) {
+		for (int i = 0; i < array.length; i++) {
 //			System.out.println(matrix[i]);
-			System.out.println(String.format(Locale.US, "%.20f", matrix[i]));
+			System.out.println(String.format(Locale.US, "%.20f", array[i]));
 		}
 		System.out.print("\n");
 	}// END: printArray

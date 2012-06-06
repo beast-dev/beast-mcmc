@@ -60,10 +60,13 @@ import java.util.List;
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
 
+    private static final boolean DEBUG = true;
+
     public static final String UNCONDITIONED_PREFIX = "u_";
     public static final String SITE_SPECIFIC_PREFIX = "c_";
     public static final String TOTAL_PREFIX = "total_";
     public static final String BASE_TRAIT_PREFIX = "base_";
+    public static final String COMPLETE_HISTORY_PREFIX = "all_";
     public static final String UNCONDITIONED_PER_BRANCH_PREFIX = "b_u_";
 
 //    public CodonPartitionedRobustCounting(String name, TreeModel tree,
@@ -215,33 +218,34 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 );
             }
 
-            if (DEBUG) {
 
-                if (useUniformization && saveCompleteHistory) {
-                    UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
+            if (useUniformization && saveCompleteHistory) {
+                UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
 
-                    StateHistory history = usModel.getStateHistory();
+                StateHistory history = usModel.getStateHistory();
 
-                    // Only report syn or nonsyn changes
-                    double[] register = usModel.getRegistration();
-                    history = history.filterChanges(register);
+                // Only report syn or nonsyn changes
+                double[] register = usModel.getRegistration();
+                history = history.filterChanges(register);
 
-                    int historyCount = history.getNumberOfJumps();
-                    if (historyCount > 0) {
-                        double parentTime = tree.getNodeHeight(tree.getParent(child));
-                        double childTime = tree.getNodeHeight(child);
-                        history.rescaleTimesOfEvents(parentTime, childTime);
+                int historyCount = history.getNumberOfJumps();
+                if (historyCount > 0) {
+                    double parentTime = tree.getNodeHeight(tree.getParent(child));
+                    double childTime = tree.getNodeHeight(child);
+                    history.rescaleTimesOfEvents(parentTime, childTime);
+
+                    if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()
                                 + " : "
                                 + history.toStringChanges(usModel.dataType)
                                 + " " + codonLabeling.getText());
-
-                        if (completeHistoryPerNode == null) {
-                            completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
-                        }
-                        completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
                     }
+
+                    if (completeHistoryPerNode == null) {
+                        completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
+                    }
+                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
                 }
             }
 
@@ -276,7 +280,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             TreeTrait stringTrait = new TreeTrait.SA() {
 
                 public String getTraitName() {
-                    return BASE_TRAIT_PREFIX + codonLabeling.getText();
+                    return COMPLETE_HISTORY_PREFIX + codonLabeling.getText();
                 }
 
                 public Intent getIntent() {
@@ -592,8 +596,6 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private final double[] condMeanMatrix;
 
     private int numCodons;
-
-    private static final boolean DEBUG = false;
 
     private boolean countsKnown = false;
     private boolean unconditionsKnown = false;

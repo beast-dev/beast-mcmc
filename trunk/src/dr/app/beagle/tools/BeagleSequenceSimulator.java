@@ -32,6 +32,8 @@ import dr.math.MathUtils;
 
 public class BeagleSequenceSimulator {
 
+	private static final boolean DEBUG_SIMULATOR = true;
+	
 	private TreeModel treeModel;
 	private GammaSiteRateModel siteModel;
 	private BranchSubstitutionModel branchSubstitutionModel;
@@ -51,6 +53,8 @@ public class BeagleSequenceSimulator {
 	private Sequence ancestralSequence = null;
 	private double[][] probabilities;
 
+//	private TreeModel newTreeModel;
+	
 	public BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,
 			GammaSiteRateModel siteModel, //
@@ -125,7 +129,6 @@ public class BeagleSequenceSimulator {
 			
 			int k = 0;
 			for (int i = 0; i < replications; i++) {
-				// System.err.println(i + ": " + seq.getChar(k) + "" + seq.getChar(k + 1) + "" + seq.getChar(k + 2));
 				array[i] = ((Codons) dataType).getState(seq.getChar(k), seq.getChar(k + 1), seq.getChar(k + 2));
 				k += 3;
 			}// END: replications loop
@@ -172,9 +175,27 @@ public class BeagleSequenceSimulator {
 		alignment.setDataType(dataType);
 		alignment.setReportCountStatistics(false);
 		NodeRef root = treeModel.getRoot();
+		
+		double[] categoryRates = siteModel.getCategoryRates();
+		beagle.setCategoryRates(categoryRates);   
+		
+		if (DEBUG_SIMULATOR) {
+		
+		System.out.println("gamma category rates:");
+		EpochBranchSubstitutionModel.printArray(categoryRates);
+		
+		}//END: DEBUG_SIMULATOR
+		
 		double[] categoryProbs = siteModel.getCategoryProportions();
 		int[] category = new int[replications];
-
+		
+		if (DEBUG_SIMULATOR) {
+		
+		System.out.println("category probs:");
+		EpochBranchSubstitutionModel.printArray(categoryProbs);
+		
+		}//END: DEBUG_SIMULATOR
+		
 		for (int i = 0; i < replications; i++) {
 			category[i] = MathUtils.randomChoicePDF(categoryProbs);
 		}
@@ -187,9 +208,9 @@ public class BeagleSequenceSimulator {
 
 		} else {
 
+			double[] frequencies = freqModel.getFrequencies();
 			for (int i = 0; i < replications; i++) {
-				seq[i] = MathUtils.randomChoicePDF(freqModel.getFrequencies());
-
+				seq[i] = MathUtils.randomChoicePDF(frequencies);
 			}
 
 		}// END: ancestral sequence check
@@ -202,15 +223,6 @@ public class BeagleSequenceSimulator {
             );
 
     }
-		
-		double[] categoryRates = siteModel.getCategoryRates();
-		beagle.setCategoryRates(categoryRates);   
-		
-//	    double[] categoryWeights = siteModel.getCategoryProportions();
-//	    beagle.setCategoryWeights(0, categoryWeights);
-
-//	    double[] frequencies = branchSubstitutionModel.getStateFrequencies(0);
-//      beagle.setStateFrequencies(0, frequencies);
 		
 		traverse(root, seq, category, alignment);
 
@@ -255,8 +267,7 @@ public class BeagleSequenceSimulator {
 		int count = 1;
 
 		double branchRate = branchRateModel.getBranchRate(tree, node);
-		double branchTime = tree.getBranchLength(node) * branchRate;
-//		double branchLength = siteModel.getRateForCategory(rateCategory) * branchTime;
+		double branchTime = tree.getBranchLength(node)* branchRate;
 		
         if (branchTime < 0.0) {
             throw new RuntimeException("Negative branch length: " + branchTime);
@@ -284,10 +295,15 @@ public class BeagleSequenceSimulator {
 		
 		}
 
-//		System.out.println("eigenIndex:" + eigenIndex);
-//		System.out.println("bufferIndex: " + branchIndex);
-//		System.out.println("weight: " + tree.getBranchLength(node));
-//		print2DArray(probabilities);
+		if (DEBUG_SIMULATOR) {
+
+			System.out.println("eigenIndex:" + eigenIndex);
+			System.out.println("bufferIndex: " + branchIndex);
+			System.out.println("weight: " + tree.getBranchLength(node));
+			System.out.println("transition probabilities:");
+			EpochBranchSubstitutionModel.print2DArray(probabilities);
+
+		}// END: DEBUG_SIMULATOR
 		
 	}// END: getTransitionProbabilities
 	
@@ -474,36 +490,4 @@ public class BeagleSequenceSimulator {
 
 	}// END : simulateEpochModel
 	
-	public static void printArray(int[] array) {
-		for (int i = 0; i < array.length; i++) {
-			System.out.println(array[i]);
-		}
-	}// END: printArray
-
-	public static void printArray(double[] array) {
-		for (int i = 0; i < array.length; i++) {
-//			System.out.println(matrix[i]);
-			System.out.println(String.format(Locale.US, "%.20f", array[i]));
-		}
-		System.out.print("\n");
-	}// END: printArray
-
-	public void print2DArray(double[][] array) {
-		for (int row = 0; row < array.length; row++) {
-			for (int col = 0; col < array[row].length; col++) {
-				System.out.print(array[row][col] + " ");
-			}
-			System.out.print("\n");
-		}
-	}// END: print2DArray
-
-	public static void print2DArray(int[][] array) {
-		for (int row = 0; row < array.length; row++) {
-			for (int col = 0; col < array[row].length; col++) {
-				System.out.print(array[row][col] + " ");
-			}
-			System.out.print("\n");
-		}
-	}// END: print2DArray
-
 } // END: class

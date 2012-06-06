@@ -60,7 +60,7 @@ import java.util.List;
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     public static final String UNCONDITIONED_PREFIX = "u_";
     public static final String SITE_SPECIFIC_PREFIX = "c_";
@@ -234,6 +234,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     double childTime = tree.getNodeHeight(child);
                     history.rescaleTimesOfEvents(parentTime, childTime);
 
+                    int n = history.getNumberOfJumps();
+                    String hstring = "{"  + (i + 1) + "," + n + (n>1?",{":",") + history.toStringChanges(usModel.dataType) + (n>1?"}}":"}");
                     if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()
@@ -245,7 +247,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     if (completeHistoryPerNode == null) {
                         completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
                     }
-                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
+//                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
+                    completeHistoryPerNode[child.getNumber()][i] = hstring;
                 }
             }
 
@@ -289,7 +292,15 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
                 public String[] getTrait(Tree tree, NodeRef node) {
                     getExpectedCountsForBranch(node); // Lazy simulation of complete histories
-                    return completeHistoryPerNode[node.getNumber()];
+                    List<String> events = new ArrayList<String>();
+                    for (int i = 0; i < numCodons; i++) {
+                        if (completeHistoryPerNode[node.getNumber()][i] != null) {
+                            events.add(completeHistoryPerNode[node.getNumber()][i]);
+                        }
+                    }
+                    String[] array = new String[events.size()];
+                    events.toArray(array);
+                    return array;
                 }
 
                 public boolean getLoggable() {

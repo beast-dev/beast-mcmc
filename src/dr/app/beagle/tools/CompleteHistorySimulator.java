@@ -83,6 +83,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private boolean saveAlignment = false;
     private Map<Integer,Sequence> alignmentTraitList;
 
+    private boolean alignmentOnly = false;
+    
     /**
      * Constructor
      *
@@ -298,22 +300,37 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     private NumberFormat format;
 
-    public String toString() {
-        StringBuffer sb = new StringBuffer();
-        //alignment output
-        sb.append("alignment\n");
-        sb.append(super.toString());
-        sb.append("\n");
-        //tree output
-        sb.append("tree\n");
-        Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                format, null,
-                (nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[]{this} : null),
-                idMap,
-                sb);
-        sb.append("\n");
-        return sb.toString();
-    }
+	public String toString() {
+
+		StringBuffer sb = new StringBuffer();
+
+		if (alignmentOnly) {
+
+			sb.append(super.toString());
+			sb.append("\n");
+
+		} else {
+
+			// alignment output
+			sb.append("alignment\n");
+			sb.append(super.toString());
+			sb.append("\n");
+			// tree output
+			sb.append("tree\n");
+			Tree.Utils.newick(tree,
+							tree.getRoot(),
+							true,
+							Tree.BranchLengthType.LENGTHS_AS_TIME,
+							format,
+							null,
+							(nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[] { this }
+									: null), idMap, sb);
+			sb.append("\n");
+
+		}
+
+		return sb.toString();
+	}// END: toString
 
     /**
      * perform the actual sequence generation
@@ -428,4 +445,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
         return StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, branchLength,
                 lambda, stateCount);
     }
-}
+    
+    public void setAlignmentOnly() {
+    	alignmentOnly = true;
+    }
+    
+}//END: class

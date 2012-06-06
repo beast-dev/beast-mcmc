@@ -52,6 +52,8 @@ import java.util.*;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
+	private static final boolean DEBUG_EPOCH = true;
+	
     public static final boolean TRY_EPOCH = true;
     public static final String EPOCH_BRANCH_SUBSTITUTION_MODEL = "EpochBranchSubstitutionModel";
     
@@ -118,7 +120,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         requestedBuffers = count * 4;
         
-//      System.out.println("fixed count = " + count);
         System.out.println("Allocating " + requestedBuffers + " extra buffers.");
         
         return requestedBuffers;
@@ -177,8 +178,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         fireModelChanged();
     }// END: handleModelChangedEvent
 
-    @SuppressWarnings("unchecked")
-    protected void handleVariableChangedEvent(Variable variable, int index,
+    @SuppressWarnings("rawtypes")
+	protected void handleVariableChangedEvent(Variable variable, int index,
                                               Parameter.ChangeType type) {
     }// END: handleVariableChangedEvent
 
@@ -288,13 +289,13 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         convolutionMatricesMap.put(bufferIndex, weights);
 
-    	////////////////////////////////////////////////////////////
-        
-//        System.out.println("bufferIndex: " + bufferIndex);
-//        printArray(weights, weights.length);
- 
-    	////////////////////////////////////////////////////////////
-        
+		if (DEBUG_EPOCH) {
+
+			System.out.println("bufferIndex: " + bufferIndex);
+			printArray(weights, weights.length);
+
+		}// END: DEBUG_EPOCH
+    		
         return returnValue;
     }// END: getBranchIndex
 
@@ -309,17 +310,17 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     ) {
 
         if (eigenIndex < substModelList.size()) {
-        	
-        	////////////////////////////////////////////////////////////
- 
-//        	  System.out.println("Branch falls in a single category");
-//            System.out.println("eigenBuffer: " + eigenIndex);                
-//            System.out.println("Populating buffers: ");
-//            printArray(probabilityIndices, count);
-//            System.out.println("for weights: ");
-//            printArray(edgeLengths, count);
-            
-        	//////////////////////////////////////////////////////////// 
+
+			if (DEBUG_EPOCH) {
+
+				System.out.println("Branch falls in a single category");
+				System.out.println("eigenBuffer: " + eigenIndex);
+				System.out.println("Populating buffers: ");
+				printArray(probabilityIndices, count);
+				System.out.println("for weights: ");
+				printArray(edgeLengths, count);
+
+			}//END: DEBUG_EPOCH
         
             // Branches fall in a single category
             beagle.updateTransitionMatrices(bufferHelper.getOffsetIndex(eigenIndex),
@@ -329,45 +330,47 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                     edgeLengths,
                     count);
 
-            // ////////////////////////////////////////////////////
+			if (DEBUG_EPOCH) {
 
-//			for (int k = 0; k < probabilityIndices.length; k++) {
-//
-//				double tmp[] = new double[4 * 4 * 4];
-//				beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
-//						tmp // outMatrix
-//						);
-//
-//				System.out.println(probabilityIndices[k]);
-//				printMatrix(tmp, 4, 4);
-//			}
+				System.out.println("Transition probabilities: ");
+				
+				for (int k = 0; k < probabilityIndices.length; k++) {
 
-            // ////////////////////////////////////////////////////
+					double tmp[] = new double[4 * 4 * 4];
+					beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
+							tmp // outMatrix
+					);
 
+					System.out.println(probabilityIndices[k]);
+					printMatrix(tmp, 4, 4);
+				}
+
+			}// END: DEBUG_EPOCH
+            	
         } else {
 
             // Branches require convolution of two or more matrices
         	int stepSize = requestedBuffers/4 ;
 
-        	////////////////////////////////////////////////////////////
- 
-//          System.out.println("Branch requires convolution");        	
-//          System.out.println("stepSize: " + stepSize);
-//          System.out.println("count from tree = " + count);
-//          System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
-//        	System.out.println("probabilityIndices ");
-//        	printArray(probabilityIndices, probabilityIndices.length);
+			if (DEBUG_EPOCH) {
 
-        	////////////////////////////////////////////////////////////
-        	
+				System.out.println("Branch requires convolution");
+				System.out.println("stepSize: " + stepSize);
+				System.out.println("count from tree = " + count);
+				System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
+				System.out.println("probabilityIndices: ");
+				printArray(probabilityIndices, probabilityIndices.length);
+
+			}//END: DEBUG_EPOCH
+        		
         	int step = 0;
         	while(step < count) {
 
-				// //////////////////////////////////////////////////////////
+				if (DEBUG_EPOCH) {
 
-				// System.out.println("step: " + step);
+					System.out.println("step: " + step);
 
-				// //////////////////////////////////////////////////////////
+				}//END: DEBUG_EPOCH
         		
             int[] firstBuffers = new int[stepSize];
             int[] secondBuffers = new int[stepSize];
@@ -394,12 +397,12 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 
             }// END: stepSize loop
 
-        	////////////////////////////////////////////////////////////
-            
-//        	System.out.println("resultBranchBuffers ");
-//        	printArray(resultBranchBuffers, resultBranchBuffers.length);
-        	
-        	////////////////////////////////////////////////////////////
+				if (DEBUG_EPOCH) {
+
+					System.out.println("resultBranchBuffers ");
+					printArray(resultBranchBuffers, resultBranchBuffers.length);
+
+				}//END: DEBUG_EPOCH
 
 				for (int i = 0; i < substModelList.size(); i++) {
 
@@ -412,11 +415,11 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 							int index = probabilityIndices[j + step];
 							
-				        	////////////////////////////////////////////////////////////
+							if (DEBUG_EPOCH) {
 							
-//							System.out.println("step + j: " + (step + j) + " index: " + index);
-							
-				        	////////////////////////////////////////////////////////////
+							System.out.println("step + j: " + (step + j) + " index: " + index);
+
+							}
 							
 							weights[j] = convolutionMatricesMap.get(index)[i];
 
@@ -488,16 +491,16 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 checkBuffers(probabilityBuffers);
                 int operationsCount = Math.min(stepSize, (count - step));
   
-            	////////////////////////////////////////////////////////////
-                
-//                System.out.println("eigenBuffer: " + eigenBuffer);                
-//                System.out.println("Populating buffers: ");
-//                printArray(probabilityBuffers, operationsCount);
-//                System.out.println("for weights: ");
-//                printArray(weights, operationsCount);
-                
-            	//////////////////////////////////////////////////////////// 
-                
+					if (DEBUG_EPOCH) {
+
+						System.out.println("eigenBuffer: " + eigenBuffer);
+						System.out.println("Populating buffers: ");
+						printArray(probabilityBuffers, operationsCount);
+						System.out.println("for weights: ");
+						printArray(weights, operationsCount);
+
+					}//END: DEBUG_EPOCH
+            		
                 beagle.updateTransitionMatrices(eigenBuffer, // eigenIndex
                         probabilityBuffers, // probabilityIndices
                         null, // firstDerivativeIndices
@@ -508,16 +511,16 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
                 if (i != 0) {
 
-                	////////////////////////////////////////////////////////////
+                	if (DEBUG_EPOCH) {
                 	
-//					System.out.println("convolving buffers: ");
-//					printArray(firstConvolutionBuffers, operationsCount);
-//					System.out.println("with buffers: ");
-//					printArray(secondConvolutionBuffers, operationsCount);
-//					System.out.println("into buffers: ");
-//					printArray(resultConvolutionBuffers, operationsCount);    
-	
-                	////////////////////////////////////////////////////////////
+					System.out.println("convolving buffers: ");
+					printArray(firstConvolutionBuffers, operationsCount);
+					System.out.println("with buffers: ");
+					printArray(secondConvolutionBuffers, operationsCount);
+					System.out.println("into buffers: ");
+					printArray(resultConvolutionBuffers, operationsCount);    
+
+                	}//END: DEBUG_EPOCH
                 	
                     beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                             secondConvolutionBuffers, // B
@@ -534,21 +537,20 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 		}// END: eigenIndex check
 
-        // ////////////////////////////////////////////////////
+    	if (DEBUG_EPOCH) {
+        
+		for (int k = 0; k < probabilityIndices.length; k++) {
 
-//		for (int k = 0; k < probabilityIndices.length; k++) {
-//
-//			double tmp[] = new double[4 * 4 * 4];
-//			beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
-//					tmp // outMatrix
-//					);
-//
-//			System.out.println(probabilityIndices[k]);
-//			printMatrix(tmp, 4, 4);
-//		}
+			double tmp[] = new double[4 * 4 * 4];
+			beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
+					tmp // outMatrix
+					);
 
-        // ////////////////////////////////////////////////////
+			System.out.println(probabilityIndices[k]);
+			printMatrix(tmp, 4, 4);
+		}
 
+    	}//END: DEBUG_EPOCH
 
     }// END: updateTransitionMatrices
 
@@ -559,9 +561,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                 System.err.println("Allocated: 0 to " + (firstBuffer + requestedBuffers - 1));
                 System.err.println("Requested = " + buffer);
                 System.err.println("Please complain to Button-Boy");
-                
-//                System.exit(-1);
-                
             }
         }
     }//END: checkBuffers
@@ -577,10 +576,57 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         return citations;
     }// END: getCitations
 
-    // /////////////
-    // ---DEBUG---//
-    // /////////////
+	// /////////////
+	// ---DEBUG---//
+	// /////////////
+    
+	public static void printArray(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			System.out.println(String.format(Locale.US, "%.20f", array[i]));
+		}
+		System.out.print("\n");
+	}// END: printArray
+    
+	public static void printArray(int[] array) {
+		for (int i = 0; i < array.length; i++) {
+			System.out.println(array[i]);
+		}
+	}// END: printArray
 
+    public static void printArray(double[] array, int nrow) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.println(String.format(Locale.US, "%.20f", array[row]));
+        }
+        System.out.print("\n");
+    }// END: printArray
+
+    public static void printArray(int[] array, int nrow) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.println(array[row]);
+        }
+        System.out.print("\n");
+    }// END: printArray
+	
+	public static void print2DArray(double[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			System.out.print("| ");
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(String.format(Locale.US, "%.10f", array[row][col]) + " ");
+			}
+			System.out.print("|\n");
+		}
+		System.out.print("\n");
+	}// END: print2DArray
+
+	public static void print2DArray(int[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(array[row][col] + " ");
+			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
+    
     public static void printMatrix(double[][] matrix, int nrow, int ncol) {
         for (int row = 0; row < nrow; row++) {
             for (int col = 0; col < nrow; col++)
@@ -595,7 +641,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             System.out.print("| ");
             for (int col = 0; col < nrow; col++)
                 System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
-//			System.out.print("\n");
             System.out.print("|\n");
         }
         System.out.print("\n");
@@ -610,20 +655,6 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         }
         System.out.print("\n");
     }// END: printMatrix
-
-    public static void printArray(double[] array, int ncol) {
-        for (int col = 0; col < ncol; col++) {
-            System.out.println(String.format(Locale.US, "%.20f", array[col]));
-        }
-        System.out.print("\n");
-    }// END: printArray
-
-    public static void printArray(int[] array, int nrow) {
-        for (int col = 0; col < nrow; col++) {
-            System.out.println(array[col]);
-        }
-        System.out.print("\n");
-    }// END: printArray
 
     // //////////////////
     // ---END: DEBUG---//

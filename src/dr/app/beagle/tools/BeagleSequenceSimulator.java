@@ -2,7 +2,6 @@ package dr.app.beagle.tools;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -53,8 +52,6 @@ public class BeagleSequenceSimulator {
 	private Sequence ancestralSequence = null;
 	private double[][] probabilities;
 
-//	private TreeModel newTreeModel;
-	
 	public BeagleSequenceSimulator(TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,
 			GammaSiteRateModel siteModel, //
@@ -176,15 +173,34 @@ public class BeagleSequenceSimulator {
 		alignment.setReportCountStatistics(false);
 		NodeRef root = treeModel.getRoot();
 		
+		// gamma category rates
 		double[] categoryRates = siteModel.getCategoryRates();
-		beagle.setCategoryRates(categoryRates);   
+		beagle.setCategoryRates(categoryRates);
+
+		// weights for gamma category rates
+		double[] categoryWeights = siteModel.getCategoryProportions();
+		beagle.setCategoryWeights(0, categoryWeights);
 		
 		if (DEBUG_SIMULATOR) {
 		
 		System.out.println("gamma category rates:");
 		EpochBranchSubstitutionModel.printArray(categoryRates);
 		
+		System.out.println("gamma category weights:");
+		EpochBranchSubstitutionModel.printArray(categoryWeights);
+		
 		}//END: DEBUG_SIMULATOR
+
+		// TODO : is this needed?
+		double[] stateFrequencies = branchSubstitutionModel.getStateFrequencies(0);
+		beagle.setStateFrequencies(0, stateFrequencies);
+
+		if (DEBUG_SIMULATOR) {
+
+			System.out.println("stateFrequencies:");
+			EpochBranchSubstitutionModel.printArray(stateFrequencies);
+
+		}// END: DEBUG_SIMULATOR
 		
 		double[] categoryProbs = siteModel.getCategoryProportions();
 		int[] category = new int[replications];
@@ -215,14 +231,16 @@ public class BeagleSequenceSimulator {
 
 		}// END: ancestral sequence check
 
-        for (int i = 0; i < eigenCount; i++) {
-            eigenBufferHelper.flipOffset(i);
+		for (int i = 0; i < eigenCount; i++) {
+			eigenBufferHelper.flipOffset(i);
 
-            branchSubstitutionModel.setEigenDecomposition(
-                    beagle, i, eigenBufferHelper, 0
-            );
+			branchSubstitutionModel.setEigenDecomposition(beagle, //
+					i, //
+					eigenBufferHelper, //
+					0 //
+					);
 
-    }
+		}
 		
 		traverse(root, seq, category, alignment);
 
@@ -267,7 +285,13 @@ public class BeagleSequenceSimulator {
 		int count = 1;
 
 		double branchRate = branchRateModel.getBranchRate(tree, node);
-		double branchTime = tree.getBranchLength(node)* branchRate;
+		double branchTime = tree.getBranchLength(node) * branchRate;
+		
+		if (DEBUG_SIMULATOR) {
+
+			System.out.println("branchRate: " + branchRate);
+			
+		}
 		
         if (branchTime < 0.0) {
             throw new RuntimeException("Negative branch length: " + branchTime);
@@ -300,7 +324,7 @@ public class BeagleSequenceSimulator {
 			System.out.println("eigenIndex:" + eigenIndex);
 			System.out.println("bufferIndex: " + branchIndex);
 			System.out.println("weight: " + tree.getBranchLength(node));
-			System.out.println("transition probabilities:");
+			System.out.println("Transition probabilities from simulator:");
 			EpochBranchSubstitutionModel.print2DArray(probabilities);
 
 		}// END: DEBUG_SIMULATOR

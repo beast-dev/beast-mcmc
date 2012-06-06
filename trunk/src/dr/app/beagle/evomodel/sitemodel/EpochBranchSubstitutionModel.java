@@ -118,7 +118,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             }// END: root check
         }// END: nodes loop
 
-        requestedBuffers = count * 4;
+        requestedBuffers = 100;//count * 4;
         
         System.out.println("Allocating " + requestedBuffers + " extra buffers.");
         
@@ -292,6 +292,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		if (DEBUG_EPOCH) {
 
 			System.out.println("bufferIndex: " + bufferIndex);
+			System.out.println("weights: ");
 			printArray(weights, weights.length);
 
 		}// END: DEBUG_EPOCH
@@ -314,7 +315,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 			if (DEBUG_EPOCH) {
 
 				System.out.println("Branch falls in a single category");
-				System.out.println("eigenBuffer: " + eigenIndex);
+				System.out.println("eigenIndex: " + eigenIndex);
 				System.out.println("Populating buffers: ");
 				printArray(probabilityIndices, count);
 				System.out.println("for weights: ");
@@ -332,7 +333,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 			if (DEBUG_EPOCH) {
 
-				System.out.println("Transition probabilities: ");
+				System.out.println("Transition probabilities from model: ");
 				
 				for (int k = 0; k < probabilityIndices.length; k++) {
 
@@ -356,8 +357,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
 				System.out.println("Branch requires convolution");
 				System.out.println("stepSize: " + stepSize);
-				System.out.println("count from tree = " + count);
-				System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
+//				System.out.println("count from tree = " + count);
+//				System.out.println("convolutionMatricesMap.size() = " + convolutionMatricesMap.size());
 				System.out.println("probabilityIndices: ");
 				printArray(probabilityIndices, probabilityIndices.length);
 
@@ -539,6 +540,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
     	if (DEBUG_EPOCH) {
         
+		System.out.println("Transition probabilities from model:");    		
+		
 		for (int k = 0; k < probabilityIndices.length; k++) {
 
 			double tmp[] = new double[4 * 4 * 4];
@@ -582,7 +585,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     
 	public static void printArray(double[] array) {
 		for (int i = 0; i < array.length; i++) {
-			System.out.println(String.format(Locale.US, "%.20f", array[i]));
+			System.out.println(String.format(Locale.US, "%.10f", array[i]));
 		}
 		System.out.print("\n");
 	}// END: printArray
@@ -595,7 +598,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
     public static void printArray(double[] array, int nrow) {
         for (int row = 0; row < nrow; row++) {
-            System.out.println(String.format(Locale.US, "%.20f", array[row]));
+            System.out.println(String.format(Locale.US, "%.10f", array[row]));
         }
         System.out.print("\n");
     }// END: printArray
@@ -630,7 +633,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     public static void printMatrix(double[][] matrix, int nrow, int ncol) {
         for (int row = 0; row < nrow; row++) {
             for (int col = 0; col < nrow; col++)
-                System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
+                System.out.print(String.format(Locale.US, "%.10f", matrix[col + row * nrow]) + " ");
             System.out.print("\n");
         }
         System.out.print("\n");
@@ -640,7 +643,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         for (int row = 0; row < nrow; row++) {
             System.out.print("| ");
             for (int col = 0; col < nrow; col++)
-                System.out.print(String.format(Locale.US, "%.20f", matrix[col + row * nrow]) + " ");
+                System.out.print(String.format(Locale.US, "%.10f", matrix[col + row * nrow]) + " ");
             System.out.print("|\n");
         }
         System.out.print("\n");

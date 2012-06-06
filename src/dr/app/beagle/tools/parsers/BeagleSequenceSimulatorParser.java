@@ -29,7 +29,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			new ElementRule(BranchSubstitutionModel.class),
 			new ElementRule(GammaSiteRateModel.class),
 //			 new ElementRule(SITE_MODEL, new XMLSyntaxRule[]{new ElementRule(BranchSubstitutionModel.class)}, false),
-			new ElementRule(BranchRateModel.class),
+			new ElementRule(BranchRateModel.class, true),
 			new ElementRule(FrequencyModel.class),
 			new ElementRule(Sequence.class, true),
 			AttributeRule.newIntegerRule(REPLICATIONS) };

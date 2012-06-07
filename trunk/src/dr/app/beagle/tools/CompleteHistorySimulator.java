@@ -117,10 +117,10 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
         // Codon models give exception when put inside report and when count statistics are done on them
 		dataType = siteModel.getSubstitutionModel().getDataType();
-		if (dataType instanceof Codons) {
-			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
-							+ "You can supress this by setting alignmentOnly to true.");
-		}
+//		if (dataType instanceof Codons && !alignmentOnly) {
+//			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
+//							+ "You can supress this by setting alignmentOnly to true.");
+//		}
          
         this.sumAcrossSites = sumAcrossSites;
 

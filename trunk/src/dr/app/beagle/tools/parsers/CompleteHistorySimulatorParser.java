@@ -106,9 +106,15 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             history.addAlignmentTrait();
         }
 
-        if (xo.getAttribute(ALIGNMENT_ONLY, true)) {
-            history.setAlignmentOnly();
-        }
+		boolean alignmentOnly = xo.getAttribute(ALIGNMENT_ONLY, false);
+		if (dataType instanceof Codons && !alignmentOnly) {
+			System.out.println("Codon models give exception when count statistics are done on them. "
+							+ "You can supress this by setting alignmentOnly to true.");
+		}
+
+		if (alignmentOnly) {
+			history.setAlignmentOnly();
+		}
         
         history.simulate();
         return history;

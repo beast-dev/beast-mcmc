@@ -674,8 +674,11 @@ public class BeastGenerator extends Generator {
                 "ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
-                || (options.traits.size() > 1 && options.useStarBEAST);
+        boolean hasAttr = options.traits.size() > 0;
+
+        // why was this here?
+//        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
+//                || (options.traits.size() > 1 && options.useStarBEAST);
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {
@@ -714,14 +717,14 @@ public class BeastGenerator extends Generator {
             }
 
             for (TraitData trait : options.traits) {
-                    // there is no harm in allowing the species trait to be listed in the taxa
+                // there is no harm in allowing the species trait to be listed in the taxa
 //                if (!trait.getName().equalsIgnoreCase(TraitData.TRAIT_SPECIES)) {
-                    writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
-                            new Attribute.Default<String>(Attribute.NAME, trait.getName())});
+                writer.writeOpenTag(AttributeParser.ATTRIBUTE, new Attribute[]{
+                        new Attribute.Default<String>(Attribute.NAME, trait.getName())});
 
-                    // denotes missing data using '?'
-                    writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
-                    writer.writeCloseTag(AttributeParser.ATTRIBUTE);
+                // denotes missing data using '?'
+                writer.writeText(taxon.containsAttribute(trait.getName()) ? taxon.getAttribute(trait.getName()).toString() : "?");
+                writer.writeCloseTag(AttributeParser.ATTRIBUTE);
 //                }
             }
 

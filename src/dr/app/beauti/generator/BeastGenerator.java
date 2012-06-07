@@ -674,8 +674,11 @@ public class BeastGenerator extends Generator {
                 "ntax=" + taxonList.getTaxonCount());
         writer.writeOpenTag(TaxaParser.TAXA, new Attribute[]{new Attribute.Default<String>(XMLParser.ID, TaxaParser.TAXA)});
 
-        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
-                || (options.traits.size() > 1 && options.useStarBEAST);
+        boolean hasAttr = options.traits.size() > 0;
+
+        // why was this here?
+//        boolean hasAttr = (options.traits.size() > 0 && !options.useStarBEAST)
+//                || (options.traits.size() > 1 && options.useStarBEAST);
 
         boolean firstDate = true;
         for (int i = 0; i < taxonList.getTaxonCount(); i++) {

@@ -8,8 +8,11 @@ import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
@@ -57,6 +60,8 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 			substModelList.add(substModel);
 		}//END: i loop
 
+		BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
+		
 		Parameter epochTransitionTimes = (Parameter) xo
 				.getChild(Parameter.class);
 
@@ -74,7 +79,10 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
 		}//END: i loop
 
-		return new EpochBranchSubstitutionModel(substModelList, frequencyModelList, epochTransitionTimes);
+		return new EpochBranchSubstitutionModel(substModelList, 
+				frequencyModelList, 
+				branchRateModel,
+				epochTransitionTimes);
 	}// END: parseXMLObject
 
 	@Override

@@ -32,6 +32,7 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -52,20 +53,34 @@ import java.util.*;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
-	private static final boolean DEBUG_EPOCH = true;
+	
+    // /////////////
+    // ---DEBUG---//
+    // /////////////
+	
+	private static final boolean DEBUG_EPOCH = false;
+	private static Integer stateCount = null;
+	private static Integer categoryCount = null;
+	
+    // //////////////////
+    // ---END: DEBUG---//
+    // //////////////////
 	
     public static final boolean TRY_EPOCH = true;
     public static final String EPOCH_BRANCH_SUBSTITUTION_MODEL = "EpochBranchSubstitutionModel";
     
     private final List<SubstitutionModel> substModelList;
     private final List<FrequencyModel> frequencyModelList;
+    private final BranchRateModel branchRateModel;
     private final Parameter epochTimes;
     private int firstBuffer;
     private Map<Integer, double[]> convolutionMatricesMap = new HashMap<Integer, double[]>();
     private int requestedBuffers;
 
     public EpochBranchSubstitutionModel(List<SubstitutionModel> substModelList,
-                                        List<FrequencyModel> frequencyModelList, Parameter epochTimes) {
+                                        List<FrequencyModel> frequencyModelList, 
+                                        BranchRateModel branchRateModel, 
+                                        Parameter epochTimes) {
 
         super(EPOCH_BRANCH_SUBSTITUTION_MODEL);
 
@@ -78,7 +93,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         this.frequencyModelList = frequencyModelList;
         this.epochTimes = epochTimes;
         this.requestedBuffers = 0;
-
+        this.branchRateModel = branchRateModel;
+        
         for (SubstitutionModel model : substModelList) {
             addModel(model);
         }
@@ -87,6 +103,14 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
             addModel(model);
         }
 
+        
+        if(DEBUG_EPOCH) {
+        	
+        	stateCount = frequencyModelList.get(0).getDataType().getStateCount();
+        	categoryCount = 4;
+        	
+        }//END: DEBUG_EPOCH
+        
         addVariable(epochTimes);
     }// END: Constructor
 
@@ -287,6 +311,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         }// END: if branch below first transition time bail out
 
+        weights = scaleArray(weights, branchRateModel.getBranchRate(tree, node));
         convolutionMatricesMap.put(bufferIndex, weights);
 
 		if (DEBUG_EPOCH) {
@@ -337,13 +362,13 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 				
 				for (int k = 0; k < probabilityIndices.length; k++) {
 
-					double tmp[] = new double[4 * 4 * 4];
+					double tmp[] = new double[categoryCount * stateCount * stateCount];
 					beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
 							tmp // outMatrix
 					);
 
 					System.out.println(probabilityIndices[k]);
-					printMatrix(tmp, 4, 4);
+					printMatrix(tmp, stateCount, stateCount);
 				}
 
 			}// END: DEBUG_EPOCH
@@ -544,13 +569,13 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 		
 		for (int k = 0; k < probabilityIndices.length; k++) {
 
-			double tmp[] = new double[4 * 4 * 4];
+			double tmp[] = new double[categoryCount * stateCount * stateCount];
 			beagle.getTransitionMatrix(probabilityIndices[k], // matrixIndex
 					tmp // outMatrix
 					);
 
 			System.out.println(probabilityIndices[k]);
-			printMatrix(tmp, 4, 4);
+			printMatrix(tmp, stateCount, stateCount);
 		}
 
     	}//END: DEBUG_EPOCH
@@ -659,6 +684,15 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
         System.out.print("\n");
     }// END: printMatrix
 
+	public double[] scaleArray(double[] array, double scalar) {
+
+		for (int i = 0; i < array.length; i++) {
+			array[i] = array[i] * scalar;
+		}
+		return array;
+
+	}// END: scaleArray
+    
     // //////////////////
     // ---END: DEBUG---//
     // //////////////////

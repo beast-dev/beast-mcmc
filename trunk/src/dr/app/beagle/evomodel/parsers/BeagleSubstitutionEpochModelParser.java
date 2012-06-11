@@ -5,11 +5,13 @@ import java.util.Arrays;
 import java.util.List;
 
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.BaseSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
+import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.ElementRule;
@@ -88,17 +90,19 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
 
-//        return new XMLSyntaxRule[]{
-//                new ElementRule(MODELS,
-//                        new XMLSyntaxRule[]{
-//                                new ElementRule(AbstractSubstitutionModel.class, 1, Integer.MAX_VALUE),
-//                        }
-//                ),
-//                new ElementRule(Parameter.class),
-//        };
+        return new XMLSyntaxRule[]{
+                new ElementRule(MODELS,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(AbstractModel.class, 1, Integer.MAX_VALUE),
+                                //TODO other subst model classes
+                        }
+                ),
+                new ElementRule(BranchRateModel.class),
+                new ElementRule(Parameter.class),
+        };
 
-		return null;
-	}
+//		return null;
+	}//END: getSyntaxRules
 
 	@Override
 	public String getParserDescription() {

@@ -473,6 +473,9 @@ public class BeagleSequenceSimulator {
 			List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
 			frequencyModelList.add(freqModel);
 
+			// create branch rate model
+			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+			
 			// create Epoch Model
 			Parameter kappa1 = new Parameter.Default(1, 10);
 			Parameter kappa2 = new Parameter.Default(1, 10);
@@ -483,34 +486,32 @@ public class BeagleSequenceSimulator {
 			substModelList.add(hky2);
 
 			Parameter epochTimes = new Parameter.Default(1, 20);
-//			EpochBranchSubstitutionModel substitutionModel = new EpochBranchSubstitutionModel(
-//					substModelList, //
-//					frequencyModelList, //
-//					epochTimes //
-//			);
-//
-//			// create site model
-//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-//			siteRateModel.addModel(substitutionModel);
-//			
-//			// create branch rate model
-//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
-//
-//			// feed to sequence simulator and generate leaves
-//			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-//					treeModel, //
-//					substitutionModel,//
-//					siteRateModel, //
-//					branchRateModel, //
-//					freqModel, //
-//					sequenceLength //
-//			);
-//
-//			Sequence ancestralSequence = new Sequence();
-//			ancestralSequence.appendSequenceString("TCAGGTCAAG");
-//			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
-//
-//			System.out.println(beagleSequenceSimulator.simulate().toString());
+			EpochBranchSubstitutionModel substitutionModel = new EpochBranchSubstitutionModel(
+					substModelList, //
+					frequencyModelList, //
+					branchRateModel, //
+					epochTimes //
+			);
+
+			// create site model
+			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
+			siteRateModel.addModel(substitutionModel);
+			
+			// feed to sequence simulator and generate leaves
+			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+					treeModel, //
+					substitutionModel,//
+					siteRateModel, //
+					branchRateModel, //
+					freqModel, //
+					sequenceLength //
+			);
+
+			Sequence ancestralSequence = new Sequence();
+			ancestralSequence.appendSequenceString("TCAGGTCAAG");
+			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
+
+			System.out.println(beagleSequenceSimulator.simulate().toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();

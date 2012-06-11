@@ -10,6 +10,7 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
@@ -64,6 +65,10 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 
 		BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
 		
+		if (branchRateModel == null) {
+			branchRateModel = new DefaultBranchRateModel();
+		}
+		
 		Parameter epochTransitionTimes = (Parameter) xo
 				.getChild(Parameter.class);
 
@@ -90,19 +95,19 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
 
-        return new XMLSyntaxRule[]{
+        return new XMLSyntaxRule[] {
                 new ElementRule(MODELS,
-                        new XMLSyntaxRule[]{
+                        new XMLSyntaxRule[] {
                                 new ElementRule(AbstractModel.class, 1, Integer.MAX_VALUE),
-                                //TODO other subst model classes
+                                //TODO or other subst model classes
                         }
                 ),
-                new ElementRule(BranchRateModel.class),
+                new ElementRule(BranchRateModel.class, true),
                 new ElementRule(Parameter.class),
         };
 
 //		return null;
-	}//END: getSyntaxRules
+	}// END: getSyntaxRules
 
 	@Override
 	public String getParserDescription() {

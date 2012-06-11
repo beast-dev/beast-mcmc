@@ -311,7 +311,10 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
 
         }// END: if branch below first transition time bail out
 
-        weights = scaleArray(weights, branchRateModel.getBranchRate(tree, node));
+		if (branchRateModel != null) {
+			weights = scaleArray(weights, branchRateModel.getBranchRate(tree, node));
+		}
+
         convolutionMatricesMap.put(bufferIndex, weights);
 
 		if (DEBUG_EPOCH) {

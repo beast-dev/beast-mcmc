@@ -5,13 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.BaseSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Parameter;
 import dr.xml.AbstractXMLObjectParser;

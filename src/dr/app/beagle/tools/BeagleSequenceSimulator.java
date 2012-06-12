@@ -29,6 +29,10 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class BeagleSequenceSimulator {
 
 	private static final boolean DEBUG_SIMULATOR = false;

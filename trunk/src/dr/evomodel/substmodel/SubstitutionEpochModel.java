@@ -25,6 +25,7 @@
 
 package dr.evomodel.substmodel;
 
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.evolution.datatype.DataType;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -86,6 +87,11 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
 
     public void getTransitionProbabilities(double startTime, double endTime, double distance, double[] matrix) {
         int matrixCount = 0;
+        
+//        System.out.println("startTime " + startTime ); 
+//        System.out.println("endTime " + endTime );  
+//            EpochBranchSubstitutionModel.printMatrix(resultMatrix);
+        
         boolean oneMatrix = (getEpochWeights(startTime, endTime, weight) == 1);
         for (int m = 0; m < numberModels; m++) {
             if (weight[m] > 0) {
@@ -97,10 +103,20 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
                     } else
                         model.getTransitionProbabilities(distance * weight[m], resultMatrix);
                     matrixCount++;
+                    
+//                    System.out.println("first " + weight[m] * (endTime - startTime) + " " + model.getVariable(0).getValue(0) + model.getId());
+//                    EpochBranchSubstitutionModel.printMatrix(resultMatrix);
+                    
                 } else {
                     model.getTransitionProbabilities(distance * weight[m], stepMatrix);
                     // Sum over unobserved state
                     int index = 0;
+                    
+//                    System.out.println("startTime " + startTime ); 
+//                    System.out.println("endTime " + endTime );  
+//                    System.out.println("second " + weight[m] * (endTime - startTime) + " " + model.getVariable(0).getValue(0) + model.getId());
+//                        EpochBranchSubstitutionModel.printMatrix(stepMatrix);
+                    
                     for (int i = 0; i < stateCount; i++) {
                         for (int j = 0; j < stateCount; j++) {
                             productMatrix[index] = 0;
@@ -110,6 +126,9 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
                             index++;
                         }
                     }
+                 
+//            		EpochBranchSubstitutionModel.printMatrix(productMatrix);
+                    
                     // Swap pointers
                     double[] tmpMatrix = resultMatrix;
                     resultMatrix = productMatrix;
@@ -118,7 +137,12 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
             }
         }
         if (!oneMatrix)
-            System.arraycopy(resultMatrix, 0, matrix, 0, stateCount * stateCount);
+            System.arraycopy(productMatrix, 0, matrix, 0, stateCount * stateCount);
+        
+//		System.out.println("C:");
+//		EpochBranchSubstitutionModel.printMatrix(resultMatrix);
+//        System.exit(-1);
+
     }
 
     private int getEpochWeights(double startTime, double endTime, double[] weights) {
@@ -131,6 +155,8 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
         // times   0, 1,  ...,   K-2,
         // where K = numberModels
 
+//        System.out.println(lengthTime);
+        
         // First epoch: 0 -> transitionTimes[0];
         if (startTime <= transitionTimes[0]) {
             if (endTime <= transitionTimes[0])
@@ -171,6 +197,10 @@ public class SubstitutionEpochModel extends AbstractSubstitutionModel {
             if (totalWeight < 0.999) System.exit(-1);
         }
 
+//        System.out.println(endTime-startTime);
+//        System.out.println(matrixCount);
+//        EpochBranchSubstitutionModel.printArray(weights);
+        	
         return matrixCount;
     }
 

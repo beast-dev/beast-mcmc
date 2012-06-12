@@ -18,6 +18,11 @@ import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+/**
+ * @author Filip Bielejec
+ * @author Marc A. Suchard
+ * @version $Id$
+ */
 public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser {
 
 	public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";

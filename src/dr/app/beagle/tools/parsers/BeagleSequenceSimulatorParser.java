@@ -1,5 +1,7 @@
 package dr.app.beagle.tools.parsers;
 
+import java.util.logging.Logger;
+
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
@@ -63,16 +65,22 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+		String msg = "";
+		
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 		
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
 		FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 		Sequence ancestralSequence = (Sequence) xo.getChild(Sequence.class);
 		int replications = xo.getIntegerAttribute(REPLICATIONS);
-
+		msg += "\n  " + replications + ( (replications > 1) ? " replications " : " replication");
+		
 		BranchRateModel rateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
 		if (rateModel == null) {
 			rateModel = new DefaultBranchRateModel();
+			msg += "\n  " + "default branch rate model with rate of 1.0";
+		} else {
+			msg += "\n  " + rateModel.getModelName() + " branch rate model";
 		}
 		
 		// TODO check this for cast errors
@@ -111,6 +119,10 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			}// END: dataType check
 		}// END: ancestralSequence check
 
+		 if (msg.length() > 0) {
+	            Logger.getLogger("dr.evomodel").info("Using Beagle Sequence Simulator: " + msg);
+		 }
+		
 		return s.simulate();
 
 	}// END: parseXMLObject

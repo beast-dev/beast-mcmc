@@ -16,9 +16,12 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.xml.AbstractXMLObjectParser;
+import dr.xml.AttributeRule;
+import dr.xml.ElementRule;
 import dr.xml.XMLObject;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
+import dr.xml.XORRule;
 
 /**
  * @author Filip Bielejec
@@ -26,9 +29,9 @@ import dr.xml.XMLSyntaxRule;
  */
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
-	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	public static final String REPLICATIONS = "replications";
-	public static final String SITE_MODEL = "siteModel";
+	private static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
+	private static final String REPLICATIONS = "replications";
+//	private static final String SITE_MODEL = "siteModel";
 	
 	@Override
 	public String getParserName() {
@@ -48,17 +51,20 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {
 		
-//		return new XMLSyntaxRule[] {
-//				new ElementRule(TreeModel.class),
-//				new ElementRule(BranchSubstitutionModel.class),
-//				new ElementRule(GammaSiteRateModel.class),
-////				 new ElementRule(SITE_MODEL, new XMLSyntaxRule[]{new ElementRule(BranchSubstitutionModel.class)}, false),
-//				new ElementRule(BranchRateModel.class, true),
-//				new ElementRule(FrequencyModel.class),
-//				new ElementRule(Sequence.class, true),
-//				AttributeRule.newIntegerRule(REPLICATIONS) };
+		return new XMLSyntaxRule[] {
+				new ElementRule(TreeModel.class),
+				new XORRule(
+						new ElementRule(BranchSubstitutionModel.class),
+						new ElementRule(SubstitutionModel.class), 
+						false),
+				new ElementRule(GammaSiteRateModel.class),
+				new ElementRule(BranchRateModel.class, true),
+				new ElementRule(FrequencyModel.class),
+				new ElementRule(Sequence.class, true),
+				AttributeRule.newIntegerRule(REPLICATIONS) 
+				};
 		
-		return null;
+//		return null;
 		
 	}//END: getSyntaxRules
 
@@ -88,9 +94,13 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		if (branchSubstitutionModel == null) {
 			SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 			branchSubstitutionModel = new HomogenousBranchSubstitutionModel(substitutionModel, freqModel);
+			
+//			System.err.println("FUBAR");
+			
 		}
 		
-		BeagleSequenceSimulator s = new BeagleSequenceSimulator(tree, //
+		BeagleSequenceSimulator s = new BeagleSequenceSimulator(
+				tree, //
 				branchSubstitutionModel, //
 				siteModel, //
 				rateModel, //

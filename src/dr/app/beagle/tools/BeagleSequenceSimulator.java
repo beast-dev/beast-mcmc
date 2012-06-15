@@ -290,7 +290,6 @@ public class BeagleSequenceSimulator {
 		int eigenIndex = branchSubstitutionModel.getBranchIndex(tree, node, branchIndex);
 		int count = 1;
 
-		//TODO
 		double branchRate = branchRateModel.getBranchRate(tree, node);
 		double branchTime = tree.getBranchLength(node) * branchRate;
 		

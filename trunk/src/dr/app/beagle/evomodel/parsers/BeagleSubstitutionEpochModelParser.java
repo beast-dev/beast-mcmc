@@ -27,7 +27,7 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 
 	public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";
 	public static final String MODELS = "models";
-	public static final String TRANSITION_TIMES = "transitionTimes";
+//	public static final String TRANSITION_TIMES = "transitionTimes";
 
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {

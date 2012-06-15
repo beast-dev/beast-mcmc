@@ -29,9 +29,9 @@ import dr.xml.XORRule;
  */
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
-	private static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	private static final String REPLICATIONS = "replications";
-//	private static final String SITE_MODEL = "siteModel";
+	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
+	public static final String REPLICATIONS = "replications";
+//	public static final String SITE_MODEL = "siteModel";
 	
 	@Override
 	public String getParserName() {

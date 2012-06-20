@@ -1,19 +1,12 @@
 package dr.app.bss;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.Font;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import jam.framework.SingleDocApplication;
 
-import javax.swing.Box;
-import javax.swing.JFrame;
-import javax.swing.JMenuBar;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
-import javax.swing.SwingUtilities;
+import java.awt.Font;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.net.URL;
+
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
@@ -22,22 +15,7 @@ public class BeagleSequenceSimulatorApp {
 	public static final String VERSION = "0.0.1";
 	public static final String DATE_STRING = "2012";
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
-	
-	// Dimension
-	private Dimension dimension;
 
-	// Frame
-	private JFrame frame;
-
-	// Menubar
-	private JMenuBar mainMenu;
-
-	// Menus with items
-	private FileMenu fileMenu;
-	private EditMenu editMenu;
-	private HelpMenu helpMenu;
-	private JTextArea textArea;
-	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException {
@@ -81,7 +59,7 @@ public class BeagleSequenceSimulatorApp {
 
 				// UIManager.setLookAndFeel(UIManager
 				// .getSystemLookAndFeelClassName());
-				
+
 				UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 				lafLoaded = true;
 
@@ -105,98 +83,63 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		dimension = Toolkit.getDefaultToolkit().getScreenSize();
-		Toolkit.getDefaultToolkit().setDynamicLayout(true);
+		SingleDocApplication app = new SingleDocApplication(
+				new BeagleSequenceSimulatorMenuFactory(), //
+				BEAGLE_SEQUENCE_SIMULATOR, //
+				VERSION.concat(" ").concat(DATE_STRING), //
+				null //
+				);
 
-		// Setup Main Frame
-		frame = new JFrame(BEAGLE_SEQUENCE_SIMULATOR);
-		frame.setLayout(new BorderLayout());
-		frame.addWindowListener(new ListenCloseWdw());
-
-		textArea = new JTextArea(frame.getWidth(), frame.getHeight());
-		textArea.setEditable(true);
-		JScrollPane scrollingText = new JScrollPane(textArea);
-	
-		JPanel mainPanel = new JPanel();
-		mainPanel.setLayout(new BorderLayout());
-		mainPanel.add(scrollingText, BorderLayout.CENTER);
-		frame.setLocationRelativeTo(null);
-		frame.setContentPane(mainPanel);
-		mainPanel.setOpaque(true);
+	      BeagleSequenceSimulatorFrame frame = new BeagleSequenceSimulatorFrame(BEAGLE_SEQUENCE_SIMULATOR);
+	      frame.setIconImage(CreateImage("icons/bss.png"));
+          app.setDocumentFrame(frame);
 		
-		// Setup Main Menu items
-		fileMenu = new FileMenu();
-		editMenu = new EditMenu();
-		helpMenu = new HelpMenu();
-
-		// Setup Main Menu
-		mainMenu = new JMenuBar();
-//		mainMenu.setLayout(new BoxLayout(mainMenu, BoxLayout.PAGE_AXIS));
-		mainMenu.add(fileMenu);
-		mainMenu.add(editMenu);
-		mainMenu.add(helpMenu);
-		
-		// Setup frame
-		frame.setJMenuBar(mainMenu);
-//		frame.add(mainMenu, BorderLayout.NORTH);
-		frame.getContentPane().add(Box.createVerticalStrut(15), BorderLayout.SOUTH);
-		frame.pack();
-
-	}//END: Constructor
-
-	private class ListenCloseWdw extends WindowAdapter {
-		public void windowClosing(WindowEvent ev) {
-			System.exit(0);
-		}
-	}
-
-	public void launchFrame() {
-
-		// Display Frame
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(new Dimension(dimension.width/4, dimension.height/4));
-		frame.setMinimumSize(new Dimension(260, 100));
-		frame.setResizable(true);
-		frame.setVisible(true);
-	}
+	}// END: Constructor
 
 	public static void main(String args[]) {
 
-		// Start application's GUI from Event Dispatching Thread
-		SwingUtilities.invokeLater(new Runnable() {
+		if (args.length > 1) {
 
-			public void run() {
+			System.out.println("Command-line interface not yet implemented");
 
-				BeagleSequenceSimulatorApp gui;
+		} else {
 
-				try {
+			try {
+				
+				new BeagleSequenceSimulatorApp();
+				
+			} catch (UnsupportedClassVersionError e) {
+				
+				System.err.println("Your Java Runtime Environment is too old. Please update");
+				e.printStackTrace();
+				
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (InstantiationException e) {
+				e.printStackTrace();
+			} catch (IllegalAccessException e) {
+				e.printStackTrace();
+			} catch (UnsupportedLookAndFeelException e) {
+				e.printStackTrace();
+			}//END: try catch block
 
-					gui = new BeagleSequenceSimulatorApp();
-					gui.launchFrame();
+		}// END: command line check
 
-				} catch (UnsupportedClassVersionError e) {
-
-					System.err.println("Your Java Runtime Environment is too old. Please update");
-					e.printStackTrace();
-
-				} catch (ClassNotFoundException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (InstantiationException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (IllegalAccessException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				} catch (UnsupportedLookAndFeelException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-			}
-		});
 	}// END: main
 
+	private Image CreateImage(String path) {
+		URL imgURL = this.getClass().getResource(path);
+		Toolkit kit = Toolkit.getDefaultToolkit();
+		Image img = kit.createImage(imgURL);
+
+		if (img != null) {
+			return img;
+		} else {
+			System.out.println("Couldn't find file: " + path + "\n");
+			return null;
+		}
+		
+	}// END: CreateImage
+	
 }// END: TestlabOutbreakApp
 
-//dr.app.beauti.generator
-//dr.app.coalgen

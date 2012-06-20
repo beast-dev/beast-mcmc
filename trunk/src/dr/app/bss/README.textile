@@ -19,7 +19,6 @@ h1. PURPOSE
 A long overdue simulator in Beagle.  
    
 h1. TODO
-* Read an existing XML (with Import... menu item), add the simulator part to it and export it
-* XML should appear in the text area
-* Syntax highlighting for XML?
+* Read an existing XML (with Import... menu item), fill data tables with it
+* Add the simulator part and export xml
 

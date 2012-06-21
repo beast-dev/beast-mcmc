@@ -25,25 +25,24 @@ import dr.app.gui.table.TableEditorStopper;
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {
 
-    JScrollPane scrollPane = new JScrollPane();
-    JTable dataTable = null;
-    DataTableModel dataTableModel = null;
+	private BeagleSequenceSimulatorFrame frame = null;
+	private BeagleSequenceSimulatorData data = null;
 
-    ClearDatesAction clearDatesAction = new ClearDatesAction();
-    GuessDatesAction guessDatesAction = new GuessDatesAction();
+	private JScrollPane scrollPane = new JScrollPane();
+	private JTable dataTable = null;
+	private DataTableModel dataTableModel = null;
 
-    JComboBox unitsCombo = new JComboBox(new String[]{"Years", "Months", "Days"});
-    JComboBox directionCombo = new JComboBox(new String[]{"Since some time in the past", "Before the present"});
+	private ClearDatesAction clearDatesAction = new ClearDatesAction();
+	private GuessDatesAction guessDatesAction = new GuessDatesAction();
 
-    BeagleSequenceSimulatorFrame frame = null;
+	private JComboBox unitsCombo = new JComboBox(new String[] { "Years",
+			"Months", "Days" });
+	private JComboBox directionCombo = new JComboBox(new String[] {
+			"Since some time in the past", "Before the present" });
 
-    BeagleSequenceSimulatorData data = null;
-
-    DateGuesser guesser = new DateGuesser();
-
-    double[] heights = null;
-
-    GuessDatesDialog guessDatesDialog = null;
+	private DateGuesser guesser = new DateGuesser();
+	private double[] heights = null;
+	private GuessDatesDialog guessDatesDialog = null;
 
     public TaxaPanel(BeagleSequenceSimulatorFrame frame, BeagleSequenceSimulatorData data) {
 
@@ -259,10 +258,6 @@ public class TaxaPanel extends JPanel implements Exportable {
     }
 
     public class GuessDatesAction extends AbstractAction {
-        /**
-         *
-         */
-        private static final long serialVersionUID = 8514706149822252033L;
 
         public GuessDatesAction() {
             super("Guess Dates");

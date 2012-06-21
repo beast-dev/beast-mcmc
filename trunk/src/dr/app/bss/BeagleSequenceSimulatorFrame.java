@@ -11,8 +11,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -35,16 +33,17 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
+	private TreePanel treePanel;
+	private ModelsPanel modelsPanel;
+	private ClockPanel clockPanel;
+	
 	private BeagleSequenceSimulatorData data = null;
 	private JLabel statusLabel;
 	private File workingDirectory = null;
 	
 	// TODO:
-	// taxa pane
-	// tree
 	// clock model
 	// frequency model
-	// branch subst model
 	// site model (rate cats)
 
 	public BeagleSequenceSimulatorFrame(String title) {
@@ -54,11 +53,16 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		data = new BeagleSequenceSimulatorData();
 
 		taxaPanel = new TaxaPanel(this, data);
-		JPanel secondPanel = new JPanel();
-
+		treePanel = new TreePanel(this, data);
+		modelsPanel = new ModelsPanel(this, data);
+		clockPanel = new ClockPanel(this, data);
+		
 		tabbedPane.addTab("Taxa", null, taxaPanel);
-		tabbedPane.addTab("second", null, secondPanel);
-
+		tabbedPane.addTab("Tree", null, treePanel);
+		tabbedPane.addTab("Branch Substitution Model", null, modelsPanel);
+		tabbedPane.addTab("Clock Model", null, clockPanel);
+		
+		
 		statusLabel = new JLabel("No taxa loaded");
 
 		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
@@ -83,10 +87,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		getContentPane().add(panel, BorderLayout.CENTER);
 
 	}// END: Constructor
-
-	// ///////////////////
-	// ---IMPORT TAXA---//
-	// ///////////////////
 
 	public boolean useImportAction() {
 		return true;
@@ -156,10 +156,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		
 	}//END: importFromFile
 
-	// /////////////////////////
-	// ---INHERITED METHODS---//
-	// /////////////////////////
-
 	@Override
 	public JComponent getExportableComponent() {
 		JComponent exportable = null;
@@ -196,19 +192,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		return false;
 	}
 
-	//TODO: does not work
-	public void fireTaxaChanged() {
-		
-		SwingUtilities.invokeLater(new Runnable() {
-		    public void run() {
-
-		    tabbedPane.repaint();
-		    
-		    }
-		});
-
-	}// END: fireTaxaChanged
-
 	public void dataSelectionChanged(boolean isSelected) {
 		if (isSelected) {
 			getDeleteAction().setEnabled(true);
@@ -217,8 +200,30 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		}
 	}// END: dataSelectionChanged
 
-	// /////////////////
-	// ---DEBUGGING---//
-	// /////////////////
+	public File getWorkingDirectory() {
+		return workingDirectory;
+	}// END: getWorkingDirectory
+
+	public void setWorkingDirectory(File workingDirectory) {
+		this.workingDirectory = workingDirectory;
+	}// END: setWorkingDirectory
+
+	//TODO: does not work
+	public void fireTaxaChanged() {
+		
+		SwingUtilities.invokeLater(new Runnable() {
+		    public void run() {
+
+		        validate();
+		        repaint();
+		    
+		    }
+		});
+
+	}// END: fireTaxaChanged
+	
+	public void fireModelChanged() {
+		modelsPanel.collectSettings();
+	}
 	
 }// END: class

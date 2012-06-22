@@ -1,3 +1,28 @@
+/*
+ * StateHistory.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.inference.markovjumps;
 
 import dr.evolution.datatype.DataType;
@@ -9,7 +34,7 @@ import java.util.List;
 /**
  * A class to represent the complete state history of a continuous-time Markov chain in the
  * interval [0,T].
- *
+ * <p/>
  * This work is supported by NSF grant 0856099
  *
  * @author Marc A. Suchard
@@ -78,7 +103,7 @@ public class StateHistory {
         }
         return total;
     }
-    
+
     public void accumulateSufficientStatistics(int[] counts, double[] times) {
         checkFinalized(true);
         int nJumps = getNumberOfJumps();
@@ -104,7 +129,7 @@ public class StateHistory {
         }
         if (times != null) { // Add last waiting time
             StateChange finalState = stateList.get(nJumps + 1);
-            times[currentState] += ( finalState.getTime() - currentTime);
+            times[currentState] += (finalState.getTime() - currentTime);
         }
     }
 
@@ -125,7 +150,7 @@ public class StateHistory {
 
     public int getEndingState() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getState();
+        return stateList.get(stateList.size() - 1).getState();
     }
 
     public double getStartingTime() {
@@ -134,7 +159,7 @@ public class StateHistory {
 
     public double getEndingTime() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getTime();
+        return stateList.get(stateList.size() - 1).getTime();
     }
 
     public void rescaleTimesOfEvents(double inStartTime, double inEndTime) {
@@ -153,7 +178,7 @@ public class StateHistory {
 
             double newNextTime = oldTimeDiff * scale + newCurrentTime;
             nextStateChange.setTime(newNextTime);
-            
+
             oldCurrentTime = oldNextTime;
             newCurrentTime = newNextTime;
 
@@ -206,7 +231,7 @@ public class StateHistory {
             }
             currentState = nextState;
         }
-        newHistory.addEndingState(stateList.get(stateList.size()-1));
+        newHistory.addEndingState(stateList.get(stateList.size() - 1));
         return newHistory;
     }
 
@@ -229,9 +254,13 @@ public class StateHistory {
         return sb.toString();
     }
 
-    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
+    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time, int site) {
         // AR changed this to match an attribute array:
-        sb.append("{").append(source).append(",").append(dest).append(",").append(time).append("}");
+        sb.append("{").append(site).append(",").append(time).append(",").append(source).append(",").append(dest).append("}");
+    }
+
+    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
+        addEventToStringBuilder(sb, source, dest, time, -1);
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,
@@ -274,7 +303,6 @@ public class StateHistory {
 
         return history;
     }
-
 
 
     private int stateCount;

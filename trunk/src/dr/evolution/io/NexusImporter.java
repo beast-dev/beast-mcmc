@@ -1,7 +1,7 @@
 /*
  * NexusImporter.java
  *
- * Copyright (C) 2002-2010 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -701,7 +701,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         int duplicateTaxon = TaxonList.Utils.findDuplicateTaxon(taxa);
         if (duplicateTaxon >= 0)
             throw new IllegalArgumentException("Tree contains duplicate taxon name: " + taxa.getTaxon(duplicateTaxon).getId() +
-                      "!\nAll taxon names should be unique.");
+                    "!\nAll taxon names should be unique.");
 
         return taxa;
     }
@@ -1274,7 +1274,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
 
     /**
      * This method takes a string and tries to decode it returning the object
-     * that best fits the data. It will recognize command delimited lists enclosed
+     * that best fits the data. It will recognize comma delimited lists enclosed
      * in {..} and call parseValue() on each element. It will also recognize Boolean,
      * Integer and Double. If the value starts with a # then it will attempt to decode
      * the following integer as an RGB colour - see Color.decode(). If nothing else fits
@@ -1284,7 +1284,7 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
      * @param value the string
      * @return the object
      */
-    static Serializable parseValue(String value) {
+    public static Serializable parseValue(String value) {
 
         value = value.trim();
 

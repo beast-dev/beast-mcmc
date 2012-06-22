@@ -235,7 +235,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     history.rescaleTimesOfEvents(parentTime, childTime);
 
                     int n = history.getNumberOfJumps();
-                    String hstring = "{"  + (i + 1) + "," + n + (n>1?",{":",") + history.toStringChanges(usModel.dataType) + (n>1?"}}":"}");
+                    // MAS may have broken the next line
+                    String hstring = "{" + (i + 1) + "," + history.toStringChanges(usModel.dataType) + "}";
                     if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()

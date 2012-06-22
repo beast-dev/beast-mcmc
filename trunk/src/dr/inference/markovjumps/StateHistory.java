@@ -227,11 +227,15 @@ public class StateHistory {
         for (int i = 1; i < stateList.size() - 1; ++i) {
             StateChange nextState = stateList.get(i);
             if (register[currentState.getState() * stateCount + nextState.getState()] == 1) {
+                nextState = nextState.clone();
+                nextState.setPreviousState(currentState.getState());
                 newHistory.addChange(nextState);
             }
             currentState = nextState;
         }
         newHistory.addEndingState(stateList.get(stateList.size() - 1));
+        // This function can produce inconsistent histories when not all changes are reported.
+        isFiltered = true;
         return newHistory;
     }
 
@@ -239,8 +243,11 @@ public class StateHistory {
         StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
-        for (int i = 1; i < stateList.size(); i++) {
+        for (int i = 1; i < stateList.size() - 1; i++) {  // TODO Code review: should this really be size() - 1?
             int nextState = stateList.get(i).getState();
+            if (isFiltered) {
+                currentState = stateList.get(i).getPreviousState();
+            }
             if (nextState != currentState) {
                 if (!firstChange) {
                     sb.append(",");
@@ -309,4 +316,6 @@ public class StateHistory {
     private int stateCount;
     private List<StateChange> stateList;
     private boolean finalized;
+    private boolean isFiltered = false;
+
 }

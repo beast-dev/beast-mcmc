@@ -19,6 +19,8 @@ h1. PURPOSE
 A long overdue simulator in Beagle.  
    
 h1. TODO
-* Read an existing XML (with Import... menu item), fill data tables with it
-* Add the simulator part and export xml
-
+* dates
+* heights
+* uneditable
+* importing from fasta
+* use writeToFile to set preferences, read preference file on startup

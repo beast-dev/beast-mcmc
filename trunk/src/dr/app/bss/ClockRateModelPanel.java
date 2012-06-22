@@ -16,7 +16,7 @@ import javax.swing.SwingConstants;
 import org.virion.jam.components.RealNumberField;
 
 @SuppressWarnings("serial")
-public class ClockPanel extends JPanel implements Exportable {
+public class ClockRateModelPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame;
 	private BeagleSequenceSimulatorData data;
@@ -25,7 +25,7 @@ public class ClockPanel extends JPanel implements Exportable {
 	private JComboBox clockCombo;
 	private RealNumberField[] clockParameterFields = new RealNumberField[BeagleSequenceSimulatorData.clockParameterNames.length];
 
-	public ClockPanel(final BeagleSequenceSimulatorFrame frame,
+	public ClockRateModelPanel(final BeagleSequenceSimulatorFrame frame,
 			final BeagleSequenceSimulatorData data) {
 
 		this.frame = frame;
@@ -61,13 +61,13 @@ public class ClockPanel extends JPanel implements Exportable {
 		optionPanel.removeAll();
 		optionPanel.addComponents(new JLabel("Clock rate model:"), clockCombo);
 		optionPanel.addSeparator();
-		optionPanel.addLabel("Select clock parameter values:");
+		optionPanel.addLabel("Set parameter values:");
 
-		int substIndex = clockCombo.getSelectedIndex();
+		int index = clockCombo.getSelectedIndex();
 
-		for (int i = 0; i < data.clockParameterIndices[substIndex].length; i++) {
+		for (int i = 0; i < data.clockParameterIndices[index].length; i++) {
 
-			int k = data.substitutionParameterIndices[substIndex][i];
+			int k = data.clockParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(clockParameterFields[k], BorderLayout.WEST);
@@ -91,6 +91,16 @@ public class ClockPanel extends JPanel implements Exportable {
 		}// END: actionPerformed
 	}// END: ListenClockCombo
 
+	public void collectSettings() {
+
+		data.clockModel = clockCombo.getSelectedIndex();
+		for (int i = 0; i < BeagleSequenceSimulatorData.clockParameterNames.length; i++) {
+
+			data.clockParameterValues[i] = clockParameterFields[i].getValue();
+
+		}// END: fill loop
+	}// END: collectSettings
+	
 	@Override
 	public JComponent getExportableComponent() {
 		return this;

@@ -6,7 +6,10 @@ import jam.panels.OptionsPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -14,6 +17,12 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+
+import dr.evolution.io.Importer.ImportException;
+import dr.evolution.io.NewickImporter;
+import dr.evolution.io.NexusImporter;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
 public class TreePanel extends JPanel implements Exportable {
@@ -52,6 +61,15 @@ public class TreePanel extends JPanel implements Exportable {
 	private class ListenTreeFileButton implements ActionListener {
 		public void actionPerformed(ActionEvent ae) {
 
+			doImport();
+
+		}// END: actionPerformed
+	}// END: ListenTreeFileButton
+
+	public void doImport() {
+
+		try {
+
 			JFileChooser chooser = new JFileChooser();
 			chooser.setDialogTitle("Select input tree file...");
 			chooser.setMultiSelectionEnabled(false);
@@ -65,15 +83,46 @@ public class TreePanel extends JPanel implements Exportable {
 				data.treeFile = file;
 				treeFileNameText.setText(data.treeFile.getName());
 
+				importFromFile(file);
+
 				File tmpDir = chooser.getCurrentDirectory();
 				if (tmpDir != null) {
 					frame.setWorkingDirectory(tmpDir);
 				}
 
 			}// END: file opened check
-		}// END: actionPerformed
-	}// END: ListenTreeFileButton
 
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ImportException e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+	}// END: doImport
+	
+	public void importFromFile(File file) throws IOException, ImportException {
+		
+        BufferedReader reader = new BufferedReader(new FileReader(file));
+
+        String line = reader.readLine();
+        Tree tree;
+
+        if (line.toUpperCase().startsWith("#NEXUS")) {
+            NexusImporter importer = new NexusImporter(reader);
+            tree = importer.importTree(null);
+        } else {
+            NewickImporter importer = new NewickImporter(reader);
+            tree = importer.importTree(null);
+        }
+
+        data.taxonList = tree;
+        data.treeModel = new TreeModel(tree);
+        
+        reader.close();
+        frame.fireTaxaChanged();
+		
+	}//END: importFromFile
+	
 	@Override
 	public JComponent getExportableComponent() {
 		return this;

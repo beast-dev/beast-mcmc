@@ -16,7 +16,7 @@ import javax.swing.SwingConstants;
 import dr.app.gui.components.RealNumberField;
 
 @SuppressWarnings("serial")
-public class ModelsPanel extends JPanel implements Exportable {
+public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame;
 	private BeagleSequenceSimulatorData data;
@@ -25,7 +25,7 @@ public class ModelsPanel extends JPanel implements Exportable {
 	private JComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[BeagleSequenceSimulatorData.substitutionParameterNames.length];
 
-	public ModelsPanel(final BeagleSequenceSimulatorFrame frame,
+	public BranchSubstitutionModelPanel(final BeagleSequenceSimulatorFrame frame,
 			final BeagleSequenceSimulatorData data) {
 
 		super();
@@ -64,13 +64,13 @@ public class ModelsPanel extends JPanel implements Exportable {
 		optionPanel.removeAll();
 		optionPanel.addComponents(new JLabel("Branch substitution model:"), substitutionCombo);
 		optionPanel.addSeparator();
-		optionPanel.addLabel("Select substitution parameter values:");
+		optionPanel.addLabel("Set parameter values:");
 
-		int substIndex = substitutionCombo.getSelectedIndex();
+		int index = substitutionCombo.getSelectedIndex();
 
-		for (int i = 0; i < data.substitutionParameterIndices[substIndex].length; i++) {
+		for (int i = 0; i < data.substitutionParameterIndices[index].length; i++) {
 
-			int k = data.substitutionParameterIndices[substIndex][i];
+			int k = data.substitutionParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(substitutionParameterFields[k], BorderLayout.WEST);

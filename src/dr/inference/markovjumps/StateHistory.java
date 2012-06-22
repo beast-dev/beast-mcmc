@@ -235,8 +235,8 @@ public class StateHistory {
         return newHistory;
     }
 
-    public String toStringChanges(DataType dataType) { //}, double startTime) {
-        StringBuilder sb = new StringBuilder();
+    public String toStringChanges(DataType dataType) {
+        StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
         for (int i = 1; i < stateList.size(); i++) {
@@ -251,6 +251,7 @@ public class StateHistory {
                 currentState = nextState;
             }
         }
+        sb.append("}"); // Always returns an array of arrays
         return sb.toString();
     }
 

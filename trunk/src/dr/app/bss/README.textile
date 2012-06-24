@@ -19,8 +19,12 @@ h1. PURPOSE
 A long overdue simulator in Beagle.  
    
 h1. TODO
-* dates
-* heights
-* uneditable
+* import dates
+* import heights
+* uneditable taxa panel?
 * importing from fasta
 * use writeToFile to set preferences, read preference file on startup
+* exception handling
+* simulating under epoch model
+* set focus on tree panel
+* movable panels?

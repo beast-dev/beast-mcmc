@@ -10,6 +10,7 @@ import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
@@ -24,7 +25,6 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
-import dr.evomodel.substmodel.YangCodonModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
@@ -49,9 +49,7 @@ public class BeagleSequenceSimulator {
 	private Beagle beagle;
 	private BufferIndexHelper eigenBufferHelper;
 	private BufferIndexHelper matrixBufferHelper;
-
 	private int stateCount;
-
 	private boolean has_ancestralSequence = false;
 	private Sequence ancestralSequence = null;
 	private double[][] probabilities;
@@ -346,11 +344,10 @@ public class BeagleSequenceSimulator {
 
 		simulateEpochModel();
 		simulateHKY();
-//		simulateCodon();
+		simulateCodon();
 		
 	} // END: main
 
-	@SuppressWarnings("unused")
 	static void simulateCodon() {
 
 		try {
@@ -371,38 +368,37 @@ public class BeagleSequenceSimulator {
 			
 			Codons codonDataType = Codons.UNIVERSAL;
 			
-			dr.evomodel.substmodel.FrequencyModel freqModel = new  dr.evomodel.substmodel.FrequencyModel(codonDataType, freqs);
+			FrequencyModel freqModel = new  FrequencyModel(codonDataType, freqs);
 
 			// create codon substitution model
 			Parameter kappa = new Parameter.Default(1, 10);
 			Parameter omega = new Parameter.Default(1, 10);
 			
-			YangCodonModel yangCodonModel = new YangCodonModel(codonDataType, omega, kappa, freqModel);
+			GY94CodonModel yangCodonModel = new GY94CodonModel(codonDataType, omega, kappa, freqModel);
 			
-//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, freqModel);
+			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, freqModel);
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-//			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model
-//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+			BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
 			// feed to sequence simulator and generate leaves
-//			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-//					treeModel, //
-//					substitutionModel,//
-//					siteRateModel, //
-//					branchRateModel, //
-//					freqModel, //
-//					sequenceLength //
-//			);
-//
-//			Sequence ancestralSequence = new Sequence();
-//			ancestralSequence.appendSequenceString("AAAAAAAAAA");
-//			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
-//
-//			System.out.println(beagleSequenceSimulator.simulate().toString());
+			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+					treeModel, //
+					substitutionModel,//
+					siteRateModel, //
+					branchRateModel, //
+					freqModel, //
+					sequenceLength //
+			);
+
+			Sequence ancestralSequence = new Sequence();
+			ancestralSequence.appendSequenceString("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+			beagleSequenceSimulator.setAncestralSequence(ancestralSequence);
+
+			System.out.println(beagleSequenceSimulator.simulate().toString());
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -432,7 +428,6 @@ public class BeagleSequenceSimulator {
 			
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-//			siteRateModel.addModel(substitutionModel);
 			
 			// create branch rate model
 			BranchRateModel branchRateModel = new DefaultBranchRateModel();
@@ -498,7 +493,6 @@ public class BeagleSequenceSimulator {
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel("siteModel");
-			siteRateModel.addModel(substitutionModel);
 			
 			// feed to sequence simulator and generate leaves
 			BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(

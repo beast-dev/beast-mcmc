@@ -200,7 +200,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			chooser.setMultiSelectionEnabled(false);
 			chooser.setCurrentDirectory(workingDirectory);
 
-			chooser.showOpenDialog(Utils.getActiveFrame());
+			chooser.showSaveDialog(Utils.getActiveFrame());
 			File file = chooser.getSelectedFile();
 
 			if (file != null) {
@@ -223,7 +223,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	// TODO: simulate
 	private void generateFile(File outFile) throws IOException, ImportException {
 
 		PrintWriter writer = new PrintWriter(new FileWriter(outFile));
@@ -270,11 +269,12 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	private void collectAllSettings() {
 		
-		// TODO: collect all settings from panels
 		frequencyPanel.collectSettings();
-		simulationPanels.collectSettings();
 		substModelPanel.collectSettings();
-		
+        clockPanel.collectSettings();
+    	sitePanel.collectSettings();
+    	simulationPanels.collectSettings();
+    	
 	}// END: collectAllSettings
 	
 	public void dataSelectionChanged(boolean isSelected) {
@@ -294,7 +294,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	}// END: setWorkingDirectory
 	
 	public void fireModelChanged() {
-		substModelPanel.collectSettings();
+//		substModelPanel.collectSettings();
+	    collectAllSettings();
 	}
 	
 }// END: class

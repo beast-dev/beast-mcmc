@@ -12,8 +12,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 public class BeagleSequenceSimulatorApp {
 
-	public static final String VERSION = "0.0.1";
-	public static final String DATE_STRING = "2012";
+//	public static final String VERSION = "0.0.1";
+//	public static final String DATE_STRING = "2012";
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
 
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
@@ -86,7 +86,7 @@ public class BeagleSequenceSimulatorApp {
 		SingleDocApplication app = new SingleDocApplication(
 				new BeagleSequenceSimulatorMenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
-				VERSION.concat(" ").concat(DATE_STRING), //
+				BeagleSequenceSimulatorData.VERSION.concat(" ").concat(BeagleSequenceSimulatorData.DATE_STRING), //
 				null //
 				);
 
@@ -106,6 +106,7 @@ public class BeagleSequenceSimulatorApp {
 
 			try {
 				
+				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
 				
 			} catch (UnsupportedClassVersionError e) {

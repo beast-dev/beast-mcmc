@@ -75,23 +75,28 @@ public class TreePanel extends JPanel implements Exportable {
 			chooser.setMultiSelectionEnabled(false);
 			chooser.setCurrentDirectory(frame.getWorkingDirectory());
 
-			chooser.showOpenDialog(Utils.getActiveFrame());
-			File file = chooser.getSelectedFile();
+			int returnValue = chooser.showOpenDialog(Utils.getActiveFrame());
 
-			if (file != null) {
+			if (returnValue == JFileChooser.APPROVE_OPTION) {
 
-				data.treeFile = file;
-				treeFileNameText.setText(data.treeFile.getName());
+				File file = chooser.getSelectedFile();
 
-				importFromFile(file);
+				if (file != null) {
 
-				File tmpDir = chooser.getCurrentDirectory();
-				if (tmpDir != null) {
-					frame.setWorkingDirectory(tmpDir);
-				}
+					data.treeFile = file;
+					treeFileNameText.setText(data.treeFile.getName());
 
-			}// END: file opened check
+					importFromFile(file);
 
+					File tmpDir = chooser.getCurrentDirectory();
+					if (tmpDir != null) {
+						frame.setWorkingDirectory(tmpDir);
+					}
+
+				}// END: file opened check
+
+			}// END: dialog cancelled check
+			
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ImportException e) {

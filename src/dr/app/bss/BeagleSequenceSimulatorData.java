@@ -6,7 +6,11 @@ import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.GTR;
+import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
+import dr.app.beagle.evomodel.substmodel.TN93;
+import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
@@ -17,7 +21,9 @@ import dr.inference.model.Parameter;
 
 public class BeagleSequenceSimulatorData {
 
-	public static final String version = "1.0";
+	public static final String VERSION = "0.0.1";
+	public static final String DATE_STRING = "2012";
+	
 	public File treeFile = null;
 	public TaxonList taxonList = new Taxa();
 	public int replicateCount = 1000;
@@ -26,51 +32,108 @@ public class BeagleSequenceSimulatorData {
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////
-
+	
 	public int substitutionModel = 0;
 
 	public static String[] substitutionModels = { "HKY", //
+		    "GTR", //
+		    "TN93", //
 			"Yang Codon Model" //
 	};
 
 	public static String[] substitutionParameterNames = new String[] {
-			"Kappa value", //
-			"Omega value" //
+			"Kappa value", // HKY
+			"AC", // GTR
+			"AG", // GTR
+			"AT", // GTR
+			"CG", // GTR
+			"CT", // GTR
+			"GT", // GTR
+			"Kappa 1", // TN93
+			"Kappa 2", // TN93
+			"Omega value", // Yang Codon Model
+			"Kappa value" // Yang Codon Model
 	};
 
 	public int[][] substitutionParameterIndices = { { 0 }, // HKY
-			{ 0, 1 }, // Yang Codon Model
+			{ 1, 2, 3, 4, 5, 6 }, // GTR
+			{ 7, 8 }, // TN93
+			{ 9, 10 }, // Yang Codon Model
 	};
 
-	public double[] substitutionParameterValues = new double[] { 10.0, // Kappa-value
+	public double[] substitutionParameterValues = new double[] { 1.0, // Kappa-value
+			1.0, // AC
+			1.0, // AG
+			1.0, // AT
+			1.0, // CG
+			1.0, // CT
+			1.0, // GT
+			1.0, // Kappa 1
+			1.0, // Kappa 2
 			0.1, // Omega value
+			1.0 // Kappa value
 	};
 
-	public void setSubstitutionModel(int model) {
-		substitutionModel = model;
-	}// END: setSubstitutionModelModel
-	
 	public BranchSubstitutionModel createBranchSubstitutionModel() {
 
 		BranchSubstitutionModel substitutionModel = null;
 
-		if (this.substitutionModel == 0) {// HKY
+		if (this.substitutionModel == 0) { // HKY
 
-			FrequencyModel frequencyModel = this.createFrequencyModel();
 			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[0]);
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+
 			HKY hky = new HKY(kappa, frequencyModel);
-			substitutionModel = new HomogenousBranchSubstitutionModel(hky,
-					frequencyModel);
+			
+			substitutionModel = new HomogenousBranchSubstitutionModel(hky, frequencyModel);
 
-		} else if (this.substitutionModel == 0) {
+		} else if (this.substitutionModel == 1) { // GTR
 
-			System.out.println("Not yet implemented");
+			Parameter ac = new Parameter.Default(1, substitutionParameterValues[1]);
+			Parameter ag = new Parameter.Default(1, substitutionParameterValues[2]);
+			Parameter at = new Parameter.Default(1, substitutionParameterValues[3]);
+			Parameter cg = new Parameter.Default(1, substitutionParameterValues[4]);
+			Parameter ct = new Parameter.Default(1, substitutionParameterValues[5]);
+			Parameter gt = new Parameter.Default(1, substitutionParameterValues[6]);
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+			
+			GTR gtr = new GTR(ac, ag, at, cg, ct, gt, frequencyModel);
+
+			substitutionModel = new HomogenousBranchSubstitutionModel(gtr, frequencyModel);
+			
+		} else if (this.substitutionModel == 2) { // TN93
+
+			Parameter kappa1 = new Parameter.Default(1, substitutionParameterValues[7]);
+			Parameter kappa2 = new Parameter.Default(1, substitutionParameterValues[8]);
+			
+			FrequencyModel frequencyModel = this.createFrequencyModel();
+
+			TN93 tn93 = new TN93(kappa1, kappa2, frequencyModel);
+			
+			substitutionModel = new HomogenousBranchSubstitutionModel(tn93, frequencyModel);
+			
+		} else if (this.substitutionModel == 3) { // Yang Codon Model
+
+            FrequencyModel frequencyModel = this.createFrequencyModel();
+
+			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[9]);
+			Parameter omega = new Parameter.Default(1, substitutionParameterValues[10]);
+			
+			GY94CodonModel yangCodonModel = new GY94CodonModel(Codons.UNIVERSAL, omega, kappa, frequencyModel);
+			
+			substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, frequencyModel);
 
 		}
 
 		return substitutionModel;
 	}// END: createBranchSubstitutionModel
 
+//	public void setSubstitutionModel(int model) {
+//	substitutionModel = model;
+//}// END: setSubstitutionModelModel	
+	
 	// ////////////////////
 	// ---CLOCK MODELS---//
 	// ////////////////////
@@ -271,17 +334,51 @@ public class BeagleSequenceSimulatorData {
 			Parameter freqs = new Parameter.Default(new double[] {
 					frequencyParameterValues[0], frequencyParameterValues[1],
 					frequencyParameterValues[2], frequencyParameterValues[3] });
+
 			frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
 		} else if (this.frequencyModel == 1) {
 
-			System.out.println("Not yet implemented");
+			Parameter freqs = new Parameter.Default(new double[] {
+					frequencyParameterValues[4], frequencyParameterValues[5],
+					frequencyParameterValues[6], frequencyParameterValues[7],
+					frequencyParameterValues[8], frequencyParameterValues[9],
+					frequencyParameterValues[10], frequencyParameterValues[11],
+					frequencyParameterValues[12], frequencyParameterValues[13],
+					frequencyParameterValues[14], frequencyParameterValues[15],
+					frequencyParameterValues[16], frequencyParameterValues[17],
+					frequencyParameterValues[18], frequencyParameterValues[19],
+					frequencyParameterValues[20], frequencyParameterValues[21],
+					frequencyParameterValues[22], frequencyParameterValues[23],
+					frequencyParameterValues[24], frequencyParameterValues[25],
+					frequencyParameterValues[26], frequencyParameterValues[27],
+					frequencyParameterValues[28], frequencyParameterValues[29],
+					frequencyParameterValues[30], frequencyParameterValues[31],
+					frequencyParameterValues[32], frequencyParameterValues[33],
+					frequencyParameterValues[34], frequencyParameterValues[35],
+					frequencyParameterValues[36], frequencyParameterValues[37],
+					frequencyParameterValues[38], frequencyParameterValues[39],
+					frequencyParameterValues[40], frequencyParameterValues[41],
+					frequencyParameterValues[42], frequencyParameterValues[43],
+					frequencyParameterValues[44], frequencyParameterValues[45],
+					frequencyParameterValues[46], frequencyParameterValues[47],
+					frequencyParameterValues[48], frequencyParameterValues[49],
+					frequencyParameterValues[50], frequencyParameterValues[51],
+					frequencyParameterValues[52], frequencyParameterValues[53],
+					frequencyParameterValues[54], frequencyParameterValues[55],
+					frequencyParameterValues[56], frequencyParameterValues[57],
+					frequencyParameterValues[58], frequencyParameterValues[59],
+					frequencyParameterValues[60], frequencyParameterValues[61],
+					frequencyParameterValues[62], frequencyParameterValues[63],
+					frequencyParameterValues[64] });
+
+			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
 
 		}
 
 		return frequencyModel;
 	}// END: createFrequencyModel
-	
+
 	// ////////////////////////
 	// ---SITE RATE MODELS---//
 	// ////////////////////////

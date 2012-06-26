@@ -627,6 +627,7 @@ public class FlexibleTree implements MutableTree {
             FlexibleNode node2 = node.getShallowCopy();
             node2.addChild(node0);
             node2.addChild(node1);
+            node2.setLength(0.0);
 
             node.addChild(node2);
         }

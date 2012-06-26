@@ -123,6 +123,8 @@ public class TemporalRooting {
             throw new IllegalArgumentException("Cannot do a root to tip regression on contemporaneous tips");
         }
 
+        ((FlexibleTree)tree).setLengthsKnown(false);
+
         double[] dates = getTipDates(tree);
         double[] distances = getRootToTipDistances(tree);
 

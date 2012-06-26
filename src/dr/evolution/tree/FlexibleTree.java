@@ -420,6 +420,14 @@ public class FlexibleTree implements MutableTree {
         fireTreeChanged();
     }
 
+    public void setHeightsKnown(boolean heightsKnown) {
+        this.heightsKnown = heightsKnown;
+    }
+
+    public void setLengthsKnown(boolean lengthsKnown) {
+        this.lengthsKnown = lengthsKnown;
+    }
+
     public void setNodeRate(NodeRef n, double rate) {
         FlexibleNode node = (FlexibleNode) n;
         node.setRate(rate);

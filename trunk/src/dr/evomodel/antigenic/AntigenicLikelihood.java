@@ -92,12 +92,13 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 columnStrain = strainNames.indexOf(columnStrainName);
                 if (columnStrain == -1) {
                     strainNames.add(columnStrainName);
-                    serumNames.add(columnStrainName);
-
                     Double date = Double.parseDouble(values[SERUM_DATE]);
                     strainDateMap.put(columnStrainName, date);
-
                     columnStrain = strainNames.size() - 1;
+                }
+                int thisStrain = serumNames.indexOf(columnStrainName);
+                if (thisStrain == -1) {
+                    serumNames.add(columnStrainName);
                 }
             }
 
@@ -112,18 +113,20 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
 
             int rowStrain = -1;
+            String rowStrainName = values[VIRUS_STRAIN];
             if (strainTaxa != null) {
-                rowStrain = strainTaxa.getTaxonIndex(values[VIRUS_STRAIN]);
+                rowStrain = strainTaxa.getTaxonIndex(rowStrainName);
             } else {
-                rowStrain = strainNames.indexOf(values[VIRUS_STRAIN]);
+                rowStrain = strainNames.indexOf(rowStrainName);
                 if (rowStrain == -1) {
-                    strainNames.add(values[VIRUS_STRAIN]);
-                    virusNames.add(values[VIRUS_STRAIN]);
-
+                    strainNames.add(rowStrainName);
                     Double date = Double.parseDouble(values[VIRUS_DATE]);
-                    strainDateMap.put(values[VIRUS_STRAIN], date);
-
+                    strainDateMap.put(rowStrainName, date);
                     rowStrain = strainNames.size() - 1;
+                }
+                int thisStrain = virusNames.indexOf(rowStrainName);
+                if (thisStrain == -1) {
+                    virusNames.add(rowStrainName);
                 }
             }
             if (rowStrain == -1) {
@@ -759,7 +762,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newStringRule(FILE_NAME, false, "The name of the file containing the assay table"),
                 AttributeRule.newIntegerRule(MDS_DIMENSION, false, "The dimension of the space for MDS"),
-                AttributeRule.newBooleanRule(MERGE_COLUMNS, true, "Should columns with the same strain have their locations merged (default true)?"),
+                AttributeRule.newBooleanRule(MERGE_COLUMNS, false, "Should columns with the same strain have their locations merged? (defaults to false)"),
                 AttributeRule.newDoubleRule(INTERVAL_WIDTH, true, "The width of the titre interval in log 2 space"),
                 new ElementRule(STRAINS, TaxonList.class, "A taxon list of strains", true),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree", true),

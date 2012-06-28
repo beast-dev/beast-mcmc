@@ -125,6 +125,10 @@ public class BeagleSequenceSimulatorData {
 			
 			substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, frequencyModel);
 
+		} else if (this.substitutionModel == 4) { 
+			
+			System.out.println("Not yet implemented");
+			
 		}
 
 		return substitutionModel;
@@ -156,7 +160,7 @@ public class BeagleSequenceSimulatorData {
 
 		BranchRateModel branchRateModel = null;
 
-		if (this.clockModel == 0) {// Strict Clock
+		if (this.clockModel == 0) { // Strict Clock
 
 			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
 			branchRateModel = new StrictClockBranchRates(rateParameter);
@@ -374,6 +378,10 @@ public class BeagleSequenceSimulatorData {
 
 			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
 
+		} else if (this.frequencyModel == 2) {
+			
+			System.out.println("Not yet implemented");
+			
 		}
 
 		return frequencyModel;

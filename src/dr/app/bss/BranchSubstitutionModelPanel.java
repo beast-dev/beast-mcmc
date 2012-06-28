@@ -56,7 +56,6 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 		setSubstitutionArguments();
 		
-		
 	}// END: Constructor
 
 	private void setSubstitutionArguments() {
@@ -79,8 +78,8 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 		}// END: indices loop
 
-		validate();
-		repaint();
+//		validate();
+//		repaint();
 	}// END: setSubstitutionArguments
 
 	private class ListenSubstitutionCombo implements ItemListener {

@@ -5,7 +5,7 @@ import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
-import dr.math.distributions.GammaDistribution;
+import dr.math.distributions.ExponentialDistribution;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
             Parameter datesParameter,
             Parameter jumpVectorParameter,
             Parameter jumpMeanParameter,
-            Parameter jumpSdParameter,
             Parameter locationPrecisionParameter
     ) {
 
@@ -47,10 +46,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
         this.jumpMeanParameter = jumpMeanParameter;
         addVariable(jumpMeanParameter);
         jumpMeanParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
-
-        this.jumpSdParameter = jumpSdParameter;
-        addVariable(jumpSdParameter);
-        jumpSdParameter.addBounds(new Parameter.DefaultBounds(Double.MAX_VALUE, 0.0, 1));
 
         this.locationPrecisionParameter = locationPrecisionParameter;
         addVariable(locationPrecisionParameter);
@@ -103,7 +98,7 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
         if (variable == locationsParameter || variable == datesParameter
             || variable == jumpVectorParameter || variable == jumpMeanParameter
-            || variable == jumpSdParameter || variable == locationPrecisionParameter) {
+            || variable == locationPrecisionParameter) {
             likelihoodKnown = false;
         }
     }
@@ -152,11 +147,8 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
         double logLikelihood = 0;
         for (int i=0; i < latestDate - earliestDate - 1; i++) {
             double x = jumpVectorParameter.getParameterValue(i);
-            double mean = jumpMeanParameter.getParameterValue(0);
-            double sd = jumpSdParameter.getParameterValue(0);
-            double shape = (mean*mean) / (sd*sd);
-            double scale = (sd*sd) / mean;
-            logLikelihood += GammaDistribution.logPdf(x, shape, scale);
+            double lambda = 1 / jumpMeanParameter.getParameterValue(0);
+            logLikelihood += ExponentialDistribution.logPdf(x, lambda);
         }
         return logLikelihood;
     }
@@ -213,7 +205,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
     private final MatrixParameter locationsParameter;
     private final Parameter jumpVectorParameter;
     private final Parameter jumpMeanParameter;
-    private final Parameter jumpSdParameter;
     private final Parameter locationPrecisionParameter;
 
     private int earliestDate;
@@ -232,7 +223,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
         public final static String DATES = "dates";
         public final static String JUMPVECTOR = "jumpVector";
         public final static String JUMPMEAN = "jumpMean";
-        public final static String JUMPSD = "jumpSd";
         public final static String LOCATIONPRECISION = "locationPrecision";
 
         public String getParserName() {
@@ -245,7 +235,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
             Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
             Parameter jumpVectorParameter = (Parameter) xo.getElementFirstChild(JUMPVECTOR);
             Parameter jumpMeanParameter = (Parameter) xo.getElementFirstChild(JUMPMEAN);
-            Parameter jumpSdParameter = (Parameter) xo.getElementFirstChild(JUMPSD);
             Parameter locationPrecisionParameter = (Parameter) xo.getElementFirstChild(LOCATIONPRECISION);
 
             AntigenicJumpPrior AGDP = new AntigenicJumpPrior(
@@ -253,7 +242,6 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
                 datesParameter,
                 jumpVectorParameter,
                 jumpMeanParameter,
-                jumpSdParameter,
                 locationPrecisionParameter);
 
 //            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
@@ -276,9 +264,8 @@ public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citab
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(LOCATIONS, MatrixParameter.class),
                 new ElementRule(DATES, Parameter.class),
-               new ElementRule(JUMPVECTOR, Parameter.class),
+                new ElementRule(JUMPVECTOR, Parameter.class),
                 new ElementRule(JUMPMEAN, Parameter.class),
-                new ElementRule(JUMPSD, Parameter.class),
                 new ElementRule(LOCATIONPRECISION, Parameter.class)
         };
 

@@ -191,8 +191,19 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
-			doExport();
-		}
+
+			if (data.treeModel == null) {
+
+				tabbedPane.setSelectedComponent(treePanel);
+				// TODO: maybe new ListenTreeFileButton class?
+				treePanel.doImport();
+				
+			} else {
+
+				doExport();
+
+			}// END: tree loaded check
+		}// END: actionPerformed
 	};
 	
 	public final void doExport() {
@@ -227,50 +238,53 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	private void generateFile(final File outFile) throws IOException, ImportException {
+	private void generateFile(final File outFile) throws IOException,
+			ImportException {
 
-		progressBar.setIndeterminate(true);
+			progressBar.setIndeterminate(true);
 
-		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+			SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
-			// Executed in background thread
-			public Void doInBackground() {
+				// Executed in background thread
+				public Void doInBackground() {
 
-				try {
+					try {
 
-					PrintWriter writer;
+						PrintWriter writer;
 
-					writer = new PrintWriter(new FileWriter(outFile));
+						writer = new PrintWriter(new FileWriter(outFile));
 
-					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-							data.treeModel, //
-							data.createBranchSubstitutionModel(), //
-							data.createSiteRateModel(), //
-							data.createBranchRateModel(), //
-							data.createFrequencyModel(), //
-							data.replicateCount //
-					);
+						BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+								data.treeModel, //
+								data.createBranchSubstitutionModel(), //
+								data.createSiteRateModel(), //
+								data.createBranchRateModel(), //
+								data.createFrequencyModel(), //
+								data.replicateCount //
+						);
 
-					writer.println(beagleSequenceSimulator.simulate().toString());
-					writer.close();
+						writer.println(beagleSequenceSimulator.simulate()
+								.toString());
+						writer.close();
 
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 
-				return null;
-			}// END: doInBackground()
+					return null;
+				}// END: doInBackground()
 
-			// Executed in event dispatch thread
-			public void done() {
+				// Executed in event dispatch thread
+				public void done() {
 
-				statusLabel.setText("Generated " + data.replicateCount + " replicates.");
-				progressBar.setIndeterminate(false);
+					statusLabel.setText("Generated " + data.replicateCount
+							+ " replicates.");
+					progressBar.setIndeterminate(false);
 
-			}// END: done
-		};
+				}// END: done
+			};
 
-		worker.execute();
+			worker.execute();
 
 	}// END: generateFile
 	    

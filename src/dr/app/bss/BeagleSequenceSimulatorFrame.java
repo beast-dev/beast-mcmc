@@ -22,6 +22,7 @@ import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
+import javax.swing.SwingWorker;
 import javax.swing.plaf.BorderUIResource;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
@@ -41,6 +42,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	
 	private BeagleSequenceSimulatorData data = null;
 	private JLabel statusLabel;
+	private JProgressBar progressBar;
 	private File workingDirectory = null;
 	
 	public BeagleSequenceSimulatorFrame(String title) {
@@ -77,7 +79,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		statusLabel = new JLabel("No taxa loaded");
 
 		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
-		JProgressBar progressBar = new JProgressBar();
+		 progressBar = new JProgressBar();
 		progressPanel.add(progressBar, BorderLayout.CENTER);
 
 		JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
@@ -95,6 +97,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
+		tabbedPane.setSelectedComponent(treePanel);
+		
 	}// END: initializeComponents
 
 	// ///////////////////
@@ -223,21 +227,50 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	private void generateFile(File outFile) throws IOException, ImportException {
+	private void generateFile(final File outFile) throws IOException, ImportException {
 
-		PrintWriter writer = new PrintWriter(new FileWriter(outFile));
+		progressBar.setIndeterminate(true);
 
-		BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-				data.treeModel, //
-				data.createBranchSubstitutionModel(), //
-				data.createSiteRateModel(), //
-				data.createBranchRateModel(), //
-				data.createFrequencyModel(), //
-				data.replicateCount //
-		);
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
-		writer.println(beagleSequenceSimulator.simulate().toString());
-		writer.close();
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					PrintWriter writer;
+
+					writer = new PrintWriter(new FileWriter(outFile));
+
+					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+							data.treeModel, //
+							data.createBranchSubstitutionModel(), //
+							data.createSiteRateModel(), //
+							data.createBranchRateModel(), //
+							data.createFrequencyModel(), //
+							data.replicateCount //
+					);
+
+					writer.println(beagleSequenceSimulator.simulate().toString());
+					writer.close();
+
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				return null;
+			}// END: doInBackground()
+
+			// Executed in event dispatch thread
+			public void done() {
+
+				statusLabel.setText("Generated " + data.replicateCount + " replicates.");
+				progressBar.setIndeterminate(false);
+
+			}// END: done
+		};
+
+		worker.execute();
 
 	}// END: generateFile
 	    

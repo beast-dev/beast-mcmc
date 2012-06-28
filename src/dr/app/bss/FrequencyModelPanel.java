@@ -1,11 +1,11 @@
 package dr.app.bss;
 
+import jam.framework.Exportable;
+import jam.panels.OptionsPanel;
+
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-
-import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -43,7 +43,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		scrollPane.setOpaque(false);
 		
-		add(scrollPane, "Center");
+		add(scrollPane, BorderLayout.CENTER);
 		
 		frequencyCombo = new JComboBox();
 		frequencyCombo.setOpaque(false);
@@ -68,6 +68,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 
 		optionPanel.removeAll();
 		optionPanel.addComponents(new JLabel("Frequency model:"), frequencyCombo);
+		
 		optionPanel.addSeparator();
 		optionPanel.addLabel("Set parameter values:");
 

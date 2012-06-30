@@ -1,3 +1,28 @@
+/*
+ * FullyConjugateMultivariateTraitLikelihood.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
@@ -6,6 +31,7 @@ import dr.evomodel.tree.TreeModel;
 import dr.inference.model.CompoundParameter;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.distributions.MultivariateNormalDistribution;
 import dr.math.distributions.WishartSufficientStatistics;
 import dr.math.interfaces.ConjugateWishartStatisticsProvider;
 import dr.math.matrixAlgebra.Matrix;
@@ -163,6 +189,38 @@ public class FullyConjugateMultivariateTraitLikelihood extends IntegratedMultiva
     @Override
     public boolean getComputeWishartSufficientStatistics() {
         return computeWishartStatistics;
+    }
+
+    protected void checkLogLikelihood(double loglikelihood, double logRemainders,
+                                      double[] conditionalRootMean, double conditionalRootPrecision,
+                                      double[][] traitPrecision) {
+
+//        System.err.println("root cmean    : " + new Vector(conditionalRootMean));
+//        System.err.println("root cprec    : " + conditionalRootPrecision);
+//        System.err.println("diffusion prec: " + new Matrix(traitPrecision));
+//
+//        System.err.println("prior mean    : " + new Vector(rootPriorMean));
+//        System.err.println("prior prec    : " + rootPriorSampleSize);
+
+        double upperPrecision = conditionalRootPrecision * rootPriorSampleSize / (conditionalRootPrecision + rootPriorSampleSize);
+//        System.err.println("root cprec    : " + upperPrecision);
+
+        double[][] newPrec = new double[traitPrecision.length][traitPrecision.length];
+
+        for (int i = 0; i < traitPrecision.length; ++i) {
+            for (int j = 0; j < traitPrecision.length; ++j) {
+                newPrec[i][j] = traitPrecision[i][j] * upperPrecision;
+            }
+        }
+        MultivariateNormalDistribution mvn = new MultivariateNormalDistribution(rootPriorMean, newPrec);
+        double logPdf = mvn.logPdf(conditionalRootMean);
+
+        System.err.println("Got here subclass: " + loglikelihood);
+        System.err.println("logValue         : " + (logRemainders + logPdf));
+        System.err.println("");
+//        System.err.println("logRemainders    : " + logRemainders);
+//        System.err.println("logPDF           : " + logPdf);
+//        System.exit(-1);
     }
 
     protected double integrateLogLikelihoodAtRoot(double[] conditionalRootMean,

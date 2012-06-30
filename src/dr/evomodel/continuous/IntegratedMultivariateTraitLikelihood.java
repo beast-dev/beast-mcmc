@@ -276,8 +276,19 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //            checkViaLargeMatrixInversion();
         }
 
+        if (DEBUG_PNAS) {
+            checkLogLikelihood(logLikelihood, sumLogRemainders(), conditionalRootMean,
+                    conditionalRootPrecision, traitPrecision);
+        }
+
         areStatesRedrawn = false;  // Should redraw internal node states when needed
         return logLikelihood;
+    }
+
+    protected void checkLogLikelihood(double loglikelihood, double logRemainders,
+                                      double[] conditionalRootMean, double conditionalRootPrecision,
+                                      double[][] traitPrecision) {
+        // Do nothing; for checking PNAS paper
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -709,6 +720,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
+    protected static boolean DEBUG_PNAS = false;
 
     private double[] zeroDimVector;
 

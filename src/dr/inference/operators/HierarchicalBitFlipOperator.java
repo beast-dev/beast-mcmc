@@ -35,28 +35,36 @@ import dr.inference.model.VectorSliceParameter;
 	     */
 	    public final double doOperation() {
 	        final int dim = hParameter.getDimension();
-	        double sum = 0.0;
+	        double logq = 0.0;
+	       
+	        //comeca novo
+	        int rep= MathUtils.nextInt(4);
+	        
+	        for (int repete=0; repete<rep+1;repete++ ){
+	    //    double sum = 0.0;
 
 	        if(usesPriorOnSum) {
 	            for (int i = 0; i < dim; i++) {
-	                sum += hParameter.getParameterValue(i);
+	      //          sum += hParameter.getParameterValue(i);
 	            }
 	        }
 
+	      
+	        
 	        final int pos = MathUtils.nextInt(dim);
 
 	        int value = (int) hParameter.getParameterValue(pos);
-	        double logq = 0.0;
+	        
 	        if (value == 0) {
 	            hParameter.setParameterValue(pos, 1.0);
 
-	            if(usesPriorOnSum)
-	                logq = -Math.log((dim - sum) / (sum + 1));
+	        //    if(usesPriorOnSum)
+	          //      logq = -Math.log((dim - sum) / (sum + 1));
 
 	        } else if (value == 1) {
 	            hParameter.setParameterValue(pos, 0.0);
-	            if(usesPriorOnSum)
-	                logq = -Math.log(sum / (dim - sum + 1));
+	         //   if(usesPriorOnSum)
+	           //     logq = -Math.log(sum / (dim - sum + 1));
 
 	        } else {
 	            throw new RuntimeException("expected 1 or 0");
@@ -78,9 +86,8 @@ import dr.inference.model.VectorSliceParameter;
 	 
 	        
 	        }
-	        
+	        }  
 	    
-	        // hastings ratio is designed to make move symmetric on sum of 1's
 	        return logq;
 	    }
 

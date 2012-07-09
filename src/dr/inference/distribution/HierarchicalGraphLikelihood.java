@@ -78,10 +78,11 @@ public class HierarchicalGraphLikelihood extends AbstractModelLikelihood {
         	for (int i = 0; i < hierarchicalIndicator.getDimension(); i++) {
             diff += (int) Math.abs(Math.round(hierarchicalIndicator.getParameterValue(i)-strataIndicatorMatrix.getParameterValue(i,j))); 
         
-        } logL += binomialLogLikelihood(hierarchicalIndicator.getDimension(), diff, logP, log1MinusP);
+        } logL += geometricLogLikelihood( diff, logP, log1MinusP);
+        
         
         /**   double logL += binomialLogLikelihood(hierarchicalIndicator.getDimension(), diff, logP, log1MinusP);
-         *geometricLogLikelihood( diff, logP, log1MinusP);
+         *binomialLogLikelihood(hierarchicalIndicator.getDimension(), diff, logP, log1MinusP);
         */
         }
        
@@ -137,7 +138,7 @@ public class HierarchicalGraphLikelihood extends AbstractModelLikelihood {
      *         when the log of the probability is logP.
      */
     private double geometricLogLikelihood( int count, double logP, double log1MinusP) {
-        return  (logP ) + (log1MinusP * count);
+        return  (log1MinusP ) + (logP * count);
     }
     
     

@@ -1,7 +1,7 @@
 /*
  * BeastMain.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -280,8 +280,10 @@ public class BeastMain {
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
+        int argumentCount = 0;
+
         try {
-            arguments.parseArguments(args);
+            argumentCount = arguments.parseArguments(args);
         } catch (Arguments.ArgumentException ae) {
             System.out.println();
             System.out.println(ae.getMessage());
@@ -301,7 +303,7 @@ public class BeastMain {
         final boolean parserWarning = arguments.hasOption("warnings"); // if dev, then auto turn on, otherwise default to turn off
         final boolean strictXML = arguments.hasOption("strict");
         final boolean window = arguments.hasOption("window");
-        final boolean options = arguments.hasOption("options");
+        final boolean options = arguments.hasOption("options") || (argumentCount == 0);
         final boolean working = arguments.hasOption("working");
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");

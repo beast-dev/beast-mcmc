@@ -61,6 +61,19 @@ public class BeagleSequenceSimulatorData {
 			{ 9, 10 }, // Yang Codon Model
 	};
 
+//	public double[][] substitutionParameterValues = new double[][] { { 1.0 }, // Kappa-value
+//			{ 1.0 }, // AC
+//			{ 1.0 }, // AG
+//			{ 1.0 }, // AT
+//			{ 1.0 }, // CG
+//			{ 1.0 }, // CT
+//			{ 1.0 }, // GT
+//			{ 1.0 }, // Kappa 1
+//			{ 1.0 }, // Kappa 2
+//			{ 0.1 }, // Omega value
+//			{ 1.0 } // Kappa value
+//	};
+	
 	public double[] substitutionParameterValues = new double[] { 1.0, // Kappa-value
 			1.0, // AC
 			1.0, // AG

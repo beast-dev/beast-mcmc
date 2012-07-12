@@ -24,6 +24,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.plaf.BorderUIResource;
+import javax.swing.text.BadLocationException;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.evolution.io.Importer.ImportException;
@@ -38,6 +39,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private ClockRateModelPanel clockPanel;
 	private FrequencyModelPanel frequencyPanel;
 	private SiteRateModelPanel sitePanel;
+	private EpochModelPanel epochModelPanel;
 	private SimulationPanel simulationPanels;
 	
 	private BeagleSequenceSimulatorData data = null;
@@ -57,48 +59,59 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	@Override
 	protected void initializeComponents() {
 
-		setSize(new Dimension(800, 600));
-		setMinimumSize(new Dimension(260, 100));
+		try {
 
-		taxaPanel = new TaxaPanel(this, data);
-		treePanel = new TreePanel(this, data);
-		substModelPanel = new BranchSubstitutionModelPanel(this, data);
-		clockPanel = new ClockRateModelPanel(this, data);
-		frequencyPanel = new FrequencyModelPanel(this, data);
-		sitePanel = new SiteRateModelPanel(this, data);
-		simulationPanels = new SimulationPanel(this, data);
-		
-		tabbedPane.addTab("Taxa", null, taxaPanel);
-		tabbedPane.addTab("Tree", null, treePanel);
-		tabbedPane.addTab("Branch Substitution Model", null, substModelPanel);
-		tabbedPane.addTab("Clock Rate Model", null, clockPanel);
-		tabbedPane.addTab("Frequency Model", null, frequencyPanel);
-		tabbedPane.addTab("Site Rate Model", null, sitePanel);
-		tabbedPane.addTab("Simulation", null, simulationPanels);
-		
-		statusLabel = new JLabel("No taxa loaded");
+			setSize(new Dimension(900, 600));
+			setMinimumSize(new Dimension(260, 100));
 
-		JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
-		 progressBar = new JProgressBar();
-		progressPanel.add(progressBar, BorderLayout.CENTER);
+			taxaPanel = new TaxaPanel(this, data);
+			treePanel = new TreePanel(this, data);
+			substModelPanel = new BranchSubstitutionModelPanel(this, data);
+			clockPanel = new ClockRateModelPanel(this, data);
+			frequencyPanel = new FrequencyModelPanel(this, data);
+			sitePanel = new SiteRateModelPanel(this, data);
+			epochModelPanel = new EpochModelPanel(this, data);
+			simulationPanels = new SimulationPanel(this, data);
 
-		JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
-		statusPanel.add(statusLabel, BorderLayout.CENTER);
-		statusPanel.add(progressPanel, BorderLayout.EAST);
-		statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
-				new Insets(0, 6, 0, 6)));
+			tabbedPane.addTab("Taxa", null, taxaPanel);
+			tabbedPane.addTab("Tree", null, treePanel);
+			tabbedPane.addTab("Branch Substitution Model", null,
+					substModelPanel);
+			tabbedPane.addTab("Clock Rate Model", null, clockPanel);
+			tabbedPane.addTab("Frequency Model", null, frequencyPanel);
+			tabbedPane.addTab("Site Rate Model", null, sitePanel);
+			tabbedPane.addTab("Epoch Model", null, epochModelPanel);
+			tabbedPane.addTab("Simulation", null, simulationPanels);
 
-		JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
-		tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
-		tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
-		tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
-				new Insets(12, 12, 12, 12)));
+			statusLabel = new JLabel("No taxa loaded");
 
-		getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
-		getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
+			JPanel progressPanel = new JPanel(new BorderLayout(0, 0));
+			progressBar = new JProgressBar();
+			progressPanel.add(progressBar, BorderLayout.CENTER);
 
-		tabbedPane.setSelectedComponent(treePanel);
-		
+			JPanel statusPanel = new JPanel(new BorderLayout(0, 0));
+			statusPanel.add(statusLabel, BorderLayout.CENTER);
+			statusPanel.add(progressPanel, BorderLayout.EAST);
+			statusPanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+					new Insets(0, 6, 0, 6)));
+
+			JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
+			tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
+			tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
+			tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+							new Insets(12, 12, 12, 12)));
+
+			getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
+			getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
+
+			tabbedPane.setSelectedComponent(treePanel);
+
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+		} catch (BadLocationException e) {
+			e.printStackTrace();
+		}
+
 	}// END: initializeComponents
 
 	// ///////////////////

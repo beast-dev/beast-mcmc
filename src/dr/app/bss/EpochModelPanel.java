@@ -15,6 +15,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.SwingConstants;
 
 import dr.app.gui.components.RealNumberField;
@@ -25,7 +26,8 @@ public class EpochModelPanel extends JPanel implements Exportable {
 	private BeagleSequenceSimulatorFrame frame;
 	private BeagleSequenceSimulatorData data;
 	private OptionsPanel optionPanel;
-
+	private JScrollPane scrollPane;
+	
 	private JComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[BeagleSequenceSimulatorData.substitutionParameterNames.length];
 	private int epochCount = 1;
@@ -41,8 +43,14 @@ public class EpochModelPanel extends JPanel implements Exportable {
 		setOpaque(false);
 		setLayout(new BorderLayout());
 
+		scrollPane = new JScrollPane();
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
-		add(optionPanel, BorderLayout.NORTH);
+		scrollPane = new JScrollPane(optionPanel,
+				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		scrollPane.setOpaque(false);
+		
+		add(scrollPane, BorderLayout.CENTER);
 		
 		substitutionCombo = new JComboBox();
 		substitutionCombo.setOpaque(false);
@@ -76,7 +84,6 @@ public class EpochModelPanel extends JPanel implements Exportable {
 		int substModelIndex = substitutionCombo.getSelectedIndex();
 
 		for (int j = 0; j < epochCount; j++) {
-
 			for (int i = 0; i < data.substitutionParameterIndices[substModelIndex].length; i++) {
 
 				int k = data.substitutionParameterIndices[substModelIndex][i];
@@ -87,8 +94,7 @@ public class EpochModelPanel extends JPanel implements Exportable {
 				optionPanel.addComponentWithLabel(BeagleSequenceSimulatorData.substitutionParameterNames[k] + ":", panel);
 
 			}// END: indices loop
-
-		}
+		}// END: epochCount loop
 		
         ActionPanel actionPanel = new ActionPanel(false);
         actionPanel.setAddAction(addEpochAction);

@@ -86,9 +86,6 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 					panel);
 
 		}// END: indices loop
-
-//		validate();
-//		repaint();
 	}// END: setFrequencyArguments
 
 	private class ListenFrequencyCombo implements ItemListener {

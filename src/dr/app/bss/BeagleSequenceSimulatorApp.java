@@ -12,8 +12,6 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 public class BeagleSequenceSimulatorApp {
 
-//	public static final String VERSION = "0.0.1";
-//	public static final String DATE_STRING = "2012";
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
 
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,

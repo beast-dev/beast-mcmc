@@ -315,7 +315,7 @@ public class PartitionSubstitutionModel extends PartitionOptions {
                 0.0, 0.0, 10.0, 0.0);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
                 0.0, 0.0, 10.0, 0.0);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.5);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.9);
         createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0);
 
         createScaleOperator("propLinear", demoTuning, substWeights);

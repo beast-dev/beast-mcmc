@@ -310,12 +310,12 @@ public class PartitionSubstitutionModel extends PartitionOptions {
 
         //=============== microsat ======================
         createParameterGammaPrior("propLinear", "Proportionality linear function",
-                PriorScaleType.NONE, 0.0, 1.0, 1.0, false);
+                PriorScaleType.NONE, 0.5, 1.0, 1.0, false);
         createParameterNormalPrior("biasConst", "Constant bias", PriorScaleType.NONE,
                 0.0, 0.0, 10.0, 0.0);
         createParameterNormalPrior("biasLinear", "Linear bias", PriorScaleType.NONE,
                 0.0, 0.0, 10.0, 0.0);
-        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  1.0);
+        createZeroOneParameterUniformPrior("geomDist", "The success probability of geometric distribution",  0.5);
         createZeroOneParameterUniformPrior("onePhaseProb", "A probability of geomDist being the last step of series", 1.0);
 
         createScaleOperator("propLinear", demoTuning, substWeights);

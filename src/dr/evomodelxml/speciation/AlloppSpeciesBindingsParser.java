@@ -1,17 +1,10 @@
 package dr.evomodelxml.speciation;
 
+import dr.evomodel.speciation.AlloppSpeciesBindings;
+import dr.evomodel.tree.TreeModel;
+import dr.xml.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import dr.evomodel.speciation.AlloppSpeciesBindings;
-import dr.evomodel.speciation.SpeciesBindings;
-import dr.evomodel.tree.TreeModel;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
 
 /**
  * Parser for list of possibly-allopolyploid species containing individuals

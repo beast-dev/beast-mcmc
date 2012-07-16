@@ -181,7 +181,7 @@ public class AlloppMulLabTree  {
 		@Override
 		public void setChild(int ch, AlloppNode newchild) {
 			child[ch] = (MulLabNode) newchild;
-			
+            newchild.setAnc(this);
 		}
 
 
@@ -293,7 +293,7 @@ public class AlloppMulLabTree  {
 		MulLabNode diroot = null;
 		if (ditrees.length > 0) {
 			SimpleNode root = (SimpleNode) ditrees[0].getRoot();
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 0); // grjtodo better to use simpletree2ditree ?
+			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, false, 0);
 			rootn = nextn - 1;
 			diroot = nodes[rootn];
 		}
@@ -302,18 +302,17 @@ public class AlloppMulLabTree  {
 		}
 		assert (diroot != null  ||  tetratrees.length == 1);
 		if (diroot != null)
-		  { diroot.fillinUnionsInSubtree(apsp); }   // added 2012-03-22 when doing DipHist grjtodo test 
-
+		  { diroot.fillinUnionsInSubtree(apsp.numberOfSpSeqs()); }   // added 2012-03-22 when doing DipHist
 
 		List<AlloppLegLink> leglinks = new ArrayList<AlloppLegLink>();
 		for (int i = 0; i < tetratrees.length; i++) {
 			// Tetratrees. Two copies each.
 			SimpleNode root = (SimpleNode)tetratrees[i].getRoot();
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 0);
+			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, true, 0);
 			int r0 = nextn - 1;
 			nodes[r0].hybridheight = tetratrees[i].getHybridHeight();
 			nodes[r0].tetraroot = true;
-			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, 1);
+			nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, true, 1);
 			int r1 = nextn - 1;
 			nodes[r1].hybridheight = tetratrees[i].getHybridHeight();
 			nodes[r1].tetraroot = true;
@@ -323,7 +322,7 @@ public class AlloppMulLabTree  {
 			rootn = nextn - 1;
 		}
 		AlloppNode.Abstract.convertLegLinks(nodes, nextn, leglinks);
-		nodes[rootn].fillinUnionsInSubtree(apsp);
+		nodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
 		makesimpletree();
 	}
 
@@ -353,13 +352,13 @@ public class AlloppMulLabTree  {
 	}
 
 	public boolean coalescenceIsCompatible(double height, FixedBitSet union) {
-		MulLabNode node = nodeOfUnion(union);
+		MulLabNode node = (MulLabNode) nodes[rootn].nodeOfUnionInSubtree(union);
 		return (node.height <= height);
 	}
 
 
 	public void recordCoalescence(double height, FixedBitSet union) {
-		MulLabNode node = nodeOfUnion(union);
+        MulLabNode node = (MulLabNode) nodes[rootn].nodeOfUnionInSubtree(union);
 		assert (node.height <= height);
 		while (node.parent != null  &&  node.parent.height <= height) {
 			node = node.parent;
@@ -456,6 +455,7 @@ public class AlloppMulLabTree  {
 	 * an index for a species, then combined with seq to make an index 
 	 * to be set in union.
 	 */
+    /*  ood
 	private void simpletree2mullabtree(SimpleNode snode, int seq) {
 		if (snode.isExternal()) {
 			nodes[nextn].child = new MulLabNode[0];
@@ -474,32 +474,7 @@ public class AlloppMulLabTree  {
 		}
 		nodes[nextn].height = snode.getHeight();
 		nextn++;
-	}
-
-
-
-
-	private MulLabNode nodeOfUnion(FixedBitSet x) {
-		return nodeOfUnionInSubtree(nodes[rootn], x);
-	}
-
-	
-	/* Searches subtree rooted at node for most tipward node 
-	 * whose union contains x. If x is known to be a union of one of the nodes,
-	 * it finds that node, so acts as a map union -> node
-	 */
-	private MulLabNode nodeOfUnionInSubtree(MulLabNode node, FixedBitSet x) {
-		if (node.child.length == 0) {
-			return node;
-		}
-		if (x.setInclusion(node.child[0].union)) {
-			return nodeOfUnionInSubtree(node.child[0], x);
-		} else if (x.setInclusion(node.child[1].union)) {
-			return nodeOfUnionInSubtree(node.child[1], x);
-		} else {
-			return node;
-		}
-	}
+	} */
 
 
 
@@ -593,7 +568,7 @@ public class AlloppMulLabTree  {
 
 		// get set of nodes with same species clade
 		for (int i = n0; i < n1; i++) {
-			nodeset[i-n0] = nodeOfUnion(unionarray[i].spsqunion);
+			nodeset[i-n0] = (MulLabNode) nodes[rootn].nodeOfUnionInSubtree(unionarray[i].spsqunion);
 		}
 		// set all pop values to dud values
 		for (int i = 0; i < n; i++) {
@@ -725,7 +700,8 @@ public class AlloppMulLabTree  {
 
 		// get set of nodes with same species clade
 		for (int i = n0; i < n1; i++) {
-			nodeset[i-n0] = nodeOfUnion(unionarray[i].spsqunion);
+			nodeset[i-n0] = (MulLabNode) nodes[rootn].nodeOfUnionInSubtree(unionarray[i].spsqunion);
+
 		}
 		// set all pop values to dud values
 		for (int i = 0; i < n; i++) {

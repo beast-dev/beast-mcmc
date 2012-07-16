@@ -109,6 +109,7 @@ public class AlloppMSCoalescent extends Likelihood.Abstract implements Units {
 
 	public void setUnits(Type units) {
 		// TODO Auto-generated method stub
+        // one day may allow units other than substitutions
 
 	}
 

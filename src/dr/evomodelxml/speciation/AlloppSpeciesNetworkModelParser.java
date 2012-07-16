@@ -1,20 +1,12 @@
 package dr.evomodelxml.speciation;
 
 
-import dr.util.Attributable;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
-import dr.evolution.tree.Tree;
-import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
-import dr.evomodel.speciation.SpeciesBindings;
-import dr.evomodel.speciation.SpeciesTreeModel;
+import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
+import dr.util.Attributable;
+import dr.xml.*;
 
 
 /**

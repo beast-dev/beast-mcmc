@@ -5,10 +5,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.util.Taxon;
-import dr.math.MathUtils;
 
 import jebl.util.FixedBitSet;
 
@@ -39,18 +37,18 @@ public interface AlloppNode {
 	void addChildren(AlloppNode c0, AlloppNode c1);
 
 	
-	void fillinUnionsInSubtree(AlloppSpeciesBindings apsp);
+	void fillinUnionsInSubtree(int unionsize);
 	AlloppNode nodeOfUnionInSubtree(FixedBitSet x);
 	
 	
 	public abstract class Abstract implements AlloppNode {
 		 
 
-		public void fillinUnionsInSubtree(AlloppSpeciesBindings apsp) {
+		public void fillinUnionsInSubtree(int unionsize) {
 			if (nofChildren() > 0) {
-				getChild(0).fillinUnionsInSubtree(apsp);
-				getChild(1).fillinUnionsInSubtree(apsp);
-				FixedBitSet union = apsp.speciesseqEmptyUnion();
+				getChild(0).fillinUnionsInSubtree(unionsize);
+				getChild(1).fillinUnionsInSubtree(unionsize);
+				FixedBitSet union = new FixedBitSet(unionsize);
 				union.union(getChild(0).getUnion());
 				union.union(getChild(1).getUnion());
 				setUnion(union);
@@ -179,16 +177,24 @@ public interface AlloppNode {
 		 * Recursively copies the topology from subtree rooted at node into
 		 * tree implemented as array nodes[]. Fills in the unions at the tips: 
 		 * using apsp which converts species name and sequence index into union.
+		 *
+		 * In AlloppDiploidHistory, it is called with addseqsuffix=false so don't get
+		 * "a" -> "a0" in diploid part, and with addseqsuffix==true for temporary
+		 * tettrees for hyb tips.
+		 *
+		 * In AlloppMulLabTree, use addseqsuffix==true for tetraploid tips,
+		  * addseqsuffix=false for diploid tips.
 		 */
 		static int simpletree2allopptree(AlloppSpeciesBindings apsp, AlloppNode[] nodes, int nextn, 
-				SimpleNode snode, int seq) {
+				SimpleNode snode, boolean addseqsuffix, int seq) {
 			if (snode.isExternal()) {
-				nodes[nextn].setTaxon(snode.getTaxon().getId() + seq);
+                String suffix = addseqsuffix ? ""+seq : "";
+				nodes[nextn].setTaxon(snode.getTaxon().getId() + suffix);
 				nodes[nextn].setUnion(apsp.speciesseqToTipUnion(snode.getTaxon(), seq));
 			} else {
-				nextn = simpletree2allopptree(apsp, nodes, nextn, snode.getChild(0), seq);
+				nextn = simpletree2allopptree(apsp, nodes, nextn, snode.getChild(0), addseqsuffix, seq);
 				int c0 = nextn - 1;
-				nextn = simpletree2allopptree(apsp, nodes, nextn, snode.getChild(1), seq);
+				nextn = simpletree2allopptree(apsp, nodes, nextn, snode.getChild(1), addseqsuffix, seq);
 				int c1 = nextn - 1;
 				nodes[nextn].addChildren(nodes[c0], nodes[c1]);
 			}
@@ -196,27 +202,30 @@ public interface AlloppNode {
 			nextn++;
 			return nextn;
 		}
-		
-		
-		/* For constructor of AlloppDiploidHistory. Like simpletree2allopptree but
-		 * assumes diploids, so seq==0. Does NOT add seq to taxon names.
-		 */
-		static int simpletree2ditree(AlloppSpeciesBindings apsp, AlloppNode[] nodes, int nextn, 
-				SimpleNode snode) {
-			if (snode.isExternal()) {
-				nodes[nextn].setTaxon(snode.getTaxon().getId());
-				nodes[nextn].setUnion(apsp.speciesseqToTipUnion(snode.getTaxon(), 0));
-			} else {
-				nextn = simpletree2ditree(apsp, nodes, nextn, snode.getChild(0));
-				int c0 = nextn - 1;
-				nextn = simpletree2ditree(apsp, nodes, nextn, snode.getChild(1));
-				int c1 = nextn - 1;
-				nodes[nextn].addChildren(nodes[c0], nodes[c1]);
-			}
-			nodes[nextn].setHeight(snode.getHeight());
-			nextn++;
-			return nextn;
-		}
+
+        /* For PopsIOSpeciesTreeModel, to restore state after MCMC move
+           * Recursively copies the topology from subtree rooted at node into
+           * tree implemented as array nodes[]. Fills in the unions at the tips:
+           * using piosb which converts species name into union.
+           */
+        static int simpletree2piotree(PopsIOSpeciesBindings piosb, AlloppNode[] nodes, int nextn,
+                                         SimpleNode snode) {
+            if (snode.isExternal()) {
+                Taxon tx = snode.getTaxon();
+                nodes[nextn].setTaxon(tx.getId());
+                nodes[nextn].setUnion(piosb.tipUnionFromTaxon(tx));
+            } else {
+                nextn = simpletree2piotree(piosb, nodes, nextn, snode.getChild(0));
+                int c0 = nextn - 1;
+                nextn = simpletree2piotree(piosb, nodes, nextn, snode.getChild(1));
+                int c1 = nextn - 1;
+                nodes[nextn].addChildren(nodes[c0], nodes[c1]);
+            }
+            nodes[nextn].setAnc(null);
+            nodes[nextn].setHeight(snode.getHeight());
+            nextn++;
+            return nextn;
+        }
 		
 	}
 

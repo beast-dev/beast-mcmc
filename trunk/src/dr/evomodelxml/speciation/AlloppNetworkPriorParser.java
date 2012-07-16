@@ -1,22 +1,9 @@
 package dr.evomodelxml.speciation;
 
-import dr.evolution.util.Units;
 import dr.evomodel.speciation.AlloppNetworkPrior;
 import dr.evomodel.speciation.AlloppNetworkPriorModel;
-import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
-import dr.evomodel.speciation.BirthDeathGernhard08Model;
-import dr.evomodel.speciation.MultiSpeciesCoalescent;
-import dr.evomodel.speciation.SpeciesBindings;
-import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evoxml.util.XMLUnits;
-import dr.inference.model.Parameter;
-import dr.xml.AbstractXMLObjectParser;
-import dr.xml.AttributeRule;
-import dr.xml.ElementRule;
-import dr.xml.XMLObject;
-import dr.xml.XMLParseException;
-import dr.xml.XMLSyntaxRule;
+import dr.xml.*;
 
 
 /**
@@ -29,7 +16,6 @@ import dr.xml.XMLSyntaxRule;
 public class AlloppNetworkPriorParser extends AbstractXMLObjectParser {
 
 	public static final String APSPNETWORKPRIOR = "apspNetworkPrior";
-	public static final String UNITS = "units";
 	public static final String MODEL = "model";
 	public static final String APSPNETWORK = "apspNetwork";
 

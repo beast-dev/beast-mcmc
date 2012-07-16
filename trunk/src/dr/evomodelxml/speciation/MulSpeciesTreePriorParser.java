@@ -12,7 +12,6 @@ import dr.xml.XMLSyntaxRule;
 
 public class MulSpeciesTreePriorParser extends AbstractXMLObjectParser {
 	public static final String MUL_SPECIES_TREE_PRIOR = "mulSpeciesTreePrior";
-	public static final String UNITS = "units";
 	public static final String MODEL = "model";
 	public static final String MUL_SPECIES_TREE = "mulTree";
 
@@ -32,18 +31,16 @@ public class MulSpeciesTreePriorParser extends AbstractXMLObjectParser {
 	}
 
 	private  XMLSyntaxRule[] modelRules() {
-		return new XMLSyntaxRule[]{
-				new ElementRule(SpeciationModel.class)
-		};
+        return new XMLSyntaxRule[]{
+                new ElementRule(SpeciationModel.class)
+        };
+    }
 
-	}
-
-	private  XMLSyntaxRule[] mulsptRules() {
-		return new XMLSyntaxRule[]{
-				new ElementRule(MulSpeciesTreeModel.class)
-		};
-
-	}
+    private  XMLSyntaxRule[] mulsptRules() {
+        return new XMLSyntaxRule[]{
+                new ElementRule(MulSpeciesTreeModel.class)
+        };
+    }
 	
 	@Override
 	public XMLSyntaxRule[] getSyntaxRules() {

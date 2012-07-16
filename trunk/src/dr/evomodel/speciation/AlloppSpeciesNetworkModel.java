@@ -83,9 +83,9 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 	public enum LegType {
 		NONE, TWOBRANCH, ONEBRANCH, JOINED, NODIPLOIDS
-	};
+	}
 
-	public final static int DITREES = 0;
+    public final static int DITREES = 0;
 	public final static int TETRATREES = 1;
 	public final static int NUMBEROFPLOIDYLEVELS = 2;
 	
@@ -175,8 +175,12 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 		List<Citation> citations = new ArrayList<Citation>();
 		citations.add(new Citation(
 				new Author[]{
-						new Author("GR", "Jones")
-				},
+                        new Author("Graham", "Jones"),
+                        new Author("Serik", "Sagitov"),
+                        new Author("Bengt", "Oxelman")
+                },
+                "Statistical Inference of Allopolyploid Networks in the Presence of Incomplete Lineage Sorting",
+                "Systematic Biology",
 				Citation.Status.IN_PREPARATION
 		));
 		return citations;
@@ -283,22 +287,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	public double geneTreeInNetworkLogLikelihood() {
 		boolean noDiploids = trees[DITREES].length == 0;
 		return mullabtree.geneTreeInMULTreeLogLikelihood(noDiploids);
-	}	
-
-	
-	public int getTipCount() {
-		int n = 0;
-		for (int i = 0; i < trees[DITREES].length; i++) {
-			n += trees[DITREES][i].getExternalNodeCount();
-		}
-		for (int i = 0; i < trees[TETRATREES].length; i++) {
-			n += trees[TETRATREES][i].getExternalNodeCount();
-		}
-		return n;
 	}
-		
 
-	public int getNumberOfDiTrees() {
+
+    public int getNumberOfDiTrees() {
 		return trees[DITREES].length;
 	}
 	
@@ -323,21 +315,9 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	 AlloppSpeciesBindings getSpeciesBindings() {
 		 return apsp;
 	 }
-	
-	
-	public double getMaxFootHeight() {
-		// grjtodo tetraonly
-		double maxfh = 0.0;
-		for (AlloppLeggedTree ttree : trees[TETRATREES]) {
-			for (int i = 0;  i < ttree.getNumberOfLegs();  ++i) {
-				maxfh = Math.max(maxfh, ttree.getFootHeight(i));
-			}
-		}
-		return maxfh;
-	}
-	
-	
-	public String mullabTreeAsText() {
+
+
+    public String mullabTreeAsText() {
 		return mullabtree.asText();
 	}
 
@@ -669,7 +649,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	}	
 	
 	
-	
+	// for making initial network
 	private FixedBitSet diploidtipbitset(int i) {
 		FixedBitSet dip = new FixedBitSet(apsp.numberOfSpSeqs());
 		// note that ditree has been  constructed randomly, so getExternalNode(i) 
@@ -755,7 +735,6 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
 	public int getTaxonIndex(Taxon taxon) {
-		// grjtodo. i presume references are unique
 		return mullabtree.simptree.getTaxonIndex(taxon);
 	}
 

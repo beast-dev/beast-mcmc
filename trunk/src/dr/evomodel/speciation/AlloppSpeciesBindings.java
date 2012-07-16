@@ -82,7 +82,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     private final GeneTreeInfo[] geneTreeInfos;
     
     private final ApSpInfo[] apspecies;
-    private final Individual[] indivs;
     private final Taxon[] taxa;
     private final Map<Taxon, Integer> taxon2index = new HashMap<Taxon, Integer>();
 	private final int spsq[][];
@@ -133,7 +132,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
      */
 	public static class ApSpInfo extends Taxon {
 
-		final public String name; // grjtodo needed?
+		final public String name;
 		final public int ploidylevel; // 2 means diploid, 4 means allotetraploid, etc
 		final Individual[] individuals;
 
@@ -184,7 +183,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	private SequenceAssignment seqassigns[];
     	private SequenceAssignment oldseqassigns[];
         private final int[] lineagesCount;
-        private final double popFactor; // grjtodo mul pops by this.
+        private final double popFactor; // grjtodo one day will mul pops by this, eg for chloroplast data.
         
         
     	/* class GeneTreeInfo.SequenceAssignments
@@ -457,7 +456,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		public boolean fitsInNetwork(final AlloppSpeciesNetworkModel asnm) {
 			GeneUnionTree gutree = new GeneUnionTree();
 			boolean fits = gutree.subtreeFitsInNetwork(gutree.getRoot(), asnm);
-			if (AlloppSpeciesNetworkModel.DBUGTUNE == true) {
+			if (AlloppSpeciesNetworkModel.DBUGTUNE) {
 				if (!fits) {
 					System.err.println("INCOMPATIBLE");
 					System.err.println(seqassignsAsText());
@@ -477,7 +476,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			asnm.sortCoalescences();
 			asnm.recordLineageCounts();
 	     	double llhood = asnm.geneTreeInNetworkLogLikelihood();
-	     	if (AlloppSpeciesNetworkModel.DBUGTUNE == true) {
+	     	if (AlloppSpeciesNetworkModel.DBUGTUNE) {
 	     		System.err.println("COMPATIBLE: log-likelihood = " + llhood);
 	     		System.err.println(seqassignsAsText());
 	     		System.err.println(gutree.asText());
@@ -511,13 +510,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			GeneUnionTree gutree = new GeneUnionTree();
 			return subtreeSpseqUpperBound(gutree.getRoot(), spsq0, spsq1, Double.MAX_VALUE);
 		}
-		
-		
-		// grjtodo morethanonetree
-		public double diploidSplitUpperBound() {
-			GeneUnionTree gutree = new GeneUnionTree();
-			return subtreeDiploidSplitUpperBound(gutree.getRoot(), Double.MAX_VALUE);
-		}
+
 		
 
 		public void permuteOneSpeciesOneIndiv() {
@@ -649,6 +642,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		// A node which has one child which contains one sequence index
 		// and where the other contains the other sequence index, imposes a limit 
 		// the initial diploid split can occur, in one tetra tree case.
+        /*
 		private double subtreeDiploidSplitUpperBound(GeneUnionNode node, double bound) {
 			if (node.child.length == 0) {
 				return bound;
@@ -674,7 +668,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 				bound = Math.min(bound, node.height);
 			}
 			return bound;
-		}        
+		} */
         
         
 
@@ -714,7 +708,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         for (int s = 0; s < apspecies.length; s++) {
         	n += apspecies[s].individuals.length;
         }
-        indivs = new Individual[n];
+        Individual [] indivs = new Individual[n];
         n = 0;
         for (int s = 0; s < apspecies.length; s++) {
         	for (int i = 0; i < apspecies[s].individuals.length; i++, n++) {
@@ -785,7 +779,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	 * Constructor for testing likelihood calculation for gene tree in network.
 	 * permuteSequenceAssignments==false
 	 */
-	public AlloppSpeciesBindings(ApSpInfo[] apsp, TreeModel[] gtreemodels,
+	public AlloppSpeciesBindings(ApSpInfo[] apsp,
 			AlloppSpeciesNetworkModelTEST.LogLhoodGTreeInNetworkTEST llgtnTEST) {
 		this(apsp, llgtnTEST.gtreemodels, 0.0, llgtnTEST.popfactors, false);
 	}
@@ -937,8 +931,8 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	public int numberOfSpSeqs() {
 		return numberOfSpSeqs;
 	}
-	
-	
+
+
     int nLineages(int speciesIndex) {
     	int n = geneTreeInfos[0].lineagesCount[speciesIndex];
     	for (GeneTreeInfo gti : geneTreeInfos) {
@@ -946,21 +940,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	}
         return n;
     }
-	
-    
-    Taxon taxonFromSpIndSeq(int sp, int i, int sq) {
-    	return apspecies[sp].individuals[i].taxa[sq];
-    	}
-    
-    
-    /* 2012-03-28 replacing with spseqUpperBound() 
-	public double speciationUpperBound(FixedBitSet left, FixedBitSet right) {
-        double bound = Double.MAX_VALUE;
-        for (GeneTreeInfo g : geneTreeInfos) {
-        	bound = Math.min(bound, g.speciationUpperBound(left, right));
-        }
-        return bound;
-	}*/
+
 	
 	
 	public double spseqUpperBound(FixedBitSet left, FixedBitSet right) {
@@ -970,15 +950,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         }
         return bound;
 	}
-	
-	
-	public double diploidSplitUpperBound() {
-        double bound = Double.MAX_VALUE;
-        for (GeneTreeInfo g : geneTreeInfos) {
-        	bound = Math.min(bound, g.diploidSplitUpperBound());
-        }
-        return bound;
-	}
+
 	
 	
 	public void permuteOneSpeciesOneIndivForOneGene() {
@@ -1019,7 +991,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	@Override
 	protected void handleVariableChangedEvent(Variable variable, int index,
 			ChangeType type) {
-		assert false; //grjtodo copies SpeciesBindings. OK?
+		assert false; // copies SpeciesBindings; not understood
 		if (AlloppSpeciesNetworkModel.DBUGTUNE)
 			System.err.println("AlloppSpeciesBindings.handleVariableChangedEvent() " + variable.getId());
 	}

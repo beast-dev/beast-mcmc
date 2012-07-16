@@ -128,7 +128,6 @@ public class TreePanel extends JPanel implements Exportable {
 		
 	}//END: importFromFile
 	
-	@Override
 	public JComponent getExportableComponent() {
 		return this;
 	}// END: getExportableComponent

@@ -18,9 +18,8 @@ public class AlloppTreeLeg {
 	 *  grjtodo tetraonly. With hexaploids, etc, may need to identify Y?
 	 *  Or clade is enough?
 	 *  
-	 *  height is the time during the branch of the foot. 
-	 *  
-	 *  grjtodo? footID identifies the foot - heights might be identical 
+	 *  height is the time of the foot (which is during a branch in Y).
+	 *
 	 */
 	public FixedBitSet footUnion;
 	public double height;

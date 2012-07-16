@@ -1,23 +1,16 @@
 package dr.evomodel.operators;
 
-import jebl.util.FixedBitSet;
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.MutableTreeUtils;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SlidableTree;
-import dr.evolution.tree.Tree;
 import dr.evomodel.speciation.AlloppDiploidHistory;
 import dr.evomodel.speciation.AlloppLeggedTree;
-import dr.evomodel.speciation.AlloppNode;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
-import dr.evomodel.speciation.SpeciesTreeModel;
-import dr.evolution.tree.SimpleTree;
 import dr.evomodelxml.operators.AlloppNetworkNodeSlideParser;
-import dr.inference.model.Parameter;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
+import jebl.util.FixedBitSet;
 
 
 /**
@@ -28,7 +21,7 @@ import dr.math.MathUtils;
 
 
 /*
- * An operator for with allopolyploid networks. Uses mauCanonical() and mauReconstruct()
+ * An operator for with allopolyploid networks. Uses mnlCanonical() and mnlReconstruct()
  * in SlidableTree.Utils to do some of the work. These are called to change one node in
  * diploid history or one node in a tetratree. There is also a move to change hyb height.
  * 
@@ -137,7 +130,6 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 	
 	// grjtodo morethanonetree
 	private void operateHybridHeightInLeggedTree(AlloppLeggedTree tree) {
-		double h = tree.getHybridHeight();	
 		double r = 	tree.getRootHeight();
 		double maxh = Double.MAX_VALUE;
 		for (int i=0; i< tree.getNumberOfLegs(); i++) {
@@ -151,8 +143,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 			maxh = Math.min(maxh, s);
 		}
 		assert maxh < Double.MAX_VALUE;
-		double newh = h;
-		newh = r + (maxh-r) * MathUtils.nextDouble();
+		double newh = r + (maxh-r) * MathUtils.nextDouble();
 		apspnet.beginNetworkEdit();
 		tree.setHybridHeight(newh);	
 		apspnet.endNetworkEdit();
@@ -165,7 +156,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		// As TreeNodeSlide(). Randomly flip children at each node,
 		// keeping track of node order (in-order order, left to right).
 
-		NodeRef[] order = SlidableTree.Utils.mauCanonical(tree);
+		NodeRef[] order = SlidableTree.Utils.mnlCanonical(tree);
 		
 		// Find the time of the most recent gene coalescence which
 		// has (species,sequence)'s to left and right of this node. 
@@ -199,8 +190,8 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 	    
 	    apspnet.beginNetworkEdit();
 		final NodeRef node = order[2 * which + 1];
-		tree.setNodeHeight(node, newHeight);
-		SlidableTree.Utils.mauReconstruct(tree, order);
+		tree.setSlidableNodeHeight(node, newHeight);
+		SlidableTree.Utils.mnlReconstruct(tree, order);
 		apspnet.endNetworkEdit();
 	}
 	
@@ -211,7 +202,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		int slidingn =  2 * which + 1;
 		AlloppDiploidHistory diphist = new AlloppDiploidHistory(apspnet);
 
-		NodeRef[] order = SlidableTree.Utils.mauCanonical(diphist);
+		NodeRef[] order = SlidableTree.Utils.mnlCanonical(diphist);
 		
 		// Find the time of the most recent gene coalescence which
 		// has (species,sequence)'s to left and right of this node. 
@@ -230,10 +221,10 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		// find limit due to hyb-tips - adjacent heights must be bigger 
 		double hybtiplimit = 0.0;
 		if (slidingn-1 >= 0) {
-			hybtiplimit = Math.max(hybtiplimit, diphist.getNodeHeight(order[slidingn-1]));
+			hybtiplimit = Math.max(hybtiplimit, diphist.getSlidableNodeHeight(order[slidingn-1]));
 		}
 		if (slidingn+1 < order.length) {
-			hybtiplimit = Math.max(hybtiplimit, diphist.getNodeHeight(order[slidingn+1]));
+			hybtiplimit = Math.max(hybtiplimit, diphist.getSlidableNodeHeight(order[slidingn+1]));
 		}	
 		
 		// find limit to keep root a diploid
@@ -246,7 +237,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		int rootn = -1;
 		double maxhgt = 0.0;
 		for (int k = 1;  k < order.length;  k += 2) {
-			double hgt = diphist.getNodeHeight(order[k]);
+			double hgt = diphist.getSlidableNodeHeight(order[k]);
 			if (hgt > maxhgt) {
 				maxhgt = hgt;
 				rootn = k;
@@ -256,7 +247,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 		double secondhgt = 0.0;
 		for (int k = 1;  k < order.length;  k += 2) {
 			if (k != rootn) {
-				double hgt = diphist.getNodeHeight(order[k]);
+				double hgt = diphist.getSlidableNodeHeight(order[k]);
 				if (hgt > secondhgt) {
 					secondhgt = hgt;
 					secondn = k;
@@ -274,10 +265,10 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 			}
 		}		
 		if (slidingn == rootn  &&  (secondn < leftmostdip  ||  secondn > rightmostdip)) {
-			drootlowerlimit = diphist.getNodeHeight(order[secondn]);
+			drootlowerlimit = diphist.getSlidableNodeHeight(order[secondn]);
 		}
 		if (slidingn < leftmostdip  ||  slidingn > rightmostdip) {
-			drootupperlimit = diphist.getNodeHeight(order[rootn]);
+			drootupperlimit = diphist.getSlidableNodeHeight(order[rootn]);
 		}
 
 	    final double upperlimit = Math.min(genelimit, drootupperlimit);
@@ -286,15 +277,15 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 	    // On direct call, factor==0.0 and use limit. Else use passed in scaling factor
 	    double newHeight = -1.0;
         if( factor > 0 ) {
-            newHeight = diphist.getNodeHeight(order[slidingn]) * factor;
+            newHeight = diphist.getSlidableNodeHeight(order[slidingn]) * factor;
           } else {
             newHeight = MathUtils.uniform(lowerlimit, upperlimit);
           }
 	    
         assert diphist.diphistOK();
 		final NodeRef node = order[slidingn];
-		diphist.setNodeHeight(node, newHeight);
-		SlidableTree.Utils.mauReconstruct(diphist, order);
+		diphist.setSlidableNodeHeight(node, newHeight);
+		SlidableTree.Utils.mnlReconstruct(diphist, order);
 		if (!diphist.diphistOK()) {
 			System.out.println("BUG in operateOneNodeInDiploidHistory()");
 		}

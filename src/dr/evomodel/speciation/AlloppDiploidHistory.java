@@ -1,19 +1,13 @@
 package dr.evomodel.speciation;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Iterator;
 import java.util.List;
 
-import dr.evolution.tree.MutableTree;
-import dr.evolution.tree.MutableTreeListener;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.SlidableTree;
 import dr.evolution.tree.Tree;
-import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
 import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
@@ -64,8 +58,6 @@ public class AlloppDiploidHistory implements SlidableTree {
 	private int rootn;
 	private int nextn;
 	private AlloppSpeciesBindings apsp;
-	//private SimpleTree TESTtree;
-
 	
 	// for replacing diploid history. Collects
 	public class HybHistory {
@@ -276,17 +268,19 @@ public class AlloppDiploidHistory implements SlidableTree {
 		// Copy homoploid trees into array
 		nextn = 0;
 		// Ditree if it exists
+        // grjtodo I don't think diroot==null case is sustainable.
 		DipHistNode diroot = null;
-		if (ditrees.length > 0) {
-			SimpleNode root = (SimpleNode) ditrees[0].getRoot();
-			nextn = AlloppNode.Abstract.simpletree2ditree(apsp, nodes, nextn, root);
-			rootn = nextn - 1;
-			diroot = nodes[rootn];
-		}
+        if (ditrees.length > 0) {
+            SimpleNode root = (SimpleNode) ditrees[0].getRoot();
+            nextn = AlloppNode.Abstract.simpletree2allopptree(apsp, nodes, nextn, root, false, 0);
+            rootn = nextn - 1;
+            diroot = nodes[rootn];
+        }
 		if (diroot != null &&  diroot.height <= 0.0) {
 			System.err.println("AlloppDiploidHistory constructor: bug");
 		}
-		diroot.fillinUnionsInSubtree(apsp);
+        assert diroot != null;
+        diroot.fillinUnionsInSubtree(apsp.numberOfSpSeqs());
 
 		assert (diroot != null  ||  tetratrees.length == 1);
 
@@ -304,7 +298,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 		}
 		AlloppNode.Abstract.convertLegLinks(nodes, nextn, leglinks);
 		assert diphistOK();
-		nodes[rootn].fillinUnionsInSubtree(apsp);
+		nodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
 		makesimpletree();
 	}
 	
@@ -449,7 +443,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 				nodes[i].setUnion(apsp.speciesseqEmptyUnion());
 			}
 		}
-		nodes[rootn].fillinUnionsInSubtree(apsp);
+		nodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
 		
 		// get the HybHistory and mark nodes for deletion
 		// joined legs are a complication
@@ -529,9 +523,9 @@ public class AlloppDiploidHistory implements SlidableTree {
 		tetnextn = 0;
 		hybheight = tetratrees[tt].getHybridHeight();
 		SimpleNode root = (SimpleNode)tetratrees[tt].getRoot();
-		tetnextn = AlloppNode.Abstract.simpletree2allopptree(apsp, tetnodes, tetnextn, root, leg);
+		tetnextn = AlloppNode.Abstract.simpletree2allopptree(apsp, tetnodes, tetnextn, root, true, leg);
 		tetrootn = tetnextn - 1;
-		tetnodes[tetrootn].fillinUnionsInSubtree(apsp);
+		tetnodes[tetrootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
 		
 		nodes[nextn].setUnion(tetnodes[tetrootn].getUnion());
 		nodes[nextn].setHeight(hybheight);
@@ -656,7 +650,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 	@Override
-	public NodeRef getRoot() {
+	public NodeRef getSlidableRoot() {
 		assert nodes[rootn].parent == null;
 		return nodes[rootn];
 	}
@@ -664,7 +658,7 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 	@Override
-	public void setRoot(NodeRef root) {
+	public void replaceSlidableRoot(NodeRef root) {
 		rootn = root.getNumber();
 		nodes[rootn].parent = null;
 	}
@@ -672,21 +666,24 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 	@Override
-	public int getNodeCount() {
+	public int getSlidableNodeCount() {
 		return nodes.length;
 	}
 
 
 
 	@Override
-	public double getNodeHeight(NodeRef node) {
+	public double getSlidableNodeHeight(NodeRef node) {
 		return nodes[node.getNumber()].getHeight();
 	}
 
-
+    @Override
+    public Taxon getSlidableNodeTaxon(NodeRef node) {
+        return nodes[node.getNumber()].getTaxon();
+    }
 
 	@Override
-	public void setNodeHeight(NodeRef node, double height) {
+	public void setSlidableNodeHeight(NodeRef node, double height) {
 		nodes[node.getNumber()].height = height;
 		
 	}
@@ -694,21 +691,21 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 	@Override
-	public boolean isExternal(NodeRef node) {
+	public boolean isExternalSlidable(NodeRef node) {
 		return (nodes[node.getNumber()].child.length == 0);
 	}
 
 
 
 	@Override
-	public NodeRef getChild(NodeRef node, int j) {
+	public NodeRef getSlidableChild(NodeRef node, int j) {
 		return nodes[node.getNumber()].child[j];
 	}
 
 
 
 	@Override
-	public void replaceChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
+	public void replaceSlidableChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
 		int nn = node.getNumber();
 		int lftn = lft.getNumber();
 		int rgtn = rgt.getNumber();
@@ -721,10 +718,6 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 
-	@Override
-	public Taxon getNodeTaxon(NodeRef node) {
-		return nodes[node.getNumber()].taxon;
-	}
 
 
 

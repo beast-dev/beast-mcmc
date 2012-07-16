@@ -14,7 +14,6 @@ import dr.evomodel.speciation.AlloppDiploidHistory.DipHistTESTINGNode;
 import dr.evomodel.speciation.AlloppSpeciesBindings.*;
 import dr.evomodel.speciation.AlloppMSCoalescent;
 import dr.evomodel.tree.TreeModel;
-import dr.math.MathUtils;
 import dr.util.AlloppMisc;
 
 
@@ -236,11 +235,11 @@ public class AlloppSpeciesNetworkModelTEST {
 		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, netdhTEST);
 		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
 		AlloppDiploidHistory diphist;
-		String newickcase[] = { "((a0,tt0leg0),(b0,tt0leg1))",
-								"(((a0,tt0leg0),tt0leg1),b0)",
-								"(((tt0leg0,tt0leg1),a0),b0)",
-								"(((a0,tt0leg0),(tt1leg0,tt1leg1)),(b0,tt0leg1))",
-								"(((((a0,tt0leg0),tt1leg0),tt1leg1),(tt2leg0,tt2leg1)),(b0,tt0leg1))"
+		String newickcase[] = { "((a,tt0leg0),(b,tt0leg1))",
+								"(((a,tt0leg0),tt0leg1),b)",
+								"(((tt0leg0,tt0leg1),a),b)",
+								"(((a,tt0leg0),(tt1leg0,tt1leg1)),(b,tt0leg1))",
+								"(((((a,tt0leg0),tt1leg0),tt1leg1),(tt2leg0,tt2leg1)),(b,tt0leg1))"
 				              };
 		String casedescription[] = {
 				"(a,b), tet from a and b",
@@ -274,9 +273,9 @@ public class AlloppSpeciesNetworkModelTEST {
 		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
 		AlloppDiploidHistory diphist;
 		String newickcase[] = {
-				"(((a0,b0),tt0leg0),(c0,tt0leg1))",
-				"((((a0,tt0leg0),tt0leg1),b0),c0)",
-				"(((a0,b0),(tt0leg0,tt0leg1)),c0)"
+				"(((a,b),tt0leg0),(c,tt0leg1))",
+				"((((a,tt0leg0),tt0leg1),b),c)",
+				"(((a,b),(tt0leg0,tt0leg1)),c)"
 		};
 		String casedescription[] = {
 				"((a,b),c), tet from ab and c",
@@ -310,7 +309,7 @@ public class AlloppSpeciesNetworkModelTEST {
 		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apspecies, netdhTEST);
 		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, netdhTEST);
 		AlloppDiploidHistory diphist;
-		String newickcase[] = { "((((a0,b0),tt0leg0),c0),(d0,tt0leg1))"
+		String newickcase[] = { "((((a,b),tt0leg0),c),(d,tt0leg1))"
 		};
 		String casedescription[] = {
 				"(((a,b),c),d) tet from ab and c which speciates later",
@@ -517,7 +516,7 @@ llhood
 		heights[0] = 0.03; heights[1] = 0.06; heights[2] = 0.09;       
         LogLhoodGTreeInNetworkTEST llgtnTEST = new 
                    LogLhoodGTreeInNetworkTEST(gtreemodels, popfactors, popvalues, heights);
-		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apsp, gtreemodels, llgtnTEST);
+		AlloppSpeciesBindings testASB = new AlloppSpeciesBindings(apsp, llgtnTEST);
 		AlloppSpeciesNetworkModel testASNM = new AlloppSpeciesNetworkModel(testASB, llgtnTEST);
 		AlloppMSCoalescent testASMSC = new AlloppMSCoalescent(testASB, testASNM, llgtnTEST);
 		double llhd = testASMSC.getLogLikelihood();

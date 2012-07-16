@@ -48,9 +48,9 @@ public class EpochModelPanel extends JPanel implements Exportable {
 		scrollPane = new JScrollPane(optionPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setOpaque(false);
-		
-		add(scrollPane, BorderLayout.CENTER);
+        scrollPane.getViewport().setOpaque(false);
+
+        add(scrollPane, BorderLayout.CENTER);
 		
 		substitutionCombo = new JComboBox();
 		substitutionCombo.setOpaque(false);

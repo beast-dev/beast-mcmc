@@ -38,15 +38,15 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 
 		scrollPane = new JScrollPane();
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
-		scrollPane = new JScrollPane(optionPanel,
+        optionPanel.setOpaque(false);
+        scrollPane = new JScrollPane(optionPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
-		scrollPane.setOpaque(false);
-		
-		add(scrollPane, BorderLayout.CENTER);
+        scrollPane.getViewport().setOpaque(false);
+
+        add(scrollPane, BorderLayout.CENTER);
 		
 		frequencyCombo = new JComboBox();
-		frequencyCombo.setOpaque(false);
 
 		for (String frequencyModel : BeagleSequenceSimulatorData.frequencyModels) {
 			frequencyCombo.addItem(frequencyModel);
@@ -70,7 +70,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 		optionPanel.addComponents(new JLabel("Frequency model:"), frequencyCombo);
 		
 		optionPanel.addSeparator();
-		optionPanel.addLabel("Set parameter values:");
+		optionPanel.addComponentWithLabel("Set parameter values:", new JLabel());
 
 		int index = frequencyCombo.getSelectedIndex();
 
@@ -107,7 +107,6 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 		}// END: fill loop
 	}// END: collectSettings
 	
-	@Override
 	public JComponent getExportableComponent() {
 		return this;
 	}//END: getExportableComponent

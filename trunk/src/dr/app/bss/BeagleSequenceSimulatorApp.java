@@ -7,13 +7,17 @@ import java.awt.Image;
 import java.awt.Toolkit;
 import java.net.URL;
 
+import javax.swing.ImageIcon;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 public class BeagleSequenceSimulatorApp {
 
+	// Share those if neccessary
+	public static ImageIcon errorIcon;
+	private Image beagleSequenceSimulatorImage;
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
-
+	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException {
@@ -81,6 +85,9 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
+		 errorIcon = CreateImageIcon("icons/error.png");
+		 beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
+		 
 		SingleDocApplication app = new SingleDocApplication(
 				new BeagleSequenceSimulatorMenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
@@ -89,7 +96,7 @@ public class BeagleSequenceSimulatorApp {
 				);
 
 	      BeagleSequenceSimulatorFrame frame = new BeagleSequenceSimulatorFrame(BEAGLE_SEQUENCE_SIMULATOR);
-	      frame.setIconImage(CreateImage("icons/bss.png"));
+	      frame.setIconImage(beagleSequenceSimulatorImage);
           app.setDocumentFrame(frame);
 		
 	}// END: Constructor
@@ -139,6 +146,16 @@ public class BeagleSequenceSimulatorApp {
 		}
 		
 	}// END: CreateImage
+	
+	private ImageIcon CreateImageIcon(String path) {
+		URL imgURL = this.getClass().getResource(path);
+		if (imgURL != null) {
+			return new ImageIcon(imgURL);
+		} else {
+			System.err.println("Couldn't find file: \n" + path + "\n");
+			return null;
+		}
+	}
 	
 }// END: TestlabOutbreakApp
 

@@ -32,7 +32,6 @@ public class EpochModelPanel extends JPanel implements Exportable {
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[BeagleSequenceSimulatorData.substitutionParameterNames.length];
 	private int epochCount = 1;
 	private RealNumberField[] transitionTimeFields = new RealNumberField[epochCount];
-
 	
 	
 	public EpochModelPanel(final BeagleSequenceSimulatorFrame frame,
@@ -89,8 +88,6 @@ public class EpochModelPanel extends JPanel implements Exportable {
 
 				int k = data.substitutionParameterIndices[substModelIndex][i];
 
-//				System.out.println("j: " + j + " i: " + i + " k: " + k);
-				
 				JPanel panel = new JPanel(new BorderLayout(6, 6));
 				panel.add(substitutionParameterFields[k], BorderLayout.WEST);
 				panel.setOpaque(false);
@@ -117,6 +114,7 @@ public class EpochModelPanel extends JPanel implements Exportable {
 			removeEpochAction.setEnabled(true);
 		}
         
+		this.updateUI();
 	}// END: setSubstitutionArguments
 
 	private class ListenSubstitutionCombo implements ItemListener {
@@ -124,7 +122,7 @@ public class EpochModelPanel extends JPanel implements Exportable {
 
 			setSubstitutionArguments();
 			frame.fireModelChanged();
-
+			
 		}// END: actionPerformed
 	}// END: ListenSubstitutionCombo
 
@@ -138,22 +136,16 @@ public class EpochModelPanel extends JPanel implements Exportable {
 		}// END: fill loop
 	}// END: collectSettings
 	
-	// TODO
 	private Action addEpochAction = new AbstractAction("+") {
-
 		public void actionPerformed(ActionEvent ae) {
 
 			epochCount++;
-		
 			setSubstitutionArguments();
 			
-//			System.out.println("epochCount: " + epochCount);
 		}// END: actionPerformed
 	};
 	
-	// TODO	
 	private Action removeEpochAction = new AbstractAction("-") {
-
 		public void actionPerformed(ActionEvent ae) {
 
 			if (epochCount > 1) {
@@ -162,7 +154,6 @@ public class EpochModelPanel extends JPanel implements Exportable {
 			
 			setSubstitutionArguments();
 			
-//			System.out.println("epochCount: " + epochCount);	
 		}// END: actionPerformed
 	};
 	

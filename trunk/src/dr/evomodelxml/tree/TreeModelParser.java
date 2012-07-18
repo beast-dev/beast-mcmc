@@ -27,6 +27,9 @@ package dr.evomodelxml.tree;
 
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Date;
+import dr.evolution.util.Taxon;
+import dr.evolution.util.TimeScale;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
@@ -137,8 +140,20 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         throw new XMLParseException("taxon " + taxonName + " not found for leafHeight element in treeModel element");
                     }
                     NodeRef node = treeModel.getExternalNode(index);
-                    ParameterParser.replaceParameter(cxo, treeModel.getLeafHeightParameter(node));
 
+                    Parameter newParameter = treeModel.getLeafHeightParameter(node);
+
+                    ParameterParser.replaceParameter(cxo, newParameter);
+
+                    Taxon taxon = treeModel.getTaxon(index);
+                    Date date = taxon.getDate();
+                    if (date != null) {
+                        double precision = date.getPrecision();
+                        if (precision > 0.0) {
+                            // taxon date not specified to exact value so add appropriate bounds
+
+                        }
+                    }
                 } else if (cxo.getName().equals(NODE_HEIGHTS)) {
 
                     boolean rootNode = cxo.getAttribute(ROOT_NODE, false);

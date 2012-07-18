@@ -39,6 +39,7 @@ import dr.util.NumberFormatter;
 public class Date extends TimeScale implements Attribute { 
 
     public static final String DATE = "date";
+    private double precision = 0.0;
 
     /**
      * Constructor for relative to origin
@@ -241,4 +242,12 @@ public class Date extends TimeScale implements Attribute {
 	private double time;
 
 	private NumberFormatter formatter = new NumberFormatter(5);
+
+    public void setPrecision(double precision) {
+        this.precision = precision;
+    }
+
+    public double getPrecision() {
+        return precision;
+    }
 }

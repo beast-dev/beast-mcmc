@@ -85,7 +85,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         // any zero branches.
         MutableTree.Utils.correctHeightsForTips(binaryTree);
 
-        // clone the node structure (this will create the individual parameters
+        // clone the node structure (this will create the individual parameters)
         Node node = new Node(binaryTree, binaryTree.getRoot());
 
         internalNodeCount = binaryTree.getInternalNodeCount();
@@ -940,7 +940,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     public Parameter getLeafHeightParameter(NodeRef node) {
 
         if (!isExternal(node)) {
-            throw new RuntimeException("only root and leaves can be used with setNodeHeightParameter");
+            throw new RuntimeException("only leaves can be used with getLeafHeightParameter");
         }
 
         return nodes[node.getNumber()].heightParameter;

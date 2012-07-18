@@ -50,6 +50,8 @@ public class DateParser extends AbstractXMLObjectParser {
     public static final String MONTHS = DateUnitsType.MONTHS.getAttribute(); //"units";
     public static final String DAYS = DateUnitsType.DAYS.getAttribute(); //"days";
 
+    private static final String PRECISION = "precision";
+
     public String getParserName() {
         return Date.DATE;
     }
@@ -122,6 +124,11 @@ public class DateParser extends AbstractXMLObjectParser {
             } else {
                 date = new Date(value, units, backwards);
             }
+        }
+
+        if (xo.hasAttribute(PRECISION)) {
+            double precision = (Double)xo.getAttribute(PRECISION);
+            date.setPrecision(precision);
         }
 
 

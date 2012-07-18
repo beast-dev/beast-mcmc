@@ -32,6 +32,30 @@ import dr.math.MathUtils;
 /**
  * @author Filip Bielejec
  * @version $Id$
+ * 
+ * 			// create Epoch Model
+			int epochCount = 1;
+			int[] transitionTimes = new int[] { 20 };
+			double[] parameterValues = new double[] { 1.0 }; 
+
+			// 1st epoch
+			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+			Parameter epochTimes = new Parameter.Default(1, transitionTimes[0]);
+			Parameter kappa = new Parameter.Default(1, parameterValues[0]);
+			HKY hky = new HKY(kappa, freqModel);
+			substModelList.add(hky);
+			
+			// epochs 2, 3, ...
+			for (int i = 0; i < epochCount; i++) {
+
+				System.out.println("i: " + i);
+
+				kappa = new Parameter.Default(1, parameterValues[i]);
+				hky = new HKY(kappa, freqModel);
+				substModelList.add(hky);
+				epochTimes.addDimension(i + 1, transitionTimes[i]);
+
+			}
  */
 public class BeagleSequenceSimulator {
 
@@ -343,8 +367,8 @@ public class BeagleSequenceSimulator {
 	public static void main(String[] args) {
 
 		simulateEpochModel();
-		simulateHKY();
-		simulateCodon();
+//		simulateHKY();
+//		simulateCodon();
 		
 	} // END: main
 
@@ -475,15 +499,40 @@ public class BeagleSequenceSimulator {
 			BranchRateModel branchRateModel = new DefaultBranchRateModel();
 			
 			// create Epoch Model
-			Parameter kappa1 = new Parameter.Default(1, 10);
-			Parameter kappa2 = new Parameter.Default(1, 10);
-			HKY hky1 = new HKY(kappa1, freqModel);
-			HKY hky2 = new HKY(kappa2, freqModel);
-			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-			substModelList.add(hky1);
-			substModelList.add(hky2);
+			int epochCount = 3;
+			int[] transitionTimes = new int[] { 10, 20 };
+			double[] parameterValues = new double[] { 1.0, 10.0, 1.0 }; 
 
-			Parameter epochTimes = new Parameter.Default(1, 20);
+			// 1st epoch
+			Parameter epochTimes = null;
+			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+			Parameter kappa = new Parameter.Default(1, parameterValues[0]);
+			HKY hky = new HKY(kappa, freqModel);
+			substModelList.add(hky);
+			
+			// epochs 2, 3, ...
+			for (int i = 1; i < epochCount; i++) {
+
+				System.out.println("i: " + i);
+
+				if (i == 1) {
+//					System.out.println("creating epochTimes parameter with initial value " + transitionTimes[0]);
+					epochTimes = new Parameter.Default(1, transitionTimes[0]);
+				} else {
+//					System.out.println("adding transition time " + transitionTimes[i - 1]);
+					epochTimes.addDimension(1, transitionTimes[i - 1]);
+				}
+				
+//				System.out.println("adding model with parameter value: " + parameterValues[i]);
+				kappa = new Parameter.Default(1, parameterValues[i]);
+				hky = new HKY(kappa, freqModel);
+				substModelList.add(hky);
+
+			}
+			
+//			double[] parameterValues2 = epochTimes.getParameterValues();
+//			EpochBranchSubstitutionModel.printArray(parameterValues2, parameterValues2.length);
+			
 			EpochBranchSubstitutionModel substitutionModel = new EpochBranchSubstitutionModel(
 					substModelList, //
 					frequencyModelList, //

@@ -1,9 +1,9 @@
 package dr.app.bss;
 
 import java.awt.Frame;
-import java.awt.Image;
-import java.awt.Toolkit;
-import java.net.URL;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 
 public class Utils {
 
@@ -23,19 +23,45 @@ public class Utils {
 		}
 		return result;
 	}
-	
-	public Image CreateImage(String path) {
-		URL imgURL = this.getClass().getResource(path);
-		Toolkit kit = Toolkit.getDefaultToolkit();
-		Image img = kit.createImage(imgURL);
 
-		if (img != null) {
-			return img;
+	// ////////////////////////////////
+	// ---EXCEPTION HANDLING UTILS---//
+	// ////////////////////////////////
+
+	public static void handleException(final Throwable e) {
+
+		final Thread t = Thread.currentThread();
+		
+		if (SwingUtilities.isEventDispatchThread()) {
+			showExceptionDialog(t, e);
 		} else {
-			System.err.println("Couldn't find file: " + path + "\n");
-			return null;
-		}
+			SwingUtilities.invokeLater(new Runnable() {
+				public void run() {
+					showExceptionDialog(t, e);
+				}
+			});
+		}// END: edt check
+	}// END: uncaughtException
 
-	}// END: CreateImage
+	private static void showExceptionDialog(Thread t, Throwable e) {
+		
+		String msg = String.format("Unexpected problem on thread %s: %s",
+				t.getName(), e.getMessage());
+
+		logException(t, e);
+
+		JOptionPane.showMessageDialog(Utils.getActiveFrame(), //
+				msg, //
+				"Error", //
+				JOptionPane.ERROR_MESSAGE, //
+				BeagleSequenceSimulatorApp.errorIcon);
+	}// END: showExceptionDialog
+
+	private static void logException(Thread t, Throwable e) {
+		// TODO: start a thread that logs it, also spying on the user and planting evidence
+		// CIA style MOFO!!!
+		e.printStackTrace();
+	}// END: logException
+	
 	
 }// END: class

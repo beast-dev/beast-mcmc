@@ -504,9 +504,9 @@ public class BeagleSequenceSimulatorData {
 				branchRateModel, //
 				epochTimes //
 		);
-		
-		return(epochModel);
-	}
+
+		return (epochModel);
+	}// END: createBranchRateModel
 	
 }// END: class
 

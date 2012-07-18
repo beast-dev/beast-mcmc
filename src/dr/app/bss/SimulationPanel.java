@@ -20,7 +20,7 @@ import org.virion.jam.components.WholeNumberField;
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 
-//	 private BeagleSequenceSimulatorFrame frame;
+	 private BeagleSequenceSimulatorFrame frame;
 	private BeagleSequenceSimulatorData data;
 	private OptionsPanel optionPanel;
 
@@ -39,7 +39,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	public SimulationPanel(final BeagleSequenceSimulatorFrame frame,
 			final BeagleSequenceSimulatorData data) {
 
-//		 this.frame = frame;
+		this.frame = frame;
 		this.data = data;
 
 		setOpaque(false);
@@ -63,6 +63,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		homogenousSimulationRadioButton = new JRadioButton(homogenousSimulation);
 		homogenousSimulationRadioButton.addActionListener(new ChooseSimulationTypeListener());
 		homogenousSimulationRadioButton.setSelected(true);
+//		frame.homogenousSimulationTypeSelected();
 		buttonGroup.add(homogenousSimulationRadioButton);
 		panel.add(homogenousSimulationRadioButton);
 			
@@ -87,16 +88,24 @@ public class SimulationPanel extends JPanel implements Exportable {
 		return this;
 	}// END: getExportableComponent
 
+	public void setHomogenousSimulation() {
+		homogenousSimulationRadioButton.setSelected(true);
+	}// END: setHomogenousSimulation
+
+	public void setHeterogenousSimulation() {
+		heterogenousSimulationRadioButton.setSelected(true);
+	}// END: setHeterogenousSimulation
+	
 	class ChooseSimulationTypeListener implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
 			if (ev.getActionCommand() == homogenousSimulation) {
 
-				System.out.println("Homogenous simulation type selected");
+				frame.homogenousSimulationTypeSelected();
 
 			} else if (ev.getActionCommand() == heterogenousSimulation) {
 
-				System.out.println("Heterogenous simulation type selected");
+				frame.heterogenousSimulationTypeSelected();
 
 			} else {
 				
@@ -106,5 +115,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		}// END: actionPerformed
 	}// END: ChooseAnalysisTypeListener
+	
+	
 	
 }// END: class

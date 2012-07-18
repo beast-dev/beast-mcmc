@@ -31,6 +31,9 @@ public class EpochModelPanel extends JPanel implements Exportable {
 	private JComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[BeagleSequenceSimulatorData.substitutionParameterNames.length];
 	private int epochCount = 1;
+	private RealNumberField[] transitionTimeFields = new RealNumberField[epochCount];
+
+	
 	
 	public EpochModelPanel(final BeagleSequenceSimulatorFrame frame,
 			final BeagleSequenceSimulatorData data) {
@@ -69,9 +72,6 @@ public class EpochModelPanel extends JPanel implements Exportable {
 
 		setSubstitutionArguments();
 		
-		
-		
-		
 	}// END: Constructor
 
 	private void setSubstitutionArguments() {
@@ -83,17 +83,26 @@ public class EpochModelPanel extends JPanel implements Exportable {
 
 		int substModelIndex = substitutionCombo.getSelectedIndex();
 
+		//TODO:
 		for (int j = 0; j < epochCount; j++) {
 			for (int i = 0; i < data.substitutionParameterIndices[substModelIndex].length; i++) {
 
 				int k = data.substitutionParameterIndices[substModelIndex][i];
 
+//				System.out.println("j: " + j + " i: " + i + " k: " + k);
+				
 				JPanel panel = new JPanel(new BorderLayout(6, 6));
 				panel.add(substitutionParameterFields[k], BorderLayout.WEST);
 				panel.setOpaque(false);
 				optionPanel.addComponentWithLabel(BeagleSequenceSimulatorData.substitutionParameterNames[k] + ":", panel);
 
 			}// END: indices loop
+			
+			JPanel panel = new JPanel(new BorderLayout(6, 6));
+//			panel.add(substitutionParameterFields[k], BorderLayout.WEST);
+			panel.setOpaque(false);
+			optionPanel.addComponentWithLabel("Transition time:", panel);			
+			
 		}// END: epochCount loop
 		
         ActionPanel actionPanel = new ActionPanel(false);
@@ -138,7 +147,7 @@ public class EpochModelPanel extends JPanel implements Exportable {
 		
 			setSubstitutionArguments();
 			
-			System.out.println("epochCount: " + epochCount);
+//			System.out.println("epochCount: " + epochCount);
 		}// END: actionPerformed
 	};
 	
@@ -153,7 +162,7 @@ public class EpochModelPanel extends JPanel implements Exportable {
 			
 			setSubstitutionArguments();
 			
-			System.out.println("epochCount: " + epochCount);	
+//			System.out.println("epochCount: " + epochCount);	
 		}// END: actionPerformed
 	};
 	

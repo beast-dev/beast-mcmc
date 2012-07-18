@@ -200,7 +200,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	public Action getExportAction() {
 		return simulateAction;
-	}
+	}//END: getExportAction
 
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
@@ -208,7 +208,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			if (data.treeModel == null) {
 
 				tabbedPane.setSelectedComponent(treePanel);
-				// TODO: maybe new ListenTreeFileButton class?
+				// TODO: maybe new ListenTreeFileButton class? Make sure it's started from EDT
 				treePanel.doImport();
 				
 			} else {
@@ -276,8 +276,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 								data.replicateCount //
 						);
 
-						writer.println(beagleSequenceSimulator.simulate()
-								.toString());
+						writer.println(beagleSequenceSimulator.simulate().toString());
 						writer.close();
 
 					} catch (IOException e) {
@@ -354,8 +353,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	}// END: setWorkingDirectory
 	
 	public void fireModelChanged() {
-//		substModelPanel.collectSettings();
 	    collectAllSettings();
-	}
+	}//END: fireModelChanged
 	
 }// END: class

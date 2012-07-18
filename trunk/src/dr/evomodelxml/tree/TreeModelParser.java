@@ -151,7 +151,19 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                         double precision = date.getPrecision();
                         if (precision > 0.0) {
                             // taxon date not specified to exact value so add appropriate bounds
+                            double upper = Taxon.getHeightFromDate(date);
+                            double lower = Taxon.getHeightFromDate(date);
+                            if (date.isBackwards()) {
+                                upper += precision;
+                            } else {
+                                lower += precision;
+                            }
 
+                            // set the bounds for the given precision
+                            newParameter.addBounds(new Parameter.DefaultBounds(upper, lower, 1));
+
+                            // set the initial value to be mid-point
+                            newParameter.setParameterValue(0, (upper + lower) / 2);
                         }
                     }
                 } else if (cxo.getName().equals(NODE_HEIGHTS)) {

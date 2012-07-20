@@ -127,7 +127,7 @@ public class DateParser extends AbstractXMLObjectParser {
         }
 
         if (xo.hasAttribute(PRECISION)) {
-            double precision = (Double)xo.getAttribute(PRECISION);
+            double precision = (Double)xo.getDoubleAttribute(PRECISION);
             date.setPrecision(precision);
         }
 
@@ -159,6 +159,7 @@ public class DateParser extends AbstractXMLObjectParser {
                     "The origin of this time scale, which must be a valid calendar date", "01/01/01", true),
             new StringAttributeRule(UNITS, "The units of the timescale", new String[]{YEARS, MONTHS, DAYS}, true),
             new StringAttributeRule(DIRECTION, "The direction of the timescale", new String[]{FORWARDS, BACKWARDS}, true),
+            AttributeRule.newDoubleRule(PRECISION, true, "The precision to which the date is specified"),
     };
 
     public Class getReturnType() {

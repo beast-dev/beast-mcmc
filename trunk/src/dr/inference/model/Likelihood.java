@@ -28,7 +28,8 @@ package dr.inference.model;
 import dr.inference.loggers.Loggable;
 import dr.util.Identifiable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * classes that calculate likelihoods should implement this interface.
@@ -138,14 +139,20 @@ public interface Likelihood extends Loggable, Identifiable {
             String[] parts = s.split("\\.");
             s = parts[parts.length - 1];
             if( m != null ) {
-                return s + "(" + m.getModelName() + ")";
+                final String modelName = m.getModelName();
+                final String i = m.getId();
+                s = s + "(" + modelName;
+                if( ! i.equals(modelName) ) {
+                    s = s + '[' + i + ']';
+                }
+                s = s + ")";
             }
             return s;
         }
 
-        public String prettyName() {
-            return getPrettyName(this);
-        }
+      public String prettyName() {
+          return getPrettyName(this);
+      }
 
         public boolean isUsed() {
             return used;

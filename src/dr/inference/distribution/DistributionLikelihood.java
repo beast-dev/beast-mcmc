@@ -118,6 +118,27 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
         throw new RuntimeException("Not implemented yet!");
     }
 
+    @Override
+    public String prettyName() {
+        String s = distribution.getClass().getName();
+        String[] parts = s.split("\\.");
+        s = parts[parts.length - 1];
+        if( s.endsWith("Distribution") ) {
+            s = s.substring(0, s.length() - "Distribution".length());
+        }
+        s = s + '(';
+        for( Attribute<double[]> data : dataList ) {
+            String name = data.getAttributeName();
+            if( name == null ) {
+                name = "?";
+            }
+                s = s + name + ',';
+        }
+        s = s.substring(0,s.length()-1) + ')';
+
+        return s;
+    }
+
     protected Distribution distribution;
     private final double offset;
 }

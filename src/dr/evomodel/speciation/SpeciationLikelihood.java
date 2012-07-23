@@ -207,6 +207,17 @@ public class SpeciationLikelihood extends AbstractModelLikelihood implements Uni
         return speciationModel.getUnits();
     }
 
+    @Override
+    public String prettyName() {
+        String s = speciationModel.getClass().getName();
+        String[] parts = s.split("\\.");
+        s = parts[parts.length - 1];
+        if( speciationModel.getId() != null ) {
+           s = s + '/' + speciationModel.getId();
+        }
+        s = s + '(' + tree.getId() + ')';
+        return s;
+    }
     // ****************************************************************
     // Private and protected stuff
     // ****************************************************************

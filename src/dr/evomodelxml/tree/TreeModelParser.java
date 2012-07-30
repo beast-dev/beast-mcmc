@@ -156,7 +156,7 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                             if (date.isBackwards()) {
                                 upper += precision;
                             } else {
-                                lower += precision;
+                                lower -= precision;
                             }
 
                             // set the bounds for the given precision

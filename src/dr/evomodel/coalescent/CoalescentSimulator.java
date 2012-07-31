@@ -27,6 +27,7 @@ package dr.evomodel.coalescent;
 
 import dr.evolution.tree.*;
 import dr.evolution.util.Date;
+import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evolution.util.TimeScale;
 import dr.inference.distribution.ParametricDistributionModel;
@@ -60,30 +61,6 @@ public class CoalescentSimulator {
 
         SimpleNode[] roots = new SimpleNode[subtrees.length];
         SimpleTree tree;
-
-        dr.evolution.util.Date mostRecent = null;
-        for (Tree subtree : subtrees) {
-            Date date = Tree.Utils.findMostRecentDate(subtree);
-            if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
-                mostRecent = date;
-            }
-        }
-
-        if (mostRecent != null) {
-            TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-            double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
-
-            for (Tree subtree : subtrees) {
-                Date date = Tree.Utils.findMostRecentDate(subtree);
-                if (date != null) {
-                    double diff = timeScale.convertTime(date.getTimeValue(), date) - time0;
-                    for (int j = 0; j < subtree.getNodeCount(); j++) {
-                        NodeRef node = subtree.getNode(j);
-                        ((SimpleTree) subtree).setNodeHeight(node, subtree.getNodeHeight(node) + diff);
-                    }
-                }
-            }
-        }
 
         for (int i = 0; i < roots.length; i++) {
             roots[i] = new SimpleNode(subtrees[i], subtrees[i].getRoot());

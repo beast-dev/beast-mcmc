@@ -199,6 +199,10 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
         return timeScale.convertTime(date.getTimeValue(), date);
     }
 
+    public static Date getMostRecentDate() {
+        return mostRecentDate;
+    }
+
     private static dr.evolution.util.Date mostRecentDate = null;
     private static TimeScale timeScale = null;
 }

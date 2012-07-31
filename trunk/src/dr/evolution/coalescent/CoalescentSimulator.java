@@ -63,9 +63,9 @@ public class CoalescentSimulator {
 			nodes[i].setTaxon(taxa.getTaxon(i));
 		}
 
-		boolean usingDates = false;
+		boolean usingDates = Taxon.getMostRecentDate() != null;
 
-		for (int i = 0; i < taxa.getTaxonCount(); i++) {
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
             Taxon taxon = taxa.getTaxon(i);
             if (usingDates) {
                 nodes[i].setHeight(taxon.getHeight());

@@ -55,6 +55,7 @@ public class SteppingStoneSamplingAnalysis {
             map.get(thetaSample.get(i)).add(logLikelihoodSample.get(i));
         }
 
+        //sort into ascending order
         Collections.sort(orderedTheta);
 
         //a list with the maxima of the log-likelihood values is constructed
@@ -66,15 +67,18 @@ public class SteppingStoneSamplingAnalysis {
 
         logBayesFactor = 0.0;
         for (int i = 1; i < orderedTheta.size(); i++) {
-        	logBayesFactor += (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i);
+        	logBayesFactor += (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i-1);
+        	//System.out.println(i + ": " + maxLogLikelihood.get(i-1));
         }
-        
+        //System.out.println(logBayesFactor);
+
         for (int i = 1; i < orderedTheta.size(); i++) {
         	double internalSum = 0.0;
         	for (int j = 0; j < map.get(orderedTheta.get(i-1)).size(); j++) {
-        		internalSum += Math.exp((orderedTheta.get(i) - orderedTheta.get(i-1)) * (map.get(orderedTheta.get(i-1)).get(j) - maxLogLikelihood.get(i)));
+        		internalSum += Math.exp((orderedTheta.get(i) - orderedTheta.get(i-1)) * (map.get(orderedTheta.get(i-1)).get(j) - maxLogLikelihood.get(i-1)));
         	}
         	internalSum /= map.get(orderedTheta.get(i-1)).size();
+        	//System.out.print(orderedTheta.get(i) + "-" + orderedTheta.get(i-1) + ": " + Math.log(internalSum));
         	logBayesFactor += Math.log(internalSum);
         }
         

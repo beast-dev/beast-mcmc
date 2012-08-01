@@ -142,7 +142,7 @@ public interface Likelihood extends Loggable, Identifiable {
                 final String modelName = m.getModelName();
                 final String i = m.getId();
                 s = s + "(" + modelName;
-                if( ! i.equals(modelName) ) {
+                if( i != null && !i.equals(modelName) ) {
                     s = s + '[' + i + ']';
                 }
                 s = s + ")";

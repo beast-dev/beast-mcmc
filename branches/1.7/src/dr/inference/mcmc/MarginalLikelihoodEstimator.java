@@ -49,7 +49,7 @@ import org.apache.commons.math.distribution.BetaDistributionImpl;
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
-    public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps,
+    public MarginalLikelihoodEstimator(String id, int chainLength, int burninLength, int pathSteps, double fixedRunValue,
 //                                       boolean linear, boolean lacing,
 PathScheme scheme,
 PathLikelihood pathLikelihood,
@@ -61,6 +61,7 @@ MCLogger logger) {
         this.pathSteps = pathSteps;
         this.scheme = scheme;
         this.schedule = schedule;
+        this.fixedRunValue = fixedRunValue;
         // deprecated
         // this.linear = (scheme == PathScheme.LINEAR);
         // this.lacing = false; // Was not such a good idea
@@ -120,15 +121,35 @@ MCLogger logger) {
         abstract double nextPathParameter();
     }
 
+    public class FixedThetaRun extends Integrator {
+    	private double value;
+
+    	public FixedThetaRun(double value) {
+    		super(1);
+    		this.value = value;
+    	}
+
+    	double nextPathParameter() {
+    		if (step == 0) {
+    			step++;
+    			return value;
+    		} else {
+    			return -1.0;
+    		}
+    	}
+
+    }
+
     public class LinearIntegrator extends Integrator {
         public LinearIntegrator(int pathSteps) {
             super(pathSteps);
         }
 
         double nextPathParameter() {
-            if (step > pathSteps)
+            if (step > pathSteps) {
                 return -1;
-            double pathParameter = 1.0 - step / (pathSteps - 1);
+            }
+            double pathParameter = 1.0 - (double)step / (double)(pathSteps - 1);
             step = step + 1;
             return pathParameter;
         }
@@ -168,6 +189,8 @@ MCLogger logger) {
     	}
 
     	double nextPathParameter() {
+    		if (step > pathSteps)
+                return -1;
     		double result = Math.pow((pathSteps - step)/((double)pathSteps), 1.0/alpha);
     		step++;
     		return result;
@@ -293,6 +316,9 @@ MCLogger logger) {
         }*/
 
         switch (scheme) {
+        	case FIXED:
+        		integrate(new FixedThetaRun(fixedRunValue));
+        		break;
             case LINEAR:
                 integrate(new LinearIntegrator(pathSteps));
                 break;
@@ -410,6 +436,10 @@ MCLogger logger) {
             if (xo.hasAttribute(PRERUN)) {
                 prerunLength = xo.getIntegerAttribute(PRERUN);
             }
+            double fixedRunValue = -1.0;
+            if (xo.hasAttribute(FIXED_VALUE)) {
+            	fixedRunValue = xo.getDoubleAttribute(FIXED_VALUE);
+            }
 
             // deprecated
             boolean linear = xo.getAttribute(LINEAR, true);
@@ -454,7 +484,7 @@ MCLogger logger) {
             }
 
             MarginalLikelihoodEstimator mle = new MarginalLikelihoodEstimator(MARGINAL_LIKELIHOOD_ESTIMATOR, chainLength,
-                    burninLength, pathSteps, scheme, pathLikelihood, os, logger);
+                    burninLength, pathSteps, fixedRunValue, scheme, pathLikelihood, os, logger);
 
             if (!xo.getAttribute(SPAWN, true))
                 mle.setSpawnable(false);
@@ -467,22 +497,24 @@ MCLogger logger) {
                 mle.setBetaFactor(xo.getAttribute(BETA, 0.5));
             }
 
-            String alphaBetaText = "(";
+            String alphaBetaText = "";
             if (scheme == PathScheme.ONE_SIDED_BETA) {
-                alphaBetaText += "1," + mle.getBetaFactor() + ")";
+                alphaBetaText += "(1," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA) {
-                alphaBetaText += mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
+                alphaBetaText += "(" + mle.getAlphaFactor() + "," + mle.getBetaFactor() + ")";
             } else if (scheme == PathScheme.BETA_QUANTILE) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
+            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             } else if (scheme == PathScheme.SIGMOID) {
-            	alphaBetaText += mle.getAlphaFactor() + ")";
+            	alphaBetaText += "(" + mle.getAlphaFactor() + ")";
             }
             java.util.logging.Logger.getLogger("dr.inference").info("\nCreating the Marginal Likelihood Estimator chain:" +
                     "\n  chainLength=" + chainLength +
                     "\n  pathSteps=" + pathSteps +
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
-                    "\n    Alekseyenko, Rambaut, Lemey and Suchard (in preparation)");
+                    "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
+                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
+                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. (in press).");
             return mle;
         }
 
@@ -511,6 +543,7 @@ MCLogger logger) {
                 AttributeRule.newBooleanRule(LACING, true),
                 AttributeRule.newBooleanRule(SPAWN, true),
                 AttributeRule.newStringRule(PATH_SCHEME, true),
+                AttributeRule.newDoubleRule(FIXED_VALUE, true),
                 AttributeRule.newDoubleRule(ALPHA, true),
                 AttributeRule.newDoubleRule(BETA, true),
                 new ElementRule(MCMC,
@@ -531,6 +564,7 @@ MCLogger logger) {
     }
 
     enum PathScheme {
+    	FIXED("fixed"),
         LINEAR("linear"),
         GEOMETRIC("geometric"),
         BETA("beta"),
@@ -579,6 +613,7 @@ MCLogger logger) {
     private final PathScheme scheme;
     private double alphaFactor = 0.5;
     private double betaFactor = 0.5;
+    private double fixedRunValue = -1.0;
     private final double pathDelta;
     private double pathParameter;
 
@@ -589,12 +624,14 @@ MCLogger logger) {
     public static final String MARGINAL_LIKELIHOOD_ESTIMATOR = "marginalLikelihoodEstimator";
     public static final String CHAIN_LENGTH = "chainLength";
     public static final String PATH_STEPS = "pathSteps";
+    public static final String FIXED = "fixed";
     public static final String LINEAR = "linear";
     public static final String LACING = "lacing";
     public static final String SPAWN = "spawn";
     public static final String BURNIN = "burnin";
     public static final String MCMC = "samplers";
     public static final String PATH_SCHEME = "pathScheme";
+    public static final String FIXED_VALUE = "fixedValue";
     public static final String ALPHA = "alpha";
     public static final String BETA = "beta";
     public static final String PRERUN = "prerun";

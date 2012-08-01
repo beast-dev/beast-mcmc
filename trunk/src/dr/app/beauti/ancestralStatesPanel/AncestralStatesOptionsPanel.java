@@ -182,7 +182,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             // root node
             ancestralStatesComponent.setMRCATaxonSet(partition, null);
         } else {
-            ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
+            String text = (String) mrcaReconstructionCombo.getSelectedItem();
+            String taxonSetId = text.substring(5,text.length() - 1);
+
+            ancestralStatesComponent.setMRCATaxonSet(partition, taxonSetId);
         }
         ancestralStatesComponent.setCountingStates(partition, countingCheck.isSelected());
 //        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
@@ -208,8 +211,7 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
         mrcaReconstructionCombo.addItem("Tree Root");
         if (options.taxonSets.size() > 0) {
             for (Taxa taxonSet : options.taxonSets) {
-//                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")"); // This causes an error because MRCA(*) is not a defined taxonSet
-                mrcaReconstructionCombo.addItem(taxonSet.getId());
+                mrcaReconstructionCombo.addItem("MRCA("+ taxonSet.getId() + ")");
             }
             if (selectedItem != null) {
                 mrcaReconstructionCombo.setSelectedItem(selectedItem);

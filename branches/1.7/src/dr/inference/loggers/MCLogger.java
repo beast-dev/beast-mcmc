@@ -1,7 +1,7 @@
 /*
  * MCLogger.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -230,7 +230,7 @@ public class MCLogger implements Logger {
                     double hoursPerMillionStates = (double) (time - startTime) / (3.6 * (double) (state - startState));
 
                     String hpm = formatter.format(hoursPerMillionStates);
-                    if( hpm.equals("0") ) {
+                    if (hpm.equals("0")) {
                         // test cases can run fast :)
                         hpm = formatter.format(1000 * hoursPerMillionStates);
                         values[columnCount + 1] = hpm + " hours/billion states";

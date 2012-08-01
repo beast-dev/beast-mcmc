@@ -48,20 +48,26 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
     //    public static final String MIXTURE_WEIGHTS = "weights";
     public static final String NORMALIZE = "normalize";
 
-    public IntegratedMixtureModel(List<AbstractModelLikelihood> likelihoodList, Parameter weights) {
+    public IntegratedMixtureModel(List<Likelihood> likelihoodList, Parameter weights) {
         super(MIXTURE_MODEL);
         this.likelihoodList = likelihoodList;
         this.mixtureWeights = weights;
-        for (AbstractModelLikelihood model : likelihoodList) {
-            addModel(model);
+        for (Likelihood model : likelihoodList) {
+            if (model.getModel() != null) {
+                addModel(model.getModel());
+            }
         }
         addVariable(mixtureWeights);
 
         StringBuilder sb = new StringBuilder();
         sb.append("Constructing an integrated finite mixture model\n");
         sb.append("\tComponents:\n");
-        for (AbstractModelLikelihood model : likelihoodList) {
-            sb.append("\t\t\t").append(model.getId()).append("\n");
+        for (Likelihood like : likelihoodList) {
+            Model model = like.getModel();
+            sb.append("\t\t\t").append(
+                    model != null ?
+                    like.getModel().getId() : "anonymous"
+            ).append("\n");
         }
 //        sb.append("\tMixing parameter: ").append(mixtureWeights.getId()).append("\n");
         sb.append("\tPlease cite:\n");
@@ -174,11 +180,11 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             Parameter weights = (Parameter) xo.getChild(Parameter.class);
-            List<AbstractModelLikelihood> likelihoodList = new ArrayList<AbstractModelLikelihood>();
+            List<Likelihood> likelihoodList = new ArrayList<Likelihood>();
 
             for (int i = 0; i < xo.getChildCount(); i++) {
                 if (xo.getChild(i) instanceof Likelihood)
-                    likelihoodList.add((AbstractModelLikelihood) xo.getChild(i));
+                    likelihoodList.add((Likelihood) xo.getChild(i));
             }
 
             if (weights.getDimension() != likelihoodList.size()) {
@@ -232,7 +238,7 @@ public class IntegratedMixtureModel extends AbstractModelLikelihood implements C
     };
 
         private final Parameter mixtureWeights;
-    List<AbstractModelLikelihood> likelihoodList;
+    List<Likelihood> likelihoodList;
 
     public List<Citation> getCitations() {
         List<Citation> citations = new ArrayList<Citation>();

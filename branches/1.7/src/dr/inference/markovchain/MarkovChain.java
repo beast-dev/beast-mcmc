@@ -1,7 +1,7 @@
 /*
  * MarkovChain.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -315,7 +315,7 @@ public final class MarkovChain {
                             + " Likelihood after: " + testScore
                             + "\n" + "Operator: " + mcmcOperator
                             + " " + mcmcOperator.getOperatorName()
-                            + ( diagnostic.length() > 0 ? "\n\nDetails\nBefore: " + diagnostic + "\nAfter: " + d2 : "")
+                            + (diagnostic.length() > 0 ? "\n\nDetails\nBefore: " + diagnostic + "\nAfter: " + d2 : "")
                     );
                     fullEvaluationError = true;
                 }
@@ -336,7 +336,7 @@ public final class MarkovChain {
                     if (fullEvaluationError) {
                         // If there has been an error then stop with an error
                         throw new RuntimeException(
-                                "One or more evaluation errors occured during the test phase of this\n" +
+                                "One or more evaluation errors occurred during the test phase of this\n" +
                                         "run. These errors imply critical errors which may produce incorrect\n" +
                                         "results.");
                     }

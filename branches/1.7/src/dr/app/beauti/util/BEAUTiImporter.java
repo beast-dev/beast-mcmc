@@ -324,6 +324,7 @@ public class BEAUTiImporter {
     private boolean isMissingValue(String value) {
         return (value.equals("?") || value.equals("NA") || value.length() == 0);
     }
+
     public void importTraits(final File file) throws Exception {
         List<TraitData> importedTraits = new ArrayList<TraitData>();
         Taxa taxa = options.taxonList;

@@ -63,36 +63,15 @@ public class CoalescentSimulator {
 			nodes[i].setTaxon(taxa.getTaxon(i));
 		}
 
-		dr.evolution.util.Date mostRecent = null;
-		boolean usingDates = false;
+		boolean usingDates = Taxon.getMostRecentDate() != null;
 
-		for (int i = 0; i < taxa.getTaxonCount(); i++) {
-			if (TaxonList.Utils.hasAttribute(taxa, i, dr.evolution.util.Date.DATE)) {
-				usingDates = true;
-				dr.evolution.util.Date date = (dr.evolution.util.Date)taxa.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
-				if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
-					mostRecent = date;
-				}
+        for (int i = 0; i < taxa.getTaxonCount(); i++) {
+            Taxon taxon = taxa.getTaxon(i);
+            if (usingDates) {
+                nodes[i].setHeight(taxon.getHeight());
 			} else {
 				// assume contemporaneous tips
 				nodes[i].setHeight(0.0);
-			}
-		}
-
-		if (usingDates && mostRecent != null ) {
-			TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
-
-			for (int i =0; i < taxa.getTaxonCount(); i++) {
-				dr.evolution.util.Date date = (dr.evolution.util.Date)taxa.getTaxonAttribute(i, dr.evolution.util.Date.DATE);
-
-				if (date == null) {
-					throw new IllegalArgumentException("Taxon, " + taxa.getTaxonId(i) + ", is missing its date");
-				}
-
-				nodes[i].setHeight(timeScale.convertTime(date.getTimeValue(), date));
-			}
-			if (demoFunction.getUnits() != mostRecent.getUnits()) {
-				//throw new IllegalArgumentException("The units of the demographic model and the most recent date must match!");
 			}
 		}
 

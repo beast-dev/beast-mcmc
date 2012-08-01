@@ -85,7 +85,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
         // any zero branches.
         MutableTree.Utils.correctHeightsForTips(binaryTree);
 
-        // clone the node structure (this will create the individual parameters
+        // clone the node structure (this will create the individual parameters)
         Node node = new Node(binaryTree, binaryTree.getRoot());
 
         internalNodeCount = binaryTree.getInternalNodeCount();

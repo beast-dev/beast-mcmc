@@ -183,7 +183,10 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             // root node
             ancestralStatesComponent.setMRCATaxonSet(partition, null);
         } else {
-            ancestralStatesComponent.setMRCATaxonSet(partition, (String) mrcaReconstructionCombo.getSelectedItem());
+            String text = (String) mrcaReconstructionCombo.getSelectedItem();
+            String taxonSetId = text.substring(5,text.length() - 1);
+
+            ancestralStatesComponent.setMRCATaxonSet(partition, taxonSetId);
         }
         ancestralStatesComponent.setCountingStates(partition, countingCheck.isSelected());
 //        ancestralStatesComponent.setDNdSRobustCounting(partition, robustCountingCheck.isSelected());
@@ -249,9 +252,12 @@ public class AncestralStatesOptionsPanel extends OptionsPanel {
             addSpanningComponent(new JLabel("Ancestral State Reconstruction:"));
 
             addComponent(ancestralReconstructionCheck);
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+
+            FlowLayout layout = new FlowLayout(FlowLayout.LEFT);
+            layout.setHgap(0);
+            JPanel panel = new JPanel(layout);
             panel.setOpaque(false);
-            panel.setBorder(BorderFactory.createEmptyBorder());
+            panel.setBorder(BorderFactory.createEmptyBorder(0,0,0,0));
             panel.add(mrcaReconstructionCheck);
             panel.add(mrcaReconstructionCombo);
             addComponent(panel);

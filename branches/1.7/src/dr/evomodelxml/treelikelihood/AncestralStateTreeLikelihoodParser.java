@@ -84,6 +84,5 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
             new ElementRule(TreeModel.class),
             new ElementRule(SiteModel.class),
             new ElementRule(BranchRateModel.class, true),
-            new ElementRule(SubstitutionModel.class)
     };
 }

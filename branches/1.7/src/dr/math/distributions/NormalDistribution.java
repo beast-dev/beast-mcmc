@@ -186,8 +186,6 @@ public class NormalDistribution implements Distribution {
 
 
 
-
-
     /** A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
      * This implementation has discrepancies depending on the programming language and system architecture
      * In Java, returned values become zero once z reaches -37.5193 exactly on the machine tested
@@ -203,8 +201,6 @@ public class NormalDistribution implements Distribution {
      * @return cdf at x
      */
     public static double cdf(double x, double mu, double sigma, boolean log_p) {
-        boolean i_tail=false;
-        double p, cp = Double.NaN;
 
         if(Double.isNaN(x) || Double.isNaN(mu) || Double.isNaN(sigma)) {
             return Double.NaN;
@@ -218,17 +214,34 @@ public class NormalDistribution implements Distribution {
             }
             return (x < mu) ? 0.0 : 1.0;
         }
-        p = (x - mu) / sigma;
+        double p = (x - mu) / sigma;
         if(Double.isInfinite(p)) {
             return (x < mu) ? 0.0 : 1.0;
         }
-        x = p;
+        return standardCDF(p, log_p);
+    }
+
+    /** A more accurate and faster implementation of the cdf (taken from function pnorm in the R statistical language)
+     * This implementation has discrepancies depending on the programming language and system architecture
+     * In Java, returned values become zero once z reaches -37.5193 exactly on the machine tested
+     * In the other implementation, the returned value 0 at about z = -8
+     * In C, this 0 value is reached approximately z = -37.51938
+     *
+     * Will later need to be optimised for BEAST
+     *
+     * @param x     argument
+     * @param log_p is p logged
+     * @return cdf at x
+     */
+    public static double standardCDF(double x, boolean log_p) {
+        boolean i_tail=false;
         if(Double.isNaN(x)) {
             return Double.NaN;
         }
 
         double xden, xnum, temp, del, eps, xsq, y;
         int i;
+        double p = x, cp = Double.NaN;
         boolean lower, upper;
         eps = DBL_EPSILON * 0.5;
         lower = !i_tail;
@@ -446,6 +459,11 @@ public class NormalDistribution implements Distribution {
     public static double tailCDF(double x, double mu, double sigma)
     {
         return standardTail((x - mu) / sigma, true);
+    }
+
+    public static double tailCDF(double x, double mu, double sigma, boolean isUpper)
+    {
+        return standardTail((x - mu) / sigma, isUpper);
     }
 
 

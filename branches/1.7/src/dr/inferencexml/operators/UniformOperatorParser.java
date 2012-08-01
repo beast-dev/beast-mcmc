@@ -22,7 +22,7 @@ public class UniformOperatorParser extends AbstractXMLObjectParser {
         Parameter parameter = (Parameter) xo.getChild(Parameter.class);
 
         if( parameter.getDimension() == 0 ) {
-             throw new XMLParseException("paraeter with 0 dimention.");
+             throw new XMLParseException("parameter with 0 dimension.");
         }
 
         Double lower = null;

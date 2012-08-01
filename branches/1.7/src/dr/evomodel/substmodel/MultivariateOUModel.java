@@ -360,6 +360,10 @@ public class MultivariateOUModel extends GeneralizedLinearModel implements Stati
         return getId() + dim;
     }
 
+    public void setDimensionNames(String[] names) {
+        // do nothing
+    }
+
     public int getDimension() {
         return W.length;
     }

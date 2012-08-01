@@ -1,7 +1,7 @@
 /*
  * ArbitraryBranchRates.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,7 +30,6 @@ import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
 import dr.evomodelxml.branchratemodel.ArbitraryBranchRatesParser;
-import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -53,7 +52,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
 
         super(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES);
 
-        for(int i = 0; i < rateParameter.getDimension(); i++) {
+        for (int i = 0; i < rateParameter.getDimension(); i++) {
             rateParameter.setValue(i, 1.0);
         }
         //Force the boundaries of rate
@@ -71,12 +70,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     public void setBranchRate(Tree tree, NodeRef node, double value) {
         rates.setNodeValue(tree, node, value);
     }
-   
+
     public double getBranchRate(final Tree tree, final NodeRef node) {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        final double rate = rates.getNodeValue(tree,node);
+        final double rate = rates.getNodeValue(tree, node);
         if (reciprocal) {
             return 1.0 / rate;
         }

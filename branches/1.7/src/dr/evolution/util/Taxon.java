@@ -41,28 +41,40 @@ import java.util.Iterator;
  */
 public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
 
-	public Taxon(String id) {
-		setId(id);
-	}
+    public Taxon(String id) {
+        setId(id);
+    }
 
-	/**
-	 * Sets a date for this taxon.
-	 */
-	public void setDate(Date date) {
-		setAttribute("date", date);
-	}
+    /**
+     * Sets a date for this taxon.
+     */
+    public void setDate(Date date) {
+        setAttribute("date", date);
+        addDateToTimeScale(date);
+    }
 
-	/**
-	 * @return a date for this taxon.
-	 */
-	public Date getDate() {
-		Object date = getAttribute("date");
-		if (date != null && date instanceof Date) {
-			return (Date)date;
-		}
-		return null;
-	}
+    /**
+     * @return a date for this taxon.
+     */
+    public Date getDate() {
+        Object date = getAttribute("date");
+        if (date != null && date instanceof Date) {
+            return (Date)date;
+        }
+        return null;
+    }
 
+    /**
+     * @return a height for this taxon.
+     * This gets the height from the globally defined timescale of dates for all Taxa.
+     */
+    public double getHeight() {
+        Object date = getAttribute("date");
+        if (date != null && date instanceof Date) {
+            return getHeightFromDate((Date)date);
+        }
+        return 0.0;
+    }
 
     /**
      * Sets a location for this taxon.
@@ -85,70 +97,70 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
     // Attributable IMPLEMENTATION
     // **************************************************************
 
-	private Attributable.AttributeHelper attributes = null;
+    private Attributable.AttributeHelper attributes = null;
 
-	/**
-	 * Sets an named attribute for this object.
-	 * @param name the name of the attribute.
-	 * @param value the new value of the attribute.
-	 */
-	public void setAttribute(String name, Object value) {
-		if (attributes == null)
-			attributes = new Attributable.AttributeHelper();
-		attributes.setAttribute(name, value);
-	}
+    /**
+     * Sets an named attribute for this object.
+     * @param name the name of the attribute.
+     * @param value the new value of the attribute.
+     */
+    public void setAttribute(String name, Object value) {
+        if (attributes == null)
+            attributes = new Attributable.AttributeHelper();
+        attributes.setAttribute(name, value);
+    }
 
-	/**
-	 * @return an object representing the named attributed for this object.
-	 * @param name the name of the attribute of interest.
-	 */
-	public Object getAttribute(String name) {
-		if (attributes == null)
-			return null;
-		else
-			return attributes.getAttribute(name);
-	}
+    /**
+     * @return an object representing the named attributed for this object.
+     * @param name the name of the attribute of interest.
+     */
+    public Object getAttribute(String name) {
+        if (attributes == null)
+            return null;
+        else
+            return attributes.getAttribute(name);
+    }
 
-	/**
-	 * if attributes == null, return false
-	 * @param name attribute name
-	 * @return boolean whether contains attribute by given its name
-	 */
-	public boolean containsAttribute(String name) {
+    /**
+     * if attributes == null, return false
+     * @param name attribute name
+     * @return boolean whether contains attribute by given its name
+     */
+    public boolean containsAttribute(String name) {
         return attributes != null && attributes.containsAttribute(name);
-	}
+    }
 
-	/**
-	 * @return an iterator of the attributes that this object has.
-	 */
-	public Iterator<String> getAttributeNames() {
-		if (attributes == null)
-			return new ArrayList<String>().iterator();
-		else
-			return attributes.getAttributeNames();
-	}
+    /**
+     * @return an iterator of the attributes that this object has.
+     */
+    public Iterator<String> getAttributeNames() {
+        if (attributes == null)
+            return new ArrayList<String>().iterator();
+        else
+            return attributes.getAttributeNames();
+    }
 
     // **************************************************************
     // Identifiable IMPLEMENTATION
     // **************************************************************
 
-	protected String id = null;
+    protected String id = null;
 
-	/**
-	 * @return the id.
-	 */
-	public String getId() {
-		return id;
-	}
+    /**
+     * @return the id.
+     */
+    public String getId() {
+        return id;
+    }
 
-	/**
-	 * Sets the id.
-	 */
-	public void setId(String id) {
-		this.id = id;
-	}
+    /**
+     * Sets the id.
+     */
+    public void setId(String id) {
+        this.id = id;
+    }
 
-	public String toString() { return getId(); }
+    public String toString() { return getId(); }
 
     @Override
     public boolean equals(final Object o) {
@@ -156,12 +168,40 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
     }
 
     // **************************************************************
-	// Comparable IMPLEMENTATION
-	// **************************************************************
+    // Comparable IMPLEMENTATION
+    // **************************************************************
 
-	public int compareTo(Taxon o) {
-		return getId().compareTo(o.getId());
-	}
+    public int compareTo(Taxon o) {
+        return getId().compareTo(o.getId());
+    }
 
+
+    private static void addDateToTimeScale(Date date) {
+        if (date != null && (mostRecentDate == null || date.after(mostRecentDate))) {
+            mostRecentDate = date;
+            timeScale = null;
+        }
+    }
+
+    public static double getHeightFromDate(Date date) {
+
+        if (timeScale == null) {
+            Date mostRecent = mostRecentDate;
+            if (mostRecent == null) {
+                mostRecent = dr.evolution.util.Date.createRelativeAge(0.0, date.getUnits());
+            }
+
+            timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
+        }
+
+        return timeScale.convertTime(date.getTimeValue(), date);
+    }
+
+    public static Date getMostRecentDate() {
+        return mostRecentDate;
+    }
+
+    private static dr.evolution.util.Date mostRecentDate = null;
+    private static TimeScale timeScale = null;
 }
 

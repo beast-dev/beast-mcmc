@@ -225,7 +225,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
-                frame.setupStarBEAST(useStarBEASTCheck.isSelected());
+                if (frame.setupStarBEAST(useStarBEASTCheck.isSelected()) == false) {
+                    useStarBEASTCheck.setSelected(false); // go back to unchecked
+                }
 
                 dataTableModel.fireTableDataChanged();
             }

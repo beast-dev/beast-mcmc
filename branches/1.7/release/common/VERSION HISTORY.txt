@@ -26,10 +26,12 @@ Version 1.7.3 released XXX XXX 2012
 
     New Features:
         Added 'precision' attribute in Date element to allow easy sampling of tip date when the date of sampling is
-        known to a limited precision (see testTipDatePrecision.xml in examples/testXML folder).
+            known to a limited precision (see testTipDatePrecision.xml in examples/testXML folder).
+        Restored non-BEAGLE AncestralTreeLikelihood availability - should be considered deprecated.
 
 	Bug Fixes:
        Issue 635:	*BEAST 'species' attributes are being created outside the <taxon> elements
+       Issue 640:	GUI error when canceling species-tree analysis
        Issue 642:	Inappropriate default values provided for microsatellite model parameters in BEAUti
        Issue 643:	Unable to specify a MRCA node to reconstruct ancestral states
 

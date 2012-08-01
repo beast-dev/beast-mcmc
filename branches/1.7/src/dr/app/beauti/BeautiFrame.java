@@ -736,12 +736,7 @@ public class BeautiFrame extends DocumentFrame {
             JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
-                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-                    if (tabbedPane.getTitleAt(i).equals(ge.getSwitchToPanel())) {
-                        tabbedPane.setSelectedIndex(i);
-                        break;
-                    }
-                }
+                switchToPanel(ge.getSwitchToPanel());
             }
             return false;
         }
@@ -790,6 +785,15 @@ public class BeautiFrame extends DocumentFrame {
 
         clearDirty();
         return true;
+    }
+
+    public void switchToPanel(String panelName) {
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            if (tabbedPane.getTitleAt(i).equals(panelName)) {
+                tabbedPane.setSelectedIndex(i);
+                break;
+            }
+        }
     }
 
     public JComponent getExportableComponent() {

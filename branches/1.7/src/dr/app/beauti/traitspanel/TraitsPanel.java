@@ -812,6 +812,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 // with
                 dataPanel.createFromTraits(traits);
             }
+            frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
         }
     }
 

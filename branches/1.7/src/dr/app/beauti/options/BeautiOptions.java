@@ -26,6 +26,7 @@
 package dr.app.beauti.options;
 
 import dr.app.beauti.components.ComponentFactory;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.components.continuous.ContinuousComponentOptions;
 import dr.app.beauti.components.discrete.DiscreteTraitsComponentOptions;
 import dr.app.beauti.mcmcpanel.MCMCPanel;
@@ -996,6 +997,10 @@ public class BeautiOptions extends ModelOptions {
 
         DiscreteTraitsComponentOptions comp2 = (DiscreteTraitsComponentOptions) getComponentOptions(DiscreteTraitsComponentOptions.class);
         comp2.createParameters(this);
+
+        AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
+        comp3.setReconstructAtNodes(partition, true);
+        comp3.setReconstructAtMRCA(partition, true);
 
         return selRow; // only for trait panel
     }

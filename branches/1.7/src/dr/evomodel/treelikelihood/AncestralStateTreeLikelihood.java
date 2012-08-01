@@ -51,7 +51,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         super(patternList, treeModel, siteModel, branchRateModel, null, useAmbiguities, false, storePartials,
                 false, forceRescaling);
         this.dataType = dataType;
-        this.tag = tag;
 
         reconstructedStates = new int[treeModel.getNodeCount()][patternCount];
         storedReconstructedStates = new int[treeModel.getNodeCount()][patternCount];
@@ -59,7 +58,7 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
         this.useMAP = useMAP;
         this.returnMarginalLogLikelihood = returnML;
       
-        treeTraits.addTrait(STATES_KEY, new TreeTrait.IA() {
+        treeTraits.addTrait(new TreeTrait.IA() {
             public String getTraitName() {
                 return tag;
             }
@@ -345,7 +344,6 @@ public class AncestralStateTreeLikelihood extends TreeLikelihood implements Tree
     private int[][] reconstructedStates;
     private int[][] storedReconstructedStates;
 
-    private String tag;
     private boolean areStatesRedrawn = false;
     private boolean storedAreStatesRedrawn = false;
 

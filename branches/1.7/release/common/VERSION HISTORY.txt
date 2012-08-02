@@ -30,6 +30,7 @@ Version 1.7.3 released XXX XXX 2012
 
 	Bug Fixes:
        Issue 635:	*BEAST 'species' attributes are being created outside the <taxon> elements
+       Issue 633:	Multivariate continuous trait analyses doesn't respect ancestral state reconstruction choices
        Issue 640:	GUI error when canceling species-tree analysis
        Issue 642:	Inappropriate default values provided for microsatellite model parameters in BEAUti
        Issue 643:	Unable to specify a MRCA node to reconstruct ancestral states

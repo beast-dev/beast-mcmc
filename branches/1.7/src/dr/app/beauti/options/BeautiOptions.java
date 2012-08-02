@@ -1000,7 +1000,7 @@ public class BeautiOptions extends ModelOptions {
 
         AncestralStatesComponentOptions comp3 = (AncestralStatesComponentOptions) getComponentOptions(AncestralStatesComponentOptions.class);
         comp3.setReconstructAtNodes(partition, true);
-        comp3.setReconstructAtMRCA(partition, true);
+        comp3.setReconstructAtMRCA(partition, false);
 
         return selRow; // only for trait panel
     }

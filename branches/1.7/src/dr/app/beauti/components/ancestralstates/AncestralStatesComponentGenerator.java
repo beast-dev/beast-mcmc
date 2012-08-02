@@ -4,6 +4,7 @@ import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
+import dr.evolution.datatype.ContinuousDataType;
 import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
 
@@ -236,18 +237,31 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
                     String prefix = cpCount == 1 ? partition.getPrefix() : partition.getPrefix() + "CP" + i + ".";
 
+                    String traitName = prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
+                    if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                        traitName = partition.getName();
+                    }
+
                     writer.writeOpenTag("trait",
                             new Attribute[] {
-                                    new Attribute.Default<String>("name", prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                                    new Attribute.Default<String>("name", traitName),
                                     new Attribute.Default<String>("tag", nameString)
                             }
                     );
-                    writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+                    if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                        writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+                    } else {
+                        writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+                    }
                     writer.writeCloseTag("trait");
                 }
             }
 
             if (component.isCountingStates(partition)) {
+                if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                    throw new RuntimeException("Can't do counting on Continuous data partition");
+                }
+
                 int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
                 for (int i = 1; i <=cpCount; ++i) {
                     String prefix = cpCount == 1 ? partition.getPrefix() :
@@ -296,14 +310,24 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
             String nameString = cpCount == 1 ? partition.getName() : partition.getName() + "." + "CP" + i;
 
+            String traitName = prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG;
+            if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                traitName = partition.getName();
+            }
+
             writer.writeOpenTag("ancestralTrait",
                     new Attribute[]{
                             new Attribute.Default<String>("name", nameString),
-                            new Attribute.Default<String>("traitName", prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG)
+                            new Attribute.Default<String>("traitName", traitName)
                     }
             );
             writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
-            writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+
+            if (partition.getDataType() == ContinuousDataType.INSTANCE)  {
+                writer.writeIDref("multivariateTraitLikelihood", prefix + "traitLikelihood");
+            } else {
+                writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
+            }
 
             if (mrcaId != null) {
                 writer.writeOpenTag("mrca");

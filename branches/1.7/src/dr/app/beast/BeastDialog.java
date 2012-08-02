@@ -1,7 +1,7 @@
 /*
- * TreeAnnotatorDialog.java
+ * BeastDialog.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,14 +31,14 @@ import jam.html.SimpleLinkListener;
 import jam.panels.OptionsPanel;
 
 import javax.swing.*;
-import javax.swing.border.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.io.File;
 
 
@@ -47,16 +47,16 @@ public class BeastDialog {
 
     private final OptionsPanel optionPanel;
 
-    private final WholeNumberField seedText = new WholeNumberField((long)1, Long.MAX_VALUE);
+    private final WholeNumberField seedText = new WholeNumberField((long) 1, Long.MAX_VALUE);
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
     private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
-    private final JComboBox beagleResourceCombo = new JComboBox(new Object[] { "CPU", "GPU" });
+    private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "CPU-SSE", "GPU"});
     private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions");
-    private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[] { "Double", "Single"});
-    private final JComboBox beagleScalingCombo = new JComboBox(new Object[] { "Default", "Dynamic", "Delayed", "Always", "Never"});
+    private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[]{"Double", "Single"});
+    private final JComboBox beagleScalingCombo = new JComboBox(new Object[]{"Default", "Dynamic", "Delayed", "Always", "Never"});
 
-    private final JComboBox threadsCombo = new JComboBox(new Object[] { "Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+    private final JComboBox threadsCombo = new JComboBox(new Object[]{"Automatic", 0, 1, 2, 3, 4, 5, 6, 7, 8});
 
     private File inputFile = null;
 
@@ -78,7 +78,7 @@ public class BeastDialog {
         final JButton inputFileButton = new JButton("Choose File...");
         final JTextField inputFileNameText = new JTextField("not selected", 16);
 
-        inputFileButton.addActionListener( new ActionListener() {
+        inputFileButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent ae) {
                 FileDialog dialog = new FileDialog(frame,
                         "Select target file...",
@@ -93,19 +93,19 @@ public class BeastDialog {
                 inputFile = new File(dialog.getDirectory(), dialog.getFile());
                 inputFileNameText.setText(inputFile.getName());
 
-            }});
+            }
+        });
         inputFileNameText.setEditable(false);
 
-        JPanel panel1 = new JPanel(new BorderLayout(0,0));
+        JPanel panel1 = new JPanel(new BorderLayout(0, 0));
         panel1.add(inputFileNameText, BorderLayout.CENTER);
         panel1.add(inputFileButton, BorderLayout.EAST);
         optionPanel.addComponentWithLabel("BEAST XML File: ", panel1);
 
         Color focusColor = UIManager.getColor("Focus.color");
-        Border focusBorder = BorderFactory.createMatteBorder( 2, 2, 2, 2, focusColor );
-        new FileDrop( null, inputFileNameText, focusBorder, new FileDrop.Listener()
-        {   public void filesDropped( java.io.File[] files )
-            {
+        Border focusBorder = BorderFactory.createMatteBorder(2, 2, 2, 2, focusColor);
+        new FileDrop(null, inputFileNameText, focusBorder, new FileDrop.Listener() {
+            public void filesDropped(java.io.File[] files) {
                 inputFile = files[0];
                 inputFileNameText.setText(inputFile.getName());
             }   // end filesDropped
@@ -125,11 +125,11 @@ public class BeastDialog {
         optionPanel.addSpanningComponent(beagleCheckBox);
         beagleCheckBox.setSelected(true);
 
-        final OptionsPanel optionPanel1 = new OptionsPanel(0,12);
+        final OptionsPanel optionPanel1 = new OptionsPanel(0, 12);
 //        optionPanel1.setBorder(BorderFactory.createEmptyBorder());
         optionPanel1.setBorder(new TitledBorder(""));
 
-        OptionsPanel optionPanel2 = new OptionsPanel(0,12);
+        OptionsPanel optionPanel2 = new OptionsPanel(0, 12);
         optionPanel2.setBorder(BorderFactory.createEmptyBorder());
         final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
 //        optionPanel2.addComponent(beagleSSECheckBox);
@@ -177,7 +177,7 @@ public class BeastDialog {
                 JOptionPane.PLAIN_MESSAGE,
                 JOptionPane.OK_CANCEL_OPTION,
                 null,
-                new String[] { "Run", "Quit" },
+                new String[]{"Run", "Quit"},
                 "Run");
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
 
@@ -209,12 +209,13 @@ public class BeastDialog {
     }
 
     public boolean preferBeagleCPU() {
-        return beagleResourceCombo.getSelectedItem().equals("CPU");
+        return (beagleResourceCombo.getSelectedItem().equals("CPU")) ||
+                (beagleResourceCombo.getSelectedItem().equals("CPU-SSE"));
     }
 
     public boolean preferBeagleSSE() {
-        // for the moment we will always use SSE if CPU is selected...
-        return preferBeagleCPU();
+        // SSE is currently causing a bug in some phylogeographic models, so setting as false until bug is fixed
+        return beagleResourceCombo.getSelectedItem().equals("CPU-SSE");
     }
 
     public boolean preferBeagleSingle() {
@@ -226,7 +227,7 @@ public class BeastDialog {
     }
 
     public String scalingScheme() {
-        return ((String)beagleScalingCombo.getSelectedItem()).toLowerCase();
+        return ((String) beagleScalingCombo.getSelectedItem()).toLowerCase();
     }
 
     public boolean showBeagleInfo() {
@@ -238,7 +239,7 @@ public class BeastDialog {
             // Automatic
             return -1;
         }
-        return (Integer)threadsCombo.getSelectedItem();
+        return (Integer) threadsCombo.getSelectedItem();
     }
 
     public File getInputFile() {

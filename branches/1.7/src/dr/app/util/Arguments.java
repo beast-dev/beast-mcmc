@@ -36,9 +36,15 @@ public class Arguments {
 		 *
 		 */
 		private static final long serialVersionUID = -3229759954341228233L;
-		public ArgumentException() { super(); }
-		public ArgumentException(String message) { super(message); }
+
+        public ArgumentException() {
+            super();
 	}
+
+        public ArgumentException(String message) {
+            super(message);
+        }
+    }
 
 	public static class Option {
 
@@ -54,10 +60,9 @@ public class Arguments {
 
 	public static class StringOption extends Option {
         /**
-         *
-         * @param label  Option name:
-         * @param tag    Descriptive name of option argument.
-         * Example - tag "file-name" will show '-save <file-name>' in the usage.
+         * @param label       Option name:
+         * @param tag         Descriptive name of option argument.
+         *                    Example - tag "file-name" will show '-save <file-name>' in the usage.
          * @param description
          */
 		public StringOption(String label, String tag, String description) {
@@ -70,6 +75,7 @@ public class Arguments {
 			this.options = options;
 			this.caseSensitive = caseSensitive;
 		}
+
 		String[] options = null;
 		String tag = null;
 		boolean caseSensitive = false;
@@ -111,7 +117,8 @@ public class Arguments {
 
 		public IntegerArrayOption(String label, int count, int minValue, int maxValue, String description) {
 			super(label, minValue, maxValue, description);
-			this.count = count;		}
+            this.count = count;
+        }
 
 		int count;
 
@@ -193,7 +200,7 @@ public class Arguments {
 	/**
 	 * Parse a list of arguments ready for accessing
 	 */
-	public void parseArguments(String[] arguments) throws ArgumentException {
+    public int parseArguments(String[] arguments) throws ArgumentException {
 
 		int[] optionIndex = new int[arguments.length];
 		for (int i = 0; i < optionIndex.length; i++) {
@@ -217,7 +224,7 @@ public class Arguments {
 
 				if (option instanceof IntegerArrayOption) {
 
-					IntegerArrayOption o = (IntegerArrayOption)option;
+                    IntegerArrayOption o = (IntegerArrayOption) option;
 					o.values = new int[o.count];
 					int k = index;
 					int j = 0;
@@ -261,7 +268,7 @@ public class Arguments {
 					}
 				} else if (option instanceof IntegerOption) {
 
-					IntegerOption o = (IntegerOption)option;
+                    IntegerOption o = (IntegerOption) option;
 					if (arg.length() == 0) {
 						int k = index + 1;
 						if (k >= arguments.length) {
@@ -288,7 +295,7 @@ public class Arguments {
 					}
                 } else if (option instanceof LongOption) {
 
-                    LongOption o = (LongOption)option;
+                    LongOption o = (LongOption) option;
                     if (arg.length() == 0) {
                         int k = index + 1;
                         if (k >= arguments.length) {
@@ -317,14 +324,14 @@ public class Arguments {
                     // I fixed only the real case to handle a variable sized array
                     // I don't have the time to figure out the right way, so I duplicated some code so
                     // that I do not break code by mistake
-					RealArrayOption o = (RealArrayOption)option;
+                    RealArrayOption o = (RealArrayOption) option;
                     if (o.count >= 0) {
                         final int count = o.count;
                         o.values = new double[count];
                         int k = index;
                         int j = 0;
 
-                        while (j < count ) {
+                        while (j < count) {
                             if (arg.length() > 0) {
                                 StringTokenizer tokenizer = new StringTokenizer(arg, ",\t ");
                                 while (tokenizer.hasMoreTokens()) {
@@ -347,7 +354,7 @@ public class Arguments {
 
                             k++;
 
-                            if (j < count ) {
+                            if (j < count) {
                                 if (k >= arguments.length) {
                                     throw new ArgumentException("Argument, " + arguments[index] +
                                             " is missing one or more values: expecting " + count + " integers");
@@ -390,11 +397,11 @@ public class Arguments {
                             }
                         }
                         o.values = new double[j];
-                        System.arraycopy(values, 0, o.values,  0, j);
+                        System.arraycopy(values, 0, o.values, 0, j);
                     }
 				} else if (option instanceof RealOption) {
 
-					RealOption o = (RealOption)option;
+                    RealOption o = (RealOption) option;
 					if (arg.length() == 0) {
 						int k = index + 1;
 						if (k >= arguments.length) {
@@ -421,7 +428,7 @@ public class Arguments {
 					}
 				} else if (option instanceof StringOption) {
 
-					StringOption o = (StringOption)option;
+                    StringOption o = (StringOption) option;
 					if (arg.length() == 0) {
 						int k = index + 1;
 						if (k >= arguments.length) {
@@ -446,7 +453,7 @@ public class Arguments {
                                 break;
                             }
                         }
-						if (!found)	 {
+                        if (!found) {
 							throw new ArgumentException("Argument, " + arguments[index] +
 								" has a bad string value: " + arg);
 						}
@@ -472,7 +479,7 @@ public class Arguments {
 				throw new ArgumentException("Unrecognized argument: " + arguments[i]);
 			}
 		}
-
+        return n;
 	}
 
 	private int findArgument(String[] arguments, String label) {

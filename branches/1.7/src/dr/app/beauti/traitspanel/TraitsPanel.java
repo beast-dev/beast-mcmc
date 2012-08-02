@@ -494,10 +494,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             boolean done = frame.doImportTraits();
             if (done) {
                 if (isSpeciesTrait) {
-                // check that we did indeed import a 'species' trait
+                    // check that we did indeed import a 'species' trait
                     if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
                         JOptionPane.showMessageDialog(this,
-                                        "The imported trait file didn't contain a trait\n" +
+                                "The imported trait file didn't contain a trait\n" +
                                         "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
                                         "Please edit it or select a different file.",
                                 "Reserved trait name",
@@ -796,6 +796,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
+            boolean success = false;
             if (discreteCount > 0) {
                 if (continuousCount > 0)  {
                     JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
@@ -806,13 +807,17 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 for (TraitData trait : traits) {
                     java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
                     singleTrait.add(trait);
-                    dataPanel.createFromTraits(singleTrait);
+                    if (dataPanel.createFromTraits(singleTrait)) {
+                        success = true;
+                    }
                 }
             } else {
                 // with
-                dataPanel.createFromTraits(traits);
+                success = dataPanel.createFromTraits(traits);
             }
-            frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
+            if (success) {
+                frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
+            }
         }
     }
 

@@ -43,6 +43,7 @@ import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MicrosatelliteSamplerTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
@@ -113,12 +114,14 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeComment("Likelihood for tree given sequence data");
 
-        String idString;
+        String prefix;
         if (num > 0) {
-            idString = substModel.getPrefix(num) + partition.getPrefix() + id;
+            prefix = substModel.getPrefix(num) + partition.getPrefix();
         } else {
-            idString = partition.getPrefix() + id;
+            prefix = partition.getPrefix();
         }
+
+          String idString = prefix + id;
 
         Attribute[] attributes;
         if (tag.equals(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD)) {
@@ -126,12 +129,15 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, idString),
                     new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
                     new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
-                    new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1)
+                    new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1),
+                    new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
             };
         } else {
             attributes = new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, idString),
-                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
+                    new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+
             };
         }
 

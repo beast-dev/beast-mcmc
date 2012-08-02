@@ -4,6 +4,7 @@ import dr.app.beauti.generator.BaseComponentGenerator;
 import dr.app.beauti.options.AbstractPartitionData;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.util.XMLWriter;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.util.Attribute;
 
 /**
@@ -117,7 +118,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                         new Attribute.Default<String>("value", matrix.toString()) },
                 true);
 
-  }
+    }
 
     protected String getCommentLabel() {
         return "Ancestral state reconstruction";
@@ -231,17 +232,17 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.reconstructAtNodes(partition)) {
                 int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
                 for (int i = 1; i <=cpCount; ++i) {
-                    String tagString = cpCount == 1 ? partition.getPrefix() + "state" :
-                            partition.getPrefix() + "CP" + i + ".state";
-                    String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
-                            partition.getPrefix() + "CP" + i + ".treeLikelihood";
+                    String nameString = cpCount == 1 ? partition.getName() : partition.getName() + "." + "CP" + i;
+
+                    String prefix = cpCount == 1 ? partition.getPrefix() : partition.getPrefix() + "CP" + i + ".";
+
                     writer.writeOpenTag("trait",
                             new Attribute[] {
-                                    new Attribute.Default<String>("name", "states"),
-                                    new Attribute.Default<String>("tag", tagString)
+                                    new Attribute.Default<String>("name", prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+                                    new Attribute.Default<String>("tag", nameString)
                             }
                     );
-                    writer.writeIDref("ancestralTreeLikelihood", likeString);
+                    writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
                     writer.writeCloseTag("trait");
                 }
             }
@@ -249,15 +250,16 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
             if (component.isCountingStates(partition)) {
                 int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
                 for (int i = 1; i <=cpCount; ++i) {
-                    String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
-                            partition.getPrefix() + "CP" + i + ".treeLikelihood";
+                    String prefix = cpCount == 1 ? partition.getPrefix() :
+                            partition.getPrefix() + "CP" + i + ".";
+
                     writer.writeOpenTag("trait",
                             new Attribute[] {
-                                    new Attribute.Default<String>("name", partition.getPrefix() + "count"),
-                                    new Attribute.Default<String>("tag", partition.getPrefix() + "count")
+                                    new Attribute.Default<String>("name", prefix + "count"),
+                                    new Attribute.Default<String>("tag", prefix + "count")
                             }
                     );
-                    writer.writeIDref("ancestralTreeLikelihood", likeString);
+                    writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
                     writer.writeCloseTag("trait");
                 }
             }
@@ -265,7 +267,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
     }
 
     private void writeAncestralStateLoggers(XMLWriter writer,
-                                           AncestralStatesComponentOptions component) {
+                                            AncestralStatesComponentOptions component) {
 
         for (AbstractPartitionData partition : options.getDataPartitions()) {
 
@@ -289,16 +291,19 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
 
         int cpCount = partition.getPartitionSubstitutionModel().getCodonPartitionCount();
         for (int i = 1; i <=cpCount; ++i) {
-            String likeString = cpCount == 1 ? partition.getPrefix() + "treeLikelihood" :
-                    partition.getPrefix() + "CP" + i + ".treeLikelihood";
+            String prefix = cpCount == 1 ? partition.getPrefix() :
+                    partition.getPrefix() + "CP" + i + ".";
 
-            String nameString = cpCount == 1 ? partition.getName() :
-                    "CP" + i + "." + partition.getName();
+            String nameString = cpCount == 1 ? partition.getName() : partition.getName() + "." + "CP" + i;
 
             writer.writeOpenTag("ancestralTrait",
-                    new Attribute[]{new Attribute.Default<String>("name", nameString)});
+                    new Attribute[]{
+                            new Attribute.Default<String>("name", nameString),
+                            new Attribute.Default<String>("traitName", prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG)
+                    }
+            );
             writer.writeIDref("treeModel", partition.getPartitionTreeModel().getPrefix() + "treeModel");
-            writer.writeIDref("ancestralTreeLikelihood", likeString);
+            writer.writeIDref("ancestralTreeLikelihood", prefix + "treeLikelihood");
 
             if (mrcaId != null) {
                 writer.writeOpenTag("mrca");
@@ -324,7 +329,7 @@ public class AncestralStatesComponentGenerator extends BaseComponentGenerator {
                 new Attribute.Default<String>("fileName", partition.getName() + DNDS_LOG_SUFFIX) });
 
         writer.writeOpenTag("dNdSLogger", new Attribute[]{new Attribute.Default<String>("id",
-                                "dNdS")});
+                "dNdS")});
         writer.writeIDref("treeModel", "treeModel");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting1");
         writer.writeIDref("codonPartitionedRobustCounting", prefix + "robustCounting2");

@@ -18,7 +18,7 @@ public abstract class BaseComponentGenerator extends Generator implements Compon
         writer.writeComment("START " + getCommentLabel());
         generate(point, item, writer);
         writer.writeComment("END " + getCommentLabel());
-        writer.writeText("");
+        writer.writeBlankLine();
     }
 
     protected abstract void generate(final InsertionPoint point, final Object item, final XMLWriter writer);

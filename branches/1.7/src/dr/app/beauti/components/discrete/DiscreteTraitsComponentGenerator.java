@@ -81,7 +81,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_PARAMETERS:
             case IN_FILE_LOG_LIKELIHOODS:
             case AFTER_FILE_LOG:
-            case IN_TREES_LOG:
+//            case IN_TREES_LOG:
                 return true;
             case IN_MCMC_PRIOR:
                 return hasBSSVS();
@@ -126,8 +126,9 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case AFTER_FILE_LOG:
                 writeDiscreteTraitFileLoggers(writer);
 
-            case IN_TREES_LOG:
-                writeTreeLogEntries((PartitionTreeModel)item, writer);
+            // This was for ancestral state writing which is now handled by the ancestral state component
+//            case IN_TREES_LOG:
+//                writeTreeLogEntries((PartitionTreeModel)item, writer);
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -142,17 +143,21 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeDiscreteTraitPatterns(XMLWriter writer,
                                             DiscreteTraitsComponentOptions component) {
 
+        boolean first = true;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
+            if (!first) {
+                writer.writeBlankLine();
+            } else {
+                first = false;
+            }
             writeGeneralDataType(model, writer);
-            writer.writeBlankLine();
         }
 
         // now create an attribute pattern for each trait that uses it
         for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partition.getTraits() != null) {
+                writer.writeBlankLine();
                 writeAttributePatterns(partition, writer);
-                writer.writeText("");
-
             }
         }
 
@@ -229,8 +234,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-            writer.writeBlankLine();
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
@@ -250,8 +253,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-            writer.writeBlankLine();
         } else {
 
         }
@@ -308,7 +309,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 //        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
-        writer.writeBlankLine();
     }
 
     private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
@@ -333,7 +333,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }
-
     }
 
     private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
@@ -415,7 +414,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
 
         writer.writeCloseTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD);
-        writer.writeBlankLine();
     }
 
     private void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
@@ -497,15 +495,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
-        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            if (partitionData.getPartitionTreeModel() == treeModel) {
-                String prefix = partitionData.getName() + ".";
-                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
-            }
-        }
-    }
+    // This was for ancestral state writing which is now handled by the ancestral state component
+//    private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
+//        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
+//            if (partitionData.getPartitionTreeModel() == treeModel) {
+//                String prefix = partitionData.getName() + ".";
+//                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+//                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+//            }
+//        }
+//    }
 
 
 }

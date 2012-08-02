@@ -233,6 +233,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     preferenceFlags |= BeagleFlag.PROCESSOR_CPU.getMask();
             }
 
+            if (BeagleFlag.VECTOR_SSE.isSet(preferenceFlags) && stateCount != 4) {
+                // @todo SSE doesn't seem to work for larger state spaces so for now we override the
+                // SSE option.
+                preferenceFlags &= ~BeagleFlag.VECTOR_SSE.getMask();
+                preferenceFlags |= BeagleFlag.VECTOR_NONE.getMask();
+
+                if (stateCount > 4 && this.rescalingScheme == PartialsRescalingScheme.DYNAMIC) {
+                    this.rescalingScheme = PartialsRescalingScheme.DELAYED;
+                }
+            }
+
             if (branchSubstitutionModel.canReturnComplexDiagonalization()) {
                 requirementFlags |= BeagleFlag.EIGEN_COMPLEX.getMask();
             }

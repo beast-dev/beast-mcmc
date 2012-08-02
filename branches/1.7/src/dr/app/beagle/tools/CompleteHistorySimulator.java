@@ -5,6 +5,7 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
+import dr.evolution.datatype.Nucleotides;
 import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -68,6 +69,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private boolean branchSpecificLambda = false;
     private Parameter branchVariableParameter = null;
     private Parameter branchPossibleValuesParameter = null;
+	private DataType dataType;
 
     protected List<double[]> registers;
     protected List<String> jumpTags;
@@ -80,6 +82,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     private boolean saveAlignment = false;
     private Map<Integer,Sequence> alignmentTraitList;
+
+    private boolean alignmentOnly = false;
 
     /**
      * Constructor
@@ -103,12 +107,20 @@ public class CompleteHistorySimulator extends SimpleAlignment
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
                                     Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
+
         this.tree = tree;
         this.siteModel = siteModel;
         this.branchRateModel = branchRateModel;
         this.nReplications = nReplications;
         stateCount = this.siteModel.getSubstitutionModel().getDataType().getStateCount();
         categoryCount = this.siteModel.getCategoryCount();
+
+        // Codon models give exception when put inside report and when count statistics are done on them
+		dataType = siteModel.getSubstitutionModel().getDataType();
+//		if (dataType instanceof Codons && !alignmentOnly) {
+//			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
+//							+ "You can supress this by setting alignmentOnly to true.");
+//		}
 
         this.sumAcrossSites = sumAcrossSites;
 
@@ -158,7 +170,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
      */
     Sequence intArray2Sequence(int[] seq, NodeRef node) {
         String sSeq = "";
-        DataType dataType = siteModel.getSubstitutionModel().getDataType();
+//        DataType dataType = siteModel.getSubstitutionModel().getDataType();
         for (int i = 0; i < nReplications; i++) {
             if (dataType instanceof Codons) {
                 String s = dataType.getTriplet(seq[i]);
@@ -290,21 +302,39 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private NumberFormat format;
 
     public String toString() {
+
         StringBuffer sb = new StringBuffer();
-        //alignment output
+
+		if (alignmentOnly) {
+
+			this.setReportCountStatistics(false);
+			sb.append(super.toString());
+			sb.append("\n");
+
+		} else {
+
+			// alignment output
         sb.append("alignment\n");
         sb.append(super.toString());
         sb.append("\n");
-        //tree output
+			// tree output
         sb.append("tree\n");
-        Tree.Utils.newick(tree, tree.getRoot(), true, Tree.BranchLengthType.LENGTHS_AS_TIME,
-                format, null,
-                (nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[]{this} : null),
+			Tree.Utils.newick(tree,
+							tree.getRoot(),
+							true,
+							Tree.BranchLengthType.LENGTHS_AS_TIME,
+							format,
+							null,
+							(nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[] { this }
+									: null),
                 idMap,
                 sb);
         sb.append("\n");
-        return sb.toString();
+
     }
+
+		return sb.toString();
+	}// END: toString
 
     /**
      * perform the actual sequence generation
@@ -419,4 +449,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
         return StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, branchLength,
                 lambda, stateCount);
     }
+
+    public void setAlignmentOnly() {
+    	alignmentOnly = true;
 }
+
+}//END: class

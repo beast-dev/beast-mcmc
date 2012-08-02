@@ -46,13 +46,26 @@ public class StateChange {
     // the state associated with this time
     private int state;
 
+    private int previousState;
+
     public StateChange(StateChange change) {
         this(change.time, change.state);
+    }
+
+    public StateChange(double time, int state, int previousState) {
+        this.time = time;
+        this.state = state;
+        this.previousState = previousState;
     }
 
     public StateChange(double time, int state) {
         this.time = time;
         this.state = state;
+        this.previousState = -1;
+    }
+
+    public StateChange clone() {
+        return new StateChange(time, state, previousState);
     }
 
     /**
@@ -67,6 +80,14 @@ public class StateChange {
      */
     public final int getState() {
         return state;
+    }
+
+    public final int getPreviousState() {
+        return previousState;
+    }
+
+    public final void setPreviousState(int state) {
+        this.previousState = state;
     }
 
     /**

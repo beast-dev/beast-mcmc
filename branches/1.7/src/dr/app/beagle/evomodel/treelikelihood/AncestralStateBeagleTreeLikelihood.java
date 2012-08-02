@@ -92,6 +92,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                 return Intent.NODE;
             }
 
+            public Class getTraitClass() {
+                return int[].class;
+            }
+
             public int[] getTrait(Tree tree, NodeRef node) {
                 return getStatesForNode(tree,node);
             }

@@ -1,6 +1,32 @@
+/*
+ * AncestralStateTreeLikelihoodParser.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -37,20 +63,45 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
-                                                        BranchRateModel branchRateModel,
-                                                        TipStatesModel tipStatesModel,
-                                                        boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
-                                                        Map<Set<String>, Parameter> partialsRestrictions,
-                                                        XMLObject xo) throws XMLParseException {
+	protected BeagleTreeLikelihood createTreeLikelihood(
+			PatternList patternList, //
+			TreeModel treeModel, //
+			BranchSubstitutionModel branchSubstitutionModel, //
+//			FrequencyModel freqModel,
+			GammaSiteRateModel siteRateModel, //
+			BranchRateModel branchRateModel, //
+			TipStatesModel tipStatesModel, //
+			boolean useAmbiguities, //
+			PartialsRescalingScheme scalingScheme, //
+			Map<Set<String>, //
+			Parameter> partialsRestrictions, //
+			XMLObject xo //
+	) throws XMLParseException {
 
-        SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-        if (substModel == null) {
-            substModel = siteRateModel.getSubstitutionModel();
-        }
 
-        DataType dataType = substModel.getDataType();
+//		System.err.println("XML object: " + xo.toString());
+
+		DataType dataType = null;
+		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+
+		// TODO
+		// both BSM and FM have to be specified, handle the exception
+		if(branchSubstitutionModel instanceof EpochBranchSubstitutionModel) {
+
+			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
+			dataType = freqModel.getDataType();
+
+		} else {
+
+			if (substModel == null) {
+
+				substModel = siteRateModel.getSubstitutionModel();
+
+			}
+
+			 dataType = substModel.getDataType();
+
+		}
 
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);

@@ -1,3 +1,28 @@
+/*
+ * CompleteHistoryLogger.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.utilities;
 
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
@@ -11,9 +36,10 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.util.CommonCitations;
 
+import java.awt.*;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.StringTokenizer;
 import java.util.logging.Logger;
 
 /**
@@ -40,7 +66,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     public static final String TOTAL_COUNT_NAME = "totalChangeCount";
     public static final String COMPLETE_HISTORY_NAME = "completeHistory";
 
-    public CompleteHistoryLogger(MarkovJumpsBeagleTreeLikelihood treeLikelihood) {
+    public CompleteHistoryLogger(MarkovJumpsBeagleTreeLikelihood treeLikelihood, HistoryFilter filter) {
         this.tree = treeLikelihood.getTreeModel();
         this.patternCount = treeLikelihood.getPatternCount();
 
@@ -61,6 +87,102 @@ public class CompleteHistoryLogger implements Loggable, Citable {
 
         Logger.getLogger("dr.app.beagle").info("\tConstructing a complete history logger;  please cite:\n"
                 + Citable.Utils.getCitationString(this));
+
+
+        if (filter == null) {
+            this.filter = new HistoryFilter.Default();
+        } else {
+            this.filter = filter;
+            Logger.getLogger("dr.app.beagle").info("\tWith filter: " + filter.getDescription() + "\n");
+    }
+
+
+    }
+
+    private static int parseListString(String listString, int currentOffset, List list) {
+
+        while (currentOffset < listString.length()) {
+            // Skip leading separators
+            if (listString.startsWith(",", currentOffset)) {
+                currentOffset++;
+            }
+
+            if (listString.startsWith("{", currentOffset)) {
+                // Need to make a new list
+                List newList = new ArrayList();
+                currentOffset = parseListString(listString, currentOffset + 1, newList);
+                list.add(newList);
+            } else if (listString.startsWith("}", currentOffset)) {
+                // the list is ended
+                return currentOffset + 1;
+            } else {
+                // Parse until next ',' or '}'
+                int nextComma = listString.indexOf(",", currentOffset);
+                int nextClose = listString.indexOf("}", currentOffset);
+                if (nextComma < 0) nextComma = listString.length() - 1;
+                if (nextClose < 0) nextClose = listString.length() - 1;
+                int nextOffset = Math.min(nextComma, nextClose);
+
+                list.add(listString.substring(currentOffset, nextOffset).trim());
+                currentOffset = nextOffset;
+            }
+        }
+        return currentOffset;
+    }
+
+    public static Serializable parseValue(String value) {
+        List nestedParse = new ArrayList<Object>();
+        parseListString(value, 0, nestedParse);
+        return parseValueObject(nestedParse.get(0));
+    }
+
+    private static Serializable parseValueObject(Object objValue) {
+        if (objValue instanceof List) {
+            List newObjList = (List) objValue;
+            Object[] newObjects = new Object[newObjList.size()];
+            for (int i = 0; i < newObjList.size(); ++i) {
+                newObjects[i] = parseValueObject(newObjList.get(i));
+            }
+            return newObjects;
+        }
+
+        String value = (String) objValue;
+        if (value.startsWith("#")) {
+            // I am not sure whether this is a good idea but
+            // I am going to assume that a # denotes an RGB colour
+            try {
+                return Color.decode(value.substring(1));
+            } catch (NumberFormatException nfe1) {
+                // not a colour
+            }
+        }
+
+        if (value.equalsIgnoreCase("TRUE") || value.equalsIgnoreCase("FALSE")) {
+            return Boolean.valueOf(value);
+        }
+
+        // Attempt to format the value as an integer
+        try {
+            return new Integer(value);
+        } catch (NumberFormatException nfe1) {
+            // not an integer
+        }
+
+        // Attempt to format the value as a double
+        try {
+            return new Double(value);
+        } catch (NumberFormatException nfe2) {
+            // not a double
+        }
+
+        // return the trimmed string
+        return value;
+
+    }
+
+
+    public void setFilter(HistoryFilter filter) {
+        this.filter = filter;
     }
 
     public LogColumn[] getColumns() {
@@ -95,18 +217,13 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                             double maxTime = Math.max(parentTime, childTime);
                             String trait = treeTraitHistory[anonSite].getTraitString(tree, node);
                             if (trait.compareTo("{}") != 0) {
-                                trait = trait.substring(1, trait.length() - 1);
-                                StringTokenizer st = new StringTokenizer(trait, ",");
-                                while (st.hasMoreTokens()) {
-                                    if (!empty) {
-                                        bf.append(",");
-                                    }
-                                    String event = st.nextToken();
-                                    event = event.substring(1, event.length() - 1);
-                                    StringTokenizer value = new StringTokenizer(event, ":");
-                                    String source = value.nextToken();
-                                    String dest = value.nextToken();
-                                    double thisTime = Double.parseDouble(value.nextToken());
+                                Object[] changes = (Object[]) parseValue(trait);
+                                for (int j = 0; j < changes.length; ++j) {
+
+                                    Object[] change = (Object[]) changes[j];
+                                    String source = (String) change[2];
+                                    String dest = (String) change[3];
+                                    double thisTime = (Double) change[1];
                                     if (thisTime < 0.0) {
                                         throw new RuntimeException("negative time");
                                     }
@@ -114,13 +231,22 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                         throw new RuntimeException("Invalid simulation time");
                                     }
 
+                                    // TODO Delegate to Filter(source, dest, thisTime).  If filtered then
+                                    boolean filtered = filter.filter(source, dest, thisTime);
+                                    if (filtered) {
+                                        if (!empty) {
+                                            bf.append(",");
+                                        }
                                     StateHistory.addEventToStringBuilder(bf, source, dest,
-                                            thisTime);
+                                                thisTime, anonSite + 1);
                                     count++;
                                     empty = false;
+                                    } else {
+                                        // Do nothing
                                 }
                             }
                         }
+                    }
                     }
                     bf.append("}").append(" ").append(count);
                     return bf.toString();
@@ -145,4 +271,6 @@ public class CompleteHistoryLogger implements Loggable, Citable {
     final private TreeTrait[] treeTraitHistory;
     final private TreeTrait treeTraitCount;
     final private int patternCount;
+
+    private HistoryFilter filter;
 }

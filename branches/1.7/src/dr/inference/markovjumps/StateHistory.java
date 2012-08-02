@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * A class to represent the complete state history of a continuous-time Markov chain in the
  * interval [0,T].
- *
+ * <p/>
  * This work is supported by NSF grant 0856099
  *
  * @author Marc A. Suchard
@@ -129,7 +129,7 @@ public class StateHistory {
         }
         if (times != null) { // Add last waiting time
             StateChange finalState = stateList.get(nJumps + 1);
-            times[currentState] += ( finalState.getTime() - currentTime);
+            times[currentState] += (finalState.getTime() - currentTime);
         }
     }
 
@@ -150,7 +150,7 @@ public class StateHistory {
 
     public int getEndingState() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getState();
+        return stateList.get(stateList.size() - 1).getState();
     }
 
     public double getStartingTime() {
@@ -159,7 +159,7 @@ public class StateHistory {
 
     public double getEndingTime() {
         checkFinalized(true);
-        return stateList.get(stateList.size()-1).getTime();
+        return stateList.get(stateList.size() - 1).getTime();
     }
 
     public void rescaleTimesOfEvents(double inStartTime, double inEndTime) {
@@ -215,12 +215,39 @@ public class StateHistory {
         System.err.println("Rescale history: " + stateHistory);
     }
 
-    public String toStringChanges(DataType dataType) { //}, double startTime) {
+    public StateHistory filterChanges(double[] register) {
+
+        if (getNumberOfJumps() == 0) {
+            return this;
+        }
+
+        StateChange currentState = stateList.get(0);
+        StateHistory newHistory = new StateHistory(currentState.getTime(), currentState.getState(), stateCount);
+
+        for (int i = 1; i < stateList.size() - 1; ++i) {
+            StateChange nextState = stateList.get(i);
+            if (register[currentState.getState() * stateCount + nextState.getState()] == 1) {
+                nextState = nextState.clone();
+                nextState.setPreviousState(currentState.getState());
+                newHistory.addChange(nextState);
+            }
+            currentState = nextState;
+        }
+        newHistory.addEndingState(stateList.get(stateList.size() - 1));
+        // This function can produce inconsistent histories when not all changes are reported.
+        isFiltered = true;
+        return newHistory;
+    }
+
+    public String toStringChanges(DataType dataType) {
         StringBuilder sb = new StringBuilder("{");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
-        for (int i = 1; i < stateList.size(); i++) {
+        for (int i = 1; i < stateList.size() - 1; i++) {  // TODO Code review: should this really be size() - 1?
             int nextState = stateList.get(i).getState();
+            if (isFiltered) {
+                currentState = stateList.get(i).getPreviousState();
+            }
             if (nextState != currentState) {
                 if (!firstChange) {
                     sb.append(",");
@@ -231,12 +258,17 @@ public class StateHistory {
                 currentState = nextState;
             }
         }
-        sb.append("}");
+        sb.append("}"); // Always returns an array of arrays
         return sb.toString();
     }
 
+    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time, int site) {
+        // AR changed this to match an attribute array:
+        sb.append("{").append(site).append(",").append(time).append(",").append(source).append(",").append(dest).append("}");
+    }
+
     public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
-        sb.append("[").append(source).append(":").append(dest).append(":").append(time).append("]");
+        addEventToStringBuilder(sb, source, dest, time, -1);
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,
@@ -281,8 +313,9 @@ public class StateHistory {
     }
 
 
-
     private int stateCount;
     private List<StateChange> stateList;
     private boolean finalized;
+    private boolean isFiltered = false;
+
 }

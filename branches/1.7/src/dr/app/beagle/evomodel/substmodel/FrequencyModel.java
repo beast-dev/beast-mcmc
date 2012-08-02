@@ -1,7 +1,7 @@
 /*
  * FrequencyModel.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -66,7 +66,7 @@ public class FrequencyModel extends AbstractModel {
         double sum = getSumOfFrequencies(frequencyParameter);
 
         if (Math.abs(sum - 1.0) > 1e-8) {
-            throw new IllegalArgumentException("Frequencies do not sum to 1, the sum to " + sum);
+            throw new IllegalArgumentException("Frequencies do not sum to 1, they sum to " + sum);
         }
 
         this.frequencyParameter = frequencyParameter;

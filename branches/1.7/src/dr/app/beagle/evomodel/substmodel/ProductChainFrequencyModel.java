@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.substmodel;
 
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 
 import java.util.List;
@@ -27,9 +28,14 @@ public class ProductChainFrequencyModel extends FrequencyModel {
             int size = freqModels.get(i).getFrequencyCount();
             stateSizes[i] = size;
             freqCount *= size;
+            addModel(freqModels.get(i));
         }
         tmp = new int[numBaseModel];
         totalFreqCount = freqCount;
+    }
+
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged(model);
     }
 
     public void setFrequency(int i, double value) {

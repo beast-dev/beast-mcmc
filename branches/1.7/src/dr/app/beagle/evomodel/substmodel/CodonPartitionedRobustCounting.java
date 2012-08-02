@@ -1,3 +1,28 @@
+/*
+ * CodonPartitionedRobustCounting.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.substmodel;
 
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
@@ -35,10 +60,13 @@ import java.util.List;
 
 public class CodonPartitionedRobustCounting extends AbstractModel implements TreeTraitProvider, Loggable {
 
+    private static final boolean DEBUG = false;
+
     public static final String UNCONDITIONED_PREFIX = "u_";
     public static final String SITE_SPECIFIC_PREFIX = "c_";
     public static final String TOTAL_PREFIX = "total_";
     public static final String BASE_TRAIT_PREFIX = "base_";
+    public static final String COMPLETE_HISTORY_PREFIX = "all_";
     public static final String UNCONDITIONED_PER_BRANCH_PREFIX = "b_u_";
 
 //    public CodonPartitionedRobustCounting(String name, TreeModel tree,
@@ -59,6 +87,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                           boolean includeExternalBranches,
                                           boolean includeInternalBranches,
                                           boolean doUnconditionalPerBranch,
+                                          boolean saveCompleteHistory,
                                           StratifiedTraitOutputFormat branchFormat,
                                           StratifiedTraitOutputFormat logFormat) {
         super(name);
@@ -87,6 +116,8 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             }
         }
 
+        this.saveCompleteHistory = saveCompleteHistory;
+
         productChainModel =
                 new ProductChainSubstitutionModel("codonLabeling", substModelsList, siteRateModelsList);
         addModel(productChainModel);
@@ -94,6 +125,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         this.useUniformization = useUniformization;
         if (useUniformization) {
             markovJumps = new UniformizedSubstitutionModel(productChainModel);
+            ((UniformizedSubstitutionModel) markovJumps).setSaveCompleteHistory(saveCompleteHistory);
         } else {
             markovJumps = new MarkovJumpsSubstitutionModel(productChainModel);
         }
@@ -186,14 +218,39 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 );
             }
 
-            if (DEBUG) {
 
-                System.err.println("Computing robust counts for " +
-                        parentSeq0[i] + parentSeq1[i] + parentSeq2[i] + " -> " +
-                        childSeq0[i] + childSeq1[i] + childSeq2[i] + " : " +
-//                        vParentState + " -> " + vChildState + " = " + codonCount);
-                        parentState + " -> " + childState + " = " + codonCount);
-                System.exit(-1);
+            if (useUniformization && saveCompleteHistory) {
+                UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
+
+                StateHistory history = usModel.getStateHistory();
+
+                // Only report syn or nonsyn changes
+                double[] register = usModel.getRegistration();
+                history = history.filterChanges(register);
+
+                int historyCount = history.getNumberOfJumps();
+                if (historyCount > 0) {
+                    double parentTime = tree.getNodeHeight(tree.getParent(child));
+                    double childTime = tree.getNodeHeight(child);
+                    history.rescaleTimesOfEvents(parentTime, childTime);
+
+                    int n = history.getNumberOfJumps();
+                    // MAS may have broken the next line
+                    String hstring = "{" + (i + 1) + "," + history.toStringChanges(usModel.dataType) + "}";
+            if (DEBUG) {
+                        System.err.println("site " + (i + 1) + " : "
+                                + history.getNumberOfJumps()
+                                + " : "
+                                + history.toStringChanges(usModel.dataType)
+                                + " " + codonLabeling.getText());
+                    }
+
+                    if (completeHistoryPerNode == null) {
+                        completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
+            }
+//                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
+                    completeHistoryPerNode[child.getNumber()][i] = hstring;
+                }
             }
 
             count[i] = codonCount;
@@ -222,6 +279,37 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 return false;
             }
         };
+
+        if (saveCompleteHistory) {
+            TreeTrait stringTrait = new TreeTrait.SA() {
+
+                public String getTraitName() {
+                    return COMPLETE_HISTORY_PREFIX + codonLabeling.getText();
+                }
+
+                public Intent getIntent() {
+                    return Intent.BRANCH;
+                }
+
+                public String[] getTrait(Tree tree, NodeRef node) {
+                    getExpectedCountsForBranch(node); // Lazy simulation of complete histories
+                    List<String> events = new ArrayList<String>();
+                    for (int i = 0; i < numCodons; i++) {
+                        if (completeHistoryPerNode[node.getNumber()][i] != null) {
+                            events.add(completeHistoryPerNode[node.getNumber()][i]);
+                        }
+                    }
+                    String[] array = new String[events.size()];
+                    events.toArray(array);
+                    return array;
+                }
+
+                public boolean getLoggable() {
+                    return true;
+                }
+            };
+            treeTraits.addTrait(stringTrait);
+        }
 
         TreeTrait unconditionedSum;
         if (!TRIAL) {
@@ -323,7 +411,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 }
 
                 public boolean getLoggable() {
-                    return false;
+                    return false;   // TODO Should be switched to true to log unconditioned values per branch
                 }
             };
 
@@ -521,14 +609,14 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
     private int numCodons;
 
-    private static final boolean DEBUG = false;
-
     private boolean countsKnown = false;
     private boolean unconditionsKnown = false;
     private boolean unconditionsPerBranchKnown = false;
     private double[] unconditionedCounts;
     private double[][] unconditionedCountsPerBranch;
     private double[][] computedCounts; // TODO Temporary storage until generic TreeTraitProvider/Helpers are finished
+
+    private String[][] completeHistoryPerNode;
 
     protected Helper treeTraits = new Helper();
     protected TreeTraitLogger treeTraitLogger;
@@ -538,5 +626,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
     private final boolean doUnconditionedPerBranch;
 
     private static final boolean TRIAL = true;
+
+    private boolean saveCompleteHistory = false;
 
 }

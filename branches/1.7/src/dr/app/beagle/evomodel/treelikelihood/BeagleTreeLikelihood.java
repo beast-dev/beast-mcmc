@@ -28,6 +28,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 import beagle.*;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
@@ -45,11 +46,7 @@ import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.util.Citable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -74,7 +71,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
-    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DYNAMIC;
+    private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DELAYED;
 
     private static int instanceCount = 0;
     private static List<Integer> resourceOrder = null;
@@ -84,8 +81,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
-
-    private static final boolean TRY_EPOCH = false;
 
     public BeagleTreeLikelihood(PatternList patternList,
                                 TreeModel treeModel,
@@ -701,6 +696,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         } else if (this.rescalingScheme == PartialsRescalingScheme.DELAYED && everUnderflowed) {
             useScaleFactors = true;
             recomputeScaleFactors = true;
+            rescalingCount++;
         }
 
         if (tipStatesModel != null) {
@@ -737,7 +733,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         if (updateSubstitutionModel) { // TODO More efficient to update only the substitution model that changed, instead of all
             // we are currently assuming a no-category model...
             for (int i = 0; i < eigenCount; i++) {
-            	if (TRY_EPOCH) {
+                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
             		  eigenBufferHelper.flipOffset(i);
             		  
             		  branchSubstitutionModel.setEigenDecomposition(
@@ -768,7 +764,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         for (int i = 0; i < eigenCount; i++) {
             if (branchUpdateCount[i] > 0) {
 
-                if (TRY_EPOCH) {
+                if (EpochBranchSubstitutionModel.TRY_EPOCH) {
                     branchSubstitutionModel.updateTransitionMatrices(
                             beagle,
                             i,
@@ -859,9 +855,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                 everUnderflowed = true;
                 logL = Double.NEGATIVE_INFINITY;
 
-                Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
                 if (firstRescaleAttempt && (rescalingScheme == PartialsRescalingScheme.DYNAMIC || rescalingScheme == PartialsRescalingScheme.DELAYED)) {
                     // we have had a potential under/over flow so attempt a rescaling
+                    if (rescalingScheme == PartialsRescalingScheme.DYNAMIC || (rescalingCount == 0)) {
+                        Logger.getLogger("dr.evomodel").info("Underflow calculating likelihood. Attempting a rescaling...");
+                    }
                     useScaleFactors = true;
                     recomputeScaleFactors = true;
 
@@ -1094,9 +1092,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     }
                 }
                 
-				// //////////////////
-				// ---TODO:DEBUG---//
-				// //////////////////
+                // /////////////
+                // ---DEBUG---//
+                // /////////////
 
 //				double tmp[] = new double[stateCount * patternCount * categoryCount];
 //				System.out.println(nodeNum);

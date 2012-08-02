@@ -183,6 +183,37 @@ public interface TreeTrait<T> {
     }
 
     /**
+     * An abstract base class for String array implementations
+     */
+    public abstract class SA extends DefaultBehavior implements TreeTrait<String[]> {
+
+        public Class getTraitClass() {
+            return String[].class;
+        }
+
+        public String getTraitString(Tree tree, NodeRef node) {
+            return formatTrait(getTrait(tree, node));
+        }
+
+        public static String formatTrait(String[] values) {
+            if (values == null || values.length == 0) return null;
+            if (values.length > 1) {
+                StringBuilder sb = new StringBuilder("{");
+                sb.append(values[0]);
+                for (int i = 1; i < values.length; i++) {
+                    sb.append(",");
+                    sb.append(values[i]);
+                }
+                sb.append("}");
+
+                return sb.toString();
+            } else {
+                return values[0];
+            }
+        }
+    }
+
+    /**
      * An abstract base class for int array implementations
      */
     public abstract class IA extends DefaultBehavior implements TreeTrait<int[]> {
@@ -602,7 +633,7 @@ public interface TreeTrait<T> {
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
-            return D.formatTrait(getTrait(tree,node));
+            return D.formatTrait(getTrait(tree, node));
         }
     }
 
@@ -630,7 +661,7 @@ public interface TreeTrait<T> {
         }
 
         public String getTraitString(Tree tree, NodeRef node) {
-            return DA.formatTrait(getTrait(tree,node));
+            return DA.formatTrait(getTrait(tree, node));
         }
     }
 }

@@ -1,5 +1,32 @@
+/*
+ * GammaSiteModelParser.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -17,6 +44,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
+    public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
     public static final String SUBSTITUTION_RATE = "mutationRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
@@ -29,9 +57,23 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        String msg = "";
+		String msg = "";
+		SubstitutionModel substitutionModel = null;
 
-        SubstitutionModel substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
+		boolean CHECK_BRANCH_SUBSTITUTION_MODEL = false;
+
+		for (int i = 0; i < xo.getChildCount(); i++) {
+
+			XMLObject cxo = (XMLObject) xo.getChild(i);
+
+			//TODO: very hack-ish
+			if (cxo.toString().toLowerCase().equalsIgnoreCase("branchSubstitutionModel")) {
+
+//				System.err.println("Found an instance of branch substitution model");
+				CHECK_BRANCH_SUBSTITUTION_MODEL = true;
+
+			}// END: BSM check
+		}// END: children loop
 
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
@@ -68,8 +110,15 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
+        if(!CHECK_BRANCH_SUBSTITUTION_MODEL) {
+
+//        	System.err.println("Doing the substitution model stuff");
+
         // set this to pass it along to the TreeLikelihoodParser...
+        substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
         siteRateModel.setSubstitutionModel(substitutionModel);
+
+        }
 
         return siteRateModel;
     }
@@ -82,7 +131,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
         return "A SiteModel that has a gamma distributed rates across sites";
     }
 
-    public Class getReturnType() {
+    public Class<GammaSiteRateModel> getReturnType() {
         return GammaSiteRateModel.class;
     }
 
@@ -91,9 +140,16 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-            new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                    new ElementRule(SubstitutionModel.class)
-            }),
+
+          new XORRule(
+          new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                  new ElementRule(SubstitutionModel.class)
+                  }),
+          new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                  new ElementRule(BranchSubstitutionModel.class)
+                  }), false
+           ),
+
             new XORRule(
                     new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
@@ -102,12 +158,16 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                             new ElementRule(Parameter.class)
                     }), true
             ),
+
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                     new ElementRule(Parameter.class)
             }, true),
+
             new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true)
+
     };
-}
+
+}//END: class

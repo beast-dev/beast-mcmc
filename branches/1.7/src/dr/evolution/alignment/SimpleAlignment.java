@@ -166,10 +166,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
-        if (invalidCharAt >= 0)
-            throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
-                    + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
+//        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+//        if (invalidCharAt >= 0)
+//            throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
+//                    + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
         super.addSequence(sequence);
         updateSiteCount();
@@ -435,12 +435,16 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
         return PatternList.Utils.empiricalStateFrequencies(this);
     }
 
+    public void setReportCountStatistics(boolean report) {
+    	countStatistics = report;
+    }
+
     public String toString() {
         dr.util.NumberFormatter formatter = new dr.util.NumberFormatter(6);
 
         StringBuffer buffer = new StringBuffer();
 
-        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
+//        boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 
         if (countStatistics) {
             buffer.append("Site count = ").append(getSiteCount()).append("\n");
@@ -494,4 +498,5 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
     private DataType dataType = null;
     private int siteCount = 0;
     private boolean siteCountKnown = false;
+    private boolean countStatistics = !(dataType instanceof Codons) && !(dataType instanceof GeneralDataType);
 }

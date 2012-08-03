@@ -142,10 +142,15 @@ public class PartitionData extends AbstractPartitionData {
     public String getPrefix() {
         String prefix = "";
 
+        if (getTraits() != null) {
+            // if it is a trait partition then always give a prefix
+            prefix += getName() + ".";
+        } else {
         // this method provides prefix as long as multi-data-partitions case,
         // because options.dataPartitions may contain traits, use options.getPartitionData()
         if (options.getPartitionData().size() > 1) { // getPartitionData() already excludes traits and microsatellite
             prefix += getName() + ".";
+        }
         }
 
         return prefix;

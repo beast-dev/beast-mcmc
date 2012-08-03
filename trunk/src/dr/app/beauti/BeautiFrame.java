@@ -636,14 +636,13 @@ public class BeautiFrame extends DocumentFrame {
         return true;
     }
 
-    public void setupStarBEAST(boolean useStarBEAST) {
+    /**
+     * Attempts to set up starBEAST - returns true if successful
+     * @param useStarBEAST
+     * @return
+     */
+    public boolean setupStarBEAST(boolean useStarBEAST) {
         if (useStarBEAST) {
-            dataPanel.selectAll();
-            dataPanel.unlinkAll();
-
-            options.starBEASTOptions = new STARBEASTOptions(options);
-            options.fileNameStem = "StarBEASTLog";
-
             if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
                 if (!traitsPanel.addTrait(
                         "<html><p>" +
@@ -653,8 +652,7 @@ public class BeautiFrame extends DocumentFrame {
                         TraitData.TRAIT_SPECIES,
                         true /* isSpeciesTrait */
                 )) {
-                    dataPanel.useStarBEASTCheck.setSelected(false); // go back to unchecked
-                    useStarBEAST = false;
+                    return false;
                 }
             } else if (options.getTraitPartitions(options.getTrait(TraitData.TRAIT_SPECIES)).size() > 0) {
                 int option = JOptionPane.showConfirmDialog(this,
@@ -664,10 +662,16 @@ public class BeautiFrame extends DocumentFrame {
                         JOptionPane.YES_NO_OPTION,
                         JOptionPane.WARNING_MESSAGE);
                 if (option == JOptionPane.NO_OPTION) {
-                    return;
+                    return false;
                 }
 
             }
+
+            dataPanel.selectAll();
+            dataPanel.unlinkAll();
+
+            options.starBEASTOptions = new STARBEASTOptions(options);
+            options.fileNameStem = "StarBEASTLog";
 
             tabbedPane.removeTabAt(1);
             tabbedPane.insertTab("Species Sets", null, speciesSetPanel, null, 1);
@@ -695,6 +699,8 @@ public class BeautiFrame extends DocumentFrame {
         treesPanel.updatePriorPanelForSpeciesAnalysis();
 
         setStatusMessage();
+
+        return true;
     }
 
     public void updateDiscreteTraitAnalysis() {
@@ -730,12 +736,7 @@ public class BeautiFrame extends DocumentFrame {
             JOptionPane.showMessageDialog(this, ge.getMessage(), "Invalid BEAUti setting : ",
                     JOptionPane.ERROR_MESSAGE);
             if (ge.getSwitchToPanel() != null) {
-                for (int i = 0; i < tabbedPane.getTabCount(); i++) {
-                    if (tabbedPane.getTitleAt(i).equals(ge.getSwitchToPanel())) {
-                        tabbedPane.setSelectedIndex(i);
-                        break;
-                    }
-                }
+                switchToPanel(ge.getSwitchToPanel());
             }
             return false;
         }
@@ -784,6 +785,15 @@ public class BeautiFrame extends DocumentFrame {
 
         clearDirty();
         return true;
+    }
+
+    public void switchToPanel(String panelName) {
+        for (int i = 0; i < tabbedPane.getTabCount(); i++) {
+            if (tabbedPane.getTitleAt(i).equals(panelName)) {
+                tabbedPane.setSelectedIndex(i);
+                break;
+            }
+        }
     }
 
     public JComponent getExportableComponent() {

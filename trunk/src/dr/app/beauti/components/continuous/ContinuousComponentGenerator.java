@@ -119,9 +119,17 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     private void writeMultivariateDiffusionModels(XMLWriter writer,
                                                   ContinuousComponentOptions component) {
 
+        boolean first = false;
+
         for (PartitionSubstitutionModel model : component.getOptions().getPartitionSubstitutionModels(ContinuousDataType.INSTANCE)) {
             String precisionMatrixId = model.getName() + ".precision";
+
+            if (!first) { writer.writeBlankLine(); } else {  first = false;  }
+
             writeMultivariateDiffusionModel(writer, model, precisionMatrixId);
+
+            writer.writeBlankLine();
+
             writeMultivariateWishartPrior(writer, model, precisionMatrixId);
         }
     }
@@ -163,8 +171,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("matrixParameter");
         writer.writeCloseTag("precisionMatrix");
         writer.writeCloseTag("multivariateDiffusionModel");
-
-        writer.writeBlankLine();
     }
 
     private void writeMultivariateWishartPrior(XMLWriter writer,
@@ -214,14 +220,20 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
     private void writeMultivariateTreeLikelihoods(XMLWriter writer,
                                                   ContinuousComponentOptions component) {
 
+        boolean first = true;
+
         for (AbstractPartitionData partitionData : component.getOptions().getDataPartitions(ContinuousDataType.INSTANCE)) {
             PartitionSubstitutionModel model = partitionData.getPartitionSubstitutionModel();
             String diffusionModelId = model.getName() + ".diffusionModel";
             String treeModelId = partitionData.getPartitionTreeModel().getPrefix() + "treeModel";
 
+            if (!first) { writer.writeBlankLine(); } else {  first = false;  }
+
             if (model.getContinuousSubstModelType() != ContinuousSubstModelType.HOMOGENOUS) {
                 writeRelaxedBranchRateModel(writer, partitionData, treeModelId);
             }
+
+            writer.writeBlankLine();
 
             writeMultivariateTreeLikelihood(writer, partitionData, diffusionModelId, treeModelId);
         }
@@ -283,8 +295,6 @@ public class ContinuousComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag("rateCategories");
 
         writer.writeCloseTag("discretizedBranchRates");
-
-        writer.writeBlankLine();
     }
 
     private void writeMultivariateTreeLikelihood(XMLWriter writer,

@@ -7,8 +7,10 @@ import dr.inference.loggers.LogFormatter;
 import dr.inference.loggers.Loggable;
 import dr.inference.loggers.TabDelimitedFormatter;
 import dr.inference.model.Likelihood;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inferencexml.loggers.LoggerParser;
+import dr.util.Identifiable;
 import dr.xml.*;
 
 import java.io.PrintWriter;
@@ -135,10 +137,23 @@ public class TreeLoggerParser extends LoggerParser {
             if (cxo instanceof XMLObject) {
                 XMLObject xco = (XMLObject)cxo;
                 if (xco.getName().equals(TREE_TRAIT)) {
+
                     TreeTraitProvider ttp = (TreeTraitProvider)xco.getChild(TreeTraitProvider.class);
 
                     String name = xco.getStringAttribute(NAME);
                     final TreeTrait trait = ttp.getTreeTrait(name);
+
+                    if (trait == null) {
+                        String childName = "TreeTraitProvider";
+
+                        if (ttp instanceof Likelihood) {
+                            childName = ((Likelihood)ttp).prettyName();
+                        } else  if (ttp instanceof Model) {
+                            childName = ((Model)ttp).getModelName();
+                        }
+
+                        throw new XMLParseException("Trait named, " + name + ", not found for " + childName);
+                    }
 
                     final String tag = xco.getStringAttribute(TAG);
 

@@ -82,8 +82,13 @@ public class TreeLikelihoodGenerator extends Generator {
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-        } else if (ancestralStatesOptions.isCountingStates(partition)) {
-            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+            if (ancestralStatesOptions.isCountingStates(partition)) {
+                // State change counting uses the MarkovJumpsTreeLikelihood but
+                // dNdS robust counting doesn't as it has its own counting code...
+                if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
+            }
         }
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
@@ -116,12 +121,12 @@ public class TreeLikelihoodGenerator extends Generator {
 
         String prefix;
         if (num > 0) {
-            prefix = substModel.getPrefix(num) + partition.getPrefix();
+            prefix = partition.getPrefix() + substModel.getPrefix(num);
         } else {
             prefix = partition.getPrefix();
         }
 
-          String idString = prefix + id;
+        String idString = prefix + id;
 
         Attribute[] attributes;
         if (tag.equals(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD)) {
@@ -201,9 +206,10 @@ public class TreeLikelihoodGenerator extends Generator {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     // State change counting uses the MarkovJumpsTreeLikelihood but
-                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-                } else if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
                     // dNdS robust counting doesn't as it has its own counting code...
+                    if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                        treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                    }
                 }
             }
 
@@ -213,7 +219,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
                     if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            writer.writeIDref(treeLikelihoodTag, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefix(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
                         }
                     } else {
                         writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);

@@ -311,7 +311,7 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
-        int threadCount = 0;
+        int threadCount = -1;
 
         if (arguments.hasOption("java")) {
             useJava = true;
@@ -371,6 +371,7 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("threads")) {
+            // threadCount defaults to -1 unless the user specifies an option
             threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
                 printTitle();

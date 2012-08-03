@@ -56,7 +56,6 @@ public class PopsIOSpeciesTreePriorParser extends AbstractXMLObjectParser {
         return PopsIOSpeciesTreePrior.class;
     }
 
-    @Override
     public String getParserName() {
         return POPSIO_SPECIES_TREE_PRIOR;
     }

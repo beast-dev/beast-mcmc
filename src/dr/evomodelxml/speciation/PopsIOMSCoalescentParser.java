@@ -42,7 +42,6 @@ public class PopsIOMSCoalescentParser extends AbstractXMLObjectParser {
         return PopsIOMSCoalescent.class;
     }
 
-    @Override
     public String getParserName() {
         return POPSIO_MSCOALESCENT;
     }

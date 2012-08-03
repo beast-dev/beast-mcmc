@@ -225,7 +225,9 @@ public class DataPanel extends BeautiPanel implements Exportable {
         useStarBEASTCheck.setToolTipText(STARBEASTOptions.CITATION);
         useStarBEASTCheck.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {// wrong listener Issue 397: *BEAST in BEAUti is broken
-                frame.setupStarBEAST(useStarBEASTCheck.isSelected());
+                if (frame.setupStarBEAST(useStarBEASTCheck.isSelected()) == false) {
+                    useStarBEASTCheck.setSelected(false); // go back to unchecked
+                }
 
                 dataTableModel.fireTableDataChanged();
             }
@@ -400,7 +402,7 @@ public class DataPanel extends BeautiPanel implements Exportable {
         dataTable.selectAll();
     }
 
-    public void createFromTraits(List<TraitData> traits) {
+    public boolean createFromTraits(List<TraitData> traits) {
         int selRow = -1;
 
         if (selectTraitDialog == null) {
@@ -417,6 +419,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 }
 
                 selRow = options.createPartitionForTraits(name, trait);
+            } else {
+                return false;
             }
         } else {
             if (traits.size() > 1) {
@@ -425,6 +429,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
                 if (result != JOptionPane.CANCEL_OPTION) {
                     String name = selectTraitDialog.getName();
                     selRow = options.createPartitionForTraits(name, traits);
+                }  else {
+                    return false;
                 }
             } else {
                 selRow = options.createPartitionForTraits(traits.get(0).getName(), traits);
@@ -439,6 +445,8 @@ public class DataPanel extends BeautiPanel implements Exportable {
         }
         fireDataChanged();
         repaint();
+
+        return true;
     }
 
     public void unlinkModels() {

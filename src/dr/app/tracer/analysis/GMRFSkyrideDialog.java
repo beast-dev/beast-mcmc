@@ -610,7 +610,7 @@ public class GMRFSkyrideDialog {
                             // insert zero-length coalescent intervals
                             int diff = intervals.getCoalescentEvents(j) - 1;
                             if (diff > 0)
-                                throw new RuntimeException("Don't handle multifurcations!");
+                                throw new RuntimeException("Can't handle multifurcations.");
                         }
 
                         state += 1;
@@ -656,8 +656,16 @@ public class GMRFSkyrideDialog {
                                 double p1 = getPopSize(index, state);
                                 double p2 = getPopSize(index + 1, state);
 
-                                double popsize = p1 + ((p2 - p1) * t);
-                                bins[k].add(popsize);
+                                double value = p1 + ((p2 - p1) * t);
+
+//                                final boolean FIRST_DERIVATIVE = false;
+//
+//                                if (FIRST_DERIVATIVE) {
+//                                    value =  ((p1 - p2) / p2) / (coalescentTimes[state][index] - lastCoalescentTime);
+////                                    value = value * 10 + 1;
+//                                }
+
+                                bins[k].add(value);
                             }
                         }
                     }

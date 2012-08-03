@@ -45,7 +45,7 @@ public class AncestralTraitParser extends AbstractXMLObjectParser {
 
         TreeTrait trait = treeTraitProvider.getTreeTrait(traitName);
         if (trait == null) {
-            throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + ", with name " + xo.getId());
+            throw new XMLParseException("A trait called, " + traitName + ", was not available from the TreeTraitProvider supplied to " + getParserName() + (xo.hasId() ? ", with ID " + xo.getId() : ""));
         }
         try {
             return new AncestralTrait(name, trait, tree, taxa);

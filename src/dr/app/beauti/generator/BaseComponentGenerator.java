@@ -10,15 +10,22 @@ import dr.app.beauti.util.XMLWriter;
  * @version $Id$
  */
 public abstract class BaseComponentGenerator extends Generator implements ComponentGenerator {
+    private Generator callingGenerator;
+
     protected BaseComponentGenerator(final BeautiOptions options) {
         super(options, null);
     }
 
-    public void generateAtInsertionPoint(final InsertionPoint point, final Object item, final XMLWriter writer) {
+    public void generateAtInsertionPoint(Generator generator, final InsertionPoint point, final Object item, final XMLWriter writer) {
+        callingGenerator = generator;
         writer.writeComment("START " + getCommentLabel());
         generate(point, item, writer);
         writer.writeComment("END " + getCommentLabel());
-        writer.writeText("");
+        writer.writeBlankLine();
+    }
+
+    public Generator getCallingGenerator() {
+        return callingGenerator;
     }
 
     protected abstract void generate(final InsertionPoint point, final Object item, final XMLWriter writer);

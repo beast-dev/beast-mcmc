@@ -51,10 +51,11 @@ public interface ComponentGenerator {
     /**
      * Called to allow the component to generate at the particular insertion point. For
      * some insertion points (currently only 'IN_TAXON') the specific item is given.
+     * @param generator the calling generator
      * @param point the insertion point
      * @param item a reference to the item being generated (or null if not applicable)
      * @param writer the XMLWriter
      */
-    void generateAtInsertionPoint(InsertionPoint point, Object item, XMLWriter writer);
+    void generateAtInsertionPoint(Generator generator, InsertionPoint point, Object item, XMLWriter writer);
 
 }

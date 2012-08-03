@@ -375,14 +375,14 @@ public abstract class Generator {
             writer.writeComment(line);
     }
 
-    protected void generateInsertionPoint(final ComponentGenerator.InsertionPoint ip, final XMLWriter writer) {
+    public void generateInsertionPoint(final ComponentGenerator.InsertionPoint ip, final XMLWriter writer) {
         generateInsertionPoint(ip, null, writer);
     }
 
-    protected void generateInsertionPoint(final ComponentGenerator.InsertionPoint ip, final Object item, final XMLWriter writer) {
+    public void generateInsertionPoint(final ComponentGenerator.InsertionPoint ip, final Object item, final XMLWriter writer) {
         for (ComponentGenerator component : components) {
             if (component.usesInsertionPoint(ip)) {
-                component.generateAtInsertionPoint(ip, item, writer);
+                component.generateAtInsertionPoint(this, ip, item, writer);
             }
         }
     }

@@ -37,13 +37,13 @@ import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.AsymmetricQuadraticModel;
 import dr.evomodel.substmodel.LinearBiasModel;
-import dr.evomodel.substmodel.SubstitutionModel;
 import dr.evomodel.substmodel.TwoPhaseModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.tree.MicrosatelliteSamplerTreeModelParser;
+import dr.evomodelxml.treelikelihood.AncestralStateTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.MicrosatelliteSamplerTreeLikelihoodParser;
 import dr.evomodelxml.treelikelihood.TreeLikelihoodParser;
 import dr.evoxml.AlignmentParser;
@@ -82,8 +82,13 @@ public class TreeLikelihoodGenerator extends Generator {
         String treeLikelihoodTag = TreeLikelihoodParser.TREE_LIKELIHOOD;
         if (ancestralStatesOptions.usingAncestralStates(partition)) {
             treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
-        } else if (ancestralStatesOptions.isCountingStates(partition)) {
+            if (ancestralStatesOptions.isCountingStates(partition)) {
+                // State change counting uses the MarkovJumpsTreeLikelihood but
+                // dNdS robust counting doesn't as it has its own counting code...
+                if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
             treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+        }
+            }
         }
 
         if (model.getDataType() == Nucleotides.INSTANCE && model.getCodonHeteroPattern() != null) {
@@ -114,12 +119,14 @@ public class TreeLikelihoodGenerator extends Generator {
 
         writer.writeComment("Likelihood for tree given sequence data");
 
-        String idString;
+        String prefix;
         if (num > 0) {
-            idString = substModel.getPrefix(num) + partition.getPrefix() + id;
+            prefix = partition.getPrefix() + substModel.getPrefix(num);
         } else {
-            idString = partition.getPrefix() + id;
+            prefix = partition.getPrefix();
         }
+
+        String idString = prefix + id;
 
         Attribute[] attributes;
         if (tag.equals(MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD)) {
@@ -127,12 +134,15 @@ public class TreeLikelihoodGenerator extends Generator {
                     new Attribute.Default<String>(XMLParser.ID, idString),
                     new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
                     new Attribute.Default<Boolean>(MarkovJumpsTreeLikelihoodParser.USE_UNIFORMIZATION, true),
-                    new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1)
+                    new Attribute.Default<Integer>(MarkovJumpsTreeLikelihoodParser.NUMBER_OF_SIMULANTS, 1),
+                    new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
             };
         } else {
             attributes = new Attribute[]{
                     new Attribute.Default<String>(XMLParser.ID, idString),
-                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood())
+                    new Attribute.Default<Boolean>(TreeLikelihoodParser.USE_AMBIGUITIES, substModel.isUseAmbiguitiesTreeLikelihood()),
+                    new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
+
             };
         }
 
@@ -181,12 +191,6 @@ public class TreeLikelihoodGenerator extends Generator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        /*if (options.clockType == ClockType.STRICT_CLOCK) {
-            writer.writeIDref(StrictClockBranchRates.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        } else {
-           writer.writeIDref(DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-        }*/
-
         generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
 
         writer.writeCloseTag(tag);
@@ -202,10 +206,11 @@ public class TreeLikelihoodGenerator extends Generator {
                 treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
                 if (ancestralStatesOptions.isCountingStates(partition)) {
                     // State change counting uses the MarkovJumpsTreeLikelihood but
-                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD;
-                } else if (ancestralStatesOptions.dNdSRobustCounting(partition)) {
                     // dNdS robust counting doesn't as it has its own counting code...
+                    if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
+                        treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
                 }
+            }
             }
 
             if (partition.getTaxonList() != null) {
@@ -214,7 +219,7 @@ public class TreeLikelihoodGenerator extends Generator {
                     PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
                     if (substModel.getDataType() == Nucleotides.INSTANCE && substModel.getCodonHeteroPattern() != null) {
                         for (int i = 1; i <= substModel.getCodonPartitionCount(); i++) {
-                            writer.writeIDref(treeLikelihoodTag, substModel.getPrefix(i) + partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);
+                            writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + substModel.getPrefix(i) + TreeLikelihoodParser.TREE_LIKELIHOOD);
                         }
                     } else {
                         writer.writeIDref(treeLikelihoodTag, partition.getPrefix() + TreeLikelihoodParser.TREE_LIKELIHOOD);

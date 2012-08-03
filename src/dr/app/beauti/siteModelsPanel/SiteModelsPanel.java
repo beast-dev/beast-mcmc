@@ -81,7 +81,6 @@ public class SiteModelsPanel extends BeautiPanel implements Exportable {
 //    CreateModelDialog createModelDialog = null;
     boolean settingOptions = false;
 
-
     public SiteModelsPanel(BeautiFrame parent, Action removeModelAction) {
 
         super();

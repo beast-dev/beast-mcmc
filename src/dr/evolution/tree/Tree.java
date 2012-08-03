@@ -958,7 +958,14 @@ public interface Tree extends TaxonList, Units, Identifiable, Attributable {
                         buffer.append((k + 1));
                     }
                 } else {
-                    buffer.append(tree.getTaxonId(node.getNumber()));
+                    String label = tree.getTaxonId(node.getNumber());
+                    if (label.contains(" ") || label.contains(":") || label.contains(";") || label.contains(",")) {
+                        buffer.append("\"");
+                        buffer.append(label);
+                        buffer.append("\"");
+                    } else {
+                        buffer.append(label);
+                    }
                 }
             } else {
                 buffer.append("(");

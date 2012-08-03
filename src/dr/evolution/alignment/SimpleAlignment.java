@@ -166,10 +166,10 @@ public class SimpleAlignment extends Sequences implements Alignment, dr.util.XHT
             throw new IllegalArgumentException("Sequence's dataType does not match the alignment's");
         }
 
-//        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
-//        if (invalidCharAt >= 0)
-//            throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
-//                    + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
+        int invalidCharAt = getInvalidChar(sequence.getSequenceString(), dataType);
+        if (invalidCharAt >= 0)
+            throw new IllegalArgumentException("Sequence of " + sequence.getTaxon().getId()
+                    + " contains invalid char \'" + sequence.getChar(invalidCharAt) + "\' at index " + invalidCharAt);
 
         super.addSequence(sequence);
         updateSiteCount();

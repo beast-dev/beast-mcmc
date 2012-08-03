@@ -33,7 +33,6 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public static final String REPLICATIONS = "replications";
 //	public static final String SITE_MODEL = "siteModel";
 	
-	@Override
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
 	}

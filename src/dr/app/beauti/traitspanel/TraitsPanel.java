@@ -796,6 +796,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 }
             }
 
+            boolean success = false;
             if (discreteCount > 0) {
                 if (continuousCount > 0)  {
                     JOptionPane.showMessageDialog(TraitsPanel.this, "Don't mix discrete and continuous traits when creating partition(s).", "Mixed Trait Types", JOptionPane.ERROR_MESSAGE);
@@ -806,11 +807,16 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                 for (TraitData trait : traits) {
                     java.util.List<TraitData> singleTrait = new ArrayList<TraitData>();
                     singleTrait.add(trait);
-                    dataPanel.createFromTraits(singleTrait);
+                    if (dataPanel.createFromTraits(singleTrait)) {
+                        success = true;
+                }
                 }
             } else {
                 // with
-                dataPanel.createFromTraits(traits);
+                success = dataPanel.createFromTraits(traits);
+            }
+            if (success) {
+                frame.switchToPanel(BeautiFrame.DATA_PARTITIONS);
             }
         }
     }

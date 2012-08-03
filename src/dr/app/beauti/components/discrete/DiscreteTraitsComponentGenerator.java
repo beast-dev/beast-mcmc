@@ -25,7 +25,10 @@
 
 package dr.app.beauti.components.discrete;
 
+import dr.app.beagle.evomodel.parsers.MarkovJumpsTreeLikelihoodParser;
+import dr.app.beauti.components.ancestralstates.AncestralStatesComponentOptions;
 import dr.app.beauti.generator.BaseComponentGenerator;
+import dr.app.beauti.generator.ComponentGenerator;
 import dr.app.beauti.options.*;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.GeneralDataType;
@@ -81,7 +84,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             case IN_FILE_LOG_PARAMETERS:
             case IN_FILE_LOG_LIKELIHOODS:
             case AFTER_FILE_LOG:
-            case IN_TREES_LOG:
+//            case IN_TREES_LOG:
                 return true;
             case IN_MCMC_PRIOR:
                 return hasBSSVS();
@@ -100,7 +103,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             case AFTER_TREE_LIKELIHOOD:
                 writeDiscreteTraitsModels(writer);
-                writeAncestralTreeLikelihoods(writer, comp);
+                writeTreeLikelihoods(writer, comp);
                 break;
 
             case IN_MCMC_PRIOR:
@@ -108,7 +111,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case IN_MCMC_LIKELIHOOD:
-                writeAncestralTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer);
                 break;
 
             case IN_SCREEN_LOG:
@@ -120,14 +123,15 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 break;
 
             case IN_FILE_LOG_LIKELIHOODS:
-                writeAncestralTreeLikelihoodReferences(writer);
+                writeTreeLikelihoodReferences(writer);
                 break;
 
             case AFTER_FILE_LOG:
                 writeDiscreteTraitFileLoggers(writer);
 
-            case IN_TREES_LOG:
-                writeTreeLogEntries((PartitionTreeModel)item, writer);
+                // This was for ancestral state writing which is now handled by the ancestral state component
+//            case IN_TREES_LOG:
+//                writeTreeLogEntries((PartitionTreeModel)item, writer);
                 break;
             default:
                 throw new IllegalArgumentException("This insertion point is not implemented for " + this.getClass().getName());
@@ -142,17 +146,21 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
     private void writeDiscreteTraitPatterns(XMLWriter writer,
                                             DiscreteTraitsComponentOptions component) {
 
+        boolean first = true;
         for (PartitionSubstitutionModel model : options.getPartitionSubstitutionModels(GeneralDataType.INSTANCE)) {
-            writeGeneralDataType(model, writer);
+            if (!first) {
             writer.writeBlankLine();
+            } else {
+                first = false;
+        }
+            writeGeneralDataType(model, writer);
         }
 
         // now create an attribute pattern for each trait that uses it
         for (AbstractPartitionData partition : options.getDataPartitions(GeneralDataType.INSTANCE)) {
             if (partition.getTraits() != null) {
+                writer.writeBlankLine();
                 writeAttributePatterns(partition, writer);
-                writer.writeText("");
-
             }
         }
 
@@ -229,8 +237,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 
             writeRatesAndIndicators(model, stateCount * (stateCount - 1) / 2, null, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-            writer.writeBlankLine();
         } else if (model.getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
             writer.writeComment("asymmetric CTMC model for discrete state reconstructions");
 
@@ -250,8 +256,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeRatesAndIndicators(model, stateCount * (stateCount - 1), null, writer);
 
             writer.writeCloseTag(GeneralSubstitutionModelParser.GENERAL_SUBSTITUTION_MODEL);
-
-            writer.writeBlankLine();
         } else {
 
         }
@@ -308,7 +312,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 //        writer.writeCloseTag(GammaSiteModelParser.MUTATION_RATE);
 
         writer.writeCloseTag(SiteModel.SITE_MODEL);
-        writer.writeBlankLine();
     }
 
     private void writeRatesAndIndicators(PartitionSubstitutionModel model, int dimension, Integer relativeTo, XMLWriter writer) {
@@ -333,7 +336,6 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             writeParameter(options.getParameter(prefix + "indicators"), dimension, writer);
             writer.writeCloseTag(GeneralSubstitutionModelParser.INDICATOR);
         }
-
     }
 
     private void writeStatisticModel(PartitionSubstitutionModel model, XMLWriter writer) {
@@ -353,7 +355,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         writer.writeCloseTag(ProductStatisticParser.PRODUCT_STATISTIC);
     }
 
-    private void writeAncestralTreeLikelihoods(XMLWriter writer,
+    private void writeTreeLikelihoods(XMLWriter writer,
                                                DiscreteTraitsComponentOptions component) {
         // generate tree likelihoods for discrete trait partitions
         if (options.hasDiscreteTraitPartition()) {
@@ -363,26 +365,32 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
             if (partition.getTraits() != null) {
                 TraitData trait = partition.getTraits().get(0);
                 if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    writeAncestralTreeLikelihood(partition, writer);
+                    writeTreeLikelihood(partition, writer);
                 }
             }
         }
     }
 
     /**
-     * Ancestral Tree Likelihood
+     * Write Tree Likelihood
      *
      * @param partition PartitionData
      * @param writer    XMLWriter
      */
-    public void writeAncestralTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
+    public void writeTreeLikelihood(AbstractPartitionData partition, XMLWriter writer) {
         String prefix = partition.getName() + ".";
 
         PartitionSubstitutionModel substModel = partition.getPartitionSubstitutionModel();
         PartitionTreeModel treeModel = partition.getPartitionTreeModel();
         PartitionClockModel clockModel = partition.getPartitionClockModel();
 
-        writer.writeOpenTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD, new Attribute[]{
+        AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+        String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+        if (ancestralStatesOptions.isCountingStates(partition)) {
+            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+        }
+
+        writer.writeOpenTag(treeLikelihoodTag, new Attribute[]{
                 new Attribute.Default<String>(XMLParser.ID, prefix + TreeLikelihoodParser.TREE_LIKELIHOOD),
                 new Attribute.Default<String>(AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG_NAME, prefix + AncestralStateTreeLikelihoodParser.RECONSTRUCTION_TAG),
         });
@@ -414,17 +422,24 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
                 throw new IllegalArgumentException("Unknown clock model");
         }
 
-        writer.writeCloseTag(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD);
-        writer.writeBlankLine();
+        getCallingGenerator().generateInsertionPoint(ComponentGenerator.InsertionPoint.IN_TREE_LIKELIHOOD, partition, writer);
+
+        writer.writeCloseTag(treeLikelihoodTag);
     }
 
-    private void writeAncestralTreeLikelihoodReferences(XMLWriter writer) {
+    private void writeTreeLikelihoodReferences(XMLWriter writer) {
         for (AbstractPartitionData partition : options.dataPartitions) {
             if (partition.getTraits() != null) {
+                AncestralStatesComponentOptions ancestralStatesOptions = (AncestralStatesComponentOptions)options.getComponentOptions(AncestralStatesComponentOptions.class);
+                String treeLikelihoodTag = TreeLikelihoodParser.ANCESTRAL_TREE_LIKELIHOOD;
+                if (ancestralStatesOptions.isCountingStates(partition)) {
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
+
                 TraitData trait = partition.getTraits().get(0);
                 String prefix = partition.getName() + ".";
                 if (trait.getTraitType() == TraitData.TraitType.DISCRETE) {
-                    writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+                    writer.writeIDref(treeLikelihoodTag,
                             prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
                 }
             }
@@ -497,15 +512,16 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
         }
     }
 
-    private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
-        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
-            if (partitionData.getPartitionTreeModel() == treeModel) {
-                String prefix = partitionData.getName() + ".";
-                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
-            }
-        }
-    }
+    // This was for ancestral state writing which is now handled by the ancestral state component
+//    private void writeTreeLogEntries(PartitionTreeModel treeModel, XMLWriter writer) {
+//        for (AbstractPartitionData partitionData : options.getDataPartitions(GeneralDataType.INSTANCE)) {
+//            if (partitionData.getPartitionTreeModel() == treeModel) {
+//                String prefix = partitionData.getName() + ".";
+//                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
+//                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+//            }
+//        }
+//    }
 
 
 }

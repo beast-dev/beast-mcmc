@@ -437,7 +437,37 @@ public class LogGenerator extends Generator {
                         });
                 writer.writeIDref(TreeModel.TREE_MODEL, tree.getPrefix() + TreeModel.TREE_MODEL);
 
-                writeTreeTraits(writer, tree);
+                // assume the first clock model is the one... (not sure if this makes sense)
+                PartitionClockModel model = options.getPartitionClockModels(options.getDataPartitions(tree)).get(0);
+                String tag = "";
+                String id = "";
+
+                switch (model.getClockType()) {
+                    case STRICT_CLOCK:
+                        tag = StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES;
+                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                        break;
+
+                    case UNCORRELATED:
+                        tag = DiscretizedBranchRatesParser.DISCRETIZED_BRANCH_RATES;
+                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                        break;
+
+                    case RANDOM_LOCAL_CLOCK:
+                        tag = RandomLocalClockModelParser.LOCAL_BRANCH_RATES;
+                        id = model.getPrefix() + BranchRateModel.BRANCH_RATES;
+                        break;
+
+                    case AUTOCORRELATED:
+                        tag = ACLikelihoodParser.AC_LIKELIHOOD;
+                        id =  options.noDuplicatedPrefix(model.getPrefix(), tree.getPrefix()) + BranchRateModel.BRANCH_RATES;
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unknown clock model");
+                }
+                writer.writeIDref(tag, id);
+                writeTreeTrait(writer, tag, id, BranchRateModel.RATE, model.getPrefix() + BranchRateModel.RATE);
 
                 writer.writeCloseTag(TreeLoggerParser.LOG_TREE);
             }

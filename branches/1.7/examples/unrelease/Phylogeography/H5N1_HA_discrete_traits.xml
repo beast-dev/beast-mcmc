@@ -935,15 +935,23 @@
     <!--</rateCategories>-->
     <!--</discretizedBranchRates>-->
 
+	<!--
     <discreteTraitRateModel id="branchRates">
         <treeModel idref="treeModel"/>
         <ancestralTreeLikelihood idref="geoTreeLikelihood"/>
         <dataType idref="geography"/>
-        <!--<attributePatterns idref="geoPatterns"/>-->
         <rate>
             <parameter id="trait.rates" value="1 1 1 1 1 1 1"/>
         </rate>
     </discreteTraitRateModel>
+	-->
+	
+    <!-- The strict clock (Uniform rates across branches)                        -->
+    <strictClockBranchRates id="branchRates">
+        <rate>
+            <parameter id="trait.rates" value="2.3E-5" lower="0.0" upper="100.0"/>
+        </rate>
+    </strictClockBranchRates>
 
     <rateStatistic id="meanRate" name="meanRate" mode="mean" internal="true" external="true">
         <treeModel idref="treeModel"/>

@@ -443,7 +443,7 @@ public class BeastMain {
                 dialog.setPreferBeagleSingle();
             }
 
-            if (!dialog.showDialog(nameString, seed)) {
+            if (!dialog.showDialog(nameString)) {
                 return;
             }
 

@@ -171,7 +171,7 @@ public class BeastDialog {
         beagleResourceCombo.setSelectedItem("CPU");
     }
 
-    public boolean showDialog(String title, long seed) {
+    public boolean showDialog(String title) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.PLAIN_MESSAGE,
@@ -180,8 +180,6 @@ public class BeastDialog {
                 new String[]{"Run", "Quit"},
                 "Run");
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        seedText.setValue(seed);
 
         final JDialog dialog = optionPane.createDialog(frame, title);
         //dialog.setResizable(true);

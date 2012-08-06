@@ -428,6 +428,21 @@ public class BeastMain {
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
+            dialog.setAllowOverwrite(allowOverwrite);
+            dialog.setSeed(seed);
+
+            dialog.setUseBeagle(useBeagle);
+
+            if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
+                dialog.setPreferBeagleGPU();
+            }
+
+            dialog.setPreferBeagleSSE(BeagleFlag.VECTOR_SSE.isSet(beagleFlags));
+
+            if (BeagleFlag.PRECISION_SINGLE.isSet(beagleFlags)) {
+                dialog.setPreferBeagleSingle();
+            }
+
             if (!dialog.showDialog(nameString, seed)) {
                 return;
             }

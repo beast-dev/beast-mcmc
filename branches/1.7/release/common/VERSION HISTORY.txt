@@ -38,11 +38,13 @@ Version 1.7.3 released XXX XXX 2012
        Issue 643:	Unable to specify a MRCA node to reconstruct ancestral states
        Issue 645:	Discrete traits were generating ancestral reconstructions irrespective of the Ancestral States settings
        Issue 647:	Selecting robust counting was not creating the correct XML
+       Issue 651:	Default Poisson prior for asymmetric BSSVS model of discrete traits is not standard
+       Issue 652:	Some conditioning priors need to be evaluated before the data likelihood
 
     Other changes:
        Restored non-BEAGLE AncestralTreeLikelihood availability - should be considered deprecated.
        Some changes to the default BEAGLE options to help discrete trait models run (SSE is switched off for
-       non-nucleotide partitions and the default scaling scheme is now 'delayed').
+           non-nucleotide partitions and the default scaling scheme is now 'delayed').
 
 ================================================================================
 

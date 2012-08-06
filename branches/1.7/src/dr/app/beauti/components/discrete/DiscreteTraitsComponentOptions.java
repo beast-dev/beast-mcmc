@@ -94,9 +94,11 @@ public class DiscreteTraitsComponentOptions implements ComponentOptions {
                 Set<String> states = partitionData.getPartitionSubstitutionModel().getDiscreteStateSet();
                 int K = states.size();
                 if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.SYM_SUBST) {
-                    nonZeroRates.offset = K - 1; // mean = 0.693 and offset = K-1
+                    nonZeroRates.mean = Math.log(2); // mean = 0.693 and offset = K-1
+                    nonZeroRates.offset = K - 1;
                 } else if (partitionData.getPartitionSubstitutionModel().getDiscreteSubstType() == DiscreteSubstModelType.ASYM_SUBST) {
                     nonZeroRates.mean = K - 1; // mean = K-1 and offset = 0
+                    nonZeroRates.offset = 0.0;
                 } else {
                     throw new IllegalArgumentException("unknown discrete substitution type");
                 }

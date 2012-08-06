@@ -72,6 +72,12 @@ public interface Likelihood extends Loggable, Identifiable {
     void setUsed();
 
     /**
+     * @return true if this likelihood should be evaluated early (if for example it may return a zero likelihood
+     * and could terminate the evaluation early or is a required conditioning for another likelihood.
+     */
+    boolean evaluateEarly();
+
+    /**
 	 * A simple abstract base class for likelihood functions
 	 */
 
@@ -160,6 +166,10 @@ public interface Likelihood extends Loggable, Identifiable {
 
         public void setUsed() {
             this.used = true;
+        }
+
+        public boolean evaluateEarly() {
+            return false;
         }
 
         // **************************************************************

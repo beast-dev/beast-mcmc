@@ -160,6 +160,10 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         return "Multivariate Polya Distribution Likelihood";
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     public void setUsed() {
     }
 

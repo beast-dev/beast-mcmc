@@ -42,6 +42,10 @@ public class GMRFDensityComponent implements Likelihood {
         return skyrideLogLikelihood;
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     public void makeDirty() {
         skyride.makeDirty();
     }

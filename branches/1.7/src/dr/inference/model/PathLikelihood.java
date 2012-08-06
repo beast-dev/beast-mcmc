@@ -86,6 +86,10 @@ public class PathLikelihood implements Likelihood {
         destination.makeDirty();
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     public String toString() {
 
         return Double.toString(getLogLikelihood());

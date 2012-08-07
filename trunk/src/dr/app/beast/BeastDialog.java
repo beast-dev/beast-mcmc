@@ -51,8 +51,8 @@ public class BeastDialog {
     private final JCheckBox overwriteCheckBox = new JCheckBox("Allow overwriting of log files");
     private final JCheckBox beagleCheckBox = new JCheckBox("Use BEAGLE library if available:");
     private final JCheckBox beagleInfoCheckBox = new JCheckBox("Show list of available BEAGLE resources and Quit");
-    private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "CPU-SSE", "GPU"});
-    private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions");
+    private final JComboBox beagleResourceCombo = new JComboBox(new Object[]{"CPU", "GPU"});
+    private final JCheckBox beagleSSECheckBox = new JCheckBox("Use CPU's SSE extensions when possible");
     private final JComboBox beaglePrecisionCombo = new JComboBox(new Object[]{"Double", "Single"});
     private final JComboBox beagleScalingCombo = new JComboBox(new Object[]{"Default", "Dynamic", "Delayed", "Always", "Never"});
 
@@ -132,7 +132,7 @@ public class BeastDialog {
         OptionsPanel optionPanel2 = new OptionsPanel(0, 12);
         optionPanel2.setBorder(BorderFactory.createEmptyBorder());
         final JLabel label1 = optionPanel2.addComponentWithLabel("Prefer use of: ", beagleResourceCombo);
-//        optionPanel2.addComponent(beagleSSECheckBox);
+        optionPanel2.addComponent(beagleSSECheckBox);
         beagleSSECheckBox.setSelected(true);
         final JLabel label2 = optionPanel2.addComponentWithLabel("Prefer precision: ", beaglePrecisionCombo);
         final JLabel label3 = optionPanel2.addComponentWithLabel("Rescaling scheme: ", beagleScalingCombo);
@@ -171,7 +171,7 @@ public class BeastDialog {
         beagleResourceCombo.setSelectedItem("CPU");
     }
 
-    public boolean showDialog(String title, long seed) {
+    public boolean showDialog(String title) {
 
         JOptionPane optionPane = new JOptionPane(optionPanel,
                 JOptionPane.PLAIN_MESSAGE,
@@ -180,8 +180,6 @@ public class BeastDialog {
                 new String[]{"Run", "Quit"},
                 "Run");
         optionPane.setBorder(new EmptyBorder(12, 12, 12, 12));
-
-        seedText.setValue(seed);
 
         final JDialog dialog = optionPane.createDialog(frame, title);
         //dialog.setResizable(true);
@@ -196,12 +194,24 @@ public class BeastDialog {
         return seedText.getLongValue();
     }
 
+    public void setSeed(long seed) {
+        seedText.setValue(seed);
+    }
+
     public boolean allowOverwrite() {
         return overwriteCheckBox.isSelected();
     }
 
+    public void setAllowOverwrite(boolean allowOverwrite) {
+        overwriteCheckBox.setSelected(allowOverwrite);
+    }
+
     public boolean useBeagle() {
         return beagleCheckBox.isSelected();
+    }
+
+    public void setUseBeagle(boolean useBeagle) {
+         beagleCheckBox.setSelected(useBeagle);
     }
 
     public boolean preferBeagleGPU() {
@@ -209,13 +219,20 @@ public class BeastDialog {
     }
 
     public boolean preferBeagleCPU() {
-        return (beagleResourceCombo.getSelectedItem().equals("CPU")) ||
-                (beagleResourceCombo.getSelectedItem().equals("CPU-SSE"));
+        return (beagleResourceCombo.getSelectedItem().equals("CPU"));
     }
 
+    public void setPreferBeagleGPU() {
+        beagleResourceCombo.setSelectedItem("GPU");
+    }
+
+
     public boolean preferBeagleSSE() {
-        // SSE is currently causing a bug in some phylogeographic models, so setting as false until bug is fixed
-        return beagleResourceCombo.getSelectedItem().equals("CPU-SSE");
+        return beagleSSECheckBox.isSelected();
+    }
+
+    public void setPreferBeagleSSE(boolean preferBeagleSSE) {
+        beagleSSECheckBox.setSelected(preferBeagleSSE);
     }
 
     public boolean preferBeagleSingle() {
@@ -226,8 +243,16 @@ public class BeastDialog {
         return beaglePrecisionCombo.getSelectedItem().equals("Double");
     }
 
+    public void setPreferBeagleSingle() {
+         beaglePrecisionCombo.setSelectedItem("Single");
+    }
+
     public String scalingScheme() {
         return ((String) beagleScalingCombo.getSelectedItem()).toLowerCase();
+    }
+
+    public void setScalingScheme(String scalingScheme) {
+        beagleScalingCombo.setSelectedItem(scalingScheme);
     }
 
     public boolean showBeagleInfo() {

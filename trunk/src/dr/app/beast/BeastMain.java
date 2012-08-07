@@ -311,7 +311,7 @@ public class BeastMain {
         long seed = MathUtils.getSeed();
         boolean useJava = false;
 
-        int threadCount = -1;
+        int threadCount = 0;
 
         if (arguments.hasOption("java")) {
             useJava = true;
@@ -371,7 +371,6 @@ public class BeastMain {
         }
 
         if (arguments.hasOption("threads")) {
-            // threadCount defaults to -1 unless the user specifies an option
             threadCount = arguments.getIntegerOption("threads");
             if (threadCount < 0) {
                 printTitle();
@@ -429,7 +428,22 @@ public class BeastMain {
 
             BeastDialog dialog = new BeastDialog(new JFrame(), titleString, icon);
 
-            if (!dialog.showDialog(nameString, seed)) {
+            dialog.setAllowOverwrite(allowOverwrite);
+            dialog.setSeed(seed);
+
+            dialog.setUseBeagle(useBeagle);
+
+            if (BeagleFlag.PROCESSOR_GPU.isSet(beagleFlags)) {
+                dialog.setPreferBeagleGPU();
+            }
+
+            dialog.setPreferBeagleSSE(BeagleFlag.VECTOR_SSE.isSet(beagleFlags));
+
+            if (BeagleFlag.PRECISION_SINGLE.isSet(beagleFlags)) {
+                dialog.setPreferBeagleSingle();
+            }
+
+            if (!dialog.showDialog(nameString)) {
                 return;
             }
 

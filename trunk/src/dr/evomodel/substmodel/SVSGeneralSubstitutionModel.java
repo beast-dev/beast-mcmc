@@ -73,6 +73,14 @@ public class SVSGeneralSubstitutionModel extends GeneralSubstitutionModel implem
     }
 
     /**
+     * Needs to be evaluated before the corresponding data likelihood.
+     * @return
+     */
+    public boolean evaluateEarly() {
+        return true;
+    }
+
+    /**
      * Forces a complete recalculation of the likelihood next time getLikelihood is called
      */
     public void makeDirty() {

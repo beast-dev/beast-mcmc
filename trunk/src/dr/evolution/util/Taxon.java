@@ -25,7 +25,6 @@
 
 package dr.evolution.util;
 
-import dr.evolution.tree.NodeRef;
 import dr.util.Attributable;
 import dr.util.Identifiable;
 
@@ -76,7 +75,6 @@ public class Taxon implements Attributable, Identifiable, Comparable<Taxon> {
         }
         return 0.0;
     }
-
 
     /**
      * Sets a location for this taxon.

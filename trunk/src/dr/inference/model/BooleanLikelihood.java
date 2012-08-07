@@ -85,5 +85,14 @@ public class BooleanLikelihood extends Likelihood.Abstract {
         return false;
 	}
 
+    /**
+     * Boolean likelihoods would generally want to be evaluated early to allow for a quick
+     * termination of the evaluation in the case of a zero likelihood.
+     * @return
+     */
+    public boolean evaluateEarly() {
+        return true;
+    }
+
 }
 

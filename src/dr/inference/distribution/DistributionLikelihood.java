@@ -44,23 +44,32 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
     private int from = -1;
     private int to = Integer.MAX_VALUE;
+    private final boolean evaluateEarly;
 
     public DistributionLikelihood(Distribution distribution) {
-        super(null);
-        this.distribution = distribution;
-        this.offset = 0.0;
+        this(distribution, 0.0, false);
     }
 
     public DistributionLikelihood(Distribution distribution, double offset) {
+        this(distribution, offset, offset > 0.0);
+    }
+
+    public DistributionLikelihood(Distribution distribution, boolean evaluateEarly) {
+        this(distribution, 0.0, evaluateEarly);
+    }
+
+    public DistributionLikelihood(Distribution distribution, double offset, boolean evaluateEarly) {
         super(null);
         this.distribution = distribution;
         this.offset = offset;
+        this.evaluateEarly = evaluateEarly;
     }
 
     public DistributionLikelihood(ParametricDistributionModel distributionModel) {
         super(distributionModel);
         this.distribution = distributionModel;
         this.offset = 0.0;
+        this.evaluateEarly = false;
     }
 
     public Distribution getDistribution() {
@@ -108,6 +117,11 @@ public class DistributionLikelihood extends AbstractDistributionLikelihood {
 
         }
         return logL;
+    }
+
+    @Override
+    public boolean evaluateEarly() {
+        return evaluateEarly;
     }
 
     // **************************************************************

@@ -517,6 +517,14 @@ public class ComplexSubstitutionModel extends AbstractSubstitutionModel implemen
         return Double.NEGATIVE_INFINITY;
     }
 
+    /**
+     * Needs to be evaluated before the corresponding data likelihood.
+     * @return
+     */
+    public boolean evaluateEarly() {
+        return true;
+    }
+
     public String prettyName() {
         return Abstract.getPrettyName(this);
     }

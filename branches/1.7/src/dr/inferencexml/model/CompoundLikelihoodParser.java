@@ -53,15 +53,15 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
         // the default is 0 threads (automatic thread pool size) but an XML attribute can override it
-        int threads = xo.getAttribute(THREADS, 0);
+        int threads = xo.getAttribute(THREADS, -1);
 
         // both the XML attribute and a system property can override it
         if (System.getProperty("thread.count") != null) {
 
             threads = Integer.parseInt(System.getProperty("thread.count"));
-            if (threads < 0 || threads > 1000) {
+            if (threads < -1 || threads > 1000) {
                 // put an upper limit here - may be unnecessary?
-                threads = 0;
+                threads = -1;
             }
         }
 
@@ -82,10 +82,10 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
         if (xo.getName().equalsIgnoreCase(POSTERIOR)) {
             compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
             switch (threads) {
-                case 0:
+                case -1:
                     Logger.getLogger("dr.evomodel").info("Posterior computation is using an auto sizing thread pool.");
                     break;
-                case 1:
+                case 0:
                     Logger.getLogger("dr.evomodel").info("Posterior computation is using a single thread.");
                     break;
                 default:
@@ -113,7 +113,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
     private final XMLSyntaxRule[] rules = {
             AttributeRule.newIntegerRule(THREADS, true),
-            new ElementRule(Likelihood.class, 0, Integer.MAX_VALUE)
+            new ElementRule(Likelihood.class, -1, Integer.MAX_VALUE)
     };
 
     public Class getReturnType() {

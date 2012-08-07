@@ -56,14 +56,16 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             i++;
         }
 
-        if (threads <= 0) {
+        if (threads < 0) {
             // asking for an automatic threadpool size
             threadCount = this.likelihoods.size();
-        } else {
+        } else if (threads > 0) {
             threadCount = threads;
+        } else {
+            threadCount = 0;
         }
 
-        if (threadCount > 1) {
+        if (threadCount > 0) {
             pool = Executors.newFixedThreadPool(threadCount);
 //        } else if (threads < 0) {
 //            // create a cached thread pool which should create one thread per likelihood...
@@ -126,8 +128,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                         likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
                     }
                 }
-
-
             }
         }
     }

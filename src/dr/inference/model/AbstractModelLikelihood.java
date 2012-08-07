@@ -28,6 +28,10 @@ public abstract class AbstractModelLikelihood extends AbstractModel implements L
         isUsed = true;
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     private boolean isUsed = false;
 
     // **************************************************************

@@ -103,6 +103,10 @@ public class ThreadedCompoundLikelihood implements Likelihood {
         return logLikelihood; // * weightFactor;
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     public void makeDirty() {
 
         for (Likelihood likelihood : likelihoods) {

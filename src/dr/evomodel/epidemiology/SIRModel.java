@@ -160,6 +160,10 @@ public class SIRModel extends DemographicModel implements Likelihood {
         return likelihoodKnown;
     }
 
+    public boolean evaluateEarly() {
+        return false;
+    }
+
     public boolean isUsed() {
         return isUsed;
     }

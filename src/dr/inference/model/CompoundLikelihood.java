@@ -65,7 +65,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             threadCount = 0;
         }
 
-        if (threadCount > 1) {
+        if (threadCount > 0) {
             pool = Executors.newFixedThreadPool(threadCount);
 //        } else if (threads < 0) {
 //            // create a cached thread pool which should create one thread per likelihood...
@@ -101,7 +101,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             evaluationTimes = null;
             evaluationCounts = null;
         }
-   }
+    }
 
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
@@ -118,8 +118,15 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     compoundModel.addModel(likelihood.getModel());
                 }
 
-                if (addToPool) {
-                    likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+                if (likelihood.evaluateEarly()) {
+                    earlyLikelihoods.add(likelihood);
+                } else {
+                    // late likelihood list is used to evaluate them if the thread pool is not being used...
+                    lateLikelihoods.add(likelihood);
+
+                    if (addToPool) {
+                        likelihoodCallers.add(new LikelihoodCaller(likelihood, index));
+                    }
                 }
             }
         }
@@ -153,39 +160,19 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     static int DEBUG = 0;
 
     public double getLogLikelihood() {
-        double logLikelihood = 0.0;
+
+        double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
+
+        if( logLikelihood == Double.NEGATIVE_INFINITY ) {
+            return Double.NEGATIVE_INFINITY;
+        }
 
         if (pool == null) {
             // Single threaded
-
-            int i = 0;
-            for (Likelihood likelihood : likelihoods) {
-                if (EVALUATION_TIMERS) {
-                    // this code is only compiled if EVALUATION_TIMERS is true
-                    long time = System.nanoTime();
-                    double l = likelihood.getLogLikelihood();
-                    evaluationTimes[i] += System.nanoTime() - time;
-                    evaluationCounts[i] ++;
-
-                    if( l == Double.NEGATIVE_INFINITY )
-                        return Double.NEGATIVE_INFINITY;
-
-                    logLikelihood += l;
-
-                    i++;
-                } else {
-                    final double l = likelihood.getLogLikelihood();
-                    // if the likelihood is zero then short cut the rest of the likelihoods
-                    // This means that expensive likelihoods such as TreeLikelihoods should
-                    // be put after cheap ones such as BooleanLikelihoods
-                    if( l == Double.NEGATIVE_INFINITY )
-                        return Double.NEGATIVE_INFINITY;
-                    logLikelihood += l;
-                }
-            }
+            logLikelihood = evaluateLikelihoods(lateLikelihoods);
         } else {
-            try {
 
+            try {
                 List<Future<Double>> results = pool.invokeAll(likelihoodCallers);
 
                 for (Future<Double> result : results) {
@@ -208,10 +195,45 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return logLikelihood;
     }
 
+    private double evaluateLikelihoods(ArrayList<Likelihood> likelihoods) {
+        double logLikelihood = 0.0;
+        int i = 0;
+        for (Likelihood likelihood : likelihoods) {
+            if (EVALUATION_TIMERS) {
+                // this code is only compiled if EVALUATION_TIMERS is true
+                long time = System.nanoTime();
+                double l = likelihood.getLogLikelihood();
+                evaluationTimes[i] += System.nanoTime() - time;
+                evaluationCounts[i] ++;
+
+                if( l == Double.NEGATIVE_INFINITY )
+                    return Double.NEGATIVE_INFINITY;
+
+                logLikelihood += l;
+
+                i++;
+            } else {
+                final double l = likelihood.getLogLikelihood();
+                // if the likelihood is zero then short cut the rest of the likelihoods
+                // This means that expensive likelihoods such as TreeLikelihoods should
+                // be put after cheap ones such as BooleanLikelihoods
+                if( l == Double.NEGATIVE_INFINITY )
+                    return Double.NEGATIVE_INFINITY;
+                logLikelihood += l;
+            }
+        }
+
+        return logLikelihood;
+    }
+
     public void makeDirty() {
         for( Likelihood likelihood : likelihoods ) {
             likelihood.makeDirty();
         }
+    }
+
+    public boolean evaluateEarly() {
+        return false;
     }
 
     public String getDiagnosis() {
@@ -408,6 +430,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     private final ArrayList<Likelihood> likelihoods = new ArrayList<Likelihood>();
     private final CompoundModel compoundModel = new CompoundModel("compoundModel");
 
+    private final ArrayList<Likelihood> earlyLikelihoods = new ArrayList<Likelihood>();
+    private final ArrayList<Likelihood> lateLikelihoods = new ArrayList<Likelihood>();
 
     private final List<Callable<Double>> likelihoodCallers = new ArrayList<Callable<Double>>();
 

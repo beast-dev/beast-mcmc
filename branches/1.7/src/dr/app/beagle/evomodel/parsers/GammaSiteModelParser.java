@@ -100,7 +100,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
-        if (xo.hasChildNamed(BRANCH_SUBSTITUTION_MODEL)) {
+        if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
 
 //        	System.err.println("Doing the substitution model stuff");
 
@@ -137,7 +137,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                     }),
                     new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                             new ElementRule(BranchSubstitutionModel.class)
-                    }), true
+                    }), false
             ),
 
             new XORRule(

@@ -1,4 +1,4 @@
-package dr.evomodelxml.sitemodel;
+package dr.evomodelxml.MSSD;
 
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
@@ -9,8 +9,13 @@ import dr.xml.*;
 import java.util.logging.Logger;
 
 /**
+ * This site model is a copy of SiteModelParser explicitly so that it is not overridden
+ * by the BEAGLE variant. This is because ALSTreeLikelihood requires a non-BEAGLE site
+ * model.
  */
-public class GammaSiteModelParser extends AbstractXMLObjectParser {
+public class ALSSiteModelParser extends AbstractXMLObjectParser {
+
+    public static final String ALS_SITE_MODEL = "alsSiteModel";
 
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String MUTATION_RATE = "mutationRate";
@@ -28,7 +33,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     }
 
     public String getParserName() {
-        return SiteModel.SITE_MODEL;
+        return ALS_SITE_MODEL;
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {

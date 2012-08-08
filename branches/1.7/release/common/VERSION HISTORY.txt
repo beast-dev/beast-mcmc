@@ -40,6 +40,7 @@ Version 1.7.3 released XXX XXX 2012
        Issue 647:	Selecting robust counting was not creating the correct XML
        Issue 651:	Default Poisson prior for asymmetric BSSVS model of discrete traits is not standard
        Issue 652:	Some conditioning priors need to be evaluated before the data likelihood
+       Issue 654:	Dollo model does not parse when BEAGLE is switched on.
 
     Other changes:
        Restored non-BEAGLE AncestralTreeLikelihood availability - should be considered deprecated.

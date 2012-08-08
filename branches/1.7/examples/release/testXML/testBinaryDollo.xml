@@ -67,19 +67,19 @@
         </nodeHeights>
     </treeModel>
 
-    <siteModel id="siteModel">
+    <alsSiteModel id="siteModel">
         <substitutionModel>
             <mutationDeathModel idref="intronModel"/>
         </substitutionModel>
         <mutationRate>
             <parameter id="overallRate" lower="0.0" value="1.0"/>
         </mutationRate>
-    </siteModel>
+    </alsSiteModel>
 
     <alsTreeLikelihood id="bdLikelihood" useScaling="false" useAmbiguities="true" integrateGainRate="true">
         <patterns idref="shortPatterns"/>
         <treeModel idref="treeModel"/>
-        <siteModel idref="siteModel"/>
+        <alsSiteModel idref="siteModel"/>
         <observationProcess type="anyTip"/>
         <!-- <observationProcess type="singleTip" taxon="Ho"/>   -->
     </alsTreeLikelihood>

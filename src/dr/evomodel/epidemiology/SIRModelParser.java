@@ -8,6 +8,9 @@ import dr.xml.*;
 
 /**
  * Parses an element from an DOM document into a SIR model.
+ *
+ * @author Trevor Bedford
+ * @author Andrew Rambaut
  */
 public class SIRModelParser extends AbstractXMLObjectParser {
 

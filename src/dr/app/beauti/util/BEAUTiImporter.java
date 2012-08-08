@@ -26,6 +26,7 @@
 package dr.app.beauti.util;
 
 import dr.app.beauti.BeautiFrame;
+import dr.app.beauti.mcmcpanel.MCMCPanel;
 import dr.app.beauti.options.*;
 import dr.app.util.Utils;
 import dr.evolution.alignment.Alignment;
@@ -519,7 +520,7 @@ public class BEAUTiImporter {
     ) throws ImportException, IllegalArgumentException {
         String fileNameStem = Utils.trimExtensions(fileName,
                 new String[]{"NEX", "NEXUS", "TRE", "TREE", "XML", "TXT"});
-        if (options.fileNameStem == null) {
+        if (options.fileNameStem == null || options.fileNameStem.equals(MCMCPanel.DEFAULT_FILE_NAME_STEM)) {
             options.fileNameStem = fileNameStem;
         }
 

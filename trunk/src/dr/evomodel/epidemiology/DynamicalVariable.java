@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 
+/**
+ * @author Trevor Bedford
+ */
 public class DynamicalVariable {
 
     private String name = "variable";

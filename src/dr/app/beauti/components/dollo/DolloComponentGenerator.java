@@ -33,6 +33,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
+import dr.evomodelxml.MSSD.ALSSiteModelParser;
 import dr.evomodelxml.MSSD.ALSTreeLikelihoodParser;
 import dr.evomodelxml.branchratemodel.DiscretizedBranchRatesParser;
 import dr.evomodelxml.branchratemodel.RandomLocalClockModelParser;
@@ -210,7 +211,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
 
     private void writeDolloSiteModel(AbstractPartitionData partition, XMLWriter writer, DolloComponentOptions components) {
         String prefix = partition.getName() + ".";
-        writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
+        writer.writeOpenTag(ALSSiteModelParser.ALS_SITE_MODEL,
                 new Attribute[]{new Attribute.Default<String>(XMLParser.ID, prefix + SiteModel.SITE_MODEL)});
 
 
@@ -234,7 +235,7 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
             writeParameter(GammaSiteModelParser.PROPORTION_INVARIANT, "pInv", model, writer);
         }
 
-        writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+        writer.writeCloseTag(ALSSiteModelParser.ALS_SITE_MODEL);
     }
 
 //    private void writeDolloTreeLikelihoods(XMLWriter writer, DolloComponentOptions component) {

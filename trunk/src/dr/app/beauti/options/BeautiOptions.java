@@ -114,7 +114,7 @@ public class BeautiOptions extends ModelOptions {
         generateCSV = true;  // until/if a button
         samplePriorOnly = false;
 
-        fileNameStem = MCMCPanel.fileNameStem;
+        fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
         logFileName = null;
         allowOverwriteLog = false;
 //        mapTreeLog = false;
@@ -1226,7 +1226,7 @@ public class BeautiOptions extends ModelOptions {
     public boolean generateCSV = true;  // until/if a button
     public boolean samplePriorOnly = false;
 
-    public String fileNameStem = MCMCPanel.fileNameStem;
+    public String fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
     public String logFileName = null;
     public boolean allowOverwriteLog = false;
     //    public boolean mapTreeLog = false;

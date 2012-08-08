@@ -59,13 +59,13 @@ public class MCMCPanel extends BeautiPanel {
 
     JCheckBox samplePriorCheckBox = new JCheckBox("Sample from prior only - create empty alignment");
 
-    public static final String fileNameStem = "untitled";
-    JTextField fileNameStemField = new JTextField(fileNameStem);
+    public static final String DEFAULT_FILE_NAME_STEM = "untitled";
+    JTextField fileNameStemField = new JTextField(DEFAULT_FILE_NAME_STEM);
 
     private JCheckBox addTxt = new JCheckBox("Add .txt suffix");
 
-    JTextField logFileNameField = new JTextField(fileNameStem + ".log");
-    JTextField treeFileNameField = new JTextField(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+    JTextField logFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".log");
+    JTextField treeFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
 //    JCheckBox allowOverwriteLogCheck = new JCheckBox("Allow to overwrite the existing log file");
 
 //    JCheckBox mapTreeLogCheck = new JCheckBox("Create tree file containing the MAP tree:");
@@ -75,7 +75,7 @@ public class MCMCPanel extends BeautiPanel {
     JTextField substTreeFileNameField = new JTextField("untitled(subst).trees");
 
     JCheckBox operatorAnalaysisCheck = new JCheckBox("Create operator analysis file:");
-    JTextField operatorAnalaysisFileNameField = new JTextField(fileNameStem + ".ops");
+    JTextField operatorAnalaysisFileNameField = new JTextField(DEFAULT_FILE_NAME_STEM + ".ops");
 
     BeautiFrame frame = null;
     private final OptionsPanel optionsPanel;
@@ -323,7 +323,7 @@ public class MCMCPanel extends BeautiPanel {
         if (options.fileNameStem != null) {
             fileNameStemField.setText(options.fileNameStem);
         } else {
-            fileNameStemField.setText(fileNameStem);
+            fileNameStemField.setText(DEFAULT_FILE_NAME_STEM);
             fileNameStemField.setEnabled(false);
         }
 
@@ -387,8 +387,8 @@ public class MCMCPanel extends BeautiPanel {
         } else {
 //            fileNameStemField.setText(fileNameStem);
 //            fileNameStemField.setEnabled(false);
-            logFileNameField.setText(fileNameStem + ".log");
-            treeFileNameField.setText(fileNameStem + "." + STARBEASTOptions.TREE_FILE_NAME);
+            logFileNameField.setText(DEFAULT_FILE_NAME_STEM + ".log");
+            treeFileNameField.setText(DEFAULT_FILE_NAME_STEM + "." + STARBEASTOptions.TREE_FILE_NAME);
 //            mapTreeLogCheck.setEnabled(false);
 //            mapTreeFileNameField.setEnabled(false);
 //            mapTreeFileNameField.setText("untitled");

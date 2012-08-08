@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 
+/**
+ * @author Trevor Bedford
+ */
 public class DynamicalSystem {
 
     private List<DynamicalVariable> variables = new ArrayList<DynamicalVariable>();

@@ -45,7 +45,8 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     public static final String SITE_MODEL = SiteModel.SITE_MODEL;
     public static final String SUBSTITUTION_MODEL = "substitutionModel";
     public static final String BRANCH_SUBSTITUTION_MODEL = "branchSubstitutionModel";
-    public static final String SUBSTITUTION_RATE = "mutationRate";
+    public static final String MUTATION_RATE = "mutationRate";
+    public static final String SUBSTITUTION_RATE = "substitutionRate";
     public static final String RELATIVE_RATE = "relativeRate";
     public static final String GAMMA_SHAPE = "gammaShape";
     public static final String GAMMA_CATEGORIES = "gammaCategories";
@@ -57,27 +58,16 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		String msg = "";
-		SubstitutionModel substitutionModel = null;
-
-		boolean CHECK_BRANCH_SUBSTITUTION_MODEL = false;
-
-		for (int i = 0; i < xo.getChildCount(); i++) {
-
-			XMLObject cxo = (XMLObject) xo.getChild(i);
-
-			//TODO: very hack-ish
-			if (cxo.toString().toLowerCase().equalsIgnoreCase("branchSubstitutionModel")) {
-
-//				System.err.println("Found an instance of branch substitution model");
-				CHECK_BRANCH_SUBSTITUTION_MODEL = true;
-
-			}// END: BSM check
-		}// END: children loop
+        String msg = "";
+        SubstitutionModel substitutionModel = null;
 
         Parameter muParam = null;
         if (xo.hasChildNamed(SUBSTITUTION_RATE)) {
             muParam = (Parameter) xo.getElementFirstChild(SUBSTITUTION_RATE);
+
+            msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
+        } else  if (xo.hasChildNamed(MUTATION_RATE)) {
+            muParam = (Parameter) xo.getElementFirstChild(MUTATION_RATE);
 
             msg += "\n  with initial substitution rate = " + muParam.getParameterValue(0);
         } else if (xo.hasChildNamed(RELATIVE_RATE)) {
@@ -110,16 +100,16 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
         GammaSiteRateModel siteRateModel = new GammaSiteRateModel(SITE_MODEL, muParam, shapeParam, catCount, invarParam);
 
-        if(!CHECK_BRANCH_SUBSTITUTION_MODEL) {
-        
+        if (xo.hasChildNamed(SUBSTITUTION_MODEL)) {
+
 //        	System.err.println("Doing the substitution model stuff");
-        	
-        // set this to pass it along to the TreeLikelihoodParser...
-        substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
-        siteRateModel.setSubstitutionModel(substitutionModel);
-        
+
+            // set this to pass it along to the TreeLikelihoodParser...
+            substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
+            siteRateModel.setSubstitutionModel(substitutionModel);
+
         }
-        
+
         return siteRateModel;
     }
 
@@ -140,34 +130,39 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
     }
 
     private final XMLSyntaxRule[] rules = {
-    		
-          new XORRule(
-          new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                  new ElementRule(SubstitutionModel.class)
-                  }),
-          new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
-                  new ElementRule(BranchSubstitutionModel.class)
-                  }), false
-           ),
-    		
+
             new XORRule(
-                    new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
-                            new ElementRule(Parameter.class)
+                    new ElementRule(SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                            new ElementRule(SubstitutionModel.class)
                     }),
+                    new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
+                            new ElementRule(BranchSubstitutionModel.class)
+                    }), true
+            ),
+
+            new XORRule(
+                    new XORRule(
+                            new ElementRule(SUBSTITUTION_RATE, new XMLSyntaxRule[]{
+                                    new ElementRule(Parameter.class)
+                            }),
+                            new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{
+                                    new ElementRule(Parameter.class)
+                            })
+                    ),
                     new ElementRule(RELATIVE_RATE, new XMLSyntaxRule[]{
                             new ElementRule(Parameter.class)
                     }), true
             ),
-            
+
             new ElementRule(GAMMA_SHAPE, new XMLSyntaxRule[]{
                     AttributeRule.newIntegerRule(GAMMA_CATEGORIES, true),
                     new ElementRule(Parameter.class)
             }, true),
-            
+
             new ElementRule(PROPORTION_INVARIANT, new XMLSyntaxRule[]{
                     new ElementRule(Parameter.class)
             }, true)
-            
+
     };
-    
+
 }//END: class

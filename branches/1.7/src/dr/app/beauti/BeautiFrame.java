@@ -65,8 +65,6 @@ import java.io.*;
  */
 public class BeautiFrame extends DocumentFrame {
 
-    private static final boolean ENABLE_ANCESTRAL_STATES = true;
-
     private static final long serialVersionUID = 2114148696789612509L;
 
     public final static String DATA_PARTITIONS = "Partitions";
@@ -200,13 +198,13 @@ public class BeautiFrame extends DocumentFrame {
                 "Select the priors on trees including coalescent models<br>" +
                 "birth-death speciation models and the *BEAST gene tree,<br>" +
                 "species tree options.</html>");
-        if (ENABLE_ANCESTRAL_STATES) {
-            tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
-            tabbedPane.setToolTipTextAt(index++, "<html>" +
-                    "Select options for sampling ancestral states at specific<br>" +
-                    "or all common ancestors, models of counting state changes<br>" +
-                    "and models of sequencing error for data partitions.</html>");
-        }
+
+        tabbedPane.addTab(ANCESTRAL_STATES, ancestralStatesPanel);
+        tabbedPane.setToolTipTextAt(index++, "<html>" +
+                "Select options for sampling ancestral states at specific<br>" +
+                "or all common ancestors, models of counting state changes<br>" +
+                "and models of sequencing error for data partitions.</html>");
+
         tabbedPane.addTab(PRIORS, priorsPanel);
         tabbedPane.setToolTipTextAt(index++, "<html>" +
                 "Specify prior probability distributions on each and every<br>" +
@@ -319,9 +317,7 @@ public class BeautiFrame extends DocumentFrame {
             siteModelsPanel.setOptions(options);
             clockModelsPanel.setOptions(options);
             treesPanel.setOptions(options);
-            if (ENABLE_ANCESTRAL_STATES) {
-                ancestralStatesPanel.setOptions(options);
-            }
+            ancestralStatesPanel.setOptions(options);
             priorsPanel.setOptions(options);
             operatorsPanel.setOptions(options);
             mcmcPanel.setOptions(options);
@@ -357,9 +353,7 @@ public class BeautiFrame extends DocumentFrame {
             siteModelsPanel.getOptions(options);
             clockModelsPanel.getOptions(options);
             treesPanel.getOptions(options);
-            if (ENABLE_ANCESTRAL_STATES) {
-                ancestralStatesPanel.getOptions(options);
-            }
+            ancestralStatesPanel.getOptions(options);
             priorsPanel.getOptions(options);
             operatorsPanel.getOptions(options);
             mcmcPanel.getOptions(options);
@@ -677,18 +671,7 @@ public class BeautiFrame extends DocumentFrame {
             tabbedPane.insertTab("Species Sets", null, speciesSetPanel, null, 1);
 
         } else { // remove species
-            // why delete this? The user may want to use it again
-            // because it is how *BEAST reverse to normal BEAST, otherwise after uncheck, everything goes wrong.
-
-            // AR - it is a fundamental point of UI design that we don't delete the user's work.
-            // If the user had hand typed all the species designations in and then just switched *BEAST
-            // off for a moment and lost all that work they would be annoyed. We need to work out what
-            // why turning off *BEAST doesn't fully work.
-
-//            if (options.traitExists(TraitData.TRAIT_SPECIES)) {
-//                traitsPanel.removeTrait(TraitData.TRAIT_SPECIES);
-            options.fileNameStem = MCMCPanel.fileNameStem;
-//            }
+            options.fileNameStem = MCMCPanel.DEFAULT_FILE_NAME_STEM;
 
             tabbedPane.removeTabAt(1);
             tabbedPane.insertTab("Taxon Sets", null, taxonSetPanel, null, 1);

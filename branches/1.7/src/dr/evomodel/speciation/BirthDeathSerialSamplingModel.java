@@ -306,9 +306,9 @@ public class BirthDeathSerialSamplingModel extends MaskableSpeciationModel {
             }
         }
 
-        if (!hasFinalSample && n != 1) {
+        if (!hasFinalSample && n < 1) {
             throw new RuntimeException(
-                    "For sampling-through-time model there must be exactly one tip at time zero.");
+                    "For sampling-through-time model there must be at least one tip at time zero.");
         }
 
         double b = birth();

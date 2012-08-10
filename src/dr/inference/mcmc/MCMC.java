@@ -37,9 +37,7 @@ import dr.util.Identifiable;
 import dr.util.NumberFormatter;
 import dr.xml.Spawnable;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
 
 /**
  * An MCMC analysis that estimates parameters of a probabilistic model.
@@ -302,10 +300,10 @@ public class MCMC implements Identifiable, Spawnable {
                 }
             }
 
-            if (operatorAnalysisFileName != null) {
+            if (operatorAnalysisFile != null) {
                 try {
-                    FileOutputStream out = new FileOutputStream(operatorAnalysisFileName);
-                    showOperatorAnalysis(new PrintStream(out));
+                    PrintStream out = new PrintStream(new FileOutputStream(operatorAnalysisFile));
+                    showOperatorAnalysis(out);
                     out.flush();
                     out.close();
                 } catch (IOException e) {
@@ -527,8 +525,9 @@ public class MCMC implements Identifiable, Spawnable {
         showOperatorAnalysis = soa;
     }
 
-    public void setOperatorAnalysisFileName(String operatorAnalysisFileName) {
-        this.operatorAnalysisFileName = operatorAnalysisFileName;
+
+    public void setOperatorAnalysisFile(File operatorAnalysisFile) {
+        this.operatorAnalysisFile = operatorAnalysisFile;
     }
 
     public String getId() {
@@ -545,7 +544,7 @@ public class MCMC implements Identifiable, Spawnable {
     protected final boolean isAdapting = true;
     protected boolean stopping = false;
     protected boolean showOperatorAnalysis = true;
-    protected String operatorAnalysisFileName = null;
+    protected File operatorAnalysisFile = null;
     protected final dr.util.Timer timer = new dr.util.Timer();
     protected long currentState = 0;
     //private int stepsPerReport = 1000;

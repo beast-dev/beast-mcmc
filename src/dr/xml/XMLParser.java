@@ -421,25 +421,7 @@ public class XMLParser {
     public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName, String attributeName) throws XMLParseException {
 
         if (xo.hasAttribute(attributeName)) {
-
-            final File logFile = getFileHandle(xo, attributeName);
-            boolean allowOverwrite = false;
-
-            if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
-                allowOverwrite = xo.getBooleanAttribute(LoggerParser.ALLOW_OVERWRITE_LOG);
-            }
-
-            // override with a runtime set System Property
-            if (System.getProperty("log.allow.overwrite") != null) {
-                allowOverwrite = Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"));
-            }
-
-            if (logFile.exists() && !allowOverwrite) {
-                throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
-                        "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
-                        "\nBEAST or select the option in the Run Options dialog box as appropriate.");
-            }
-
+            File logFile = getLogFile(xo, attributeName);
 
             try {
                 return new PrintWriter(new FileOutputStream(logFile));
@@ -450,6 +432,29 @@ public class XMLParser {
 
         }
         return new PrintWriter(System.out);
+    }
+
+    public static File getLogFile(XMLObject xo, String attributeName) throws XMLParseException {
+        final File logFile = getFileHandle(xo, attributeName);
+        boolean allowOverwrite = false;
+
+        if (xo.hasAttribute(LoggerParser.ALLOW_OVERWRITE_LOG)) {
+            allowOverwrite = xo.getBooleanAttribute(LoggerParser.ALLOW_OVERWRITE_LOG);
+        }
+
+        // override with a runtime set System Property
+        if (System.getProperty("log.allow.overwrite") != null) {
+            allowOverwrite = Boolean.parseBoolean(System.getProperty("log.allow.overwrite", "false"));
+        }
+
+        if (logFile.exists() && !allowOverwrite) {
+            throw new XMLParseException("\nThe log file " + logFile.getName() + " already exists in the working directory." +
+                    "\nTo allow it to be overwritten, use the '-overwrite' command line option when running" +
+                    "\nBEAST or select the option in the Run Options dialog box as appropriate.");
+        }
+
+
+        return logFile;
     }
 
 

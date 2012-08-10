@@ -35,6 +35,8 @@ import dr.inference.model.Likelihood;
 import dr.inference.operators.OperatorSchedule;
 import dr.xml.*;
 
+import java.io.FileOutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 public class MCMCParser extends AbstractXMLObjectParser {
@@ -100,7 +102,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         mcmc.setShowOperatorAnalysis(true);
         if (xo.hasAttribute(OPERATOR_ANALYSIS)) {
-            mcmc.setOperatorAnalysisFileName(xo.getStringAttribute(OPERATOR_ANALYSIS));
+            mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS));
         }
 
 

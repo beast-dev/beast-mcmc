@@ -421,7 +421,20 @@ public class XMLParser {
     public static PrintWriter getFilePrintWriter(XMLObject xo, String parserName, String attributeName) throws XMLParseException {
 
         if (xo.hasAttribute(attributeName)) {
+            File logFile = getLogFile(xo, attributeName);
 
+            try {
+                return new PrintWriter(new FileOutputStream(logFile));
+            } catch (FileNotFoundException fnfe) {
+                throw new XMLParseException("File '" + logFile.getAbsolutePath() +
+                        "' can not be opened for " + parserName + " element.");
+            }
+
+        }
+        return new PrintWriter(System.out);
+    }
+
+    public static File getLogFile(XMLObject xo, String attributeName) throws XMLParseException {
             final File logFile = getFileHandle(xo, attributeName);
             boolean allowOverwrite = false;
 
@@ -441,15 +454,7 @@ public class XMLParser {
             }
 
 
-            try {
-                return new PrintWriter(new FileOutputStream(logFile));
-            } catch (FileNotFoundException fnfe) {
-                throw new XMLParseException("File '" + logFile.getAbsolutePath() +
-                        "' can not be opened for " + parserName + " element.");
-            }
-
-        }
-        return new PrintWriter(System.out);
+        return logFile;
     }
 
 

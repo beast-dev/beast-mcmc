@@ -94,7 +94,7 @@ public class MCMCParser extends AbstractXMLObjectParser {
 
         mcmc.setShowOperatorAnalysis(true);
         if (xo.hasAttribute(OPERATOR_ANALYSIS)) {
-            mcmc.setOperatorAnalysisFileName(xo.getStringAttribute(OPERATOR_ANALYSIS));
+            mcmc.setOperatorAnalysisFile(XMLParser.getLogFile(xo, OPERATOR_ANALYSIS));
         }
 
         Logger[] loggerArray = new Logger[loggers.size()];

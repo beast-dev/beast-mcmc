@@ -52,7 +52,7 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        // the default is 0 threads (automatic thread pool size) but an XML attribute can override it
+        // the default is -1 threads (automatic thread pool size) but an XML attribute can override it
         int threads = xo.getAttribute(THREADS, -1);
 
         // both the XML attribute and a system property can override it

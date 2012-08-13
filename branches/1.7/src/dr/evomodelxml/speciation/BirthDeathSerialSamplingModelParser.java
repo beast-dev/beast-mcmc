@@ -75,6 +75,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         }
 
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
+        //Issue 656: fix p=0
         final Parameter p = xo.hasChildNamed(SAMPLE_PROBABILITY) ?
                         (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY) : new Parameter.Default(0.0);
 
@@ -133,7 +134,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
                     new ElementRule(RELATIVE_MU, new XMLSyntaxRule[]{new ElementRule(Parameter.class)})),
             new ElementRule(PSI, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(SAMPLE_BECOMES_NON_INFECTIOUS, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
-            new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            XMLUnits.SYNTAX_RULES[0]
+            //Issue 656
+//            new ElementRule(SAMPLE_PROBABILITY, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
+//            XMLUnits.SYNTAX_RULES[0]
     };
 }

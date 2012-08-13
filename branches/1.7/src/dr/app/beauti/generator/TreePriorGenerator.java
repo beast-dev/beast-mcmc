@@ -863,6 +863,7 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
+                //Issue 656
 //                writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
 //                        + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."

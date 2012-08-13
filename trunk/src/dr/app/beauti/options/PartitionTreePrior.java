@@ -143,10 +143,11 @@ public class PartitionTreePrior extends PartitionOptions {
         createZeroOneParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU,
                 "Birth-Death relative death rate", 0.5);
-        createParameterBetaDistributionPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
-                "Birth-Death the proportion of taxa sampled from birth death tree",
-                0.01, 1.0, 1.0, 0.0);
+        //Issue 656
+//        createParameterBetaDistributionPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
+//                "Birth-Death the proportion of taxa sampled from birth death tree",
+//                0.01, 1.0, 1.0, 0.0);
         createNonNegativeParameterUniformPrior(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.PSI,
                 "Birth-Death rate of sampling taxa through time", PriorScaleType.NONE,
@@ -210,8 +211,9 @@ public class PartitionTreePrior extends PartitionOptions {
                 + BirthDeathSerialSamplingModelParser.LAMBDA, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.RELATIVE_MU, demoTuning, 1);
-        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, demoTuning, 1);
+        //Issue 656
+//        createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, demoTuning, 1);
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                 + BirthDeathSerialSamplingModelParser.PSI, demoTuning, 1);   // todo random worl op ?
         createScaleOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
@@ -289,8 +291,8 @@ public class PartitionTreePrior extends PartitionOptions {
             params.add(psi);
             params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
                     + BirthDeathSerialSamplingModelParser.ORIGIN));
-            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
-                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
+//            params.add(getParameter(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
 
         } else if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
             params.add(getParameter(BirthDeathEpidemiologyModelParser.ORIGIN));
@@ -360,8 +362,8 @@ public class PartitionTreePrior extends PartitionOptions {
                     + BirthDeathSerialSamplingModelParser.PSI));
             ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
                     + BirthDeathSerialSamplingModelParser.ORIGIN));
-            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
-                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
+//            ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."
+//                    + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY));
 
 //            if (nodeHeightPrior == TreePriorType.BIRTH_DEATH_BASIC_REPRODUCTIVE_NUMBER) {
 //                ops.add(getOperator(BirthDeathSerialSamplingModelParser.BDSS + "."

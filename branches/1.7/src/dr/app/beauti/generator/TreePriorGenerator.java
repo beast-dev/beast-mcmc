@@ -297,8 +297,8 @@ public class TreePriorGenerator extends Generator {
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.LAMBDA, prior, writer);
                 writeParameter(BirthDeathSerialSamplingModelParser.RELATIVE_MU,
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.RELATIVE_MU, prior, writer);
-                writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
-                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, prior, writer);
+//                writeParameter(BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY,
+//                        BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, prior, writer);
                 writeParameter(BirthDeathSerialSamplingModelParser.PSI,
                         BirthDeathSerialSamplingModelParser.BDSS + "." + BirthDeathSerialSamplingModelParser.PSI, prior, writer);
                 writeParameter(BirthDeathSerialSamplingModelParser.ORIGIN,
@@ -863,8 +863,8 @@ public class TreePriorGenerator extends Generator {
                         + BirthDeathSerialSamplingModelParser.LAMBDA, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.RELATIVE_MU, writer);
-                writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
-                        + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, writer);
+//                writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
+//                        + BirthDeathSerialSamplingModelParser.SAMPLE_PROBABILITY, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."
                         + BirthDeathSerialSamplingModelParser.PSI, writer);
                 writeParameterRef(modelPrefix + BirthDeathSerialSamplingModelParser.BDSS + "."

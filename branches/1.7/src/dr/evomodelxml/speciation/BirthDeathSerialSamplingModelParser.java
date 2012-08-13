@@ -44,7 +44,7 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
     public static final String MU = "deathRate";
     public static final String RELATIVE_MU = "relativeDeathRate";
     public static final String PSI = "psi";
-    public static final String SAMPLE_PROBABILITY = "sampleProbability";
+    public static final String SAMPLE_PROBABILITY = "sampleProbability"; // default to fix to 0
     public static final String SAMPLE_BECOMES_NON_INFECTIOUS = "sampleBecomesNonInfectiousProb";
     public static final String R = "r";
 //    public static final String FINAL_TIME_INTERVAL = "finalTimeInterval";
@@ -75,7 +75,8 @@ public class BirthDeathSerialSamplingModelParser extends AbstractXMLObjectParser
         }
 
         final Parameter psi = (Parameter) xo.getElementFirstChild(PSI);
-        final Parameter p = (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY);
+        final Parameter p = xo.hasChildNamed(SAMPLE_PROBABILITY) ?
+                        (Parameter) xo.getElementFirstChild(SAMPLE_PROBABILITY) : new Parameter.Default(0.0);
 
         Parameter origin = null;
         if (xo.hasChildNamed(ORIGIN)) {

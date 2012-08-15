@@ -198,7 +198,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             likelihoods.add(treeLikelihood);
         }
 
-        return new CompoundLikelihood(instanceCount, likelihoods);
+        return new CompoundLikelihood(likelihoods);
     }
 
     //************************************************************************

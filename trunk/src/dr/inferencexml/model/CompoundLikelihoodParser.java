@@ -80,17 +80,17 @@ public class CompoundLikelihoodParser extends AbstractXMLObjectParser {
 
         CompoundLikelihood compoundLikelihood;
 
-        if (xo.getName().equalsIgnoreCase(POSTERIOR)) {
+        if (xo.getName().equalsIgnoreCase(LIKELIHOOD)) {
             compoundLikelihood = new CompoundLikelihood(threads, likelihoods);
             switch (threads) {
                 case -1:
-                    Logger.getLogger("dr.evomodel").info("Posterior computation is using an auto sizing thread pool.");
+                    Logger.getLogger("dr.evomodel").info("Likelihood computation is using an auto sizing thread pool.");
                     break;
                 case 0:
-                    Logger.getLogger("dr.evomodel").info("Posterior computation is using a single thread.");
+                    Logger.getLogger("dr.evomodel").info("Likelihood computation is using a single thread.");
                     break;
                 default:
-                    Logger.getLogger("dr.evomodel").info("Posterior computation is using a pool of " + threads + " threads.");
+                    Logger.getLogger("dr.evomodel").info("Likelihood computation is using a pool of " + threads + " threads.");
                     break;
             }
         } else {

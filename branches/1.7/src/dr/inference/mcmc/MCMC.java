@@ -237,14 +237,6 @@ public class MCMC implements Identifiable, Spawnable {
             // OperatorAnalysisPrinter class can do the job now
             if (showOperatorAnalysis) {
                 showOperatorAnalysis(System.out);
-                try {
-                    FileOutputStream out = new FileOutputStream(id + ".operators");
-                    showOperatorAnalysis(new PrintStream(out));
-                    out.flush();
-                    out.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
 
             if (operatorAnalysisFile != null) {

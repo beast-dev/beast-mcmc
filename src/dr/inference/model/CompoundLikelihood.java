@@ -56,12 +56,13 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             i++;
         }
 
-        if (threads < 0) {
-            // asking for an automatic threadpool size
+        if (threads < 0 && this.likelihoods.size() > 1) {
+            // asking for an automatic threadpool size and there is more than one likelihood to compute
             threadCount = this.likelihoods.size();
         } else if (threads > 0) {
             threadCount = threads;
         } else {
+            // no thread pool requested or only one likelihood
             threadCount = 0;
         }
 
@@ -106,7 +107,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
     protected void addLikelihood(Likelihood likelihood, int index, boolean addToPool) {
 
         // unroll any compound likelihoods
-        if (UNROLL_COMPOUND && likelihood instanceof CompoundLikelihood) {
+        if (UNROLL_COMPOUND && addToPool && likelihood instanceof CompoundLikelihood) {
             for (Likelihood l : ((CompoundLikelihood)likelihood).getLikelihoods()) {
                 addLikelihood(l, index, addToPool);
             }

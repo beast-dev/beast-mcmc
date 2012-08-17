@@ -157,9 +157,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return compoundModel;
     }
 
-    // todo: remove in release
-    static int DEBUG = 0;
-
     public double getLogLikelihood() {
 
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
@@ -188,11 +185,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             }
         }
 
-        if( DEBUG > 0 ) {
-            int t = DEBUG; DEBUG = 0;
-            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
-            DEBUG = t;
-        }
         return logLikelihood;
     }
 
@@ -283,6 +275,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     message += "-Inf";
                 } else if( Double.isNaN(logLikelihood) ) {
                     message += "NaN";
+                } else if( logLikelihood == Double.POSITIVE_INFINITY ) {
+                    message += "+Inf";
                 } else {
                     message += nf.formatDecimal(logLikelihood, 4);
                 }

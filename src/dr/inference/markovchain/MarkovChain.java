@@ -131,7 +131,15 @@ public final class MarkovChain {
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
             } else {
-                message += "!";
+                message += ".";
+            }
+            throw new IllegalArgumentException(message);
+        } else if (currentScore == Double.POSITIVE_INFINITY || Double.isNaN(currentScore)) {
+            String message = "A likelihood returned with a numerical error";
+            if (likelihood instanceof CompoundLikelihood) {
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+            } else {
+                message += ".";
             }
             throw new IllegalArgumentException(message);
         }
@@ -228,6 +236,13 @@ public final class MarkovChain {
 
                 // assert Profiler.stopProfile("Evaluate");
 
+                if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
+                    diagnostic = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+                    Logger.getLogger("error").severe(
+                            "A likelihood returned with a numerical error:\n" + diagnostic);
+                }
+
                 if (usingFullEvaluation) {
 
                     // This is a test that the state is correctly restored. The
@@ -251,11 +266,6 @@ public final class MarkovChain {
                     bestScore = score;
                     fireBestModel(currentState, currentModel);
                 }
-
-                // todo | Suggest a test here of score being +Inf or NaN which would imply a numerical error. +Inf
-                // todo | in particular is likely to be an issue because the move will be accepted. The other option
-                // todo | is always to reject such states which will have the effect of bounding the parameters to
-                // todo | values which don't induce numerical issues (but do this obscurely).
 
                 accept = mcmcOperator instanceof GibbsOperator || acceptor.accept(oldScore, score, hastingsRatio, logr);
 

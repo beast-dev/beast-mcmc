@@ -164,8 +164,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
-        if( logLikelihood == Double.NEGATIVE_INFINITY ) {
-            return Double.NEGATIVE_INFINITY;
+        if( Double.isInfinite(logLikelihood) || Double.isNaN(logLikelihood) ) {
+            return logLikelihood;
         }
 
         if (pool == null) {
@@ -207,9 +207,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 evaluationTimes[i] += System.nanoTime() - time;
                 evaluationCounts[i] ++;
 
-                if( l == Double.NEGATIVE_INFINITY )
-                    return Double.NEGATIVE_INFINITY;
-
                 logLikelihood += l;
 
                 i++;
@@ -218,10 +215,13 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 // if the likelihood is zero then short cut the rest of the likelihoods
                 // This means that expensive likelihoods such as TreeLikelihoods should
                 // be put after cheap ones such as BooleanLikelihoods
-                if( l == Double.NEGATIVE_INFINITY )
-                    return Double.NEGATIVE_INFINITY;
                 logLikelihood += l;
             }
+
+            if( Double.isInfinite(logLikelihood) || Double.isNaN(logLikelihood) ) {
+                return logLikelihood;
+        }
+
         }
 
         return logLikelihood;
@@ -283,6 +283,8 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                     message += "-Inf";
                 } else if( Double.isNaN(logLikelihood) ) {
                     message += "NaN";
+                } else if( logLikelihood == Double.POSITIVE_INFINITY ) {
+                    message += "+Inf";
                 } else {
                     message += nf.formatDecimal(logLikelihood, 4);
                 }

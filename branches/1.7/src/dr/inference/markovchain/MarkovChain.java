@@ -131,12 +131,20 @@ public final class MarkovChain {
             if (likelihood instanceof CompoundLikelihood) {
                 message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
             } else {
-                message += "!";
+                message += ".";
+            }
+            throw new IllegalArgumentException(message);
+        } else if (currentScore == Double.POSITIVE_INFINITY || Double.isNaN(currentScore)) {
+            String message = "A likelihood returned with a numerical error";
+            if (likelihood instanceof CompoundLikelihood) {
+                message += ": " + ((CompoundLikelihood) likelihood).getDiagnosis();
+            } else {
+                message += ".";
             }
             throw new IllegalArgumentException(message);
         }
 
-        pleaseStop = false;
+            pleaseStop = false;
         isStopped = false;
 
         String diagnostic = "";
@@ -227,6 +235,13 @@ public final class MarkovChain {
                 }
 
                 // assert Profiler.stopProfile("Evaluate");
+
+                if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
+                    diagnostic = likelihood instanceof CompoundLikelihood ?
+                            ((CompoundLikelihood)likelihood).getDiagnosis() : "";
+                    Logger.getLogger("error").severe(
+                            "A likelihood returned with a numerical error.\n" + diagnostic);
+                }
 
                 if (usingFullEvaluation) {
 

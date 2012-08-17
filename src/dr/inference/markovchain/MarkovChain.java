@@ -252,6 +252,11 @@ public final class MarkovChain {
                     fireBestModel(currentState, currentModel);
                 }
 
+                // todo | Suggest a test here of score being +Inf or NaN which would imply a numerical error. +Inf
+                // todo | in particular is likely to be an issue because the move will be accepted. The other option
+                // todo | is always to reject such states which will have the effect of bounding the parameters to
+                // todo | values which don't induce numerical issues (but do this obscurely).
+
                 accept = mcmcOperator instanceof GibbsOperator || acceptor.accept(oldScore, score, hastingsRatio, logr);
 
                 deviation = score - oldScore;

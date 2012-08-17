@@ -157,15 +157,15 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return compoundModel;
     }
 
-    // todo: remove in release
-    static int DEBUG = 0;
+//    // todo: remove in release
+//    static int DEBUG = 0;
 
     public double getLogLikelihood() {
 
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
 
-        if( Double.isInfinite(logLikelihood) || Double.isNaN(logLikelihood) ) {
-            return logLikelihood;
+        if( logLikelihood == Double.NEGATIVE_INFINITY ) {
+            return Double.NEGATIVE_INFINITY;
         }
 
         if (pool == null) {
@@ -188,11 +188,11 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             }
         }
 
-        if( DEBUG > 0 ) {
-            int t = DEBUG; DEBUG = 0;
-            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
-            DEBUG = t;
-        }
+//        if( DEBUG > 0 ) {
+//            int t = DEBUG; DEBUG = 0;
+//            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
+//            DEBUG = t;
+//        }
         return logLikelihood;
     }
 
@@ -207,6 +207,9 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 evaluationTimes[i] += System.nanoTime() - time;
                 evaluationCounts[i] ++;
 
+                if( l == Double.NEGATIVE_INFINITY )
+                    return Double.NEGATIVE_INFINITY;
+
                 logLikelihood += l;
 
                 i++;
@@ -215,13 +218,10 @@ public class CompoundLikelihood implements Likelihood, Reportable {
                 // if the likelihood is zero then short cut the rest of the likelihoods
                 // This means that expensive likelihoods such as TreeLikelihoods should
                 // be put after cheap ones such as BooleanLikelihoods
+                if( l == Double.NEGATIVE_INFINITY )
+                    return Double.NEGATIVE_INFINITY;
                 logLikelihood += l;
             }
-
-            if( Double.isInfinite(logLikelihood) || Double.isNaN(logLikelihood) ) {
-                return logLikelihood;
-        }
-
         }
 
         return logLikelihood;

@@ -237,10 +237,16 @@ public final class MarkovChain {
                 // assert Profiler.stopProfile("Evaluate");
 
                 if (score == Double.POSITIVE_INFINITY || Double.isNaN(score)) {
-                    diagnostic = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood)likelihood).getDiagnosis() : "";
-                    Logger.getLogger("error").severe(
-                            "A likelihood returned with a numerical error:\n" + diagnostic);
+                    if (likelihood instanceof CompoundLikelihood) {
+                        Logger.getLogger("error").severe("A likelihood returned with a numerical error:\n" +
+                                ((CompoundLikelihood)likelihood).getDiagnosis());
+                    } else {
+                        Logger.getLogger("error").severe("A likelihood returned with a numerical error.");
+                    }
+
+                    // If the user has chosen to ignore this error then we transform it
+                    // to a negative infinity so the state is rejected.
+                    score = Double.NEGATIVE_INFINITY;
                 }
 
                 if (usingFullEvaluation) {

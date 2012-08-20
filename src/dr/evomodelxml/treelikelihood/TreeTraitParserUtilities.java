@@ -59,10 +59,10 @@ public class TreeTraitParserUtilities {
 
     public void jitter(XMLObject xo, int length, List<Integer> missingIndices) throws XMLParseException {
         XMLObject cxo = xo.getChild(TreeTraitParserUtilities.JITTER);
-                      Parameter traits = (Parameter) cxo.getChild(Parameter.class);
-                      double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
-                      boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
-                      jitter(traits, length, missingIndices, window, duplicates, true);
+        Parameter traits = (Parameter) cxo.getChild(Parameter.class);
+        double[] window = cxo.getDoubleArrayAttribute(TreeTraitParserUtilities.WINDOW); // Must be included, no default value
+        boolean duplicates = cxo.getAttribute(TreeTraitParserUtilities.DUPLICATES, true); // default = true
+        jitter(traits, length, missingIndices, window, duplicates, true);
     }
 
     public void randomize(XMLObject xo) throws XMLParseException {
@@ -239,7 +239,7 @@ public class TreeTraitParserUtilities {
                             // try the alternative param name
                             traitParam = getTraitParameterByName(traitParameter, altParamName);
                             if (traitParam == null) {
-                                throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                                throw new RuntimeException("Missing trait parameters for taxon, " + paramName);
                             }
                         }
                     } else {
@@ -258,8 +258,9 @@ public class TreeTraitParserUtilities {
                     }
                     if (sampleSize != traitParam.getDimension()) {
                         if (existingTraitParameter) {
-                            throw new RuntimeException("Trait length must match trait parameter dimension: " +
-                            sampleSize + " != " + traitParam.getDimension());
+                            throw new RuntimeException("Trait length must match trait parameter dimension for taxon, " +
+                                    taxonName + ": " +
+                                    sampleSize + " != " + traitParam.getDimension());
                         } else {
                             traitParam.setDimension(sampleSize);
                         }

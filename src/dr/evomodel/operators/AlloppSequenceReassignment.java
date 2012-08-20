@@ -2,6 +2,7 @@ package dr.evomodel.operators;
 
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesNetworkModel;
+import dr.evomodelxml.operators.AlloppNetworkNodeSlideParser;
 import dr.evomodelxml.operators.AlloppSequenceReassignmentParser;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;

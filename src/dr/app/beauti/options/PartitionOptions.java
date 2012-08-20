@@ -63,7 +63,7 @@ public abstract class PartitionOptions extends ModelOptions {
 
     public abstract String getPrefix();
 
-    //    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
+//    protected void createParameterClockRateUndefinedPrior(PartitionOptions options, String name, String description, PriorScaleType scaleType,
 //                                                          double initial, double truncationLower, double truncationUpper) { // it will change to Uniform
 //        new Parameter.Builder(name, description).scaleType(scaleType).prior(PriorType.UNDEFINED).initial(initial)
 //                .isCMTCRate(true).isNonNegative(true)

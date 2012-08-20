@@ -157,9 +157,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
         return compoundModel;
     }
 
-//    // todo: remove in release
-//    static int DEBUG = 0;
-
     public double getLogLikelihood() {
 
         double logLikelihood = evaluateLikelihoods(earlyLikelihoods);
@@ -188,11 +185,6 @@ public class CompoundLikelihood implements Likelihood, Reportable {
             }
         }
 
-//        if( DEBUG > 0 ) {
-//            int t = DEBUG; DEBUG = 0;
-//            System.err.println(getId() + ": " + getDiagnosis(0) + " = " + logLikelihood);
-//            DEBUG = t;
-//        }
         return logLikelihood;
     }
 

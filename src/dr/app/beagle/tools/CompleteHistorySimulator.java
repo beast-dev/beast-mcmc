@@ -66,9 +66,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //    protected double[] lambda;
 //    protected double[][] probabilities;
 
-	private boolean branchSpecificLambda = false;
-	private Parameter branchVariableParameter = null;
-	private Parameter branchPossibleValuesParameter = null;
+    private boolean branchSpecificLambda = false;
+    private Parameter branchVariableParameter = null;
+    private Parameter branchPossibleValuesParameter = null;
 	private DataType dataType;
 
     protected List<double[]> registers;
@@ -84,7 +84,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
     private Map<Integer,Sequence> alignmentTraitList;
 
     private boolean alignmentOnly = false;
-    
+
     /**
      * Constructor
      *
@@ -107,8 +107,8 @@ public class CompleteHistorySimulator extends SimpleAlignment
     public CompleteHistorySimulator(Tree tree, GammaSiteRateModel siteModel, BranchRateModel branchRateModel,
                                     int nReplications, boolean sumAcrossSites,
                                     Parameter branchVariableParameter, Parameter branchPossibleValuesParameter) {
-        
-    	this.tree = tree;
+
+        this.tree = tree;
         this.siteModel = siteModel;
         this.branchRateModel = branchRateModel;
         this.nReplications = nReplications;
@@ -121,7 +121,7 @@ public class CompleteHistorySimulator extends SimpleAlignment
 //			System.out.println("Codon models give exception when put inside report and when count statistics are done on them. "
 //							+ "You can supress this by setting alignmentOnly to true.");
 //		}
-         
+
         this.sumAcrossSites = sumAcrossSites;
 
         List<String> taxaIds = new ArrayList<String>();
@@ -301,9 +301,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
 
     private NumberFormat format;
 
-	public String toString() {
+    public String toString() {
 
-		StringBuffer sb = new StringBuffer();
+        StringBuffer sb = new StringBuffer();
 
 		if (alignmentOnly) {
 
@@ -314,11 +314,11 @@ public class CompleteHistorySimulator extends SimpleAlignment
 		} else {
 
 			// alignment output
-			sb.append("alignment\n");
-			sb.append(super.toString());
-			sb.append("\n");
+        sb.append("alignment\n");
+        sb.append(super.toString());
+        sb.append("\n");
 			// tree output
-			sb.append("tree\n");
+        sb.append("tree\n");
 			Tree.Utils.newick(tree,
 							tree.getRoot(),
 							true,
@@ -326,12 +326,12 @@ public class CompleteHistorySimulator extends SimpleAlignment
 							format,
 							null,
 							(nJumpProcesses > 0 || saveAlignment ? new TreeTraitProvider[] { this }
-									: null), 
-									idMap, 
-									sb);
-			sb.append("\n");
+									: null),
+                idMap,
+                sb);
+        sb.append("\n");
 
-		}
+    }
 
 		return sb.toString();
 	}// END: toString
@@ -449,9 +449,9 @@ public class CompleteHistorySimulator extends SimpleAlignment
         return StateHistory.simulateUnconditionalOnEndingState(0.0, startingState, branchLength,
                 lambda, stateCount);
     }
-    
+
     public void setAlignmentOnly() {
     	alignmentOnly = true;
-    }
-    
+}
+
 }//END: class

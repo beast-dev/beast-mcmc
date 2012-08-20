@@ -5,8 +5,6 @@
         $Id: build_BEAST_MCMC.xml,v 1.5 2009/04/15 Walter Xie Exp $
     </description>
 
-    <property name="JDK_VERSION" value="1.6"/>
-
     <!-- set global properties for this build -->
     <property name="src" location="src"/>
     <property name="build" location="build"/>
@@ -49,7 +47,7 @@
         <mkdir dir="${build}"/>
 
         <!-- Compile the java code from ${src} into ${build} /bin -->
-        <javac source="${JDK_VERSION}" target="${JDK_VERSION}" srcdir="${src}" destdir="${build}" classpathref="classpath"
+        <javac source="1.5" target="1.5" srcdir="${src}" destdir="${build}" classpathref="classpath"
                fork="true"
                memoryinitialsize="256m"
                memorymaximumsize="1024m">
@@ -266,8 +264,8 @@
     </target>
 
 
-    <property name="version" value="1.8.0pre"/>
-    <property name="version_number" value="1.8.0"/>
+    <property name="version" value="1.7.3"/>
+    <property name="version_number" value="1.7.3"/>
     <property name="release_dir" value="release"/>
     <property name="BEAST_name" value="BEAST"/>
     <property name="BEASTMC3_name" value="BEASTMC3"/>

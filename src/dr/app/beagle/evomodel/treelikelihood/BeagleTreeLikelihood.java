@@ -745,25 +745,25 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             // we are currently assuming a no-category model...
             for (int i = 0; i < eigenCount; i++) {
                 if (EpochBranchSubstitutionModel.TRY_EPOCH) {
-                    eigenBufferHelper.flipOffset(i);
+            		  eigenBufferHelper.flipOffset(i);
+            		  
+            		  branchSubstitutionModel.setEigenDecomposition(
+            				  beagle, i, eigenBufferHelper, 0
+            				  );
+            		
+            		
+            	} else {
+            	
+                EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
 
-                    branchSubstitutionModel.setEigenDecomposition(
-                            beagle, i, eigenBufferHelper, 0
-                    );
+                eigenBufferHelper.flipOffset(i);
 
-
-                } else {
-
-                    EigenDecomposition ed = branchSubstitutionModel.getEigenDecomposition(i, 0);
-
-                    eigenBufferHelper.flipOffset(i);
-
-                    beagle.setEigenDecomposition(
-                            eigenBufferHelper.getOffsetIndex(i),
-                            ed.getEigenVectors(),
-                            ed.getInverseEigenVectors(),
-                            ed.getEigenValues());
-                }
+                beagle.setEigenDecomposition(
+                        eigenBufferHelper.getOffsetIndex(i),
+                        ed.getEigenVectors(),
+                        ed.getInverseEigenVectors(),
+                        ed.getEigenValues());
+            	}
             }
         }
 
@@ -1102,7 +1102,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
                     }
                 }
-
+                
                 // /////////////
                 // ---DEBUG---//
                 // /////////////
@@ -1117,9 +1117,9 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 ////					}
 //				}
 
-                // //////////////////
-                // ---END: DEBUG---//
-                // //////////////////
+				// //////////////////
+				// ---END: DEBUG---//
+				// //////////////////
 
             }
         }

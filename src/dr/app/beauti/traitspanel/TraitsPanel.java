@@ -494,10 +494,10 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
             boolean done = frame.doImportTraits();
             if (done) {
                 if (isSpeciesTrait) {
-                // check that we did indeed import a 'species' trait
+                    // check that we did indeed import a 'species' trait
                     if (!options.traitExists(TraitData.TRAIT_SPECIES)) {
                         JOptionPane.showMessageDialog(this,
-                                        "The imported trait file didn't contain a trait\n" +
+                                "The imported trait file didn't contain a trait\n" +
                                         "called '" + TraitData.TRAIT_SPECIES + "', required for *BEAST.\n" +
                                         "Please edit it or select a different file.",
                                 "Reserved trait name",
@@ -809,7 +809,7 @@ public class TraitsPanel extends BeautiPanel implements Exportable {
                     singleTrait.add(trait);
                     if (dataPanel.createFromTraits(singleTrait)) {
                         success = true;
-                }
+                    }
                 }
             } else {
                 // with

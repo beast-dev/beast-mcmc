@@ -67,11 +67,11 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 		}//END: i loop
 
 		BranchRateModel branchRateModel = (BranchRateModel)xo.getChild(BranchRateModel.class);
-		
+
 		if (branchRateModel == null) {
 			branchRateModel = new DefaultBranchRateModel();
 		}
-		
+
 		Parameter epochTransitionTimes = (Parameter) xo
 				.getChild(Parameter.class);
 
@@ -89,8 +89,8 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
 			epochTransitionTimes.setParameterValueQuietly(i, sortedEpochTransitionTimes[i]);
 		}//END: i loop
 
-		return new EpochBranchSubstitutionModel(substModelList, 
-				frequencyModelList, 
+		return new EpochBranchSubstitutionModel(substModelList,
+				frequencyModelList,
 				branchRateModel,
 				epochTransitionTimes);
 	}// END: parseXMLObject

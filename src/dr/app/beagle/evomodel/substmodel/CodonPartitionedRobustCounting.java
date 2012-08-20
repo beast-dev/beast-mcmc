@@ -237,7 +237,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     int n = history.getNumberOfJumps();
                     // MAS may have broken the next line
                     String hstring = "{" + (i + 1) + "," + history.toStringChanges(usModel.dataType) + "}";
-                    if (DEBUG) {
+            if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()
                                 + " : "
@@ -247,7 +247,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
                     if (completeHistoryPerNode == null) {
                         completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
-                    }
+            }
 //                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
                     completeHistoryPerNode[child.getNumber()][i] = hstring;
                 }

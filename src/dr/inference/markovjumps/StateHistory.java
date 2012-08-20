@@ -103,7 +103,7 @@ public class StateHistory {
         }
         return total;
     }
-
+    
     public void accumulateSufficientStatistics(int[] counts, double[] times) {
         checkFinalized(true);
         int nJumps = getNumberOfJumps();
@@ -178,7 +178,7 @@ public class StateHistory {
 
             double newNextTime = oldTimeDiff * scale + newCurrentTime;
             nextStateChange.setTime(newNextTime);
-
+            
             oldCurrentTime = oldNextTime;
             newCurrentTime = newNextTime;
 

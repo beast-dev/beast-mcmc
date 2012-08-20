@@ -1,28 +1,3 @@
-/*
- * IntegratedMultivariateTraitLikelihood.java
- *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
- *
- * This file is part of BEAST.
- * See the NOTICE file distributed with this work for additional
- * information regarding copyright ownership and licensing.
- *
- * BEAST is free software; you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as
- * published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with BEAST; if not, write to the
- * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
- * Boston, MA  02110-1301  USA
- */
-
 package dr.evomodel.continuous;
 
 import dr.evolution.tree.NodeRef;
@@ -191,7 +166,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         if (computeWishartStatistics) {
 //            if (wishartStatistics == null) {
-            wishartStatistics = new WishartSufficientStatistics(dimTrait);
+                wishartStatistics = new WishartSufficientStatistics(dimTrait);
 //            } else {
 //                wishartStatistics.clear();
 //            }
@@ -276,19 +251,8 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 //            checkViaLargeMatrixInversion();
         }
 
-        if (DEBUG_PNAS) {
-            checkLogLikelihood(logLikelihood, sumLogRemainders(), conditionalRootMean,
-                    conditionalRootPrecision, traitPrecision);
-        }
-
         areStatesRedrawn = false;  // Should redraw internal node states when needed
         return logLikelihood;
-    }
-
-    protected void checkLogLikelihood(double loglikelihood, double logRemainders,
-                                      double[] conditionalRootMean, double conditionalRootPrecision,
-                                      double[][] traitPrecision) {
-        // Do nothing; for checking PNAS paper
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
@@ -504,9 +468,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     public double[] getTraitForNode(Tree tree, NodeRef node, String traitName) {
 
-//        if (tree != treeModel) {
-//            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
-//        }
+        if (tree != treeModel) {
+            throw new RuntimeException("Can only reconstruct states on treeModel given to constructor");
+        }
 
         getLogLikelihood();
 
@@ -720,7 +684,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected final boolean integrateRoot = true; // Set to false if conditioning on root value (not fully implemented)
     protected static boolean DEBUG = false;
     protected static boolean DEBUG_PREORDER = false;
-    protected static boolean DEBUG_PNAS = false;
 
     private double[] zeroDimVector;
 

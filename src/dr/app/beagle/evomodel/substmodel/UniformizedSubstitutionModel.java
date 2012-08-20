@@ -91,7 +91,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         if (model == substModel) {
             updateSubordinator = true;
         }
-        super.handleModelChangedEvent(model, object, index);
+        super.handleModelChangedEvent(model, object, index);       
     }
 
     public void setSaveCompleteHistory(boolean in) {
@@ -144,7 +144,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
 
     public double computeCondStatMarkovJumps(int startingState,
                                              int endingState,
-                                             double time,
+                                             double time,                                             
                                              double transitionProbability) {
 
         if (updateSubordinator) {
@@ -156,13 +156,13 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             StateHistory history;
             try {
                 history = UniformizedStateHistory.simulateConditionalOnEndingState(
-                        0.0,
-                        startingState,
-                        time,
-                        endingState,
-                        transitionProbability,
-                        stateCount,
-                        subordinator
+                    0.0,
+                    startingState,
+                    time,
+                    endingState,
+                    transitionProbability,
+                    stateCount,
+                    subordinator
                 );
             } catch (SubordinatedProcess.Exception e) {
 
@@ -192,7 +192,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
                     if (history.getEndingState() == endingState) {
                         success = true;
                     }
-
+                    
                     attempts++;
                 }
             }

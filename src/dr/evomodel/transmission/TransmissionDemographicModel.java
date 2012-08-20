@@ -1,7 +1,7 @@
 /*
  * TransmissionDemographicModel.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -115,31 +115,24 @@ public class TransmissionDemographicModel extends DemographicModel {
         throw new RuntimeException("getDemographicFunction not used for TransmissionDemographicModel");
     }
 
-    protected int getIndexFromHost(int host) {
-        return 0;
-    }
-
-    // Attempting to get the transmission model to be host-specific
-    public DemographicFunction getDemographicFunction(double transmissionTime, double donorSize, int host) {
-
-        final int index = getIndexFromHost(host);
+    public DemographicFunction getDemographicFunction(double transmissionTime, double donorSize) {
 
         if (model == 0) {
             // constant
-            double N0 = N0Parameter.getParameterValue(index);
+            double N0 = N0Parameter.getParameterValue(0);
             ((ConstantPopulation) hostDemographic).setN0(N0);
 
         } else if (model == 1) {
             // exponential
-            double N1 = N1Parameter.getParameterValue(index);
+            double N1 = N1Parameter.getParameterValue(0);
             ((TransmissionDemographicFunction) hostDemographic).setTransmissionTime(transmissionTime);
             ((TransmissionDemographicFunction) hostDemographic).setDonorSize(donorSize);
             ((TransmissionDemographicFunction) hostDemographic).setBottleNeckProportion(N1);
             if (growthRateParameter != null) {
-                double r = growthRateParameter.getParameterValue(index);
+                double r = growthRateParameter.getParameterValue(0);
                 ((TransmissionExponentialGrowth) hostDemographic).setGrowthRate(r);
             } else {
-                double d = doublingTimeParameter.getParameterValue(index);
+                double d = doublingTimeParameter.getParameterValue(0);
                 ((TransmissionExponentialGrowth) hostDemographic).setDoublingTime(d);
             }
 
@@ -148,15 +141,15 @@ public class TransmissionDemographicModel extends DemographicModel {
             ((TransmissionDemographicFunction) hostDemographic).setTransmissionTime(transmissionTime);
             ((TransmissionDemographicFunction) hostDemographic).setDonorSize(donorSize);
 
-            double N0 = N0Parameter.getParameterValue(index);
+            double N0 = N0Parameter.getParameterValue(0);
             ((TransmissionLogisticGrowth) hostDemographic).setN0(N0);
-            double N1 = N1Parameter.getParameterValue(index);
+            double N1 = N1Parameter.getParameterValue(0);
             ((TransmissionDemographicFunction) hostDemographic).setBottleNeckProportion(N1);
             if (growthRateParameter != null) {
-                double r = growthRateParameter.getParameterValue(index);
+                double r = growthRateParameter.getParameterValue(0);
                 ((TransmissionLogisticGrowth) hostDemographic).setGrowthRate(r);
             } else {
-                double d = doublingTimeParameter.getParameterValue(index);
+                double d = doublingTimeParameter.getParameterValue(0);
                 ((TransmissionLogisticGrowth) hostDemographic).setDoublingTime(d);
             }
 

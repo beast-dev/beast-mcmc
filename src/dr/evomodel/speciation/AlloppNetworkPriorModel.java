@@ -67,6 +67,8 @@ public class AlloppNetworkPriorModel extends AbstractModel  implements Units {
 
 	@Override
 	protected void acceptState() {
+		// TODO Auto-generated method stub
+
 	}
 	
 	public Type getUnits() {
@@ -74,7 +76,7 @@ public class AlloppNetworkPriorModel extends AbstractModel  implements Units {
 	}
 
 	public void setUnits(Type units) {
-		// grjtodo one day may allow units other than substitutions
+		// TODO Auto-generated method stub
 		
 	}	
 

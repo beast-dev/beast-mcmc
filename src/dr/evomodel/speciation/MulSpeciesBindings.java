@@ -29,6 +29,7 @@ import dr.evolution.tree.MutableTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
+import dr.evomodel.speciation.SpeciesBindings.GeneTreeInfo;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.speciation.MulSpeciesBindingsParser;
 import dr.inference.loggers.LogColumn;
@@ -62,6 +63,7 @@ public class MulSpeciesBindings extends AbstractModel  implements Loggable {
 
     // grj Species definition    
     private final AlloppSpeciesBindings.ApSpInfo[] apspecies;
+    private final AlloppSpeciesBindings.Individual[] indivs;
     private final Taxon[] taxa;
     private final Map<Taxon, Integer> taxon2index = new HashMap<Taxon, Integer>();
 	private final int spsq[][];
@@ -96,26 +98,26 @@ public class MulSpeciesBindings extends AbstractModel  implements Loggable {
         
         // make the flattened arrays
         int n = 0;
-        for (AlloppSpeciesBindings.ApSpInfo apspi : apspecies) {
-            n += apspi.individuals.length;
+        for (int s = 0; s < apspecies.length; s++) {
+        	n += apspecies[s].individuals.length;
         }
-        AlloppSpeciesBindings.Individual [] indivs = new AlloppSpeciesBindings.Individual[n];
+        indivs = new AlloppSpeciesBindings.Individual[n];
         n = 0;
-        for (AlloppSpeciesBindings.ApSpInfo apspi : apspecies) {
-            for (int i = 0; i < apspi.individuals.length; i++, n++) {
-                indivs[n] = apspi.individuals[i];
-            }
+        for (int s = 0; s < apspecies.length; s++) {
+        	for (int i = 0; i < apspecies[s].individuals.length; i++, n++) {
+        		indivs[n] =  apspecies[s].individuals[i];
+        	}
         }
         int t = 0;
-        for (AlloppSpeciesBindings.Individual indiv : indivs) {
-            t += indiv.taxa.length;
+        for (int i = 0; i < indivs.length; i++) {
+        	t += indivs[i].taxa.length;
         }  
         taxa = new Taxon[t];
         t = 0;
-        for (AlloppSpeciesBindings.Individual indiv : indivs) {
-            for (int j = 0; j < indiv.taxa.length; j++, t++) {
-                taxa[t] = indiv.taxa[j];
-            }
+        for (int i = 0; i < indivs.length; i++) {
+        	for (int j = 0; j < indivs[i].taxa.length; j++, t++) {
+        		taxa[t] =  indivs[i].taxa[j];
+        	}
         }
         // set up maps to indices
         for (int i = 0; i < taxa.length; i++) {
@@ -177,6 +179,12 @@ public class MulSpeciesBindings extends AbstractModel  implements Loggable {
     // grj
 	public String apspeciesName(int i) {
 		return apspecies[i].name;
+	}
+    
+    // grjtodo spandseq2spseqindex(), spseqindex2sp(), spseqindex2seq(), 
+    // spseqindex2spandseq() pasted from AlloppSpeciesBindings.
+	public int spandseq2spseqindex(int sp, int seq) {
+		return spsq[sp][seq];
 	}
 	
 	

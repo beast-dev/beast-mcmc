@@ -1,0 +1,54 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+
+	<matrixParameter id="locations">
+		<parameter value="0.0 0.0"/>
+	</matrixParameter>
+	
+	<operators id="operators" optimizationSchedule="log">
+												
+		<randomWalkOperator windowSize="1.0" weight="273">
+			<matrixParameter idref="locations"/>
+		</randomWalkOperator>
+						
+	</operators>
+	
+	<mcmc id="mcmc" chainLength="10000000" autoOptimize="true">
+		<posterior id="posterior">
+			<prior id="prior">
+				<multivariateNormalPrior id="rootPrior">
+					<meanParameter>
+						<parameter value="0.0 0.0"/>
+					</meanParameter>
+					<precisionParameter>
+						<matrixParameter>
+							<parameter value="0.04 0.0"/>
+							<parameter value="0.0 0.25"/>
+						</matrixParameter>
+					</precisionParameter>
+					<data>
+						<matrixParameter idref="locations"/>
+					</data>
+				</multivariateNormalPrior>
+			</prior>
+		</posterior>
+		
+		<operators idref="operators"/>
+		
+		<log id="screenLog" logEvery="100000">
+			<column label="Posterior" dp="4" width="12">
+				<posterior idref="posterior"/>
+			</column>
+		</log>
+		
+		<log id="fileLog2" logEvery="10000" fileName="testMVN.log">
+			<matrixParameter idref="locations"/>
+		</log>
+	</mcmc>
+	
+	<report>
+		<property name="timer">
+			<object idref="mcmc"/>
+		</property>
+	</report>
+</beast>

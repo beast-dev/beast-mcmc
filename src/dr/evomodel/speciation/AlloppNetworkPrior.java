@@ -1,10 +1,10 @@
 package dr.evomodel.speciation;
 
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
-import dr.evolution.tree.Tree;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
+
+import java.util.ArrayList;
 
 
 /**
@@ -22,55 +22,22 @@ import dr.inference.model.Parameter;
 public class AlloppNetworkPrior extends Likelihood.Abstract {
 	AlloppSpeciesNetworkModel asnm;
 	AlloppNetworkPriorModel prior;
-	BirthDeathGernhard08Model bdgm;
-	double beta = 0.25; // two diploids make allotetraploids at this rate relative
-	                            // to rate that one diploid speciates.
-	double rho = 1.0; // for hybridization, not (yet) for birth-death-sample. Must be <= 1
-	double gamma = 0.8; // mu/lambda
-	// One day might estimate some of these values...
-	
+    double numHybsLogL[];
 
-	public AlloppNetworkPrior(AlloppNetworkPriorModel prior, AlloppSpeciesNetworkModel asnm) {
+
+
+    public AlloppNetworkPrior(AlloppNetworkPriorModel prior, AlloppSpeciesNetworkModel asnm) {
 		super(prior);
 		this.asnm = asnm;
 		this.prior = prior;
-		
-		// 2011-09-17 I only use BirthDeathGernhard08Model for testing against.
-		Parameter birthDiffRateParameter = prior.getRate();
-		Parameter relativeDeathRateParameter = new Parameter.Default(gamma);
-		BirthDeathGernhard08Model.TreeType treetype = BirthDeathGernhard08Model.TreeType.ORIENTED;
-		dr.evolution.util.Units.Type unittype = dr.evolution.util.Units.Type.SUBSTITUTIONS;
-		bdgm = new BirthDeathGernhard08Model(
-				birthDiffRateParameter, relativeDeathRateParameter, null,
-                treetype, unittype);
-		
-		SimpleNode [] test = new SimpleNode[9];
-		for (int i=0; i < 9; i++) {
-			test[i] = new SimpleNode();
-		}
-		test[0].setId("a");
-		test[1].setId("b");
-		test[2].addChild(test[0]);
-		test[2].addChild(test[1]);		
-		test[3].setId("c");
-		test[4].setId("d");
-		test[5].addChild(test[3]);
-		test[5].addChild(test[4]);		
-		test[6].setId("e");
-		test[7].addChild(test[5]);
-		test[7].addChild(test[6]);		
-		test[8].addChild(test[2]);
-		test[8].addChild(test[7]);		
-		test[2].setHeight(0.01);
-		test[5].setHeight(0.02);
-		test[7].setHeight(0.03);
-		test[8].setHeight(0.04);
-		SimpleTree testtree = new SimpleTree(test[4]);
-		double z = bdgm.calculateTreeLogLikelihood(testtree);
-		double w = loglhoodDiploidTree(testtree);
-		if (Math.abs(z - w) >= 1e-14) {
-			System.err.println("AlloppNetworkPrior.calculateLogLikelihood() numerical error?");
-		}
+        asnm.setHybPopModel(prior.getHybridPopModel());
+
+        numHybsLogL = new double[asnm.maxNumberOfHybPopParameters()+1];
+        for (int h = 0; h < numHybsLogL.length; h++) {
+            numHybsLogL[h] = -h * Math.log(4.0);
+            // grjtodo-soon the form of the function and the 4.0 here is experimental
+        }
+
 		
 	}
 	
@@ -83,118 +50,71 @@ public class AlloppNetworkPrior extends Likelihood.Abstract {
 
 	@Override
 	protected double calculateLogLikelihood() {
-		
-		double loglhood = 0.0;
-		
-		// normal likelihood for diploid tree, with uniform prior on origin. 
-		AlloppLeggedTree ditree = asnm.getHomoploidTree(AlloppSpeciesNetworkModel.DITREES, 0);
-		loglhood += bdgm.calculateTreeLogLikelihood(ditree);
-		double z = loglhoodDiploidTree(ditree);
-		if (Math.abs(z - loglhood) >= 1e-12) {
-			System.err.println("AlloppNetworkPrior.calculateLogLikelihood() numerical error?");
-		}
+        double llhood = 0.0;
+        //network topology and times prior
+        llhood += loglikelihoodEvents();
+        //System.out.print(llhood); System.out.print(" ");
+        llhood += loglikeNumHybridizations();
+        //System.out.print(llhood); System.out.print(" ");
+        // population prior for tips
+        Parameter tippvals = asnm.getTipPopValues();
+        ParametricDistributionModel tipmodel = prior.getTipPopModel();
+        for (int i = 0; i < tippvals.getDimension(); i++) {
+            llhood += tipmodel.logPdf(tippvals.getParameterValue(i));
+        }
+        // population prior for root ends
+        Parameter rootpvals = asnm.getRootPopValues();
+        ParametricDistributionModel rootmodel = prior.getRootPopModel();
+        for (int i = 0; i < rootpvals.getDimension(); i++) {
+            llhood += rootmodel.logPdf(rootpvals.getParameterValue(i));
+        }
+        // population prior for new hybrids
+        ParametricDistributionModel hybmodel = prior.getHybridPopModel();
+        for (int i = 0; i < asnm.getNumberOfTetraTrees(); i++) {
+            llhood += hybmodel.logPdf(asnm.getOneHybPopValue(i));
+        }
+        //System.out.println(llhood);
+        return llhood;
+	}
 
-		int noftetratrees = asnm.getNumberOfTetraTrees();
-		for (int i = 0; i < noftetratrees; i++) {
-			AlloppLeggedTree tetratree = asnm.getHomoploidTree(AlloppSpeciesNetworkModel.TETRATREES, i);
-			// likelihood conditioned on origin = hybridization time for tetraploid trees 
-			loglhood += loglhoodLeggedTree(tetratree);
-			// not-principled likelihood for hybridization time
-			loglhood += loglikelihoodHybridizationTime(ditree, tetratree);
-		}
-		
-		return loglhood;
-	}
-	
-	
-	private double loglikelihoodHybridizationTime(AlloppLeggedTree ditree, AlloppLeggedTree tetratree) {
-		double rooth = ditree.getRootHeight();
-		int ndips = ditree.getExternalNodeCount();
-		double delta = prior.getRate().getParameterValue(0);
-		double hybh = tetratree.getHybridHeight();
-		double lhood = beta * delta / (1.0 - gamma);
-		double extantdips = ndips / rho;
-		double extantdippairs = 0.5 * extantdips * (extantdips-1);
-		lhood *= (hybh/rooth) + ((rooth-hybh)/rooth) * extantdippairs;
-		double loglhood = Math.log(lhood);
-		return loglhood;
-	}
-	
-	
-	private double loglhoodDiploidTree(Tree ditree) {
-		int ntips = ditree.getExternalNodeCount();
-		double z = Math.log(ntips);
-		double delta = prior.getRate().getParameterValue(0);
-		z += (ntips-1) * Math.log(delta);
-		z -= (ntips-2) * Math.log(1.0-gamma);
- 		for (int i = 0; i < ditree.getInternalNodeCount(); i++) {
-			double t = ditree.getNodeHeight(ditree.getInternalNode(i));
-			if (ditree.isRoot(ditree.getInternalNode(i))) {
-			z -= delta * t;
-			z -= Math.log( 1.0 - gamma*(expdx(delta, t)) );
-			}
-			z += logp1(delta, t);
-		}
-		return z;
-	}
-	
-	
-	
-	
-	private double loglhoodLeggedTree(AlloppLeggedTree tetratree) {
-		int ntips = tetratree.getExternalNodeCount();
-		if (ntips == 1) {
-			return 0.0;
-		}
-		
-		double z = 0.0;
-		double h = tetratree.getHybridHeight();
-		double delta = prior.getRate().getParameterValue(0);
-		double y = logq1(delta, h);
-		for (int i = 0; i < tetratree.getInternalNodeCount(); i++) {
-			double t = tetratree.getNodeHeight(tetratree.getInternalNode(i));
-			z += logp1(delta, t);
-			z -= y;
-		}
-		return z;
-	}
-	
-	
-	
-	private double expdx(double delta, double x) {
-		return Math.exp(-delta * x);
-	}
-	
-	
-	private double oneminusexpdx(double delta, double x) {
-		assert x >= 0.0;
-		double y = delta * x;
-		if (y > 1e-6) {
-			return 1.0 - expdx(delta, x);
-		} else {
-			return y - 0.5*y*y;
-		}
-	}
-	
-	
-	private double logq1(double delta, double x) {
-		double z = 0.0;
-		z += Math.log(1.0 - gamma);
-		z += Math.log(oneminusexpdx(delta, x));
-		z -= Math.log(delta);
-		z -= Math.log(1.0 - gamma * expdx(delta, x));
-		return z;
-	}
-	
-	
-	
-	private double logp1(double delta, double x) {
-		double z = 0.0;
-		z +=  2.0 * Math.log(1.0 - gamma);
-		z -= delta * x;
-		z -= 2 * Math.log(1.0 - gamma * expdx(delta, x));
-		return z;
-	}
-		
-	
+
+
+
+
+    private double loglikeNumHybridizations() {
+        int nhybs = asnm.getNumberOfTetraTrees();
+        //System.out.print(nhybs); System.out.print(" ");
+        return numHybsLogL[nhybs];
+    }
+
+
+    /*
+       * Going backwards in time this gives probabilities to three types
+       * of events: diploid-diploid joins, tet-tet joins, and hybridization events.
+       */
+    private double loglikelihoodEvents() {
+
+        double lambda = prior.getRate().getParameterValue(0);
+
+        ArrayList<Double> heights = new ArrayList<Double>();
+
+        AlloppDiploidHistory adhist = asnm.getDiploidHistory();
+        adhist.collectInternalAndHybHeights(heights);
+        int nttrees = asnm.getNumberOfTetraTrees();
+        for (int tt = 0; tt < nttrees; tt++) {
+            AlloppLeggedTree ttree = asnm.getTetraploidTree(tt);
+            ttree.collectInternalHeights(heights);
+        }
+        double loglhood = 0.0;
+        for (double t : heights) {
+            loglhood += logexpPDF(t, lambda);
+        }
+        return loglhood;
+    }
+
+
+    private double logexpPDF(double x, double rate) {
+        return Math.log(rate) - rate*x;
+    }
+
 }

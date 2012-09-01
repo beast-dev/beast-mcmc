@@ -1,6 +1,6 @@
 package dr.evomodel.speciation;
 
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
+
 import dr.evolution.util.Units;
 import dr.inference.model.Likelihood;
 
@@ -16,11 +16,11 @@ import dr.inference.model.Likelihood;
 
 /*
  * AlloppMSCoalescent, AlloppSpeciesNetworkModel, AlloppLeggedTree,
- * and AlloppSpeciesBindings collaborate closely.
+ * AlloppDiploidHistory, and AlloppSpeciesBindings collaborate closely.
  * 
- * AlloppSpeciesNetworkModel contains a 2D array of AlloppLeggedTree's
- * for representing the network. It also contains a multiply labelled tree 
- * as an alternative representation.
+ * AlloppSpeciesNetworkModel contains an AlloppDiploidHistory and an array of
+ * AlloppLeggedTree's for representing the tetraploid trees. It also contains a
+ * multiply labelled tree as an alternative representation.
  * 
  * AlloppSpeciesBindings represents the species-individual-genome structure
  * of the data, and contains the gene trees.
@@ -66,16 +66,6 @@ public class AlloppMSCoalescent extends Likelihood.Abstract implements Units {
     }
 
     
-    /*
-     * for testing
-     */
-    public AlloppMSCoalescent(AlloppSpeciesBindings testASB,
-			AlloppSpeciesNetworkModel testASNM,
-			AlloppSpeciesNetworkModelTEST.LogLhoodGTreeInNetworkTEST llgtnTEST) {
-		this(testASB, testASNM);
-	}
-
-    
     
     @Override
 	protected double calculateLogLikelihood() {
@@ -84,7 +74,7 @@ public class AlloppMSCoalescent extends Likelihood.Abstract implements Units {
     			return Double.NEGATIVE_INFINITY;
     		}
     	}
-	    // grjtodo JH has compatible flags for efficiency. I'm checking 
+	    // grjtodo-oneday JH has compatible flags for efficiency. I'm checking
 	    // every time.
     	
         double logl = 0;

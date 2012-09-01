@@ -1,24 +1,18 @@
 package dr.evomodel.speciation;
 
 import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.Formatter;
+import java.util.Locale;
+import java.util.Stack;
 
 
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
-import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST.LogLhoodGTreeInNetworkTEST;
-
+import dr.util.AlloppMisc;
 import jebl.util.FixedBitSet;
+import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SimpleNode;
-import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.SlidableTree;
-import dr.evolution.tree.Tree;
-import dr.evolution.util.MutableTaxonListListener;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.Units;
-import dr.evomodel.tree.TreeLogger;
 import dr.math.MathUtils;
 
 
@@ -39,64 +33,219 @@ import dr.math.MathUtils;
  * species tree which is attached to a tree of lower ploidy
  * via its legs, as part of a AlloppSpeciesNetworkModel.
  *
- * 2011-05-19 I use this for diploid tree, although only the tree,
- * no legs, is used then.
- *
  * tree is a SimpleTree: its nodes contain times, and taxa at tips.
+ * The fields diphistlftleg, diphistrgtleg are indices giving the
+ * hyb-tips in the AlloppDiploidHistory.
  *
- * For tetraploids, legs[] has length one or two. If two legs, they specify
- * the branches (which may be the same branch twice at different
- * times) where the tree joins a lower ploidy tree.
- *
- * If only one leg, it means that the polyploid
- * tree arose from two extinct species. In this
- * case the field splitheight is used for the MRCA of these,
- * and the single leg joins the MRCA to the lower ploidy tree.
- * A special case of the one leg case is where there is
- * no diploid tree. Here the leg has no foot.
- *
- * hybridheight is the time of hybridization, `where the legs
- * join together', which is earlier then the root node of the
- * homoploid tree.
+ * (Changed 2012-07. Used to have more complicated legs and a
+ * tree for the diploids.)
  *
  */
 
 
 
 
-public class AlloppLeggedTree implements Tree, SlidableTree, TreeLogger.LogUpon  {
+public class AlloppLeggedTree implements  SlidableTree  {
 
-    private  SimpleTree tree;
-    private  AlloppTreeLeg[] legs;
-    private double splitheight;
-    private double hybridheight;
+    private ALTNode[] altnodes;
+    private int rootn;
 
-
-
-
+    private int diphistlftleg;
+    private int diphistrgtleg;
 
 
 
     /*
-     * Constructor makes a random starting (homoploid) tree with legs.
+    * parent, child[] implement the tree topology.
+    *
+    * height is the node height; can be > 0 for hyb-tips.
+    *
+    * union is a spseq-union. At diploid tips they are used normally.
+    * Hyb-tips have unions derived from the tetratree and leg index (0 or 1).
+    * Unions are taken towards the root.
+    *
+    * For a hyb-tip, tettree specifies the index of the tetratree whose
+    * root comes from it. It is not used for other nodes.
+    */
+    private class ALTNode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
+        private int anc;
+        private int lft;
+        private int rgt;
+        private double height;
+        private Taxon taxon;
+        private FixedBitSet union;
+        private int nodeNumber;
+
+        // dud constuctor
+        ALTNode(int nn) {
+            anc = -1;
+            lft = -1;
+            rgt = -1;
+            height = -1.0;
+            taxon = new Taxon("");
+            union = null;
+            nodeNumber = nn;
+        }
+
+        // copy constructor
+        public ALTNode(ALTNode node) {
+            anc = node.anc;
+            lft = node.lft;
+            rgt = node.rgt;
+            nodeNumber = node.nodeNumber;
+            copyNonTopologyFields(node);
+        }
+
+        // no-topology constructor. Copies all fields of argument node,
+        // except the anc, lft, rgt fields which are set to `unknown',
+        // and the index field, which is set to nn
+        public ALTNode(int nn, ALTNode node) {
+            anc = -1;
+            lft = -1;
+            rgt = -1;
+            nodeNumber = nn;
+            copyNonTopologyFields(node);
+        }
+
+
+
+        private void copyNonTopologyFields(ALTNode node) {
+            height = node.height;
+            taxon = new Taxon(node.taxon.getId());
+            if (node.union == null) {
+                union = null;
+            } else {
+                union = new FixedBitSet(node.union);
+            }
+        }
+
+        @Override
+        public AlloppNode getChild(int ch) {
+            return ch==0 ? altnodes[lft] : altnodes[rgt];
+        }
+
+        @Override
+        public AlloppNode getAnc() {
+            return altnodes[anc];
+        }
+
+
+        @Override
+        public double getHeight() {
+            return height;
+        }
+
+        @Override
+        public Taxon getTaxon() {
+            return taxon;
+        }
+
+        @Override
+        public FixedBitSet getUnion() {
+            return union;
+        }
+
+        @Override
+        public void setChild(int ch, AlloppNode newchild) {
+            int newch = ((ALTNode)newchild).nodeNumber;
+            if (ch == 0) {
+                lft = newch;
+            } else {
+                rgt = newch;
+            }
+        }
+
+        @Override
+        public void setAnc(AlloppNode anc) {
+            this.anc = ((ALTNode)anc).nodeNumber;
+        }
+
+        @Override
+        public void setTaxon(String name) {
+            this.taxon = new Taxon(name);
+
+        }
+
+
+        @Override
+        public void setHeight(double height) {
+            this.height = height;
+
+        }
+
+        @Override
+        public void setUnion(FixedBitSet union) {
+            this.union = union;
+        }
+
+        @Override
+        public void addChildren(AlloppNode c0, AlloppNode c1) {
+            lft = ((ALTNode)c0).nodeNumber;
+            altnodes[lft].anc = nodeNumber;
+            rgt = ((ALTNode)c1).nodeNumber;
+            altnodes[rgt].anc = nodeNumber;
+        }
+
+        @Override
+        public String asText(int indentlen) {
+            StringBuilder s = new StringBuilder();
+            Formatter formatter = new Formatter(s, Locale.US);
+            if (lft < 0) {
+                formatter.format("%s ", taxon.getId());
+            } else {
+                formatter.format("%s ", "+");
+            }
+            while (s.length() < 20-indentlen) {
+                formatter.format("%s", " ");
+            }
+            formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
+            formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
+            return s.toString();
+        }
+
+
+        @Override
+        public int nofChildren() {
+            return (lft < 0) ? 0 : 2;
+        }
+
+        @Override
+        public int getNumber() {
+            return nodeNumber;
+        }
+
+        @Override
+        public void setNumber(int n) {
+            nodeNumber = n;
+
+        }
+
+
+
+    }
+
+
+    /*
+     * Constructor makes a random starting (homoploid) tree.
+     * Legs are left to AlloppDiploidHistory to do.
      */
-    public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModel.LegType legtype) {
-    	SimpleNode root;
-    	int nTaxa = taxa.length;
-    	int nNodes = 2 * nTaxa - 1;
-    	SimpleNode[] nodes = new SimpleNode[nNodes];
-    	for (int n = 0; n < nNodes; n++) {
-    		nodes[n] = new SimpleNode();
-    	}
-    	ArrayList<Integer> tojoin = new ArrayList<Integer>(nTaxa);
-    	for (int n = 0; n < nTaxa; n++) {
-    		nodes[n].setTaxon(taxa[n]);
-    		nodes[n].setHeight(0.0);
+    public AlloppLeggedTree(Taxon[] taxa) {
+        int noftets = taxa.length;
+        double rate = 1.0; // scale later (in network)
+
+        // Make array of dud nodes
+        altnodes = new ALTNode[2 * noftets - 1];
+        for (int i = 0; i < altnodes.length; i++) {
+            altnodes[i] = new ALTNode(i);
+        }
+    	ArrayList<Integer> tojoin = new ArrayList<Integer>(noftets);
+    	for (int n = 0; n < noftets; n++) {
+    		altnodes[n].setTaxon(taxa[n].getId());
+    		altnodes[n].setHeight(0.0);
     		tojoin.add(n);
     	}
-    	double rate = 1.0;
     	double treeheight = 0.0;
-    	for (int i = 0; i < nTaxa-1; i++) {
+    	for (int i = 0; i < noftets-1; i++) {
     		int numtojoin = tojoin.size();
     		int j = MathUtils.nextInt(numtojoin);
     		Integer child0 = tojoin.get(j);
@@ -104,499 +253,353 @@ public class AlloppLeggedTree implements Tree, SlidableTree, TreeLogger.LogUpon 
     		int k = MathUtils.nextInt(numtojoin-1);
     		Integer child1 = tojoin.get(k);
     		tojoin.remove(k);
-    		nodes[nTaxa+i].addChild(nodes[child0]);
-    		nodes[nTaxa+i].addChild(nodes[child1]);
-    		nodes[nTaxa+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
-    		treeheight = nodes[nTaxa+i].getHeight();
-    		tojoin.add(nTaxa+i);
+    		altnodes[noftets+i].addChildren(altnodes[child0], altnodes[child1]);
+    		altnodes[noftets+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
+    		treeheight = altnodes[noftets+i].getHeight();
+    		tojoin.add(noftets+i);
     	}
-    	hybridheight = -1.0;
-    	splitheight = -1.0;
-    	switch (legtype) {
-    	case NODIPLOIDS:
-    		hybridheight = treeheight + randomnodeheight(rate);
-    		splitheight =  hybridheight + randomsplitheight(rate);
-    		legs = new AlloppTreeLeg[1];
-    		legs[0] = new AlloppTreeLeg(-1.0); // no foot
-    		break;
-    	case JOINED:
-    		hybridheight = treeheight + randomnodeheight(rate);
-    		splitheight =  hybridheight + randomsplitheight(rate);
-    		legs = new AlloppTreeLeg[1];
-    		legs[0] = new AlloppTreeLeg(splitheight + randomnodeheight(rate));
-    		break;
-    	case ONEBRANCH: case TWOBRANCH:
-    		hybridheight = treeheight + randomnodeheight(rate);
-    		legs = new AlloppTreeLeg[2];
-    		legs[0] = new AlloppTreeLeg(hybridheight + randomnodeheight(rate));
-    		legs[1] = new AlloppTreeLeg(legs[0].height + randomnodeheight(rate));
-    		break;
-    	case NONE:
-    		legs = new AlloppTreeLeg[0];
-    		break;
-    	default:
-    		assert false;
-    		legs = new AlloppTreeLeg[0];
-    	}
-    	root = nodes[nodes.length - 1];
-    	tree = new SimpleTree(root);
-    	tree.setUnits(Units.Type.SUBSTITUTIONS);
+        diphistlftleg = -1;
+        diphistrgtleg = -1;
+    	rootn = altnodes.length - 1;
+    }
+
+
+
+    /**
+     * copy constructor
+     */
+    public AlloppLeggedTree(AlloppLeggedTree x) {
+        altnodes = new ALTNode[x.altnodes.length];
+        for (int n = 0; n < altnodes.length; n++) {
+            altnodes[n] = new ALTNode(x.altnodes[n]);
+        }
+        rootn = x.rootn;
+        this.diphistlftleg = x.diphistlftleg;
+        this.diphistrgtleg = x.diphistrgtleg;
+
     }
 
 
     /*
-     * Constructor for diploid tree with no legs. Used to convert
-     * DiploidHistory to network.
-     */
-    public AlloppLeggedTree(SimpleTree stree) {
-    	   this.tree = stree;
-    	   legs = new AlloppTreeLeg[0];
-    	   splitheight = -1.0;
-    	   hybridheight = -1.0;
-    }
-
-
-    /**
-     * clone constructor
-     */
-    public AlloppLeggedTree(AlloppLeggedTree tree) {
-    	this.tree = new SimpleTree(tree);
-    	this.hybridheight = tree.hybridheight;
-    	this.splitheight = tree.splitheight;
-    	this.legs = new AlloppTreeLeg[tree.legs.length];
-    	for (int i = 0; i < legs.length; i++) {
-    		legs[i] = new AlloppTreeLeg(tree.legs[i]);
-    	}
-    }
-
-
-     /*
-      * Constructor for testing.
+      * Constructor. Makes a merged tree from two trees. ttree2 has the more ancient hyb time,
+      * so the merged tree gets its legs.
       */
-     public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModelTEST.NetworkConversionTEST netconvTEST,
-    		                       AlloppSpeciesNetworkModel.LegType legtype, double addheight) {
+    public AlloppLeggedTree(AlloppLeggedTree ttree1, AlloppLeggedTree ttree2, double hybHeight) {
+        altnodes = new ALTNode[1 + ttree1.altnodes.length + ttree2.altnodes.length];
+        diphistlftleg = ttree2.diphistlftleg;
+        diphistrgtleg = ttree2.diphistrgtleg;
+        int nextn = copySubtree(0, (ALTNode)ttree1.getSlidableRoot());
+        int lft = nextn - 1;
+        nextn = copySubtree(nextn, (ALTNode)ttree2.getSlidableRoot());
+        int rgt = nextn - 1;
+        assert nextn == altnodes.length - 1;
+        altnodes[nextn] = new ALTNode(nextn);
+        altnodes[nextn].addChildren(altnodes[lft], altnodes[rgt]);
+        altnodes[nextn].setHeight(hybHeight);
+        rootn = nextn;
+    }
+
+
+    /*
+    * Constructor. Makes a tree from  subtree of tetTree
+    * does not fill in legs
+    */
+    public AlloppLeggedTree(AlloppLeggedTree tetTree, AlloppNode sub) {
+        ALTNode node = (ALTNode)sub;
+        int ntips = tetTree.noftipsSubtree(node);
+        altnodes = new ALTNode[2*ntips-1];
+        for (int n = 0; n < altnodes.length; n++) {
+            altnodes[n] = new ALTNode(n);
+        }
+        int nextn = copySubtree(0, node);
+        rootn = nextn - 1;
+    }
+
+
+    /*
+    * Constructor for testing.
+    */
+     public AlloppLeggedTree(Taxon[] taxa,
+                             AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST netconvTEST) {
          int nTaxa = taxa.length;
          assert(nTaxa <= 4);
          int nNodes = 2 * nTaxa - 1;
-         SimpleNode[] nodes = new SimpleNode[nNodes];
+         altnodes = new ALTNode[nNodes];
          for (int n = 0; n < nNodes; n++) {
-             nodes[n] = new SimpleNode();
-         }
-         SimpleNode root;
-         nodes[0].setTaxon(taxa[0]);
-         if (nTaxa >= 2) {
-         nodes[1].setTaxon(taxa[1]);
-         nodes[2].setHeight(addheight + 1.0);
-         nodes[2].addChild(nodes[0]);
-         nodes[2].addChild(nodes[1]);
-         }
-         if (nTaxa >= 3) {
-             nodes[3].setTaxon(taxa[2]);
-             nodes[4].setHeight(addheight + nodes[2].getHeight() + 1.0);
-             nodes[4].addChild(nodes[2]);
-             nodes[4].addChild(nodes[3]);
-         }
-         if (nTaxa == 4) {
-             nodes[5].setTaxon(taxa[3]);
-             nodes[6].setHeight(addheight + nodes[4].getHeight() + 1.0);
-             nodes[6].addChild(nodes[4]);
-             nodes[6].addChild(nodes[5]);
+             altnodes[n] = new ALTNode(n);
          }
 
-         root = nodes[nodes.length - 1];
-         tree = new SimpleTree(root);
-         tree.setUnits(Units.Type.YEARS);
-
-         double rootheight = root.getHeight();
-         switch (legtype) {
-         case NONE:
-        	 legs = new AlloppTreeLeg[0];
-        	 splitheight = -1.0;
-        	 break;
-         case TWOBRANCH: case ONEBRANCH:
-        	 legs = new AlloppTreeLeg[2];
-        	 legs[0] = new AlloppTreeLeg(rootheight+1.0);
-        	 legs[1] = new AlloppTreeLeg(rootheight+2.0);
-        	 splitheight = -1.0;
-        	 break;
-         case JOINED:
-        	 legs = new AlloppTreeLeg[1];
-        	 legs[0] = new AlloppTreeLeg(rootheight+2.0);
-        	 splitheight = rootheight+1.0;
-        	 break;
-         default:
-        	 assert false;
-        	 legs = new AlloppTreeLeg[0];
+         for (int t = 0; t<nTaxa; t++) {
+             altnodes[t].setTaxon(taxa[t].getId());
+             altnodes[t].setHeight(0.0);
          }
-     }
-
-
-     /*
-      * Constructor for testing
-      */
-     public AlloppLeggedTree(Taxon[] taxa, AlloppSpeciesNetworkModel.LegType legtype,
-			LogLhoodGTreeInNetworkTEST llgtnTEST) {
-    	 assert legtype == AlloppSpeciesNetworkModel.LegType.NODIPLOIDS;
-    	 int nTaxa = taxa.length;
-    	 assert nTaxa <= 3;
-
-    	 if (llgtnTEST.heights.length > 0) { // testing cases
-    		 assert (nTaxa == 2 && llgtnTEST.heights.length == 3)  ||  (nTaxa == 3 && llgtnTEST.heights.length == 4);
-    		 hybridheight = llgtnTEST.heights[nTaxa-1];
-    		 splitheight = llgtnTEST.heights[nTaxa];
-    	 }
-
-         int nNodes = 2 * nTaxa - 1;
-         SimpleNode[] nodes = new SimpleNode[nNodes];
-         for (int n = 0; n < nNodes; n++) {
-             nodes[n] = new SimpleNode();
-         }
-         SimpleNode root;
-         nodes[0].setTaxon(taxa[0]);
-         if (nTaxa >= 2) {
-         nodes[1].setTaxon(taxa[1]);
-         nodes[2].setHeight(llgtnTEST.heights[0]);
-         nodes[2].addChild(nodes[0]);
-         nodes[2].addChild(nodes[1]);
+         if (nTaxa == 2) {
+         altnodes[2].setHeight(1.0);
+         altnodes[2].addChildren(altnodes[0], altnodes[1]);
          }
          if (nTaxa == 3) {
-             nodes[3].setTaxon(taxa[2]);
-             nodes[4].setHeight(llgtnTEST.heights[1]);
-             nodes[4].addChild(nodes[2]);
-             nodes[4].addChild(nodes[3]);
+             altnodes[3].setHeight(altnodes[0].getHeight() + 1.0);
+             altnodes[3].addChildren(altnodes[0], altnodes[1]);
+             altnodes[4].setHeight(altnodes[3].getHeight() + 1.0);
+             altnodes[4].addChildren(altnodes[2], altnodes[3]);
          }
-         root = nodes[nodes.length - 1];
-         tree = new SimpleTree(root);
-         tree.setUnits(Units.Type.SUBSTITUTIONS);
-
-    	 legs = new AlloppTreeLeg[1];
-    	 legs[0] = new AlloppTreeLeg(-1.0); // no foot
-
-	}
-
-
-
-     public void replaceLegs(AlloppDiploidHistory.HybHistory hh) {
-    	 int nlegs = hh.legs.length;
-    	 legs = new AlloppTreeLeg[nlegs];
-    	 for (int i = 0; i < nlegs; i++) {
-    		 legs[i] = new AlloppTreeLeg(hh.legs[i]);
-    	 }
-    	 hybridheight = hh.hybheight;
-    	 splitheight = hh.splitheight;
+         if (nTaxa == 4) {
+             altnodes[4].setHeight(altnodes[0].getHeight() + 1.0);
+             altnodes[4].addChildren(altnodes[0], altnodes[1]);
+             altnodes[5].setHeight(altnodes[4].getHeight() + 1.0);
+             altnodes[5].addChildren(altnodes[2], altnodes[4]);
+             altnodes[6].setHeight(altnodes[5].getHeight() + 1.0);
+             altnodes[6].addChildren(altnodes[3], altnodes[5]);
+         }
+         rootn = altnodes.length - 1;
      }
+
+
+
+ // SlidableTree implementation
+
+    @Override
+    public NodeRef getSlidableRoot() {
+        assert altnodes[rootn].anc < 0;
+        return altnodes[rootn];
+    }
+
+
+
+    @Override
+    public void replaceSlidableRoot(NodeRef root) {
+        rootn = root.getNumber();
+        altnodes[rootn].anc = -1;
+    }
+
+
+
+    @Override
+    public int getSlidableNodeCount() {
+        return altnodes.length;
+    }
+
+
+
+    @Override
+    public double getSlidableNodeHeight(NodeRef node) {
+        return altnodes[node.getNumber()].getHeight();
+    }
+
+    @Override
+    public Taxon getSlidableNodeTaxon(NodeRef node) {
+        return altnodes[node.getNumber()].getTaxon();
+    }
+
+    @Override
+    public void setSlidableNodeHeight(NodeRef node, double height) {
+        altnodes[node.getNumber()].height = height;
+
+    }
+
+
+
+    @Override
+    public boolean isExternalSlidable(NodeRef node) {
+        return (altnodes[node.getNumber()].lft < 0);
+    }
+
+
+
+    @Override
+    public NodeRef getSlidableChild(NodeRef node, int j) {
+        int n = node.getNumber();
+        return j == 0 ? altnodes[ altnodes[n].lft ] : altnodes[ altnodes[n].rgt ];
+    }
+
+
+
+    @Override
+    public void replaceSlidableChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
+        int nn = node.getNumber();
+        int lftn = lft.getNumber();
+        int rgtn = rgt.getNumber();
+        assert altnodes[nn].lft >= 0;
+        altnodes[nn].lft = lftn;
+        altnodes[nn].rgt = rgtn;
+        altnodes[lftn].anc = altnodes[nn].nodeNumber;
+        altnodes[rgtn].anc = altnodes[nn].nodeNumber;
+    }
+
+
+
+    String asText() {
+        String header = "topology             height         union         legs" + System.getProperty("line.separator");
+        String s = "";
+        Stack<Integer> x = new Stack<Integer>();
+        return header + AlloppNode.Abstract.subtreeAsText(altnodes[rootn], s, x, 0, "");
+
+    }
+
+
+
+
+    boolean leggedtreeOK() {
+        int nroots = 0;
+        for (int i = 0; i < altnodes.length; i++) {
+            if (altnodes[i].anc < 0) {
+                nroots++;
+            }
+        }
+        if (nroots != 1) {
+            return false;
+        }
+        for (int i = 0; i < altnodes.length; i++) {
+            int nparents = 0;
+            for (int j = 0; j < altnodes.length; j++) {
+                if (altnodes[j].lft == i) { nparents++; }
+                if (altnodes[j].rgt == i) { nparents++; }
+            }
+            if (altnodes[i].anc < 0  &&  nparents != 0) {
+                return false;
+            }
+            if (altnodes[i].anc >= 0  &&  nparents != 1) {
+                return false;
+            }
+        }
+        for (int i = 0; i < altnodes.length; i++) {
+            if (altnodes[i].getNumber() != i) {
+                return false;
+            }
+        }
+        for (int i = 0; i < altnodes.length; i++) {
+            if (altnodes[i].lft >= 0) {
+                if (altnodes[i].rgt < 0) {
+                    return false;
+                }
+                int lft = altnodes[i].lft;
+                int rgt = altnodes[i].rgt;
+                if (altnodes[lft].anc != i) {
+                    return false;
+                }
+                if (altnodes[rgt].anc != i) {
+                    return false;
+                }
+                if (altnodes[i].height <= altnodes[lft].height) {
+                    return false;
+                }
+                if (altnodes[i].height <= altnodes[rgt].height) {
+                    return false;
+                }
+            } else {
+                if (altnodes[i].height != 0) {
+                    return false;
+                }
+            }
+        }
+        if (altnodes[rootn].anc >= 0) {
+            return false;
+        }
+        return true;
+    }
+
+
+
 
 
      public int scaleAllHeights(double scale) {
-    	beginTreeEdit();
-     	int nNodes = tree.getNodeCount();
-     	for (int n = 0; n < nNodes; n++) {
-     		NodeRef node = tree.getNode(n);
-     		tree.setNodeHeight(node, scale*tree.getNodeHeight(node));
-     	}
-     	int count = nNodes;
-     	if (hybridheight >= 0.0) { hybridheight *= scale;  count++; }
-     	if (splitheight >= 0.0) { splitheight *= scale;  count++; }
-         for (AlloppTreeLeg leg : legs) {
-             if (leg.height >= 0.0) {
-                 leg.height *= scale;
+     	int count = 0;
+     	for (int n = 0; n < altnodes.length; n++) {
+             if (altnodes[n].nofChildren() > 0) {
+                 altnodes[n].height *= scale;
                  count++;
              }
-         }
+     	}
      	return count;
      }
 
 
+    public void fillinTipUnions(AlloppSpeciesBindings apsp, int leg) {
+        for (int n = 0; n < altnodes.length; n++) {
+            if (altnodes[n].nofChildren() == 0) {
+                altnodes[n].setUnion(apsp.taxonseqToTipUnion(altnodes[n].taxon, leg));
+            }
+        }
+    }
 
      public double getRootHeight() {
-    	 return tree.getRootHeight();
-     }
-
-     public double getSplitHeight() {
-    	 return splitheight;
-     }
-
-
-     public double getHybridHeight() {
-    	 return hybridheight;
-     }
-
-     // 2011-08-31 used only for setting up cases for testing
-     public double getMaxFootHeight() {
-    	 double max = tree.getRootHeight();
-    	 for (int i = 0; i < legs.length; i++) {
-    		 max = Math.max(max, legs[i].height);
-    	 }
-    	 return max;
-     }
-
-
-     // Returns the 'bottom' of a tree with legs. Works for 0,1,2 legs.
-     // Used for making starting tree
-     public double getMaxHeight() {
-    	 double max = tree.getRootHeight();
-    	 for (int i = 0; i < legs.length; i++) {
-    		 max = Math.max(max, legs[i].height);
-    	 }
-    	 max = Math.max(max, hybridheight);
-    	 max = Math.max(max, splitheight);
-    	 return max;
+    	 return altnodes[rootn].height;
      }
 
 
 
+    public int getExternalNodeCount() {
+        return (altnodes.length + 1) / 2;
+    }
 
-	public void setFootUnion(int leg, FixedBitSet footUnion) {
-		legs[leg].footUnion = footUnion;
-	}
-
-
-
-	public FixedBitSet getFootUnion(int leg) {
-		return legs[leg].footUnion;
-	}
-
-	public int getNumberOfLegs() {
-		return legs.length;
-	}
-
-	public double getFootHeight(int leg) {
-		return legs[leg].height;
-	}
-
-
-	public void setHybridHeight(double newh) {
-		assert newh >= tree.getRootHeight();
-		if (legs.length == 1) {
-			assert newh <= splitheight;
-		} else {
-			assert newh <= legs[0].height;
-			assert newh <= legs[1].height;
-		}
-		hybridheight = newh;
-	}
-
-
-
-
-    /*
-	public void setSplitHeight(double news) {
-		assert legs.length == 1;
-		assert legs[0].height < 0.0  ||  news <= legs[0].height;
-		assert news >= hybridheight;
-		splitheight = news;
-	} */
-
-
-
-
-
-    // Moves
-
-    /*
-    public void moveSplitOrLeg(double dirooth) {
-    	if (getNumberOfLegs() == 1) {
-    		if (MathUtils.nextBoolean()) {
-    			moveSplitHeight(dirooth);
-    		} else {
-    			moveLegHeight(0, dirooth);
-    		}
-    	} else {
-    		if (MathUtils.nextBoolean()) {
-    			moveLegHeight(0, dirooth);
-    		} else {
-    			moveLegHeight(0, dirooth);
-    		}
-    	}
-
+    public int getInternalNodeCount() {
+        return (altnodes.length - 1) / 2;
     }
 
 
-    // tetraonly twodiploidsonly
-    public void moveMostRecentLegHeight() {
-    	if (MathUtils.nextBoolean()) {
-    		// small move
-    		if (getNumberOfLegs() == 1) {
-    			double oldh = getSplitHeight();
-    			double minh = getHybridHeight();
-    			double maxh = legs[0].height;
-    			setSplitHeight(AlloppMisc.uniformInRange(oldh, minh, maxh, 0.1));
-    		} else {
-    			assert getNumberOfLegs() == 2;
-    			if (legs[0].height < legs[1].height) {
-    				legs[0].height = AlloppMisc.uniformInRange(legs[0].height, getHybridHeight(), legs[1].height, 0.1);
-    			} else {
-    				legs[1].height = AlloppMisc.uniformInRange(legs[1].height, getHybridHeight(), legs[0].height, 0.1);
-    			}
-    		}
-    	} else {
-    		// big move
-    		if (getNumberOfLegs() == 1) {
-    			setSplitHeight(MathUtils.uniform(getHybridHeight(), legs[0].height));
-    		} else {
-    			assert getNumberOfLegs() == 2;
-    			if (legs[0].height < legs[1].height) {
-    				legs[0].height = MathUtils.uniform(getHybridHeight(), legs[1].height);
-    			} else {
-    				legs[1].height = MathUtils.uniform(getHybridHeight(), legs[0].height);
-    			}
-    		}
-    	}
 
+
+    public void collectInternalHeights(ArrayList<Double> heights) {
+        for (int n = 0; n < altnodes.length; n++) {
+            if (altnodes[n].nofChildren() > 0) {
+                heights.add(altnodes[n].height);
+            }
+        }
     }
 
 
-    // tetraonly twodiploidsonly
-    public void moveMostAncientLegHeight(double dirooth) {
-    	if (MathUtils.nextBoolean()) {
-    		// small move
-    		if (getNumberOfLegs() == 1) {
-    			legs[0].height = AlloppMisc.uniformInRange(legs[0].height, getSplitHeight(), dirooth, 0.1);
-    		} else {
-    			assert getNumberOfLegs() == 2;
-    			if (legs[0].height < legs[1].height) {
-    				legs[1].height = AlloppMisc.uniformInRange(legs[1].height, legs[0].height, dirooth, 0.1);
-    			} else {
-    				legs[0].height = AlloppMisc.uniformInRange(legs[0].height, legs[1].height, dirooth, 0.1);
-    			}
-    		}
-    	} else {
-    		// big move
-    		if (getNumberOfLegs() == 1) {
-    			legs[0].height = MathUtils.uniform(getSplitHeight(), dirooth);
-    		} else {
-    			assert getNumberOfLegs() == 2;
-    			if (legs[0].height < legs[1].height) {
-    				legs[1].height = MathUtils.uniform(legs[0].height, dirooth);
-    			} else {
-    				legs[0].height = MathUtils.uniform(legs[1].height, dirooth);
-    			}
-    		}
-    	}
+    public void setDiphistLftLeg(int lftleg) {
+        diphistlftleg = lftleg;
+    }
 
+    public void setDiphistRgtLeg(int rgtleg) {
+        diphistrgtleg = rgtleg;
+    }
+
+    public int getDiphistLftLeg() {
+        return diphistlftleg;
+    }
+
+    public int getDiphistRgtLeg() {
+        return diphistrgtleg;
     }
 
 
-    // grjtodo tetraonly twodiploidsonly
-     public void moveLegTopology(FixedBitSet dip0, FixedBitSet dip1) {
-    	 int rnd = MathUtils.nextInt(6);
-    	 double t0;
-    	 double t1;
-    	 if (getNumberOfLegs() == 1) {
-    		 t0 = getSplitHeight();
-    		 t1 = legs[0].height;
-    	 } else {
-    		 t0 = Math.min(legs[0].height, legs[1].height);
-    		 t1 = Math.max(legs[0].height, legs[1].height);
-    	 }
-    	 switch (rnd) {
-    	 case 0:  case 1:  case 2:  case 3:
-    		 // TWOBRANCH, ONEBRANCH
-    		 legs = new AlloppTreeLeg[2];
-    		 if (MathUtils.nextBoolean()) {
-    		   legs[0] = new AlloppTreeLeg(t0);
-    		   legs[1] = new AlloppTreeLeg(t1);
-    		 } else {
-    		   legs[0] = new AlloppTreeLeg(t1);
-    		   legs[1] = new AlloppTreeLeg(t0);
-    		 }
-
-    		 break;
-    	 case 4: case 5:
-    		 // JOINED
-    		 legs = new AlloppTreeLeg[1];
-    		 legs[0] = new AlloppTreeLeg(t1);
-    		 setSplitHeight(t0);
-    		 break;
-    	 }
-    	 switch (rnd) {
-    	 case 0:
-    		 legs[0].footUnion = dip0;
-    		 legs[1].footUnion = dip1;
-    		 break;
-    	 case 1:
-    		 legs[0].footUnion = dip1;
-    		 legs[1].footUnion = dip0;
-    		 break;
-    	 case 2:
-    		 legs[0].footUnion = dip0;
-    		 legs[1].footUnion = dip0;
-    		 break;
-    	 case 3:
-    		 legs[0].footUnion = dip1;
-    		 legs[1].footUnion = dip1;
-    		 break;
-    	 case 4:
-    		 legs[0].footUnion = dip0;
-    		 break;
-    	 case 5:
-    		 legs[0].footUnion = dip1;
-    		 break;
-    	 }
-     }
-      */
 
 
+    /***********************************************************************/
+    /************************** private ************************************/
+    /***********************************************************************/
 
+    private int copySubtree(int nextn, ALTNode node) {
+        if (node.nofChildren() == 0) {
+            altnodes[nextn] = new ALTNode(nextn, node);
+            nextn++;
+        } else {
+            nextn = copySubtree(nextn, (ALTNode)node.getChild(0));
+            int lft = nextn - 1;
+            nextn = copySubtree(nextn, (ALTNode)node.getChild(1));
+            int rgt = nextn - 1;
+            altnodes[nextn] = new ALTNode(nextn, node);
+            altnodes[nextn].anc = -1;
+            altnodes[nextn].nodeNumber = nextn;
+            altnodes[nextn].addChildren(altnodes[lft], altnodes[rgt]);
+            nextn++;
+        }
+        return nextn;
+    }
 
-
-
-
-
-
-
-
-	// TreeLogger.LogUpon
-
-	public boolean logNow(long state) {
-       // can set logEvery=0 in XML and get here for debugging
-
-		return false;
-	}
-
-
-
-
-
-
-/*
- *
- * **************************************************************
- *
- *
- */
-
-
-    /*
-	private void moveLegHeight(int lg, double dirooth) {
-		double minh = getHybridHeight();
-		if (getNumberOfLegs() == 1) {
-			minh = getSplitHeight();
-		}
-		if (MathUtils.nextBoolean()) {
-			// small move
-			legs[lg].height = AlloppMisc.uniformInRange(legs[lg].height, minh, dirooth, 0.1);
-		} else {
-			// big move
-			legs[lg].height = MathUtils.uniform(minh, dirooth);
-		}
-	}
-
-
-
-	private void moveSplitHeight(double dirooth) {
-		double oldh = getSplitHeight();
-		double minh = getHybridHeight();
-		double maxh = legs[0].height;
-		if (MathUtils.nextBoolean()) {
-			// small move
-			setSplitHeight(AlloppMisc.uniformInRange(oldh, minh, maxh, 0.1));
-		} else {
-			// big move
-			setSplitHeight(MathUtils.uniform(getHybridHeight(), legs[0].height));
-		}
-	}   */
-
+    private int noftipsSubtree(ALTNode node) {
+        int ntips = 0;
+        if (node.lft >= 0) {
+            int lftntips = noftipsSubtree(altnodes[node.lft]);
+            int rgtntips = noftipsSubtree(altnodes[node.rgt]);
+            ntips = lftntips + rgtntips;
+        } else {
+            ntips = 1;
+        }
+        return ntips;
+    }
 
 
     private double randomnodeheight(double rate) {
@@ -605,317 +608,12 @@ public class AlloppLeggedTree implements Tree, SlidableTree, TreeLogger.LogUpon 
     }
 
 
-    private double randomsplitheight(double rate) {
-    	return randomnodeheight(rate) + randomnodeheight(rate) + randomnodeheight(rate);
-     }
 
 
 
-//                      Tree
 
 
-	public NodeRef getRoot() {
-		return tree.getRoot();
-	}
 
-
-	public int getNodeCount() {
-		return tree.getNodeCount();
-	}
-
-
-	public NodeRef getNode(int i) {
-		return tree.getNode(i);
-	}
-
-
-	public NodeRef getInternalNode(int i) {
-		return tree.getInternalNode(i);
-	}
-
-
-	public NodeRef getExternalNode(int i) {
-		return tree.getExternalNode(i);
-	}
-
-
-	public int getExternalNodeCount() {
-		return tree.getExternalNodeCount();
-	}
-
-
-	public int getInternalNodeCount() {
-		return tree.getInternalNodeCount();
-	}
-
-
-	public Taxon getNodeTaxon(NodeRef node) {
-		return tree.getNodeTaxon(node);
-	}
-
-
-	public boolean hasNodeHeights() {
-		return tree.hasNodeHeights();
-	}
-
-
-	public double getNodeHeight(NodeRef node) {
-		return tree.getNodeHeight(node);
-	}
-
-
-	public boolean hasBranchLengths() {
-		return tree.hasBranchLengths();
-	}
-
-
-	public double getBranchLength(NodeRef node) {
-		return tree.getBranchLength(node);
-	}
-
-
-	public double getNodeRate(NodeRef node) {
-		return tree.getNodeRate(node);
-	}
-
-
-	public Object getNodeAttribute(NodeRef node, String name) {
-		return tree.getNodeAttribute(node, name);
-	}
-
-
-	public Iterator getNodeAttributeNames(NodeRef node) {
-		return tree.getNodeAttributeNames(node);
-	}
-
-
-	public boolean isExternal(NodeRef node) {
-		return tree.isExternal(node);
-	}
-
-
-	public boolean isRoot(NodeRef node) {
-		return tree.isRoot(node);
-	}
-
-
-	public int getChildCount(NodeRef node) {
-		return tree.getChildCount(node);
-	}
-
-
-	public NodeRef getChild(NodeRef node, int j) {
-		return tree.getChild(node, j);
-	}
-
-
-	public NodeRef getParent(NodeRef node) {
-		return tree.getParent(node);
-	}
-
-
-	public Tree getCopy() {
-		return tree.getCopy();
-	}
-
-
-	public int getTaxonCount() {
-		return tree.getTaxonCount();
-	}
-
-
-	public Taxon getTaxon(int taxonIndex) {
-		return tree.getTaxon(taxonIndex);
-	}
-
-
-	public String getTaxonId(int taxonIndex) {
-		return tree.getTaxonId(taxonIndex);
-	}
-
-
-	public int getTaxonIndex(String id) {
-		return tree.getTaxonIndex(id);
-	}
-
-
-	public int getTaxonIndex(Taxon taxon) {
-		return tree.getTaxonIndex(taxon);
-	}
-
-
-	public List<Taxon> asList() {
-		return tree.asList();
-	}
-
-
-	public Object getTaxonAttribute(int taxonIndex, String name) {
-		return tree.getTaxonAttribute(taxonIndex, name);
-	}
-
-
-	public Iterator<Taxon> iterator() {
-		return tree.iterator();
-	}
-
-
-	public Type getUnits() {
-		return tree.getUnits();
-	}
-
-
-	public void setUnits(Type units) {
-		tree.setUnits(units);
-	}
-
-
-	public void setAttribute(String name, Object value) {
-		tree.setAttribute(name, value);
-	}
-
-
-	public Object getAttribute(String name) {
-		return tree.getAttribute(name);
-	}
-
-
-	public Iterator<String> getAttributeNames() {
-		return tree.getAttributeNames();
-	}
-
-
-	public int addTaxon(Taxon taxon) {
-		return tree.addTaxon(taxon);
-	}
-
-
-	public boolean removeTaxon(Taxon taxon) {
-		return tree.removeTaxon(taxon);
-	}
-
-
-	public void setTaxonId(int taxonIndex, String id) {
-		tree.setTaxonId(taxonIndex, id);
-	}
-
-
-	public void setTaxonAttribute(int taxonIndex, String name, Object value) {
-		tree.setTaxonAttribute(taxonIndex, name, value);
-	}
-
-
-	public void addMutableTaxonListListener(MutableTaxonListListener listener) {
-		tree.addMutableTaxonListListener(listener);
-	}
-
-
-
-	//          MutableTree which extends Tree, MutableTaxonList
-
-
-
-	public boolean beginTreeEdit() {
-		return tree.beginTreeEdit();
-	}
-
-	public void endTreeEdit() {
-		tree.endTreeEdit();
-	}
-
-
-	public void setNodeHeight(NodeRef node, double height) {
-		tree.setNodeHeight(node, height);
-	}
-
-
-	public void setNodeRate(NodeRef node, double rate) {
-		tree.setNodeRate(node, rate);
-	}
-
-
-	public void setBranchLength(NodeRef node, double length) {
-		tree.setBranchLength(node, length);
-	}
-
-
-	public void setNodeAttribute(NodeRef node, String name, Object value) {
-		tree.setNodeAttribute(node, name, value);
-	}
-
-
-
-
-
-
-
-	// Identifiable
-
-	public String getId() {
-		return tree.getId();
-	}
-
-
-
-
-	public void setId(String id) {
-		tree.setId(id);
-
-	}
-
-
-    @Override
-    public NodeRef getSlidableRoot() {
-        return tree.getRoot();  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public int getSlidableNodeCount() {
-        return tree.getNodeCount();  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-
-    @Override
-    public Taxon getSlidableNodeTaxon(NodeRef node) {
-        return tree.getNodeTaxon(node);
-    }
-
-    @Override
-    public double getSlidableNodeHeight(NodeRef node) {
-        return tree.getNodeHeight(node);  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void setSlidableNodeHeight(NodeRef node, double height) {
-        tree.setNodeHeight(node, height);//To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public boolean isExternalSlidable(NodeRef node) {
-        return tree.isExternal(node);  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public NodeRef getSlidableChild(NodeRef node, int i) {
-        return tree.getChild(node, i);  //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-	public void replaceSlidableChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
-	   	final NodeRef lchild = tree.getChild(node, 0);
-        final NodeRef rchild = tree.getChild(node, 1);
-        if (lchild != lft) {
-            tree.replaceChild(node, lchild, lft);
-        }
-        if (rchild != rgt) {
-            tree.replaceChild(node, rchild, rgt);
-        }
-
-	}
-
-    @Override
-    public void replaceSlidableRoot(NodeRef root) {
-        tree.setRoot(root);//To change body of implemented methods use File | Settings | File Templates.
-    }
 
 
 }

@@ -420,7 +420,7 @@ public class PopsIOSpeciesBindings extends AbstractModel   {
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged(object, index);
-        // grjtodo copied from elsewhere; not understood.
+        // grjtodo-oneday copied from elsewhere; not understood.
     }
 
     @Override

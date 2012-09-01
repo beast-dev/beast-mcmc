@@ -34,7 +34,7 @@ import java.util.logging.Logger;
  */
 
 /*
- * grjtodo This includes a lot of code from SpeciesTreeModel. It would be better to re-use! 
+ * grjtodo-oneday This includes a lot of code from SpeciesTreeModel. It would be better to re-use!
  * Not clear how: neither contain nor extend seems ideal. This uses
  * a MulSpeciesBindings which is seriously different from a SpeciesBindings.
  * 
@@ -933,7 +933,7 @@ public class MulSpeciesTreeModel extends AbstractModel implements MutableTree, C
         return props.get(tip).speciesIndex;
     }
 
-    // grjtodo: not used because user starting tree not yet supported
+    // grjtodo-oneday: not used because user starting tree not yet supported
     private Double setInitialSplitPopulations(FlexibleTree startTree, NodeRef node, int pos[]) {
         if (!startTree.isExternal(node)) {
             int loc = -1;

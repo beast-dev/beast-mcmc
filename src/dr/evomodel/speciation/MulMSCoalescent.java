@@ -84,7 +84,7 @@ public class MulMSCoalescent extends Likelihood.Abstract implements Units {
             checkCompatibility = false;
         }
         
-        // grjtodo. For now, always do checks. Should make them when do a seq reassign, plus as above, otherwise not
+        // grjtodo-oneday. For now, always do checks. Should make them when do a seq reassign, plus as above, otherwise not
         for (int i  = 0; i < mulspb.getGeneTrees().length; i++) {
         	if (!spTree.isCompatible(mulspb.getGeneTrees()[i])) {
         		return Double.NEGATIVE_INFINITY;

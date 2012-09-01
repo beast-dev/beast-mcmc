@@ -12,7 +12,6 @@ import java.util.Iterator;
 import java.util.Locale;
 
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.util.Taxon;
 import dr.math.MathUtils;
@@ -23,6 +22,9 @@ public class AlloppMisc {
 	
 	
 	public static String FixedBitSetasText(FixedBitSet x) {
+        if (x == null) {
+            return "{?}";
+        }
 		StringBuilder rep = new StringBuilder();
 		rep.append("{");
 		for (int b = 0; b < x.cardinality() + FixedBitSet.complement(x).cardinality(); ++b) {
@@ -49,9 +51,17 @@ public class AlloppMisc {
 			formatter.format("%8s", "zero");
 		} else if (x < 1e-3) {
 			formatter.format("%8.2e", x);
-		} else {
-			formatter.format("%8.6f", x);
-		}
+		} else if (x < 9.999) {
+			formatter.format("%8.5f", x);
+		} else if (x < 99.99) {
+            formatter.format("%8.4f", x);
+        } else if (x < 999.9) {
+            formatter.format("%8.3f", x);
+        } else if (x < 9999) {
+            formatter.format("%8.2f", x);
+        } else {
+            formatter.format("%8.0f", x);
+        }
 		return s.toString();
 	}
 
@@ -107,19 +117,7 @@ public class AlloppMisc {
 		}
 		return s;
 	}
-	
-	
-	
-	public static String SimpleTreeAsTextualNodeList(SimpleTree stree) {
-		String s = "";
-		int nnodes = stree.getNodeCount();
-		for (int n = 0;  n < nnodes;  ++n) {
-			NodeRef node = stree.getNode(n);
-			s += SimpleNodeAsText(stree, node);
-			s += "\n";
-		}
-	return s;	
-	}
+
 	
 	
 	

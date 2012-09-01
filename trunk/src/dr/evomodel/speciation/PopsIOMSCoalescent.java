@@ -34,7 +34,7 @@ public class PopsIOMSCoalescent extends Likelihood.Abstract {
                 return Double.NEGATIVE_INFINITY;
             }
         }
-        // grjtodo JH has compatible flags for efficiency. I'm checking
+        // grjtodo-oneday JH has compatible flags for efficiency. I'm checking
         // every time.
 
         double logl = 0;

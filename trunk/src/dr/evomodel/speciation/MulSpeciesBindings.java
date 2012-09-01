@@ -597,7 +597,7 @@ public class MulSpeciesBindings extends AbstractModel  implements Loggable {
     	}       
 
         
-    	/* grjtodo 
+    	/* grjtodo-oneday
     	 * This is a bit odd. It collects individuals as (sp, iv) indices
     	 * that `belong' to a node in the sense that any taxon (sequence)
     	 * of an individual belongs to the clade of the node.
@@ -725,7 +725,7 @@ public class MulSpeciesBindings extends AbstractModel  implements Loggable {
         
         // grj
 		private void permuteOneAssignment(int sp, int iv) {
-			// grjtodo tetraonly
+			// grjtodo-tetraonly
 			int tx;
 			if (apspecies[sp].individuals[iv].taxa.length == 2) {
 				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);

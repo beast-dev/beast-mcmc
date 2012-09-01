@@ -183,7 +183,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	private SequenceAssignment seqassigns[];
     	private SequenceAssignment oldseqassigns[];
         private final int[] lineagesCount;
-        private final double popFactor; // grjtodo one day will mul pops by this, eg for chloroplast data.
+        private final double popFactor; // grjtodo-oneday will mul pops by this, eg for chloroplast data.
         
         
     	/* class GeneTreeInfo.SequenceAssignments
@@ -221,7 +221,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
          * 
          * Node for GeneTreeInfo.GeneUnionTree.
          */
-       private class GeneUnionNode {
+        private class GeneUnionNode {
     		private GeneUnionNode child[];
     		private double height;
     		private FixedBitSet union;
@@ -429,98 +429,93 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
             }
         }
 
-       
+
         public String seqassignsAsText() {
-        	String s = "Sequence assignments" + System.getProperty("line.separator");
-        	for (int tx = 0; tx < seqassigns.length; tx++) {
-        		s += taxa[tx];
-        		s += ":";
-        		s += seqassigns[tx].seqIndex;
-        		if (tx+1 < seqassigns.length  &&  seqassigns[tx].spIndex != seqassigns[tx+1].spIndex) {
-        			s += System.getProperty("line.separator");
-        		} else {
-        			s += "  ";
-        		}
-        	}
-        	return s;
+            String s = "Sequence assignments" + System.getProperty("line.separator");
+            for (int tx = 0; tx < seqassigns.length; tx++) {
+                s += taxa[tx];
+                s += ":";
+                s += seqassigns[tx].seqIndex;
+                if (tx+1 < seqassigns.length  &&  seqassigns[tx].spIndex != seqassigns[tx+1].spIndex) {
+                    s += System.getProperty("line.separator");
+                } else {
+                    s += "  ";
+                }
+            }
+            return s;
         }
-        
 
-        
+
+
         public String genetreeAsText() {
-        	GeneUnionTree gutree = new GeneUnionTree();
-        	return gutree.asText();
+            GeneUnionTree gutree = new GeneUnionTree();
+            return gutree.asText();
         }
-        
-        
-		public boolean fitsInNetwork(final AlloppSpeciesNetworkModel asnm) {
-			GeneUnionTree gutree = new GeneUnionTree();
-			boolean fits = gutree.subtreeFitsInNetwork(gutree.getRoot(), asnm);
-			if (AlloppSpeciesNetworkModel.DBUGTUNE) {
-				if (!fits) {
-					System.err.println("INCOMPATIBLE");
-					System.err.println(seqassignsAsText());
-					System.err.println(gutree.asText());
-					System.err.println(asnm.mullabTreeAsText());
-				}
-			}
-			return fits; 
-		}
-    
-		
-		// returns log(P(g_i|S)) = probability that gene tree fits into species network
-		public double treeLogLikelihood(final AlloppSpeciesNetworkModel asnm) {
-			GeneUnionTree gutree = new GeneUnionTree();
-			asnm.clearCoalescences();
-			gutree.subtreeRecordCoalescences(gutree.getRoot(), asnm);
-			asnm.sortCoalescences();
-			asnm.recordLineageCounts();
-	     	double llhood = asnm.geneTreeInNetworkLogLikelihood();
-	     	if (AlloppSpeciesNetworkModel.DBUGTUNE) {
-	     		System.err.println("COMPATIBLE: log-likelihood = " + llhood);
-	     		System.err.println(seqassignsAsText());
-	     		System.err.println(gutree.asText());
-	     		System.err.println(asnm.mullabTreeAsText());
-	     	}
-			return llhood;
-		}	
-		
-		
-		public void storeSequenceAssignments() {
-			for (int i = 0; i < seqassigns.length; i++) {
-				oldseqassigns[i].seqIndex = seqassigns[i].seqIndex;
-			}
-		}
-        
-		public void restoreSequenceAssignments() {
-			for (int i = 0; i < seqassigns.length; i++) {
-				seqassigns[i].seqIndex = oldseqassigns[i].seqIndex;
-			}
-		}
 
-		
-		/* 2012-03-28 replacing with spseqUpperBound()
-		public double speciationUpperBound(FixedBitSet spp0, FixedBitSet spp1) {
-			GeneUnionTree gutree = new GeneUnionTree();
-			return subtreeSpeciationUpperBound(gutree.getRoot(), spp0, spp1, Double.MAX_VALUE);
-		}*/
-		
-		
-		public double spseqUpperBound(FixedBitSet spsq0, FixedBitSet spsq1) {
-			GeneUnionTree gutree = new GeneUnionTree();
-			return subtreeSpseqUpperBound(gutree.getRoot(), spsq0, spsq1, Double.MAX_VALUE);
-		}
 
-		
+        public boolean fitsInNetwork(final AlloppSpeciesNetworkModel asnm) {
+            GeneUnionTree gutree = new GeneUnionTree();
+            boolean fits = gutree.subtreeFitsInNetwork(gutree.getRoot(), asnm);
+            if (AlloppSpeciesNetworkModel.DBUGTUNE) {
+                if (!fits) {
+                    System.err.println("INCOMPATIBLE");
+                    System.err.println(seqassignsAsText());
+                    System.err.println(gutree.asText());
+                    System.err.println(asnm.mullabTreeAsText());
+                }
+            }
+            return fits;
+        }
 
-		public void permuteOneSpeciesOneIndiv() {
-			int sp = MathUtils.nextInt(apspecies.length);
-			int iv = MathUtils.nextInt(apspecies[sp].individuals.length);
-			permuteOneAssignment(sp, iv);
-		}       
+
+        // returns log(P(g_i|S)) = probability that gene tree fits into species network
+        public double treeLogLikelihood(final AlloppSpeciesNetworkModel asnm) {
+            GeneUnionTree gutree = new GeneUnionTree();
+            asnm.clearCoalescences();
+            gutree.subtreeRecordCoalescences(gutree.getRoot(), asnm);
+            asnm.sortCoalescences();
+            asnm.recordLineageCounts();
+            double llhood = asnm.geneTreeInNetworkLogLikelihood();
+            if (AlloppSpeciesNetworkModel.DBUGTUNE) {
+                System.err.println("COMPATIBLE: log-likelihood = " + llhood);
+                System.err.println(seqassignsAsText());
+                System.err.println(gutree.asText());
+                System.err.println(asnm.mullabTreeAsText());
+            }
+            return llhood;
+        }
+
+
+        public void storeSequenceAssignments() {
+            for (int i = 0; i < seqassigns.length; i++) {
+                oldseqassigns[i].seqIndex = seqassigns[i].seqIndex;
+            }
+        }
+
+        public void restoreSequenceAssignments() {
+            for (int i = 0; i < seqassigns.length; i++) {
+                seqassigns[i].seqIndex = oldseqassigns[i].seqIndex;
+            }
+        }
+
+
+
+
+        public double spseqUpperBound(FixedBitSet spsq0, FixedBitSet spsq1) {
+            GeneUnionTree gutree = new GeneUnionTree();
+            return subtreeSpseqUpperBound(gutree.getRoot(), spsq0, spsq1, Double.MAX_VALUE);
+        }
+
+
+
+        public void permuteOneSpeciesOneIndiv() {
+            int sp = MathUtils.nextInt(apspecies.length);
+            int iv = MathUtils.nextInt(apspecies[sp].individuals.length);
+            permuteOneAssignment(sp, iv);
+        }
 
         
-		/* grjtodo 
+		/* grjtodo-oneday
 		 * This is a bit odd. It collects individuals as (sp, iv) indices
 		 * that `belong' to a node in the sense that any taxon (sequence)
 		 * of an individual belongs to the clade of the node.
@@ -557,7 +552,6 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         
 
        // called when a gene tree has changed, which affects likelihood.
-       // grjtodo not clear if it is useful.
        // 2011-08-12 I am not using dirty flags (yet). I return 
        // false from getLikelihoodKnown() in AlloppMSCoalescent
        // and that seems to be sufficient.
@@ -579,32 +573,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			}
 		}
 		
-        
-		
-		/* 2012-03-28 replacing with spseqUpperBound()
-		// start at root of gutree and recurse. 
-		// A node which has one child which contains some of species spp0
-		// and where the other contains some of species spp1, imposes a limit 
-		// on how early a speciation can occur.
-		private double subtreeSpeciationUpperBound(GeneUnionNode node, 
-				              FixedBitSet spp0, FixedBitSet spp1, double bound) {
-			if (node.child.length == 0) {
-				return bound;
-			}
-			for (GeneUnionNode ch : node.child) {
-				bound = Math.min(bound, subtreeSpeciationUpperBound(ch, spp0, spp1, bound));
-			}
-			FixedBitSet genespp0 = spsqunion2spunion(node.child[0].union);
-			int int00 = genespp0.intersectCardinality(spp0);
-			int int01 = genespp0.intersectCardinality(spp1);
-			FixedBitSet genespp1 = spsqunion2spunion(node.child[1].union);
-			int int10 = genespp1.intersectCardinality(spp0);
-			int int11 = genespp1.intersectCardinality(spp1);
-			if ((int00 > 0 && int11 > 0)  ||  (int10 > 0 && int01 > 0)) {
-				bound = Math.min(bound, node.height);
-			}
-	        return bound;
-		}*/
+
 
 
 		
@@ -632,48 +601,10 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	        return bound;
 		}
 
-
-		
-		
-		
-		
-		
-		// start at root of gutree and recurse. 
-		// A node which has one child which contains one sequence index
-		// and where the other contains the other sequence index, imposes a limit 
-		// the initial diploid split can occur, in one tetra tree case.
-        /*
-		private double subtreeDiploidSplitUpperBound(GeneUnionNode node, double bound) {
-			if (node.child.length == 0) {
-				return bound;
-			}
-			for (GeneUnionNode ch : node.child) {
-				bound = Math.min(bound, subtreeDiploidSplitUpperBound(ch, bound));
-			}
-			boolean ch0seq0 = false;
-			boolean ch0seq1 = false;
-			for(int i = node.child[0].union.nextOnBit(0); i >= 0; i = node.child[0].union.nextOnBit(i+1)) {
-				int seq = spseqindex2seq(i);
-				if (seq == 0) { ch0seq0 = true; }
-				if (seq == 1) { ch0seq1 = true; }
-			}
-			boolean ch1seq0 = false;
-			boolean ch1seq1 = false;
-			for(int i = node.child[1].union.nextOnBit(0); i >= 0; i = node.child[1].union.nextOnBit(i+1)) {
-				int seq = spseqindex2seq(i);
-				if (seq == 0) { ch1seq0 = true; }
-				if (seq == 1) { ch1seq1 = true; }
-			}
-			if ((ch0seq0 && ch1seq1) || (ch0seq1 && ch1seq0)) {
-				bound = Math.min(bound, node.height);
-			}
-			return bound;
-		} */
-        
         
 
 		private void permuteOneAssignment(int sp, int iv) {
-			// grjtodo tetraonly
+			// grjtodo-tetraonly
 			int tx;
 			if (apspecies[sp].individuals[iv].taxa.length == 2) {
 				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);
@@ -770,19 +701,18 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	 * Minimal constructor for testing conversions network -> multree, diphist
 	 */
 	public AlloppSpeciesBindings(ApSpInfo[] apspecies,
-			AlloppSpeciesNetworkModelTEST.NetworkConversionTEST networkToMulLabTreeTEST) {
+			AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST networkToMulLabTreeTEST) {
 		this(apspecies, new TreeModel[0], 0.0, new double[0]);
 	}
 
 
-	/*
-	 * Constructor for testing likelihood calculation for gene tree in network.
-	 * permuteSequenceAssignments==false
-	 */
-	public AlloppSpeciesBindings(ApSpInfo[] apsp,
-			AlloppSpeciesNetworkModelTEST.LogLhoodGTreeInNetworkTEST llgtnTEST) {
-		this(apsp, llgtnTEST.gtreemodels, 0.0, llgtnTEST.popfactors, false);
-	}
+    /*
+      * Minimal constructor for testing conversions network -> multree, diphist
+      */
+    public AlloppSpeciesBindings(ApSpInfo[] apspecies,
+                                 AlloppSpeciesNetworkModelTEST.LhoodMultreeTEST lhoodMultreeTEST) {
+        this(apspecies, new TreeModel[0], 0.0, new double[0]);
+    }
 
 
 	public double initialMinGeneNodeHeight() {
@@ -795,15 +725,26 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		FixedBitSet union = new FixedBitSet(numberOfSpSeqs());
 		return union;
 	}	
-	
-	
-	public FixedBitSet speciesseqToTipUnion(Taxon tx, int seq) {
-		FixedBitSet union = speciesseqEmptyUnion();
-		int sp = apspeciesId2index(tx.getId());
-		int spseq = spandseq2spseqindex(sp, seq);
-		union.set(spseq);
-		return union;
+
+
+    // Taxons vs species.
+    // Taxons may have a final "0", "1",... to distinguish sequences, while
+    // species do not. AlloppLeggedTree uses a SimpleTree, which only has
+    // Taxons, so same thing there. Multree needs distinguishable Taxons
+    // so has suffices. Not clear if species version is useful
+	public FixedBitSet taxonseqToTipUnion(Taxon tx, int seq) {
+		return speciesseqToTipUnion(tx.getId(), seq);
 	}
+
+
+    private FixedBitSet speciesseqToTipUnion(String species, int seq) {
+        FixedBitSet union = speciesseqEmptyUnion();
+        int sp = apspeciesId2index(species);
+        int spseq = spandseq2spseqindex(sp, seq);
+        union.set(spseq);
+        return union;
+    }
+
 		
 	public FixedBitSet spsqunion2spunion(FixedBitSet spsqunion) {
 		FixedBitSet spunion = new FixedBitSet(apspecies.length);
@@ -828,6 +769,9 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	
 	
 	public double maxGeneTreeHeight() {
+        if (geneTreeInfos.length == 0) {
+            return 999;   // for test code only
+        }
 		double maxheight = 0.0;
 		for (GeneTreeInfo gti : geneTreeInfos) {
 			double height = gti.tree.getNodeHeight(gti.tree.getRoot());

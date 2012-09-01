@@ -14,7 +14,7 @@ import dr.inference.operators.SimpleMCMCOperator;
  */
 
 
-
+// 2012-07 ood
 public class AlloppMoveLegs extends SimpleMCMCOperator {
 
 	private final AlloppSpeciesNetworkModel apspnet;

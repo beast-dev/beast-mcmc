@@ -102,14 +102,12 @@ public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser 
                 new ElementRule(MODELS,
                         new XMLSyntaxRule[] {
                                 new ElementRule(AbstractModel.class, 1, Integer.MAX_VALUE),
-                                //TODO or other subst model classes
                         }
                 ),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(Parameter.class),
         };
 
-//		return null;
 	}// END: getSyntaxRules
 
 	@Override

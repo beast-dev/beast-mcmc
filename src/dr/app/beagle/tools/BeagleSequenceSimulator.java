@@ -33,29 +33,6 @@ import dr.math.MathUtils;
  * @author Filip Bielejec
  * @version $Id$
  * 
- * 			// create Epoch Model
-			int epochCount = 1;
-			int[] transitionTimes = new int[] { 20 };
-			double[] parameterValues = new double[] { 1.0 }; 
-
-			// 1st epoch
-			List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-			Parameter epochTimes = new Parameter.Default(1, transitionTimes[0]);
-			Parameter kappa = new Parameter.Default(1, parameterValues[0]);
-			HKY hky = new HKY(kappa, freqModel);
-			substModelList.add(hky);
-			
-			// epochs 2, 3, ...
-			for (int i = 0; i < epochCount; i++) {
-
-				System.out.println("i: " + i);
-
-				kappa = new Parameter.Default(1, parameterValues[i]);
-				hky = new HKY(kappa, freqModel);
-				substModelList.add(hky);
-				epochTimes.addDimension(i + 1, transitionTimes[i]);
-
-			}
  */
 public class BeagleSequenceSimulator {
 

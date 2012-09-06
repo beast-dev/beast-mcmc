@@ -88,14 +88,10 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			msg += "\n  " + rateModel.getModelName() + " branch rate model";
 		}
 		
-		// TODO check this for cast errors
 		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
 		if (branchSubstitutionModel == null) {
 			SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 			branchSubstitutionModel = new HomogenousBranchSubstitutionModel(substitutionModel, freqModel);
-			
-//			System.err.println("FUBAR");
-			
 		}
 		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(

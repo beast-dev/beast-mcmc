@@ -76,11 +76,11 @@ public class BeagleSequenceSimulatorApp {
 			try {
 
 				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-
-			} catch (Exception e1) {
-
-				e1.printStackTrace();
 				System.out.println("Specified l&f not found. Loading system default l&f");
+				
+			} catch (Exception e) {
+
+				e.printStackTrace();
 
 			}
 		}
@@ -113,6 +113,8 @@ public class BeagleSequenceSimulatorApp {
 				
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
+				System.out.println("Do the evolution baby!");// Cool sub-title
+																// for a paper
 				
 			} catch (UnsupportedClassVersionError e) {
 				
@@ -152,10 +154,10 @@ public class BeagleSequenceSimulatorApp {
 		if (imgURL != null) {
 			return new ImageIcon(imgURL);
 		} else {
-			System.err.println("Couldn't find file: \n" + path + "\n");
+			System.err.println("Couldn't find file: " + path + "\n");
 			return null;
 		}
-	}
+	}// END: CreateImageIcon
 	
 }// END: TestlabOutbreakApp
 

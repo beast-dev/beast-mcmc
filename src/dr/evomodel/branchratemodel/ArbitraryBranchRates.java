@@ -47,17 +47,23 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     final TreeParameterModel rates;
     final Parameter rateParameter;
     final boolean reciprocal;
+    final boolean exp;
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal) {
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal, boolean exp, boolean setRates) {
 
         super(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES);
 
-        for (int i = 0; i < rateParameter.getDimension(); i++) {
-            rateParameter.setValue(i, 1.0);
+        if (setRates) {
+            double value = exp ? 0.0 : 1.0;
+            for (int i = 0; i < rateParameter.getDimension(); i++) {
+                rateParameter.setValue(i, value);
+            }
         }
         //Force the boundaries of rate
-        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
-        rateParameter.addBounds(bound);
+        if (!exp) {
+            Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
+            rateParameter.addBounds(bound);
+        }
 
         this.rates = new TreeParameterModel(tree, rateParameter, false);
         this.rateParameter = rateParameter;
@@ -65,6 +71,7 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         addModel(rates);
 
         this.reciprocal = reciprocal;
+        this.exp = exp;
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
@@ -75,9 +82,12 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        final double rate = rates.getNodeValue(tree, node);
+        double rate = rates.getNodeValue(tree, node);
         if (reciprocal) {
-            return 1.0 / rate;
+            rate = 1.0 / rate;
+        }
+        if (exp) {
+            rate = Math.exp(rate);
         }
         return rate;
     }

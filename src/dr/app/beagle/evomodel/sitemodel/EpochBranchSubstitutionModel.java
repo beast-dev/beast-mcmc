@@ -53,7 +53,6 @@ import java.util.*;
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 
-	
     // /////////////
     // ---DEBUG---//
     // /////////////
@@ -118,32 +117,8 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
      * @return number of extra transition matrices buffers to allocate
      */
     public int getExtraBufferCount(TreeModel treeModel) {
-
-        // loop over the tree to determine the count
-        double[] transitionTimes = epochTimes.getParameterValues();
-        int rootId = treeModel.getRoot().getNumber();
-        int count = 0;
-        for (NodeRef node : treeModel.getNodes()) {
-
-            if (node.getNumber() != rootId) {
-
-                double nodeHeight = treeModel.getNodeHeight(node);
-                double parentHeight = treeModel.getNodeHeight(treeModel
-                        .getParent(node));
-
-                for (int i = 0; i < transitionTimes.length; i++) {
-
-                    if (nodeHeight <= transitionTimes[i] && transitionTimes[i] < parentHeight) {
-                        count++;
-                        break;
-                    }// END: transition time check check
-
-                }// END: transition times loop
-            }// END: root check
-        }// END: nodes loop
-
-        requestedBuffers = 100;//count * 4;
-        
+    	
+        requestedBuffers = 100;
         System.out.println("Allocating " + requestedBuffers + " extra buffers.");
         
         return requestedBuffers;
@@ -335,7 +310,7 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
                                          final int[] firstDerivativeIndices,
                                          final int[] secondDervativeIndices,
                                          final double[] edgeLengths,
-                                         int count // number of branches to update in paralell
+                                         int count // number of branches to update in parallel
     ) {
 
         if (eigenIndex < substModelList.size()) {
@@ -700,4 +675,37 @@ public class EpochBranchSubstitutionModel extends AbstractModel implements
     // ---END: DEBUG---//
     // //////////////////
 
+    public int getExtraBufferCount_old(TreeModel treeModel) {
+
+        // loop over the tree to determine the count
+        double[] transitionTimes = epochTimes.getParameterValues();
+        int rootId = treeModel.getRoot().getNumber();
+		int count = 0;
+		
+        for (NodeRef node : treeModel.getNodes()) {
+
+            if (node.getNumber() != rootId) {
+
+                double nodeHeight = treeModel.getNodeHeight(node);
+                double parentHeight = treeModel.getNodeHeight(treeModel
+                        .getParent(node));
+
+                for (int i = 0; i < transitionTimes.length; i++) {
+
+                    if (nodeHeight <= transitionTimes[i] && transitionTimes[i] < parentHeight) {
+                        count++;
+                        break;
+                    }// END: transition time check check
+
+                }// END: transition times loop
+            }// END: root check
+        }// END: nodes loop
+
+        requestedBuffers = count * 4;
+        
+        System.out.println("Allocating " + requestedBuffers + " extra buffers.");
+        
+        return requestedBuffers;
+    }// END: getBufferCount_old
+	
 }// END: class

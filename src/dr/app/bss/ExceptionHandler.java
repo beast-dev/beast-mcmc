@@ -17,7 +17,7 @@ public class ExceptionHandler implements UncaughtExceptionHandler {
 					showExceptionDialog(t, e);
 				}
 			});
-		}// END: edt check
+		}// END: EDT check
 	}// END: uncaughtException
 
 	private void showExceptionDialog(Thread t, Throwable e) {

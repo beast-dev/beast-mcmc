@@ -170,7 +170,7 @@ public class CompoundLikelihood implements Likelihood, Reportable {
 
         if (pool == null) {
             // Single threaded
-            logLikelihood = evaluateLikelihoods(lateLikelihoods);
+            logLikelihood += evaluateLikelihoods(lateLikelihoods);
         } else {
 
             try {

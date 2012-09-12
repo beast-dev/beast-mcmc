@@ -239,7 +239,7 @@ public class TreeTraitParserUtilities {
                             // try the alternative param name
                             traitParam = getTraitParameterByName(traitParameter, altParamName);
                             if (traitParam == null) {
-                                throw new RuntimeException("Missing trait parameters for tree tip, " + paramName);
+                                throw new RuntimeException("Missing trait parameters for taxon, " + paramName);
                             }
                         }
                     } else {
@@ -258,7 +258,8 @@ public class TreeTraitParserUtilities {
                     }
                     if (sampleSize != traitParam.getDimension()) {
                         if (existingTraitParameter) {
-                            throw new RuntimeException("Trait length must match trait parameter dimension: " +
+                            throw new RuntimeException("Trait length must match trait parameter dimension for taxon, " +
+                                    taxonName + ": " +
                             sampleSize + " != " + traitParam.getDimension());
                         } else {
                             traitParam.setDimension(sampleSize);

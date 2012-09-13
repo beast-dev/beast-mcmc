@@ -78,16 +78,16 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 			XMLObject xo //
 	) throws XMLParseException {
 
-		
+
 //		System.err.println("XML object: " + xo.toString());
-	
+
 		DataType dataType = null;
 		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-		
+
 		// TODO
 		// both BSM and FM have to be specified, handle the exception
 		if(branchSubstitutionModel instanceof EpochBranchSubstitutionModel) {
-		
+
 			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 			dataType = freqModel.getDataType();
 
@@ -102,7 +102,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 			 dataType = substModel.getDataType();
 
 		}
-		
+
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 

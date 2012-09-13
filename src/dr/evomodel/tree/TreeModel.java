@@ -940,7 +940,7 @@ public class TreeModel extends AbstractModel implements MutableTree {
     public Parameter getLeafHeightParameter(NodeRef node) {
 
         if (!isExternal(node)) {
-            throw new RuntimeException("only leaves can be used with getLeafHeightParameter");
+            throw new RuntimeException("only root and leaves can be used with setNodeHeightParameter");
         }
 
         return nodes[node.getNumber()].heightParameter;

@@ -120,7 +120,7 @@ public class TreeLoggerParser extends LoggerParser {
                     List<TreeTrait> filteredTraits = new ArrayList<TreeTrait>();
                     for (String match : matches) {
                         for (TreeTrait trait : traits) {
-                            if (trait.getTraitName().startsWith(match)) {
+                            if (trait.getTraitName().contains(match)) {
                                 filteredTraits.add(trait);
                             }
                         }

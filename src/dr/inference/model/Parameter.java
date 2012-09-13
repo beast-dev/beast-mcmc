@@ -577,7 +577,7 @@ public interface Parameter extends Statistic, Variable<Double> {
         public void setDimension(int dim) {
             final int oldDim = getDimension();
             if( oldDim == dim ) {
-                return;
+               return;
             }
 
             assert storedValues == null :

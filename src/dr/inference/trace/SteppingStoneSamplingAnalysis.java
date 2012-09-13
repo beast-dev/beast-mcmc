@@ -71,7 +71,7 @@ public class SteppingStoneSamplingAnalysis {
         	//System.out.println(i + ": " + maxLogLikelihood.get(i-1));
         }
         //System.out.println(logBayesFactor);
-        
+
         for (int i = 1; i < orderedTheta.size(); i++) {
         	double internalSum = 0.0;
         	for (int j = 0; j < map.get(orderedTheta.get(i-1)).size(); j++) {

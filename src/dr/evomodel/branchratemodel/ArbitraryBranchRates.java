@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -47,23 +47,17 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
     final TreeParameterModel rates;
     final Parameter rateParameter;
     final boolean reciprocal;
-    final boolean exp;
 
-    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal, boolean exp, boolean setRates) {
+    public ArbitraryBranchRates(TreeModel tree, Parameter rateParameter, boolean reciprocal) {
 
         super(ArbitraryBranchRatesParser.ARBITRARY_BRANCH_RATES);
 
-        if (setRates) {
-            double value = exp ? 0.0 : 1.0;
-            for (int i = 0; i < rateParameter.getDimension(); i++) {
-                rateParameter.setValue(i, value);
-            }
+        for (int i = 0; i < rateParameter.getDimension(); i++) {
+            rateParameter.setValue(i, 1.0);
         }
         //Force the boundaries of rate
-        if (!exp) {
-            Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
-            rateParameter.addBounds(bound);
-        }
+        Parameter.DefaultBounds bound = new Parameter.DefaultBounds(Double.MAX_VALUE, 0, rateParameter.getDimension());
+        rateParameter.addBounds(bound);
 
         this.rates = new TreeParameterModel(tree, rateParameter, false);
         this.rateParameter = rateParameter;
@@ -71,7 +65,6 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         addModel(rates);
 
         this.reciprocal = reciprocal;
-        this.exp = exp;
     }
 
     public void setBranchRate(Tree tree, NodeRef node, double value) {
@@ -82,12 +75,9 @@ public class ArbitraryBranchRates extends AbstractBranchRateModel {
         // Branch rates are proportional to time.
         // In the traitLikelihoods, time is proportional to variance
         // Fernandez and Steel (2000) shows the sampling density with the scalar proportional to precision 
-        double rate = rates.getNodeValue(tree, node);
+        final double rate = rates.getNodeValue(tree, node);
         if (reciprocal) {
-            rate = 1.0 / rate;
-        }
-        if (exp) {
-            rate = Math.exp(rate);
+            return 1.0 / rate;
         }
         return rate;
     }

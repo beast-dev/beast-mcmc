@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- *  BEAST is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU Lesser General Public License for more details.
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -144,7 +144,7 @@ public final class MarkovChain {
             throw new IllegalArgumentException(message);
         }
 
-        pleaseStop = false;
+            pleaseStop = false;
         isStopped = false;
 
         String diagnostic = "";
@@ -300,7 +300,7 @@ public final class MarkovChain {
                 if (usingFullEvaluation) {
                     oldScore = score; // for the usingFullEvaluation test
                     diagnostic = likelihood instanceof CompoundLikelihood ?
-                            ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                            ((CompoundLikelihood)likelihood).getDiagnosis() : "";
                 }
             } else {
                 if (DEBUG) {
@@ -325,7 +325,7 @@ public final class MarkovChain {
                 final double testScore = evaluate(likelihood, prior);
 
                 final String d2 = likelihood instanceof CompoundLikelihood ?
-                        ((CompoundLikelihood) likelihood).getDiagnosis() : "";
+                        ((CompoundLikelihood)likelihood).getDiagnosis() : "";
 
                 if (Math.abs(testScore - oldScore) > EVALUATION_TEST_THRESHOLD) {
 
@@ -363,8 +363,6 @@ public final class MarkovChain {
                     }
                 }
             }
-
-            fireEndCurrentIteration(currentState);
 
             currentState += 1;
         }
@@ -477,7 +475,7 @@ public final class MarkovChain {
         return isStopped;
     }
 
-    protected double evaluate(Likelihood likelihood, Prior prior) {
+    private double evaluate(Likelihood likelihood, Prior prior) {
 
         double logPosterior = 0.0;
 
@@ -542,15 +540,6 @@ public final class MarkovChain {
         listeners.remove(listener);
     }
 
-    public void addMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.add(delegate);
-    }
-
-    public void removeMarkovChainDelegate(MarkovChainDelegate delegate) {
-        delegates.remove(delegate);
-    }
-
-
     private void fireBestModel(long state, Model bestModel) {
 
         for (MarkovChainListener listener : listeners) {
@@ -562,10 +551,6 @@ public final class MarkovChain {
         for (MarkovChainListener listener : listeners) {
             listener.currentState(state, currentModel);
         }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentState(state);
-        }
     }
 
     private void fireFinished(long chainLength) {
@@ -573,18 +558,7 @@ public final class MarkovChain {
         for (MarkovChainListener listener : listeners) {
             listener.finished(chainLength);
         }
-
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.finished(chainLength);
-        }
-    }
-
-    private void fireEndCurrentIteration(long state) {
-        for (MarkovChainDelegate delegate : delegates) {
-            delegate.currentStateEnd(state);
-        }
     }
 
     private final ArrayList<MarkovChainListener> listeners = new ArrayList<MarkovChainListener>();
-    private final ArrayList<MarkovChainDelegate> delegates = new ArrayList<MarkovChainDelegate>();
 }

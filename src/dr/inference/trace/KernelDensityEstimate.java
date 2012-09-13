@@ -27,20 +27,20 @@ public class KernelDensityEstimate extends DensityEstimate {
                 throw new RuntimeException("Unknown type");
         }
     }
-    
+
     public KernelDensityEstimate(String type, Double[] samples, int minimumBinCount) {
         super(samples, minimumBinCount);
-       
+
         this.kde = new NormalKDEDistribution(samples);
 
     }
-    
+
     public KernelDensityEstimatorDistribution getKernelDensityEstimatorDistribution() {
     	return this.kde;
     }
-        
+
     protected void calculateDensity(Variate data, int minimumBinCount) {
-    	
+
         FrequencyDistribution frequency = calculateFrequencies(data, minimumBinCount);
 
         xCoordinates = new Variate.D();
@@ -104,5 +104,5 @@ public class KernelDensityEstimate extends DensityEstimate {
     	System.out.println("Bandwidth: " + kde.getBandWidth());
     	System.out.println();
     }
-    
+
 }

@@ -1404,7 +1404,7 @@ public class TracerFrame extends DocumentFrame implements TracerFileMenuHandler,
     }
 
     class TraceTableModel extends AbstractTableModel {
-        final String[] columnNames = {"Trace File", "States", "Burn-In"};
+        final String[] columnNames = {"Tree File", "States", "Burn-In"};
 
         public int getColumnCount() {
             return columnNames.length;

@@ -39,8 +39,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
 
     public static final String ANNOTATE_WITH_ALIGNMENT = "annotateWithAlignment";
 
-    public static final String ALIGNMENT_ONLY = "alignmentOnly";
-    
     public String getParserName() {
         return HISTORY_SIMULATOR;
     }
@@ -106,16 +104,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             history.addAlignmentTrait();
         }
 
-		boolean alignmentOnly = xo.getAttribute(ALIGNMENT_ONLY, false);
-		if (dataType instanceof Codons && !alignmentOnly) {
-			System.out.println("Codon models give exception when count statistics are done on them. "
-							+ "You can supress this by setting alignmentOnly to true.");
-		}
-
-		if (alignmentOnly) {
-			history.setAlignmentOnly();
-		}
-        
         history.simulate();
         return history;
     }
@@ -145,7 +133,6 @@ public class CompleteHistorySimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newBooleanRule(NON_SYN_JUMPS, true),
             AttributeRule.newBooleanRule(SUM_SITES, true),
             AttributeRule.newBooleanRule(ANNOTATE_WITH_ALIGNMENT, true),
-            AttributeRule.newBooleanRule(ALIGNMENT_ONLY, true),
             new ElementRule(BRANCH_SPECIFIC_SPECIFICATION, new XMLSyntaxRule[] {
                     new ElementRule(VARIABLE_VALUE_PARAMETER, Parameter.class),
                     new ElementRule(BRANCH_VARIABLE_PARAMETER, Parameter.class),

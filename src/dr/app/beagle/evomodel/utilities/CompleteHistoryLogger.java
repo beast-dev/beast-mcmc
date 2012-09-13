@@ -94,7 +94,7 @@ public class CompleteHistoryLogger implements Loggable, Citable {
         } else {
             this.filter = filter;
             Logger.getLogger("dr.app.beagle").info("\tWith filter: " + filter.getDescription() + "\n");
-        }
+    }
 
 
     }
@@ -237,16 +237,16 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                         if (!empty) {
                                             bf.append(",");
                                         }
-                                        StateHistory.addEventToStringBuilder(bf, source, dest,
+                                    StateHistory.addEventToStringBuilder(bf, source, dest,
                                                 thisTime, anonSite + 1);
-                                        count++;
-                                        empty = false;
+                                    count++;
+                                    empty = false;
                                     } else {
                                         // Do nothing
-                                    }
                                 }
                             }
                         }
+                    }
                     }
                     bf.append("}").append(" ").append(count);
                     return bf.toString();

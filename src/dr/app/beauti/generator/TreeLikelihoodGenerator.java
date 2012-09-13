@@ -86,8 +86,8 @@ public class TreeLikelihoodGenerator extends Generator {
                 // State change counting uses the MarkovJumpsTreeLikelihood but
                 // dNdS robust counting doesn't as it has its own counting code...
                 if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
-            treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
-        }
+                    treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                }
             }
         }
 
@@ -209,8 +209,8 @@ public class TreeLikelihoodGenerator extends Generator {
                     // dNdS robust counting doesn't as it has its own counting code...
                     if (!ancestralStatesOptions.dNdSRobustCounting(partition)) {
                         treeLikelihoodTag = MarkovJumpsTreeLikelihoodParser.MARKOV_JUMP_TREE_LIKELIHOOD;
+                    }
                 }
-            }
             }
 
             if (partition.getTaxonList() != null) {

@@ -120,15 +120,15 @@ MCLogger logger) {
 
         abstract double nextPathParameter();
     }
-    
+
     public class FixedThetaRun extends Integrator {
     	private double value;
-    	
+
     	public FixedThetaRun(double value) {
     		super(1);
     		this.value = value;
     	}
-    	
+
     	double nextPathParameter() {
     		if (step == 0) {
     			step++;
@@ -137,7 +137,7 @@ MCLogger logger) {
     			return -1.0;
     		}
     	}
-    	
+
     }
 
     public class LinearIntegrator extends Integrator {
@@ -513,7 +513,7 @@ MCLogger logger) {
                     "\n  pathScheme=" + scheme.getText() + alphaBetaText +
                     "\n  If you use these results, please cite:" +
                     "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
-                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
+                    "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " +
                     "\n          phylogenetic uncertainty. Mol. Biol. Evol. (in press).");
             return mle;
         }

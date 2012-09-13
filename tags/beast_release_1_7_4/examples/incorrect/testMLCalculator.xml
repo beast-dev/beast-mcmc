@@ -1,0 +1,6 @@
+<?xml version="1.0" standalone="yes"?>
+<beast>
+    <marginalLikelihoodAnalysis fileName="simulation-test.log">
+        <likelihoodColumn name="treeLikelihood1" harmonicOnly="false" bootstrap="true"/>
+    </marginalLikelihoodAnalysis>
+</beast>

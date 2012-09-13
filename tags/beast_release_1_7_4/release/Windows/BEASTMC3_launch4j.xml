@@ -1,0 +1,21 @@
+<launch4jConfig>
+  <headerType>gui</headerType>
+  <icon>../common/icons/beast.ico</icon>
+  <classPath>
+  	<mainClass>dr.app.beast.BeastMC3</mainClass>
+  	<cp>./lib/beast.jar</cp>
+  </classPath>
+  <cmdLine>-window -working -options</cmdLine>
+  <jre>
+    <minVersion>1.5.0</minVersion>
+    <initialHeapSize>256</initialHeapSize>
+    <maxHeapSize>1024</maxHeapSize>
+  </jre>
+  <versionInfo>
+    <fileDescription>BEASTMC3</fileDescription>
+    <copyright>2002-2012</copyright>
+    <productName>BEASTMC3</productName>
+    <internalName>BEASTMC3</internalName>
+    <originalFilename>BEASTMC3.exe</originalFilename>
+  </versionInfo>
+</launch4jConfig>

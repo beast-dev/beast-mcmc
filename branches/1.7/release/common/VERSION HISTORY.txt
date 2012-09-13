@@ -50,6 +50,7 @@ Version 1.7.3 released 20th Aug 2012
        Issue 643:	Unable to specify a MRCA node to reconstruct ancestral states
        Issue 645:	Discrete traits were generating ancestral reconstructions irrespective of the Ancestral States settings
        Issue 647:	Selecting robust counting was not creating the correct XML
+       Issue 649:	Suggest BEAST stops if any of the probabilities go to +Inf
        Issue 651:	Default Poisson prior for asymmetric BSSVS model of discrete traits is not standard
        Issue 652:	Some conditioning priors need to be evaluated before the data likelihood
        Issue 654:	Dollo model does not parse when BEAGLE is switched on.

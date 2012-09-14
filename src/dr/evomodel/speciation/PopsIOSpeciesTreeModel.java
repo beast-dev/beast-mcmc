@@ -36,23 +36,35 @@ coalescences) are reconstructed from that.
 stree is used to implement Tree, which is used for logging and for
 calculation of the tree prior (eg Yule model). stree is a copy of
 topology and node times  from nodes[].
+*/
 
- */
+
 public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTree, Tree, Scalable, TreeLogger.LogUpon {
     private PopsIOSpeciesBindings piosb;
     private PriorComponent[] priorComponents;
-    private PopsIONode[] nodes;
-    private PopsIONode root;
-    private SimpleTree oldtree;
+    private PopsIONode[] pionodes;
+    private int rootn;
+    private PopsIONode[] oldpionodes;
+    private int oldrootn;
     private SimpleTree stree;
 
     @Override
     public boolean logNow(long state) {
-        // for debugging, set logEvery=0 in XML
-        if (state == 40) {
+        // for debugging, set logEvery=0 in XML:
+        //    <!--  species tree log file.  -->
+        //    <logTree id="pioTreeFileLog" logEvery="0" fileName="C:\Users\....
+
+        /*if (state == 40) {
             System.out.println("DEBUGGING: PopsIOSpeciesTreeModel.logNow(), state == 40");
+        }  */
+
+        if (state <= 100) {
+            return true;
         }
-        return state % 10000 == 0;
+        if (state <= 10000) {
+            return (state % 100) == 0;
+        }
+        return (state % 10000) == 0;
     }
 
 
@@ -83,8 +95,9 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
      *  with gene trees and calculating likelihood.
      */
     private class PopsIONode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
-        private PopsIONode parent;
-        private PopsIONode child[];
+        private int anc;
+        private int lft;
+        private int rgt;
         private double height;
         private Taxon taxon;
         private FixedBitSet union;
@@ -94,8 +107,9 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
         // dud constuctor
         PopsIONode(int nn) {
-            parent = null;
-            child = new PopsIONode[0];
+            anc = -1;
+            lft = -1;
+            rgt = -1;
             height = -1.0;
             coalheights = new ArrayList<Double>();
             taxon = new Taxon("");
@@ -104,10 +118,41 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         }
 
 
+
+        // copy constructor
+        public PopsIONode(PopsIONode node) {
+            anc = node.anc;
+            lft = node.lft;
+            rgt = node.rgt;
+            nodeNumber = node.nodeNumber;
+            copyNonTopologyFields(node);
+        }
+
+
+
+
+        private void copyNonTopologyFields(PopsIONode node) {
+            height = node.height;
+            taxon = new Taxon(node.taxon.getId());
+            nlineages = node.nlineages;
+            if (node.union == null) {
+                union = null;
+            } else {
+                union = new FixedBitSet(node.union);
+            }
+            coalheights = new ArrayList<Double>();
+            for (int i = 0; i < node.coalheights.size(); i++) {
+                coalheights.add(node.coalheights.get(i));
+            }
+        }
+
+
+
+
         public String asText(int indentlen) {
             StringBuilder s = new StringBuilder();
             Formatter formatter = new Formatter(s, Locale.US);
-            if (child.length == 0) {
+            if (lft < 0) {
                 formatter.format("%s ", taxon.getId());
             } else {
                 formatter.format("%s ", "+");
@@ -137,17 +182,17 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
         @Override
         public int nofChildren() {
-            return child.length;
+            return (lft < 0) ? 0 : 2;
         }
 
         @Override
         public AlloppNode getChild(int ch) {
-            return child[ch];
+            return ch==0 ? pionodes[lft] : pionodes[rgt];
         }
 
         @Override
         public AlloppNode getAnc() {
-            return parent;
+            return pionodes[anc];
         }
 
         @Override
@@ -167,16 +212,17 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
         @Override
         public void setChild(int ch, AlloppNode newchild) {
-            if (child == null) {
-                child = new PopsIONode[2];
+            int newch = ((PopsIONode)newchild).nodeNumber;
+            if (ch == 0) {
+                lft = newch;
+            } else {
+                rgt = newch;
             }
-            child[ch] = (PopsIONode)newchild;
-            newchild.setAnc(this);
         }
 
         @Override
         public void setAnc(AlloppNode anc) {
-            parent = (PopsIONode)anc;
+            this.anc = ((PopsIONode)anc).nodeNumber;
 
         }
 
@@ -200,11 +246,10 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
         @Override
         public void addChildren(AlloppNode c0, AlloppNode c1) {
-            child = new PopsIONode[2];
-            child[0] = (PopsIONode)c0;
-            child[0].setAnc(this);
-            child[1] = (PopsIONode)c1;
-            child[1].setAnc(this);
+            lft = ((PopsIONode)c0).nodeNumber;
+            pionodes[lft].anc = nodeNumber;
+            rgt = ((PopsIONode)c1).nodeNumber;
+            pionodes[rgt].anc = nodeNumber;
         }
 
     }
@@ -217,15 +262,15 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         PopsIOSpeciesBindings.SpInfo[] species = piosb.getSpecies();
         int nTaxa = species.length;
         int nNodes = 2 * nTaxa - 1;
-        nodes = new PopsIONode[nNodes];
+        pionodes = new PopsIONode[nNodes];
         for (int n = 0; n < nNodes; n++) {
-            nodes[n] = new PopsIONode(n);
+            pionodes[n] = new PopsIONode(n);
         }
         ArrayList<Integer> tojoin = new ArrayList<Integer>(nTaxa);
         for (int n = 0; n < nTaxa; n++) {
-            nodes[n].setTaxon(species[n].name);
-            nodes[n].setHeight(0.0);
-            nodes[n].setUnion(piosb.tipUnionFromTaxon(nodes[n].getTaxon()));
+            pionodes[n].setTaxon(species[n].name);
+            pionodes[n].setHeight(0.0);
+            pionodes[n].setUnion(piosb.tipUnionFromTaxon(pionodes[n].getTaxon()));
             tojoin.add(n);
         }
         double rate = 1.0;
@@ -238,16 +283,16 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
             int k = MathUtils.nextInt(numtojoin-1);
             Integer child1 = tojoin.get(k);
             tojoin.remove(k);
-            nodes[nTaxa+i].addChildren(nodes[child0], nodes[child1]);
-            nodes[nTaxa+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
-            treeheight = nodes[nTaxa+i].getHeight();
+            pionodes[nTaxa+i].addChildren(pionodes[child0],pionodes[child1]);
+            pionodes[nTaxa+i].setHeight(treeheight + randomnodeheight(numtojoin*rate));
+            treeheight = pionodes[nTaxa+i].getHeight();
             tojoin.add(nTaxa+i);
         }
-        root = nodes[nodes.length - 1];
+        rootn = pionodes.length - 1;
 
-        double scale = 0.99 * piosb.initialMinGeneNodeHeight() / root.height;
+        double scale = 0.99 * piosb.initialMinGeneNodeHeight() / pionodes[rootn].height;
         scaleAllHeights(scale);
-        root.fillinUnionsInSubtree(piosb.getSpecies().length);
+        pionodes[rootn].fillinUnionsInSubtree(piosb.getSpecies().length);
 
         stree = makeSimpleTree();
     }
@@ -294,10 +339,10 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
 
     private int scaleAllHeights(double scale) {
-        for (int nn = 0; nn < nodes.length; nn++) {
-            nodes[nn].height *= scale;
+        for (int nn = 0; nn < pionodes.length; nn++) {
+            pionodes[nn].height *= scale;
         }
-        return nodes.length;
+        return pionodes.length;
     }
 
 
@@ -306,7 +351,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
         String s = "";
         Stack<Integer> x = new Stack<Integer>();
-        return header + subtreeAsText(root, s, x, 0, "");
+        return header + subtreeAsText(pionodes[rootn], s, x, 0, "");
     }
 
     /*
@@ -314,7 +359,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
       * is compatible with the network.
       */
     public boolean coalescenceIsCompatible(double height, FixedBitSet union) {
-        PopsIONode node = (PopsIONode) root.nodeOfUnionInSubtree(union);
+        PopsIONode node = (PopsIONode) pionodes[rootn].nodeOfUnionInSubtree(union);
         return (node.height <= height);
     }
 
@@ -324,7 +369,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     * from branches of mullabtree. Required before call to recordCoalescence
     */
     public void clearCoalescences() {
-        clearSubtreeCoalescences(root);
+        clearSubtreeCoalescences(pionodes[rootn]);
     }
 
 
@@ -333,16 +378,18 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
       * to its branch in mullabtree.
       */
     public void recordCoalescence(double height, FixedBitSet union) {
-        PopsIONode node = (PopsIONode) root.nodeOfUnionInSubtree(union);
+        PopsIONode node = (PopsIONode) pionodes[rootn].nodeOfUnionInSubtree(union);
         assert (node.height <= height);
-        while (node.parent != null  &&  node.parent.height <= height) {
-            node = node.parent;
+        while (node.anc >= 0  &&  pionodes[node.anc].height <= height) {
+            node = pionodes[node.anc];
         }
-        node.coalheights.add(height);    }
+        node.coalheights.add(height);
+
+    }
 
 
     public void sortCoalescences() {
-        for (PopsIONode node : nodes) {
+        for (PopsIONode node : pionodes) {
             Collections.sort(node.coalheights);
         }
     }
@@ -353,7 +400,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
       * Records the number of gene lineages at nodes of mullabtree.
       */
     public void recordLineageCounts() {
-        recordSubtreeLineageCounts(root);
+        recordSubtreeLineageCounts(pionodes[rootn]);
     }
 
 
@@ -372,7 +419,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
      * See branchLL() for more.
      */
     public double geneTreeInSpeciesTreeLogLikelihood() {
-        return geneTreeInPopsIOSubtreeLogLikelihood(root);
+        return geneTreeInPopsIOSubtreeLogLikelihood(pionodes[rootn]);
     }
 
 
@@ -392,11 +439,11 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         s += node.asText(indent.length());
         s += System.getProperty("line.separator");
         String subs = "";
-        if (node.child.length > 0) {
+        if (node.lft >= 0) {
             x.push(depth);
-            subs += subtreeAsText(node.child[0], "", x, depth+1, "-");
+            subs += subtreeAsText(pionodes[node.lft], "", x, depth+1, "-");
             x.pop();
-            subs += subtreeAsText(node.child[1], "", x, depth+1, "`-");
+            subs += subtreeAsText(pionodes[node.rgt], "", x, depth+1, "`-");
         }
         return s + subs;
     }
@@ -404,8 +451,9 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
     private double geneTreeInPopsIOSubtreeLogLikelihood(PopsIONode node) {
         double loglike = 0.0;
-        for (int i = 0; i < node.child.length; i++) {
-            loglike += geneTreeInPopsIOSubtreeLogLikelihood(node.child[i]);
+        if (node.lft >= 0) {
+            loglike += geneTreeInPopsIOSubtreeLogLikelihood(pionodes[node.lft]);
+            loglike += geneTreeInPopsIOSubtreeLogLikelihood(pionodes[node.rgt]);
         }
         loglike += branchLLInPopsIOtree(node);
         return loglike;
@@ -415,7 +463,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     private double branchLLInPopsIOtree(PopsIONode node) {
         double loglike = 0.0;
         double t[];
-        if (node.parent == null) {
+        if (node.anc < 0) {
             t = new double[node.coalheights.size() + 2];
             t[0] = node.height;
             t[t.length - 1] = piosb.maxGeneTreeHeight();
@@ -426,7 +474,7 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
         } else {
             t = new double[node.coalheights.size() + 2];
             t[0] = node.height;
-            t[t.length - 1] = node.parent.height;
+            t[t.length - 1] = pionodes[node.anc].height;
             for (int i = 0; i < node.coalheights.size(); i++) {
                 t[i + 1] = node.coalheights.get(i);
             }
@@ -472,28 +520,28 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
 
     private SimpleTree makeSimpleTree() {
-        SimpleNode[] snodes = new SimpleNode[nodes.length];
-        for (int n = 0; n < nodes.length; n++) {
+        SimpleNode[] snodes = new SimpleNode[pionodes.length];
+        for (int n = 0; n < pionodes.length; n++) {
             snodes[n] = new SimpleNode();
             snodes[n].setTaxon(null);
         }
-        makesimplesubtree(snodes, 0, root);
-        return new SimpleTree(snodes[nodes.length-1]);
+        makesimplesubtree(snodes, 0, pionodes[rootn]);
+        return new SimpleTree(snodes[pionodes.length-1]);
     }
 
 
     // for makeSimpleTree()
     private int makesimplesubtree(SimpleNode[] snodes, int nextsn, PopsIONode pionode) {
-        if (pionode.child.length == 0) {
+        if (pionode.lft < 0) {
             Taxon tx = new Taxon(pionode.taxon.getId());
             if (nextsn >= snodes.length) {
                 System.out.println("BUG: makesimplesubtree()");
             }
             snodes[nextsn].setTaxon(tx);
         } else {
-            nextsn = makesimplesubtree(snodes, nextsn, pionode.child[0]);
+            nextsn = makesimplesubtree(snodes, nextsn, pionodes[pionode.lft]);
             int subtree0 = nextsn-1;
-            nextsn = makesimplesubtree(snodes, nextsn, pionode.child[1]);
+            nextsn = makesimplesubtree(snodes, nextsn, pionodes[pionode.rgt]);
             int subtree1 = nextsn-1;
             snodes[nextsn].addChild(snodes[subtree0]);
             snodes[nextsn].addChild(snodes[subtree1]);
@@ -505,23 +553,30 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
 
     private void clearSubtreeCoalescences(PopsIONode node) {
-        for (int i = 0; i < node.child.length; i++) {
-            clearSubtreeCoalescences(node.child[i]);
+        if (node.lft >= 0) {
+            clearSubtreeCoalescences(pionodes[node.lft]);
+            clearSubtreeCoalescences(pionodes[node.rgt]);
+        }
+        if (node == null) {
+            System.out.println("BUG");
+        }
+        if (node.coalheights == null) {
+            System.out.println("BUG");
         }
         node.coalheights.clear();
     }
 
 
     private void recordSubtreeLineageCounts(PopsIONode node) {
-        if (node.child.length == 0) {
+        if (node.lft < 0) {
             int spIndex = piosb.speciesId2index(node.getTaxon().getId());
             node.nlineages = piosb.nLineages(spIndex);
         } else {
             node.nlineages = 0;
-            for (int i = 0; i < node.child.length; i++) {
-                recordSubtreeLineageCounts(node.child[i]);
-                node.nlineages += node.child[i].nlineages - node.child[i].coalheights.size();
-            }
+            recordSubtreeLineageCounts(pionodes[node.lft]);
+            node.nlineages += pionodes[node.lft].nlineages - pionodes[node.lft].coalheights.size();
+            recordSubtreeLineageCounts(pionodes[node.rgt]);
+            node.nlineages += pionodes[node.rgt].nlineages - pionodes[node.rgt].coalheights.size();
         }
     }
 
@@ -562,20 +617,20 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
 
     @Override
     protected void storeState() {
-        oldtree = makeSimpleTree();
+        oldpionodes = new PopsIONode[pionodes.length];
+        for (int n = 0; n < oldpionodes.length; n++) {
+            oldpionodes[n] = new PopsIONode(pionodes[n]);
+        }
+        oldrootn = rootn;
     }
 
     @Override
     protected void restoreState() {
-        SimpleNode root = (SimpleNode) oldtree.getRoot();
-        int nextn = 0;
-        nodes = new PopsIONode[oldtree.getNodeCount()];
-        for (int nn = 0; nn < nodes.length; nn++) {
-            nodes[nn] = new PopsIONode(nn);
+        pionodes = new PopsIONode[oldpionodes.length];
+        for (int n = 0; n < pionodes.length; n++) {
+            pionodes[n] = new PopsIONode(oldpionodes[n]);
         }
-        nextn = AlloppNode.Abstract.simpletree2piotree(piosb, nodes, nextn, root);
-        this.root = nodes[nextn - 1];
-        this.root.fillinUnionsInSubtree(piosb.getSpecies().length);
+        rootn = oldrootn;
         stree = makeSimpleTree();
     }
 
@@ -590,65 +645,62 @@ public class PopsIOSpeciesTreeModel extends AbstractModel implements SlidableTre
     /*******************************************************************************/
     @Override
     public NodeRef getSlidableRoot() {
-        if (root.parent != null) {
-            System.out.println("BUG: getSlidableRoot");
-        }
-        assert root.parent == null;
-        return root;
+        assert pionodes[rootn].anc < 0;
+        return pionodes[rootn];
+
     }
 
     @Override
     public void replaceSlidableRoot(NodeRef newroot) {
-        root = (PopsIONode) newroot;
-        root.parent = null;
+        rootn = newroot.getNumber();
+        pionodes[rootn].anc = -1;
     }
 
     @Override
     public int getSlidableNodeCount() {
-        return nodes.length;
+        return pionodes.length;
     }
 
     @Override
     public Taxon getSlidableNodeTaxon(NodeRef node) {
-        assert node == nodes[node.getNumber()];
+        assert node == pionodes[node.getNumber()];
         return ((PopsIONode)node).getTaxon();
     }
 
 
     @Override
     public double getSlidableNodeHeight(NodeRef node) {
-        assert node == nodes[node.getNumber()];
+        assert node == pionodes[node.getNumber()];
         return ((PopsIONode)node).getHeight();
     }
 
     @Override
     public void setSlidableNodeHeight(NodeRef node, double height) {
-        assert node == nodes[node.getNumber()];
+        assert node == pionodes[node.getNumber()];
         ((PopsIONode)node).height = height;
     }
 
     @Override
     public boolean isExternalSlidable(NodeRef node) {
-        assert node == nodes[node.getNumber()];
-        return (((PopsIONode)node).child.length == 0);
+        return (pionodes[node.getNumber()].lft < 0);
     }
 
     @Override
     public NodeRef getSlidableChild(NodeRef node, int j) {
-        assert node == nodes[node.getNumber()];
-        return ((PopsIONode)node).child[j];
+        int n = node.getNumber();
+        return j == 0 ? pionodes[ pionodes[n].lft ] : pionodes[ pionodes[n].rgt ];
     }
 
     @Override
     public void replaceSlidableChildren(NodeRef node, NodeRef lft, NodeRef rgt) {
-        assert node == nodes[node.getNumber()];
-        assert lft == nodes[lft.getNumber()];
-        assert rgt == nodes[rgt.getNumber()];
-        assert ((PopsIONode)node).child.length == 2;
-        ((PopsIONode)node).child[0] = (PopsIONode)lft;
-        ((PopsIONode)node).child[1] = (PopsIONode)rgt;
-        ((PopsIONode)lft).parent = (PopsIONode)node;
-        ((PopsIONode)rgt).parent = (PopsIONode)node;
+        int nn = node.getNumber();
+        int lftn = lft.getNumber();
+        int rgtn = rgt.getNumber();
+        assert pionodes[nn].lft >= 0;
+        pionodes[nn].lft = lftn;
+        pionodes[nn].rgt = rgtn;
+        pionodes[lftn].anc = pionodes[nn].nodeNumber;
+        pionodes[rgtn].anc = pionodes[nn].nodeNumber;
     }
 
 

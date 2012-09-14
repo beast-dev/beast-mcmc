@@ -48,6 +48,7 @@ public class AlloppSequenceReassignment extends SimpleMCMCOperator {
 		}
 		
 		apspnet.endNetworkEdit();
+        assert apspnet.alloppspeciesnetworkOK();
 		return 0;
 	}
 

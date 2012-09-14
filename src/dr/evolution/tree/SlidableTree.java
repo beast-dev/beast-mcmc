@@ -15,15 +15,14 @@ import dr.math.MathUtils;
 
 /*
 The aim is to simplify code by not having to use a MutableTree with its long list of
-methods. It is (2012-05-11) partially helping. The users of SlidableTree are
+methods. The users of SlidableTree are
 
-1. AlloppLeggedTree which contains ('is') a SimpleTree (so a MutableTree anyway). In this
-case the SlidableTree methods are implemented by calling SimpleTree methods.
+1. AlloppLeggedTree, for moves within tetraploid subtrees.
 
-2. AlloppDiploidHistory, where it works as intended. A SimpleTree is made for testing purposes.
+2. AlloppDiploidHistory. A SimpleTree is made for testing purposes.
 
-3. PopsIOSpeciesTreeModel. 2012-05-11 needs to be a Tree for logging. So I
-make and update a SimpleTree and delegate to that. Not great.
+3. PopsIOSpeciesTreeModel. Needs to be a Tree for logging. So I
+make and update a SimpleTree and delegate to that.
 
 4. MulSpeciesTreeModel does not use it yet, but could do. Currently a MutableTree and
 uses near-copy of JH's code for MCMC moves. Same issue as PopsIOSpeciesTreeModel if use

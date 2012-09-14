@@ -33,12 +33,11 @@ import dr.math.MathUtils;
  * species tree which is attached to a tree of lower ploidy
  * via its legs, as part of a AlloppSpeciesNetworkModel.
  *
- * tree is a SimpleTree: its nodes contain times, and taxa at tips.
+ * altnodes is an array of ALTNode's which implements the homoploid species tree.
+ * rootn is the index of the root node.
+ *
  * The fields diphistlftleg, diphistrgtleg are indices giving the
  * hyb-tips in the AlloppDiploidHistory.
- *
- * (Changed 2012-07. Used to have more complicated legs and a
- * tree for the diploids.)
  *
  */
 

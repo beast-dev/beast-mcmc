@@ -3,6 +3,8 @@ package test.dr.evomodel.speciation;
 import dr.evomodel.speciation.AlloppMulLabTree;
 import dr.evomodel.speciation.AlloppSpeciesBindings;
 import dr.evomodel.speciation.AlloppSpeciesBindings.ApSpInfo;
+import dr.math.MathUtils;
+import dr.math.distributions.GammaDistribution;
 import org.junit.Before;
 import org.junit.Test;
 import dr.evomodel.speciation.AlloppSpeciesBindings.Individual;
@@ -31,6 +33,7 @@ public class AlloppSpeciesNetworkModelTEST {
 	
 	@Test
 	public void testAlloppSpeciesNetworkModel() {
+        //testGammaQuantile();
 		testNetworkToMulLabTree();
         testLhoodMulLabTree();
         // grjtodo-soon would like a test of gene tree in network compatibility.
@@ -57,7 +60,21 @@ public class AlloppSpeciesNetworkModelTEST {
 	 *  ****************** TESTING MulLabTree conversion ******************
 	 * 
 	 */
-		
+
+
+    // trying to reproduce weird bug when quantile returned 4.9e-324
+    public void testGammaQuantile() {
+        MathUtils.setSeed(42);
+        for (int i = 0; i < 1000000; i++) {
+            double s = MathUtils.uniform(.999, 1.001);
+            double b = MathUtils.uniform(6e-5, 7e-5);
+            final GammaDistribution gamma = new GammaDistribution(s,b);
+            double q = MathUtils.uniform(3e-7, 4e-7);
+            double x = gamma.quantile(q);
+            assert x > 1e-20;
+        }
+    }
+
 	public void testNetworkToMulLabTree() {
 		ApSpInfo[] apspecies = new ApSpInfo[5];
 		apspecies[0] = new ApSpInfo("a", 2, new Individual[0]);

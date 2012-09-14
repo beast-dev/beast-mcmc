@@ -298,7 +298,7 @@ public class AlloppNetworkNodeSlide extends SimpleMCMCOperator {
 			System.out.println("BUG in operateOneNodeInDiploidHistory()");
 		}
         assert diphist.diphistOK();
-		apspnet.endNetworkEdit();		
+		apspnet.endNetworkEdit();
 	}
 	
 }

@@ -377,12 +377,11 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     	 * GeneTreeInfo constructor
     	 * 
     	 * JH's SpeciesBindings code has test
-    	 * 
     	 *   if (tree.getTaxonIndex(t) >= 0) { add taxon to count }
     	 *   
     	 * I am not clear about what happens if some gene trees don't have all taxa.  
-    	 * For now, 2011-05-12 I insist all gene trees have all taxa
-    	 * 
+    	 * I insist all gene trees have all taxa, and use missing data
+    	 * grjtodo-oneday make more efficient
     	 */
         GeneTreeInfo(TreeModel tree, double popFactor, boolean permuteSequenceAssignments) {
             this.tree = tree;
@@ -731,19 +730,14 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
     // Taxons may have a final "0", "1",... to distinguish sequences, while
     // species do not. AlloppLeggedTree uses a SimpleTree, which only has
     // Taxons, so same thing there. Multree needs distinguishable Taxons
-    // so has suffices. Not clear if species version is useful
+    // so has suffices.
 	public FixedBitSet taxonseqToTipUnion(Taxon tx, int seq) {
-		return speciesseqToTipUnion(tx.getId(), seq);
-	}
-
-
-    private FixedBitSet speciesseqToTipUnion(String species, int seq) {
         FixedBitSet union = speciesseqEmptyUnion();
-        int sp = apspeciesId2index(species);
+        int sp = apspeciesId2index(tx.getId());
         int spseq = spandseq2spseqindex(sp, seq);
         union.set(spseq);
         return union;
-    }
+	}
 
 		
 	public FixedBitSet spsqunion2spunion(FixedBitSet spsqunion) {

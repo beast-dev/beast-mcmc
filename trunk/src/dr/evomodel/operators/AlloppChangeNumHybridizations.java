@@ -10,16 +10,22 @@ import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 
 import dr.math.MathUtils;
+import jebl.util.FixedBitSet;
 
 /**
  * Created with IntelliJ IDEA.
  * User: Graham
  * Date: 22/07/12
  */
+
+
+
 public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
 
     private final AlloppSpeciesNetworkModel apspnet;
     private final AlloppSpeciesBindings apsp;
+    static private final int footdistribution = 2;
+
 
     public AlloppChangeNumHybridizations(AlloppSpeciesNetworkModel apspnet, AlloppSpeciesBindings apsp, double weight) {
         this.apspnet = apspnet;
@@ -48,7 +54,7 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
             hr = doSplitMove();
         }
         apspnet.endNetworkEdit();
-        assert apspnet.getDiploidHistory().diphistOK();
+        assert apspnet. netAndGTreesAreCompatible();
         return hr;
     }
 
@@ -156,11 +162,7 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
         AlloppLeggedTree ttree1 = apspnet.getTetraploidTree(tt1);
         AlloppLeggedTree ttree2 = apspnet.getTetraploidTree(tt2);
         AlloppDiploidHistory adhist = apspnet.getDiploidHistory();
-        double hybh1 = adhist.getHybHeight(ttree1);
-        double hybh2 = adhist.getHybHeight(ttree2);
-        double rooth2 = ttree2.getRootHeight();
-        mergeable = mergeable && (rooth2 <= hybh1);
-        mergeable = mergeable && (hybh1 <= hybh2);
+        // check legs agree and meet as produced by a split move.
         mergeable = mergeable && adhist.tettreesShareLegs(ttree1, ttree2);
         return mergeable;
     }
@@ -171,18 +173,40 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
         AlloppLeggedTree ttree1 = apspnet.getTetraploidTree(tt1);
         AlloppLeggedTree ttree2 = apspnet.getTetraploidTree(tt2);
         AlloppDiploidHistory adhist = apspnet.getDiploidHistory();
-
-        double lfttime = adhist.intervalOfFoot(ttree2, true);
-        double rgttime = adhist.intervalOfFoot(ttree2, false);
-        hr -= Math.log(lfttime * rgttime);
-
+        // collect height info
+        AlloppDiploidHistory.FootAncHeights lftleg2 =
+                adhist.intervalOfFootAncestor(ttree2, AlloppDiploidHistory.LegLorR.left);
+        AlloppDiploidHistory.FootAncHeights rgtleg2 =
+                adhist.intervalOfFootAncestor(ttree2, AlloppDiploidHistory.LegLorR.right);
+        // Choose most recent footanc height as root height of merged tree.
+        // Account for loss of the other footanc height.
+        // Use gene limit on the lost footanc height for hr calculation.
+        // grjtodo-soon test the gene limit calculation somehow
+        double rooth;
+        if (lftleg2.anchgt < rgtleg2.anchgt) {
+            rooth  = lftleg2.anchgt;
+            FixedBitSet tt1leg1 = apspnet.unionOfWholeTetTree(tt1, 1);
+            FixedBitSet tt2leg1 = apspnet.unionOfWholeTetTree(tt2, 1);
+            double genelimit = apsp.spseqUpperBound(tt1leg1, tt2leg1);
+            double maxfootanchgt = Math.min(genelimit, rgtleg2.ancanchgt);
+            hr += Math.log(uniformpdf(rooth, maxfootanchgt));
+        } else {
+            rooth  = rgtleg2.anchgt;
+            FixedBitSet tt1leg0 = apspnet.unionOfWholeTetTree(tt1, 0);
+            FixedBitSet tt2leg0 = apspnet.unionOfWholeTetTree(tt2, 0);
+            double genelimit = apsp.spseqUpperBound(tt1leg0, tt2leg0);
+            double maxfootanchgt = Math.min(genelimit, lftleg2.ancanchgt);
+            hr += Math.log(uniformpdf(rooth, maxfootanchgt));
+        }
+        // account for loss of two old hybhgts
+        hr += Math.log(uniformpdf(ttree1.getRootHeight(), rooth));
+        hr += Math.log(uniformpdf(ttree2.getRootHeight(), rooth));
         // merge the trees and replace tt2 with result
-        AlloppLeggedTree merged = new AlloppLeggedTree(ttree1, ttree2, adhist.getHybHeight(ttree1));
+        AlloppLeggedTree merged = new AlloppLeggedTree(ttree1, ttree2, rooth);
         apspnet.setTetTree(tt2, merged);
         apspnet.removeTetree(tt1);
-
-        // fix up the links from diploid history
-        // get rid of old links first, to enable later assertions
+        // Fix up the links from diploid history.
+        // Get rid of old links first, to enable later assertions
         adhist.clearAllNodeTettree();
         for (int i = 0;  i < apspnet.getNumberOfTetraTrees();  i++) {
             AlloppLeggedTree ttree = apspnet.getTetraploidTree(i);
@@ -193,38 +217,71 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
             assert adhist.getNodeTettree(dhrgtleg) == -1;
             adhist.setNodeTettree(dhrgtleg, i);
         }
+        // new hybhgt for merged tree
+        double maxhybhgt = Math.min(lftleg2.ancanchgt, rgtleg2.ancanchgt);
+        double hybght = MathUtils.uniform(rooth, maxhybhgt);
+        adhist.setHybridHeight(merged, hybght);
+        hr -= Math.log(uniformpdf(rooth, maxhybhgt));
         adhist.removeFeet(apspnet, ttree1);
         return hr;
     }
 
 
+    private double uniformpdf(double min, double max) {
+        double density = 1.0 / (max-min);
+        return density;
+    }
 
     private double splitTettree(int tt, AlloppNode root1, AlloppNode root2) {
         double hr = 0.0;
+        // collect info from old TetraTree
         AlloppLeggedTree tetTree = apspnet.getTetraploidTree(tt);
         AlloppDiploidHistory adhist = apspnet.getDiploidHistory();
         double rooth = tetTree.getRootHeight();
         int lftleg = tetTree.getDiphistLftLeg();
         int rgtleg = tetTree.getDiphistRgtLeg();
-        double hybh = adhist.getHybHeight(tetTree);
         double lftanchgt = adhist.getAncHeight(lftleg);
         double rgtanchgt = adhist.getAncHeight(rgtleg);
-
-        // make two new trees, number 2 getting old one's legs.
+        // account for the hybhgt that will be lost
+        hr += Math.log(uniformpdf(rooth, Math.min(lftanchgt, rgtanchgt)));
+        // make two new trees
         AlloppLeggedTree tetTree1 = new AlloppLeggedTree(tetTree, root1);
         AlloppLeggedTree tetTree2 = new AlloppLeggedTree(tetTree, root2);
-        tetTree2.setDiphistLftLeg(tetTree.getDiphistLftLeg());
-        tetTree2.setDiphistRgtLeg(tetTree.getDiphistRgtLeg());
+        // tetree2 gets old one's legs, with new height
+        tetTree2.setDiphistLftLeg(lftleg);
+        tetTree2.setDiphistRgtLeg(rgtleg);
+        double hybhgt2 = MathUtils.uniform(tetTree2.getRootHeight(), rooth);
+        hr -= Math.log(uniformpdf(tetTree2.getRootHeight(), rooth));
+        adhist.setHybridHeight(tetTree2, hybhgt2);
         // remove old and add new ones to list.
         // tetTree2 replaces tetTree, that is, same index, so dip tips stay consistent
         apspnet.setTetTree(tt, tetTree2);
         int tt2 = tt;
         int tt1 = apspnet.addTetTree(tetTree1);
-
-        double lfthgt = MathUtils.uniform(hybh, lftanchgt);
-        double rgthgt = MathUtils.uniform(hybh, rgtanchgt);
-        hr += Math.log((lftanchgt-hybh) * (rgtanchgt-hybh));
-        adhist.addTwoDipTips(apspnet, tt1, tt2, lfthgt, rgthgt, rooth);
+        // new hybhgt for tree1
+        double hybhgt1 = MathUtils.uniform(tetTree1.getRootHeight(), rooth);
+        hr -= Math.log(uniformpdf(tetTree1.getRootHeight(), rooth));
+        // new hgt for a foot anc (other height is rooth)
+        // it is constrained by gene trees and existing node height
+        if (MathUtils.nextBoolean()) {
+            FixedBitSet tt1leg0 = apspnet.unionOfWholeTetTree(tt1, 0);
+            FixedBitSet tt2leg0 = apspnet.unionOfWholeTetTree(tt2, 0);
+            double genelimit = apsp.spseqUpperBound(tt1leg0, tt2leg0);
+            double maxfootanchgt = Math.min(genelimit, lftanchgt);
+            double footanchgt = MathUtils.uniform(rooth, maxfootanchgt);
+            hr -= Math.log(uniformpdf(rooth, maxfootanchgt));
+            adhist.addTwoDipTips(apspnet, tt1, tt2, footanchgt, rooth, hybhgt1);
+        } else {
+            FixedBitSet tt1leg1 = apspnet.unionOfWholeTetTree(tt1, 1);
+            FixedBitSet tt2leg1 = apspnet.unionOfWholeTetTree(tt2, 1);
+            double genelimit = apsp.spseqUpperBound(tt1leg1, tt2leg1);
+            double maxfootanchgt = Math.min(genelimit, rgtanchgt);
+            double footanchgt = MathUtils.uniform(rooth, maxfootanchgt);
+            hr -= Math.log(uniformpdf(rooth, maxfootanchgt));
+            adhist.addTwoDipTips(apspnet, tt1, tt2, rooth, footanchgt, hybhgt1);
+        }
+        // Account for left/right choice. Might be clearer to do this within split candidate.
+        hr += Math.log(2.0);
         return hr;
     }
 

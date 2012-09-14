@@ -92,6 +92,7 @@ public class AlloppMulLabTree  {
         private boolean tetraroot;   // true iff this node is root of a teraploid subtree
         private boolean intetratree;  // true iff this is in a tetratree
         private boolean tetraancestor;  // true iff this is a node with no diploid tip descendants
+        private int ttreeindex;
         private double hybridheight;
 		private FixedBitSet union;
 		private ArrayList<Double> coalheights;
@@ -111,6 +112,7 @@ public class AlloppMulLabTree  {
 			tetraroot = false;
             intetratree = false;
             tetraancestor = false;
+            ttreeindex = -1;
 			hybridheight = -1.0;   
 			coalheights = new ArrayList<Double>();
 			taxon = new Taxon("");
@@ -567,6 +569,7 @@ public class AlloppMulLabTree  {
                 nextn = allopptree2MulLabNodes(apsp, troot, adhist.getNodeLeg(dhni));
                 mlnodes[nextn-1].hybridheight = adhist.getHeightFromIndex(dhni);
                 mlnodes[nextn-1].tetraroot = true;
+                mlnodes[nextn-1].ttreeindex = tt;
             }
         } else {
             nextn = subtree2MulLabNodes(adhist, adhist.getLftFromIndex(dhni), tettrees, apsp);
@@ -626,6 +629,16 @@ public class AlloppMulLabTree  {
 			snodes[nextsn].addChild(snodes[subtree1]);
 		}
 		snodes[nextsn].setHeight(mnode.height);
+        String tti;
+        if (mnode.ttreeindex < 0) {
+            tti = "X";
+        } else {
+            tti = "T" + mnode.ttreeindex;
+        }
+        snodes[nextsn].setAttribute("tti", tti);
+        if (mnode.hybridheight >= 0.0) {
+            snodes[nextsn].setAttribute("hybhgt", mnode.hybridheight);
+        }
 		return nextsn+1;
 	}
 
@@ -852,6 +865,9 @@ public class AlloppMulLabTree  {
 			t[t.length-1] = node.hybridheight;
 			pal = new PopulationAndLineages(t, tippop, node.hybpop(), node.nlineages);
 			loglike += limbLogLike(pal);
+            if (Double.isNaN(loglike)) {
+                System.out.println("BUG in branchLLInMULtree");
+            }
 			// before hybridization
 			int nbefore = node.coalheights.size() - nsince;
 			t = new double[nbefore + 2];
@@ -907,6 +923,9 @@ public class AlloppMulLabTree  {
 			final double z = limbLinPopIntegral(pal, pal.t[i], pal.t[i+1]);
 			loglike -= y * z;
 		}
+        if (Double.isNaN(loglike)) {
+            System.out.println("BUG in limbLogLike");
+        }
 		return loglike;
 	}
 
@@ -917,6 +936,9 @@ public class AlloppMulLabTree  {
 	private double limbLinPopIntegral(PopulationAndLineages b, double t0, double t1) {
 		final double begt = b.t[0];
 		final double endt = b.t[b.t.length-1];
+        if (b.rootpop < 1E-20) {
+            System.out.println("Underflow in limbLinPopIntegral()");
+        }
 		final double d = b.rootpop - b.tippop;
 		final double c = endt * b.tippop - begt * b.rootpop;
 		final double x = Math.abs(d / b.tippop);

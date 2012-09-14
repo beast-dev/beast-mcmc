@@ -53,6 +53,18 @@ public class AlloppDiploidHistory implements SlidableTree {
 
     /******************************** Inner classes ****************************************/
 
+    public enum LegLorR {left, right};
+
+
+    // Small class for returning two heights. For ChangeNumHybs move
+    public class FootAncHeights {
+        public double anchgt;
+        public double ancanchgt;
+        FootAncHeights(double anchgt, double ancanchgt) {
+            this.anchgt = anchgt;
+            this.ancanchgt = ancanchgt;
+        }
+    }
 
     /*
     * parent, child[] implement the tree topology.
@@ -74,10 +86,9 @@ public class AlloppDiploidHistory implements SlidableTree {
 		private Taxon taxon;
 		private FixedBitSet union;
 		private int tettree;
-		private int leg;
+		private int leg;    // 0 is left, 1 is right
 		private int nodeNumber;
-		private boolean del;  // for marking nodes that don't go into ditree on extant diploids
-		
+
 		// dud constuctor
         DipHistNode(int nn) {
             anc = -1;
@@ -89,7 +100,6 @@ public class AlloppDiploidHistory implements SlidableTree {
             tettree = -1;
             leg = -1;
             nodeNumber = nn;
-            del = false;
         }
 
         // copy constructor
@@ -123,7 +133,6 @@ public class AlloppDiploidHistory implements SlidableTree {
             }
             tettree = node.tettree;
             leg = node.leg;
-            del = node.del;
         }
 
 
@@ -261,34 +270,33 @@ public class AlloppDiploidHistory implements SlidableTree {
             dhnodes[nextn].height = 0.0;
             tojoin.add(nextn);
         }
-        // Make two tips for the tet tree, but don't add these to tojoin[] yet
+        // Make two tips for the tet tree, and add to tojoin[]
         double tettipsheight = tettree.getRootHeight() + MathUtils.nextExponential(rate);
         dhnodes[nextn].tettree = 0;
-        dhnodes[nextn].leg= 0;
+        dhnodes[nextn].leg = 0;
         tettree.setDiphistLftLeg(nextn);
         dhnodes[nextn].height = tettipsheight;
+        tojoin.add(nextn);
         nextn++;
         dhnodes[nextn].tettree = 0;
         dhnodes[nextn].leg = 1;
         tettree.setDiphistRgtLeg(nextn);
         dhnodes[nextn].height = tettipsheight;
+        tojoin.add(nextn);
         nextn ++;
         // build the tree from tips, adding the hyb-tips as their height is reached
-        double treeheight = 0.0;
-        boolean addedtettips = false;
+        double treeheight = tettipsheight;
         for (int i = 0; i < ntips-1; i++) {
             int numtojoin = tojoin.size();
             double nextheight = treeheight + MathUtils.nextExponential(numtojoin*rate);
-            if (!addedtettips   &&  (numtojoin == 1  ||  nextheight > tettipsheight)) {
-                treeheight = tettipsheight;
-                tojoin.add(nofdips);
-                tojoin.add(nofdips+1);
-                numtojoin = tojoin.size();
-                nextheight = treeheight + MathUtils.nextExponential(numtojoin*rate);
-                addedtettips = true;
-            }
             int j = MathUtils.nextInt(numtojoin);
             Integer child0 = tojoin.get(j);
+            if (numtojoin > 2) {
+                while (dhnodes[child0].lft < 0  &&  dhnodes[child0].tettree < 0) {
+                    j = MathUtils.nextInt(numtojoin);
+                    child0 = tojoin.get(j);
+                }
+            }
             tojoin.remove(j);
             int k = MathUtils.nextInt(numtojoin-1);
             Integer child1 = tojoin.get(k);
@@ -480,21 +488,44 @@ public class AlloppDiploidHistory implements SlidableTree {
         int rgtleg2 = ttree2.getDiphistRgtLeg();
         int rgtleg2anc = dhnodes[rgtleg2].anc;
         boolean llrr = ((lftleg1anc == lftleg2anc)  &&  (rgtleg1anc == rgtleg2anc));
+        return llrr;
+        /*
         boolean lrrl = ((lftleg1anc == rgtleg2anc)  &&  (rgtleg1anc == lftleg2anc));
-        return  (llrr || lrrl);
+        return  (llrr || lrrl);  */
     }
 
 
-    // For move that merges two tettrees. This is for Hastings ratio calculation.
+    // For (old?) move that merges two tettrees. This is for Hastings ratio calculation.
     public double intervalOfFoot(AlloppLeggedTree ttree, boolean left) {
         double hybh = getHybHeight(ttree);
-        int foot = left ? ttree.getDiphistLftLeg() :ttree.getDiphistRgtLeg();
+        int foot = left ? ttree.getDiphistLftLeg() : ttree.getDiphistRgtLeg();
         int footanc = dhnodes[foot].anc;
         assert footanc >= 0;
         int footancanc = dhnodes[footanc].anc;
         assert footancanc >= 0;
         return (dhnodes[footancanc].height  -  hybh);
     }
+
+
+    // For move that merges two tettrees. This is for Hastings ratio calculation.
+    public FootAncHeights intervalOfFootAncestor(AlloppLeggedTree ttree, LegLorR leg) {
+        double hybh = getHybHeight(ttree);
+        int foot = (leg==LegLorR.left) ? ttree.getDiphistLftLeg() : ttree.getDiphistRgtLeg();
+        assert hybh == dhnodes[foot].height;
+        int footanc = dhnodes[foot].anc;
+        int footancanc = dhnodes[footanc].anc;
+        assert footancanc >= 0;
+        return new FootAncHeights(dhnodes[footanc].height, dhnodes[footancanc].height);
+    }
+
+
+
+    public void setHybridHeight(AlloppLeggedTree ttree, double newh) {
+        int foot1 = ttree.getDiphistLftLeg();
+        int foot2 = ttree.getDiphistRgtLeg();
+        dhnodes[foot1].height = dhnodes[foot2].height = newh;
+    }
+
 
 
     // For move that merges two tettrees. This is for after merge.
@@ -513,7 +544,7 @@ public class AlloppDiploidHistory implements SlidableTree {
     }
 
 
-
+    // Adds two hyb-tips for tettree tt1. these are joined to legs of tettree tt2
     public void addTwoDipTips(AlloppSpeciesNetworkModel apspnet, int tt1, int tt2, double lfthgt, double rgthgt, double tiphgt) {
         AlloppLeggedTree tettree1 = apspnet.getTetraploidTree(tt1);
         AlloppLeggedTree tettree2 = apspnet.getTetraploidTree(tt2);
@@ -756,7 +787,20 @@ public class AlloppDiploidHistory implements SlidableTree {
                 }
             }
         }
+        if (!gotDipTipInSubtree(dhnodes[rootn].lft)  ||  !gotDipTipInSubtree(dhnodes[rootn].rgt)) {
+            return false;
+        }
+
         return true;
+    }
+
+
+    private boolean gotDipTipInSubtree(int nn) {
+        if (dhnodes[nn].lft < 0) {
+            return (dhnodes[nn].tettree < 0);
+        } else {
+            return gotDipTipInSubtree(dhnodes[nn].lft)  ||  gotDipTipInSubtree(dhnodes[nn].rgt);
+        }
     }
 
 
@@ -783,12 +827,23 @@ public class AlloppDiploidHistory implements SlidableTree {
             assert tmpnodes[n].rgt < 0;
             dhnodes[nextn] = new DipHistNode(nextn, tmpnodes[n]);
             int tt = dhnodes[nextn].tettree;
+            int leg = dhnodes[nextn].leg;
+            AlloppLeggedTree ttree;
             if (tt >= 0) {
-                if (apspnet.getTetraploidTree(tt).getDiphistLftLeg() == n) {
-                    apspnet.getTetraploidTree(tt).setDiphistLftLeg(nextn);
+                ttree = apspnet.getTetraploidTree(tt);
+                if (ttree.getDiphistLftLeg() == n) {
+                    if (leg == 0) {
+                        ttree.setDiphistLftLeg(nextn);
+                    } else {
+                        ttree.setDiphistRgtLeg(nextn);
+                    }
                 } else {
                     assert apspnet.getTetraploidTree(tt).getDiphistRgtLeg() == n;
-                    apspnet.getTetraploidTree(tt).setDiphistRgtLeg(nextn);
+                    if (leg == 0) {
+                        ttree.setDiphistLftLeg(nextn);
+                    } else {
+                        ttree.setDiphistRgtLeg(nextn);
+                    }
                 }
             }
             nextn ++;

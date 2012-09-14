@@ -67,15 +67,17 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 // AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon.
 // Nothing so far does TreeTraitProvider.
 public class AlloppSpeciesNetworkModel extends AbstractModel implements
-		Scalable, Units, Citable, Tree, TreeLogger.LogUpon {
+		Scalable, Units, Citable, Tree, TreeTraitProvider, TreeLogger.LogUpon {
 
 	private final AlloppSpeciesBindings apsp;
     private AlloppDiploidHistory adhist;
     private AlloppDiploidHistory oldadhist;
     private ArrayList<AlloppLeggedTree> tettrees;
     private ArrayList<AlloppLeggedTree> oldtettrees;
+    private TreeTrait tti;
+    private TreeTrait hh;
 
-	private AlloppMulLabTree mullabtree;
+    private AlloppMulLabTree mullabtree;
 
     private ParametricDistributionModel hybridPopModel;
 
@@ -92,8 +94,83 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
     public final static boolean DBUGTUNE = false;
 
-	
-	
+
+
+
+    private class TetTreeIndexTrait implements TreeTrait<String> {
+        TetTreeIndexTrait() {}
+
+        public String getTraitName() {
+            return "tti";
+        }
+
+        public TreeTrait.Intent getIntent() {
+            return TreeTrait.Intent.NODE;
+        }
+
+        @Override
+        public Class getTraitClass() {
+            return String.class;
+        }
+
+        public String getTrait(Tree tree, NodeRef node) {
+            assert tree == mullabtree;
+            return (String)getNodeAttribute(node, "tti");
+        }
+
+        @Override
+        public String getTraitString(Tree tree, NodeRef node) {
+            return "" + getNodeAttribute(node, "tti");
+        }
+
+        @Override
+        public boolean getLoggable() {
+            return true;
+        }
+    }
+
+
+
+    // grjtodo-soon hybheights in TreeAnnotator is not working as hoped.
+    // Nodes may or may not
+    // have hybheights, so means, medians, etc, combine -1 with valid values
+    // Omitting attributes from nodes results in some `null's in the tree log file
+    // which makes TreeAnnotator treat all values as discrete (as a set).
+    // For now, just don't add hh to list in getTreeTraits()
+    private class HybHeightTrait implements TreeTrait<Double> {
+        HybHeightTrait() {}
+
+        public String getTraitName() {
+            return "hybhgt";
+        }
+
+        public TreeTrait.Intent getIntent() {
+            return TreeTrait.Intent.NODE;
+        }
+
+        @Override
+        public Class getTraitClass() {
+            return Double.class;
+        }
+
+        public Double getTrait(Tree tree, NodeRef node) {
+            assert tree == mullabtree;
+            return (Double)getNodeAttribute(node, "hybhgt");
+        }
+
+        @Override
+        public String getTraitString(Tree tree, NodeRef node) {
+            return "" + getNodeAttribute(node, "hybhgt");
+        }
+
+        @Override
+        public boolean getLoggable() {
+            return true;
+        }
+    }
+
+
+
 	
 	/*
 	 * Constructors. 
@@ -131,7 +208,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         makeLoggingHybPopParam();
 
         mullabtree = new AlloppMulLabTree(adhist, tettrees, apsp, tippopvalues, rootpopvalues, hybpopvalues);
-		
+
+        tti = new TetTreeIndexTrait();
+        hh = new HybHeightTrait();
+
         Logger.getLogger("dr.evomodel.speciation.allopolyploid").info("\tConstructing an allopolyploid network,  please cite:\n"
                 + Citable.Utils.getCitationString(this));
 	}	
@@ -175,21 +255,39 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
                 },
                 "Statistical Inference of Allopolyploid Species Networks in the Presence of Incomplete Lineage Sorting",
                 "Systematic Biology",
-                Citation.Status.IN_PREPARATION
+                Citation.Status.IN_SUBMISSION
         ));
         return citations;
     }
 
 
-    boolean alloppspeciesnetworkOK() {
+    public boolean alloppspeciesnetworkOK() {
         for (AlloppLeggedTree tettree : tettrees) {
             if (!tettree.leggedtreeOK()) {
                 return false;
             }
         }
-        if (!adhist.diphistOK()) {
+        for (int tt = 0; tt <tettrees.size(); tt++) {
+            AlloppLeggedTree tettree = getTetraploidTree(tt);
+            int lftleg = tettree.getDiphistLftLeg();
+            int rgtleg = tettree.getDiphistRgtLeg();
+            if  (0 != adhist.getNodeLeg(lftleg)) {
+                return false;
+            }
+            if (tt != adhist.getNodeTettree(lftleg)) {
+                return false;
+            }
+            if (1 != adhist.getNodeLeg(rgtleg)) {
+                return false;
+            }
+            if  (tt != adhist.getNodeTettree(rgtleg)) {
+                return false;
+            }
+        }
+    if (!adhist.diphistOK()) {
             return false;
         }
+
         if (!mullabtree.mullabtreeOK()) {
             return false;
         }
@@ -315,6 +413,15 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     }
 
 
+    public boolean netAndGTreesAreCompatible() {
+        for (int i = 0; i < apsp.numberOfGeneTrees(); i++) {
+            if (!apsp.geneTreeFitsInNetwork(i, this)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // Scalable implementation
     @Override
     public String getName() {
@@ -366,17 +473,30 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
 
+    public FixedBitSet unionOfWholeTetTree(int tt, int leg) {
+        // fill in tips
+        tettrees.get(tt).fillinTipUnions(apsp, leg);
+        // fill in rest. could just take union of all, but have this function ready
+        AlloppNode tetroot = (AlloppNode)tettrees.get(tt).getSlidableRoot();
+        tetroot.fillinUnionsInSubtree(apsp.numberOfSpSeqs());
+        return tetroot.getUnion();
+    }
+
+
     public double addHybPopParam() {
-        // grjtodo-soon this requires checking. Have just increased number of tettrees
         assert tettrees.size() <= hybpopvalues.length;
         double newval = hybridPopModel.quantile(MathUtils.nextDouble());
+        if (newval < 1E-10) {
+            newval = 1E-10; // grjtodo-soon.
+            // There is a problem. quantile(3.84E-7) with sensible param values returns 4.9E-324
+            // GammaDistImpl(alpha=1,beta=6.5e-5)
+        }
         hybpopvalues[tettrees.size()-1] = newval;
         return hybridPopModel.logPdf(newval);
     }
 
 
     public double removeHybPopParam() {
-        // grjtodo-soon this requires checking. Have just decreased number of tettrees
         assert tettrees.size() < hybpopvalues.length;
         double oldval = hybpopvalues[tettrees.size()];
         hybpopvalues[tettrees.size()] = 0.0;      // set unused dimension to impossible value
@@ -459,7 +579,8 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 	 * is compatible with the network. 
 	 */
 	boolean coalescenceIsCompatible(double height, FixedBitSet union) {
-		return mullabtree.coalescenceIsCompatible(height, union);
+        boolean ok = mullabtree.coalescenceIsCompatible(height, union);
+		return ok;
 	}
 	
 	
@@ -506,19 +627,26 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
 
+    /********************** for logging ********************/
+
+    public TreeTrait[] getTreeTraits() {
+        return new TreeTrait[]{tti};
+    }
+
+    public TreeTrait getTreeTrait(String key) {
+        if (key.equals(tti.getTraitName())) {
+            return tti;
+        }
+        if (key.equals(hh.getTraitName())) {
+            return hh;
+        }
+        throw new IllegalArgumentException();
+    }
+
+
     /********************************************************************************/
     /***********************   private    *******************************************/
     /********************************************************************************/
-
-    private FixedBitSet unionOfWholeTetTree(int tt, int leg) {
-        // fill in tips
-        tettrees.get(tt).fillinTipUnions(apsp, leg);
-        // fill in rest. could just take union of all, but have this function ready
-        AlloppNode tetroot = (AlloppNode)tettrees.get(tt).getSlidableRoot();
-        tetroot.fillinUnionsInSubtree(apsp.numberOfSpSeqs());
-        return tetroot.getUnion();
-    }
-
 
 
     /*
@@ -783,6 +911,9 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         // can set logEvery=0 in XML for multree:
         //      <logTree id="multreeFileLog" logEvery="0" fileName="C:/U....
         // and get here for debugging
+        if (state == 6696) {
+            System.out.println("logNow("+state+")");
+        }
         if (state <= 100) {
             return true;
         }
@@ -796,13 +927,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 	
 	
-/* *********************** TEST CODE **********************************/	
-	
-// grjtodo-soon The log-like test has been lost with new (2012-07) code for
-    // multi-hybridizations, cos it was no-diploids
-    // need new test with more species, hybrids, etc.
-    // Lot of work in R to do test there
-	
+/* *********************** TEST CODE **********************************/
 
 	
 	/*

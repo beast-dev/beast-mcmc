@@ -1,8 +1,13 @@
 package dr.app.beagle.tools.parsers;
 
+import java.util.ArrayList;
+
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.alignment.PatternList;
+import dr.evolution.alignment.Patterns;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -47,12 +52,19 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-		int replications = xo.getIntegerAttribute(REPLICATIONS);
+		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+		for (int i = 0; i < xo.getChildCount(); i++) {
 
-		BeagleSequenceSimulator s = null;
-		// BeagleSequenceSimulator s = new BeagleSequenceSimulator(
-		// replications //
-		// );
+			Partition partition = (Partition) xo.getChild(i);
+			partitionsList.add(partition);
+
+		}
+
+		int replications = xo.getIntegerAttribute(REPLICATIONS);
+		
+		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList, //
+				replications //
+		);
 
 		return s.simulate();
 	}// END: parseXMLObject

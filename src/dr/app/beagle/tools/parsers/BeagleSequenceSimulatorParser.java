@@ -67,6 +67,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		
 	}//END: getSyntaxRules
 
+	//TODO: fix parser to work with new simulator
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
@@ -94,14 +95,16 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			branchSubstitutionModel = new HomogenousBranchSubstitutionModel(substitutionModel, freqModel);
 		}
 		
-		BeagleSequenceSimulator s = new BeagleSequenceSimulator(
-				tree, //
-				branchSubstitutionModel, //
-				siteModel, //
-				rateModel, //
-				freqModel, //
-				replications //
-		);
+		BeagleSequenceSimulator s = null;
+		
+//		BeagleSequenceSimulator s = new BeagleSequenceSimulator(
+//				tree, //
+//				branchSubstitutionModel, //
+//				siteModel, //
+//				rateModel, //
+//				freqModel, //
+//				replications //
+//		);
 
 		if (ancestralSequence != null) {
 
@@ -119,7 +122,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 			} else {
 
-				s.setAncestralSequence(ancestralSequence);
+//				s.setAncestralSequence(ancestralSequence);
 
 			}// END: dataType check
 		}// END: ancestralSequence check

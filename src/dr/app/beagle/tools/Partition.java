@@ -7,6 +7,10 @@ import dr.evolution.sequence.Sequence;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 
+/**
+ * @author Filip Bielejec
+ * @version $Id$
+ */
 public class Partition {
 
 	public int from;

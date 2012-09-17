@@ -1,4 +1,4 @@
-package dr.app.bss;
+package dr.app.beagle.tools;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;

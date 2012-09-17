@@ -38,7 +38,7 @@ import dr.math.MathUtils;
  */
 public class BeagleSequenceSimulator {
 
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	
 	private ArrayList<Partition> partitions;
 
@@ -214,7 +214,8 @@ public class BeagleSequenceSimulator {
 
 		return beagle;
 	}// END: loadBeagleInstance
-	
+
+	// TODO: fill alignment in the right places
 	private void traverse(Beagle beagle, //
 			Partition partition, //
 			NodeRef node, //

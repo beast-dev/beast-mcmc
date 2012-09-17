@@ -255,6 +255,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
+	//TODO: fix to work with new simulator
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -271,14 +272,16 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 					writer = new PrintWriter(new FileWriter(outFile));
 
-					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-							data.treeModel, //
-							data.createBranchSubstitutionModel(), //
-							data.createSiteRateModel(), //
-							data.createBranchRateModel(), //
-							data.createFrequencyModel(), //
-							data.replicateCount //
-					);
+					BeagleSequenceSimulator beagleSequenceSimulator = null;
+					
+//					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+//							data.treeModel, //
+//							data.createBranchSubstitutionModel(), //
+//							data.createSiteRateModel(), //
+//							data.createBranchRateModel(), //
+//							data.createFrequencyModel(), //
+//							data.replicateCount //
+//					);
 
 					writer.println(beagleSequenceSimulator.simulate().toString());
 					writer.close();

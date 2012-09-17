@@ -42,18 +42,18 @@ public class BeagleSequenceSimulator {
 	
 	private ArrayList<Partition> partitions;
 
-	private int siteCount;
+	private int replications;
     private SimpleAlignment simpleAlignment;
     private DataType dataType;
     private int stateCount;
     private HashMap<Taxon, int[]> alignmentMap ;
     
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //
-			int siteCount //
+			int replications //
 	) {
 
 		this.partitions = partitions;
-		this.siteCount = siteCount;
+		this.replications = replications;
 
 		alignmentMap = new HashMap<Taxon, int[]>();
 		
@@ -263,7 +263,7 @@ public class BeagleSequenceSimulator {
 
 				} else {
 
-					int[] sequence = new int[siteCount];
+					int[] sequence = new int[replications];
 					Arrays.fill(sequence, Integer.MAX_VALUE);
 
 					int j = 0;
@@ -344,7 +344,7 @@ public class BeagleSequenceSimulator {
 
 		if (dataType instanceof Codons) {
 
-			for (int i = 0; i < siteCount; i++) {
+			for (int i = 0; i < replications; i++) {
 
 				sSeq.append(dataType.getTriplet(seq[i]));
 
@@ -352,7 +352,7 @@ public class BeagleSequenceSimulator {
 
 		} else {
 
-			for (int i = 0; i < siteCount; i++) {
+			for (int i = 0; i < replications; i++) {
 
 				sSeq.append(dataType.getCode(seq[i]));
 
@@ -365,12 +365,12 @@ public class BeagleSequenceSimulator {
 	
 	private int[] sequence2intArray(Sequence sequence) {
 
-		int array[] = new int[siteCount];
+		int array[] = new int[replications];
 
 		if (dataType instanceof Codons) {
 
 			int k = 0;
-			for (int i = 0; i < siteCount; i++) {
+			for (int i = 0; i < replications; i++) {
 				array[i] = ((Codons) dataType).getState(sequence.getChar(k),
 						sequence.getChar(k + 1), sequence.getChar(k + 2));
 				k += 3;
@@ -378,7 +378,7 @@ public class BeagleSequenceSimulator {
 
 		} else {
 
-			for (int i = 0; i < siteCount; i++) {
+			for (int i = 0; i < replications; i++) {
 				array[i] = dataType.getState(sequence.getChar(i));
 			}// END: replications loop
 

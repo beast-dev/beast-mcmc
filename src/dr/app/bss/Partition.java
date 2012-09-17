@@ -41,11 +41,17 @@ public class Partition {
 		this.branchSubstitutionModel = branchSubstitutionModel;
 		this.branchRateModel = branchRateModel;
 		
+//		this.from = from + 1;
+//		this.to = to + 1;
+//		this.every = every;
+//		
+//		partitionSiteCount = ((to - from) / every) + 1;
+
 		this.from = from - 1;
-		this.to = to;// + 1;
+		this.to = to;
 		this.every = every;
 		
-		partitionSiteCount = ((to - from) / every);
+		partitionSiteCount = ((to - from) / every) + 1;
 		
 	}//END: Constructor
 	

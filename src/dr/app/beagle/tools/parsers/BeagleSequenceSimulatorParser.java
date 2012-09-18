@@ -1,10 +1,13 @@
 package dr.app.beagle.tools.parsers;
 
 import java.util.ArrayList;
+import java.util.logging.Logger;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
 import dr.evolution.alignment.Alignment;
+import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.Nucleotides;
 import dr.xml.AbstractXMLObjectParser;
 import dr.xml.AttributeRule;
 import dr.xml.ElementRule;
@@ -45,11 +48,13 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 		
 	}//END: getSyntaxRules
 
-	//TODO: fix parser to work with partitions
 	@Override
 	public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+		String msg = "";
+		
 		int replications = xo.getIntegerAttribute(REPLICATIONS);
+		msg += "\n\t" + replications + ( (replications > 1) ? " replications " : " replication");
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 		for (int i = 0; i < xo.getChildCount(); i++) {
@@ -70,10 +75,32 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 				partition.to = replications;
 			}
 			
-			partitionsList.add(partition);
+			if (partition.ancestralSequence != null) {
 
+				if (partition.ancestralSequence.getLength() != 3 * replications && partition.freqModel.getDataType() instanceof Codons) {
+
+					throw new RuntimeException("Ancestral codon sequence has "
+							+ partition.ancestralSequence.getLength() + " characters "
+							+ "expecting " + 3 * replications + " characters");
+
+				} else if (partition.ancestralSequence.getLength() != replications && partition.freqModel.getDataType() instanceof Nucleotides) {
+
+					throw new RuntimeException("Ancestral nuleotide sequence has "
+							+ partition.ancestralSequence.getLength() + " characters "
+							+ "expecting " + replications + " characters");
+
+				}// END: dataType check
+			}// END: ancestralSequence check
+			
+			msg += "\n\t" + "partition" + (i + 1) + " from " + partition.from + " to " + partition.to + " every " + partition.every;
+			// TODO: print partition info
+			partitionsList.add(partition);
 		}// END: partitions loop
 
+		 if (msg.length() > 0) {
+	            Logger.getLogger("dr.app.beagle.tools").info("Using Beagle Sequence Simulator: " + msg);
+		 }
+		
 		BeagleSequenceSimulator s = new BeagleSequenceSimulator(partitionsList, //
 				replications //
 		);

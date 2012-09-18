@@ -26,6 +26,8 @@ public class Partition {
 	public boolean hasAncestralSequence = false;
 	public Sequence ancestralSequence = null;
 
+//	public static final ThreadLocal threadLocal = new ThreadLocal();
+	
 	public Partition(
 			TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,

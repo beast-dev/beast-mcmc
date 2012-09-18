@@ -36,7 +36,7 @@ import dr.inference.operators.OperatorSchedule;
  */
 public interface MarkovChainDelegate {
 
-    void setup(MCMCOptions options, OperatorSchedule schedule);
+    void setup(MCMCOptions options, OperatorSchedule schedule, MarkovChain markovChain);
 
     void currentState(long state);
 

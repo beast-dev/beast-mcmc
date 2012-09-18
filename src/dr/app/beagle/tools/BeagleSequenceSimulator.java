@@ -38,7 +38,7 @@ import dr.math.MathUtils;
  */
 public class BeagleSequenceSimulator {
 
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	
 	private ArrayList<Partition> partitions;
 
@@ -59,6 +59,7 @@ public class BeagleSequenceSimulator {
 		
 	}// END: Constructor
 
+	//TODO: do in parallel
 	public Alignment simulate() {
 
 		int partitionCount = 0;
@@ -90,13 +91,14 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: simulate
 
+	//TODO: runnable
 	private void simulatePartition(Partition partition, int partitionCount) {
 
 		TreeModel treeModel = partition.treeModel;
 		BranchSubstitutionModel branchSubstitutionModel = partition.branchSubstitutionModel;
 		GammaSiteRateModel siteModel = partition.siteModel;
 		FrequencyModel freqModel = partition.freqModel;
-		int partitionSiteCount = partition.partitionSiteCount;
+		int partitionSiteCount = partition.getPartitionSiteCount();
 		
 		NodeRef root = treeModel.getRoot();
 
@@ -184,7 +186,7 @@ public class BeagleSequenceSimulator {
 		TreeModel treeModel = partition.treeModel;
 		BranchSubstitutionModel branchSubstitutionModel = partition.branchSubstitutionModel;
 		GammaSiteRateModel siteModel = partition.siteModel;
-		int partitionSiteCount = partition.partitionSiteCount;
+		int partitionSiteCount = partition.getPartitionSiteCount();
 		
 		int tipCount = treeModel.getExternalNodeCount();
 		int compactPartialsCount = tipCount;
@@ -214,7 +216,7 @@ public class BeagleSequenceSimulator {
 
 		return beagle;
 	}// END: loadBeagleInstance
-
+	
 	// TODO: fill alignment in the right places
 	private void traverse(Beagle beagle, //
 			Partition partition, //
@@ -227,7 +229,7 @@ public class BeagleSequenceSimulator {
 	) {
 
 		TreeModel treeModel = partition.treeModel;
-		int partitionSiteCount = partition.partitionSiteCount;
+		int partitionSiteCount = partition.getPartitionSiteCount();
 		
 		for (int iChild = 0; iChild < treeModel.getChildCount(node); iChild++) {
 

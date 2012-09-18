@@ -146,7 +146,7 @@ public class MCMC implements Identifiable, Spawnable {
         }*/
 
         for(MarkovChainDelegate delegate : delegates) {
-            delegate.setup(options, schedule);
+            delegate.setup(options, schedule, mc);
         }
         this.delegates = delegates;
     }

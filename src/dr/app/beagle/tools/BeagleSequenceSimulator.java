@@ -62,36 +62,36 @@ public class BeagleSequenceSimulator {
 		
 	}// END: Constructor
 
-	//TODO: do in parallel
+	//TODO: fix parallel 
 	public Alignment simulate() {
 
 		// Executor for threads
-		int NTHREDS = Runtime.getRuntime().availableProcessors(); //1
-		ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
-		ThreadLocal<Partition> threadLocalPartition;
+//		int NTHREDS = Runtime.getRuntime().availableProcessors(); //1
+//		ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
+//		ThreadLocal<Partition> threadLocalPartition;
 		
 		int partitionCount = 0;
 		for (Partition partition : partitions) {
 
-			threadLocalPartition = new ThreadLocal<Partition>();
-			threadLocalPartition.set(partition);
+//			threadLocalPartition = new ThreadLocal<Partition>();
+//			threadLocalPartition.set(partition);
 			
 			if (DEBUG) {
 				System.out.println("Simulating for partition " + partitionCount);
 			}
 
-//			simulatePartition(partition);
-			executor.submit(new simulatePartition(threadLocalPartition.get()));
+			simulatePartition(partition);
+//			executor.submit(new simulatePartition(threadLocalPartition.get()));
 //			new simulatePartition(threadLocalPartition.get()).run();
-			threadLocalPartition.remove();
+//			threadLocalPartition.remove();
 			
 			partitionCount++;
 		}// END: partitions loop
 
 		// Wait until all threads are finished
-		executor.shutdown();
-		while (!executor.isTerminated()) {
-		}
+//		executor.shutdown();
+//		while (!executor.isTerminated()) {
+//		}
 		
 		if (DEBUG) {
 			printHashMap(alignmentMap);
@@ -110,7 +110,6 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: simulate
 
-	//TODO: runnable
 	private class simulatePartition implements Runnable {
 
 		private FrequencyModel freqModel;
@@ -277,6 +276,10 @@ public class BeagleSequenceSimulator {
 		// set ancestral sequence for partition if it exists
 		if (partition.hasAncestralSequence) {
 
+//			System.out.println(partition.ancestralSequence.getSequenceString().length());
+//			System.out.println(partitionSiteCount);
+//			System.out.println(replications);
+			
 			parentSequence = sequence2intArray(partition.ancestralSequence);
 
 		} else {
@@ -345,7 +348,6 @@ public class BeagleSequenceSimulator {
 		return beagle;
 	}// END: loadBeagleInstance
 	
-	// TODO: fill alignment in the right places
 	private void traverse(Beagle beagle, //
 			Partition partition, //
 			NodeRef node, //
@@ -367,6 +369,13 @@ public class BeagleSequenceSimulator {
 
 			double[][] probabilities = getTransitionProbabilities(beagle, partition, child, categoryCount, stateCount, matrixBufferHelper, eigenBufferHelper);
 
+			/////////////
+			
+//			System.out.println(partition.ancestralSequence.getSequenceString().length());
+//			System.out.println(partitionSiteCount);
+			
+            /////////////
+			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
 				System.arraycopy(probabilities[category[i]], parentSequence[i] * stateCount, cProb, 0, stateCount);
@@ -385,7 +394,7 @@ public class BeagleSequenceSimulator {
 				if (alignmentMap.containsKey(taxon)) {
 
 					int j = 0;
-					for (int i = partition.from; i < partition.to; i += partition.every) {
+					for (int i = partition.from; i <= partition.to; i += partition.every) {
 
 						alignmentMap.get(taxon)[i] = partitionSequence[j];
 						j++;
@@ -398,7 +407,7 @@ public class BeagleSequenceSimulator {
 					Arrays.fill(sequence, Integer.MAX_VALUE);
 
 					int j = 0;
-					for (int i = partition.from; i < partition.to; i += partition.every) {
+					for (int i = partition.from; i <= partition.to; i += partition.every) {
 
 						sequence[i] = partitionSequence[j];
 						j++;
@@ -551,6 +560,8 @@ public class BeagleSequenceSimulator {
 
 		try {
 
+			System.out.println("Test case 1: simulateOnePartition");
+			
 			int sequenceLength = 10;
 			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
@@ -585,13 +596,13 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					1, // from
-					sequenceLength, // to
+					0, // from
+					sequenceLength - 1, // to
 					1 // every
 			);
 
 			Sequence ancestralSequence = new Sequence();
-			ancestralSequence.appendSequenceString("AAAAAAAAAA");
+			ancestralSequence.appendSequenceString("TCAAGTGAGG");
 			partition1.setAncestralSequence(ancestralSequence);
 			
 			partitionsList.add(partition1);
@@ -602,6 +613,7 @@ public class BeagleSequenceSimulator {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(-1);
 		} // END: try-catch block
 
 	}// END: simulateOnePartition
@@ -610,7 +622,9 @@ public class BeagleSequenceSimulator {
 
 		try {
 
-			int sequenceLength = 10;
+			System.out.println("Test case 2: simulateTwoPartitions");
+			
+			int sequenceLength = 11;
 			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
 			// create tree
@@ -643,8 +657,8 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					1, // from
-					5, // to
+					0, // from
+					4, // to
 					1 // every
 			);
 
@@ -654,10 +668,14 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					6, // from
-					sequenceLength, // to
+					5, // from
+					sequenceLength - 1, // to
 					1 // every
 			);
+		
+//			Sequence ancestralSequence = new Sequence();
+//			ancestralSequence.appendSequenceString("TCAAGTGAGG");
+//			partition2.setAncestralSequence(ancestralSequence);
 			
 			partitionsList.add(partition1);
 			partitionsList.add(partition2);
@@ -668,6 +686,7 @@ public class BeagleSequenceSimulator {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(-1);
 		} // END: try-catch block
 
 	}// END: simulateTwoPartitions
@@ -676,6 +695,8 @@ public class BeagleSequenceSimulator {
 
 		try {
 
+			System.out.println("Test case 3: simulateThreePartitions");
+			
 			int sequenceLength = 10;
 			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
@@ -709,8 +730,8 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					1, // from
-					sequenceLength, // to
+					0, // from
+					sequenceLength - 1, // to
 					3 // every
 			);
 
@@ -720,8 +741,8 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					2, // from
-					sequenceLength, // to
+					1, // from
+					sequenceLength - 1, // to
 					3 // every
 			);
 			
@@ -731,8 +752,8 @@ public class BeagleSequenceSimulator {
 					siteRateModel, //
 					branchRateModel, //
 					freqModel, //
-					3, // from
-					sequenceLength, // to
+					2, // from
+					sequenceLength - 1, // to
 					3 // every
 			);
 			
@@ -746,6 +767,7 @@ public class BeagleSequenceSimulator {
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+			System.exit(-1);
 		} // END: try-catch block
 
 	}// END: simulateThreePartitions

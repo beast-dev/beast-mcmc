@@ -72,7 +72,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			}
 
 			if (partition.to == -1) {
-				partition.to = replications;
+				partition.to = replications - 1;
 			}
 			
 			if (partition.ancestralSequence != null) {
@@ -92,8 +92,9 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 				}// END: dataType check
 			}// END: ancestralSequence check
 			
-			msg += "\n\t" + "partition" + (i + 1) + " from " + partition.from + " to " + partition.to + " every " + partition.every;
 			// TODO: print partition info
+//			msg += "\n\t" + "partition" + (i + 1) + " from " + partition.from + " to " + partition.to + " every " + partition.every;
+			
 			partitionsList.add(partition);
 		}// END: partitions loop
 

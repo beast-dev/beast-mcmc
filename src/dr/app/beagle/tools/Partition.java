@@ -45,7 +45,7 @@ public class Partition {
 		this.branchSubstitutionModel = branchSubstitutionModel;
 		this.branchRateModel = branchRateModel;
 		
-		this.from = from - 1;
+		this.from = from;
 		this.to = to;
 		this.every = every;
 		

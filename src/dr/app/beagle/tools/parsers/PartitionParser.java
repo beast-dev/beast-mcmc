@@ -52,7 +52,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
         int every = xo.getAttribute(EVERY, 1);
 		
 		if (xo.hasAttribute(FROM)) {
-			from = xo.getIntegerAttribute(FROM);
+			from = xo.getIntegerAttribute(FROM) - 1;
 			
 			if (from < 0) {
 				throw new XMLParseException(
@@ -63,7 +63,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 
 		if (xo.hasAttribute(TO)) {
 			
-			to = xo.getIntegerAttribute(TO);
+			to = xo.getIntegerAttribute(TO) - 1;
 			if (to < 0 || to < from) {
 				throw new XMLParseException(
 						"illegal 'to' attribute in patterns element");

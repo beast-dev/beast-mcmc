@@ -130,9 +130,5 @@ public class PartitionParser extends AbstractXMLObjectParser {
 		};
 		
 	}// END: getSyntaxRules
-
-
-	
-	
 	
 }// END: class

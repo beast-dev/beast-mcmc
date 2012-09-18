@@ -52,19 +52,23 @@ public class PartitionParser extends AbstractXMLObjectParser {
         int every = xo.getAttribute(EVERY, 1);
 		
 		if (xo.hasAttribute(FROM)) {
-			from = xo.getIntegerAttribute(FROM) - 1;
+			from = xo.getIntegerAttribute(FROM);
+			
 			if (from < 0) {
 				throw new XMLParseException(
 						"illegal 'from' attribute in patterns element");
 			}
+			
 		}// END: from check
 
 		if (xo.hasAttribute(TO)) {
-			to = xo.getIntegerAttribute(TO) - 1;
+			
+			to = xo.getIntegerAttribute(TO);
 			if (to < 0 || to < from) {
 				throw new XMLParseException(
 						"illegal 'to' attribute in patterns element");
 			}
+			
 		}// END: to check
 
 		if (every <= 0) {
@@ -72,19 +76,6 @@ public class PartitionParser extends AbstractXMLObjectParser {
 					"illegal 'every' attribute in patterns element");
 		}// END: every check
 
-		//TODO: get parent element, get nr of replications
-//        if (from > replications) {
-//            throw new XMLParseException("illegal 'from' attribute in patterns element");
-//        }
-//            
-//        if (to > replications) {
-//            throw new XMLParseException("illegal 'to' attribute in patterns element");
-//        }
-//         
-//		if (to == -1) {
-//			to = replications;
-//		}
-		
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
 		
 		GammaSiteRateModel siteModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
@@ -98,16 +89,16 @@ public class PartitionParser extends AbstractXMLObjectParser {
 		
 		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
 		if (branchSubstitutionModel == null) {
+
 			SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
 			branchSubstitutionModel = new HomogenousBranchSubstitutionModel(substitutionModel, freqModel);
+		
 		}
 		
 		Partition partition = new Partition(tree, branchSubstitutionModel, siteModel, rateModel, freqModel, from, to, every);
 
 		if (ancestralSequence != null) {
-
 				partition.setAncestralSequence(ancestralSequence);
-
 		}// END: ancestralSequence check
 
 		return partition;

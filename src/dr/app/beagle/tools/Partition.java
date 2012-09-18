@@ -23,11 +23,9 @@ public class Partition {
 	public BranchRateModel branchRateModel;
 	public FrequencyModel freqModel;
 	
-	public int partitionSiteCount;
-	
 	public boolean hasAncestralSequence = false;
 	public Sequence ancestralSequence = null;
-	
+
 	public Partition(
 			TreeModel treeModel, //
 			BranchSubstitutionModel branchSubstitutionModel,
@@ -45,17 +43,9 @@ public class Partition {
 		this.branchSubstitutionModel = branchSubstitutionModel;
 		this.branchRateModel = branchRateModel;
 		
-//		this.from = from + 1;
-//		this.to = to + 1;
-//		this.every = every;
-//		
-//		partitionSiteCount = ((to - from) / every) + 1;
-
 		this.from = from - 1;
 		this.to = to;
 		this.every = every;
-		
-		partitionSiteCount = ((to - from) / every) + 1;
 		
 	}//END: Constructor
 	
@@ -64,6 +54,9 @@ public class Partition {
 		this.hasAncestralSequence = true;
 	}// END: setAncestralSequence
 	
-	
+	public int getPartitionSiteCount() {
+		int partitionSiteCount = ((to - from) / every) + 1;
+		return partitionSiteCount;
+	}// END: getPartitionSiteCount
 	
 }//END: class

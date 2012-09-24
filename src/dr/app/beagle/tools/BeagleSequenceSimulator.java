@@ -3,7 +3,9 @@ package dr.app.beagle.tools;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -43,7 +45,6 @@ public class BeagleSequenceSimulator {
 	private final boolean DEBUG = false;
 	
 	private ArrayList<Partition> partitions;
-
 	private int replications;
     private SimpleAlignment simpleAlignment;
     private DataType dataType;
@@ -62,65 +63,78 @@ public class BeagleSequenceSimulator {
 		
 	}// END: Constructor
 
-	//TODO: fix parallel 
+	// TODO: fix parallel execution
 	public Alignment simulate() {
 
-		// Executor for threads
-//		int NTHREDS = Runtime.getRuntime().availableProcessors(); //1
-//		ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
-//		ThreadLocal<Partition> threadLocalPartition;
-		
-		int partitionCount = 0;
-		for (Partition partition : partitions) {
+		try {
 
-//			threadLocalPartition = new ThreadLocal<Partition>();
-//			threadLocalPartition.set(partition);
-			
-			if (DEBUG) {
-				System.out.println("Simulating for partition " + partitionCount);
+			// Executor for threads
+			int NTHREDS = Runtime.getRuntime().availableProcessors();
+			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
+			ThreadLocal<Partition> threadLocalPartition;
+
+			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
+
+			int partitionCount = 0;
+			for (Partition partition : partitions) {
+
+				threadLocalPartition = new ThreadLocal<Partition>();
+				threadLocalPartition.set(partition);
+
+				if (DEBUG) {
+					System.out.println("Simulating for partition " + partitionCount);
+				}
+
+//				simulatePartition(partition);
+//				executor.submit(new simulatePartitionRunnable(threadLocalPartition.get()));
+				simulatePartitionCallers.add(new simulatePartitionCallable(threadLocalPartition.get()));
+
+				threadLocalPartition.remove();
+
+				partitionCount++;
+			}// END: partitions loop
+
+			executor.invokeAll(simulatePartitionCallers);
+
+			// Wait until all threads are finished
+			executor.shutdown();
+			while (!executor.isTerminated()) {
 			}
 
-			simulatePartition(partition);
-//			executor.submit(new simulatePartition(threadLocalPartition.get()));
-//			new simulatePartition(threadLocalPartition.get()).run();
-//			threadLocalPartition.remove();
-			
-			partitionCount++;
-		}// END: partitions loop
+			if (DEBUG) {
+				printHashMap(alignmentMap);
+			}
 
-		// Wait until all threads are finished
-//		executor.shutdown();
-//		while (!executor.isTerminated()) {
-//		}
-		
-		if (DEBUG) {
-			printHashMap(alignmentMap);
-		}
-		
-		// compile the alignment
-		Iterator<Entry<Taxon, int[]>> iterator = alignmentMap.entrySet().iterator();
-		while (iterator.hasNext()) {
+			// compile the alignment
+			Iterator<Entry<Taxon, int[]>> iterator = alignmentMap.entrySet()
+					.iterator();
+			while (iterator.hasNext()) {
 
-			   Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
-		       simpleAlignment.addSequence(intArray2Sequence((Taxon)pairs.getKey(), (int[])pairs.getValue()));
-		       iterator.remove();
-		       
-		}// END: while has next
-		
+				Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
+				simpleAlignment.addSequence(intArray2Sequence(
+						(Taxon) pairs.getKey(), (int[]) pairs.getValue()));
+				iterator.remove();
+
+			}// END: while has next
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
 		return simpleAlignment;
 	}// END: simulate
 
-	private class simulatePartition implements Runnable {
+	public class simulatePartitionRunnable implements Runnable {
 
+		private Partition partition;
 		private FrequencyModel freqModel;
 		private BranchSubstitutionModel branchSubstitutionModel;
 		private Tree treeModel;
-		private Partition partition;
 		private GammaSiteRateModel siteModel;
 		private int partitionSiteCount;
 		private NodeRef root;
 
-		private simulatePartition(Partition partition) {
+		private simulatePartitionRunnable(Partition partition) {
 			this.partition = partition;
 		}// END: Constructor
 
@@ -217,7 +231,110 @@ public class BeagleSequenceSimulator {
 
 		}// END: run
 
-	}//END: simulatePartition class
+	}//END: simulatePartitionRunnable class
+	
+   private class simulatePartitionCallable implements Callable<Void> {
+    	
+    	private Partition partition;
+		private FrequencyModel freqModel;
+		private BranchSubstitutionModel branchSubstitutionModel;
+		private Tree treeModel;
+		private GammaSiteRateModel siteModel;
+		private int partitionSiteCount;
+		private NodeRef root;
+    	
+		private simulatePartitionCallable(Partition partition) {
+			this.partition = partition;
+		}// END: Constructor
+
+		public Void call() throws Exception {
+        	
+			treeModel = partition.treeModel;
+			branchSubstitutionModel = partition.branchSubstitutionModel;
+			siteModel = partition.siteModel;
+			freqModel = partition.freqModel;
+			partitionSiteCount = partition.getPartitionSiteCount();
+
+			root = treeModel.getRoot();
+			
+		// do those only once
+		if(!fieldsSet) {
+			
+			dataType = freqModel.getDataType();
+			simpleAlignment = new SimpleAlignment();
+			simpleAlignment.setDataType(dataType);
+			simpleAlignment.setReportCountStatistics(false);
+			
+			stateCount = dataType.getStateCount();
+			
+			fieldsSet = true;
+		}//END: partitionCount check
+		
+		// Buffer index helpers
+		int eigenCount = branchSubstitutionModel.getEigenCount();
+		BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+		
+		int nodeCount = treeModel.getNodeCount();
+		BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+		
+		int tipCount = treeModel.getExternalNodeCount();
+		BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+
+		// load beagle
+		Beagle beagle = loadBeagleInstance(partition, eigenBufferHelper,
+				matrixBufferHelper, partialBufferHelper);
+
+		// gamma category rates
+		double[] categoryRates = siteModel.getCategoryRates();
+		beagle.setCategoryRates(categoryRates);
+
+		// weights for gamma category rates
+		double[] categoryWeights = siteModel.getCategoryProportions();
+		beagle.setCategoryWeights(0, categoryWeights);
+
+		// proportion of sites in each category
+		double[] categoryProbs = siteModel.getCategoryProportions();
+		int[] category = new int[partitionSiteCount];
+
+		for (int i = 0; i < partitionSiteCount; i++) {
+			category[i] = MathUtils.randomChoicePDF(categoryProbs);
+		}
+
+		int[] parentSequence = new int[partitionSiteCount];
+
+		// set ancestral sequence for partition if it exists
+		if (partition.hasAncestralSequence) {
+
+			parentSequence = sequence2intArray(partition.ancestralSequence);
+
+		} else {
+
+			double[] frequencies = freqModel.getFrequencies();
+			for (int i = 0; i < partitionSiteCount; i++) {
+				parentSequence[i] = MathUtils.randomChoicePDF(frequencies);
+			}
+
+		}// END: ancestral sequence check
+		
+		for (int i = 0; i < eigenCount; i++) {
+
+			eigenBufferHelper.flipOffset(i);
+
+			branchSubstitutionModel.setEigenDecomposition(beagle, //
+					i, //
+					eigenBufferHelper, //
+					0 //
+					);
+
+		}// END: i loop
+
+		int categoryCount = siteModel.getCategoryCount();
+		traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
+        	
+		return null;
+        }//END: call
+
+	}// END: simulatePartitionCallable class
 	
 	private void simulatePartition(Partition partition) {
 
@@ -326,7 +443,7 @@ public class BeagleSequenceSimulator {
 		int internalNodeCount = treeModel.getInternalNodeCount();
 		int scaleBufferCount = internalNodeCount + 1;
 
-		int[] resourceList = null;
+		int[] resourceList = new int[] { 0 };
 		long preferenceFlags = 0;
 		long requirementFlags = 0;
 
@@ -550,9 +667,9 @@ public class BeagleSequenceSimulator {
 	
 	public static void main(String[] args) {
 
-		simulateOnePartition();
+//		simulateOnePartition();
 		simulateTwoPartitions();
-		simulateThreePartitions(); 
+//		simulateThreePartitions(); 
 
 	} // END: main
 

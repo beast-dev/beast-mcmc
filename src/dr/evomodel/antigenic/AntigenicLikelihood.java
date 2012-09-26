@@ -341,7 +341,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 //                    tip.setParameterValue(dim, location.getParameterValue(dim));
 //                }
             } else {
-                throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
+                // The tree may contain viruses not present in the assay data
+         //       throw new IllegalArgumentException("Unmatched tip name in assay data: " + label);
             }
         }
         // we are only setting this parameter not listening to it:

@@ -3,12 +3,8 @@ package dr.app.beagle.tools;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -63,56 +59,51 @@ public class BeagleSequenceSimulator {
 		
 	}// END: Constructor
 
-	// TODO: fix parallel execution
 	public Alignment simulate() {
 
 		try {
 
 			// Executor for threads
-			int NTHREDS = Runtime.getRuntime().availableProcessors();
-			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
-			ThreadLocal<Partition> threadLocalPartition;
+//			int NTHREDS = Runtime.getRuntime().availableProcessors();
+//			ExecutorService executor = Executors.newFixedThreadPool(NTHREDS);
+//			ThreadLocal<Partition> threadLocalPartition;
 
-			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
+//			List<Callable<Void>> simulatePartitionCallers = new ArrayList<Callable<Void>>();
 
 			int partitionCount = 0;
 			for (Partition partition : partitions) {
 
-				threadLocalPartition = new ThreadLocal<Partition>();
-				threadLocalPartition.set(partition);
+//				threadLocalPartition = new ThreadLocal<Partition>();
+//				threadLocalPartition.set(partition);
 
 				if (DEBUG) {
 					System.out.println("Simulating for partition " + partitionCount);
 				}
 
-//				simulatePartition(partition);
+				simulatePartition(partition);
 //				executor.submit(new simulatePartitionRunnable(threadLocalPartition.get()));
-				simulatePartitionCallers.add(new simulatePartitionCallable(threadLocalPartition.get()));
+//				simulatePartitionCallers.add(new simulatePartitionRunnable(threadLocalPartition.get()));
 
-				threadLocalPartition.remove();
+//				threadLocalPartition.remove();
 
 				partitionCount++;
 			}// END: partitions loop
 
-			executor.invokeAll(simulatePartitionCallers);
-
 			// Wait until all threads are finished
-			executor.shutdown();
-			while (!executor.isTerminated()) {
-			}
+//			executor.shutdown();
+//			while (!executor.isTerminated()) {
+//			}
 
 			if (DEBUG) {
 				printHashMap(alignmentMap);
 			}
 
 			// compile the alignment
-			Iterator<Entry<Taxon, int[]>> iterator = alignmentMap.entrySet()
-					.iterator();
+			Iterator<Entry<Taxon, int[]>> iterator = alignmentMap.entrySet().iterator();
 			while (iterator.hasNext()) {
 
 				Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
-				simpleAlignment.addSequence(intArray2Sequence(
-						(Taxon) pairs.getKey(), (int[]) pairs.getValue()));
+				simpleAlignment.addSequence(intArray2Sequence((Taxon) pairs.getKey(), (int[]) pairs.getValue()));
 				iterator.remove();
 
 			}// END: while has next
@@ -124,218 +115,6 @@ public class BeagleSequenceSimulator {
 		return simpleAlignment;
 	}// END: simulate
 
-	public class simulatePartitionRunnable implements Runnable {
-
-		private Partition partition;
-		private FrequencyModel freqModel;
-		private BranchSubstitutionModel branchSubstitutionModel;
-		private Tree treeModel;
-		private GammaSiteRateModel siteModel;
-		private int partitionSiteCount;
-		private NodeRef root;
-
-		private simulatePartitionRunnable(Partition partition) {
-			this.partition = partition;
-		}// END: Constructor
-
-		@Override
-		public void run() {
-			
-			try {
-			
-				treeModel = partition.treeModel;
-				branchSubstitutionModel = partition.branchSubstitutionModel;
-				siteModel = partition.siteModel;
-				freqModel = partition.freqModel;
-				partitionSiteCount = partition.getPartitionSiteCount();
-
-				root = treeModel.getRoot();
-				
-			// do those only once
-			if(!fieldsSet) {
-				
-				dataType = freqModel.getDataType();
-				simpleAlignment = new SimpleAlignment();
-				simpleAlignment.setDataType(dataType);
-				simpleAlignment.setReportCountStatistics(false);
-				
-				stateCount = dataType.getStateCount();
-				
-				fieldsSet = true;
-			}//END: partitionCount check
-			
-			// Buffer index helpers
-			int eigenCount = branchSubstitutionModel.getEigenCount();
-			BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
-			
-			int nodeCount = treeModel.getNodeCount();
-			BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
-			
-			int tipCount = treeModel.getExternalNodeCount();
-			BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
-
-			// load beagle
-			Beagle beagle = loadBeagleInstance(partition, eigenBufferHelper,
-					matrixBufferHelper, partialBufferHelper);
-
-			// gamma category rates
-			double[] categoryRates = siteModel.getCategoryRates();
-			beagle.setCategoryRates(categoryRates);
-
-			// weights for gamma category rates
-			double[] categoryWeights = siteModel.getCategoryProportions();
-			beagle.setCategoryWeights(0, categoryWeights);
-
-			// proportion of sites in each category
-			double[] categoryProbs = siteModel.getCategoryProportions();
-			int[] category = new int[partitionSiteCount];
-
-			for (int i = 0; i < partitionSiteCount; i++) {
-				category[i] = MathUtils.randomChoicePDF(categoryProbs);
-			}
-
-			int[] parentSequence = new int[partitionSiteCount];
-
-			// set ancestral sequence for partition if it exists
-			if (partition.hasAncestralSequence) {
-
-				parentSequence = sequence2intArray(partition.ancestralSequence);
-
-			} else {
-
-				double[] frequencies = freqModel.getFrequencies();
-				for (int i = 0; i < partitionSiteCount; i++) {
-					parentSequence[i] = MathUtils.randomChoicePDF(frequencies);
-				}
-
-			}// END: ancestral sequence check
-			
-			for (int i = 0; i < eigenCount; i++) {
-
-				eigenBufferHelper.flipOffset(i);
-
-				branchSubstitutionModel.setEigenDecomposition(beagle, //
-						i, //
-						eigenBufferHelper, //
-						0 //
-						);
-
-			}// END: i loop
-
-			int categoryCount = siteModel.getCategoryCount();
-			traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
-			
-			} catch (RuntimeException e) {
-				e.printStackTrace();
-			}// END: try-catch block
-
-		}// END: run
-
-	}//END: simulatePartitionRunnable class
-	
-   private class simulatePartitionCallable implements Callable<Void> {
-    	
-    	private Partition partition;
-		private FrequencyModel freqModel;
-		private BranchSubstitutionModel branchSubstitutionModel;
-		private Tree treeModel;
-		private GammaSiteRateModel siteModel;
-		private int partitionSiteCount;
-		private NodeRef root;
-    	
-		private simulatePartitionCallable(Partition partition) {
-			this.partition = partition;
-		}// END: Constructor
-
-		public Void call() throws Exception {
-        	
-			treeModel = partition.treeModel;
-			branchSubstitutionModel = partition.branchSubstitutionModel;
-			siteModel = partition.siteModel;
-			freqModel = partition.freqModel;
-			partitionSiteCount = partition.getPartitionSiteCount();
-
-			root = treeModel.getRoot();
-			
-		// do those only once
-		if(!fieldsSet) {
-			
-			dataType = freqModel.getDataType();
-			simpleAlignment = new SimpleAlignment();
-			simpleAlignment.setDataType(dataType);
-			simpleAlignment.setReportCountStatistics(false);
-			
-			stateCount = dataType.getStateCount();
-			
-			fieldsSet = true;
-		}//END: partitionCount check
-		
-		// Buffer index helpers
-		int eigenCount = branchSubstitutionModel.getEigenCount();
-		BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
-		
-		int nodeCount = treeModel.getNodeCount();
-		BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
-		
-		int tipCount = treeModel.getExternalNodeCount();
-		BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
-
-		// load beagle
-		Beagle beagle = loadBeagleInstance(partition, eigenBufferHelper,
-				matrixBufferHelper, partialBufferHelper);
-
-		// gamma category rates
-		double[] categoryRates = siteModel.getCategoryRates();
-		beagle.setCategoryRates(categoryRates);
-
-		// weights for gamma category rates
-		double[] categoryWeights = siteModel.getCategoryProportions();
-		beagle.setCategoryWeights(0, categoryWeights);
-
-		// proportion of sites in each category
-		double[] categoryProbs = siteModel.getCategoryProportions();
-		int[] category = new int[partitionSiteCount];
-
-		for (int i = 0; i < partitionSiteCount; i++) {
-			category[i] = MathUtils.randomChoicePDF(categoryProbs);
-		}
-
-		int[] parentSequence = new int[partitionSiteCount];
-
-		// set ancestral sequence for partition if it exists
-		if (partition.hasAncestralSequence) {
-
-			parentSequence = sequence2intArray(partition.ancestralSequence);
-
-		} else {
-
-			double[] frequencies = freqModel.getFrequencies();
-			for (int i = 0; i < partitionSiteCount; i++) {
-				parentSequence[i] = MathUtils.randomChoicePDF(frequencies);
-			}
-
-		}// END: ancestral sequence check
-		
-		for (int i = 0; i < eigenCount; i++) {
-
-			eigenBufferHelper.flipOffset(i);
-
-			branchSubstitutionModel.setEigenDecomposition(beagle, //
-					i, //
-					eigenBufferHelper, //
-					0 //
-					);
-
-		}// END: i loop
-
-		int categoryCount = siteModel.getCategoryCount();
-		traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
-        	
-		return null;
-        }//END: call
-
-	}// END: simulatePartitionCallable class
-	
 	private void simulatePartition(Partition partition) {
 
 		TreeModel treeModel = partition.treeModel;
@@ -393,10 +172,6 @@ public class BeagleSequenceSimulator {
 		// set ancestral sequence for partition if it exists
 		if (partition.hasAncestralSequence) {
 
-//			System.out.println(partition.ancestralSequence.getSequenceString().length());
-//			System.out.println(partitionSiteCount);
-//			System.out.println(replications);
-			
 			parentSequence = sequence2intArray(partition.ancestralSequence);
 
 		} else {
@@ -465,6 +240,7 @@ public class BeagleSequenceSimulator {
 		return beagle;
 	}// END: loadBeagleInstance
 	
+	// TODO: traverse
 	private void traverse(Beagle beagle, //
 			Partition partition, //
 			NodeRef node, //
@@ -486,12 +262,10 @@ public class BeagleSequenceSimulator {
 
 			double[][] probabilities = getTransitionProbabilities(beagle, partition, child, categoryCount, stateCount, matrixBufferHelper, eigenBufferHelper);
 
-			/////////////
-			
-//			System.out.println(partition.ancestralSequence.getSequenceString().length());
-//			System.out.println(partitionSiteCount);
-			
-            /////////////
+			if(DEBUG) {
+				System.out.println("parent sequence:");
+				EpochBranchSubstitutionModel.printArray(parentSequence);
+			}
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
 
@@ -500,12 +274,13 @@ public class BeagleSequenceSimulator {
 				
 			}
 			
+			if (DEBUG) {
+				System.out.println("partition sequence:");
+				EpochBranchSubstitutionModel.printArray(partitionSequence);
+			}
+			
 			if (treeModel.getChildCount(child) == 0) {
 
-				if (DEBUG) {
-					EpochBranchSubstitutionModel.printArray(partitionSequence);
-				}
-				
 				Taxon taxon = treeModel.getNodeTaxon(child);
 
 				if (alignmentMap.containsKey(taxon)) {
@@ -888,5 +663,114 @@ public class BeagleSequenceSimulator {
 		} // END: try-catch block
 
 	}// END: simulateThreePartitions
+	
+	public class simulatePartitionRunnable implements Runnable {
+
+		private Partition partition;
+		private FrequencyModel freqModel;
+		private BranchSubstitutionModel branchSubstitutionModel;
+		private Tree treeModel;
+		private GammaSiteRateModel siteModel;
+		private int partitionSiteCount;
+		private NodeRef root;
+
+		private simulatePartitionRunnable(Partition partition) {
+			this.partition = partition;
+		}// END: Constructor
+
+		@Override
+		public void run() {
+			
+			try {
+			
+				treeModel = partition.treeModel;
+				branchSubstitutionModel = partition.branchSubstitutionModel;
+				siteModel = partition.siteModel;
+				freqModel = partition.freqModel;
+				partitionSiteCount = partition.getPartitionSiteCount();
+
+				root = treeModel.getRoot();
+				
+			// do those only once
+			if(!fieldsSet) {
+				
+				dataType = freqModel.getDataType();
+				simpleAlignment = new SimpleAlignment();
+				simpleAlignment.setDataType(dataType);
+				simpleAlignment.setReportCountStatistics(false);
+				
+				stateCount = dataType.getStateCount();
+				
+				fieldsSet = true;
+			}//END: partitionCount check
+			
+			// Buffer index helpers
+			int eigenCount = branchSubstitutionModel.getEigenCount();
+			BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+			
+			int nodeCount = treeModel.getNodeCount();
+			BufferIndexHelper matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+			
+			int tipCount = treeModel.getExternalNodeCount();
+			BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
+
+			// load beagle
+			Beagle beagle = loadBeagleInstance(partition, eigenBufferHelper,
+					matrixBufferHelper, partialBufferHelper);
+
+			// gamma category rates
+			double[] categoryRates = siteModel.getCategoryRates();
+			beagle.setCategoryRates(categoryRates);
+
+			// weights for gamma category rates
+			double[] categoryWeights = siteModel.getCategoryProportions();
+			beagle.setCategoryWeights(0, categoryWeights);
+
+			// proportion of sites in each category
+			double[] categoryProbs = siteModel.getCategoryProportions();
+			int[] category = new int[partitionSiteCount];
+
+			for (int i = 0; i < partitionSiteCount; i++) {
+				category[i] = MathUtils.randomChoicePDF(categoryProbs);
+			}
+
+			int[] parentSequence = new int[partitionSiteCount];
+
+			// set ancestral sequence for partition if it exists
+			if (partition.hasAncestralSequence) {
+
+				parentSequence = sequence2intArray(partition.ancestralSequence);
+
+			} else {
+
+				double[] frequencies = freqModel.getFrequencies();
+				for (int i = 0; i < partitionSiteCount; i++) {
+					parentSequence[i] = MathUtils.randomChoicePDF(frequencies);
+				}
+
+			}// END: ancestral sequence check
+			
+			for (int i = 0; i < eigenCount; i++) {
+
+				eigenBufferHelper.flipOffset(i);
+
+				branchSubstitutionModel.setEigenDecomposition(beagle, //
+						i, //
+						eigenBufferHelper, //
+						0 //
+						);
+
+			}// END: i loop
+
+			int categoryCount = siteModel.getCategoryCount();
+			traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
+			
+			} catch (RuntimeException e) {
+				e.printStackTrace();
+			}// END: try-catch block
+
+		}// END: run
+
+	}//END: simulatePartitionRunnable class
 	
 } // END: class

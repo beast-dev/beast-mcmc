@@ -3,6 +3,7 @@ package dr.app.gui.chart;
 import dr.inference.trace.TraceDistribution;
 import dr.math.distributions.GammaKDEDistribution;
 import dr.math.distributions.KernelDensityEstimatorDistribution;
+import dr.math.distributions.LogTransformedNormalKDEDistribution;
 import dr.math.distributions.NormalKDEDistribution;
 import dr.stats.Variate;
 import dr.util.FrequencyDistribution;
@@ -34,6 +35,7 @@ public class KDENumericalDensityPlot extends NumericalDensityPlot { //Plot.Abstr
         switch (type) {
             case GAUSSIAN: return new NormalKDEDistribution(samples);
             case GAMMA: return new GammaKDEDistribution(samples);
+            case LOGTRANSFORMEDGAUSSIAN: return new LogTransformedNormalKDEDistribution(samples);
             default:
                 throw new RuntimeException("Unknown type");
         }

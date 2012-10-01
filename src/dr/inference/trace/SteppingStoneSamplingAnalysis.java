@@ -26,6 +26,7 @@ public class SteppingStoneSamplingAnalysis {
     private boolean logBayesFactorCalculated = false;
     private double logBayesFactor;
     private List<Double> maxLogLikelihood;
+    private List<Double> mlContribution;
     private List<Double> orderedTheta;
     
     public SteppingStoneSamplingAnalysis(String logLikelihoodName, List<Double> logLikelihoodSample, List<Double> thetaSample) {
@@ -65,9 +66,13 @@ public class SteppingStoneSamplingAnalysis {
             maxLogLikelihood.add(Collections.max(values));    
         }
 
+        mlContribution = new ArrayList<Double>();
+        
         logBayesFactor = 0.0;
         for (int i = 1; i < orderedTheta.size(); i++) {
-        	logBayesFactor += (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i-1);
+        	double contribution = (orderedTheta.get(i) - orderedTheta.get(i-1)) * maxLogLikelihood.get(i-1);
+        	logBayesFactor += contribution;
+        	mlContribution.add(contribution);
         	//System.out.println(i + ": " + maxLogLikelihood.get(i-1));
         }
         //System.out.println(logBayesFactor);
@@ -80,6 +85,7 @@ public class SteppingStoneSamplingAnalysis {
         	internalSum /= map.get(orderedTheta.get(i-1)).size();
         	//System.out.print(orderedTheta.get(i) + "-" + orderedTheta.get(i-1) + ": " + Math.log(internalSum));
         	logBayesFactor += Math.log(internalSum);
+        	mlContribution.set(i-1, mlContribution.get(i-1) + Math.log(internalSum));
         }
         
         logBayesFactorCalculated = true;
@@ -89,11 +95,15 @@ public class SteppingStoneSamplingAnalysis {
     public String toString() {
         double bf = getLogBayesFactor();
         StringBuffer sb = new StringBuffer();
-        sb.append("PathParameter\tMaxPathLikelihood\n");
+        sb.append("PathParameter\tMaxPathLikelihood\tMLContribution\n");
         for (int i = 0; i < orderedTheta.size(); ++i) {
             sb.append(String.format(FORMAT, orderedTheta.get(i)));
             sb.append("\t");
             sb.append(String.format(FORMAT, maxLogLikelihood.get(i)));
+            sb.append("\t");
+            if (i != (orderedTheta.size()-1)) {
+            	sb.append(String.format(FORMAT, mlContribution.get(i)));
+            }
             sb.append("\n");
         }
 

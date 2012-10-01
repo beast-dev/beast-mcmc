@@ -96,6 +96,7 @@ public abstract class KernelDensityEstimatorDistribution implements Distribution
     public enum Type {
         GAUSSIAN("Gaussian"),
         GAMMA("Gamma"),
+        LOGTRANSFORMEDGAUSSIAN("LogTransformedGaussian"),
         BETA("Beta");
 
         private Type(String text) {

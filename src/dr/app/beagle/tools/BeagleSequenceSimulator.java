@@ -38,7 +38,7 @@ import dr.math.MathUtils;
  */
 public class BeagleSequenceSimulator {
 
-	private final boolean DEBUG = false;
+	private final boolean DEBUG = true;
 	
 	private ArrayList<Partition> partitions;
 	private int replications;
@@ -48,6 +48,8 @@ public class BeagleSequenceSimulator {
 	private ConcurrentHashMap<Taxon, int[]> alignmentMap;
     private boolean fieldsSet = false;
 	
+    private int gapFlag = Integer.MAX_VALUE;
+    
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //
 			int replications //
 	) {
@@ -103,7 +105,10 @@ public class BeagleSequenceSimulator {
 			while (iterator.hasNext()) {
 
 				Entry<?, ?> pairs = (Entry<?, ?>) iterator.next();
-				simpleAlignment.addSequence(intArray2Sequence((Taxon) pairs.getKey(), (int[]) pairs.getValue()));
+//				Taxon taxon = (Taxon) pairs.getKey();
+//				int[] sequence = (int[]) pairs.getValue();
+				
+				simpleAlignment.addSequence(intArray2Sequence((Taxon) pairs.getKey(), (int[]) pairs.getValue(), gapFlag));
 				iterator.remove();
 
 			}// END: while has next
@@ -296,7 +301,8 @@ public class BeagleSequenceSimulator {
 				} else {
 
 					int[] sequence = new int[replications];
-					Arrays.fill(sequence, Integer.MAX_VALUE);
+					// TODO
+					Arrays.fill(sequence, gapFlag);
 
 					int j = 0;
 					for (int i = partition.from; i <= partition.to; i += partition.every) {
@@ -370,7 +376,7 @@ public class BeagleSequenceSimulator {
 		return probabilities;
 	}// END: getTransitionProbabilities
 
-	private Sequence intArray2Sequence(Taxon taxon, int[] seq) {
+	private Sequence intArray2Sequence(Taxon taxon, int[] seq, int gapFlag) {
 
 		StringBuilder sSeq = new StringBuilder();
 
@@ -378,7 +384,13 @@ public class BeagleSequenceSimulator {
 
 			for (int i = 0; i < replications; i++) {
 
-				sSeq.append(dataType.getTriplet(seq[i]));
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getTriplet(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getTriplet(seq[i]));
+				}// END: gap check
 
 			}// END: replications loop
 
@@ -386,7 +398,13 @@ public class BeagleSequenceSimulator {
 
 			for (int i = 0; i < replications; i++) {
 
-				sSeq.append(dataType.getCode(seq[i]));
+				int state = seq[i];
+
+				if (state == gapFlag) {
+					sSeq.append(dataType.getCode(dataType.getGapState()));
+				} else {
+					sSeq.append(dataType.getCode(seq[i]));
+				}// END: gap check
 
 			}// END: replications loop
 
@@ -403,8 +421,7 @@ public class BeagleSequenceSimulator {
 
 			int k = 0;
 			for (int i = 0; i < replications; i++) {
-				array[i] = ((Codons) dataType).getState(sequence.getChar(k),
-						sequence.getChar(k + 1), sequence.getChar(k + 2));
+				array[i] = ((Codons) dataType).getState(sequence.getChar(k), sequence.getChar(k + 1), sequence.getChar(k + 2));
 				k += 3;
 			}// END: replications loop
 

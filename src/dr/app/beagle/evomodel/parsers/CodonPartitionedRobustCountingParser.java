@@ -58,11 +58,21 @@ public class CodonPartitionedRobustCountingParser extends AbstractXMLObjectParse
         AncestralStateBeagleTreeLikelihood[] partition = new AncestralStateBeagleTreeLikelihood[3];
         String[] labels = new String[]{FIRST, SECOND, THIRD};
 
+        int patternCount = -1;
+
         BranchRateModel testBranchRateModel = null;
         for (int i = 0; i < 3; i++) {
             partition[i] = (AncestralStateBeagleTreeLikelihood)
                     xo.getChild(labels[i]).getChild(AncestralStateBeagleTreeLikelihood.class);
 
+            if (i == 0) {
+                patternCount = partition[i].getPatternCount();
+            } else {
+                if (partition[i].getPatternCount() != patternCount) {
+                    throw new XMLParseException("Codon-partitioned robust counting requires all partitions to have the same length." +
+                            " Make sure that partitions include all unique sites and do not strip gaps.");
+                }
+            }
             // Ensure that siteRateModel has one category
             if (partition[i].getSiteRateModel().getCategoryCount() > 1) {
                 throw new XMLParseException("Robust counting currently only implemented for single category models");

@@ -50,7 +50,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		// number of sites
 		replicatesField.setColumns(8);
-		replicatesField.setValue(data.replicateCount);
+		replicatesField.setValue(data.sequenceLength);
 		
 		optionPanel.addComponents(replicatesLabel, replicatesField);
 
@@ -79,7 +79,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
-		data.replicateCount = replicatesField.getValue();
+		data.sequenceLength = replicatesField.getValue();
 //		frame.fireModelChanged();
 	}
 

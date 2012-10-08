@@ -38,7 +38,7 @@ import dr.math.MathUtils;
  */
 public class BeagleSequenceSimulator {
 
-	private final boolean DEBUG = true;
+	private final boolean DEBUG = false;
 	
 	private ArrayList<Partition> partitions;
 	private int replications;

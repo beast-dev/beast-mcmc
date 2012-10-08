@@ -113,8 +113,8 @@ public class BeagleSequenceSimulatorApp {
 				
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
-				System.out.println("Do the evolution baby!");// Cool sub-title
-																// for a paper
+				// Cool sub-title for a paper
+				System.out.println("Do the evolution baby!");
 				
 			} catch (UnsupportedClassVersionError e) {
 				

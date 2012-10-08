@@ -30,7 +30,7 @@ public class BeagleSequenceSimulatorData {
 	
 	public File treeFile = null;
 	public TaxonList taxonList = new Taxa();
-	public int replicateCount = 1000;
+	public int sequenceLength = 1000;
 	public TreeModel treeModel;
 	
 	// ///////////////////////////

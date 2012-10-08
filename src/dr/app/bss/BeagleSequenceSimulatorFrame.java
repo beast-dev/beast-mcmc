@@ -81,6 +81,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -96,6 +97,7 @@ import javax.swing.plaf.BorderUIResource;
 import javax.swing.text.BadLocationException;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
+import dr.app.beagle.tools.Partition;
 import dr.evolution.io.Importer.ImportException;
 
 @SuppressWarnings("serial")
@@ -255,7 +257,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	//TODO: fix to work with new simulator
+	//TODO: fix to work with multiple partitions
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -272,16 +274,23 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 					writer = new PrintWriter(new FileWriter(outFile));
 
-					BeagleSequenceSimulator beagleSequenceSimulator = null;
+					ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 					
-//					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-//							data.treeModel, //
-//							data.createBranchSubstitutionModel(), //
-//							data.createSiteRateModel(), //
-//							data.createBranchRateModel(), //
-//							data.createFrequencyModel(), //
-//							data.replicateCount //
-//					);
+					// create partition
+					Partition partition = new Partition(data.treeModel, //
+							data.createBranchSubstitutionModel(), //
+							data.createSiteRateModel(), //
+							data.createBranchRateModel(), //
+							data.createFrequencyModel(), //
+							0, // from
+							data.sequenceLength - 1, // to
+							1 // every
+					);
+					
+					partitionsList.add(partition);
+					
+					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(partitionsList,
+							data.sequenceLength);
 
 					writer.println(beagleSequenceSimulator.simulate().toString());
 					writer.close();
@@ -296,7 +305,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				statusLabel.setText("Generated " + data.replicateCount + " replicates.");
+				statusLabel.setText("Generated " + data.sequenceLength + " replicates.");
 				progressBar.setIndeterminate(false);
 
 			}// END: done

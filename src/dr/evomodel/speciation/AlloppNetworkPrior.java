@@ -34,8 +34,8 @@ public class AlloppNetworkPrior extends Likelihood.Abstract {
 
         numHybsLogL = new double[asnm.maxNumberOfHybPopParameters()+1];
         for (int h = 0; h < numHybsLogL.length; h++) {
-            numHybsLogL[h] = -h * Math.log(4.0);
-            // grjtodo-soon the form of the function and the 4.0 here is experimental
+            numHybsLogL[h] = -h * Math.log(9.0);
+            // grjtodo-soon the form of the function and the 9.0 here is experimental
         }
 
 		

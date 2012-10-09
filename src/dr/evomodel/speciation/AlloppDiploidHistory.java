@@ -19,7 +19,7 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
  * AlloppDiploidHistory represents part of the network before hybridizations.
  * It is basically a tree with some tips representing diploid species at present time
  * and others representing the points at which hybridization occurs.
- * 
+ *
  * @author Graham Jones
  *         Date: 13/03/2012
  */
@@ -45,15 +45,15 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 
 public class AlloppDiploidHistory implements SlidableTree {
-	private DipHistNode[] dhnodes;
-	private int rootn;
-	private int nextn;
-	private AlloppSpeciesBindings apsp;
+    private DipHistNode[] dhnodes;
+    private int rootn;
+    private int nextn;
+    private AlloppSpeciesBindings apsp;
 
 
     /******************************** Inner classes ****************************************/
 
-    public enum LegLorR {left, right};
+    public enum LegLorR {left, right, dud};
 
 
     // Small class for returning two heights. For ChangeNumHybs move
@@ -78,18 +78,18 @@ public class AlloppDiploidHistory implements SlidableTree {
     * For a hyb-tip, tettree specifies the index of the tetratree whose
     * root comes from it. It is not used for other nodes.
     */
-	private class DipHistNode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
-		private int anc;
+    private class DipHistNode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
+        private int anc;
         private int lft;
         private int rgt;
-		private double height;
-		private Taxon taxon;
-		private FixedBitSet union;
-		private int tettree;
-		private int leg;    // 0 is left, 1 is right
-		private int nodeNumber;
+        private double height;
+        private Taxon taxon;
+        private FixedBitSet union;
+        private int tettree;
+        private LegLorR leg;
+        private int nodeNumber;
 
-		// dud constuctor
+        // dud constuctor
         DipHistNode(int nn) {
             anc = -1;
             lft = -1;
@@ -98,7 +98,7 @@ public class AlloppDiploidHistory implements SlidableTree {
             taxon = new Taxon("");
             union = null;
             tettree = -1;
-            leg = -1;
+            leg = LegLorR.dud;
             nodeNumber = nn;
         }
 
@@ -137,71 +137,71 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
         @Override
-		public AlloppNode getChild(int ch) {
-			return ch==0 ? dhnodes[lft] : dhnodes[rgt];
-		}
+        public AlloppNode getChild(int ch) {
+            return ch==0 ? dhnodes[lft] : dhnodes[rgt];
+        }
 
-		@Override
-		public AlloppNode getAnc() {
-			return dhnodes[anc];
-		}
+        @Override
+        public AlloppNode getAnc() {
+            return dhnodes[anc];
+        }
 
 
-		@Override
-		public double getHeight() {
-			return height;
-		}
-		
-		@Override
-		public Taxon getTaxon() {
-			return taxon;
-		}
-		
-		@Override
-		public FixedBitSet getUnion() {
-			return union;
-		}
+        @Override
+        public double getHeight() {
+            return height;
+        }
 
-		@Override
-		public void setChild(int ch, AlloppNode newchild) {
+        @Override
+        public Taxon getTaxon() {
+            return taxon;
+        }
+
+        @Override
+        public FixedBitSet getUnion() {
+            return union;
+        }
+
+        @Override
+        public void setChild(int ch, AlloppNode newchild) {
             int newch = ((DipHistNode)newchild).nodeNumber;
             if (ch == 0) {
                 lft = newch;
             } else {
                 rgt = newch;
             }
-		}
+        }
 
-		@Override
-		public void setAnc(AlloppNode anc) {
-			this.anc = ((DipHistNode)anc).nodeNumber;
-		}
+        @Override
+        public void setAnc(AlloppNode anc) {
+            this.anc = ((DipHistNode)anc).nodeNumber;
+        }
 
-		@Override
-		public void setTaxon(String name) {
-			this.taxon = new Taxon(name);
-			
-		}
+        @Override
+        public void setTaxon(String name) {
+            this.taxon = new Taxon(name);
 
-		
-		@Override
-		public void setHeight(double height) {
-			this.height = height;
-			
-		}
+        }
 
-		@Override
-		public void setUnion(FixedBitSet union) {
-			this.union = union;
-		}
 
-		@Override
-		public void addChildren(AlloppNode c0, AlloppNode c1) {
+        @Override
+        public void setHeight(double height) {
+            this.height = height;
+
+        }
+
+        @Override
+        public void setUnion(FixedBitSet union) {
+            this.union = union;
+        }
+
+        @Override
+        public void addChildren(AlloppNode c0, AlloppNode c1) {
             lft = ((DipHistNode)c0).nodeNumber;
             dhnodes[lft].anc = nodeNumber;
             rgt = ((DipHistNode)c1).nodeNumber;
             dhnodes[rgt].anc = nodeNumber;
-			}
+        }
 
         @Override
         public String asText(int indentlen) {
@@ -218,94 +218,118 @@ public class AlloppDiploidHistory implements SlidableTree {
             formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
             formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
             formatter.format("%3d ", tettree);
-            formatter.format("%3d ", leg);
+            String legtext = " * ";
+            if (leg == LegLorR.left) {
+                legtext = " L ";
+            }
+            if (leg == LegLorR.right) {
+                legtext = " R ";
+            }
+            formatter.format("%s", legtext);
             return s.toString();
         }
 
 
         @Override
-		public int nofChildren() {
-			return (lft < 0) ? 0 : 2;
-		}
+        public int nofChildren() {
+            return (lft < 0) ? 0 : 2;
+        }
 
-		@Override
-		public int getNumber() {
-			return nodeNumber;
-		}
+        @Override
+        public int getNumber() {
+            return nodeNumber;
+        }
 
-		@Override
-		public void setNumber(int n) {
-			nodeNumber = n;
-			
-		}
+        @Override
+        public void setNumber(int n) {
+            nodeNumber = n;
+
+        }
 
 
 
-	}
+    }
 
 
     /******************************** Constructors ****************************************/
 
 
+
+    private class JoiningNode {
+        int nn;
+        boolean hasdip;
+        JoiningNode(int nn, boolean hasdip) {
+            this.nn = nn;
+            this.hasdip = hasdip;
+        }
+    }
+
+
     /*
       * Constructor makes initial random AlloppDiploidHistory from a diploid tree
-      * and a tetratree.
+      * and previously constructed tetratrees.
       * apsp needed for speciesseqEmptyUnion(). grjtodo-oneday really needed?
       *
       */
-    AlloppDiploidHistory(Taxon [] dipspp, AlloppLeggedTree tettree, AlloppSpeciesBindings apsp) {
+    AlloppDiploidHistory(Taxon [] dipspp, ArrayList<AlloppLeggedTree> tettrees, double rate, AlloppSpeciesBindings apsp) {
         this.apsp = apsp;
         int nofdips = dipspp.length;
-        int ntips = nofdips + 2;
-        double rate = 1.0; // scale later (in network)
+        int ntips = nofdips + 2 * tettrees.size();
         // Make array of dud nodes
         dhnodes = new DipHistNode[2 * ntips - 1];
         for (int i = 0; i < dhnodes.length; i++) {
             dhnodes[i] = new DipHistNode(i);
         }
         // Make tips for diploids and add them to tojoin[]
-        ArrayList<Integer> tojoin = new ArrayList<Integer>();
+        ArrayList<JoiningNode> tojoin = new ArrayList<JoiningNode>();
         for (nextn = 0; nextn < nofdips; nextn++) {
             dhnodes[nextn].taxon = new Taxon(dipspp[nextn].getId());
             dhnodes[nextn].height = 0.0;
-            tojoin.add(nextn);
+            tojoin.add(new JoiningNode(nextn, true));
         }
-        // Make two tips for the tet tree, and add to tojoin[]
-        double tettipsheight = tettree.getRootHeight() + MathUtils.nextExponential(rate);
-        dhnodes[nextn].tettree = 0;
-        dhnodes[nextn].leg = 0;
-        tettree.setDiphistLftLeg(nextn);
-        dhnodes[nextn].height = tettipsheight;
-        tojoin.add(nextn);
-        nextn++;
-        dhnodes[nextn].tettree = 0;
-        dhnodes[nextn].leg = 1;
-        tettree.setDiphistRgtLeg(nextn);
-        dhnodes[nextn].height = tettipsheight;
-        tojoin.add(nextn);
-        nextn ++;
-        // build the tree from tips, adding the hyb-tips as their height is reached
-        double treeheight = tettipsheight;
+        // Make two tips for each tet tree, and add to tojoin[]
+        for (int tt = 0; tt < tettrees.size(); tt++) {
+            AlloppLeggedTree ttree = tettrees.get(tt);
+            double tettipsheight = ttree.getRootHeight() + MathUtils.nextExponential(rate);
+            dhnodes[nextn].tettree = tt;
+            dhnodes[nextn].leg = LegLorR.left;
+            ttree.setDiphistLftLeg(nextn);
+            dhnodes[nextn].height = tettipsheight;
+            tojoin.add(new JoiningNode(nextn, false));
+            nextn++;
+            dhnodes[nextn].tettree = tt;
+            dhnodes[nextn].leg = LegLorR.right;
+            ttree.setDiphistRgtLeg(nextn);
+            dhnodes[nextn].height = tettipsheight;
+            tojoin.add(new JoiningNode(nextn, false));
+            nextn ++;
+            }
+
+        // build the tree from tips, taking care not to join the last diploids before all tets used up
         for (int i = 0; i < ntips-1; i++) {
             int numtojoin = tojoin.size();
-            double nextheight = treeheight + MathUtils.nextExponential(numtojoin*rate);
+            int numwithdips = 0;
+            for (JoiningNode jn : tojoin) {
+                numwithdips += jn.hasdip ? 1 : 0;
+            }
             int j = MathUtils.nextInt(numtojoin);
-            Integer child0 = tojoin.get(j);
-            if (numtojoin > 2) {
-                while (dhnodes[child0].lft < 0  &&  dhnodes[child0].tettree < 0) {
+            JoiningNode child0 = tojoin.get(j);
+            // if down to 2 diploids, and still a tet, ensure ch0 has no dips
+            if (numtojoin > 2  &&  numwithdips == 2) {
+                while (child0.hasdip) {
                     j = MathUtils.nextInt(numtojoin);
                     child0 = tojoin.get(j);
                 }
             }
             tojoin.remove(j);
             int k = MathUtils.nextInt(numtojoin-1);
-            Integer child1 = tojoin.get(k);
+            JoiningNode child1 = tojoin.get(k);
             tojoin.remove(k);
-            dhnodes[nextn].lft = child0;   dhnodes[child0].anc = nextn;
-            dhnodes[nextn].rgt = child1;   dhnodes[child1].anc = nextn;
-            dhnodes[nextn].height = nextheight;
-            treeheight = dhnodes[nextn].height;
-            tojoin.add(nextn);
+            dhnodes[nextn].lft = child0.nn;   dhnodes[child0.nn].anc = nextn;
+            dhnodes[nextn].rgt = child1.nn;   dhnodes[child1.nn].anc = nextn;
+            double maxchhgt = Math.max(dhnodes[child0.nn].height, dhnodes[child1.nn].height);
+            dhnodes[nextn].height = maxchhgt + MathUtils.nextExponential(numtojoin*rate);
+            tojoin.add(new JoiningNode(nextn, child0.hasdip || child1.hasdip));
             nextn++;
         }
         rootn = nextn - 1;
@@ -346,19 +370,19 @@ public class AlloppDiploidHistory implements SlidableTree {
         // link the hyb-tips to tet roots.
         for (int n = 0; n < dhnodes.length; n++) {
             String tipname = dhnodes[n].taxon.getId();
-            int leg = -1;
+            LegLorR leg = LegLorR.dud;
             int tt = -1;
-            if (tipname.contains("L")) { leg = 0; }
-            if (tipname.contains("R")) { leg = 1; }
+            if (tipname.contains("L")) { leg = LegLorR.left; }
+            if (tipname.contains("R")) { leg = LegLorR.right; }
             if (tipname.contains("0")) { tt = 0; }
             if (tipname.contains("1")) { tt = 1; }
             if (tipname.contains("2")) { tt = 2; }
-            if (leg >= 0) {
+            if (leg != LegLorR.dud) {
                 assert tt >= 0;
                 dhnodes[n].tettree = tt;
                 dhnodes[n].leg = leg;
-                if (leg == 0) { tettrees.get(tt).setDiphistLftLeg(n); }
-                if (leg == 1) { tettrees.get(tt).setDiphistRgtLeg(n); }
+                if (leg == LegLorR.left) { tettrees.get(tt).setDiphistLftLeg(n); }
+                if (leg == LegLorR.right) { tettrees.get(tt).setDiphistRgtLeg(n); }
             }
         }
         dhnodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
@@ -471,10 +495,10 @@ public class AlloppDiploidHistory implements SlidableTree {
     }
 
 
-	public boolean tipIsDiploidTip(NodeRef node) {
+    public boolean tipIsDiploidTip(NodeRef node) {
         assert dhnodes[node.getNumber()].lft < 0;
-		return (dhnodes[node.getNumber()].tettree < 0);
-	}
+        return (dhnodes[node.getNumber()].tettree < 0);
+    }
 
     // For move that merges two tettrees. This is part of
     // test that they can be merged.
@@ -560,13 +584,13 @@ public class AlloppDiploidHistory implements SlidableTree {
         tmpnodes[oldn] = new DipHistNode(oldn);
         tmpnodes[oldn].height = tiphgt;
         tmpnodes[oldn].tettree = tt1;
-        tmpnodes[oldn].leg = 0;
+        tmpnodes[oldn].leg = LegLorR.left;
         tettree1.setDiphistLftLeg(oldn);
 
         tmpnodes[oldn+1] = new DipHistNode(oldn+1);
         tmpnodes[oldn+1].height = tiphgt;
         tmpnodes[oldn+1].tettree = tt1;
-        tmpnodes[oldn+1].leg = 1;
+        tmpnodes[oldn+1].leg = LegLorR.right;
         tettree1.setDiphistRgtLeg(oldn+1);
 
         // two new nodes to go into existing branches
@@ -620,7 +644,7 @@ public class AlloppDiploidHistory implements SlidableTree {
     }
 
     double getHeightFromIndex(int n) {
-       return dhnodes[n].height;
+        return dhnodes[n].height;
     }
 
     int getLftFromIndex(int n) {
@@ -630,7 +654,7 @@ public class AlloppDiploidHistory implements SlidableTree {
         return dhnodes[n].rgt;
     }
     Taxon getTaxonFromIndex(int n) {
-         return dhnodes[n].taxon;
+        return dhnodes[n].taxon;
     }
 
 
@@ -650,7 +674,7 @@ public class AlloppDiploidHistory implements SlidableTree {
             if (node.lft >= 0) {
                 heights.add(node.height);
             } else {
-                if (node.tettree >= 0  &&  node.leg == 0) {
+                if (node.tettree >= 0  &&  node.leg == LegLorR.left) {
                     heights.add(node.height);
                 }
             }
@@ -693,9 +717,15 @@ public class AlloppDiploidHistory implements SlidableTree {
         return dhnodes[node].tettree;
     }
 
-    int getNodeLeg(int node) {
+    LegLorR getNodeLeg(int node) {
         return dhnodes[node].leg;
     }
+
+    // for move that flips all seqs of tet tree and its legs
+    void setNodeLeg(int nn, LegLorR leg) {
+        dhnodes[nn].leg = leg;
+    }
+
 
     // for merging tetrees in move
     public void setNodeTettree(int node, int tt) {
@@ -764,7 +794,7 @@ public class AlloppDiploidHistory implements SlidableTree {
                     if (dhnodes[i].height <= 0) {
                         return false;
                     }
-                    if (dhnodes[i].leg < 0) {
+                    if (dhnodes[i].leg != LegLorR.left  &&  dhnodes[i].leg != LegLorR.right) {
                         return false;
                     }
                 } else {
@@ -822,26 +852,28 @@ public class AlloppDiploidHistory implements SlidableTree {
       * nodes in any order, but it would complicate things elsewhere.)
       */
     private void buildSubtreeFromNodes(AlloppSpeciesNetworkModel apspnet,
-                                      DipHistNode[] tmpnodes, int n) {
+                                       DipHistNode[] tmpnodes, int n) {
         if (tmpnodes[n].lft < 0) {
             assert tmpnodes[n].rgt < 0;
             dhnodes[nextn] = new DipHistNode(nextn, tmpnodes[n]);
             int tt = dhnodes[nextn].tettree;
-            int leg = dhnodes[nextn].leg;
+            LegLorR leg = dhnodes[nextn].leg;
             AlloppLeggedTree ttree;
             if (tt >= 0) {
                 ttree = apspnet.getTetraploidTree(tt);
                 if (ttree.getDiphistLftLeg() == n) {
-                    if (leg == 0) {
+                    if (leg == LegLorR.left) {
                         ttree.setDiphistLftLeg(nextn);
                     } else {
+                        assert leg == LegLorR.right;
                         ttree.setDiphistRgtLeg(nextn);
                     }
                 } else {
                     assert apspnet.getTetraploidTree(tt).getDiphistRgtLeg() == n;
-                    if (leg == 0) {
+                    if (leg == LegLorR.left) {
                         ttree.setDiphistLftLeg(nextn);
                     } else {
+                        assert leg == LegLorR.right;
                         ttree.setDiphistRgtLeg(nextn);
                     }
                 }
@@ -885,37 +917,37 @@ public class AlloppDiploidHistory implements SlidableTree {
     }
 
     // for testing
-	private SimpleTree makesimpletree() {
-    	SimpleNode[] snodes = new SimpleNode[dhnodes.length];
-    	for (int n = 0; n < dhnodes.length; n++) {
-    		snodes[n] = new SimpleNode();
-    		snodes[n].setTaxon(null); // I use taxon==null to identify joined leg node when removing hybtips
-    	}
-		makesimplesubtree(snodes, 0, dhnodes[rootn]);
-		return new SimpleTree(snodes[dhnodes.length-1]);
-	}
- 	
-	
-	// for testing. for makesimpletree()
-	private int makesimplesubtree(SimpleNode[] snodes, int nextsn, DipHistNode dhnode) {
-		if (dhnode.lft < 0) {
-			Taxon tx = new Taxon(dhnode.taxon.getId());
-			snodes[nextsn].setTaxon(tx);
-			if (dhnode.tettree >= 0) {
-				snodes[nextsn].setAttribute("tettree", dhnode.tettree);
-				snodes[nextsn].setAttribute("leg", dhnode.leg);
-			}
-		} else {
-			nextsn = makesimplesubtree(snodes, nextsn, dhnodes[dhnode.lft]);
-			int subtree0 = nextsn-1;
-			nextsn = makesimplesubtree(snodes, nextsn, dhnodes[dhnode.rgt]);
-			int subtree1 = nextsn-1;
-			snodes[nextsn].addChild(snodes[subtree0]);
-			snodes[nextsn].addChild(snodes[subtree1]);
-		}
-		snodes[nextsn].setHeight(dhnode.height);
-		return nextsn+1;
-	}
+    private SimpleTree makesimpletree() {
+        SimpleNode[] snodes = new SimpleNode[dhnodes.length];
+        for (int n = 0; n < dhnodes.length; n++) {
+            snodes[n] = new SimpleNode();
+            snodes[n].setTaxon(null); // I use taxon==null to identify joined leg node when removing hybtips
+        }
+        makesimplesubtree(snodes, 0, dhnodes[rootn]);
+        return new SimpleTree(snodes[dhnodes.length-1]);
+    }
+
+
+    // for testing. for makesimpletree()
+    private int makesimplesubtree(SimpleNode[] snodes, int nextsn, DipHistNode dhnode) {
+        if (dhnode.lft < 0) {
+            Taxon tx = new Taxon(dhnode.taxon.getId());
+            snodes[nextsn].setTaxon(tx);
+            if (dhnode.tettree >= 0) {
+                snodes[nextsn].setAttribute("tettree", dhnode.tettree);
+                snodes[nextsn].setAttribute("leg", dhnode.leg);
+            }
+        } else {
+            nextsn = makesimplesubtree(snodes, nextsn, dhnodes[dhnode.lft]);
+            int subtree0 = nextsn-1;
+            nextsn = makesimplesubtree(snodes, nextsn, dhnodes[dhnode.rgt]);
+            int subtree1 = nextsn-1;
+            snodes[nextsn].addChild(snodes[subtree0]);
+            snodes[nextsn].addChild(snodes[subtree1]);
+        }
+        snodes[nextsn].setHeight(dhnode.height);
+        return nextsn+1;
+    }
 
 
     // for testing
@@ -941,5 +973,5 @@ public class AlloppDiploidHistory implements SlidableTree {
 
 
 
-   
+
 }

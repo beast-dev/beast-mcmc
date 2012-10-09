@@ -228,9 +228,8 @@ public class AlloppLeggedTree implements  SlidableTree  {
      * Constructor makes a random starting (homoploid) tree.
      * Legs are left to AlloppDiploidHistory to do.
      */
-    public AlloppLeggedTree(Taxon[] taxa) {
+    public AlloppLeggedTree(Taxon[] taxa, double rate) {
         int noftets = taxa.length;
-        double rate = 1.0; // scale later (in network)
 
         // Make array of dud nodes
         altnodes = new ALTNode[2 * noftets - 1];
@@ -511,6 +510,21 @@ public class AlloppLeggedTree implements  SlidableTree  {
      	}
      	return count;
      }
+
+
+    public ArrayList<Taxon> getSpeciesTaxons() {
+        ArrayList<Taxon> sptxs = new ArrayList<Taxon>();
+        for (int n = 0; n < altnodes.length; n++) {
+            if (altnodes[n].nofChildren() == 0) {
+                Taxon taxon = altnodes[n].getTaxon();
+                sptxs.add(taxon);
+            }
+        }
+        assert sptxs.size() == getExternalNodeCount();
+        return sptxs;
+    }
+
+
 
 
     public void fillinTipUnions(AlloppSpeciesBindings apsp, int leg) {

@@ -23,7 +23,7 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 /**
  * An AlloppMulLabTree represents the species network as single 
  * binary tree with tips that can be multiply labelled with species. 
- * 
+ *
  * @author Graham Jones
  *         Date: 13/09/2011
  */
@@ -59,10 +59,10 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
  * can implement the Tree interface.
  */
 public class AlloppMulLabTree  {
-	private MulLabNode[] mlnodes;
-	private int rootn;
-	private int nextn;
-	private AlloppSpeciesBindings apsp;
+    private MulLabNode[] mlnodes;
+    private int rootn;
+    private int nextn;
+    private AlloppSpeciesBindings apsp;
     private Parameter tippopvals;
     private Parameter rootpopvals;
     private double [] hybpopvals;
@@ -83,166 +83,166 @@ public class AlloppMulLabTree  {
     * each individual of the species. There is one bit for each Taxon like
     * "c0" or "c1"
     */
-	private class MulLabNode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
+    private class MulLabNode extends AlloppNode.Abstract implements AlloppNode, NodeRef {
         private int nodeNumber;
         private int anc;
-		private int lft;
+        private int lft;
         private int rgt;
-		private double height;
+        private double height;
         private boolean tetraroot;   // true iff this node is root of a teraploid subtree
         private boolean intetratree;  // true iff this is in a tetratree
         private boolean tetraancestor;  // true iff this is a node with no diploid tip descendants
         private int ttreeindex;
         private double hybridheight;
-		private FixedBitSet union;
-		private ArrayList<Double> coalheights;
-		private int nlineages;
-		private Taxon taxon;
-		private int tippopindex;
-		private int hybpopindex;
-		private int rootpopindex;
+        private FixedBitSet union;
+        private ArrayList<Double> coalheights;
+        private int nlineages;
+        private Taxon taxon;
+        private int tippopindex;
+        private int hybpopindex;
+        private int rootpopindex;
 
-		// dud constuctor
-		MulLabNode(int nn) {
+        // dud constuctor
+        MulLabNode(int nn) {
             nodeNumber = nn;
-			anc = -1;
-			lft = -1;
+            anc = -1;
+            lft = -1;
             rgt = -1;
-			height = -1.0;    
-			tetraroot = false;
+            height = -1.0;
+            tetraroot = false;
             intetratree = false;
             tetraancestor = false;
             ttreeindex = -1;
-			hybridheight = -1.0;   
-			coalheights = new ArrayList<Double>();
-			taxon = new Taxon("");
-			tippopindex = -1;
-			hybpopindex	= -1;
-			rootpopindex = -1;
-		}
+            hybridheight = -1.0;
+            coalheights = new ArrayList<Double>();
+            taxon = new Taxon("");
+            tippopindex = -1;
+            hybpopindex	= -1;
+            rootpopindex = -1;
+        }
 
 
-		public double tippop() {
-			return tippopvals.getParameterValue(tippopindex);
-		}
+        public double tippop() {
+            return tippopvals.getParameterValue(tippopindex);
+        }
 
-		public double hybpop() {
-			return hybpopvals[hybpopindex];
-		}
+        public double hybpop() {
+            return hybpopvals[hybpopindex];
+        }
 
-		public double rootpop() {
-			return rootpopvals.getParameterValue(rootpopindex);
-		}
+        public double rootpop() {
+            return rootpopvals.getParameterValue(rootpopindex);
+        }
 
         @Override
-		public String asText(int indentlen) {
-			StringBuilder s = new StringBuilder();
-			Formatter formatter = new Formatter(s, Locale.US);
-			if (lft < 0) {
-				formatter.format("%s ", taxon.getId());
-			} else {
-				formatter.format("%s ", "+");
-			}
-			while (s.length() < 20-indentlen) {
-				formatter.format("%s", " "); 
-			}
-			formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
-			formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
-			double tippop = (tippopindex >= 0) ? tippop() : -1.0;
-			formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(tippopindex), AlloppMisc.nonnegIn8Chars(tippop));
-			double hybpop = (hybpopindex >= 0) ? hybpop() : -1.0;
-			formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(hybpopindex), AlloppMisc.nonnegIn8Chars(hybpop));
-			double rootpop = (rootpopindex >= 0) ? rootpop() : -1.0;
-			formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(rootpopindex), AlloppMisc.nonnegIn8Chars(rootpop));
-			formatter.format("%s ", tetraroot ? "tetroot" : "       ");
-			formatter.format("%s ", AlloppMisc.nonnegIn8Chars(hybridheight));		
-			formatter.format("%3d  ", nlineages);
-			for (int c = 0; c < coalheights.size(); c++) {
-				formatter.format(AlloppMisc.nonnegIn8Chars(coalheights.get(c)) + ",");
-			}
-			return s.toString();
-		}
+        public String asText(int indentlen) {
+            StringBuilder s = new StringBuilder();
+            Formatter formatter = new Formatter(s, Locale.US);
+            if (lft < 0) {
+                formatter.format("%s ", taxon.getId());
+            } else {
+                formatter.format("%s ", "+");
+            }
+            while (s.length() < 20-indentlen) {
+                formatter.format("%s", " ");
+            }
+            formatter.format("%s ", AlloppMisc.nonnegIn8Chars(height));
+            formatter.format("%20s ", AlloppMisc.FixedBitSetasText(union));
+            double tippop = (tippopindex >= 0) ? tippop() : -1.0;
+            formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(tippopindex), AlloppMisc.nonnegIn8Chars(tippop));
+            double hybpop = (hybpopindex >= 0) ? hybpop() : -1.0;
+            formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(hybpopindex), AlloppMisc.nonnegIn8Chars(hybpop));
+            double rootpop = (rootpopindex >= 0) ? rootpop() : -1.0;
+            formatter.format("%s %s ", AlloppMisc.nonnegIntIn2Chars(rootpopindex), AlloppMisc.nonnegIn8Chars(rootpop));
+            formatter.format("%s ", tetraroot ? "tetroot" : "       ");
+            formatter.format("%s ", AlloppMisc.nonnegIn8Chars(hybridheight));
+            formatter.format("%3d  ", nlineages);
+            for (int c = 0; c < coalheights.size(); c++) {
+                formatter.format(AlloppMisc.nonnegIn8Chars(coalheights.get(c)) + ",");
+            }
+            return s.toString();
+        }
 
 
-		@Override
-		public int nofChildren() {
-			return ((lft < 0) ? 0 : 2);
-		}
+        @Override
+        public int nofChildren() {
+            return ((lft < 0) ? 0 : 2);
+        }
 
 
-		@Override
-		public AlloppNode getChild(int ch) {
+        @Override
+        public AlloppNode getChild(int ch) {
             return ch==0 ? mlnodes[lft] : mlnodes[rgt];
-		}
+        }
 
 
-		@Override
-		public AlloppNode getAnc() {
-			return mlnodes[anc];
-		}
+        @Override
+        public AlloppNode getAnc() {
+            return mlnodes[anc];
+        }
 
 
 
-		@Override
-		public double getHeight() {
-			return height;
-		}
+        @Override
+        public double getHeight() {
+            return height;
+        }
 
 
-		@Override
-		public FixedBitSet getUnion() {
-			return union;
-		}
+        @Override
+        public FixedBitSet getUnion() {
+            return union;
+        }
 
 
-		@Override
-		public void setChild(int ch, AlloppNode newchild) {
+        @Override
+        public void setChild(int ch, AlloppNode newchild) {
             int newch = ((MulLabNode)newchild).nodeNumber;
             if (ch == 0) {
                 lft = newch;
             } else {
                 rgt = newch;
             }
-		}
+        }
 
 
-		@Override
-		public void setAnc(AlloppNode anc) {
+        @Override
+        public void setAnc(AlloppNode anc) {
             this.anc = ((MulLabNode)anc).nodeNumber;
-		}
+        }
 
-		@Override
-		public Taxon getTaxon() {
-			return taxon;
-		}
-
-
-		@Override
-		public void setTaxon(String name) {
-			taxon = new Taxon(name);
-		}
+        @Override
+        public Taxon getTaxon() {
+            return taxon;
+        }
 
 
-		@Override
-		public void setHeight(double height) {
-			this.height = height;
-		}
+        @Override
+        public void setTaxon(String name) {
+            taxon = new Taxon(name);
+        }
 
 
-		@Override
-		public void setUnion(FixedBitSet union) {
-			this.union = union;
-			
-		}
- 
-				
-		@Override
-		public void addChildren(AlloppNode c0, AlloppNode c1) {
+        @Override
+        public void setHeight(double height) {
+            this.height = height;
+        }
+
+
+        @Override
+        public void setUnion(FixedBitSet union) {
+            this.union = union;
+
+        }
+
+
+        @Override
+        public void addChildren(AlloppNode c0, AlloppNode c1) {
             lft = ((MulLabNode)c0).nodeNumber;
             mlnodes[lft].anc = nodeNumber;
             rgt = ((MulLabNode)c1).nodeNumber;
             mlnodes[rgt].anc = nodeNumber;
-			}
+        }
 
 
         @Override
@@ -257,77 +257,77 @@ public class AlloppMulLabTree  {
     }
 
 
-	private class SpSqUnion {
-		public FixedBitSet spsqunion;
-		public FixedBitSet spunion;
-		public SpSqUnion(FixedBitSet spsqunion) {
-			this.spsqunion = spsqunion;
-			spunion = apsp.spsqunion2spunion(spsqunion);
-		}
-	}
+    private class SpSqUnion {
+        public FixedBitSet spsqunion;
+        public FixedBitSet spunion;
+        public SpSqUnion(FixedBitSet spsqunion) {
+            this.spsqunion = spsqunion;
+            spunion = apsp.spsqunion2spunion(spsqunion);
+        }
+    }
 
 
-	private class PopulationAndLineages {
-		public double t[];
-		public double tippop;
-		public double rootpop;
-		public int tipnlin;
+    private class PopulationAndLineages {
+        public double t[];
+        public double tippop;
+        public double rootpop;
+        public int tipnlin;
 
-		public PopulationAndLineages(double[] t2, double tippop, double rootpop, 
-				int tipnlin) {
-			this.t = t2;
-			this.tippop = tippop;
-			this.rootpop = rootpop;
-			this.tipnlin = tipnlin;
-		}
+        public PopulationAndLineages(double[] t2, double tippop, double rootpop,
+                                     int tipnlin) {
+            this.t = t2;
+            this.tippop = tippop;
+            this.rootpop = rootpop;
+            this.tipnlin = tipnlin;
+        }
 
-		public double populationAt(double x) {
-			final double begt = t[0];
-			final double endt = t[t.length - 1];
-			return ((endt-x)*tippop + (x-begt)*rootpop) / (endt-begt);
-		}
-	}
-
-
+        public double populationAt(double x) {
+            final double begt = t[0];
+            final double endt = t[t.length - 1];
+            return ((endt-x)*tippop + (x-begt)*rootpop) / (endt-begt);
+        }
+    }
 
 
-	/*
-	 * This constructor makes a single multiply labelled tree from the diploid
-	 * history and set of tetraploid AlloppLeggedTrees which is passed to it. It is called directly
-	 * by testing code.
-	 */
-	AlloppMulLabTree(AlloppDiploidHistory adhist, ArrayList<AlloppLeggedTree> tettrees,
+
+
+    /*
+      * This constructor makes a single multiply labelled tree from the diploid
+      * history and set of tetraploid AlloppLeggedTrees which is passed to it. It is called directly
+      * by testing code.
+      */
+    AlloppMulLabTree(AlloppDiploidHistory adhist, ArrayList<AlloppLeggedTree> tettrees,
                      AlloppSpeciesBindings apsp, Parameter tippopvals, Parameter rootpopvals, double [] hybpopvals) {
-		this.apsp = apsp;
+        this.apsp = apsp;
         this.tippopvals = tippopvals;
         this.rootpopvals = rootpopvals;
         this.hybpopvals = hybpopvals;
         nofhybpopvals = tettrees.size();
         // Count tips for the tree to be made
-		int ntips = 0;
+        int ntips = 0;
         ntips += adhist.getDiploidTipCount();
-		for (AlloppLeggedTree ttree : tettrees) {
-			ntips += 2 * ttree.getExternalNodeCount();
-		}
-		// Make array of dud nodes
-		mlnodes = new MulLabNode[2 * ntips - 1];
-		for (int i = 0; i < mlnodes.length; i++) {
-			mlnodes[i] = new MulLabNode(i);
+        for (AlloppLeggedTree ttree : tettrees) {
+            ntips += 2 * ttree.getExternalNodeCount();
+        }
+        // Make array of dud nodes
+        mlnodes = new MulLabNode[2 * ntips - 1];
+        for (int i = 0; i < mlnodes.length; i++) {
+            mlnodes[i] = new MulLabNode(i);
             mlnodes[i].tetraancestor = true;
-		}
-		// get dip hist and tetratrees into array; unions are filled at tips
+        }
+        // get dip hist and tetratrees into array; unions are filled at tips
         nextn = 0;
-		nextn = subtree2MulLabNodes(adhist, adhist.getRootIndex(), tettrees, apsp);
+        nextn = subtree2MulLabNodes(adhist, adhist.getRootIndex(), tettrees, apsp);
         rootn = nextn - 1;
         // fill unions from tips
-		mlnodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
+        mlnodes[rootn].fillinUnionsInSubtree(apsp.numberOfSpSeqs());
         // The tetraroot flags were initialised false, set to final values by subtree2MulLabNodes()
         // The tetraancestor flags were initialised true, diploid tips later set false by subtree2MulLabNodes()
         // The intetratree flags were initialised false, tetraploid tips later set true by allopptree2MulLabNodes()
         // Now fill in tetraancestor and intetratree flags from tips.
         fillinTetraFlagsInSubtree(mlnodes[rootn]);
-		makesimpletree();
-	}
+        makesimpletree();
+    }
 
 
 
@@ -480,65 +480,65 @@ public class AlloppMulLabTree  {
 
 
 
-	String mullabTreeAsNewick() {
-		String s = Tree.Utils.uniqueNewick(simptree, simptree.getRoot());
-		return s;
-	}
+    String mullabTreeAsNewick() {
+        String s = Tree.Utils.uniqueNewick(simptree, simptree.getRoot());
+        return s;
+    }
 
-	String asText() {
-		String header = "topology             height         union         []  tippop  []  hybpop  [] rootpop  tetroot   hybhgt nlin coalheights" + System.getProperty("line.separator");
+    String asText() {
+        String header = "topology             height         union         []  tippop  []  hybpop  [] rootpop  tetroot   hybhgt nlin coalheights" + System.getProperty("line.separator");
 
-		String s = "";
-		Stack<Integer> x = new Stack<Integer>();
-		return header + AlloppNode.Abstract.subtreeAsText(mlnodes[rootn], s, x, 0, "");
-	}
-
-
-	void clearCoalescences() {
-		clearSubtreeCoalescences(mlnodes[rootn]);
-	}	
-
-	void recordLineageCounts() {
-		recordSubtreeLineageCounts(mlnodes[rootn]);
-	}
-
-	boolean coalescenceIsCompatible(double height, FixedBitSet union) {
-		MulLabNode node = (MulLabNode) mlnodes[rootn].nodeOfUnionInSubtree(union);
-		return (node.height <= height);
-	}
+        String s = "";
+        Stack<Integer> x = new Stack<Integer>();
+        return header + AlloppNode.Abstract.subtreeAsText(mlnodes[rootn], s, x, 0, "");
+    }
 
 
-	void recordCoalescence(double height, FixedBitSet union) {
+    void clearCoalescences() {
+        clearSubtreeCoalescences(mlnodes[rootn]);
+    }
+
+    void recordLineageCounts() {
+        recordSubtreeLineageCounts(mlnodes[rootn]);
+    }
+
+    boolean coalescenceIsCompatible(double height, FixedBitSet union) {
         MulLabNode node = (MulLabNode) mlnodes[rootn].nodeOfUnionInSubtree(union);
-		assert (node.height <= height);
-		while (node.anc >= 0  &&  mlnodes[node.anc].height <= height) {
-			node = mlnodes[node.anc];
-		}
-		node.coalheights.add(height);
-	}
-
-	void sortCoalescences() {
-		for (MulLabNode node : mlnodes) {
-			Collections.sort(node.coalheights);
-		}
-	}
+        return (node.height <= height);
+    }
 
 
-	double geneTreeInMULTreeLogLikelihood() {
-		fillinpopvals();
-		//System.out.println(asText());
-		return geneTreeInMULSubtreeLogLikelihood(mlnodes[rootn]);
-	}
+    void recordCoalescence(double height, FixedBitSet union) {
+        MulLabNode node = (MulLabNode) mlnodes[rootn].nodeOfUnionInSubtree(union);
+        assert (node.height <= height);
+        while (node.anc >= 0  &&  mlnodes[node.anc].height <= height) {
+            node = mlnodes[node.anc];
+        }
+        node.coalheights.add(height);
+    }
+
+    void sortCoalescences() {
+        for (MulLabNode node : mlnodes) {
+            Collections.sort(node.coalheights);
+        }
+    }
 
 
-	
-	
-	
+    double geneTreeInMULTreeLogLikelihood() {
+        fillinpopvals();
+        //System.out.println(asText());
+        return geneTreeInMULSubtreeLogLikelihood(mlnodes[rootn]);
+    }
+
+
+
+
+
 /*
- * 
- * ***************************************************
- * 	                Private
- */
+*
+* ***************************************************
+* 	                Private
+*/
 
 
 
@@ -566,7 +566,8 @@ public class AlloppMulLabTree  {
                 nextn++;
             } else {
                 AlloppNode troot = (AlloppNode)tettrees.get(tt).getSlidableRoot();
-                nextn = allopptree2MulLabNodes(apsp, troot, adhist.getNodeLeg(dhni));
+                int seq = (adhist.getNodeLeg(dhni) == AlloppDiploidHistory.LegLorR.left) ? 0 : 1;
+                nextn = allopptree2MulLabNodes(apsp, troot, seq);
                 mlnodes[nextn-1].hybridheight = adhist.getHeightFromIndex(dhni);
                 mlnodes[nextn-1].tetraroot = true;
                 mlnodes[nextn-1].ttreeindex = tt;
@@ -608,27 +609,27 @@ public class AlloppMulLabTree  {
 
 
     private void makesimpletree() {
-    	SimpleNode[] snodes = new SimpleNode[mlnodes.length];
-    	for (int n = 0; n < mlnodes.length; n++) {
-    		snodes[n] = new SimpleNode();
-    	}
-		makesimplesubtree(snodes, 0, mlnodes[rootn]);
-		simptree = new SimpleTree(snodes[mlnodes.length-1]);
-	}
- 	
-	
-	private int makesimplesubtree(SimpleNode[] snodes, int nextsn, MulLabNode mnode) {
-		if (mnode.lft < 0) {
-			snodes[nextsn].setTaxon(new Taxon(mnode.taxon.getId()));
-		} else {
-			nextsn = makesimplesubtree(snodes, nextsn, mlnodes[mnode.lft]);
-			int subtree0 = nextsn-1;
-			nextsn = makesimplesubtree(snodes, nextsn, mlnodes[mnode.rgt]);
-			int subtree1 = nextsn-1;
-			snodes[nextsn].addChild(snodes[subtree0]);
-			snodes[nextsn].addChild(snodes[subtree1]);
-		}
-		snodes[nextsn].setHeight(mnode.height);
+        SimpleNode[] snodes = new SimpleNode[mlnodes.length];
+        for (int n = 0; n < mlnodes.length; n++) {
+            snodes[n] = new SimpleNode();
+        }
+        makesimplesubtree(snodes, 0, mlnodes[rootn]);
+        simptree = new SimpleTree(snodes[mlnodes.length-1]);
+    }
+
+
+    private int makesimplesubtree(SimpleNode[] snodes, int nextsn, MulLabNode mnode) {
+        if (mnode.lft < 0) {
+            snodes[nextsn].setTaxon(new Taxon(mnode.taxon.getId()));
+        } else {
+            nextsn = makesimplesubtree(snodes, nextsn, mlnodes[mnode.lft]);
+            int subtree0 = nextsn-1;
+            nextsn = makesimplesubtree(snodes, nextsn, mlnodes[mnode.rgt]);
+            int subtree1 = nextsn-1;
+            snodes[nextsn].addChild(snodes[subtree0]);
+            snodes[nextsn].addChild(snodes[subtree1]);
+        }
+        snodes[nextsn].setHeight(mnode.height);
         String tti;
         if (mnode.ttreeindex < 0) {
             tti = "X";
@@ -639,63 +640,63 @@ public class AlloppMulLabTree  {
         if (mnode.hybridheight >= 0.0) {
             snodes[nextsn].setAttribute("hybhgt", mnode.hybridheight);
         }
-		return nextsn+1;
-	}
+        return nextsn+1;
+    }
 
 
-	private void clearSubtreeCoalescences(MulLabNode node) {
+    private void clearSubtreeCoalescences(MulLabNode node) {
         if (node.lft >= 0) {
             clearSubtreeCoalescences(mlnodes[node.lft]);
             clearSubtreeCoalescences(mlnodes[node.rgt]);
         }
-		node.coalheights.clear();
-	}
+        node.coalheights.clear();
+    }
 
 
-	private void recordSubtreeLineageCounts(MulLabNode node) {
-		if (node.lft < 0) {
-			node.nlineages = apsp.nLineages(apsp.spseqindex2sp(union2spseqindex(node.union)));
-		} else {
-			node.nlineages = 0;
+    private void recordSubtreeLineageCounts(MulLabNode node) {
+        if (node.lft < 0) {
+            node.nlineages = apsp.nLineages(apsp.spseqindex2sp(union2spseqindex(node.union)));
+        } else {
+            node.nlineages = 0;
             recordSubtreeLineageCounts(mlnodes[node.lft]);
             recordSubtreeLineageCounts(mlnodes[node.rgt]);
             node.nlineages += mlnodes[node.lft].nlineages - mlnodes[node.lft].coalheights.size();
             node.nlineages += mlnodes[node.rgt].nlineages - mlnodes[node.rgt].coalheights.size();
-		}			
-	}		
+        }
+    }
 
 
 
-	/*
-	 * This copies population values in the Parameter popvalues 
-	 * to nodes in the AlloppMulLabTree. The population values are
-	 * per-species-clade (per-branch in network), but of course more than 
-	 * one node in AlloppMulLabTree may correspond to the same species.
-	 * 
-	 * The other complications are that tips are different from internal 
-	 * nodes, and that nodes which roots of tetratrees or just below,
-	 * as well as the root are special cases.
-	 * 
-	 * It collects unions (which represent sets whose elements 
-	 * identify a species and a sequence) from the nodes and then
-	 * sorts them primarily using identities of the species, so
-	 * that sets of node with same species clade are grouped together. The sort 
-	 * also puts the node sets corresponding to tips first in the array and sorts
-	 * nodes within node sets in a well-defined way.
-	 * This mainly does what is required, since nodes with the same
-	 * species clade are treated the same.
-	 *
-	 * fillinpopvalsforspunion() deals with a set of nodes
-	 * with same species clade.
-	 */
-	private void fillinpopvals() {
-		ArrayList<SpSqUnion> unionarraylist = new ArrayList<SpSqUnion>();
-		for (int n = 0; n < mlnodes.length; n++) {
-			unionarraylist.add(new SpSqUnion(mlnodes[n].union));
-		}
-		Collections.sort(unionarraylist, SPUNION_ORDER);
-		SpSqUnion[] unionarray = new SpSqUnion[unionarraylist.size()];
-		unionarray = unionarraylist.toArray(unionarray);
+    /*
+      * This copies population values in the Parameter popvalues
+      * to nodes in the AlloppMulLabTree. The population values are
+      * per-species-clade (per-branch in network), but of course more than
+      * one node in AlloppMulLabTree may correspond to the same species.
+      *
+      * The other complications are that tips are different from internal
+      * nodes, and that nodes which roots of tetratrees or just below,
+      * as well as the root are special cases.
+      *
+      * It collects unions (which represent sets whose elements
+      * identify a species and a sequence) from the nodes and then
+      * sorts them primarily using identities of the species, so
+      * that sets of node with same species clade are grouped together. The sort
+      * also puts the node sets corresponding to tips first in the array and sorts
+      * nodes within node sets in a well-defined way.
+      * This mainly does what is required, since nodes with the same
+      * species clade are treated the same.
+      *
+      * fillinpopvalsforspunion() deals with a set of nodes
+      * with same species clade.
+      */
+    private void fillinpopvals() {
+        ArrayList<SpSqUnion> unionarraylist = new ArrayList<SpSqUnion>();
+        for (int n = 0; n < mlnodes.length; n++) {
+            unionarraylist.add(new SpSqUnion(mlnodes[n].union));
+        }
+        Collections.sort(unionarraylist, SPUNION_ORDER);
+        SpSqUnion[] unionarray = new SpSqUnion[unionarraylist.size()];
+        unionarray = unionarraylist.toArray(unionarray);
         PopValIndices pvis = new PopValIndices(0,0,0);
         // set all pop indices to dud values
         for (int n = 0; n < mlnodes.length; n++) {
@@ -705,11 +706,11 @@ public class AlloppMulLabTree  {
         }
         int noftippopvals = tippopvals.getDimension();
         int nofrootpopvals = rootpopvals.getDimension();
-		for (int n0 = 0; n0 < unionarray.length; ) {
-			int n1 = n0+1; 
-			while (n1 < unionarray.length && unionarray[n1].spunion.equals(unionarray[n0].spunion)) {
-				n1++;
-			}
+        for (int n0 = 0; n0 < unionarray.length; ) {
+            int n1 = n0+1;
+            while (n1 < unionarray.length && unionarray[n1].spunion.equals(unionarray[n0].spunion)) {
+                n1++;
+            }
             assert pvis.tipp <= noftippopvals;
             if (!(pvis.rootp <= nofrootpopvals)) {
                 System.out.println("BUG in fillinpopvals()");
@@ -718,26 +719,26 @@ public class AlloppMulLabTree  {
             assert pvis.hybp <= nofhybpopvals;
             pvis = fillinpopvalsforspunion(unionarray, n0, n1, pvis);
             n0 = n1;
-		}
-		if (pvis.tipp != noftippopvals  || pvis.rootp != nofrootpopvals  ||  pvis.hybp != nofhybpopvals) {
-			System.out.println("BUG in fillinpopvals()");
-		}
-		assert pvis.tipp == noftippopvals;
+        }
+        if (pvis.tipp != noftippopvals  || pvis.rootp != nofrootpopvals  ||  pvis.hybp != nofhybpopvals) {
+            System.out.println("BUG in fillinpopvals()");
+        }
+        assert pvis.tipp == noftippopvals;
         assert pvis.rootp == nofrootpopvals;
         assert pvis.hybp == nofhybpopvals;
-	}
+    }
 
-		
-   private class PopValIndices {
-       public int tipp;
-       public int rootp;
-       public int hybp;
-       PopValIndices(int tipp, int rootp, int hybp) {
-           this.tipp = tipp;
-           this.rootp = rootp;
-           this.hybp = hybp;
-       }
-   }
+
+    private class PopValIndices {
+        public int tipp;
+        public int rootp;
+        public int hybp;
+        PopValIndices(int tipp, int rootp, int hybp) {
+            this.tipp = tipp;
+            this.rootp = rootp;
+            this.hybp = hybp;
+        }
+    }
 
 
     private PopValIndices fillinpopvalsforspunion(SpSqUnion[] unionarray, int n0, int n1, PopValIndices pvis) {
@@ -821,208 +822,208 @@ public class AlloppMulLabTree  {
 
 
 
-	/*
-	 * Visits each node in MULtree and accumulates LogLikelihood
-	 */
-	private double geneTreeInMULSubtreeLogLikelihood(MulLabNode node) {
-		double loglike = 0.0;
+    /*
+      * Visits each node in MULtree and accumulates LogLikelihood
+      */
+    private double geneTreeInMULSubtreeLogLikelihood(MulLabNode node) {
+        double loglike = 0.0;
         if (node.lft >= 0) {
             loglike += geneTreeInMULSubtreeLogLikelihood(mlnodes[node.lft]);
             loglike += geneTreeInMULSubtreeLogLikelihood(mlnodes[node.rgt]);
         }
-		loglike += branchLLInMULtree(node);
+        loglike += branchLLInMULtree(node);
 
-		return loglike;
-	}
+        return loglike;
+    }
 
 
-	/*
-	 * Does likelihood calculation for a single node in the case
-	 * of two diploids.
-	 */
-	private double branchLLInMULtree(MulLabNode node) {
-		double loglike = 0.0;
+    /*
+      * Does likelihood calculation for a single node in the case
+      * of two diploids.
+      */
+    private double branchLLInMULtree(MulLabNode node) {
+        double loglike = 0.0;
 
-		double tippop = 0.0;
-		if (node.lft < 0) {
-			tippop = node.tippop();
-		} else {
-			tippop = mlnodes[node.lft].rootpop() + mlnodes[node.rgt].rootpop();
-		}
+        double tippop = 0.0;
+        if (node.lft < 0) {
+            tippop = node.tippop();
+        } else {
+            tippop = mlnodes[node.lft].rootpop() + mlnodes[node.rgt].rootpop();
+        }
 
-		PopulationAndLineages pal;
-		double t[];
-		if (node.tetraroot) {
-			// since hybridization
-			int nsince = 0;
-			for ( ; nsince < node.coalheights.size() && 
-			node.coalheights.get(nsince) < node.hybridheight; nsince++) {}
-			t = new double[nsince + 2];
-			t[0] = node.height;
-			for (int i = 0; i < nsince; i++) {
-				t[i+1] = node.coalheights.get(i);
-			}
-			t[t.length-1] = node.hybridheight;
-			pal = new PopulationAndLineages(t, tippop, node.hybpop(), node.nlineages);
-			loglike += limbLogLike(pal);
+        PopulationAndLineages pal;
+        double t[];
+        if (node.tetraroot) {
+            // since hybridization
+            int nsince = 0;
+            for ( ; nsince < node.coalheights.size() &&
+                    node.coalheights.get(nsince) < node.hybridheight; nsince++) {}
+            t = new double[nsince + 2];
+            t[0] = node.height;
+            for (int i = 0; i < nsince; i++) {
+                t[i+1] = node.coalheights.get(i);
+            }
+            t[t.length-1] = node.hybridheight;
+            pal = new PopulationAndLineages(t, tippop, node.hybpop(), node.nlineages);
+            loglike += limbLogLike(pal);
             if (Double.isNaN(loglike)) {
                 System.out.println("BUG in branchLLInMULtree");
             }
-			// before hybridization
-			int nbefore = node.coalheights.size() - nsince;
-			t = new double[nbefore + 2];
-			t[0] = node.hybridheight;
-			for (int i = 0; i < nbefore; i++) {
-				t[i+1] = node.coalheights.get(nsince+i);
-			}				
-			t[t.length-1] = mlnodes[node.anc].height;
+            // before hybridization
+            int nbefore = node.coalheights.size() - nsince;
+            t = new double[nbefore + 2];
+            t[0] = node.hybridheight;
+            for (int i = 0; i < nbefore; i++) {
+                t[i+1] = node.coalheights.get(nsince+i);
+            }
+            t[t.length-1] = mlnodes[node.anc].height;
 
-			pal = new PopulationAndLineages(t, node.rootpop(), node.rootpop(), node.nlineages - nsince);
-			loglike += limbLogLike(pal);				
-		} else if (node.anc < 0) {
-			t = new double[node.coalheights.size() + 2];
-			t[0] = node.height;
-			t[t.length-1] = apsp.maxGeneTreeHeight();
-			for (int i = 0; i < node.coalheights.size(); i++) {
-				t[i+1] = node.coalheights.get(i);
-			}
-			pal = new PopulationAndLineages(t, tippop, tippop, node.nlineages);
-			loglike += limbLogLike(pal);					
-		} else {
-			t = new double[node.coalheights.size() + 2];
-			t[0] = node.height;
-			t[t.length-1] = mlnodes[node.anc].height;
-			for (int i = 0; i < node.coalheights.size(); i++) {
-				t[i+1] = node.coalheights.get(i);
-			}
-			pal = new PopulationAndLineages(t, tippop, node.rootpop(), node.nlineages);
-			loglike += limbLogLike(pal);				
-		}
+            pal = new PopulationAndLineages(t, node.rootpop(), node.rootpop(), node.nlineages - nsince);
+            loglike += limbLogLike(pal);
+        } else if (node.anc < 0) {
+            t = new double[node.coalheights.size() + 2];
+            t[0] = node.height;
+            t[t.length-1] = apsp.maxGeneTreeHeight();
+            for (int i = 0; i < node.coalheights.size(); i++) {
+                t[i+1] = node.coalheights.get(i);
+            }
+            pal = new PopulationAndLineages(t, tippop, tippop, node.nlineages);
+            loglike += limbLogLike(pal);
+        } else {
+            t = new double[node.coalheights.size() + 2];
+            t[0] = node.height;
+            t[t.length-1] = mlnodes[node.anc].height;
+            for (int i = 0; i < node.coalheights.size(); i++) {
+                t[i+1] = node.coalheights.get(i);
+            }
+            pal = new PopulationAndLineages(t, tippop, node.rootpop(), node.nlineages);
+            loglike += limbLogLike(pal);
+        }
         if (Double.isNaN(loglike)) {
             System.out.println("BUG in branchLLInMULtree");
         }
-		return loglike;
+        return loglike;
     }
 
 
 
 
-	/*
-	 * limbLogLike calculates the log-likelihood for 
-	 * the coalescences at t[1],t[2],...t[k] within a limb
-	 * from t[0] to t[k+1]. ('limb' means a branch or part of one.)
-	 */
-	private double limbLogLike(PopulationAndLineages pal) {
-		double loglike = 0.0;
-		int k = pal.t.length - 2;
-		for (int i = 1; i <= k; i++) {
-			loglike -= Math.log(pal.populationAt(pal.t[i]));
-		}
-		for (int i = 0; i <= k; i++) {
-			final double y = (pal.tipnlin-i) * (pal.tipnlin-i-1) / 2 ;
-			final double z = limbLinPopIntegral(pal, pal.t[i], pal.t[i+1]);
-			loglike -= y * z;
-		}
+    /*
+      * limbLogLike calculates the log-likelihood for
+      * the coalescences at t[1],t[2],...t[k] within a limb
+      * from t[0] to t[k+1]. ('limb' means a branch or part of one.)
+      */
+    private double limbLogLike(PopulationAndLineages pal) {
+        double loglike = 0.0;
+        int k = pal.t.length - 2;
+        for (int i = 1; i <= k; i++) {
+            loglike -= Math.log(pal.populationAt(pal.t[i]));
+        }
+        for (int i = 0; i <= k; i++) {
+            final double y = (pal.tipnlin-i) * (pal.tipnlin-i-1) / 2 ;
+            final double z = limbLinPopIntegral(pal, pal.t[i], pal.t[i+1]);
+            loglike -= y * z;
+        }
         if (Double.isNaN(loglike)) {
             System.out.println("BUG in limbLogLike");
         }
-		return loglike;
-	}
+        return loglike;
+    }
 
 
 
-	// integral from t0 to t1 of (endt-begt)/((endt-x)begPop + (x-begt)endPop) 
-	// with respect to x
-	private double limbLinPopIntegral(PopulationAndLineages b, double t0, double t1) {
-		final double begt = b.t[0];
-		final double endt = b.t[b.t.length-1];
+    // integral from t0 to t1 of (endt-begt)/((endt-x)begPop + (x-begt)endPop)
+    // with respect to x
+    private double limbLinPopIntegral(PopulationAndLineages b, double t0, double t1) {
+        final double begt = b.t[0];
+        final double endt = b.t[b.t.length-1];
         if (b.rootpop < 1E-20) {
             System.out.println("Underflow in limbLinPopIntegral()");
         }
-		final double d = b.rootpop - b.tippop;
-		final double c = endt * b.tippop - begt * b.rootpop;
-		final double x = Math.abs(d / b.tippop);
-		if (x > 0.001) {
-			return ((endt - begt) / d) * Math.log((c + d * t1) / (c + d * t0));
-		} else {
-			double y = d * (t1 - t0) / (c + d * t0);
-			double ys = (1.0 - y/2.0 + y*y * (1.0/3.0 - y/4.0 + y*y * (1.0/5.0 - y/6.0)));
-			return ((endt - begt) * (t1 - t0) / (c + d * t0)) * ys; 
-		}
-	}		
+        final double d = b.rootpop - b.tippop;
+        final double c = endt * b.tippop - begt * b.rootpop;
+        final double x = Math.abs(d / b.tippop);
+        if (x > 0.001) {
+            return ((endt - begt) / d) * Math.log((c + d * t1) / (c + d * t0));
+        } else {
+            double y = d * (t1 - t0) / (c + d * t0);
+            double ys = (1.0 - y/2.0 + y*y * (1.0/3.0 - y/4.0 + y*y * (1.0/5.0 - y/6.0)));
+            return ((endt - begt) * (t1 - t0) / (c + d * t0)) * ys;
+        }
+    }
 
 
 
 
-	private static int union2spseqindex(FixedBitSet union) {
-		assert union.cardinality() == 1;
-		return union.nextOnBit(0);
-	}
+    private static int union2spseqindex(FixedBitSet union) {
+        assert union.cardinality() == 1;
+        return union.nextOnBit(0);
+    }
 
 
 
 
-	/*
-	 * This is for ordering the unions in the nodes of the AlloppMulLabTree.
-	 * Those unions are of (species, sequence) pairs.
-	 * 
-	 * The comparator sorts the unions of (species, sequence) pairs (SpSqUnions)
-	 * so that all unions containing the same set of species (ignoring sequence)
-	 * are grouped together. Call the sets of SpSqUnions for the same species a
-	 * `group'. There can be 1,2 or 3 SpSqUnions in a group. 
-	 * 
-	 * The groups are sorted in order of increasing number of species (clade size).
-	 * All groups for a single species (a tip in the network) come first, then 
-	 * those groups for two species, and so on to the root for all species.
-	 * For groups that have equal numbers of species, a lexicographical
-	 * ordering using species indices is used.
-	 * 
-	 * Within each group, species and sequence information is used to sort the 1 to 3
-	 * SpSqUnions. The size of the `clade' of (species, sequence) pairs is used
-	 * first in the comparison, which ensures that the three nodes with the same species
-	 * - corresponding to two roots of tetratrees in the AlloppMulLabTree plus a leg-join - 
-	 * are ordered so that the two roots come first.
-	 * 
-	 */
+    /*
+      * This is for ordering the unions in the nodes of the AlloppMulLabTree.
+      * Those unions are of (species, sequence) pairs.
+      *
+      * The comparator sorts the unions of (species, sequence) pairs (SpSqUnions)
+      * so that all unions containing the same set of species (ignoring sequence)
+      * are grouped together. Call the sets of SpSqUnions for the same species a
+      * `group'. There can be 1,2 or 3 SpSqUnions in a group.
+      *
+      * The groups are sorted in order of increasing number of species (clade size).
+      * All groups for a single species (a tip in the network) come first, then
+      * those groups for two species, and so on to the root for all species.
+      * For groups that have equal numbers of species, a lexicographical
+      * ordering using species indices is used.
+      *
+      * Within each group, species and sequence information is used to sort the 1 to 3
+      * SpSqUnions. The size of the `clade' of (species, sequence) pairs is used
+      * first in the comparison, which ensures that the three nodes with the same species
+      * - corresponding to two roots of tetratrees in the AlloppMulLabTree plus a leg-join -
+      * are ordered so that the two roots come first.
+      *
+      */
 
-	static final Comparator<SpSqUnion> SPUNION_ORDER = new Comparator<SpSqUnion>() {
-		public int compare(SpSqUnion a, SpSqUnion b) {
-			int ac = a.spunion.cardinality();
-			int bc = b.spunion.cardinality();
-			if (ac != bc) {
-				return ac-bc;
-			} else {
-				int an = a.spunion.nextOnBit(0);
-				int bn = b.spunion.nextOnBit(0);
-				while (an >= 0 || bn >= 0) {
-					if (an != bn) {
-						return an-bn;
-					}
-					an = a.spunion.nextOnBit(an+1);
-					bn = b.spunion.nextOnBit(bn+1);
-				}
-				// spunions compare equal; do spsqunions
-				ac = a.spsqunion.cardinality();
-				bc = b.spsqunion.cardinality();
-				if (ac != bc) {
-					return ac-bc;
-				} else {
-					an = a.spsqunion.nextOnBit(0);
-					bn = b.spsqunion.nextOnBit(0);
-					while (an >= 0 || bn >= 0) {
-						if (an != bn) {
-							return an-bn;
-						}
-						an = a.spsqunion.nextOnBit(an+1);
-						bn = b.spsqunion.nextOnBit(bn+1);
-					}				
-					return 0;
-				}
-			}
-		}
-	};
+    static final Comparator<SpSqUnion> SPUNION_ORDER = new Comparator<SpSqUnion>() {
+        public int compare(SpSqUnion a, SpSqUnion b) {
+            int ac = a.spunion.cardinality();
+            int bc = b.spunion.cardinality();
+            if (ac != bc) {
+                return ac-bc;
+            } else {
+                int an = a.spunion.nextOnBit(0);
+                int bn = b.spunion.nextOnBit(0);
+                while (an >= 0 || bn >= 0) {
+                    if (an != bn) {
+                        return an-bn;
+                    }
+                    an = a.spunion.nextOnBit(an+1);
+                    bn = b.spunion.nextOnBit(bn+1);
+                }
+                // spunions compare equal; do spsqunions
+                ac = a.spsqunion.cardinality();
+                bc = b.spsqunion.cardinality();
+                if (ac != bc) {
+                    return ac-bc;
+                } else {
+                    an = a.spsqunion.nextOnBit(0);
+                    bn = b.spsqunion.nextOnBit(0);
+                    while (an >= 0 || bn >= 0) {
+                        if (an != bn) {
+                            return an-bn;
+                        }
+                        an = a.spsqunion.nextOnBit(an+1);
+                        bn = b.spsqunion.nextOnBit(bn+1);
+                    }
+                    return 0;
+                }
+            }
+        }
+    };
 
 
 
-	
+
 }

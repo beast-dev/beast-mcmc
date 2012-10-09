@@ -27,9 +27,9 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 
 
 /**
- * 
+ *
  * Implements an allopolyploid species network as a collection of `trees with legs'.
- * 
+ *
  * @author Graham Jones
  *         Date: 19/04/2011
  */
@@ -67,9 +67,9 @@ import test.dr.evomodel.speciation.AlloppSpeciesNetworkModelTEST;
 // AlloppLeggedTree implements MutableTree, TreeLogger.LogUpon.
 // Nothing so far does TreeTraitProvider.
 public class AlloppSpeciesNetworkModel extends AbstractModel implements
-		Scalable, Units, Citable, Tree, TreeTraitProvider, TreeLogger.LogUpon {
+        Scalable, Units, Citable, Tree, TreeTraitProvider, TreeLogger.LogUpon {
 
-	private final AlloppSpeciesBindings apsp;
+    private final AlloppSpeciesBindings apsp;
     private AlloppDiploidHistory adhist;
     private AlloppDiploidHistory oldadhist;
     private ArrayList<AlloppLeggedTree> tettrees;
@@ -82,8 +82,8 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     private ParametricDistributionModel hybridPopModel;
 
     // The Parameters are public, copying JH - is that necessary? TreeNodeSlide accesses it.
-	// 2011-06-30 parser accesses it too. 
-	// Parameter or Parameter.Default ?? (a Java thing I don't get)
+    // 2011-06-30 parser accesses it too.
+    // Parameter or Parameter.Default ?? (a Java thing I don't get)
     public final Parameter tippopvalues;
     public final Parameter rootpopvalues;
 
@@ -105,7 +105,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         }
 
         public TreeTrait.Intent getIntent() {
-            return TreeTrait.Intent.NODE;
+            return Intent.BRANCH;
         }
 
         @Override
@@ -171,28 +171,28 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
 
-	
-	/*
-	 * Constructors. 
-	 * 
-	 */ 
-	public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apspecies,
+
+    /*
+      * Constructors.
+      *
+      */
+    public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apspecies,
                                      double tippopvalue, double rootpopvalue, double hybpopvalue, boolean onehyb) {
-		super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
-		apsp = apspecies;
-		addModel(apsp);
+        super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
+        apsp = apspecies;
+        addModel(apsp);
         tettrees = new ArrayList<AlloppLeggedTree>();
         Taxon[] dipspp = apsp.SpeciesWithinPloidyLevel(2);
         Taxon[] tetspp = apsp.SpeciesWithinPloidyLevel(4);
         makeInitialNDipsNTetsNetwork(dipspp, tetspp);
 
-		double maxrootheight = adhist.getRootHeight();
-		for (int i = 0; i < tettrees.size(); i++) {
-			double height = tettrees.get(i).getRootHeight();
-			if (height > maxrootheight) { maxrootheight = height; }
-		}
-		double scale = 0.99 * apsp.initialMinGeneNodeHeight() / maxrootheight;
-		scaleAllHeights(scale);
+        double maxrootheight = adhist.getRootHeight();
+        for (int i = 0; i < tettrees.size(); i++) {
+            double height = tettrees.get(i).getRootHeight();
+            if (height > maxrootheight) { maxrootheight = height; }
+        }
+        double scale = 0.99 * apsp.initialMinGeneNodeHeight() / maxrootheight;
+        scaleAllHeights(scale);
 
         int ntippopparams = numberOfTipPopParameters();
         int nrootpopparams = numberOfRootPopParameters();
@@ -203,7 +203,10 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         addVariable(rootpopvalues);
         // hybridization pop sizes have to be done differently because they change in number.
         hybpopvalues = new double[maxnhybpopparams];
-        hybpopvalues[0] = hybpopvalue;
+        for (int hp = 0; hp < hybpopvalues.length; hp++) {
+            hybpopvalues[hp] = hybpopvalue;
+        }
+
         logginghybpopvalues = new Parameter.Default(hybpopvalues);
         makeLoggingHybPopParam();
 
@@ -214,23 +217,23 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
         Logger.getLogger("dr.evomodel.speciation.allopolyploid").info("\tConstructing an allopolyploid network,  please cite:\n"
                 + Citable.Utils.getCitationString(this));
-	}	
-	
-		
-	
-	/*
-	 * This (partial) constructor is for testing conversion network to multree.
-	 * Real work done by testExampleNetworkToMulLabTree()
-	 */
-	public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apsp,
-			AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
-		super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
-		this.apsp = apsp;
-		tippopvalues = null;
+    }
+
+
+
+    /*
+      * This (partial) constructor is for testing conversion network to multree.
+      * Real work done by testExampleNetworkToMulLabTree()
+      */
+    public AlloppSpeciesNetworkModel(AlloppSpeciesBindings apsp,
+                                     AlloppSpeciesNetworkModelTEST.NetworkToMultreeTEST nmltTEST) {
+        super(AlloppSpeciesNetworkModelParser.ALLOPPSPECIESNETWORK);
+        this.apsp = apsp;
+        tippopvalues = null;
         rootpopvalues = null;
         hybpopvalues = null;
         logginghybpopvalues = null;
-	}
+    }
 
     // This is called from AlloppNetworkPrior (which is created after network)
     // to supply a ParametricDistributionModel for the prior on the
@@ -240,7 +243,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     }
 
 
-/***********************************************************************************/
+    /***********************************************************************************/
 
 
     // Citable implementation
@@ -271,20 +274,20 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
             AlloppLeggedTree tettree = getTetraploidTree(tt);
             int lftleg = tettree.getDiphistLftLeg();
             int rgtleg = tettree.getDiphistRgtLeg();
-            if  (0 != adhist.getNodeLeg(lftleg)) {
+            if  (AlloppDiploidHistory.LegLorR.left != adhist.getNodeLeg(lftleg)) {
                 return false;
             }
             if (tt != adhist.getNodeTettree(lftleg)) {
                 return false;
             }
-            if (1 != adhist.getNodeLeg(rgtleg)) {
+            if (AlloppDiploidHistory.LegLorR.right != adhist.getNodeLeg(rgtleg)) {
                 return false;
             }
             if  (tt != adhist.getNodeTettree(rgtleg)) {
                 return false;
             }
         }
-    if (!adhist.diphistOK()) {
+        if (!adhist.diphistOK()) {
             return false;
         }
 
@@ -461,12 +464,13 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         }
         assert node != null;
         int tt = adhist.getNodeTettree(node.getNumber());
-        int leg = adhist.getNodeLeg(node.getNumber());
+        AlloppDiploidHistory.LegLorR leg = adhist.getNodeLeg(node.getNumber());
+        int seq = (leg == AlloppDiploidHistory.LegLorR.left) ? 0 : 1;
         FixedBitSet union;
         if (tt < 0) { // ordinary tip
             union = apsp.taxonseqToTipUnion(adhist.getSlidableNodeTaxon(node), 0);
         } else {
-            union = unionOfWholeTetTree(tt, leg);
+            union = unionOfWholeTetTree(tt, seq);
         }
         return union;
     }
@@ -545,6 +549,18 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     }
 
 
+    // for move that flips all seqs of tet tree and its legs
+    public void flipLegsOfTetraTree(int tt) {
+        int oldlftleg = tettrees.get(tt).getDiphistLftLeg();
+        int oldrgtleg = tettrees.get(tt).getDiphistRgtLeg();
+        AlloppDiploidHistory.LegLorR lftLorR = adhist.getNodeLeg(oldlftleg);
+        AlloppDiploidHistory.LegLorR rgtLorR = adhist.getNodeLeg(oldrgtleg);
+        adhist.setNodeLeg(oldlftleg, rgtLorR);
+        adhist.setNodeLeg(oldrgtleg, lftLorR);
+        tettrees.get(tt).setDiphistLftLeg(oldrgtleg);
+        tettrees.get(tt).setDiphistRgtLeg(oldlftleg);
+    }
+
     public void moveLegs() {
         // ood
     }
@@ -574,56 +590,56 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         return hybpopvalues[i];
     }
 
-	/*
-	 * Called from AlloppSpeciesBindings to check if a node in a gene tree
-	 * is compatible with the network. 
-	 */
-	boolean coalescenceIsCompatible(double height, FixedBitSet union) {
-        boolean ok = mullabtree.coalescenceIsCompatible(height, union);
-		return ok;
-	}
-	
-	
     /*
-     * Called from AlloppSpeciesBindings to remove coalescent information
-     * from branches of mullabtree. Required before call to recordCoalescence
-     */
-	void clearCoalescences() {
-		mullabtree.clearCoalescences();
-	}	
+      * Called from AlloppSpeciesBindings to check if a node in a gene tree
+      * is compatible with the network.
+      */
+    boolean coalescenceIsCompatible(double height, FixedBitSet union) {
+        boolean ok = mullabtree.coalescenceIsCompatible(height, union);
+        return ok;
+    }
 
-	
-	/*
-	 * Called from AlloppSpeciesBindings to add a node from a gene tree
-	 * to its branch in mullabtree.
-	 */
-	void recordCoalescence(double height, FixedBitSet union) {
-		mullabtree.recordCoalescence(height, union);
-	}
-	
-	
-	void sortCoalescences() {
-		mullabtree.sortCoalescences();
-	}
 
-	
-	/*
-	 * Records the number of gene lineages at nodes of mullabtree.
-	 */
-	void recordLineageCounts() {
-		mullabtree.recordLineageCounts();
-	}	
-	
-	
-	/*
-	 * Calculates the log-likelihood for a single gene tree in the network
-	 * 
-	 * Requires that clearCoalescences(), recordCoalescence(), recordLineageCounts()
-	 * called to fill mullabtree with information about gene tree coalescences first.
-	 */
-	double geneTreeInNetworkLogLikelihood() {
-		return mullabtree.geneTreeInMULTreeLogLikelihood();
-	}
+    /*
+    * Called from AlloppSpeciesBindings to remove coalescent information
+    * from branches of mullabtree. Required before call to recordCoalescence
+    */
+    void clearCoalescences() {
+        mullabtree.clearCoalescences();
+    }
+
+
+    /*
+      * Called from AlloppSpeciesBindings to add a node from a gene tree
+      * to its branch in mullabtree.
+      */
+    void recordCoalescence(double height, FixedBitSet union) {
+        mullabtree.recordCoalescence(height, union);
+    }
+
+
+    void sortCoalescences() {
+        mullabtree.sortCoalescences();
+    }
+
+
+    /*
+      * Records the number of gene lineages at nodes of mullabtree.
+      */
+    void recordLineageCounts() {
+        mullabtree.recordLineageCounts();
+    }
+
+
+    /*
+      * Calculates the log-likelihood for a single gene tree in the network
+      *
+      * Requires that clearCoalescences(), recordCoalescence(), recordLineageCounts()
+      * called to fill mullabtree with information about gene tree coalescences first.
+      */
+    double geneTreeInNetworkLogLikelihood() {
+        return mullabtree.geneTreeInMULTreeLogLikelihood();
+    }
 
 
 
@@ -652,15 +668,52 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
     /*
 	 * Make a random initial starting network. 
 	 */
-	private void makeInitialNDipsNTetsNetwork(Taxon[] dipspp, Taxon[] tetspp) {
-		// grjtodo-oneday. This is crude. 2012-07-23 Only one tet tree, only JOINED case
-		// only ever joins to terminal branches, squashes tet tree to fit.
+    private void makeInitialNDipsNTetsNetwork(Taxon[] dipspp, Taxon[] tetspp) {
+        //
+        double rate = 1.0; // scale later
+        assert tetspp.length > 0;
+        assert dipspp.length > 1;
+        // Chinese restuarant process to partition tetraploids
+        ArrayList<TetraTaxonGroup> tetgps = new ArrayList<TetraTaxonGroup>();
+        TetraTaxonGroup gp1 = new TetraTaxonGroup();
+        gp1.add(tetspp[0]);
+        tetgps.add(gp1);
+        for (int t = 1;  t < tetspp.length; t++) {
+            double [] pdf = new double[tetgps.size() + 1];
+            for (int g = 0; g < tetgps.size(); g++) {
+                pdf[g] = tetgps.get(g).size();
+            }
+            pdf[tetgps.size()] = 1;
+            int nextg = MathUtils.randomChoicePDF(pdf);
+            if (nextg == tetgps.size()) {
+                TetraTaxonGroup newgp = new TetraTaxonGroup();
+                newgp.add(tetspp[t]);
+                tetgps.add(newgp);
+            } else {
+                tetgps.get(nextg).add(tetspp[t]);
+            }
+        }
+        // Make trees for each group of tetraploids
+        for (int g = 0; g < tetgps.size(); g++) {
+            Taxon [] gpspp = new Taxon[tetgps.get(g).size()];
+            for (int t = 0; t < tetgps.get(g).size(); t++) {
+                gpspp[t] = tetgps.get(g).get(t);
+            }
+            AlloppLeggedTree tettree = new AlloppLeggedTree(gpspp, rate);
+            tettrees.add(tettree);
+        }
+        // Make diploid history given tetraploid subtrees
+        adhist = new AlloppDiploidHistory(dipspp, tettrees, rate, apsp);
+    }
 
-        AlloppLeggedTree tettree = new AlloppLeggedTree(tetspp);
-        tettrees.add(tettree);
-        adhist = new AlloppDiploidHistory(dipspp, tettree, apsp);
-	}
 
+    private class TetraTaxonGroup {
+        ArrayList<Taxon> tettxs;
+        TetraTaxonGroup() { tettxs = new ArrayList<Taxon>(); }
+        public void add(Taxon tx) { tettxs.add(tx); }
+        public Taxon get(int i) { return tettxs.get(i); }
+        public int size() { return tettxs.size(); }
+    }
 
 
     private void makeLoggingHybPopParam() {
@@ -725,189 +778,189 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
 
 
     public int getTaxonCount() {
-		return mullabtree.simptree.getTaxonCount();
-	}
+        return mullabtree.simptree.getTaxonCount();
+    }
 
-	public Taxon getTaxon(int taxonIndex) {
-		return mullabtree.simptree.getTaxon(taxonIndex);
-	}
+    public Taxon getTaxon(int taxonIndex) {
+        return mullabtree.simptree.getTaxon(taxonIndex);
+    }
 
 
-	public String getTaxonId(int taxonIndex) {
-		return mullabtree.simptree.getTaxonId(taxonIndex);
-	}
+    public String getTaxonId(int taxonIndex) {
+        return mullabtree.simptree.getTaxonId(taxonIndex);
+    }
 
 
-	public int getTaxonIndex(String id) {
-		return mullabtree.simptree.getTaxonIndex(id);
-	}
+    public int getTaxonIndex(String id) {
+        return mullabtree.simptree.getTaxonIndex(id);
+    }
 
 
-	public int getTaxonIndex(Taxon taxon) {
-		return mullabtree.simptree.getTaxonIndex(taxon);
-	}
+    public int getTaxonIndex(Taxon taxon) {
+        return mullabtree.simptree.getTaxonIndex(taxon);
+    }
 
 
-	public List<Taxon> asList() {
-		return mullabtree.simptree.asList();
-	}
+    public List<Taxon> asList() {
+        return mullabtree.simptree.asList();
+    }
 
 
-	public Object getTaxonAttribute(int taxonIndex, String name) {
-		return mullabtree.simptree.getTaxonAttribute(taxonIndex, name);
-	}
+    public Object getTaxonAttribute(int taxonIndex, String name) {
+        return mullabtree.simptree.getTaxonAttribute(taxonIndex, name);
+    }
 
 
-	public String getId() {
-		return mullabtree.simptree.getId();
-	}
+    public String getId() {
+        return mullabtree.simptree.getId();
+    }
 
 
-	public void setId(String id) {
-		mullabtree.simptree.setId(id);
-		
-	}
+    public void setId(String id) {
+        mullabtree.simptree.setId(id);
 
+    }
 
-	public Iterator<Taxon> iterator() {
-		return mullabtree.simptree.iterator();
-	}
 
+    public Iterator<Taxon> iterator() {
+        return mullabtree.simptree.iterator();
+    }
 
-	public Type getUnits() {
-		return mullabtree.simptree.getUnits();
-	}
 
+    public Type getUnits() {
+        return mullabtree.simptree.getUnits();
+    }
 
-	public void setUnits(Type units) {
-		mullabtree.simptree.setUnits(units);
-		
-	}
 
+    public void setUnits(Type units) {
+        mullabtree.simptree.setUnits(units);
 
-	public void setAttribute(String name, Object value) {
-		mullabtree.simptree.setAttribute(name, value);
-		
-	}
+    }
 
 
-	public Object getAttribute(String name) {
-		return mullabtree.simptree.getAttribute(name);
-	}
+    public void setAttribute(String name, Object value) {
+        mullabtree.simptree.setAttribute(name, value);
 
+    }
 
-	public Iterator<String> getAttributeNames() {
-		return mullabtree.simptree.getAttributeNames();
-	}
 
+    public Object getAttribute(String name) {
+        return mullabtree.simptree.getAttribute(name);
+    }
 
-	public NodeRef getRoot() {
-		return mullabtree.simptree.getRoot();
-	}
 
+    public Iterator<String> getAttributeNames() {
+        return mullabtree.simptree.getAttributeNames();
+    }
 
-	public int getNodeCount() {
-		return mullabtree.simptree.getNodeCount();
-	}
 
+    public NodeRef getRoot() {
+        return mullabtree.simptree.getRoot();
+    }
 
-	public NodeRef getNode(int i) {
-		return mullabtree.simptree.getNode(i);
-	}
 
+    public int getNodeCount() {
+        return mullabtree.simptree.getNodeCount();
+    }
 
-	public NodeRef getInternalNode(int i) {
-		return mullabtree.simptree.getInternalNode(i);
-	}
 
+    public NodeRef getNode(int i) {
+        return mullabtree.simptree.getNode(i);
+    }
 
-	public NodeRef getExternalNode(int i) {
-		return mullabtree.simptree.getExternalNode(i);
-	}
 
+    public NodeRef getInternalNode(int i) {
+        return mullabtree.simptree.getInternalNode(i);
+    }
 
-	public int getExternalNodeCount() {
-		return mullabtree.simptree.getExternalNodeCount();
-	}
 
+    public NodeRef getExternalNode(int i) {
+        return mullabtree.simptree.getExternalNode(i);
+    }
 
-	public int getInternalNodeCount() {
-		return mullabtree.simptree.getInternalNodeCount();
-	}
 
+    public int getExternalNodeCount() {
+        return mullabtree.simptree.getExternalNodeCount();
+    }
 
-	public Taxon getNodeTaxon(NodeRef node) {
-		return mullabtree.simptree.getNodeTaxon(node);
-	}
 
-	public boolean hasNodeHeights() {
-		return true;
-	}
+    public int getInternalNodeCount() {
+        return mullabtree.simptree.getInternalNodeCount();
+    }
 
 
-	public double getNodeHeight(NodeRef node) {
-		return mullabtree.simptree.getNodeHeight(node);
-	}
+    public Taxon getNodeTaxon(NodeRef node) {
+        return mullabtree.simptree.getNodeTaxon(node);
+    }
 
+    public boolean hasNodeHeights() {
+        return true;
+    }
 
-	public boolean hasBranchLengths() {
-		return true;
-	}
 
+    public double getNodeHeight(NodeRef node) {
+        return mullabtree.simptree.getNodeHeight(node);
+    }
 
-	public double getBranchLength(NodeRef node) {
-		return mullabtree.simptree.getBranchLength(node);
-	}
 
+    public boolean hasBranchLengths() {
+        return true;
+    }
 
-	public double getNodeRate(NodeRef node) {
-		return mullabtree.simptree.getNodeRate(node);
-	}
 
+    public double getBranchLength(NodeRef node) {
+        return mullabtree.simptree.getBranchLength(node);
+    }
 
-	public Object getNodeAttribute(NodeRef node, String name) {
-		return mullabtree.simptree.getNodeAttribute(node, name);
-	}
 
+    public double getNodeRate(NodeRef node) {
+        return mullabtree.simptree.getNodeRate(node);
+    }
 
-	public Iterator getNodeAttributeNames(NodeRef node) {
-		return mullabtree.simptree.getNodeAttributeNames(node);
-	}
 
+    public Object getNodeAttribute(NodeRef node, String name) {
+        return mullabtree.simptree.getNodeAttribute(node, name);
+    }
 
-	public boolean isExternal(NodeRef node) {
-		return mullabtree.simptree.isExternal(node);
-	}
 
+    public Iterator getNodeAttributeNames(NodeRef node) {
+        return mullabtree.simptree.getNodeAttributeNames(node);
+    }
 
-	public boolean isRoot(NodeRef node) {
-		return mullabtree.simptree.isRoot(node);
-	}
 
+    public boolean isExternal(NodeRef node) {
+        return mullabtree.simptree.isExternal(node);
+    }
 
-	public int getChildCount(NodeRef node) {
-		int cc = mullabtree.simptree.getChildCount(node);
-		assert cc == 2;
-		return cc;
-	}
 
+    public boolean isRoot(NodeRef node) {
+        return mullabtree.simptree.isRoot(node);
+    }
 
-	public NodeRef getChild(NodeRef node, int j) {
-		return mullabtree.simptree.getChild(node, j);
-	}
 
+    public int getChildCount(NodeRef node) {
+        int cc = mullabtree.simptree.getChildCount(node);
+        assert cc == 2;
+        return cc;
+    }
 
-	public NodeRef getParent(NodeRef node) {
-		return mullabtree.simptree.getParent(node);
-	}
 
+    public NodeRef getChild(NodeRef node, int j) {
+        return mullabtree.simptree.getChild(node, j);
+    }
 
-	public Tree getCopy() {
-		return mullabtree.simptree.getCopy();
-	}
 
+    public NodeRef getParent(NodeRef node) {
+        return mullabtree.simptree.getParent(node);
+    }
 
-	public boolean logNow(long state) {
+
+    public Tree getCopy() {
+        return mullabtree.simptree.getCopy();
+    }
+
+
+    public boolean logNow(long state) {
         // can set logEvery=0 in XML for multree:
         //      <logTree id="multreeFileLog" logEvery="0" fileName="C:/U....
         // and get here for debugging
@@ -920,24 +973,24 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
         if (state <= 10000) {
             return (state % 100) == 0;
         }
-		return (state % 10000) == 0;
-	}    		
+        return (state % 10000) == 0;
+    }
 
-	
 
-	
-	
+
+
+
 /* *********************** TEST CODE **********************************/
 
-	
-	/*
-	 * Test of conversion from network to mullab tree
-	 * 	 * 2011-05-07 It is called from testAlloppSpeciesNetworkModel.java.
-	 * I don't know how to put the code in there without
-	 * making lots public here.
-	 */
-	// grjtodo-oneday. should be possible to pass stuff in nmltTEST. Currently
-	// it just signals that this is indeed a test.
+
+    /*
+      * Test of conversion from network to mullab tree
+      * 	 * 2011-05-07 It is called from testAlloppSpeciesNetworkModel.java.
+      * I don't know how to put the code in there without
+      * making lots public here.
+      */
+    // grjtodo-oneday. should be possible to pass stuff in nmltTEST. Currently
+    // it just signals that this is indeed a test.
 
 
     public String testExampleNetworkToMulLabTree(
@@ -1105,7 +1158,7 @@ public class AlloppSpeciesNetworkModel extends AbstractModel implements
             testhybpopvalues[pp] = 3000+pp;
         }
         AlloppMulLabTree testmullabtree = new AlloppMulLabTree(adhist, tettrees, apsp,
-                                testtippopvalues, testrootpopvalues, testhybpopvalues, nmltTEST);
+                testtippopvalues, testrootpopvalues, testhybpopvalues, nmltTEST);
         System.out.println(testmullabtree.asText());
         String newick = testmullabtree.mullabTreeAsNewick();
         return newick;

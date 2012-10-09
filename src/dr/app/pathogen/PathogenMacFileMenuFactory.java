@@ -83,6 +83,9 @@ public class PathogenMacFileMenuFactory implements MenuFactory {
             item = new JMenuItem(((PathogenFrame)frame).getExportDataAction());
             menu.add(item);
 
+            item = new JMenuItem(((PathogenFrame)frame).getExportTimeTreeAction());
+            menu.add(item);
+
         } else {
             // If the frame is not a BeautiFrame then create a dummy set of disabled menu options.
             // At present the only situation where this may happen is in Mac OS X when no windows

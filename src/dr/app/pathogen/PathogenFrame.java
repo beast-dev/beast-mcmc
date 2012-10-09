@@ -9,11 +9,14 @@
 package dr.app.pathogen;
 
 import dr.evolution.io.*;
+import dr.evolution.tree.MutableTree;
+import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.util.TaxonList;
 import dr.app.tools.NexusExporter;
 import dr.app.pathogen.TemporalRooting;
+import dr.stats.Regression;
 import dr.util.NumberFormatter;
 import jam.framework.DocumentFrame;
 import jam.framework.Exportable;
@@ -182,6 +185,48 @@ public class PathogenFrame extends DocumentFrame {
         }
     }
 
+    private void doExportTimeTree() {
+        FileDialog dialog = new FileDialog(this,
+                "Export Time Tree File...",
+                FileDialog.SAVE);
+
+        dialog.setVisible(true);
+        if (dialog.getFile() != null) {
+            File file = new File(dialog.getDirectory(), dialog.getFile());
+
+            PrintStream ps = null;
+            try {
+                ps = new PrintStream(file);
+                writeTimeTreeFile(ps);
+                ps.close();
+            } catch (IOException ioe) {
+                JOptionPane.showMessageDialog(this, "Error writing tree file: " + ioe.getMessage(),
+                        "Export Error",
+                        JOptionPane.ERROR_MESSAGE);
+            }
+
+        }
+    }
+
+    protected void writeTimeTreeFile(PrintStream ps) throws IOException {
+
+        FlexibleTree tree = new FlexibleTree(treesPanel.getTreeAsViewed());
+
+        Regression r = treesPanel.getTemporalRooting().getRootToTipRegression(treesPanel.getTreeAsViewed());
+
+        for (int i = 0; i < tree.getInternalNodeCount(); i++) {
+            NodeRef node = tree.getInternalNode(i);
+            double height = tree.getNodeHeight(node);
+            tree.setNodeHeight(node, height/r.getGradient());
+        }
+
+        TreeUtils.setHeightsFromDates(tree);
+
+        NexusExporter nexusExporter = new NexusExporter(new PrintStream(ps));
+        nexusExporter.exportTree(tree);
+    }
+
+
     protected void writeTreeFile(PrintStream ps, boolean newickFormat) throws IOException {
 
         Tree tree = treesPanel.getTreeAsViewed();
@@ -283,4 +328,15 @@ public class PathogenFrame extends DocumentFrame {
             doExportData();
         }
     };
+
+    public Action getExportTimeTreeAction() {
+        return exportTimeTreeAction;
+    }
+
+    protected AbstractAction exportTimeTreeAction = new AbstractAction("Export Time Tree...") {
+        public void actionPerformed(ActionEvent ae) {
+            doExportTimeTree();
+        }
+    };
+
 }

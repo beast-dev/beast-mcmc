@@ -54,7 +54,7 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
             hr = doSplitMove();
         }
         apspnet.endNetworkEdit();
-        assert apspnet. netAndGTreesAreCompatible();
+        assert apspnet.netAndGTreesAreCompatible();
         return hr;
     }
 
@@ -280,7 +280,9 @@ public class AlloppChangeNumHybridizations  extends SimpleMCMCOperator {
             hr -= Math.log(uniformpdf(rooth, maxfootanchgt));
             adhist.addTwoDipTips(apspnet, tt1, tt2, rooth, footanchgt, hybhgt1);
         }
-        // Account for left/right choice. Might be clearer to do this within split candidate.
+        // grjtodo-soon The only difference between the two states is the time-order of the nodes.
+        // Should topologies or histories be counted?
+        // Account for left/right choice. This says histories
         hr += Math.log(2.0);
         return hr;
     }

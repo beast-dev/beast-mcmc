@@ -510,7 +510,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
         public void permuteOneSpeciesOneIndiv() {
             int sp = MathUtils.nextInt(apspecies.length);
             int iv = MathUtils.nextInt(apspecies[sp].individuals.length);
-            permuteOneAssignment(sp, iv);
+            flipOneAssignment(sp, iv);
         }
 
         
@@ -520,7 +520,7 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		 * of an individual belongs to the clade of the node.
 		 * I've used a set but not made SpeciesIndivPair's comparable
 		 * so that if both sequences of an individual occurs in clade it appears
-		 * twice. Then permuteOneAssignment() flips everything so that those
+		 * twice. Then flipOneAssignment() flips everything so that those
 		 * occurring twice get flipped twice and so not changed.
 		 * 
 		 * Result is that individuals with one but not two sequences in
@@ -539,9 +539,10 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 			Set<SpeciesIndivPair> spivs = new HashSet<SpeciesIndivPair>();
 			collectIndivsOfNode(node, spivs);
 			for (SpeciesIndivPair spiv : spivs) {
-				permuteOneAssignment(spiv.spIndex, spiv.ivIndex);
+				flipOneAssignment(spiv.spIndex, spiv.ivIndex);
 			}
-		}        
+		}
+
 		
 		
 		
@@ -600,20 +601,28 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	        return bound;
 		}
 
-        
 
-		private void permuteOneAssignment(int sp, int iv) {
-			// grjtodo-tetraonly
-			int tx;
-			if (apspecies[sp].individuals[iv].taxa.length == 2) {
-				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);
-				seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
-				tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[1]);
-				seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
-			}
-		}
 
-        
+        private void flipOneAssignment(int sp, int iv) {
+            // grjtodo-tetraonly
+            int tx;
+            if (apspecies[sp].individuals[iv].taxa.length == 2) {
+                tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[0]);
+                seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
+                tx = taxon2index.get(apspecies[sp].individuals[iv].taxa[1]);
+                seqassigns[tx].seqIndex = 1 - seqassigns[tx].seqIndex;
+            }
+        }
+
+
+
+        private void flipAssignmentsForSpecies(int sp) {
+            for (int iv = 0; iv < apspecies[sp].individuals.length; iv++) {
+                flipOneAssignment(sp, iv);
+            }
+        }
+
+
 
     }
     // end of GeneTreeInfo
@@ -883,8 +892,8 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 	
 	public double spseqUpperBound(FixedBitSet left, FixedBitSet right) {
         double bound = Double.MAX_VALUE;
-        for (GeneTreeInfo g : geneTreeInfos) {
-        	bound = Math.min(bound, g.spseqUpperBound(left, right));
+        for (GeneTreeInfo gti : geneTreeInfos) {
+        	bound = Math.min(bound, gti.spseqUpperBound(left, right));
         }
         return bound;
 	}
@@ -901,7 +910,16 @@ public class AlloppSpeciesBindings extends AbstractModel implements Loggable {
 		int i = MathUtils.nextInt(geneTreeInfos.length);
 		geneTreeInfos[i].permuteSetOfIndivs();
 	}
-	
+
+
+    public void flipAssignmentsForAllGenesOneSpecies(int sp) {
+        for (GeneTreeInfo gti : geneTreeInfos) {
+            gti.flipAssignmentsForSpecies(sp);
+        }
+
+    }
+
+
 	
 	public String seqassignsAsText(int g) {
 		return geneTreeInfos[g].seqassignsAsText();

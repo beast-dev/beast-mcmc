@@ -1182,6 +1182,7 @@ public class BeautiOptions extends ModelOptions {
 
     public List<Taxa> taxonSets = new ArrayList<Taxa>();
     public Map<Taxa, Boolean> taxonSetsMono = new HashMap<Taxa, Boolean>();
+    public Map<Taxa, Double> taxonSetsHeights = new HashMap<Taxa, Double>();
     public Map<Taxa, Boolean> taxonSetsIncludeStem = new HashMap<Taxa, Boolean>();
     public Map<Taxa, PartitionTreeModel> taxonSetsTreeModel = new HashMap<Taxa, PartitionTreeModel>();
 

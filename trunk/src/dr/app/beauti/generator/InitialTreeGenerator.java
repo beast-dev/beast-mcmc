@@ -13,9 +13,14 @@ import dr.evolution.util.Taxa;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
 import dr.evomodelxml.coalescent.ConstantPopulationModelParser;
 import dr.evomodelxml.coalescent.ExponentialGrowthModelParser;
+import dr.evomodelxml.coalescent.NewCoalescentSimulatorParser;
 import dr.evoxml.*;
 import dr.util.Attribute;
 import dr.xml.XMLParser;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Alexei Drummond
@@ -89,30 +94,13 @@ public class InitialTreeGenerator extends Generator {
                 // generate a coalescent tree
                 writer.writeComment("Generate a random starting tree under the coalescent process");
 
-                ClockModelGroup group = options.getDataPartitions(model).get(0).
-                        getPartitionClockModel().getClockModelGroup();
-
-                if ( (group.getRateTypeOption() == FixRateType.FIX_MEAN || group.getRateTypeOption() == FixRateType.RELATIVE_TO)
-                        && model.getDataType().getType() != DataType.MICRO_SAT) {
-
-//            		writer.writeComment("No calibration");
-                    writer.writeOpenTag(
-                            CoalescentSimulatorParser.COALESCENT_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                    new Attribute.Default<String>(CoalescentSimulatorParser.ROOT_HEIGHT, "" + rootHeight.initial)
-                            }
-                    );
-
-                } else {
-//            		writer.writeComment("Has calibration");
-                    writer.writeOpenTag(
-                            CoalescentSimulatorParser.COALESCENT_TREE,
-                            new Attribute[]{
-                                    new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE)
-                            }
-                    );
-                }
+                writer.writeOpenTag(
+                        NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
+                        new Attribute[]{
+                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
+                                new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + rootHeight.initial)
+                        }
+                );
 
                 String taxaId;
                 if (options.hasIdenticalTaxa() && options.getPartitionPattern().size() < 1) {
@@ -120,8 +108,11 @@ public class InitialTreeGenerator extends Generator {
                 } else { // Microsatellite always uses code below
                     taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
                 }
-                writeTaxaRef(taxaId, model, writer);
 
+                if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
+                    writeSubTree(taxaId, options.taxonList, model, writer);
+                }
+//                writeTaxaRef(taxaId, model, writer);
 
                 writeInitialDemoModelRef(model, writer);
                 writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
@@ -163,6 +154,78 @@ public class InitialTreeGenerator extends Generator {
         } else {
             writer.writeTag(TaxaParser.TAXA, taxaAttribute, true);
         }
+    }
+
+    private void writeSubTree(String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
+
+        Double height = options.taxonSetsHeights.get(taxa);
+        if (height == null) {
+            height = Double.NaN;
+        }
+
+        Attribute[] attributes = new Attribute[] {};
+        if (taxaId != null) {
+            if (Double.isNaN(height)) {
+                attributes = new Attribute[] {
+                        new Attribute.Default<String>(XMLParser.IDREF, taxaId)
+                };
+            } else {
+                attributes = new Attribute[] {
+                        new Attribute.Default<String>(XMLParser.IDREF, taxaId),
+                        new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + height)
+                };
+
+            }
+        } else {
+            if (!Double.isNaN(height)) {
+                attributes = new Attribute[] {
+                        new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + height)
+                };
+
+            }
+        }
+
+        // construct a subtree
+
+        writer.writeOpenTag(
+                NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
+                attributes
+        );
+
+        List<Taxa> subsets = new ArrayList<Taxa>();
+//        Taxa remainingTaxa = new Taxa(taxa);
+
+        for (Taxa taxa2 : options.taxonSets) {
+            boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
+            boolean isMono = options.taxonSetsMono.get(taxa2);
+            boolean isSubset = taxa.containsAll(taxa2);
+            if (sameTree && isMono && taxa2 != taxa && isSubset) {
+                subsets.add(taxa2);
+            }
+        }
+
+        List<Taxa> toRemove = new ArrayList<Taxa>();
+        for (Taxa taxa3 : subsets) {
+            boolean isSubSubSet = false;
+            for (Taxa taxa4 : subsets) {
+                if (!taxa4.equals(taxa3) && taxa4.containsAll(taxa3)) {
+                    isSubSubSet = true;
+                }
+            }
+            if (isSubSubSet) {
+                toRemove.add(taxa3);
+            }
+        }
+        subsets.removeAll(toRemove);
+
+        for (Taxa taxa5 : subsets) {
+//            remainingTaxa.removeTaxa(taxa5);
+            writeSubTree(null, taxa5, model, writer);
+        }
+
+        writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+        writeInitialDemoModelRef(model, writer);
+        writer.writeCloseTag(NewCoalescentSimulatorParser.COALESCENT_SIMULATOR);
     }
 
     private void writeInitialDemoModelRef(PartitionTreeModel model, XMLWriter writer) {

@@ -73,7 +73,7 @@ public class CoalescentSimulator {
             tree = new SimpleTree(simulator.simulateCoalescent(roots, model.getDemographicFunction()));
         }
 
-        if (rootHeight > 0.0) {
+        if (!Double.isNaN(rootHeight) && rootHeight > 0.0) {
             if (preserveSubtrees) {
                 limitNodes(tree, rootHeight - 1e-12);
                 tree.setRootHeight(rootHeight); 

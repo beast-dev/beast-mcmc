@@ -92,15 +92,7 @@ public class InitialTreeGenerator extends Generator {
 
             case RANDOM:
                 // generate a coalescent tree
-                writer.writeComment("Generate a random starting tree under the coalescent process");
-
-                writer.writeOpenTag(
-                        NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
-                        new Attribute[]{
-                                new Attribute.Default<String>(XMLParser.ID, modelPrefix + STARTING_TREE),
-                                new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + rootHeight.initial)
-                        }
-                );
+                String simulatorId = modelPrefix + STARTING_TREE;
 
                 String taxaId;
                 if (options.hasIdenticalTaxa() && options.getPartitionPattern().size() < 1) {
@@ -109,13 +101,23 @@ public class InitialTreeGenerator extends Generator {
                     taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
                 }
 
+                writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
-                    writeSubTree(taxaId, options.taxonList, model, writer);
-                }
-//                writeTaxaRef(taxaId, model, writer);
+                    writeSubTree(simulatorId, taxaId, options.taxonList, model, writer);
+                } else {
+                    writer.writeOpenTag(
+                            NewCoalescentSimulatorParser.COALESCENT_SIMULATOR,
+                            new Attribute[]{
+                                    new Attribute.Default<String>(XMLParser.ID, simulatorId)
+                            }
+                    );
 
-                writeInitialDemoModelRef(model, writer);
-                writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+
+                    writeTaxaRef(taxaId, model, writer);
+
+                    writeInitialDemoModelRef(model, writer);
+                    writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+                }
                 break;
             default:
                 throw new IllegalArgumentException("Unknown StartingTreeType");
@@ -156,7 +158,7 @@ public class InitialTreeGenerator extends Generator {
         }
     }
 
-    private void writeSubTree(String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
+    private void writeSubTree(String treeId, String taxaId, Taxa taxa, PartitionTreeModel model, XMLWriter writer) {
 
         Double height = options.taxonSetsHeights.get(taxa);
         if (height == null) {
@@ -164,14 +166,14 @@ public class InitialTreeGenerator extends Generator {
         }
 
         Attribute[] attributes = new Attribute[] {};
-        if (taxaId != null) {
+        if (treeId != null) {
             if (Double.isNaN(height)) {
                 attributes = new Attribute[] {
-                        new Attribute.Default<String>(XMLParser.IDREF, taxaId)
+                        new Attribute.Default<String>(XMLParser.ID, treeId)
                 };
             } else {
                 attributes = new Attribute[] {
-                        new Attribute.Default<String>(XMLParser.IDREF, taxaId),
+                        new Attribute.Default<String>(XMLParser.ID, treeId),
                         new Attribute.Default<String>(NewCoalescentSimulatorParser.HEIGHT, "" + height)
                 };
 
@@ -198,8 +200,9 @@ public class InitialTreeGenerator extends Generator {
         for (Taxa taxa2 : options.taxonSets) {
             boolean sameTree = model.equals(options.taxonSetsTreeModel.get(taxa2));
             boolean isMono = options.taxonSetsMono.get(taxa2);
+            boolean hasHeight = options.taxonSetsHeights.get(taxa2) != null;
             boolean isSubset = taxa.containsAll(taxa2);
-            if (sameTree && isMono && taxa2 != taxa && isSubset) {
+            if (sameTree && (isMono || hasHeight) && taxa2 != taxa && isSubset) {
                 subsets.add(taxa2);
             }
         }
@@ -220,10 +223,14 @@ public class InitialTreeGenerator extends Generator {
 
         for (Taxa taxa5 : subsets) {
 //            remainingTaxa.removeTaxa(taxa5);
-            writeSubTree(null, taxa5, model, writer);
+            writeSubTree(null, null, taxa5, model, writer);
         }
 
-        writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+        if (taxaId != null) {
+            writer.writeIDref(TaxaParser.TAXA, taxa.getId());
+        } else {
+            writer.writeIDref(TaxaParser.TAXA, taxaId);
+        }
         writeInitialDemoModelRef(model, writer);
         writer.writeCloseTag(NewCoalescentSimulatorParser.COALESCENT_SIMULATOR);
     }

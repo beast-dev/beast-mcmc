@@ -1,5 +1,6 @@
 package dr.evomodelxml.coalescent;
 
+import dr.evolution.tree.SimpleNode;
 import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxa;
@@ -55,15 +56,27 @@ public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
                     + getParserName() + " element.");
         }
 
+        Taxa remainingTaxa = new Taxa();
+        for (int i = 0; i < taxonLists.size(); i++) {
+            remainingTaxa.addTaxa(taxonLists.get(i));
+        }
+
+        for (int i = 0; i < subtrees.size(); i++) {
+            remainingTaxa.removeTaxa(subtrees.get(i));
+        }
+
         try {
-            Tree[] trees = new Tree[taxonLists.size() + subtrees.size()];
-            // simulate each taxonList separately
-            for (int i = 0; i < taxonLists.size(); i++) {
-                trees[i] = simulator.simulateTree(taxonLists.get(i), demoModel);
-            }
+            Tree[] trees = new Tree[subtrees.size() + remainingTaxa.getTaxonCount()];
             // add the preset trees
             for (int i = 0; i < subtrees.size(); i++) {
-                trees[i + taxonLists.size()] = subtrees.get(i);
+                trees[i] = subtrees.get(i);
+            }
+
+            // add all the remaining taxa in as single tip trees...
+            for (int i = 0; i < remainingTaxa.getTaxonCount(); i++) {
+                Taxa tip = new Taxa();
+                tip.addTaxon(remainingTaxa.getTaxon(i));
+                trees[i + subtrees.size()] = simulator.simulateTree(tip, demoModel);
             }
 
             return simulator.simulateTree(trees, demoModel, height, trees.length != 1);
@@ -94,5 +107,6 @@ public class NewCoalescentSimulatorParser extends AbstractXMLObjectParser {
             AttributeRule.newDoubleRule(HEIGHT, true, ""),
             new ElementRule(Tree.class, 0, Integer.MAX_VALUE),
             new ElementRule(TaxonList.class, 0, Integer.MAX_VALUE),
+            new ElementRule(DemographicModel.class, 0, Integer.MAX_VALUE),
     };
 }

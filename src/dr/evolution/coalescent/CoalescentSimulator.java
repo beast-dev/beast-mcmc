@@ -85,7 +85,7 @@ public class CoalescentSimulator {
         // sanity check - disjoint trees
 
         if( ! Tree.Utils.allDisjoint(nodes) ) {
-            throw new RuntimeException("non disjoint trees");
+            throw new RuntimeException("subtrees' taxa overlap");
         }
 
         if( nodes.length == 0 ) {
@@ -99,7 +99,7 @@ public class CoalescentSimulator {
             }
         }
 
-        throw new RuntimeException("failed to merge trees after 1000 tries!");
+        throw new RuntimeException("failed to merge trees after 1000 tries.");
 	}
 
 	public SimpleNode[] simulateCoalescent(SimpleNode[] nodes, DemographicFunction demographic, double currentHeight, double maxHeight) {

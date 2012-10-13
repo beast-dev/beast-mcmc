@@ -40,6 +40,8 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     private boolean isValueValid = true;
 
+    protected boolean allowEmpty = false;
+
     public RealNumberField() { // no FocusListener
         super();
         setLabel("Value");
@@ -66,6 +68,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         range_check = true;
     }
 
+    public void setAllowEmpty(boolean allowEmpty) {
+        this.allowEmpty = allowEmpty;
+    }
+
     public void focusGained(FocusEvent evt) {
     }
 
@@ -87,6 +93,9 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
     }
 
     public boolean isValueValid() {
+        if (getText().trim().equals("") && allowEmpty) {
+            return true;
+        }
         if (range_check) {
             try {
                 double value = getValue();
@@ -106,7 +115,10 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
         return true;
     }
 
-    public void setText(double value) {
+    public void setText(Double value) {
+        if (value == null && allowEmpty) {
+            setText("");
+        }
         if (value == Double.NaN) {
             setText(NaN);
         } else if (value == Double.POSITIVE_INFINITY) {
@@ -184,8 +196,7 @@ public class RealNumberField extends JTextField implements FocusListener, Docume
 
     public Double getValue() {
         try {
-            if (getText().trim() == "" || getText().trim() == null) {
-//                System.out.println("null");
+            if (allowEmpty && getText().trim().equals("")) {
                 return null;
             } else if (getText().equals(POSITIVE_INFINITY)) {
                 return Double.POSITIVE_INFINITY;

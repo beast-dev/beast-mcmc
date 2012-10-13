@@ -42,9 +42,14 @@ public class DateCellEditor extends DefaultCellEditor {
     private RealNumberField editor;
 
     public DateCellEditor() {
+        this(false);
+    }
+
+    public DateCellEditor(boolean allowEmpty) {
         super(new RealNumberField(0.0, Double.MAX_VALUE));
 
         editor = (RealNumberField) getComponent();
+        editor.setAllowEmpty(allowEmpty);
 
         setClickCountToStart(2); //This is usually 1 or 2.
 
@@ -74,7 +79,9 @@ public class DateCellEditor extends DefaultCellEditor {
         table.setRowHeight(row, fontHeight + fontHeight / 2);
 //      System.out.println(editor.getPreferredSize() + "\t" + table.getRowHeight(row) + "\t" + table.getHeight());
         editor.setFont(table.getFont());
-        editor.setValue(((Double) value).doubleValue());
+        if (value != null) {
+            editor.setValue(((Double) value).doubleValue());
+        }
         return editor;
     }
 }

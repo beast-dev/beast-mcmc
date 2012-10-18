@@ -165,6 +165,7 @@ public class MatrixParameter extends CompoundParameter {
 
     private static final String ROW_DIMENSION = "rows";
     private static final String COLUMN_DIMENSION = "columns";
+    private static final String TRANSPOSE = "transpose";
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
@@ -196,6 +197,16 @@ public class MatrixParameter extends CompoundParameter {
                 else if (dim != parameter.getDimension())
                     throw new XMLParseException("All parameters must have the same dimension to construct a rectangular matrix");
             }
+
+            boolean transposed = xo.getAttribute(TRANSPOSE, false);
+
+
+            if (transposed) {
+                System.err.println("hi!  I'm here");
+                System.exit(-1);
+//              matrixParameter = new TransposedMatrixParameter(matrixParameter);
+            }
+
             return matrixParameter;
         }
 

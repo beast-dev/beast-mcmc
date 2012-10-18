@@ -7,6 +7,7 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JComponent;
@@ -21,7 +22,7 @@ import org.virion.jam.components.WholeNumberField;
 public class SimulationPanel extends JPanel implements Exportable {
 
 	 private BeagleSequenceSimulatorFrame frame;
-	private BeagleSequenceSimulatorData data;
+	private ArrayList<BeagleSequenceSimulatorData> dataList;
 	private OptionsPanel optionPanel;
 
 	private JLabel replicatesLabel = new JLabel("Number of sites:");
@@ -37,10 +38,10 @@ public class SimulationPanel extends JPanel implements Exportable {
 	
 	
 	public SimulationPanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) {
 
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -50,7 +51,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 		// number of sites
 		replicatesField.setColumns(8);
-		replicatesField.setValue(data.sequenceLength);
+		replicatesField.setValue(dataList.get(0).sequenceLength);
 		
 		optionPanel.addComponents(replicatesLabel, replicatesField);
 
@@ -59,27 +60,27 @@ public class SimulationPanel extends JPanel implements Exportable {
 		panel.setLayout(new GridLayout(2, 1));
 		buttonGroup = new ButtonGroup();
 
-		homogenousSimulation = "Homogenous simulation";
-		homogenousSimulationRadioButton = new JRadioButton(homogenousSimulation);
-		homogenousSimulationRadioButton.addActionListener(new ChooseSimulationTypeListener());
-		homogenousSimulationRadioButton.setSelected(true);
-//		frame.homogenousSimulationTypeSelected();
-		buttonGroup.add(homogenousSimulationRadioButton);
-		panel.add(homogenousSimulationRadioButton);
+//		homogenousSimulation = "Homogenous simulation";
+//		homogenousSimulationRadioButton = new JRadioButton(homogenousSimulation);
+//		homogenousSimulationRadioButton.addActionListener(new ChooseSimulationTypeListener());
+//		homogenousSimulationRadioButton.setSelected(true);
+////		frame.homogenousSimulationTypeSelected();
+//		buttonGroup.add(homogenousSimulationRadioButton);
+//		panel.add(homogenousSimulationRadioButton);
 			
-		heterogenousSimulation = "Heterogenous simulation";
-		heterogenousSimulationRadioButton = new JRadioButton(heterogenousSimulation);
-		heterogenousSimulationRadioButton.addActionListener(new ChooseSimulationTypeListener());
-		heterogenousSimulationRadioButton.setSelected(true);
-		buttonGroup.add(heterogenousSimulationRadioButton);
-		panel.add(heterogenousSimulationRadioButton); 
+//		heterogenousSimulation = "Heterogenous simulation";
+//		heterogenousSimulationRadioButton = new JRadioButton(heterogenousSimulation);
+//		heterogenousSimulationRadioButton.addActionListener(new ChooseSimulationTypeListener());
+//		heterogenousSimulationRadioButton.setSelected(true);
+//		buttonGroup.add(heterogenousSimulationRadioButton);
+//		panel.add(heterogenousSimulationRadioButton); 
 		
-		optionPanel.addComponentWithLabel("Choose simulation type:", panel);
+//		optionPanel.addComponentWithLabel("Choose simulation type:", panel);
 		
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
-		data.sequenceLength = replicatesField.getValue();
+		dataList.get(0).sequenceLength = replicatesField.getValue();
 //		frame.fireModelChanged();
 	}
 
@@ -88,33 +89,33 @@ public class SimulationPanel extends JPanel implements Exportable {
 		return this;
 	}// END: getExportableComponent
 
-	public void setHomogenousSimulation() {
-		homogenousSimulationRadioButton.setSelected(true);
-	}// END: setHomogenousSimulation
+//	public void setHomogenousSimulation() {
+//		homogenousSimulationRadioButton.setSelected(true);
+//	}// END: setHomogenousSimulation
 
-	public void setHeterogenousSimulation() {
-		heterogenousSimulationRadioButton.setSelected(true);
-	}// END: setHeterogenousSimulation
+//	public void setHeterogenousSimulation() {
+//		heterogenousSimulationRadioButton.setSelected(true);
+//	}// END: setHeterogenousSimulation
 	
-	class ChooseSimulationTypeListener implements ActionListener {
-		public void actionPerformed(ActionEvent ev) {
-
-			if (ev.getActionCommand() == homogenousSimulation) {
-
-				frame.homogenousSimulationTypeSelected();
-
-			} else if (ev.getActionCommand() == heterogenousSimulation) {
-
-				frame.heterogenousSimulationTypeSelected();
-
-			} else {
-				
-				System.err.println("Unimplemented simulation type selected");
-			
-			}
-
-		}// END: actionPerformed
-	}// END: ChooseAnalysisTypeListener
+//	class ChooseSimulationTypeListener implements ActionListener {
+//		public void actionPerformed(ActionEvent ev) {
+//
+//			if (ev.getActionCommand() == homogenousSimulation) {
+//
+//				frame.homogenousSimulationTypeSelected();
+//
+//			} else if (ev.getActionCommand() == heterogenousSimulation) {
+//
+//				frame.heterogenousSimulationTypeSelected();
+//
+//			} else {
+//				
+//				System.err.println("Unimplemented simulation type selected");
+//			
+//			}
+//
+//		}// END: actionPerformed
+//	}// END: ChooseAnalysisTypeListener
 	
 	
 	

@@ -6,6 +6,7 @@ import jam.panels.OptionsPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -18,20 +19,20 @@ import dr.app.gui.components.RealNumberField;
 @SuppressWarnings("serial")
 public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame;
-	private BeagleSequenceSimulatorData data;
+	private BeagleSequenceSimulatorFrame frame = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
 	private OptionsPanel optionPanel;
 
 	private JComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[BeagleSequenceSimulatorData.substitutionParameterNames.length];
 
 	public BranchSubstitutionModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) {
 
 		super();
 
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -51,7 +52,7 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 		for (int i = 0; i < BeagleSequenceSimulatorData.substitutionParameterNames.length; i++) {
 			substitutionParameterFields[i] = new RealNumberField();
 			substitutionParameterFields[i].setColumns(8);
-			substitutionParameterFields[i].setValue(data.substitutionParameterValues[i]);
+			substitutionParameterFields[i].setValue(dataList.get(0).substitutionParameterValues[i]);
 		}// END: fill loop
 
 		setSubstitutionArguments();
@@ -67,9 +68,9 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 		int index = substitutionCombo.getSelectedIndex();
 
-		for (int i = 0; i < data.substitutionParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(0).substitutionParameterIndices[index].length; i++) {
 
-			int k = data.substitutionParameterIndices[index][i];
+			int k = dataList.get(0).substitutionParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(substitutionParameterFields[k], BorderLayout.WEST);
@@ -93,10 +94,10 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 	public void collectSettings() {
 
-		data.substitutionModel = substitutionCombo.getSelectedIndex();
+		dataList.get(0).substitutionModel = substitutionCombo.getSelectedIndex();
 		for (int i = 0; i < BeagleSequenceSimulatorData.substitutionParameterNames.length; i++) {
 
-			data.substitutionParameterValues[i] = substitutionParameterFields[i].getValue();
+			dataList.get(0).substitutionParameterValues[i] = substitutionParameterFields[i].getValue();
 
 		}// END: fill loop
 	}// END: collectSettings

@@ -106,14 +106,15 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreePanel treePanel;
-	private BranchSubstitutionModelPanel substModelPanel;
-	private ClockRateModelPanel clockPanel;
-	private FrequencyModelPanel frequencyPanel;
-	private SiteRateModelPanel sitePanel;
-	private EpochModelPanel epochModelPanel;
+//	private BranchSubstitutionModelPanel substModelPanel;
+//	private ClockRateModelPanel clockPanel;
+//	private FrequencyModelPanel frequencyPanel;
+//	private SiteRateModelPanel sitePanel;
+	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
 	
-	private BeagleSequenceSimulatorData data = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList;
+	
 	private JLabel statusLabel;
 	private JProgressBar progressBar;
 	private File workingDirectory = null;
@@ -123,7 +124,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		super();
 		
 		setTitle(title);
-		data = new BeagleSequenceSimulatorData();
+		dataList = new ArrayList<BeagleSequenceSimulatorData>();
+		dataList.add(new BeagleSequenceSimulatorData());
 
 	}// END: Constructor
 
@@ -135,23 +137,23 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			setSize(new Dimension(900, 600));
 			setMinimumSize(new Dimension(260, 100));
 
-			taxaPanel = new TaxaPanel(this, data);
-			treePanel = new TreePanel(this, data);
-			substModelPanel = new BranchSubstitutionModelPanel(this, data);
-			clockPanel = new ClockRateModelPanel(this, data);
-			frequencyPanel = new FrequencyModelPanel(this, data);
-			sitePanel = new SiteRateModelPanel(this, data);
-			epochModelPanel = new EpochModelPanel(this, data);
-			simulationPanel = new SimulationPanel(this, data);
+			taxaPanel = new TaxaPanel(this, dataList);
+			treePanel = new TreePanel(this, dataList);
+//			substModelPanel = new BranchSubstitutionModelPanel(this, dataList);
+//			clockPanel = new ClockRateModelPanel(this, dataList);
+//			frequencyPanel = new FrequencyModelPanel(this, dataList);
+//			sitePanel = new SiteRateModelPanel(this, dataList);
+			partitionsPanel = new PartitionsPanel(this, dataList);
+			simulationPanel = new SimulationPanel(this, dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
 			tabbedPane.addTab("Tree", null, treePanel);
-			tabbedPane.addTab("Branch Substitution Model", null,
-					substModelPanel);
-			tabbedPane.addTab("Epoch Model", null, epochModelPanel);
-			tabbedPane.addTab("Clock Rate Model", null, clockPanel);
-			tabbedPane.addTab("Frequency Model", null, frequencyPanel);
-			tabbedPane.addTab("Site Rate Model", null, sitePanel);
+//			tabbedPane.addTab("Branch Substitution Model", null,
+//					substModelPanel);
+			tabbedPane.addTab("Partitions", null, partitionsPanel);
+//			tabbedPane.addTab("Clock Rate Model", null, clockPanel);
+//			tabbedPane.addTab("Frequency Model", null, frequencyPanel);
+//			tabbedPane.addTab("Site Rate Model", null, sitePanel);
 			tabbedPane.addTab("Simulation", null, simulationPanel);
 
 			statusLabel = new JLabel("No taxa loaded");
@@ -177,11 +179,9 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 			tabbedPane.setSelectedComponent(treePanel);
 //			this.homogenousSimulationTypeSelected();
-			this.heterogenousSimulationTypeSelected();
+//			this.heterogenousSimulationTypeSelected();
 			
 		} catch (NumberFormatException e) {
-			e.printStackTrace();
-		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
 
@@ -192,8 +192,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		SwingUtilities.invokeLater(new Runnable() {
 		    public void run() {
 
-		        taxaPanel.updateUI();
-		        statusLabel.setText(Integer.toString(data.taxonList.getTaxonCount()) + " taxa loaded.");
+//		        taxaPanel.updateUI();
+		        statusLabel.setText(Integer.toString(dataList.get(0).taxonList.getTaxonCount()) + " taxa loaded.");
 		    
 		    }
 		});
@@ -211,7 +211,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
 
-			if (data.treeModel == null) {
+			if (dataList.get(0).treeModel == null) {
 
 				tabbedPane.setSelectedComponent(treePanel);
 				// TODO: maybe new ListenTreeFileButton class? Make sure it's started from EDT
@@ -276,21 +276,25 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 					ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 					
-					// create partition
-					Partition partition = new Partition(data.treeModel, //
-							data.createBranchSubstitutionModel(), //
-							data.createSiteRateModel(), //
-							data.createBranchRateModel(), //
-							data.createFrequencyModel(), //
-							0, // from
-							data.sequenceLength - 1, // to
-							1 // every
-					);
-					
-					partitionsList.add(partition);
+					for (BeagleSequenceSimulatorData data : dataList) {
+
+						// create partition
+						Partition partition = new Partition(data.treeModel, //
+								data.createBranchSubstitutionModel(), //
+								data.createSiteRateModel(), //
+								data.createBranchRateModel(), //
+								data.createFrequencyModel(), //
+								0, // from
+								data.sequenceLength - 1, // to
+								1 // every
+						);
+
+						partitionsList.add(partition);
+						
+					}//END: data list loop		
 					
 					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(partitionsList,
-							data.sequenceLength);
+							dataList.get(0).sequenceLength);
 
 					writer.println(beagleSequenceSimulator.simulate().toString());
 					writer.close();
@@ -305,7 +309,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				statusLabel.setText("Generated " + data.sequenceLength + " replicates.");
+				statusLabel.setText("Generated " + dataList.get(0).sequenceLength + " replicates.");
 				progressBar.setIndeterminate(false);
 
 			}// END: done
@@ -343,29 +347,29 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	private void collectAllSettings() {
 		
-		frequencyPanel.collectSettings();
-		substModelPanel.collectSettings();
-        clockPanel.collectSettings();
-    	sitePanel.collectSettings();
+//		frequencyPanel.collectSettings();
+//		substModelPanel.collectSettings();
+//        clockPanel.collectSettings();
+//    	sitePanel.collectSettings();
     	simulationPanel.collectSettings();
     	
 	}// END: collectAllSettings
 	
-	public void homogenousSimulationTypeSelected() {
-		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-		int epochModelPanelIndex = tabbedPane.indexOfComponent(epochModelPanel);
-		tabbedPane.setEnabledAt(substModelPanelIndex, true);
-		tabbedPane.setEnabledAt(epochModelPanelIndex, false);
-		simulationPanel.setHomogenousSimulation();
-	}// END: homogenousSimulationTypeSelected
+//	public void homogenousSimulationTypeSelected() {
+//		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
+//		int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
+//		tabbedPane.setEnabledAt(substModelPanelIndex, true);
+//		tabbedPane.setEnabledAt(epochModelPanelIndex, false);
+//		simulationPanel.setHomogenousSimulation();
+//	}// END: homogenousSimulationTypeSelected
 
-	public void heterogenousSimulationTypeSelected() {
-		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-		int epochModelPanelIndex = tabbedPane.indexOfComponent(epochModelPanel);
-		tabbedPane.setEnabledAt(substModelPanelIndex, false);
-		tabbedPane.setEnabledAt(epochModelPanelIndex, true);
-		simulationPanel.setHeterogenousSimulation();
-	}// END: heterogenousSimulationTypeSelected
+//	public void heterogenousSimulationTypeSelected() {
+//		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
+//		int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
+//		tabbedPane.setEnabledAt(substModelPanelIndex, false);
+//		tabbedPane.setEnabledAt(epochModelPanelIndex, true);
+//		simulationPanel.setHeterogenousSimulation();
+//	}// END: heterogenousSimulationTypeSelected
 
 	public void dataSelectionChanged(boolean isSelected) {
 		if (isSelected) {

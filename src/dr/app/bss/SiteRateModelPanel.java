@@ -3,6 +3,7 @@ package dr.app.bss;
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
@@ -22,8 +23,9 @@ import org.virion.jam.components.RealNumberField;
 @SuppressWarnings("serial")
 public class SiteRateModelPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame;
-	private BeagleSequenceSimulatorData data;
+	private BeagleSequenceSimulatorFrame frame = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	
 	private OptionsPanel optionPanel;
 
 	private JComboBox siteCombo;
@@ -31,10 +33,10 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
     private JSpinner gammaCategoriesSpinner;
 	
 	public SiteRateModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) throws NumberFormatException, BadLocationException {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) throws NumberFormatException, BadLocationException {
 
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -54,7 +56,7 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 		for (int i = 0; i < BeagleSequenceSimulatorData.siteParameterNames.length; i++) {
 			siteParameterFields[i] = new RealNumberField();
 			siteParameterFields[i].setColumns(8);
-			siteParameterFields[i].setValue(data.siteParameterValues[i]);
+			siteParameterFields[i].setValue(dataList.get(0).siteParameterValues[i]);
 		}// END: fill loop
 
 		setSiteArguments();
@@ -70,11 +72,11 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 
 		int index = siteCombo.getSelectedIndex();
 		
-		for (int i = 0; i < data.siteParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(0).siteParameterIndices[index].length; i++) {
 
 			if(index == 1 && i == 0) {
 				
-				int k = data.siteParameterIndices[index][i];
+				int k = dataList.get(0).siteParameterIndices[index][i];
 				
 				Integer initValue = Integer.valueOf(siteParameterFields[k].getText(0, 1)); 
 				Integer	min = 0;
@@ -93,7 +95,7 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 				
 			} else {
 			
-			int k = data.siteParameterIndices[index][i];
+			int k = dataList.get(0).siteParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(siteParameterFields[k], BorderLayout.WEST);
@@ -127,17 +129,17 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 	public void collectSettings() {
 
 		int index = siteCombo.getSelectedIndex();
-		data.siteModel = index;
+		dataList.get(0).siteModel = index;
 		
 		for (int i = 0; i < BeagleSequenceSimulatorData.siteParameterNames.length; i++) {
 
 			if(index == 1 && i == 0) { 
 				
-				data.siteParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
+				dataList.get(0).siteParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
 						
 			} else {
 			
-			data.siteParameterValues[i] = siteParameterFields[i].getValue();
+				dataList.get(0).siteParameterValues[i] = siteParameterFields[i].getValue();
 			
 			}// END: gama categories field check
 

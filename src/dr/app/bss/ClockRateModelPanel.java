@@ -3,6 +3,7 @@ package dr.app.bss;
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
 import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
@@ -18,18 +19,18 @@ import org.virion.jam.components.RealNumberField;
 @SuppressWarnings("serial")
 public class ClockRateModelPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame;
-	private BeagleSequenceSimulatorData data;
+	private BeagleSequenceSimulatorFrame frame = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	
 	private OptionsPanel optionPanel;
-
 	private JComboBox clockCombo;
 	private RealNumberField[] clockParameterFields = new RealNumberField[BeagleSequenceSimulatorData.clockParameterNames.length];
 
 	public ClockRateModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) {
 
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -49,7 +50,7 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 		for (int i = 0; i < BeagleSequenceSimulatorData.clockParameterNames.length; i++) {
 			clockParameterFields[i] = new RealNumberField();
 			clockParameterFields[i].setColumns(8);
-			clockParameterFields[i].setValue(data.clockParameterValues[i]);
+			clockParameterFields[i].setValue(dataList.get(0).clockParameterValues[i]);
 		}// END: fill loop
 
 		setClockArguments();
@@ -65,9 +66,9 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 
 		int index = clockCombo.getSelectedIndex();
 
-		for (int i = 0; i < data.clockParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(0).clockParameterIndices[index].length; i++) {
 
-			int k = data.clockParameterIndices[index][i];
+			int k = dataList.get(0).clockParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(clockParameterFields[k], BorderLayout.WEST);
@@ -93,10 +94,10 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 
 	public void collectSettings() {
 
-		data.clockModel = clockCombo.getSelectedIndex();
+		dataList.get(0).clockModel = clockCombo.getSelectedIndex();
 		for (int i = 0; i < BeagleSequenceSimulatorData.clockParameterNames.length; i++) {
 
-			data.clockParameterValues[i] = clockParameterFields[i].getValue();
+			dataList.get(0).clockParameterValues[i] = clockParameterFields[i].getValue();
 
 		}// END: fill loop
 	}// END: collectSettings

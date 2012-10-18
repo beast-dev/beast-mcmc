@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -28,19 +29,19 @@ import dr.evomodel.tree.TreeModel;
 public class TreePanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private BeagleSequenceSimulatorData data = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
 	private OptionsPanel optionPanel;
 
 	private JButton treeFileButton = new JButton("Choose File...");
 	private JTextField treeFileNameText = new JTextField("not selected", 16);
 
 	public TreePanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) {
 
 		super();
 
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -83,8 +84,8 @@ public class TreePanel extends JPanel implements Exportable {
 
 				if (file != null) {
 
-					data.treeFile = file;
-					treeFileNameText.setText(data.treeFile.getName());
+					dataList.get(0).treeFile = file;
+					treeFileNameText.setText(dataList.get(0).treeFile.getName());
 
 					importFromFile(file);
 
@@ -120,8 +121,8 @@ public class TreePanel extends JPanel implements Exportable {
             tree = importer.importTree(null);
         }
 
-        data.taxonList = tree;
-        data.treeModel = new TreeModel(tree);
+        dataList.get(0).taxonList = tree;
+        dataList.get(0).treeModel = new TreeModel(tree);
         
         reader.close();
         frame.fireTaxaChanged();

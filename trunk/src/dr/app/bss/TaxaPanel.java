@@ -19,6 +19,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
 import dr.app.gui.table.TableEditorStopper;
 
@@ -26,7 +27,7 @@ import dr.app.gui.table.TableEditorStopper;
 public class TaxaPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private BeagleSequenceSimulatorData data = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
 	private JTable dataTable = null;
@@ -44,10 +45,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private double[] heights = null;
 	private GuessDatesDialog guessDatesDialog = null;
 
-    public TaxaPanel(BeagleSequenceSimulatorFrame frame, BeagleSequenceSimulatorData data) {
+    public TaxaPanel(BeagleSequenceSimulatorFrame frame, ArrayList<BeagleSequenceSimulatorData> dataList) {
 
         this.frame = frame;
-        this.data = data;
+        this.dataList = dataList;
 
         dataTableModel = new DataTableModel();
         TableSorter sorter = new TableSorter(dataTableModel);
@@ -125,7 +126,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
     public final void dataChanged() {
 
-        if (data.taxonList.getTaxonCount() > 0) {
+        if (dataList.get(0).taxonList.getTaxonCount() > 0) {
             clearDatesAction.setEnabled(true);
             guessDatesAction.setEnabled(true);
             unitsCombo.setEnabled(true);
@@ -154,13 +155,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 
         boolean backwards = directionCombo.getSelectedIndex() == 1;
 
-        for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
-            Date date = data.taxonList.getTaxon(i).getDate();
+        for (int i = 0; i < dataList.get(0).taxonList.getTaxonCount(); i++) {
+            Date date = dataList.get(0).taxonList.getTaxon(i).getDate();
             double d = date.getTimeValue();
 
             Date newDate = createDate(d, units, backwards, 0.0);
 
-            data.taxonList.getTaxon(i).setDate(newDate);
+            dataList.get(0).taxonList.getTaxon(i).setDate(newDate);
         }
 
         calculateHeights();
@@ -193,13 +194,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 
     public void clearDates() {
-        for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
+        for (int i = 0; i < dataList.get(0).taxonList.getTaxonCount(); i++) {
             java.util.Date origin = new java.util.Date(0);
 
             double d = 0.0;
 
             Date date = Date.createTimeSinceOrigin(d, Units.Type.YEARS, origin);
-            data.taxonList.getTaxon(i).setAttribute("date", date);
+            dataList.get(0).taxonList.getTaxon(i).setAttribute("date", date);
         }
 
         // adjust the dates to the current timescale...
@@ -226,7 +227,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 //        String warningMessage = null;
 
-        guesser.guessDates(data.taxonList);
+        guesser.guessDates(dataList.get(0).taxonList);
 
 //        if (warningMessage != null) {
 //            JOptionPane.showMessageDialog(this, "Warning: some dates may not be set correctly - \n" + warningMessage,
@@ -272,26 +273,26 @@ public class TaxaPanel extends JPanel implements Exportable {
     private void calculateHeights() {
 
         double maximumTipHeight = 0.0;
-        if (data.taxonList == null || data.taxonList.getTaxonCount() == 0) return;
+        if (dataList.get(0).taxonList == null || dataList.get(0).taxonList.getTaxonCount() == 0) return;
 
         heights = null;
 
         dr.evolution.util.Date mostRecent = null;
-        for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
-            Date date = data.taxonList.getTaxon(i).getDate();
+        for (int i = 0; i < dataList.get(0).taxonList.getTaxonCount(); i++) {
+            Date date = dataList.get(0).taxonList.getTaxon(i).getDate();
             if ((date != null) && (mostRecent == null || date.after(mostRecent))) {
                 mostRecent = date;
             }
         }
 
         if (mostRecent != null) {
-            heights = new double[data.taxonList.getTaxonCount()];
+            heights = new double[dataList.get(0).taxonList.getTaxonCount()];
 
             TimeScale timeScale = new TimeScale(mostRecent.getUnits(), true, mostRecent.getAbsoluteTimeValue());
             double time0 = timeScale.convertTime(mostRecent.getTimeValue(), mostRecent);
 
-            for (int i = 0; i < data.taxonList.getTaxonCount(); i++) {
-                Date date = data.taxonList.getTaxon(i).getDate();
+            for (int i = 0; i < dataList.get(0).taxonList.getTaxonCount(); i++) {
+                Date date = dataList.get(0).taxonList.getTaxon(i).getDate();
                 if (date != null) {
                     heights[i] = timeScale.convertTime(date.getTimeValue(), date) - time0;
                     if (heights[i] > maximumTipHeight) maximumTipHeight = heights[i];
@@ -312,15 +313,15 @@ public class TaxaPanel extends JPanel implements Exportable {
         }
 
         public int getRowCount() {
-            return data.taxonList.getTaxonCount();
+            return dataList.get(0).taxonList.getTaxonCount();
         }
 
         public Object getValueAt(int row, int col) {
             switch (col) {
                 case 0:
-                    return data.taxonList.getTaxonId(row);
+                    return dataList.get(0).taxonList.getTaxonId(row);
                 case 1:
-                    Date date = data.taxonList.getTaxon(row).getDate();
+                    Date date = dataList.get(0).taxonList.getTaxon(row).getDate();
                     if (date != null) {
                         return date.getTimeValue();
                     } else {
@@ -338,13 +339,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 
         public void setValueAt(Object aValue, int row, int col) {
             if (col == 0) {
-                data.taxonList.getTaxon(row).setId(aValue.toString());
+            	dataList.get(0).taxonList.getTaxon(row).setId(aValue.toString());
             } else if (col == 1) {
-                Date date = data.taxonList.getTaxon(row).getDate();
+                Date date = dataList.get(0).taxonList.getTaxon(row).getDate();
                 if (date != null) {
                     double d = (Double) aValue;
                     Date newDate = createDate(d, date.getUnits(), date.isBackwards(), date.getOrigin());
-                    data.taxonList.getTaxon(row).setDate(newDate);
+                    dataList.get(0).taxonList.getTaxon(row).setDate(newDate);
                 }
             }
 
@@ -354,7 +355,7 @@ public class TaxaPanel extends JPanel implements Exportable {
         public boolean isCellEditable(int row, int col) {
             if (col == 0) return true;
             if (col == 1) {
-                Date date = data.taxonList.getTaxon(row).getDate();
+                Date date = dataList.get(0).taxonList.getTaxon(row).getDate();
                 return (date != null);
             }
             return false;

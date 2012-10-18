@@ -6,6 +6,7 @@ import jam.panels.OptionsPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.util.ArrayList;
 
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
@@ -19,19 +20,19 @@ import org.virion.jam.components.RealNumberField;
 @SuppressWarnings("serial")
 public class FrequencyModelPanel extends JPanel implements Exportable {
 
-	private BeagleSequenceSimulatorFrame frame;
-	private BeagleSequenceSimulatorData data;
+	private BeagleSequenceSimulatorFrame frame = null;
+	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	
 	private OptionsPanel optionPanel;
-
 	private JScrollPane scrollPane;
 	private JComboBox frequencyCombo;
 	private RealNumberField[] frequencyParameterFields = new RealNumberField[BeagleSequenceSimulatorData.frequencyParameterNames.length];
 	
 	public FrequencyModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final BeagleSequenceSimulatorData data) {
+			final ArrayList<BeagleSequenceSimulatorData> dataList) {
 		
 		this.frame = frame;
-		this.data = data;
+		this.dataList = dataList;
 
 		setOpaque(false);
 		setLayout(new BorderLayout());
@@ -57,7 +58,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 		for (int i = 0; i < BeagleSequenceSimulatorData.frequencyParameterNames.length; i++) {
 			frequencyParameterFields[i] = new RealNumberField();
 			frequencyParameterFields[i].setColumns(8);
-			frequencyParameterFields[i].setValue(data.frequencyParameterValues[i]);
+			frequencyParameterFields[i].setValue(dataList.get(0).frequencyParameterValues[i]);
 		}// END: fill loop
 
 		setFrequencyArguments();
@@ -74,9 +75,9 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 
 		int index = frequencyCombo.getSelectedIndex();
 
-		for (int i = 0; i < data.frequencyParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(0).frequencyParameterIndices[index].length; i++) {
 
-			int k = data.frequencyParameterIndices[index][i];
+			int k = dataList.get(0).frequencyParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(frequencyParameterFields[k], BorderLayout.WEST);
@@ -99,10 +100,10 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 
 	public void collectSettings() {
 
-		data.frequencyModel = frequencyCombo.getSelectedIndex();
+		dataList.get(0).frequencyModel = frequencyCombo.getSelectedIndex();
 		for (int i = 0; i < BeagleSequenceSimulatorData.frequencyParameterNames.length; i++) {
 
-			data.frequencyParameterValues[i] = frequencyParameterFields[i].getValue();
+			dataList.get(0).frequencyParameterValues[i] = frequencyParameterFields[i].getValue();
 
 		}// END: fill loop
 	}// END: collectSettings

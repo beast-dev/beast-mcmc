@@ -40,9 +40,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private TableColumn column;
 
 	private int partitionsCount = 1;
-	
+
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
+			
+			partitionTableModel.addDefaultRow();
+//			partitionTableModel.addRow(dataList.get(partitionsCount - 1));
+			
 			partitionsCount++;
 			setPartitions();
 		}// END: actionPerformed
@@ -51,12 +55,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private Action removePartitionAction = new AbstractAction("-") {
 		public void actionPerformed(ActionEvent ae) {
 			if (partitionsCount > 1) {
+				partitionTableModel.deleteRow(partitionsCount - 1);
 				partitionsCount--;
 				setPartitions();
 			}
 		}// END: actionPerformed
 	};
-	
+
 	public PartitionsPanel(final BeagleSequenceSimulatorFrame frame,
 			final ArrayList<PartitionData> dataList) {
 
@@ -120,7 +125,9 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		actionPanel.setAddAction(addPartitionAction);
 		actionPanel.setRemoveAction(removePartitionAction);
 		add(actionPanel, BorderLayout.SOUTH);
-		 
+
+		setPartitions();
+
 	}// END: Constructor
 
 	public JComponent getExportableComponent() {
@@ -134,10 +141,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		} else {
 			removePartitionAction.setEnabled(true);
 		}
-        
+
 		this.updateUI();
-	}//END: setPartitions
-	
+	}// END: setPartitions
+
 	private class PartitionTableModelListener implements TableModelListener {
 		public void tableChanged(TableModelEvent ev) {
 

@@ -88,11 +88,14 @@ public class PartitionTableModel extends AbstractTableModel {
 //			 dataList.get(row).treeModel = (TreeModel) value;
 			System.out.println("FUBAR1");
 		case FROM_INDEX:
-			System.out.println("FUBAR2");
+			dataList.get(row).from = (Integer) value;
+			break;
 		case TO_INDEX:
-			System.out.println("FUBAR3");
+			dataList.get(row).to = (Integer) value;
+			break;
 		case EVERY_INDEX:
-			System.out.println("FUBAR4");
+			dataList.get(row).every = (Integer) value;
+			break;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 //			 dataList.get(row).substitutionModel = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
@@ -108,6 +111,22 @@ public class PartitionTableModel extends AbstractTableModel {
 		fireTableCellUpdated(row, column);
 	}
 
+	// This appends a row
+	public void addRow(PartitionData row) {
+		dataList.add(row);
+		this.fireTableDataChanged();
+	}
+	
+	public void addDefaultRow() {
+		dataList.add(new PartitionData());
+		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
+	}
+	
+	public void deleteRow(int row) {
+		dataList.remove(row);
+		this.fireTableDataChanged();
+	}
+	
 	public String getColumnName(int column) {
 		return COLUMN_NAMES[column];
 	}//END: getColumnName

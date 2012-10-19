@@ -27,7 +27,7 @@ import dr.app.gui.table.TableEditorStopper;
 public class TaxaPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	private ArrayList<PartitionData> dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
 	private JTable dataTable = null;
@@ -45,7 +45,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private double[] heights = null;
 	private GuessDatesDialog guessDatesDialog = null;
 
-    public TaxaPanel(BeagleSequenceSimulatorFrame frame, ArrayList<BeagleSequenceSimulatorData> dataList) {
+    public TaxaPanel(BeagleSequenceSimulatorFrame frame, ArrayList<PartitionData> dataList) {
 
         this.frame = frame;
         this.dataList = dataList;

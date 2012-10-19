@@ -21,15 +21,15 @@ import org.virion.jam.components.RealNumberField;
 public class FrequencyModelPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	private ArrayList<PartitionData> dataList = null;
 	
 	private OptionsPanel optionPanel;
 	private JScrollPane scrollPane;
 	private JComboBox frequencyCombo;
-	private RealNumberField[] frequencyParameterFields = new RealNumberField[BeagleSequenceSimulatorData.frequencyParameterNames.length];
+	private RealNumberField[] frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
 	
 	public FrequencyModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<BeagleSequenceSimulatorData> dataList) {
+			final ArrayList<PartitionData> dataList) {
 		
 		this.frame = frame;
 		this.dataList = dataList;
@@ -49,13 +49,13 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 		
 		frequencyCombo = new JComboBox();
 
-		for (String frequencyModel : BeagleSequenceSimulatorData.frequencyModels) {
+		for (String frequencyModel : PartitionData.frequencyModels) {
 			frequencyCombo.addItem(frequencyModel);
 		}// END: fill loop
 
 		frequencyCombo.addItemListener(new ListenFrequencyCombo());
 
-		for (int i = 0; i < BeagleSequenceSimulatorData.frequencyParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {
 			frequencyParameterFields[i] = new RealNumberField();
 			frequencyParameterFields[i].setColumns(8);
 			frequencyParameterFields[i].setValue(dataList.get(0).frequencyParameterValues[i]);
@@ -83,7 +83,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 			panel.add(frequencyParameterFields[k], BorderLayout.WEST);
 			panel.setOpaque(false);
 			optionPanel.addComponentWithLabel(
-					BeagleSequenceSimulatorData.frequencyParameterNames[k] + ":",
+					PartitionData.frequencyParameterNames[k] + ":",
 					panel);
 
 		}// END: indices loop
@@ -101,7 +101,7 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 	public void collectSettings() {
 
 		dataList.get(0).frequencyModel = frequencyCombo.getSelectedIndex();
-		for (int i = 0; i < BeagleSequenceSimulatorData.frequencyParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {
 
 			dataList.get(0).frequencyParameterValues[i] = frequencyParameterFields[i].getValue();
 

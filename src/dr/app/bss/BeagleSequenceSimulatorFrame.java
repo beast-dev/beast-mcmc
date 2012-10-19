@@ -1,72 +1,3 @@
-/**
- * 	// ///////////////////
-	// ---IMPORT TAXA---//
-	// ///////////////////
-
-//	public Action getImportAction() {
-//		return importTaxaAction;
-//	}
-//
-//	private AbstractAction importTaxaAction = new AbstractAction("Import Taxa...") {
-//		public void actionPerformed(ActionEvent ae) {
-//			 doImport();
-//		}
-//	};
-//
-//	public void doImport() {
-//
-//		try {
-//
-//			JFileChooser chooser = new JFileChooser();
-//			chooser.setDialogTitle("Import Taxa...");
-//			chooser.setMultiSelectionEnabled(false);
-//			chooser.setCurrentDirectory(workingDirectory);
-//
-//			chooser.showOpenDialog(Utils.getActiveFrame());
-//			File file = chooser.getSelectedFile();
-//
-//			if (file != null) {
-//
-//				importFromFile(file);
-//
-//				File tmpDir = chooser.getCurrentDirectory();
-//				if (tmpDir != null) {
-//					workingDirectory = tmpDir;
-//				}
-//
-//			}// END: file opened check
-//
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		} catch (ImportException e) {
-//			e.printStackTrace();
-//		}// END: try catch block
-//
-//	}// END: doImport
-//	
-//	public void importFromFile(File file) throws IOException, ImportException {
-//		
-//        BufferedReader reader = new BufferedReader(new FileReader(file));
-//
-//        String line = reader.readLine();
-//        Tree tree;
-//
-//        if (line.toUpperCase().startsWith("#NEXUS")) {
-//            NexusImporter importer = new NexusImporter(reader);
-//            tree = importer.importTree(null);
-//        } else {
-//            NewickImporter importer = new NewickImporter(reader);
-//            tree = importer.importTree(null);
-//        }
-//
-//        data.taxonList = tree;
-//        reader.close();
-//
-//        fireTaxaChanged();
-//		
-//	}//END: importFromFile
- * */
-
 package dr.app.bss;
 
 import jam.framework.DocumentFrame;
@@ -94,7 +25,6 @@ import javax.swing.JTabbedPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 import javax.swing.plaf.BorderUIResource;
-import javax.swing.text.BadLocationException;
 
 import dr.app.beagle.tools.BeagleSequenceSimulator;
 import dr.app.beagle.tools.Partition;
@@ -106,26 +36,26 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreePanel treePanel;
-//	private BranchSubstitutionModelPanel substModelPanel;
-//	private ClockRateModelPanel clockPanel;
-//	private FrequencyModelPanel frequencyPanel;
-//	private SiteRateModelPanel sitePanel;
+	// private BranchSubstitutionModelPanel substModelPanel;
+	// private ClockRateModelPanel clockPanel;
+	// private FrequencyModelPanel frequencyPanel;
+	// private SiteRateModelPanel sitePanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
-	
-	private ArrayList<BeagleSequenceSimulatorData> dataList;
-	
+
+	private ArrayList<PartitionData> dataList;
+
 	private JLabel statusLabel;
 	private JProgressBar progressBar;
 	private File workingDirectory = null;
-	
+
 	public BeagleSequenceSimulatorFrame(String title) {
 
 		super();
-		
+
 		setTitle(title);
-		dataList = new ArrayList<BeagleSequenceSimulatorData>();
-		dataList.add(new BeagleSequenceSimulatorData());
+		dataList = new ArrayList<PartitionData>();
+		dataList.add(new PartitionData());
 
 	}// END: Constructor
 
@@ -139,21 +69,22 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 			taxaPanel = new TaxaPanel(this, dataList);
 			treePanel = new TreePanel(this, dataList);
-//			substModelPanel = new BranchSubstitutionModelPanel(this, dataList);
-//			clockPanel = new ClockRateModelPanel(this, dataList);
-//			frequencyPanel = new FrequencyModelPanel(this, dataList);
-//			sitePanel = new SiteRateModelPanel(this, dataList);
 			partitionsPanel = new PartitionsPanel(this, dataList);
+			// substModelPanel = new BranchSubstitutionModelPanel(this,
+			// dataList);
+			// clockPanel = new ClockRateModelPanel(this, dataList);
+			// frequencyPanel = new FrequencyModelPanel(this, dataList);
+			// sitePanel = new SiteRateModelPanel(this, dataList);
 			simulationPanel = new SimulationPanel(this, dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
 			tabbedPane.addTab("Tree", null, treePanel);
-//			tabbedPane.addTab("Branch Substitution Model", null,
-//					substModelPanel);
 			tabbedPane.addTab("Partitions", null, partitionsPanel);
-//			tabbedPane.addTab("Clock Rate Model", null, clockPanel);
-//			tabbedPane.addTab("Frequency Model", null, frequencyPanel);
-//			tabbedPane.addTab("Site Rate Model", null, sitePanel);
+			// tabbedPane.addTab("Branch Substitution Model", null,
+			// substModelPanel);
+			// tabbedPane.addTab("Clock Rate Model", null, clockPanel);
+			// tabbedPane.addTab("Frequency Model", null, frequencyPanel);
+			// tabbedPane.addTab("Site Rate Model", null, sitePanel);
 			tabbedPane.addTab("Simulation", null, simulationPanel);
 
 			statusLabel = new JLabel("No taxa loaded");
@@ -171,16 +102,18 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
 			tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
 			tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
-			tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
+			tabbedPanePanel
+					.setBorder(new BorderUIResource.EmptyBorderUIResource(
 							new Insets(12, 12, 12, 12)));
 
 			getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 			getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-			tabbedPane.setSelectedComponent(treePanel);
-//			this.homogenousSimulationTypeSelected();
-//			this.heterogenousSimulationTypeSelected();
-			
+			tabbedPane.setSelectedComponent(partitionsPanel);
+
+			// this.homogenousSimulationTypeSelected();
+			// this.heterogenousSimulationTypeSelected();
+
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
 		}
@@ -188,14 +121,15 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	}// END: initializeComponents
 
 	public void fireTaxaChanged() {
-		
-		SwingUtilities.invokeLater(new Runnable() {
-		    public void run() {
 
-//		        taxaPanel.updateUI();
-		        statusLabel.setText(Integer.toString(dataList.get(0).taxonList.getTaxonCount()) + " taxa loaded.");
-		    
-		    }
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+
+				taxaPanel.updateUI();
+				statusLabel.setText(Integer.toString(dataList.get(0).taxonList
+						.getTaxonCount()) + " taxa loaded.");
+
+			}
 		});
 
 	}// END: fireTaxaChanged
@@ -206,7 +140,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	public Action getExportAction() {
 		return simulateAction;
-	}//END: getExportAction
+	}// END: getExportAction
 
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
@@ -214,9 +148,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			if (dataList.get(0).treeModel == null) {
 
 				tabbedPane.setSelectedComponent(treePanel);
-				// TODO: maybe new ListenTreeFileButton class? Make sure it's started from EDT
 				treePanel.doImport();
-				
+
 			} else {
 
 				doExport();
@@ -224,7 +157,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			}// END: tree loaded check
 		}// END: actionPerformed
 	};
-	
+
 	public final void doExport() {
 
 		try {
@@ -257,7 +190,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: doExport
 
-	//TODO: fix to work with multiple partitions
+	// TODO: fix to work with multiple partitions
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -275,8 +208,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					writer = new PrintWriter(new FileWriter(outFile));
 
 					ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-					
-					for (BeagleSequenceSimulatorData data : dataList) {
+
+					for (PartitionData data : dataList) {
 
 						// create partition
 						Partition partition = new Partition(data.treeModel, //
@@ -290,13 +223,14 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 						);
 
 						partitionsList.add(partition);
-						
-					}//END: data list loop		
-					
-					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(partitionsList,
-							dataList.get(0).sequenceLength);
 
-					writer.println(beagleSequenceSimulator.simulate().toString());
+					}// END: data list loop
+
+					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
+							partitionsList, dataList.get(0).sequenceLength);
+
+					writer.println(beagleSequenceSimulator.simulate()
+							.toString());
 					writer.close();
 
 				} catch (Exception e) {
@@ -309,7 +243,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				statusLabel.setText("Generated " + dataList.get(0).sequenceLength + " replicates.");
+				statusLabel.setText("Generated "
+						+ dataList.get(0).sequenceLength + " replicates.");
 				progressBar.setIndeterminate(false);
 
 			}// END: done
@@ -346,30 +281,30 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	}
 
 	private void collectAllSettings() {
-		
-//		frequencyPanel.collectSettings();
-//		substModelPanel.collectSettings();
-//        clockPanel.collectSettings();
-//    	sitePanel.collectSettings();
-    	simulationPanel.collectSettings();
-    	
-	}// END: collectAllSettings
-	
-//	public void homogenousSimulationTypeSelected() {
-//		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-//		int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
-//		tabbedPane.setEnabledAt(substModelPanelIndex, true);
-//		tabbedPane.setEnabledAt(epochModelPanelIndex, false);
-//		simulationPanel.setHomogenousSimulation();
-//	}// END: homogenousSimulationTypeSelected
 
-//	public void heterogenousSimulationTypeSelected() {
-//		int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-//		int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
-//		tabbedPane.setEnabledAt(substModelPanelIndex, false);
-//		tabbedPane.setEnabledAt(epochModelPanelIndex, true);
-//		simulationPanel.setHeterogenousSimulation();
-//	}// END: heterogenousSimulationTypeSelected
+		// frequencyPanel.collectSettings();
+		// substModelPanel.collectSettings();
+		// clockPanel.collectSettings();
+		// sitePanel.collectSettings();
+		simulationPanel.collectSettings();
+
+	}// END: collectAllSettings
+
+	// public void homogenousSimulationTypeSelected() {
+	// int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
+	// int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
+	// tabbedPane.setEnabledAt(substModelPanelIndex, true);
+	// tabbedPane.setEnabledAt(epochModelPanelIndex, false);
+	// simulationPanel.setHomogenousSimulation();
+	// }// END: homogenousSimulationTypeSelected
+
+	// public void heterogenousSimulationTypeSelected() {
+	// int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
+	// int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
+	// tabbedPane.setEnabledAt(substModelPanelIndex, false);
+	// tabbedPane.setEnabledAt(epochModelPanelIndex, true);
+	// simulationPanel.setHeterogenousSimulation();
+	// }// END: heterogenousSimulationTypeSelected
 
 	public void dataSelectionChanged(boolean isSelected) {
 		if (isSelected) {
@@ -386,9 +321,9 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	public void setWorkingDirectory(File workingDirectory) {
 		this.workingDirectory = workingDirectory;
 	}// END: setWorkingDirectory
-	
+
 	public void fireModelChanged() {
-	    collectAllSettings();
-	}//END: fireModelChanged
-	
+		collectAllSettings();
+	}// END: fireModelChanged
+
 }// END: class

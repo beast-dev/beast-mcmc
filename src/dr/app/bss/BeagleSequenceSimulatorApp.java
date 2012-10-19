@@ -59,10 +59,10 @@ public class BeagleSequenceSimulatorApp {
 
 			try {
 
-				// UIManager.setLookAndFeel(UIManager
-				// .getSystemLookAndFeelClassName());
+				 UIManager.setLookAndFeel(UIManager
+				 .getSystemLookAndFeelClassName());
 
-				UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+//				UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 				lafLoaded = true;
 
 			} catch (Exception e) {
@@ -91,7 +91,7 @@ public class BeagleSequenceSimulatorApp {
 		SingleDocApplication app = new SingleDocApplication(
 				new BeagleSequenceSimulatorMenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
-				BeagleSequenceSimulatorData.VERSION.concat(" ").concat(BeagleSequenceSimulatorData.DATE_STRING), //
+				PartitionData.VERSION.concat(" ").concat(PartitionData.DATE_STRING), //
 				null //
 				);
 

@@ -24,16 +24,16 @@ import org.virion.jam.components.RealNumberField;
 public class SiteRateModelPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	private ArrayList<PartitionData> dataList = null;
 	
 	private OptionsPanel optionPanel;
 
 	private JComboBox siteCombo;
-	private RealNumberField[] siteParameterFields = new RealNumberField[BeagleSequenceSimulatorData.siteParameterNames.length];
+	private RealNumberField[] siteParameterFields = new RealNumberField[PartitionData.siteParameterNames.length];
     private JSpinner gammaCategoriesSpinner;
 	
 	public SiteRateModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<BeagleSequenceSimulatorData> dataList) throws NumberFormatException, BadLocationException {
+			final ArrayList<PartitionData> dataList) throws NumberFormatException, BadLocationException {
 
 		this.frame = frame;
 		this.dataList = dataList;
@@ -47,13 +47,13 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 		siteCombo = new JComboBox();
 		siteCombo.setOpaque(false);
 
-		for (String siteModel : BeagleSequenceSimulatorData.siteModels) {
+		for (String siteModel : PartitionData.siteModels) {
 			siteCombo.addItem(siteModel);
 		}// END: fill loop
 
 		siteCombo.addItemListener(new ListenSiteCombo());
 
-		for (int i = 0; i < BeagleSequenceSimulatorData.siteParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
 			siteParameterFields[i] = new RealNumberField();
 			siteParameterFields[i].setColumns(8);
 			siteParameterFields[i].setValue(dataList.get(0).siteParameterValues[i]);
@@ -90,7 +90,7 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 				panel.add(gammaCategoriesSpinner, BorderLayout.WEST);
 				panel.setOpaque(false);
 				optionPanel.addComponentWithLabel(
-						BeagleSequenceSimulatorData.siteParameterNames[k] + ":",
+						PartitionData.siteParameterNames[k] + ":",
 						panel);
 				
 			} else {
@@ -101,7 +101,7 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 			panel.add(siteParameterFields[k], BorderLayout.WEST);
 			panel.setOpaque(false);
 			optionPanel.addComponentWithLabel(
-					BeagleSequenceSimulatorData.siteParameterNames[k] + ":",
+					PartitionData.siteParameterNames[k] + ":",
 					panel);
 
 			}// END: gama categories field check
@@ -131,7 +131,7 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 		int index = siteCombo.getSelectedIndex();
 		dataList.get(0).siteModel = index;
 		
-		for (int i = 0; i < BeagleSequenceSimulatorData.siteParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
 
 			if(index == 1 && i == 0) { 
 				

@@ -29,14 +29,14 @@ import dr.evomodel.tree.TreeModel;
 public class TreePanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	private ArrayList<PartitionData> dataList = null;
 	private OptionsPanel optionPanel;
 
 	private JButton treeFileButton = new JButton("Choose File...");
 	private JTextField treeFileNameText = new JTextField("not selected", 16);
 
 	public TreePanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<BeagleSequenceSimulatorData> dataList) {
+			final ArrayList<PartitionData> dataList) {
 
 		super();
 
@@ -67,6 +67,7 @@ public class TreePanel extends JPanel implements Exportable {
 		}// END: actionPerformed
 	}// END: ListenTreeFileButton
 
+	//TODO: set to work with multiple trees
 	public void doImport() {
 
 		try {

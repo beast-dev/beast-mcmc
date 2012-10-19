@@ -20,14 +20,14 @@ import org.virion.jam.components.RealNumberField;
 public class ClockRateModelPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<BeagleSequenceSimulatorData> dataList = null;
+	private ArrayList<PartitionData> dataList = null;
 	
 	private OptionsPanel optionPanel;
 	private JComboBox clockCombo;
-	private RealNumberField[] clockParameterFields = new RealNumberField[BeagleSequenceSimulatorData.clockParameterNames.length];
+	private RealNumberField[] clockParameterFields = new RealNumberField[PartitionData.clockParameterNames.length];
 
 	public ClockRateModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<BeagleSequenceSimulatorData> dataList) {
+			final ArrayList<PartitionData> dataList) {
 
 		this.frame = frame;
 		this.dataList = dataList;
@@ -41,13 +41,13 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 		clockCombo = new JComboBox();
 		clockCombo.setOpaque(false);
 
-		for (String clockModel : BeagleSequenceSimulatorData.clockModels) {
+		for (String clockModel : PartitionData.clockModels) {
 			clockCombo.addItem(clockModel);
 		}// END: fill loop
 
 		clockCombo.addItemListener(new ListenClockCombo());
 
-		for (int i = 0; i < BeagleSequenceSimulatorData.clockParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.clockParameterNames.length; i++) {
 			clockParameterFields[i] = new RealNumberField();
 			clockParameterFields[i].setColumns(8);
 			clockParameterFields[i].setValue(dataList.get(0).clockParameterValues[i]);
@@ -74,7 +74,7 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 			panel.add(clockParameterFields[k], BorderLayout.WEST);
 			panel.setOpaque(false);
 			optionPanel.addComponentWithLabel(
-					BeagleSequenceSimulatorData.clockParameterNames[k] + ":",
+					PartitionData.clockParameterNames[k] + ":",
 					panel);
 
 		}// END: indices loop
@@ -95,7 +95,7 @@ public class ClockRateModelPanel extends JPanel implements Exportable {
 	public void collectSettings() {
 
 		dataList.get(0).clockModel = clockCombo.getSelectedIndex();
-		for (int i = 0; i < BeagleSequenceSimulatorData.clockParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.clockParameterNames.length; i++) {
 
 			dataList.get(0).clockParameterValues[i] = clockParameterFields[i].getValue();
 

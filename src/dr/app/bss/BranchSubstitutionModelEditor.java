@@ -1,44 +1,51 @@
 package dr.app.bss;
 
-import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
 
 import dr.app.gui.components.RealNumberField;
 
-@SuppressWarnings("serial")
-public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
+public class BranchSubstitutionModelEditor {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+	// Data
 	private ArrayList<PartitionData> dataList = null;
+	private int row;
+	
+	// Settings
 	private OptionsPanel optionPanel;
-
 	private JComboBox substitutionCombo;
 	private RealNumberField[] substitutionParameterFields = new RealNumberField[PartitionData.substitutionParameterNames.length];
 
-	public BranchSubstitutionModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) {
-
-		super();
-
-		this.frame = frame;
+	//Buttons
+	private JButton done;
+	
+	// Window
+	private JDialog window;
+	private Frame owner;
+	
+	public BranchSubstitutionModelEditor(ArrayList<PartitionData> dataList, int row) {
+		
 		this.dataList = dataList;
-
-		setOpaque(false);
-		setLayout(new BorderLayout());
-
+		this.row = row;
+		
+		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
-		add(optionPanel, BorderLayout.NORTH);
 		
 		substitutionCombo = new JComboBox();
 		substitutionCombo.setOpaque(false);
@@ -52,13 +59,26 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
 			substitutionParameterFields[i] = new RealNumberField();
 			substitutionParameterFields[i].setColumns(8);
-			substitutionParameterFields[i].setValue(dataList.get(0).substitutionParameterValues[i]);
+			substitutionParameterFields[i].setValue(dataList.get(row).substitutionParameterValues[i]);
 		}// END: fill loop
 
 		setSubstitutionArguments();
-		
-	}// END: Constructor
 
+		// Buttons
+		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done.addActionListener(new ListenOk());
+		JPanel buttonsHolder = new JPanel();
+		buttonsHolder.setOpaque(false);
+		buttonsHolder.add(done);
+		
+		owner = Utils.getActiveFrame();
+		window.setLocationRelativeTo(owner);
+		window.getContentPane().setLayout(new BorderLayout());
+		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
+		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
+		window.pack();
+	}//END: Constructor
+	
 	private void setSubstitutionArguments() {
 
 		optionPanel.removeAll();
@@ -68,9 +88,9 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 		int index = substitutionCombo.getSelectedIndex();
 
-		for (int i = 0; i < dataList.get(0).substitutionParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(row).substitutionParameterIndices[index].length; i++) {
 
-			int k = dataList.get(0).substitutionParameterIndices[index][i];
+			int k = dataList.get(row).substitutionParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(substitutionParameterFields[k], BorderLayout.WEST);
@@ -79,31 +99,44 @@ public class BranchSubstitutionModelPanel extends JPanel implements Exportable {
 
 		}// END: indices loop
 
-//		validate();
-//		repaint();
+		window.validate();
+		window.repaint();
 	}// END: setSubstitutionArguments
-
+	
 	private class ListenSubstitutionCombo implements ItemListener {
 		public void itemStateChanged(ItemEvent ie) {
 
 			setSubstitutionArguments();
-			frame.fireModelChanged();
+//			frame.fireModelChanged();
 
 		}// END: actionPerformed
 	}// END: ListenSubstitutionCombo
-
+	
 	public void collectSettings() {
 
-		dataList.get(0).substitutionModel = substitutionCombo.getSelectedIndex();
+		dataList.get(row).substitutionModel = substitutionCombo.getSelectedIndex();
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
 
-			dataList.get(0).substitutionParameterValues[i] = substitutionParameterFields[i].getValue();
+			dataList.get(row).substitutionParameterValues[i] = substitutionParameterFields[i].getValue();
 
 		}// END: fill loop
 	}// END: collectSettings
 	
-	public JComponent getExportableComponent() {
-		return this;
-	}//END: getExportableComponent
+	private class ListenOk implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
 
+			window.setVisible(false);
+			collectSettings();
+			
+		}// END: actionPerformed
+	}// END: ListenSaveLocationCoordinates
+	
+	public void launch() {
+		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		window.setSize(new Dimension(450, 400));
+		window.setMinimumSize(new Dimension(100, 100));
+		window.setResizable(true);
+		window.setVisible(true);
+	}//END: launch
+	
 }// END: class

@@ -14,9 +14,12 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class BeagleSequenceSimulatorApp {
 
 	// Share those if neccessary
-	public static ImageIcon errorIcon;
 	private Image beagleSequenceSimulatorImage;
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
+
+	// Icons
+	public static ImageIcon doneIcon;
+	public static ImageIcon errorIcon;
 	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
@@ -40,15 +43,18 @@ public class BeagleSequenceSimulatorApp {
 			System.setProperty("apple.awt.draggableWindowBackground", "true");
 			System.setProperty("apple.awt.showGrowBox", "true");
 
-			UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN, 13));
-			UIManager.put("SmallSystemFont", new Font("Lucida Grande", Font.PLAIN, 11));
+			UIManager.put("SystemFont", new Font("Lucida Grande", Font.PLAIN,
+					13));
+			UIManager.put("SmallSystemFont", new Font("Lucida Grande",
+					Font.PLAIN, 11));
 
 			try {
 
 				// UIManager.setLookAndFeel(UIManager
 				// .getSystemLookAndFeelClassName());
 
-				UIManager.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
+				UIManager
+						.setLookAndFeel("ch.randelshofer.quaqua.QuaquaLookAndFeel");
 				lafLoaded = true;
 
 			} catch (Exception e) {
@@ -59,10 +65,10 @@ public class BeagleSequenceSimulatorApp {
 
 			try {
 
-				 UIManager.setLookAndFeel(UIManager
-				 .getSystemLookAndFeelClassName());
+//				UIManager.setLookAndFeel(UIManager
+//						.getSystemLookAndFeelClassName());
 
-//				UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
+				 UIManager.setLookAndFeel("com.sun.java.swing.plaf.nimbus.NimbusLookAndFeel");
 				lafLoaded = true;
 
 			} catch (Exception e) {
@@ -75,9 +81,11 @@ public class BeagleSequenceSimulatorApp {
 
 			try {
 
-				UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-				System.out.println("Specified l&f not found. Loading system default l&f");
-				
+				UIManager.setLookAndFeel(UIManager
+						.getSystemLookAndFeelClassName());
+				System.out
+						.println("Specified l&f not found. Loading system default l&f");
+
 			} catch (Exception e) {
 
 				e.printStackTrace();
@@ -85,20 +93,24 @@ public class BeagleSequenceSimulatorApp {
 			}
 		}
 
-		 errorIcon = CreateImageIcon("icons/error.png");
-		 beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
-		 
 		SingleDocApplication app = new SingleDocApplication(
 				new BeagleSequenceSimulatorMenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
-				PartitionData.VERSION.concat(" ").concat(PartitionData.DATE_STRING), //
+				PartitionData.VERSION.concat(" ").concat(
+						PartitionData.DATE_STRING), //
 				null //
-				);
+		);
 
-	      BeagleSequenceSimulatorFrame frame = new BeagleSequenceSimulatorFrame(BEAGLE_SEQUENCE_SIMULATOR);
-	      frame.setIconImage(beagleSequenceSimulatorImage);
-          app.setDocumentFrame(frame);
-		
+		beagleSequenceSimulatorImage = CreateImage("icons/bss.png");
+		BeagleSequenceSimulatorFrame frame = new BeagleSequenceSimulatorFrame(
+				BEAGLE_SEQUENCE_SIMULATOR);
+		frame.setIconImage(beagleSequenceSimulatorImage);
+		app.setDocumentFrame(frame);
+
+		// Setup icons
+		doneIcon = CreateImageIcon("icons/check.png");
+		errorIcon = CreateImageIcon("icons/error.png");
+
 	}// END: Constructor
 
 	public static void main(String args[]) {
@@ -110,17 +122,18 @@ public class BeagleSequenceSimulatorApp {
 		} else {
 
 			try {
-				
+
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
 				// Cool sub-title for a paper
 				System.out.println("Do the evolution baby!");
-				
+
 			} catch (UnsupportedClassVersionError e) {
-				
-				System.err.println("Your Java Runtime Environment is too old. Please update");
+
+				System.err
+						.println("Your Java Runtime Environment is too old. Please update");
 				e.printStackTrace();
-				
+
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
 			} catch (InstantiationException e) {
@@ -129,7 +142,7 @@ public class BeagleSequenceSimulatorApp {
 				e.printStackTrace();
 			} catch (UnsupportedLookAndFeelException e) {
 				e.printStackTrace();
-			}//END: try catch block
+			}// END: try catch block
 
 		}// END: command line check
 
@@ -146,9 +159,9 @@ public class BeagleSequenceSimulatorApp {
 			System.out.println("Couldn't find file: " + path + "\n");
 			return null;
 		}
-		
+
 	}// END: CreateImage
-	
+
 	private ImageIcon CreateImageIcon(String path) {
 		URL imgURL = this.getClass().getResource(path);
 		if (imgURL != null) {
@@ -158,6 +171,6 @@ public class BeagleSequenceSimulatorApp {
 			return null;
 		}
 	}// END: CreateImageIcon
-	
+
 }// END: TestlabOutbreakApp
 

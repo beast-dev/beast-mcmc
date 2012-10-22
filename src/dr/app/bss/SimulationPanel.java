@@ -53,7 +53,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 
 	public final void collectSettings() {
 		dataList.get(0).sequenceLength = replicatesField.getValue();
-//		frame.fireModelChanged();
+		frame.fireModelChanged();
 	}
 
 	@Override

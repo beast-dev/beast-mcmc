@@ -1,15 +1,20 @@
 package dr.app.bss;
 
-import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
+import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -17,36 +22,40 @@ import javax.swing.SwingConstants;
 
 import org.virion.jam.components.RealNumberField;
 
-@SuppressWarnings("serial")
-public class FrequencyModelPanel extends JPanel implements Exportable {
+public class FrequencyModelEditor {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+	// Data
 	private ArrayList<PartitionData> dataList = null;
+	private int row;
 	
+	// Settings
 	private OptionsPanel optionPanel;
 	private JScrollPane scrollPane;
 	private JComboBox frequencyCombo;
 	private RealNumberField[] frequencyParameterFields = new RealNumberField[PartitionData.frequencyParameterNames.length];
 	
-	public FrequencyModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) {
+	//Buttons
+	private JButton done;
+	
+	// Window
+	private JDialog window;
+	private Frame owner;
+	
+	public FrequencyModelEditor(ArrayList<PartitionData> dataList, int row) {
 		
-		this.frame = frame;
 		this.dataList = dataList;
+		this.row = row;
 
-		setOpaque(false);
-		setLayout(new BorderLayout());
-
-		scrollPane = new JScrollPane();
+		window = new JDialog(owner, "Setup branch substitution model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
+		
+		scrollPane = new JScrollPane();
         optionPanel.setOpaque(false);
         scrollPane = new JScrollPane(optionPanel,
 				JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         scrollPane.getViewport().setOpaque(false);
 
-        add(scrollPane, BorderLayout.CENTER);
-		
 		frequencyCombo = new JComboBox();
 
 		for (String frequencyModel : PartitionData.frequencyModels) {
@@ -63,6 +72,19 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 
 		setFrequencyArguments();
 		
+		// Buttons
+		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done.addActionListener(new ListenOk());
+		JPanel buttonsHolder = new JPanel();
+		buttonsHolder.setOpaque(false);
+		buttonsHolder.add(done);
+		
+		owner = Utils.getActiveFrame();
+		window.setLocationRelativeTo(owner);
+		window.getContentPane().setLayout(new BorderLayout());
+		window.getContentPane().add(scrollPane, BorderLayout.CENTER);
+		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
+		window.pack();
 	}//END: Constructor
 
 	private void setFrequencyArguments() {
@@ -87,29 +109,44 @@ public class FrequencyModelPanel extends JPanel implements Exportable {
 					panel);
 
 		}// END: indices loop
+		
+		window.validate();
+		window.repaint();
 	}// END: setFrequencyArguments
 
 	private class ListenFrequencyCombo implements ItemListener {
 		public void itemStateChanged(ItemEvent ie) {
 
 			setFrequencyArguments();
-			frame.fireModelChanged();
 
 		}// END: actionPerformed
 	}// END: ListenClockCombo
 
 	public void collectSettings() {
 
-		dataList.get(0).frequencyModel = frequencyCombo.getSelectedIndex();
+		dataList.get(row).frequencyModel = frequencyCombo.getSelectedIndex();
 		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {
 
-			dataList.get(0).frequencyParameterValues[i] = frequencyParameterFields[i].getValue();
+			dataList.get(row).frequencyParameterValues[i] = frequencyParameterFields[i].getValue();
 
 		}// END: fill loop
 	}// END: collectSettings
 	
-	public JComponent getExportableComponent() {
-		return this;
-	}//END: getExportableComponent
+	private class ListenOk implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			window.setVisible(false);
+			collectSettings();
+			
+		}// END: actionPerformed
+	}// END: ListenSaveLocationCoordinates
+	
+	public void launch() {
+		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		window.setSize(new Dimension(450, 400));
+		window.setMinimumSize(new Dimension(100, 100));
+		window.setResizable(true);
+		window.setVisible(true);
+	}//END: launch
 	
 }//END: class

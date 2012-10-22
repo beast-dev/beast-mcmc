@@ -235,6 +235,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				button.setForeground(table.getForeground());
 				button.setBackground(table.getBackground());
 			}
+			
+			// TODO: set label from model name
 			label = (value == null) ? "" : value.toString();
 			button.setText(label);
 			isPushed = true;

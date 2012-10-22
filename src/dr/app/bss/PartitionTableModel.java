@@ -6,11 +6,16 @@ import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JOptionPane;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.text.BadLocationException;
 
 @SuppressWarnings("serial")
 public class PartitionTableModel extends AbstractTableModel {
+
+	private BranchSubstitutionModelEditor branchSubstitutionModelEditor;
+	private SiteRateModelEditor siteRateModelEditor;
+	private ClockRateModelEditor clockRateModelEditor;
+	private FrequencyModelEditor frequencyModelEditor;
 
 	public final int PARTITION_TREE_INDEX = 0;
 	public final int FROM_INDEX = 1;
@@ -28,7 +33,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
 			String.class, Integer.class, Integer.class, Integer.class,
 			JComboBox.class, JButton.class, JButton.class, JButton.class };
-	
+
 	private ArrayList<PartitionData> dataList;
 
 	public PartitionTableModel(ArrayList<PartitionData> dataList) {
@@ -38,18 +43,18 @@ public class PartitionTableModel extends AbstractTableModel {
 	@Override
 	public int getColumnCount() {
 		return COLUMN_NAMES.length;
-	}//END: getColumnCount
+	}// END: getColumnCount
 
 	@Override
 	public int getRowCount() {
 		return dataList.size();
-	}//END: getRowCount
+	}// END: getRowCount
 
 	@Override
 	public Class<?> getColumnClass(int columnIndex) {
 		return COLUMN_TYPES[columnIndex];
-	}//END: getColumnClass
-	
+	}// END: getColumnClass
+
 	@Override
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
@@ -61,31 +66,63 @@ public class PartitionTableModel extends AbstractTableModel {
 			return dataList.get(row).to;
 		case EVERY_INDEX:
 			return dataList.get(row).every;
-		case BRANCH_SUBSTITUTION_MODEL_INDEX: // fall through
+		case BRANCH_SUBSTITUTION_MODEL_INDEX:
+
+			branchSubstitutionModelEditor = new BranchSubstitutionModelEditor(
+					dataList, row);
+			final JButton branchSubstModelButton = new JButton(
+					COLUMN_NAMES[column]);
+			branchSubstModelButton
+					.addActionListener(new ListenOpenBranchSubstitutionModelEditor());
+			return branchSubstModelButton;
+
 		case SITE_RATE_MODEL_INDEX:
+
+			try {
+
+				siteRateModelEditor = new SiteRateModelEditor(dataList, row);
+				final JButton siteRateModelButton = new JButton(
+						COLUMN_NAMES[column]);
+				siteRateModelButton
+						.addActionListener(new ListenOpenSiteRateModelEditor());
+
+				return siteRateModelButton;
+
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
+			} catch (BadLocationException e) {
+				e.printStackTrace();
+			}
+
 		case CLOCK_RATE_MODEL_INDEX:
+
+			clockRateModelEditor = new ClockRateModelEditor(dataList, row);
+			final JButton clockRateModelButton = new JButton(
+					COLUMN_NAMES[column]);
+			clockRateModelButton
+					.addActionListener(new ListenOpenClockRateModelEditor());
+			return clockRateModelButton;
+
 		case FREQUENCY_MODEL_INDEX:
-			final JButton button = new JButton(COLUMN_NAMES[column]);
-			button.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent arg0) {
-					JOptionPane.showMessageDialog(
-							JOptionPane.getFrameForComponent(button),
-							"Button clicked for row " + row + " column "
-									+ column);
-				}
-			});
-			return button;
+
+			frequencyModelEditor = new FrequencyModelEditor(dataList, row);
+			final JButton frequencyModelButton = new JButton(
+					COLUMN_NAMES[column]);
+			frequencyModelButton
+					.addActionListener(new ListenOpenFrequencyModelEditor());
+			return frequencyModelButton;
+
 		default:
 			return "Error";
 		}
 
 	}// END: getValueAt
-	
+
 	public void setValueAt(Object value, int row, int column) {
-		
+
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-//			 dataList.get(row).treeModel = (TreeModel) value;
+			// dataList.get(row).treeModel = (TreeModel) value;
 			System.out.println("FUBAR1");
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
@@ -97,13 +134,13 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).every = (Integer) value;
 			break;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
-//			 dataList.get(row).substitutionModel = (Integer) value;
+			// dataList.get(row).substitutionModel = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
-//			 dataList.get(row).siteModel= (Integer) value;
+			// dataList.get(row).siteModel= (Integer) value;
 		case CLOCK_RATE_MODEL_INDEX:
-//			 dataList.get(row).clockModel= (Integer) value;
+			// dataList.get(row).clockModel= (Integer) value;
 		case FREQUENCY_MODEL_INDEX:
-//			 dataList.get(row).frequencyModel= (Integer) value;
+			// dataList.get(row).frequencyModel= (Integer) value;
 		default:
 			System.out.println("invalid index");
 		}
@@ -116,20 +153,20 @@ public class PartitionTableModel extends AbstractTableModel {
 		dataList.add(row);
 		this.fireTableDataChanged();
 	}
-	
+
 	public void addDefaultRow() {
 		dataList.add(new PartitionData());
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}
-	
+
 	public void deleteRow(int row) {
 		dataList.remove(row);
 		this.fireTableDataChanged();
 	}
-	
+
 	public String getColumnName(int column) {
 		return COLUMN_NAMES[column];
-	}//END: getColumnName
+	}// END: getColumnName
 
 	public String[] getColumn(int index) {
 
@@ -141,7 +178,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		return column;
 	}// END: getColumn
-	
+
 	public boolean isCellEditable(int row, int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
@@ -164,5 +201,38 @@ public class PartitionTableModel extends AbstractTableModel {
 			return false;
 		}
 	}// END: isCellEditable
+
+	private class ListenOpenBranchSubstitutionModelEditor implements
+			ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			branchSubstitutionModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenBranchSubstitutionModelEditor
+
+	private class ListenOpenSiteRateModelEditor implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			siteRateModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenSiteRateModelEditor
+
+	private class ListenOpenClockRateModelEditor implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			clockRateModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenSiteRateModelEditor
+
+	private class ListenOpenFrequencyModelEditor implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			frequencyModelEditor.launch();
+
+		}// END: actionPerformed
+	}// END: ListenOpenSiteRateModelEditor
 
 }// END: class

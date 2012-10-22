@@ -36,10 +36,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private JTabbedPane tabbedPane = new JTabbedPane();
 	private TaxaPanel taxaPanel;
 	private TreePanel treePanel;
-	// private BranchSubstitutionModelPanel substModelPanel;
-	// private ClockRateModelPanel clockPanel;
-	// private FrequencyModelPanel frequencyPanel;
-	// private SiteRateModelPanel sitePanel;
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
 
@@ -70,21 +66,11 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			taxaPanel = new TaxaPanel(this, dataList);
 			treePanel = new TreePanel(this, dataList);
 			partitionsPanel = new PartitionsPanel(this, dataList);
-			// substModelPanel = new BranchSubstitutionModelPanel(this,
-			// dataList);
-			// clockPanel = new ClockRateModelPanel(this, dataList);
-			// frequencyPanel = new FrequencyModelPanel(this, dataList);
-			// sitePanel = new SiteRateModelPanel(this, dataList);
 			simulationPanel = new SimulationPanel(this, dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
 			tabbedPane.addTab("Tree", null, treePanel);
 			tabbedPane.addTab("Partitions", null, partitionsPanel);
-			// tabbedPane.addTab("Branch Substitution Model", null,
-			// substModelPanel);
-			// tabbedPane.addTab("Clock Rate Model", null, clockPanel);
-			// tabbedPane.addTab("Frequency Model", null, frequencyPanel);
-			// tabbedPane.addTab("Site Rate Model", null, sitePanel);
 			tabbedPane.addTab("Simulation", null, simulationPanel);
 
 			statusLabel = new JLabel("No taxa loaded");
@@ -102,17 +88,13 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			JPanel tabbedPanePanel = new JPanel(new BorderLayout(0, 0));
 			tabbedPanePanel.add(tabbedPane, BorderLayout.CENTER);
 			tabbedPanePanel.add(statusPanel, BorderLayout.SOUTH);
-			tabbedPanePanel
-					.setBorder(new BorderUIResource.EmptyBorderUIResource(
+			tabbedPanePanel.setBorder(new BorderUIResource.EmptyBorderUIResource(
 							new Insets(12, 12, 12, 12)));
 
 			getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 			getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
 			tabbedPane.setSelectedComponent(partitionsPanel);
-
-			// this.homogenousSimulationTypeSelected();
-			// this.heterogenousSimulationTypeSelected();
 
 		} catch (NumberFormatException e) {
 			e.printStackTrace();
@@ -289,22 +271,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		simulationPanel.collectSettings();
 
 	}// END: collectAllSettings
-
-	// public void homogenousSimulationTypeSelected() {
-	// int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-	// int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
-	// tabbedPane.setEnabledAt(substModelPanelIndex, true);
-	// tabbedPane.setEnabledAt(epochModelPanelIndex, false);
-	// simulationPanel.setHomogenousSimulation();
-	// }// END: homogenousSimulationTypeSelected
-
-	// public void heterogenousSimulationTypeSelected() {
-	// int substModelPanelIndex = tabbedPane.indexOfComponent(substModelPanel);
-	// int epochModelPanelIndex = tabbedPane.indexOfComponent(partitionsPanel);
-	// tabbedPane.setEnabledAt(substModelPanelIndex, false);
-	// tabbedPane.setEnabledAt(epochModelPanelIndex, true);
-	// simulationPanel.setHeterogenousSimulation();
-	// }// END: heterogenousSimulationTypeSelected
 
 	public void dataSelectionChanged(boolean isSelected) {
 		if (isSelected) {

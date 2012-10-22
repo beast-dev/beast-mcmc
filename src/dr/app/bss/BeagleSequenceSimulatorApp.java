@@ -20,6 +20,7 @@ public class BeagleSequenceSimulatorApp {
 	// Icons
 	public static ImageIcon doneIcon;
 	public static ImageIcon errorIcon;
+	public static ImageIcon hammerIcon;
 	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
@@ -110,7 +111,8 @@ public class BeagleSequenceSimulatorApp {
 		// Setup icons
 		doneIcon = CreateImageIcon("icons/check.png");
 		errorIcon = CreateImageIcon("icons/error.png");
-
+		hammerIcon = CreateImageIcon("icons/hammer.png");
+		
 	}// END: Constructor
 
 	public static void main(String args[]) {

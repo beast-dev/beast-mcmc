@@ -66,7 +66,9 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			taxaPanel = new TaxaPanel(this, dataList);
 			treePanel = new TreePanel(this, dataList);
 			partitionsPanel = new PartitionsPanel(this, dataList);
-			simulationPanel = new SimulationPanel(this, dataList);
+			simulationPanel = new SimulationPanel(
+//					this, 
+					dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
 			tabbedPane.addTab("Tree", null, treePanel);

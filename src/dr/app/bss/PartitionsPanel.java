@@ -43,10 +43,10 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
-			
+
 			partitionTableModel.addDefaultRow();
-//			partitionTableModel.addRow(dataList.get(partitionsCount - 1));
-			
+			// partitionTableModel.addRow(dataList.get(partitionsCount - 1));
+
 			partitionsCount++;
 			setPartitions();
 		}// END: actionPerformed
@@ -75,8 +75,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				.addTableModelListener(new PartitionTableModelListener());
 
 		partitionTable = new JTable(partitionTableModel);
-
 		partitionTable.setFillsViewportHeight(true);
+		partitionTable.getTableHeader().setReorderingAllowed(false);
 		partitionTable.addMouseListener(new JTableButtonMouseListener(
 				partitionTable));
 
@@ -104,22 +104,22 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor(new JCheckBox()));
+		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.SITE_RATE_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor(new JCheckBox()));
+		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.CLOCK_RATE_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor(new JCheckBox()));
+		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.FREQUENCY_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
-		column.setCellEditor(new JTableButtonCellEditor(new JCheckBox()));
+		column.setCellEditor(new JTableButtonCellEditor());
 
 		ActionPanel actionPanel = new ActionPanel(false);
 		actionPanel.setAddAction(addPartitionAction);
@@ -149,7 +149,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		public void tableChanged(TableModelEvent ev) {
 
 			System.out.println("TODO: PartitionTableModelListener");
-
+			frame.fireModelChanged();
+			
 		}
 	}// END: InteractiveTableModelListener
 
@@ -193,30 +194,33 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		public JTableButtonCellRenderer() {
 			super();
-		}
+			setOpaque(true);
+		}// END: Constructor
 
 		@Override
 		public Component getTableCellRendererComponent(JTable table,
 				Object value, boolean isSelected, boolean hasFocus, int row,
 				int column) {
 
+			setEnabled(table.isEnabled());
+
 			JButton button = (JButton) value;
 			setBackground(isSelected ? table.getSelectionBackground() : table
 					.getBackground());
-			// setText((value == null) ? "" : value.toString());
+			// button.setText((value == null) ? "" : value.toString());
+
 			return button;
 		}
 	}// END: JTableButtonRenderer
 
 	private class JTableButtonCellEditor extends DefaultCellEditor {
+
 		protected JButton button;
-
 		private String label;
-
 		private boolean isPushed;
 
-		public JTableButtonCellEditor(JCheckBox checkBox) {
-			super(checkBox);
+		public JTableButtonCellEditor() {
+			super(new JCheckBox());
 			button = new JButton();
 			button.setOpaque(true);
 			button.addActionListener(new ActionListener() {
@@ -228,6 +232,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		public Component getTableCellEditorComponent(JTable table,
 				Object value, boolean isSelected, int row, int column) {
+
 			if (isSelected) {
 				button.setForeground(table.getSelectionForeground());
 				button.setBackground(table.getSelectionBackground());
@@ -235,7 +240,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				button.setForeground(table.getForeground());
 				button.setBackground(table.getBackground());
 			}
-			
+
 			// TODO: set label from model name
 			label = (value == null) ? "" : value.toString();
 			button.setText(label);
@@ -264,11 +269,12 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: JTableButtonCellEditor
 
 	private class JTableButtonMouseListener extends MouseAdapter {
+
 		private final JTable table;
 
 		public JTableButtonMouseListener(JTable table) {
 			this.table = table;
-		}
+		}// END: Constructor
 
 		public void mouseClicked(MouseEvent e) {
 			int column = table.getColumnModel().getColumnIndexAtX(e.getX());
@@ -278,10 +284,13 @@ public class PartitionsPanel extends JPanel implements Exportable {
 					&& column < table.getColumnCount() && column >= 0) {
 				Object value = table.getValueAt(row, column);
 				if (value instanceof JButton) {
+
 					((JButton) value).doClick();
-				}
-			}
-		}
+
+				}// END: JButton check
+			}// END: placement check
+		}// END: mouseClicked
+
 	}// END: JTableButtonMouseListener
 
 	//

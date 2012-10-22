@@ -1,15 +1,20 @@
 package dr.app.bss;
 
+import jam.panels.OptionsPanel;
+
 import java.awt.BorderLayout;
+import java.awt.Dimension;
+import java.awt.Frame;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
 
-import jam.framework.Exportable;
-import jam.panels.OptionsPanel;
-
+import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JComponent;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JSpinner;
@@ -20,29 +25,32 @@ import javax.swing.text.BadLocationException;
 
 import org.virion.jam.components.RealNumberField;
 
-@SuppressWarnings("serial")
-public class SiteRateModelPanel extends JPanel implements Exportable {
+public class SiteRateModelEditor {
 
-	private BeagleSequenceSimulatorFrame frame = null;
+	// Data
 	private ArrayList<PartitionData> dataList = null;
+	private int row;
 	
+	// Settings	
 	private OptionsPanel optionPanel;
-
 	private JComboBox siteCombo;
 	private RealNumberField[] siteParameterFields = new RealNumberField[PartitionData.siteParameterNames.length];
     private JSpinner gammaCategoriesSpinner;
 	
-	public SiteRateModelPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) throws NumberFormatException, BadLocationException {
+	//Buttons
+	private JButton done;
+	
+	// Window
+	private JDialog window;
+	private Frame owner;
+    
+	public SiteRateModelEditor(ArrayList<PartitionData> dataList, int row) throws NumberFormatException, BadLocationException {
 
-		this.frame = frame;
 		this.dataList = dataList;
-
-		setOpaque(false);
-		setLayout(new BorderLayout());
-
+		this.row = row;
+		
+		window = new JDialog(owner, "Setup site rate model for partition " + (row + 1));
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
-		add(optionPanel, BorderLayout.NORTH);
 
 		siteCombo = new JComboBox();
 		siteCombo.setOpaque(false);
@@ -61,6 +69,19 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 
 		setSiteArguments();
 
+		// Buttons
+		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done.addActionListener(new ListenOk());
+		JPanel buttonsHolder = new JPanel();
+		buttonsHolder.setOpaque(false);
+		buttonsHolder.add(done);
+		
+		owner = Utils.getActiveFrame();
+		window.setLocationRelativeTo(owner);
+		window.getContentPane().setLayout(new BorderLayout());
+		window.getContentPane().add(optionPanel, BorderLayout.CENTER);
+		window.getContentPane().add(buttonsHolder, BorderLayout.SOUTH);
+		window.pack();
 	}// END: Constructor
 
 	private void setSiteArguments() throws NumberFormatException, BadLocationException {
@@ -107,6 +128,9 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 			}// END: gama categories field check
 			
 		}// END: indices loop
+		
+		window.validate();
+		window.repaint();
 	}// END: setSiteArguments
 
 	private class ListenSiteCombo implements ItemListener {
@@ -115,7 +139,6 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 			try {
 
 				setSiteArguments();
-				frame.fireModelChanged();
 
 			} catch (NumberFormatException e) {
 				e.printStackTrace();
@@ -129,13 +152,13 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 	public void collectSettings() {
 
 		int index = siteCombo.getSelectedIndex();
-		dataList.get(0).siteModel = index;
+		dataList.get(row).siteModel = index;
 		
 		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
 
 			if(index == 1 && i == 0) { 
 				
-				dataList.get(0).siteParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
+				dataList.get(row).siteParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
 						
 			} else {
 			
@@ -146,9 +169,21 @@ public class SiteRateModelPanel extends JPanel implements Exportable {
 		}// END: fill loop
 	}// END: collectSettings
 	
-	@Override
-	public JComponent getExportableComponent() {
-		return this;
-	}// END: getExportableComponent
+	private class ListenOk implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			window.setVisible(false);
+			collectSettings();
+			
+		}// END: actionPerformed
+	}// END: ListenSaveLocationCoordinates
+	
+	public void launch() {
+		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		window.setSize(new Dimension(450, 400));
+		window.setMinimumSize(new Dimension(100, 100));
+		window.setResizable(true);
+		window.setVisible(true);
+	}//END: launch
 
 }// END: class

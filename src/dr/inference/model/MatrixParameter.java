@@ -25,6 +25,7 @@
 
 package dr.inference.model;
 
+import com.sun.servicetag.SystemEnvironment;
 import dr.xml.*;
 
 import java.util.StringTokenizer;
@@ -167,89 +168,71 @@ public class MatrixParameter extends CompoundParameter {
     private static final String COLUMN_DIMENSION = "columns";
     private static final String TRANSPOSE = "transpose";
 
-    public static XMLObjectParser PARSER;
+    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-    static {
-        PARSER = new AbstractXMLObjectParser() {
+        public String getParserName() {
+            return MATRIX_PARAMETER;
+        }
 
-            public String getParserName() {
-                return MATRIX_PARAMETER;
+        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+            final String name = xo.hasId() ? xo.getId() : null;
+            MatrixParameter matrixParameter = new MatrixParameter(name);
+
+            if (xo.hasAttribute(ROW_DIMENSION)) {
+                int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
+                matrixParameter.setRowDimension(rowDimension);
             }
 
-            public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-
-                final String name = xo.hasId() ? xo.getId() : null;
-                MatrixParameter matrixParameter = new MatrixParameter(name);
-
-                if (xo.hasAttribute(ROW_DIMENSION)) {
-                    int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
-                    matrixParameter.setRowDimension(rowDimension);
-                }
-
-                if (xo.hasAttribute(COLUMN_DIMENSION)) {
-                    int columnDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
-                    matrixParameter.setColumnDimension(columnDimension);
-                }
-
-                int dim = 0;
-                for (int i = 0; i < xo.getChildCount(); i++) {
-                    Parameter parameter = (Parameter) xo.getChild(i);
-                    matrixParameter.addParameter(parameter);
-                    if (i == 0)
-                        dim = parameter.getDimension();
-                    else if (dim != parameter.getDimension())
-                        throw new XMLParseException("All parameters must have the same dimension to construct a rectangular matrix");
-                }
-
-                /*boolean transposed = xo.getAttribute(TRANSPOSE, false);
-
-
-                if (transposed) {
-                    System.err.println(matrixParameter.getParameterAsMatrix()[2][1]);
-                    System.err.println(matrixParameter.getRowDimension());
-                    MatrixParameter matrixParameterTemp = new TransposedMatrixParameter(name);
-
-                    for (int i = 0; i < matrixParameter.getColumnDimension(); i++) {
-
-                        Parameter parameter = matrixParameter.getParameter(i);
-                        System.err.println(matrixParameter.getParameter(i).getDimension());
-                        matrixParameterTemp.addParameter(parameter);
-
-                    }
-                    matrixParameterTemp.setRowDimension(matrixParameter.getRowDimension());
-                    matrixParameterTemp.setColumnDimension(matrixParameter.getColumnDimension());
-
-
-                    return matrixParameterTemp;
-
-                }       */
-
-                return matrixParameter;
+            if (xo.hasAttribute(COLUMN_DIMENSION)) {
+                int columnDimension = xo.getIntegerAttribute(COLUMN_DIMENSION);
+                matrixParameter.setColumnDimension(columnDimension);
             }
 
-            //************************************************************************
-            // AbstractXMLObjectParser implementation
-            //************************************************************************
-
-            public String getParserDescription() {
-                return "A matrix parameter constructed from its component parameters.";
+            int dim = 0;
+            for (int i = 0; i < xo.getChildCount(); i++) {
+                Parameter parameter = (Parameter) xo.getChild(i);
+                matrixParameter.addParameter(parameter);
+                if (i == 0)
+                    dim = parameter.getDimension();
+                else if (dim != parameter.getDimension())
+                    throw new XMLParseException("All parameters must have the same dimension to construct a rectangular matrix");
             }
 
-            public XMLSyntaxRule[] getSyntaxRules() {
-                return rules;
+            boolean transposed = xo.getAttribute(TRANSPOSE, false);
+
+
+            if (transposed) {
+                System.err.println("hi!  I'm here");
+                System.exit(-1);
+//              matrixParameter = new TransposedMatrixParameter(matrixParameter);
             }
 
-            private final XMLSyntaxRule[] rules = {
-                    new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
-                    AttributeRule.newIntegerRule(ROW_DIMENSION, true),
-                    AttributeRule.newIntegerRule(COLUMN_DIMENSION, true)
-            };
+            return matrixParameter;
+        }
 
-            public Class getReturnType() {
-                return MatrixParameter.class;
-            }
+        //************************************************************************
+        // AbstractXMLObjectParser implementation
+        //************************************************************************
+
+        public String getParserDescription() {
+            return "A matrix parameter constructed from its component parameters.";
+        }
+
+        public XMLSyntaxRule[] getSyntaxRules() {
+            return rules;
+        }
+
+        private final XMLSyntaxRule[] rules = {
+                new ElementRule(Parameter.class, 0, Integer.MAX_VALUE),
+                AttributeRule.newIntegerRule(ROW_DIMENSION, true),
+                AttributeRule.newIntegerRule(COLUMN_DIMENSION, true)
         };
-    }
+
+        public Class getReturnType() {
+            return MatrixParameter.class;
+        }
+    };
 
 
 }

@@ -21,6 +21,7 @@ public class BeagleSequenceSimulatorApp {
 	public static ImageIcon doneIcon;
 	public static ImageIcon errorIcon;
 	public static ImageIcon hammerIcon;
+	public static ImageIcon closeIcon;
 	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
@@ -112,6 +113,7 @@ public class BeagleSequenceSimulatorApp {
 		doneIcon = CreateImageIcon("icons/check.png");
 		errorIcon = CreateImageIcon("icons/error.png");
 		hammerIcon = CreateImageIcon("icons/hammer.png");
+		closeIcon = CreateImageIcon("icons/close.png");
 		
 	}// END: Constructor
 

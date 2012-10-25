@@ -60,9 +60,13 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
-		dataList.get(0).sequenceLength = replicatesField.getValue();
-//		frame.fireModelChanged();
-	}
+
+		// all elements hold the same value
+		for (PartitionData data : dataList) {
+			data.sequenceLength = replicatesField.getValue();
+		}
+		// frame.fireModelChanged();
+	}// END: collectSettings
 
 	@Override
 	public JComponent getExportableComponent() {
@@ -90,6 +94,9 @@ public class SimulationPanel extends JPanel implements Exportable {
 			System.out.println("\tEvery: " + data.every);
 			System.out.println("\tTree model: " + "TODO");
 			System.out.println("\tSubstitution model: " + PartitionData.substitutionModels[data.substitutionModel]);
+			System.out.println("\tSite rate model: " + PartitionData.siteModels[data.siteModel]);
+			System.out.println("\tClock rate model: " + PartitionData.clockModels[data.clockModel]);
+			System.out.println("\tFrequency model: " + PartitionData.frequencyModels[data.frequencyModel]);
 			
 			row++;
 		}// END: data list loop

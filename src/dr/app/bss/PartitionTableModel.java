@@ -3,6 +3,7 @@ package dr.app.bss;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.io.File;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -31,7 +32,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			"Frequency Model" };
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			String.class, Integer.class, Integer.class, Integer.class,
+			File.class, Integer.class, Integer.class, Integer.class,
 			JComboBox.class, JButton.class, JButton.class, JButton.class };
 
 	private ArrayList<PartitionData> dataList;
@@ -59,7 +60,8 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			return "TODO";
+			//TODO
+			return dataList.get(row).treeFile == null ? "" : dataList.get(row).treeFile.getName();
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -122,8 +124,8 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			// dataList.get(row).treeModel = (TreeModel) value;
-			System.out.println("FUBAR1");
+			//TODO
+			dataList.get(row).treeFile = (File) value;
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
 			break;
@@ -134,13 +136,13 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).every = (Integer) value;
 			break;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
-			// dataList.get(row).substitutionModel = (Integer) value;
+			 dataList.get(row).substitutionModel = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
-			// dataList.get(row).siteModel= (Integer) value;
+			 dataList.get(row).siteModel= (Integer) value;
 		case CLOCK_RATE_MODEL_INDEX:
-			// dataList.get(row).clockModel= (Integer) value;
+			 dataList.get(row).clockModel= (Integer) value;
 		case FREQUENCY_MODEL_INDEX:
-			// dataList.get(row).frequencyModel= (Integer) value;
+			 dataList.get(row).frequencyModel= (Integer) value;
 		default:
 			System.out.println("invalid index");
 		}

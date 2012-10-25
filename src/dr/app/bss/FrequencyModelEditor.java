@@ -36,6 +36,7 @@ public class FrequencyModelEditor {
 	
 	//Buttons
 	private JButton done;
+	private JButton cancel;
 	
 	// Window
 	private JDialog window;
@@ -73,12 +74,18 @@ public class FrequencyModelEditor {
 		setFrequencyArguments();
 		
 		// Buttons
-		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
-		done.addActionListener(new ListenOk());
 		JPanel buttonsHolder = new JPanel();
 		buttonsHolder.setOpaque(false);
+		
+		cancel = new JButton("Cancel", BeagleSequenceSimulatorApp.closeIcon);
+		cancel.addActionListener(new ListenCancel());
+		buttonsHolder.add(cancel);
+		
+		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done.addActionListener(new ListenOk());
 		buttonsHolder.add(done);
 		
+		// Window
 		owner = Utils.getActiveFrame();
 		window.setLocationRelativeTo(owner);
 		window.getContentPane().setLayout(new BorderLayout());
@@ -140,6 +147,14 @@ public class FrequencyModelEditor {
 			
 		}// END: actionPerformed
 	}// END: ListenSaveLocationCoordinates
+	
+	private class ListenCancel implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			window.setVisible(false);
+			
+		}// END: actionPerformed
+	}// END: ListenCancel
 	
 	public void launch() {
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

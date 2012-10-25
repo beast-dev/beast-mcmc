@@ -20,10 +20,8 @@ A long overdue simulator in Beagle.
    
 h1. TODO
 * simplify taxa panel
-* import heights
-* uneditable taxa panel?
-* importing from fasta
-* use writeToFile to set preferences, use open to read preferences
-* preferences file could be used for command line interface
-* exception handling
-* simulating under epoch model
+* keep values set in Editors
+* animated buttons in Partitions Panel
+* icon in Simulate button
+* importing multiple trees
+* combo box with trees

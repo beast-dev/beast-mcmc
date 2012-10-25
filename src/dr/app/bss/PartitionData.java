@@ -28,10 +28,15 @@ public class PartitionData {
 	public static final String VERSION = "0.0.1";
 	public static final String DATE_STRING = "2012";
 	
-	public File treeFile = null;
 	public TaxonList taxonList = new Taxa();
-	public int sequenceLength = 1000;
+	public int sequenceLength = 1000;	
+	
+	//change to Lists
+	public File treeFile = null;
 	public TreeModel treeModel;
+
+	public List<File> treeFilesList;
+	public List<TreeModel> treeModelsList;
 	
 	public int from = 1;
 	public int to = sequenceLength;

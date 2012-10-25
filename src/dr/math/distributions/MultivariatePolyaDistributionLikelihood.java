@@ -11,8 +11,8 @@ import dr.xml.*;
  * Description:
  * this class provides a model for over-dispersed multinomial counts. The model follows Dirichlet-Multinomial distribution with
  * multinomial parameters integrated out analytically. This model is also known as Multivariate Polya distribution.
- * Standard parameterization involves k intensities a_i's. This implementation reparametrizes those as frequencies (k-1 df)
- * and dispersion parameters, where a = sum_i=1^k a_i is dispersion and f_i = a_i/a
+ * Standard parameterization involves k intensities a_i's. This implementation uses the standard parametrization internally, but allows
+ * for reparametrization as frequencies (k-1 df) and dispersion parameters, where a = sum_i=1^k a_i is dispersion and f_i = a_i/a
  * <p/>
  * Created by
  *
@@ -24,6 +24,8 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
 
     protected Parameter frequencies;
     protected Parameter dispersion;
+    protected Parameter alphas;
+    protected boolean isAlphasKnown;
     protected MatrixParameter data;
     protected double fixedNorm;
     protected double variableNorm;
@@ -41,15 +43,47 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         super(modelID);
         this.frequencies = frequencies;
         this.dispersion = dispersion;
+        this.alphas = new Parameter.Default(frequencies.getDimension());
+        computeAlphas();
         this.data = data;
         isFixedNormKnown = false;
         isVariableNormKnown = false;
-        addVariable(frequencies);
-        addVariable(dispersion);
-        addVariable(data);
-        if (frequencies.getDimension() != data.getColumnDimension()) {
+        addVariable(this.frequencies);
+        addVariable(this.dispersion);
+        addVariable(this.data);
+        if (this.alphas.getDimension() != data.getColumnDimension()) {
             System.err.println("Dimensions of the frequncy vector and number of columns do not match!");
         }
+    }
+
+    public MultivariatePolyaDistributionLikelihood(String modelID, MatrixParameter data, Parameter alphas) {
+        super(modelID);
+        this.alphas = alphas;
+        isAlphasKnown = true;
+
+        this.frequencies = new Parameter.Default(alphas.getDimension());
+        this.dispersion = new Parameter.Default(1);
+        this.data = data;
+        isFixedNormKnown = false;
+        isVariableNormKnown = false;
+        addVariable(this.alphas);
+        addVariable(this.data);
+        if (this.alphas.getDimension() != data.getColumnDimension()) {
+            System.err.println("Dimensions of the frequncy vector and number of columns do not match!");
+        }
+    }
+
+    /* Compute alphas from frequencies and dispersion
+    */
+    protected void computeAlphas(){
+        double disp=dispersion.getParameterValue(0);
+        double[] freqs = frequencies.getParameterValues();
+
+        for(int i=0; i<alphas.getDimension(); ++i){
+            alphas.setParameterValueQuietly(i, disp*freqs[i]);
+        }
+        alphas.setParameterValueNotifyChangedAll(0, alphas.getParameterValue(0));
+        isAlphasKnown = true;
     }
 
     public MultivariatePolyaDistributionLikelihood(String modelID) {
@@ -71,14 +105,18 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
         }
         double logP = fixedNorm + variableNorm;
 
-        double freqs[] = frequencies.getParameterValues();
-        double ad = dispersion.getParameterValue(0);
+        double disp = 0;
+        double[] a = alphas.getParameterValues();
+        for(int i = 0; i< alphas.getDimension(); ++i){
+            disp = disp + a[i];
+        }
 
+        
         for (int i = 0; i < data.getRowDimension(); ++i) {
             for (int j = 0; j < data.getColumnDimension(); ++j) {
-                logP += GammaFunction.lnGamma(data.getParameterValue(i, j) + ad * freqs[j]);
+                logP += GammaFunction.lnGamma(data.getParameterValue(i, j) + a[j]);
             }
-            logP -= GammaFunction.lnGamma(rowSums[i] + dispersion.getParameterValue(0));
+            logP -= GammaFunction.lnGamma(rowSums[i] + disp);
         }
         return logP;
     }
@@ -104,11 +142,15 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
     }
 
     protected void computeVariableNorm() {
-        variableNorm = GammaFunction.lnGamma(dispersion.getParameterValue(0));
+        double disp = 0;
+        double[] a = alphas.getParameterValues();
+        for(int i = 0; i< alphas.getDimension(); ++i){
+            disp = disp + a[i];
+        }
+        variableNorm = GammaFunction.lnGamma(disp);
 
-        double ad = dispersion.getParameterValue(0);
-        for (int i = 0; i < frequencies.getDimension(); ++i) {
-            variableNorm -= GammaFunction.lnGamma(frequencies.getParameterValue(i) * ad);
+        for (int i = 0; i < alphas.getDimension(); ++i) {
+            variableNorm -= GammaFunction.lnGamma(a[i]);
         }
         variableNorm *= data.getRowDimension();
     }
@@ -118,9 +160,13 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
         if (variable.getVariableName().equals(frequencies.getVariableName()) || variable.getVariableName().equals(dispersion.getVariableName())) {
+            isAlphasKnown = false;
             isVariableNormKnown = false;
         } else if (variable.getVariableName().equals(data.getVariableName())) {
             isFixedNormKnown = false;
+        }
+        else if(variable.getVariableName().equals(alphas.getVariableName())){
+            isVariableNormKnown = false;
         }
     }
 
@@ -188,6 +234,7 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
             MatrixParameter data;
             Parameter dispersion;
             Parameter frequencies;
+            Parameter rates;
 
             if (xo.hasChildNamed(DATA)) {
                 data = (MatrixParameter) xo.getChild(DATA).getChild(MatrixParameter.class);
@@ -195,29 +242,37 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
                 throw new XMLParseException("Missing data element!");
             }
 
-            if (xo.hasChildNamed(DISPERSION)) {
-                dispersion = (Parameter) xo.getChild(DISPERSION).getChild(Parameter.class);
-            } else {
-                throw new XMLParseException("Missing dispersion element!");
+            if (xo.hasChildNamed(RATES)) {
+                rates = (Parameter) xo.getChild(RATES).getChild(Parameter.class);
+                if (rates.getDimension() != data.getColumnDimension()) {
+                    throw new XMLParseException("The number of data columns must match the dimension of " + RATES
+                            + " parameter (" + data.getColumnDimension() + " != " + rates.getDimension() + "!");
+                }
             }
-
-            if (xo.hasChildNamed(FREQ)) {
+            else if (xo.hasChildNamed(FREQ)) {
                 frequencies = (Parameter) xo.getChild(FREQ).getChild(Parameter.class);
+                if (xo.hasChildNamed(DISPERSION)) {
+                    dispersion = (Parameter) xo.getChild(DISPERSION).getChild(Parameter.class);
+                } else {
+                    throw new XMLParseException(DISPERSION + " element has to be specified when using " + FREQ
+                            +" parametrization");
+                }
+                if (dispersion.getDimension() != 1) {
+                    throw new XMLParseException("Dispersion parameter must be of dimmension exactly 1!");
+                }
+
+                if (frequencies.getDimension() != data.getColumnDimension()) {
+                    throw new XMLParseException("The number of data columns must match the dimension of "+ FREQ
+                            + " parameter (" + data.getColumnDimension() + " != " + frequencies.getDimension() + "!");
+                }
+                return new MultivariatePolyaDistributionLikelihood(MVPLIKE, data, frequencies, dispersion);
+
             } else {
-                throw new XMLParseException("Missing frequencies element!");
+                throw new XMLParseException("Either " + FREQ + " or " + RATES + "element has to be specified!");
             }
 
-            if (dispersion.getDimension() != 1) {
-                throw new XMLParseException("Dispersion parameter must be of dimmension exactly 1!");
-            }
 
-            if (frequencies.getDimension() != data.getColumnDimension()) {
-                throw new XMLParseException("The number of data columns must match the dimension" +
-                        " of frequencies parameter (" +
-                        data.getColumnDimension() + " != " + frequencies.getDimension() + "!");
-            }
-
-            return new MultivariatePolyaDistributionLikelihood(MVPLIKE, data, frequencies, dispersion);
+            return new MultivariatePolyaDistributionLikelihood(MVPLIKE, data, rates);
         }
 
         //************************************************************************
@@ -234,8 +289,9 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(DATA, new XMLSyntaxRule[]{new ElementRule(MatrixParameter.class)}, false),
-                new ElementRule(DISPERSION, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false),
-                new ElementRule(FREQ, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false),
+                new XORRule(new ElementRule(RATES, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false),
+                        new ElementRule(FREQ, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, false)),
+                new ElementRule(DISPERSION, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true),
         };
 
         public Class getReturnType() {
@@ -246,4 +302,5 @@ public class MultivariatePolyaDistributionLikelihood extends AbstractModel imple
     public static final String DATA = "data";
     public static final String DISPERSION = "dispersion";
     public static final String FREQ = "frequencies";
+    public static final String RATES = "alpha";
 }

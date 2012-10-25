@@ -1,5 +1,5 @@
 /*
- * RandomDiscretizedBranchRates.java
+ * ContinuousBranchRates.java
  *
  * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
  *
@@ -30,18 +30,21 @@ import dr.evolution.tree.SimpleTree;
 import dr.evolution.tree.Tree;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.tree.TreeParameterModel;
-import dr.evomodelxml.branchratemodel.RandomDiscretizedBranchRatesParser;
+import dr.evomodelxml.branchratemodel.ContinuousBranchRatesParser;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.*;
 
 /**
- * @author Alexei Drummond
- * @author Andrew Rambaut
- * @author Michael Defoin Platel
+ *
+ * Uses the implementation of continuous branch rates described in:
+ * Li, W.L.S. and A.J. Drummond, Model Averaging and Bayes Factor
+ * Calculation of Relaxed Molecular Clocks in Bayesian Phylogenetics.
+ * Molecular Biology and Evolution, 2012. 29(2): p. 751-761.
+ *
  * @author Wai Lok Sibon Li
- * @version $Id: RandomDiscretizedBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
+ * @version $Id: ContinuousBranchRates.java,v 1.11 2006/01/09 17:44:30 rambaut Exp $
  */
-public class RandomDiscretizedBranchRates extends AbstractBranchRateModel {
+public class ContinuousBranchRates extends AbstractBranchRateModel {
 
     private final ParametricDistributionModel distributionModel;
 
@@ -61,7 +64,7 @@ public class RandomDiscretizedBranchRates extends AbstractBranchRateModel {
 
     //overSampling control the number of effective categories
 
-    public RandomDiscretizedBranchRates(
+    public ContinuousBranchRates(
             TreeModel tree,
             /*Parameter rateCategoryParameter, */
             Parameter rateCategoryQuantilesParameter,
@@ -71,7 +74,7 @@ public class RandomDiscretizedBranchRates extends AbstractBranchRateModel {
 
     }
 
-    public RandomDiscretizedBranchRates(
+    public ContinuousBranchRates(
             TreeModel tree,
             /* Parameter rateCategoryParameter, */
             Parameter rateCategoryQuantilesParameter,
@@ -80,7 +83,7 @@ public class RandomDiscretizedBranchRates extends AbstractBranchRateModel {
             boolean normalize,
             double normalizeBranchRateTo) {
 
-        super(RandomDiscretizedBranchRatesParser.RANDOM_DISCRETIZED_BRANCH_RATES);
+        super(ContinuousBranchRatesParser.CONTINUOUS_BRANCH_RATES);
 
         //d this.rateCategories = new TreeParameterModel(tree, rateCategoryParameter, false);
         this.rateCategoryQuantiles = new TreeParameterModel(tree, rateCategoryQuantilesParameter, false);

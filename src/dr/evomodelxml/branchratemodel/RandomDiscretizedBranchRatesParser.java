@@ -1,6 +1,6 @@
 package dr.evomodelxml.branchratemodel;
 
-import dr.evomodel.branchratemodel.RandomDiscretizedBranchRates;
+//import dr.evomodel.branchratemodel.RandomDiscretizedBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Parameter;
@@ -30,36 +30,43 @@ public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser 
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+//        throw new RuntimeException("randomDiscretizedBranchRates has been renamed to continuousBranchRates (all of the " +
+//                "parameters have been kept the same). Please make changes to the XML before rerunning. ");
+        System.err.println("randomDiscretizedBranchRates has been renamed to continuousBranchRates (all of the " +
+                        "parameters have been kept the same). Please make changes to the XML before rerunning. ");
+        System.exit(1);
+        return null;
+
         //final int overSampling = xo.getAttribute(OVERSAMPLING, 1);
-        final boolean normalize = xo.getAttribute(NORMALIZE, false);
-        final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
-
-        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
-        ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
-
-        //Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
-
-        Parameter rateCategoryQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORY_QUANTILES);
-
-        Logger.getLogger("dr.evomodel").info("Using random discretized relaxed clock model.");
-        //Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
-        Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
-        //Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
-        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryQuantilesParameter.getDimension());
-        if(normalize) {
-            Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
-        }
-
-        if (xo.hasAttribute(SINGLE_ROOT_RATE)) {
-            //singleRootRate = xo.getBooleanAttribute(SINGLE_ROOT_RATE);
-            Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
-        }
-
-        /* if (xo.hasAttribute(NORMALIZED_MEAN)) {
-            dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
-        }*/
-
-        return new RandomDiscretizedBranchRates(tree, /*rateCategoryParameter, */rateCategoryQuantilesParameter, distributionModel, /*overSampling,*/ normalize, normalizeBranchRateTo);
+//        final boolean normalize = xo.getAttribute(NORMALIZE, false);
+//        final double normalizeBranchRateTo = xo.getAttribute(NORMALIZE_BRANCH_RATE_TO, Double.NaN);
+//
+//        TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);
+//        ParametricDistributionModel distributionModel = (ParametricDistributionModel) xo.getElementFirstChild(DISTRIBUTION);
+//
+//        //Parameter rateCategoryParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORIES);
+//
+//        Parameter rateCategoryQuantilesParameter = (Parameter) xo.getElementFirstChild(RATE_CATEGORY_QUANTILES);
+//
+//        Logger.getLogger("dr.evomodel").info("Using random discretized relaxed clock model.");
+//        //Logger.getLogger("dr.evomodel").info("  over sampling = " + overSampling);
+//        Logger.getLogger("dr.evomodel").info("  parametric model = " + distributionModel.getModelName());
+//        //Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryParameter.getDimension());
+//        Logger.getLogger("dr.evomodel").info("   rate categories = " + rateCategoryQuantilesParameter.getDimension());
+//        if(normalize) {
+//            Logger.getLogger("dr.evomodel").info("   mean rate is normalized to " + normalizeBranchRateTo);
+//        }
+//
+//        if (xo.hasAttribute(SINGLE_ROOT_RATE)) {
+//            //singleRootRate = xo.getBooleanAttribute(SINGLE_ROOT_RATE);
+//            Logger.getLogger("dr.evomodel").warning("   WARNING: single root rate is not implemented!");
+//        }
+//
+//        /* if (xo.hasAttribute(NORMALIZED_MEAN)) {
+//            dbr.setNormalizedMean(xo.getDoubleAttribute(NORMALIZED_MEAN));
+//        }*/
+//
+//        return new RandomDiscretizedBranchRates(tree, /*rateCategoryParameter, */rateCategoryQuantilesParameter, distributionModel, /*overSampling,*/ normalize, normalizeBranchRateTo);
     }
 
     //************************************************************************
@@ -73,7 +80,7 @@ public class RandomDiscretizedBranchRatesParser extends AbstractXMLObjectParser 
     }
 
     public Class getReturnType() {
-        return RandomDiscretizedBranchRates.class;
+        return null; //RandomDiscretizedBranchRates.class;
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {

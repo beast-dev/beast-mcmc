@@ -1,3 +1,28 @@
+/*
+ * InstantiableTracerApp.java
+ *
+ * Copyright (C) 2002-2012 Alexei Drummond and Andrew Rambaut
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * BEAST is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.app.tracer.application;
 
 import dr.app.util.OSType;
@@ -12,13 +37,21 @@ import java.security.Permission;
 import java.util.Locale;
 
 /**
+ *
+ * A class for calling an instance of Tracer within a BEAST (or any other Java) analysis.
+ * Allows a threaded call of Tracer (that won't terminate the JVM). A lot of the code is
+ * copied from TracerApp.java (but is a SingleDocApplication instead of a
+ * MultiDocApplication)
+ *
+ *
  * @author Wai Lok Sibon Li
  * @version $Id: InstantiableTracerApp.java,v 1.0 2012/09/17 15:23:33 sibon.li Exp $
  */
 public class InstantiableTracerApp extends SingleDocApplication {
     public InstantiableTracerApp (String nameString, String aboutString, Icon icon,
                          String websiteURLString, String helpURLString) {
-            super(new TracerMenuBarFactory(), nameString, aboutString, icon, websiteURLString, helpURLString);
+            super(new TracerMenuBarFactory(), nameString, aboutString, icon,
+                    websiteURLString, helpURLString);
 
             addPreferencesSection(new GeneralPreferencesSection());
     }

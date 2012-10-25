@@ -107,6 +107,7 @@ public class TreePanel extends JPanel implements Exportable {
 
 	}// END: doImport
 	
+	//TODO: set to work with multiple trees
 	public void importFromFile(File file) throws IOException, ImportException {
 		
         BufferedReader reader = new BufferedReader(new FileReader(file));

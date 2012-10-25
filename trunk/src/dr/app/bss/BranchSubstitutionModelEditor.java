@@ -34,6 +34,7 @@ public class BranchSubstitutionModelEditor {
 
 	//Buttons
 	private JButton done;
+	private JButton cancel;
 	
 	// Window
 	private JDialog window;
@@ -55,7 +56,8 @@ public class BranchSubstitutionModelEditor {
 		}// END: fill loop
 
 		substitutionCombo.addItemListener(new ListenSubstitutionCombo());
-
+//		substitutionCombo.setSelectedIndex(this.dataList.get(row).substitutionModel);
+		
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
 			substitutionParameterFields[i] = new RealNumberField();
 			substitutionParameterFields[i].setColumns(8);
@@ -65,12 +67,18 @@ public class BranchSubstitutionModelEditor {
 		setSubstitutionArguments();
 
 		// Buttons
-		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
-		done.addActionListener(new ListenOk());
 		JPanel buttonsHolder = new JPanel();
 		buttonsHolder.setOpaque(false);
+		
+		cancel = new JButton("Cancel", BeagleSequenceSimulatorApp.closeIcon);
+		cancel.addActionListener(new ListenCancel());
+		buttonsHolder.add(cancel);
+		
+		done = new JButton("Done", BeagleSequenceSimulatorApp.doneIcon);
+		done.addActionListener(new ListenOk());
 		buttonsHolder.add(done);
 		
+		// Window
 		owner = Utils.getActiveFrame();
 		window.setLocationRelativeTo(owner);
 		window.getContentPane().setLayout(new BorderLayout());
@@ -129,7 +137,15 @@ public class BranchSubstitutionModelEditor {
 			collectSettings();
 			
 		}// END: actionPerformed
-	}// END: ListenSaveLocationCoordinates
+	}// END: ListenOk
+	
+	private class ListenCancel implements ActionListener {
+		public void actionPerformed(ActionEvent ev) {
+
+			window.setVisible(false);
+			
+		}// END: actionPerformed
+	}// END: ListenCancel
 	
 	public void launch() {
 		window.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);

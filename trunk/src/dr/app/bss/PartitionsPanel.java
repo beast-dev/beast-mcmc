@@ -159,6 +159,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		public JTableComboBoxCellRenderer(String[] items) {
 			super(items);
+	        setOpaque(true);
 		}
 
 		public Component getTableCellRendererComponent(JTable table,
@@ -167,18 +168,24 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			if (isSelected) {
 
-				setForeground(table.getSelectionForeground());
-				super.setBackground(table.getSelectionBackground());
+	            this.setForeground(table.getSelectionForeground());
+	            this.setBackground(table.getSelectionBackground());
 
 			} else {
 
-				setForeground(table.getForeground());
-				setBackground(table.getBackground());
+	            this.setForeground(table.getForeground());
+	            this.setBackground(table.getBackground());
+	            
 			}
 
 			// Select the current value
 			setSelectedItem(value);
 
+            if (value != null) {
+//                removeAllItems();
+                addItem(value);
+            }
+			
 			return this;
 		}
 	}// END: JTableComboBoxCellRenderer class
@@ -277,21 +284,23 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: Constructor
 
 		public void mouseClicked(MouseEvent e) {
+			
 			int column = table.getColumnModel().getColumnIndexAtX(e.getX());
 			int row = e.getY() / table.getRowHeight();
 
-			if (row < table.getRowCount() && row >= 0
-					&& column < table.getColumnCount() && column >= 0) {
+			if (row < table.getRowCount() && row >= 0 && column < table.getColumnCount() && column >= 0) {
+				
 				Object value = table.getValueAt(row, column);
 				if (value instanceof JButton) {
 
 					((JButton) value).doClick();
 
 				}// END: JButton check
+				
 			}// END: placement check
 		}// END: mouseClicked
 
-	}// END: JTableButtonMouseListener
+	}// END: JTableButtonMouseListener class
 
 	//
 

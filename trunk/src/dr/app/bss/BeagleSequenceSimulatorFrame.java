@@ -96,7 +96,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			getContentPane().setLayout(new java.awt.BorderLayout(0, 0));
 			getContentPane().add(tabbedPanePanel, BorderLayout.CENTER);
 
-			tabbedPane.setSelectedComponent(partitionsPanel);
+			tabbedPane.setSelectedComponent(treePanel);
 
 		} catch (NumberFormatException e) {
 			e.printStackTrace();

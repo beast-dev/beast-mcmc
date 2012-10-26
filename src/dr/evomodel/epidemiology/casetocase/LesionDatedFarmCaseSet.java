@@ -1,7 +1,9 @@
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.RiemannApproximation;
 import dr.xml.*;
 
@@ -16,14 +18,21 @@ import java.util.ArrayList;
  */
 public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
-    public LesionDatedFarmCaseSet(GammaDistributionModel incubationPeriodDistribution,
+    public LesionDatedFarmCaseSet(String name, GammaDistributionModel incubationPeriodDistribution,
                                   ArrayList<AbstractCase> farms, Integer riemannSampleSize){
+        super(name);
         this.incubationPeriodDistribution = incubationPeriodDistribution;
+        addModel(this.incubationPeriodDistribution);
         this.cases = farms;
         numericalIntegrator = new RiemannApproximation(riemannSampleSize);
         for(AbstractCase farm : farms){
             ((LesionDatedFarmCase)farm).installNumericalIntegrator(numericalIntegrator);
         }
+    }
+
+    public LesionDatedFarmCaseSet(GammaDistributionModel incubationPeriodDistribution,
+                                  ArrayList<AbstractCase> farms, Integer riemannSampleSize){
+        this(LESION_DATED_FARM_CASE_SET, incubationPeriodDistribution, farms, riemannSampleSize);
     }
 
     /* Likelihood of the root branch (the farm is infectious by the root node time)*/
@@ -97,7 +106,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         }
 
         public String getParserName(){
-            return NEW_MODEL_FARM_SET;
+            return LESION_DATED_FARM_CASE_SET;
         }
 
         @Override
@@ -114,8 +123,32 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         };
     };
 
-    public static final String NEW_MODEL_FARM_SET = "newModelFarmSet";
+    public static final String LESION_DATED_FARM_CASE_SET = "newModelFarmSet";
     private GammaDistributionModel incubationPeriodDistribution;
     public RiemannApproximation numericalIntegrator;
 
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void storeState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void restoreState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void acceptState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 }

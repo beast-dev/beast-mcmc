@@ -113,6 +113,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         estimatedLastSampleTime = lastSampleDate.getTimeValue()+0.5;
         cases = caseData;
+        addModel(cases);
         verbose = false;
         branchMap = prepareBranches();
 
@@ -151,9 +152,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // ModelListener IMPLEMENTATION
     // **************************************************************
 
-    /* Not currently implemented */
 
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
+        Arrays.fill(subTreeRecalculationNeeded, true);
+        likelihoodKnown = false;
+
     }
 
 
@@ -161,9 +164,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // VariableListener IMPLEMENTATION
     // **************************************************************
 
-    // Not currently implemented */
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
+        Arrays.fill(subTreeRecalculationNeeded, true);
+        likelihoodKnown = false;
     }
 
     // **************************************************************
@@ -215,6 +219,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public final void makeDirty() {
+        Arrays.fill(subTreeRecalculationNeeded, true);
         likelihoodKnown = false;
     }
 
@@ -227,7 +232,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double calculateLogLikelihood(AbstractCase[] map){
         NodeRef root = virusTree.getRoot();
-        return calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
+        double result = calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
+        return result;
     }
 
     /* Return the integer day on which the given node occurred */

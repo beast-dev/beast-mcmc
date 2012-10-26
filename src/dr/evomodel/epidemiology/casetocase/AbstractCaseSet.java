@@ -1,5 +1,8 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Variable;
+
 import java.util.ArrayList;
 
 /**
@@ -9,10 +12,13 @@ import java.util.ArrayList;
  * Time: 14:40
  * To change this template use File | Settings | File Templates.
  */
-public abstract class AbstractCaseSet {
+public abstract class AbstractCaseSet extends AbstractModel {
+
+    public AbstractCaseSet(String name){
+        super(name);
+    }
 
     protected ArrayList<AbstractCase> cases;
-
 
     /*Likelihood for the root if it is painted with 'farm'  */
 

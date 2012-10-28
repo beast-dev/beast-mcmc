@@ -25,13 +25,9 @@
 
 package dr.inference.model;
 
-import com.sun.servicetag.SystemEnvironment;
 import dr.xml.*;
 
 import java.util.StringTokenizer;
-//import org.w3c.dom.Document;
-//import org.w3c.dom.Element;
-//import dr.xml.*;
 
 /**
  * @author Marc Suchard
@@ -90,7 +86,6 @@ public class MatrixParameter extends CompoundParameter {
                 addParameter(row);
             }
         }
-
     }
 
     public int getColumnDimension() {
@@ -102,7 +97,7 @@ public class MatrixParameter extends CompoundParameter {
     }
 
     public String toSymmetricString() {
-        StringBuffer sb = new StringBuffer("{");
+        StringBuilder sb = new StringBuilder("{");
         int dim = getRowDimension();
         int total = dim * (dim + 1) / 2;
         for (int i = 0; i < dim; i++) {
@@ -177,7 +172,14 @@ public class MatrixParameter extends CompoundParameter {
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             final String name = xo.hasId() ? xo.getId() : null;
-            MatrixParameter matrixParameter = new MatrixParameter(name);
+            boolean transposed = xo.getAttribute(TRANSPOSE, false);
+
+            MatrixParameter matrixParameter;
+            if (!transposed) {
+                matrixParameter = new MatrixParameter(name);
+            } else {
+                matrixParameter = new TransposedMatrixParameter(name);
+            }
 
             if (xo.hasAttribute(ROW_DIMENSION)) {
                 int rowDimension = xo.getIntegerAttribute(ROW_DIMENSION);
@@ -197,15 +199,6 @@ public class MatrixParameter extends CompoundParameter {
                     dim = parameter.getDimension();
                 else if (dim != parameter.getDimension())
                     throw new XMLParseException("All parameters must have the same dimension to construct a rectangular matrix");
-            }
-
-            boolean transposed = xo.getAttribute(TRANSPOSE, false);
-
-
-            if (transposed) {
-                System.err.println("hi!  I'm here");
-                System.exit(-1);
-//              matrixParameter = new TransposedMatrixParameter(matrixParameter);
             }
 
             return matrixParameter;
@@ -233,6 +226,4 @@ public class MatrixParameter extends CompoundParameter {
             return MatrixParameter.class;
         }
     };
-
-
 }

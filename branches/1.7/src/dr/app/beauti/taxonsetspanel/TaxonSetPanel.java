@@ -31,6 +31,7 @@ import dr.app.beauti.BeautiPanel;
 import dr.app.beauti.ComboBoxRenderer;
 import dr.app.beauti.options.BeautiOptions;
 import dr.app.beauti.options.PartitionTreeModel;
+import dr.app.gui.table.DateCellEditor;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
@@ -400,13 +401,18 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
         tableColumn.setMinWidth(20);
 
         tableColumn = tableColumnModel.getColumn(1);
-        tableColumn.setPreferredWidth(10);
+        tableColumn.setPreferredWidth(20);
         tableColumn = tableColumnModel.getColumn(2);
-        tableColumn.setPreferredWidth(10);
+        tableColumn.setPreferredWidth(20);
 
         tableColumn = tableColumnModel.getColumn(3);
         comboBoxRenderer.putClientProperty("JComboBox.isTableCellEditor", Boolean.TRUE);
         tableColumn.setCellRenderer(comboBoxRenderer);
+        tableColumn.setPreferredWidth(30);
+
+        tableColumn = tableColumnModel.getColumn(4);
+        tableColumn.setCellEditor(new DateCellEditor(true));
+        tableColumn.setPreferredWidth(30);
     }
 
     protected void initTaxonSetsTable(AbstractTableModel tableModel, final String[] columnToolTips) {
@@ -685,7 +691,7 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
     protected class TaxonSetsTableModel extends AbstractTableModel {
         private static final long serialVersionUID = 3318461381525023153L;
 
-        String[] columnNames = {"Taxon Sets", "Monophyletic?", "IncludeStem?", "Tree"};
+        String[] columnNames = {"Taxon Set", "Mono?", "Stem?", "Tree", "Age"};
 
         public TaxonSetsTableModel() {
         }
@@ -714,6 +720,8 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                     return options.taxonSetsIncludeStem.get(taxonSet);
                 case 3:
                     return options.taxonSetsTreeModel.get(taxonSet);
+                case 4:
+                    return options.taxonSetsHeights.get(taxonSet);
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);
             }
@@ -747,6 +755,11 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
                     this.fireTableDataChanged();
                     taxonSetsTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
                     break;
+                case 4:
+                    options.taxonSetsHeights.put(taxonSet, (Double) aValue);
+                    this.fireTableDataChanged();
+                    taxonSetsTable.getSelectionModel().setSelectionInterval(rowIndex, rowIndex);
+                    break;
                 default:
                     throw new IllegalArgumentException("unknown column, " + columnIndex);
             }
@@ -756,8 +769,20 @@ public class TaxonSetPanel extends BeautiPanel implements Exportable {
             return true;
         }
 
-        public Class getColumnClass(int c) {
-            return getValueAt(0, c).getClass();
+        public Class getColumnClass(int columnIndex) {
+            switch (columnIndex) {
+                case 0:
+                    return String.class;
+                case 1:
+                case 2:
+                    return Boolean.class;
+                case 3:
+                    return String.class;
+                case 4:
+                    return Double.class;
+                default:
+                    throw new IllegalArgumentException("unknown column, " + columnIndex);
+            }
         }
     }
 

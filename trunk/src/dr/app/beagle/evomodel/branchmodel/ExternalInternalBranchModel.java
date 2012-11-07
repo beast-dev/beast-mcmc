@@ -1,7 +1,5 @@
 package dr.app.beagle.evomodel.branchmodel;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
@@ -20,7 +18,7 @@ import java.util.List;
  * @author Filip Bielejec
  * @version $Id$
  */
-public class ExternalInternalBranchModel extends AbstractModel implements BranchSpecificModel, Citable {
+public class ExternalInternalBranchModel extends AbstractModel implements BranchModel, Citable {
     public ExternalInternalBranchModel(TreeModel tree, SubstitutionModel externalSubstModel, SubstitutionModel internalSubstModel) {
         super("ExternalInternalBranchModel");
 

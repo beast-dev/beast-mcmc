@@ -32,7 +32,7 @@ import dr.evolution.tree.NodeRef;
  * @author Filip Bielejec
  * @version $Id$
  */
-public interface BranchSpecificModel {
+public interface BranchModel {
     Mapping getBranchModelMapping(final NodeRef node);
 
     public interface Mapping {

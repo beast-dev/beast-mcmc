@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -24,7 +23,7 @@ import dr.app.gui.components.RealNumberField;
 public class BranchSubstitutionModelEditor {
 
 	// Data
-	private ArrayList<PartitionData> dataList = null;
+	private PartitionDataList dataList = null;
 	private int row;
 	
 	// Settings
@@ -40,7 +39,7 @@ public class BranchSubstitutionModelEditor {
 	private JDialog window;
 	private Frame owner;
 	
-	public BranchSubstitutionModelEditor(ArrayList<PartitionData> dataList, int row) {
+	public BranchSubstitutionModelEditor(PartitionDataList dataList, int row) {
 		
 		this.dataList = dataList;
 		this.row = row;

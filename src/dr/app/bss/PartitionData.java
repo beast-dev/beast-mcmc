@@ -16,31 +16,25 @@ import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
-import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 
+//TODO: serialize
+
 public class PartitionData {
 
-	public static final String VERSION = "0.0.1";
-	public static final String DATE_STRING = "2012";
+	public int from = 1;
+	public int to = 1000;
+	public int every = 1;
 	
-	public TaxonList taxonList = new Taxa();
-	public int sequenceLength = 1000;	
+	// //////////////////
+	// ---TREE MODEL---//
+	// //////////////////
 	
-	//change to Lists
 	public File treeFile = null;
 	public TreeModel treeModel;
-
-	public List<File> treeFilesList;
-	public List<TreeModel> treeModelsList;
-	
-	public int from = 1;
-	public int to = sequenceLength;
-	public int every = 1;
 	
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//

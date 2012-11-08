@@ -2,7 +2,6 @@ package dr.app.bss;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 import java.io.File;
 
 import javax.swing.JButton;
@@ -32,12 +31,12 @@ public class PartitionTableModel extends AbstractTableModel {
 			"Frequency Model" };
 
 	private static final Class<?>[] COLUMN_TYPES = new Class<?>[] {
-			File.class, Integer.class, Integer.class, Integer.class,
-			JComboBox.class, JButton.class, JButton.class, JButton.class };
+			JComboBox.class, Integer.class, Integer.class, Integer.class,
+			JButton.class, JButton.class, JButton.class, JButton.class };
 
-	private ArrayList<PartitionData> dataList;
+	private PartitionDataList dataList;
 
-	public PartitionTableModel(ArrayList<PartitionData> dataList) {
+	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
 	}// END: constructor
 
@@ -60,8 +59,11 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			//TODO
-			return dataList.get(row).treeFile == null ? "" : dataList.get(row).treeFile.getName();
+			
+			// TODO
+			return dataList.get(row).treeFile == null ? new File("") : dataList
+					.get(row).treeFile.getName();
+			
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -124,8 +126,16 @@ public class PartitionTableModel extends AbstractTableModel {
 
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			//TODO
-			dataList.get(row).treeFile = (File) value;
+
+			// TODO
+//			if (value == null) {
+//				dataList.get(row).treeFile = new File("");
+//			} else {
+				dataList.get(row).treeFile = (File) value;
+//			}
+		
+			break;
+
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
 			break;
@@ -184,7 +194,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public boolean isCellEditable(int row, int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			return false;
+			return true;
 		case FROM_INDEX:
 			return true;
 		case TO_INDEX:

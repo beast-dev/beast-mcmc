@@ -39,7 +39,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private PartitionsPanel partitionsPanel;
 	private SimulationPanel simulationPanel;
 
-	private ArrayList<PartitionData> dataList;
+	private PartitionDataList dataList;
 
 	private JLabel statusLabel;
 	private JProgressBar progressBar;
@@ -50,7 +50,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		super();
 
 		setTitle(title);
-		dataList = new ArrayList<PartitionData>();
+		dataList = new PartitionDataList();
 		dataList.add(new PartitionData());
 
 	}// END: Constructor
@@ -110,7 +110,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			public void run() {
 
 				taxaPanel.updateUI();
-				statusLabel.setText(Integer.toString(dataList.get(0).taxonList
+				statusLabel.setText(Integer.toString(dataList.taxonList
 						.getTaxonCount()) + " taxa loaded.");
 
 			}
@@ -129,7 +129,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
 
-			if (dataList.get(0).treeModel == null) {
+			if (dataList.treeModelsList.size() == 0) {
 
 				tabbedPane.setSelectedComponent(treePanel);
 				treePanel.doImport();
@@ -202,7 +202,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 								data.createBranchRateModel(), //
 								data.createFrequencyModel(), //
 								0, // from
-								data.sequenceLength - 1, // to
+								data.to - 1, // to
 								1 // every
 						);
 
@@ -211,7 +211,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					}// END: data list loop
 
 					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-							partitionsList, dataList.get(0).sequenceLength);
+							partitionsList, dataList.sequenceLength);
 
 					writer.println(beagleSequenceSimulator.simulate()
 							.toString());
@@ -227,8 +227,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				statusLabel.setText("Generated "
-						+ dataList.get(0).sequenceLength + " replicates.");
+				statusLabel.setText("Generated " + dataList.sequenceLength + " replicates.");
 				progressBar.setIndeterminate(false);
 
 			}// END: done

@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -29,20 +28,23 @@ import dr.evomodel.tree.TreeModel;
 public class TreePanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<PartitionData> dataList = null;
+	private PartitionDataList dataList = null;
 	private OptionsPanel optionPanel;
 
 	private JButton treeFileButton = new JButton("Choose File...");
 	private JTextField treeFileNameText = new JTextField("not selected", 16);
 
+//	private int treeCount;
+	
 	public TreePanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) {
+			final PartitionDataList dataList) {
 
 		super();
 
 		this.frame = frame;
 		this.dataList = dataList;
-
+//		treeCount = 0;
+		
 		setOpaque(false);
 		setLayout(new BorderLayout());
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
@@ -63,7 +65,7 @@ public class TreePanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 
 			doImport();
-
+			
 		}// END: actionPerformed
 	}// END: ListenTreeFileButton
 
@@ -85,8 +87,8 @@ public class TreePanel extends JPanel implements Exportable {
 
 				if (file != null) {
 
-					dataList.get(0).treeFile = file;
-					treeFileNameText.setText(dataList.get(0).treeFile.getName());
+					dataList.treeFilesList.add(file);
+					treeFileNameText.setText(file.getName());
 
 					importFromFile(file);
 
@@ -122,9 +124,10 @@ public class TreePanel extends JPanel implements Exportable {
             NewickImporter importer = new NewickImporter(reader);
             tree = importer.importTree(null);
         }
-
-        dataList.get(0).taxonList = tree;
-        dataList.get(0).treeModel = new TreeModel(tree);
+        
+        // TODO Add taxons from a new tree to that list and display them in Taxa panel
+        dataList.taxonList = tree;
+        dataList.treeModelsList.add(new TreeModel(tree));
         
         reader.close();
         frame.fireTaxaChanged();

@@ -98,8 +98,8 @@ public class BeagleSequenceSimulatorApp {
 		SingleDocApplication app = new SingleDocApplication(
 				new BeagleSequenceSimulatorMenuFactory(), //
 				BEAGLE_SEQUENCE_SIMULATOR, //
-				PartitionData.VERSION.concat(" ").concat(
-						PartitionData.DATE_STRING), //
+				PartitionDataList.VERSION.concat(" ").concat(
+						PartitionDataList.DATE_STRING), //
 				null //
 		);
 

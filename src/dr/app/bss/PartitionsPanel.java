@@ -8,7 +8,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.io.File;
+import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -31,7 +32,7 @@ import org.virion.jam.panels.ActionPanel;
 public class PartitionsPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<PartitionData> dataList = null;
+	private PartitionDataList dataList = null;
 
 	private JTable partitionTable = null;
 	private PartitionTableModel partitionTableModel = null;
@@ -44,8 +45,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
 
-			partitionTableModel.addDefaultRow();
-			// partitionTableModel.addRow(dataList.get(partitionsCount - 1));
+//			partitionTableModel.addDefaultRow();
+			 partitionTableModel.addRow(dataList.get(partitionsCount - 1));
 
 			partitionsCount++;
 			setPartitions();
@@ -63,7 +64,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	};
 
 	public PartitionsPanel(final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) {
+			final PartitionDataList dataList) {
 
 		super();
 
@@ -95,11 +96,18 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		add(scrollPane, BorderLayout.CENTER);
 
 		// set columns
-		column = partitionTable.getColumnModel().getColumn(
-				partitionTableModel.PARTITION_TREE_INDEX);
-		column.setCellRenderer(new JTableComboBoxCellRenderer(
-				new String[] { "" }));
-		column.setCellEditor(new JTableComboBoxCellEditor(new String[] { "" }));
+
+		// ////////////////////////
+		// ---TODO TREE COLUMN---//
+		// ////////////////////////
+	
+		column = partitionTable.getColumnModel().getColumn(partitionTableModel.PARTITION_TREE_INDEX);
+//		JComboBox comboBox = new JComboBox();
+//		comboBox.addActionListener(new ListenComboBox(comboBox, dataList.treeFilesList));
+		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellRenderer(new JTableComboBoxCellRenderer(new String[] { "" }));
+
+		// //////////////////////////////////////////////////
 
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
@@ -154,7 +162,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}
 	}// END: InteractiveTableModelListener
 
-	private class JTableComboBoxCellRenderer extends JComboBox implements
+	public class JTableComboBoxCellRenderer extends JComboBox implements
 			TableCellRenderer {
 
 		public JTableComboBoxCellRenderer(String[] items) {
@@ -162,6 +170,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	        setOpaque(true);
 		}
 
+		public JTableComboBoxCellRenderer(File[] items) {
+			super(items);
+	        setOpaque(true);
+		}
+		
 		public Component getTableCellRendererComponent(JTable table,
 				Object value, boolean isSelected, boolean hasFocus, int row,
 				int column) {
@@ -182,7 +195,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			setSelectedItem(value);
 
             if (value != null) {
-//                removeAllItems();
+                removeAllItems();
                 addItem(value);
             }
 			
@@ -191,9 +204,40 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	}// END: JTableComboBoxCellRenderer class
 
 	private class JTableComboBoxCellEditor extends DefaultCellEditor {
-		public JTableComboBoxCellEditor(String[] items) {
-			super(new JComboBox(items));
+		
+//		public JTableComboBoxCellEditor(String[] items) {
+//			super(new JComboBox(items));
+//		}
+//		
+//		public JTableComboBoxCellEditor(File[] items) {
+//			super(new JComboBox(items));
+//		}
+//
+//		public JTableComboBoxCellEditor(JComboBox comboBox) {
+//			super(comboBox);
+//		}
+		
+        public JTableComboBoxCellEditor() {
+            super(new JComboBox());
+        }
+		
+		public Component getTableCellEditorComponent(JTable table,
+				Object value, boolean isSelected, int row, int column) {
+
+			((JComboBox) editorComponent).removeAllItems();
+
+			if (column == partitionTableModel.PARTITION_TREE_INDEX) {
+				for (File file : dataList.treeFilesList) {
+					((JComboBox) editorComponent).addItem(file);
+				}
+			}
+
+			((JComboBox) editorComponent).setSelectedItem(value);
+			delegate.setValue(value);
+
+			return editorComponent;
 		}
+
 	}// END: JTableComboBoxCellEditor class
 
 	private class JTableButtonCellRenderer extends JButton implements
@@ -302,6 +346,30 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 	}// END: JTableButtonMouseListener class
 
+//	private class ListenComboBox implements ActionListener {
+//
+//		private JComboBox combobox;
+//		private List<File> list;
+//
+//		public ListenComboBox(JComboBox combobox, List<File> list) {
+//			this.combobox = combobox;
+//			this.list = list;
+//		}
+//
+//		public void actionPerformed(ActionEvent ev) {
+//
+//			// TODO
+//			combobox.removeAll();
+//			for (File file : list) {
+//				combobox.addItem(file);
+//			}
+//
+//			combobox.validate();
+//			combobox.repaint();
+//			
+//		}// END: actionPerformed
+//	}// END: ListenComboBox
+	
 	//
 
 }// END: class

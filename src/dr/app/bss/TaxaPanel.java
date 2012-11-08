@@ -6,7 +6,6 @@ import jam.table.TableRenderer;
 
 import java.awt.BorderLayout;
 import java.awt.Insets;
-import java.util.ArrayList;
 
 import javax.swing.JComponent;
 import javax.swing.JPanel;
@@ -26,7 +25,7 @@ import dr.app.gui.table.TableSorter;
 public class TaxaPanel extends JPanel implements Exportable {
 
 	private BeagleSequenceSimulatorFrame frame = null;
-	private ArrayList<PartitionData> dataList = null;
+	private PartitionDataList dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
 	private JTable dataTable = null;
@@ -35,7 +34,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private double[] heights = null;
 
 	public TaxaPanel(BeagleSequenceSimulatorFrame frame,
-			ArrayList<PartitionData> dataList) {
+			PartitionDataList dataList) {
 
 		this.frame = frame;
 		this.dataList = dataList;
@@ -112,10 +111,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		System.out.println("Parsing heights");
 
-		heights = new double[dataList.get(0).taxonList.getTaxonCount()];;
-		for (int i = 0; i < dataList.get(0).taxonList.getTaxonCount(); i++) {
+		heights = new double[dataList.taxonList.getTaxonCount()];;
+		for (int i = 0; i < dataList.taxonList.getTaxonCount(); i++) {
 
-			heights[i] = dataList.get(0).taxonList.getTaxon(i).getHeight();
+			heights[i] = dataList.taxonList.getTaxon(i).getHeight();
 
 		}// END: taxon loop
 		
@@ -134,13 +133,13 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 
 		public int getRowCount() {
-			return dataList.get(0).taxonList.getTaxonCount();
+			return dataList.taxonList.getTaxonCount();
 		}
 
 		public Object getValueAt(int row, int col) {
 			switch (col) {
 			case 0:
-				return dataList.get(0).taxonList.getTaxonId(row);
+				return dataList.taxonList.getTaxonId(row);
 			case 1:
 				
 //				getHeights();
@@ -162,7 +161,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 			getHeights();
 			
 			if (col == 0) {
-				dataList.get(0).taxonList.getTaxon(row).setId(value.toString());
+				dataList.taxonList.getTaxon(row).setId(value.toString());
 			}
 			
 //			if (col == 1) {

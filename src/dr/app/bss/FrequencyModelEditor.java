@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -25,7 +24,7 @@ import org.virion.jam.components.RealNumberField;
 public class FrequencyModelEditor {
 
 	// Data
-	private ArrayList<PartitionData> dataList = null;
+	private PartitionDataList dataList = null;
 	private int row;
 	
 	// Settings
@@ -42,7 +41,7 @@ public class FrequencyModelEditor {
 	private JDialog window;
 	private Frame owner;
 	
-	public FrequencyModelEditor(ArrayList<PartitionData> dataList, int row) {
+	public FrequencyModelEditor(PartitionDataList dataList, int row) {
 		
 		this.dataList = dataList;
 		this.row = row;

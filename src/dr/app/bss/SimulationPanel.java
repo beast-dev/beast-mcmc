@@ -6,7 +6,6 @@ import jam.panels.OptionsPanel;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -20,7 +19,7 @@ import org.virion.jam.components.WholeNumberField;
 public class SimulationPanel extends JPanel implements Exportable {
 
 //	 private BeagleSequenceSimulatorFrame frame;
-	private ArrayList<PartitionData> dataList;
+	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
 
 	private JLabel replicatesLabel = new JLabel("Number of sites:");
@@ -32,7 +31,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	
 	public SimulationPanel(
 //			final BeagleSequenceSimulatorFrame frame,
-			final ArrayList<PartitionData> dataList) {
+			final PartitionDataList dataList) {
 
 //		this.frame = frame;
 		this.dataList = dataList;
@@ -41,7 +40,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		
 		// number of sites
 		replicatesField.setColumns(8);
-		replicatesField.setValue(dataList.get(0).sequenceLength);
+		replicatesField.setValue(dataList.sequenceLength);
 		
 		optionPanel.addComponents(replicatesLabel, replicatesField);
 
@@ -62,9 +61,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	public final void collectSettings() {
 
 		// all elements hold the same value
-		for (PartitionData data : dataList) {
-			data.sequenceLength = replicatesField.getValue();
-		}
+			dataList.sequenceLength = replicatesField.getValue();
 		// frame.fireModelChanged();
 	}// END: collectSettings
 
@@ -88,15 +85,20 @@ public class SimulationPanel extends JPanel implements Exportable {
 		for (PartitionData data : dataList) {
 
 			System.out.println("Partition: " + row);
-			System.out.println("\tReplications: " + data.sequenceLength);
+			System.out.println("\tReplications: " + dataList.sequenceLength);
 			System.out.println("\tFrom: " + data.from);
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);
-			System.out.println("\tTree model: " + "TODO");
+			System.out.println("\tTree model: " + data.treeFile.getName());
 			System.out.println("\tSubstitution model: " + PartitionData.substitutionModels[data.substitutionModel]);
 			System.out.println("\tSite rate model: " + PartitionData.siteModels[data.siteModel]);
 			System.out.println("\tClock rate model: " + PartitionData.clockModels[data.clockModel]);
 			System.out.println("\tFrequency model: " + PartitionData.frequencyModels[data.frequencyModel]);
+
+			System.out.println("Possible trees: ");
+			for (int i = 0; i < dataList.treeFilesList.size(); i++) {
+				System.out.println(dataList.treeFilesList.get(i).getName());
+			}
 			
 			row++;
 		}// END: data list loop

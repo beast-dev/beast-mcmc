@@ -37,26 +37,28 @@ public class EpochBranchModelParser extends AbstractXMLObjectParser {
         List<Epoch> epochs = new ArrayList<Epoch>();
 
         for (int i = 0; i < xo.getChildCount(); i++) {
-            XMLObject xoc = (XMLObject) xo.getChild(i);
-            if (xoc.getName().equals(EPOCH)) {
+            if (xo.getChild(i) instanceof XMLObject) {
+                XMLObject xoc = (XMLObject) xo.getChild(i);
+                if (xoc.getName().equals(EPOCH)) {
 
-                Parameter tt = null;
+                    Parameter tt = null;
 
-                if (xoc.hasAttribute(TRANSITION_TIME)) {
-                    double t = xoc.getAttribute(TRANSITION_TIME, 0.0);
-                    tt = new Parameter.Default(1, t);
-                }
-
-                SubstitutionModel s = (SubstitutionModel) xoc.getChild(SubstitutionModel.class);
-
-                if (xoc.hasChildNamed(TRANSITION_TIME)) {
-                    if (tt != null) {
-                        throw new XMLParseException("An epoch cannot have a transitionTime attribute and a parameter");
+                    if (xoc.hasAttribute(TRANSITION_TIME)) {
+                        double t = xoc.getAttribute(TRANSITION_TIME, 0.0);
+                        tt = new Parameter.Default(1, t);
                     }
 
-                    tt = (Parameter) xoc.getElementFirstChild(TRANSITION_TIME);
+                    SubstitutionModel s = (SubstitutionModel) xoc.getChild(SubstitutionModel.class);
+
+                    if (xoc.hasChildNamed(TRANSITION_TIME)) {
+                        if (tt != null) {
+                            throw new XMLParseException("An epoch cannot have a transitionTime attribute and a parameter");
+                        }
+
+                        tt = (Parameter) xoc.getElementFirstChild(TRANSITION_TIME);
+                    }
+                    epochs.add(new Epoch(s, tt));
                 }
-                epochs.add(new Epoch(s, tt));
             }
         }
 

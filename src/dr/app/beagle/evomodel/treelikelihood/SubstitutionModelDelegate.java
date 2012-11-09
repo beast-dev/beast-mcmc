@@ -125,11 +125,11 @@ final class SubstitutionModelDelegate {
 
         for (int i = 0; i < updateCount; i++) {
 
-            matrixBufferHelper.flipOffset(branchIndices[i]);
-
             BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
             int[] order = mapping.getOrder();
             double[] weights = mapping.getWeights();
+
+            matrixBufferHelper.flipOffset(branchIndices[i]);
 
             if (order.length == 1) {
                 probabilityIndices[order[0]][counts[order[0]]] = branchIndices[i];

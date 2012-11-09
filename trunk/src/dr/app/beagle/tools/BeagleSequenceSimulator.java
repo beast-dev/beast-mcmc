@@ -459,9 +459,9 @@ public class BeagleSequenceSimulator {
 	
 	public static void main(String[] args) {
 
-//		simulateOnePartition();
+		simulateOnePartition();
 		simulateTwoPartitions();
-//		simulateThreePartitions(); 
+		simulateThreePartitions(); 
 
 	} // END: main
 

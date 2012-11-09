@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.*;
@@ -52,7 +53,9 @@ import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.math.MathUtils;
 import dr.util.Citable;
+import org.apache.commons.math.exception.MathUnsupportedOperationException;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -1173,9 +1176,11 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
         try {
 
+            MathUtils.setSeed(666);
+
             System.out.println("Test case 1: simulateOnePartition");
 
-            int sequenceLength = 10;
+            int sequenceLength = 1000;
             ArrayList<Partition> partitionsList = new ArrayList<Partition>();
 
             // create tree
@@ -1191,21 +1196,37 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
                     freqs);
 
             // create substitution model
-            Parameter kappa = new Parameter.Default(1, 10);
+            Parameter kappa = new Parameter.Default(1, 1);
+            Parameter kappa2 = new Parameter.Default(1, 100);
+
             HKY hky = new HKY(kappa, freqModel);
-            HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
+            HKY hky2 = new HKY(kappa2, freqModel);
+
+            HomogenousBranchSubstitutionModel homogenousBranchSubstitutionModel = new HomogenousBranchSubstitutionModel(
                     hky, freqModel);
+
+
+            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+            substitutionModels.add(hky);
+            substitutionModels.add(hky2);
+            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
+            freqModels.add(freqModel);
+
+            Parameter epochTimes = new Parameter.Default(1,10);
+
+            // create branch rate model
+            BranchRateModel branchRateModel = new DefaultBranchRateModel();
+
+            EpochBranchSubstitutionModel ebsm = new EpochBranchSubstitutionModel(substitutionModels, freqModels, branchRateModel, epochTimes);
 
             // create site model
             GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
                     "siteModel");
 
-            // create branch rate model
-            BranchRateModel branchRateModel = new DefaultBranchRateModel();
 
             // create partition
             Partition partition1 = new Partition(treeModel, //
-                    substitutionModel,//
+                    ebsm,//
                     siteRateModel, //
                     branchRateModel, //
                     freqModel, //
@@ -1214,9 +1235,9 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
                     1 // every
             );
 
-            Sequence ancestralSequence = new Sequence();
-            ancestralSequence.appendSequenceString("TCAAGTGAGG");
-            partition1.setAncestralSequence(ancestralSequence);
+//            Sequence ancestralSequence = new Sequence();
+//            ancestralSequence.appendSequenceString("TCAAGTGAGG");
+//            partition1.setAncestralSequence(ancestralSequence);
 
             partitionsList.add(partition1);
 
@@ -1224,24 +1245,15 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
             Alignment alignment = simulator.simulate();
 
-            Parameter kappa2 = new Parameter.Default(1, 1);
-            HKY hky2 = new HKY(kappa2, freqModel);
-
-            List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky);
-            substitutionModels.add(hky2);
-            List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
-            freqModels.add(freqModel);
-
-            Parameter epochTimes = new Parameter.Default(1,35);
-
-            EpochBranchSubstitutionModel ebsm = new EpochBranchSubstitutionModel(substitutionModels, freqModels, branchRateModel, epochTimes);
             BeagleTreeLikelihood btl = new BeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("BTL = " + btl.getLogLikelihood());
 
-            BranchModel branchModel = new HomogeneousBranchModel(hky);
-            NewBeagleTreeLikelihood nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, branchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky);
+
+//            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
+
+            NewBeagleTreeLikelihood nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("nBTL = " + nbtl.getLogLikelihood());
 

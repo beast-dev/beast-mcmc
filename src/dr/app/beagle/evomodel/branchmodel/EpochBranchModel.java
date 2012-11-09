@@ -139,12 +139,12 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
             if (parentHeight >= transitionTimes[lastTransitionTime] && transitionTimes[lastTransitionTime] > nodeHeight) {
 
                 weightList.add( parentHeight - transitionTimes[lastTransitionTime] );
-                orderList.add(lastTransitionTime);
+                orderList.add(nModels - 1);
 
             } else if (nodeHeight > transitionTimes[lastTransitionTime]) {
 
                 weightList.add( branchLength );
-                orderList.add(lastTransitionTime);
+                orderList.add(nModels - 1);
 
             } else {
                 // nothing to add

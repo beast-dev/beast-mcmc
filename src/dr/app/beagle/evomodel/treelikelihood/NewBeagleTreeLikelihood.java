@@ -129,7 +129,7 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             this.branchModel = branchModel;
             substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel);
-            addModel(branchModel);
+            addModel(this.branchModel);
 
             if (branchRateModel != null) {
                 this.branchRateModel = branchRateModel;
@@ -958,7 +958,7 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         // First update the transition probability matrix(ices) for this branch
-        if (parent != null && updateNode[nodeNum]) {
+        if (flip && parent != null && updateNode[nodeNum]) {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 

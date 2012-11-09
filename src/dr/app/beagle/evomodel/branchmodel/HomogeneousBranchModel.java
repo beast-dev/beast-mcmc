@@ -25,15 +25,61 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
+import dr.inference.model.AbstractModel;
+import dr.inference.model.Model;
+import dr.inference.model.Variable;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @version $Id$
  */
-public class HomogeneousBranchModel implements BranchModel {
+public class HomogeneousBranchModel extends AbstractModel implements BranchModel{
+    private final SubstitutionModel substitutionModel;
+
+    public HomogeneousBranchModel(SubstitutionModel substitutionModel) {
+        super("HomogeneousBranchModel");
+        this.substitutionModel = substitutionModel;
+    }
+
     public Mapping getBranchModelMapping(NodeRef node) {
         return DEFAULT;
+    }
+
+    @Override
+    public List<SubstitutionModel> getSubstitutionModels() {
+        List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+        substitutionModels.add(substitutionModel);
+        return substitutionModels;
+    }
+
+    @Override
+    public boolean requiresMatrixConvolution() {
+        return false;
+    }
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+    }
+
+    @Override
+    protected void storeState() {
+    }
+
+    @Override
+    protected void restoreState() {
+    }
+
+    @Override
+    protected void acceptState() {
     }
 }

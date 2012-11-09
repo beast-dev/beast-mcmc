@@ -44,6 +44,20 @@ public class ExternalInternalBranchModel extends AbstractModel implements Branch
     }
 
     @Override
+    public List<SubstitutionModel> getSubstitutionModels() {
+        List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
+        substitutionModels.add(externalSubstModel);
+        substitutionModels.add(internalSubstModel);
+        return substitutionModels;
+    }
+
+    @Override
+    public boolean requiresMatrixConvolution() {
+        return false;
+    }
+
+
+    @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
     }

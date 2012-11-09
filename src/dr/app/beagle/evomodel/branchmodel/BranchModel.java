@@ -25,15 +25,24 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
+import dr.evolution.tree.Tree;
+import dr.inference.model.Model;
+
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
  * @author Filip Bielejec
  * @version $Id$
  */
-public interface BranchModel {
+public interface BranchModel extends Model {
     Mapping getBranchModelMapping(final NodeRef node);
+
+    List<SubstitutionModel> getSubstitutionModels();
+
+    boolean requiresMatrixConvolution();
 
     public interface Mapping {
         int[] getOrder();

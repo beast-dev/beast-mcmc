@@ -1,0 +1,244 @@
+/*
+ * EpochBranchSubstitutionModel.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
+package dr.app.beagle.evomodel.treelikelihood;
+
+import beagle.Beagle;
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
+import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
+import dr.evolution.tree.Tree;
+import dr.evomodel.tree.TreeModel;
+import dr.stats.Variate;
+
+import java.util.*;
+
+/**
+ * @author Andrew Rambaut
+ * @author Filip Bielejec
+ * @author Marc A. Suchard
+ * @version $Id$
+ */
+@SuppressWarnings("serial")
+final class SubstitutionModelDelegate {
+    private static final int BUFFER_POOL_SIZE = 100;
+
+    private final Tree tree;
+    private final List<SubstitutionModel> substitutionModelList;
+    private final BranchModel branchModel;
+
+    private final int eigenCount;
+    private final int nodeCount;
+
+    private final int extraBufferCount;
+
+    private final BufferIndexHelper eigenBufferHelper;
+    private BufferIndexHelper matrixBufferHelper;
+
+    private Stack<Integer> availableBuffers = new Stack<Integer>();
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
+
+        this.tree = tree;
+
+        this.substitutionModelList = branchModel.getSubstitutionModels();
+
+        this.branchModel = branchModel;
+
+        eigenCount = substitutionModelList.size();
+        nodeCount = tree.getNodeCount();
+
+        // two eigen buffers for each decomposition for store and restore.
+        eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
+
+        // two matrices for each node less the root
+        matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
+
+        this.extraBufferCount = branchModel.requiresMatrixConvolution() ? BUFFER_POOL_SIZE : 0;
+
+        for (int i = 0; i < extraBufferCount; i++) {
+            pushAvailableBuffer(i + matrixBufferHelper.getBufferCount());
+        }
+
+    }// END: Constructor
+
+    public boolean canReturnComplexDiagonalization() {
+        return substitutionModelList.get(0).getEigenDecomposition().canReturnComplexDiagonalization();
+    }
+
+    public int getEigenBufferCount() {
+        return eigenBufferHelper.getBufferCount();
+    }
+
+    public int getMatrixBufferCount() {
+        return matrixBufferHelper.getBufferCount() + extraBufferCount;
+    }
+
+    public void updateSubstitutionModels(Beagle beagle) {
+        for (int i = 0; i < eigenCount; i++) {
+            eigenBufferHelper.flipOffset(i);
+
+            EigenDecomposition ed = substitutionModelList.get(i).getEigenDecomposition();
+
+            beagle.setEigenDecomposition(
+                    eigenBufferHelper.getOffsetIndex(i),
+                    ed.getEigenVectors(),
+                    ed.getInverseEigenVectors(),
+                    ed.getEigenValues());
+        }
+    }
+
+    public void updateTransitionMatrices(Beagle beagle, int[] branchIndices, double[] edgeLength, int updateCount) {
+
+        int[][] probabilityIndices = new int[eigenCount][updateCount];
+        double[][] edgeLengths = new double[eigenCount][updateCount];
+
+        int count = 0;
+
+        List<Stack<Integer>> convolutionList = new ArrayList<Stack<Integer>>();
+
+        for (int i = 0; i < updateCount; i++) {
+            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
+            int[] order = mapping.getOrder();
+            double[] weights = mapping.getWeights();
+
+            if (order.length == 1) {
+                probabilityIndices[order[0]][count] = branchIndices[i];
+                edgeLengths[order[0]][count] = edgeLength[i];
+                count ++;
+            } else {
+                double sum = 0.0;
+                for (double w : weights) {
+                    sum += w;
+                }
+
+                Stack<Integer> bufferIndices = new Stack<Integer>();
+                for (int j = 0; j < order.length; j++) {
+                    int buffer = popAvailableBuffer();
+
+                    if (buffer < 0) {
+                        // no buffers available
+                        throw new RuntimeException("All out of buffers");
+                    }
+
+                    probabilityIndices[order[j]][count] = buffer;
+                    edgeLengths[order[j]][count] = weights[j] * edgeLength[i] / sum;
+
+                    bufferIndices.add(buffer);
+                }
+                bufferIndices.add(branchIndices[i]);
+
+                convolutionList.add(bufferIndices);
+            }
+
+        }
+
+        for (int i = 0; i < eigenCount; i++) {
+            beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(i),
+                    probabilityIndices[i],
+                    null, // firstDerivativeIndices
+                    null, // secondDerivativeIndices
+                    edgeLengths[i],
+                    count);
+        }
+
+        while (convolutionList.size() > 0) {
+            int[] firstConvolutionBuffers = new int[nodeCount];
+            int[] secondConvolutionBuffers = new int[nodeCount];
+            int[] resultConvolutionBuffers = new int[nodeCount];
+            int operationsCount = 0;
+
+            List<Stack<Integer>> empty = new ArrayList<Stack<Integer>>();
+
+            for (Stack<Integer> convolve : convolutionList) {
+                if (convolve.size() > 3) {
+                    firstConvolutionBuffers[operationsCount] = convolve.pop();
+                    secondConvolutionBuffers[operationsCount] = convolve.pop();
+                    int buffer = popAvailableBuffer();
+
+                    if (buffer < 0) {
+                        // no buffers available
+                        throw new RuntimeException("All out of buffers");
+                    }
+
+                    resultConvolutionBuffers[operationsCount] = buffer;
+                    convolve.push(buffer);
+                    operationsCount ++;
+
+                } else  if (convolve.size() == 3) {
+                    firstConvolutionBuffers[operationsCount] = convolve.pop();
+                    secondConvolutionBuffers[operationsCount] = convolve.pop();
+                    resultConvolutionBuffers[operationsCount] = convolve.pop();
+                    operationsCount ++;
+                } else {
+                    throw new RuntimeException("Unexpected convolve list size");
+                }
+
+                if (convolve.size() == 0) {
+                    empty.add(convolve);
+                }
+            }
+
+            beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
+                    secondConvolutionBuffers, // B
+                    resultConvolutionBuffers, // C
+                    operationsCount // count
+            );
+
+            convolutionList.removeAll(empty);
+        }
+    }
+
+    private int popAvailableBuffer() {
+        if (availableBuffers.empty()) {
+            return -1;
+        }
+        return availableBuffers.pop();
+    }
+
+    private void pushAvailableBuffer(int index) {
+        availableBuffers.push(index);
+    }
+
+    public double[] getRootStateFrequencies() {
+        return substitutionModelList.get(0).getFrequencyModel().getFrequencies();
+    }// END: getStateFrequencies
+
+    public int getMatrixIndex(int branchIndex) {
+        return matrixBufferHelper.getOffsetIndex(branchIndex);
+    }
+
+    public void storeState() {
+        eigenBufferHelper.storeState();
+        matrixBufferHelper.storeState();
+    }
+
+    public void restoreState() {
+        eigenBufferHelper.restoreState();
+        matrixBufferHelper.restoreState();
+    }
+
+}// END: class

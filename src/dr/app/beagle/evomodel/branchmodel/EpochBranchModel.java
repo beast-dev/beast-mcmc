@@ -172,6 +172,16 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         };
     }// END: getBranchIndex
 
+    @Override
+    public boolean requiresMatrixConvolution() {
+        return true;
+    }
+
+    @Override
+    public List<SubstitutionModel> getSubstitutionModels() {
+        return substitutionModels;
+    }
+
     protected void handleModelChangedEvent(Model model, Object object, int index) {
         fireModelChanged();
     }// END: handleModelChangedEvent

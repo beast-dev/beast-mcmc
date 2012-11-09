@@ -49,6 +49,7 @@ import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.DefaultBranchRateModel;
+import dr.evomodel.branchratemodel.StrictClockBranchRates;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
@@ -1212,10 +1213,11 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
             List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
             freqModels.add(freqModel);
 
-            Parameter epochTimes = new Parameter.Default(1,10);
+            Parameter epochTimes = new Parameter.Default(1,20);
 
             // create branch rate model
-            BranchRateModel branchRateModel = new DefaultBranchRateModel();
+            Parameter rate = new Parameter.Default(1, 0.001);
+            BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
 
             EpochBranchSubstitutionModel ebsm = new EpochBranchSubstitutionModel(substitutionModels, freqModels, branchRateModel, epochTimes);
 
@@ -1245,17 +1247,25 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
             Alignment alignment = simulator.simulate();
 
-            BeagleTreeLikelihood btl = new BeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            BeagleTreeLikelihood btl = new BeagleTreeLikelihood(alignment, treeModel, homogenousBranchSubstitutionModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
-            System.out.println("BTL = " + btl.getLogLikelihood());
+            System.out.println("BTL(homogeneous) = " + btl.getLogLikelihood());
+
+            btl = new BeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+
+            System.out.println("BTL(epoch) = " + btl.getLogLikelihood());
 
             BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky);
 
-//            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
+            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
 
             NewBeagleTreeLikelihood nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
-            System.out.println("nBTL = " + nbtl.getLogLikelihood());
+            System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
+
+             nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+
+            System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
 
         } catch (Exception e) {
             e.printStackTrace();

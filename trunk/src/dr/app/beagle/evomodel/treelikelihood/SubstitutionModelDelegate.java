@@ -58,7 +58,7 @@ final class SubstitutionModelDelegate {
     private final BufferIndexHelper eigenBufferHelper;
     private BufferIndexHelper matrixBufferHelper;
 
-    private Stack<Integer> availableBuffers = new Stack<Integer>();
+    private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
 
@@ -116,9 +116,9 @@ final class SubstitutionModelDelegate {
         int[][] probabilityIndices = new int[eigenCount][updateCount];
         double[][] edgeLengths = new double[eigenCount][updateCount];
 
-        int count = 0;
+        int[] counts = new int[eigenCount];
 
-        List<Stack<Integer>> convolutionList = new ArrayList<Stack<Integer>>();
+        List<Deque<Integer>> convolutionList = new ArrayList<Deque<Integer>>();
 
         for (int i = 0; i < updateCount; i++) {
             BranchModel.Mapping mapping = branchModel.getBranchModelMapping(tree.getNode(branchIndices[i]));
@@ -126,16 +126,16 @@ final class SubstitutionModelDelegate {
             double[] weights = mapping.getWeights();
 
             if (order.length == 1) {
-                probabilityIndices[order[0]][count] = branchIndices[i];
-                edgeLengths[order[0]][count] = edgeLength[i];
-                count ++;
+                probabilityIndices[order[0]][counts[order[0]]] = branchIndices[i];
+                edgeLengths[order[0]][counts[order[0]]] = edgeLength[i];
+                counts[order[0]] ++;
             } else {
                 double sum = 0.0;
                 for (double w : weights) {
                     sum += w;
                 }
 
-                Stack<Integer> bufferIndices = new Stack<Integer>();
+                Deque<Integer> bufferIndices = new ArrayDeque<Integer>();
                 for (int j = 0; j < order.length; j++) {
                     int buffer = popAvailableBuffer();
 
@@ -144,8 +144,9 @@ final class SubstitutionModelDelegate {
                         throw new RuntimeException("All out of buffers");
                     }
 
-                    probabilityIndices[order[j]][count] = buffer;
-                    edgeLengths[order[j]][count] = weights[j] * edgeLength[i] / sum;
+                    probabilityIndices[order[j]][counts[order[j]]] = buffer;
+                    edgeLengths[order[j]][counts[order[j]]] = weights[j] * edgeLength[i] / sum;
+                    counts[order[j]]++;
 
                     bufferIndices.add(buffer);
                 }
@@ -162,7 +163,7 @@ final class SubstitutionModelDelegate {
                     null, // firstDerivativeIndices
                     null, // secondDerivativeIndices
                     edgeLengths[i],
-                    count);
+                    counts[i]);
         }
 
         while (convolutionList.size() > 0) {
@@ -171,9 +172,9 @@ final class SubstitutionModelDelegate {
             int[] resultConvolutionBuffers = new int[nodeCount];
             int operationsCount = 0;
 
-            List<Stack<Integer>> empty = new ArrayList<Stack<Integer>>();
+            List<Deque<Integer>> empty = new ArrayList<Deque<Integer>>();
 
-            for (Stack<Integer> convolve : convolutionList) {
+            for (Deque<Integer> convolve : convolutionList) {
                 if (convolve.size() > 3) {
                     firstConvolutionBuffers[operationsCount] = convolve.pop();
                     secondConvolutionBuffers[operationsCount] = convolve.pop();
@@ -213,7 +214,7 @@ final class SubstitutionModelDelegate {
     }
 
     private int popAvailableBuffer() {
-        if (availableBuffers.empty()) {
+        if (availableBuffers.isEmpty()) {
             return -1;
         }
         return availableBuffers.pop();

@@ -48,38 +48,65 @@ import java.util.Locale;
  * @version $Id: InstantiableTracerApp.java,v 1.0 2012/09/17 15:23:33 sibon.li Exp $
  */
 public class InstantiableTracerApp extends SingleDocApplication {
+    private boolean exiting;
     public InstantiableTracerApp (String nameString, String aboutString, Icon icon,
-                         String websiteURLString, String helpURLString) {
+                         String websiteURLString, String helpURLString, boolean exiting) {
             super(new TracerMenuBarFactory(), nameString, aboutString, icon,
                     websiteURLString, helpURLString);
 
             addPreferencesSection(new GeneralPreferencesSection());
+        this.exiting = exiting;
     }
 
 
     @Override
     public void doQuit() {
-        if (documentFrame == null) {
-            return;
+        if(exiting) {   // Implemented this way because documentFrame is private in SingleDocApplication
+            super.doQuit();
         }
-        if (documentFrame.requestClose()) {
+        else {
+            if (documentFrame == null) {
+                return;
+            }
+            if (documentFrame.requestClose()) {
 
-            documentFrame.setVisible(false);
-            documentFrame.dispose();
-//            try {
-//                System.exit(0);
-//            }catch (ExitException e) {
-//                System.setSecurityManager(null);
-//            }
+                documentFrame.setVisible(false);
+                documentFrame.dispose();
+    //            try {
+    //                System.exit(0);
+    //            }catch (ExitException e) {
+    //                System.setSecurityManager(null);
+    //            }
+            }
         }
     }
 
+//    @Override
+//    public void doQuit() {
+//        //super.doQuit();
+//        if (documentFrame == null) {
+//            return;
+//        }
+//        if (documentFrame.requestClose()) {
+//
+//            documentFrame.setVisible(false);
+//            documentFrame.dispose();
+////            try {
+////                System.exit(0);
+////            }catch (ExitException e) {
+////                System.setSecurityManager(null);
+////            }
+//        }
+//    }
+
     private DocumentFrame documentFrame = null;
 
-    public static void loadInstantiableTracer(String nameString, String logFileName, long bi) {
+
+    private static void loadTracerInstance(String nameString, String logFileName, long bi, boolean exiting) {
         final String name = nameString;
         final String fileName = logFileName;
         final long burnin = bi;
+        final boolean exit = exiting;
 
         Thread thread = new Thread() {
             public void run() {
@@ -133,7 +160,7 @@ public class InstantiableTracerApp extends SingleDocApplication {
 
                     InstantiableTracerApp app = new InstantiableTracerApp(name,
                             "Tracer tool running through "+ name + ". Authors Wai Lok Sibon Li & Andrew Rambaut",
-                            icon, "http://beast.bio.ed.ac.uk/", "http://beast.bio.ed.ac.uk/Tracer");
+                            icon, "http://beast.bio.ed.ac.uk/", "http://beast.bio.ed.ac.uk/Tracer", exit);
 
                     TracerFrame frame = new TracerFrame(name);
                     app.setDocumentFrame(frame);
@@ -155,6 +182,20 @@ public class InstantiableTracerApp extends SingleDocApplication {
 
     }
 
+    /*
+     *Instantiates a Tracer window which will terminate the JRE (similar to Tracer but burnin can be set)
+     */
+    public static void loadExitingTracerInstance(String nameString, String logFileName, long bi) {
+        loadTracerInstance(nameString, logFileName, bi, true);
+    }
+
+    /*
+     * Loads an instance of tracer that does not terminate the JRE. Also does not call System.exit() when the
+     * window is closed by the user.
+     */
+    public static void loadNonExitingTracerInstance(String nameString, String logFileName, long bi) {
+        loadTracerInstance(nameString, logFileName, bi, false);
+    }
 
 }
 

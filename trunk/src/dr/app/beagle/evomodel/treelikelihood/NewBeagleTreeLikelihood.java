@@ -31,7 +31,6 @@ import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.*;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -42,7 +41,6 @@ import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Nucleotides;
 import dr.evolution.io.NewickImporter;
-import dr.evolution.sequence.Sequence;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
@@ -55,8 +53,6 @@ import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-import dr.util.Citable;
-import org.apache.commons.math.exception.MathUnsupportedOperationException;
 
 import java.util.*;
 import java.util.logging.Logger;
@@ -1255,11 +1251,11 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
             Alignment alignment = simulator.simulate();
 
-            BeagleTreeLikelihood btl = new BeagleTreeLikelihood(alignment, treeModel, homogenousBranchSubstitutionModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            OldBeagleTreeLikelihood btl = new OldBeagleTreeLikelihood(alignment, treeModel, homogenousBranchSubstitutionModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("BTL(homogeneous) = " + btl.getLogLikelihood());
 
-            btl = new BeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            btl = new OldBeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("BTL(epoch) = " + btl.getLogLikelihood());
 

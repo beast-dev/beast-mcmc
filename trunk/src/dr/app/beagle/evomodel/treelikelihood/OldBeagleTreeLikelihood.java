@@ -61,7 +61,7 @@ import java.util.logging.Logger;
 @SuppressWarnings("serial")
 
 @Deprecated
-public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
+public class OldBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -84,28 +84,28 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
-    public BeagleTreeLikelihood(PatternList patternList,
-                                TreeModel treeModel,
-                                BranchSubstitutionModel branchSubstitutionModel,
-                                SiteRateModel siteRateModel,
-                                BranchRateModel branchRateModel,
-                                TipStatesModel tipStatesModel,
-                                boolean useAmbiguities,
-                                PartialsRescalingScheme rescalingScheme) {
+    public OldBeagleTreeLikelihood(PatternList patternList,
+                                   TreeModel treeModel,
+                                   BranchSubstitutionModel branchSubstitutionModel,
+                                   SiteRateModel siteRateModel,
+                                   BranchRateModel branchRateModel,
+                                   TipStatesModel tipStatesModel,
+                                   boolean useAmbiguities,
+                                   PartialsRescalingScheme rescalingScheme) {
 
         this(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme,
                 null);
     }
 
-    public BeagleTreeLikelihood(PatternList patternList,
-                                TreeModel treeModel,
-                                BranchSubstitutionModel branchSubstitutionModel,
-                                SiteRateModel siteRateModel,
-                                BranchRateModel branchRateModel,
-                                TipStatesModel tipStatesModel,
-                                boolean useAmbiguities,
-                                PartialsRescalingScheme rescalingScheme,
-                                Map<Set<String>, Parameter> partialsRestrictions) {
+    public OldBeagleTreeLikelihood(PatternList patternList,
+                                   TreeModel treeModel,
+                                   BranchSubstitutionModel branchSubstitutionModel,
+                                   SiteRateModel siteRateModel,
+                                   BranchRateModel branchRateModel,
+                                   TipStatesModel tipStatesModel,
+                                   boolean useAmbiguities,
+                                   PartialsRescalingScheme rescalingScheme,
+                                   Map<Set<String>, Parameter> partialsRestrictions) {
 
         super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 

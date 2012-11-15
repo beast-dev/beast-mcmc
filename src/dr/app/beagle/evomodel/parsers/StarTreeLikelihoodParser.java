@@ -27,7 +27,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.OldBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.StarTreeLikelihood;
 import dr.evolution.alignment.PatternList;
@@ -58,7 +58,7 @@ public class StarTreeLikelihoodParser extends TreeLikelihoodParser {
         return STAR_TREE;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected OldBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                      BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                      BranchRateModel branchRateModel,
                                                      boolean useAmbiguities, PartialsRescalingScheme scalingScheme,

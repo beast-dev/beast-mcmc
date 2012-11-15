@@ -27,7 +27,6 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.operators.TipStateSwapOperator;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.xml.*;
 
 /**

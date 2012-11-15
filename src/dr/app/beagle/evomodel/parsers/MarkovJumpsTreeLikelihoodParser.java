@@ -26,11 +26,8 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;

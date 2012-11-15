@@ -148,7 +148,7 @@ public class BeagleSequenceSimulator {
 	private void simulatePartition(Partition partition) {
 
 		TreeModel treeModel = partition.treeModel;
-		BranchSubstitutionModel branchSubstitutionModel = partition.branchSubstitutionModel;
+		BranchSubstitutionModel branchModel = partition.getBranchModel();
 		GammaSiteRateModel siteModel = partition.siteModel;
 		FrequencyModel freqModel = partition.freqModel;
 		int partitionSiteCount = partition.getPartitionSiteCount();
@@ -168,7 +168,7 @@ public class BeagleSequenceSimulator {
 		}//END: partitionCount check
 		
 		// Buffer index helpers
-		int eigenCount = branchSubstitutionModel.getEigenCount();
+		int eigenCount = branchModel.getEigenCount();
 		BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 		
 		int nodeCount = treeModel.getNodeCount();
@@ -217,7 +217,7 @@ public class BeagleSequenceSimulator {
 
 			eigenBufferHelper.flipOffset(i);
 
-			branchSubstitutionModel.setEigenDecomposition(beagle, //
+			branchModel.setEigenDecomposition(beagle, //
 					i, //
 					eigenBufferHelper, //
 					0 //
@@ -237,7 +237,7 @@ public class BeagleSequenceSimulator {
 			) {
 
 		TreeModel treeModel = partition.treeModel;
-		BranchSubstitutionModel branchSubstitutionModel = partition.branchSubstitutionModel;
+		BranchSubstitutionModel branchModel = partition.getBranchModel();
 		GammaSiteRateModel siteModel = partition.siteModel;
 		int partitionSiteCount = partition.getPartitionSiteCount();
 		
@@ -259,7 +259,7 @@ public class BeagleSequenceSimulator {
 				stateCount, //
 				patternCount, //
 				eigenBufferHelper.getBufferCount(), //
-				matrixBufferHelper.getBufferCount() + branchSubstitutionModel.getExtraBufferCount(treeModel), //
+				matrixBufferHelper.getBufferCount() + branchModel.getExtraBufferCount(treeModel), //
 				categoryCount, //
 				scaleBufferCount, //
 				resourceList, //
@@ -359,7 +359,7 @@ public class BeagleSequenceSimulator {
 
 		double[][] probabilities = new double[categoryCount][stateCount * stateCount];
 
-		BranchSubstitutionModel branchSubstitutionModel = partition.branchSubstitutionModel;
+		BranchSubstitutionModel branchSubstitutionModel = partition.getBranchModel();
 		TreeModel treeModel = partition.treeModel;
 		BranchRateModel branchRateModel = partition.branchRateModel;
 		
@@ -726,7 +726,7 @@ public class BeagleSequenceSimulator {
 			try {
 			
 				treeModel = partition.treeModel;
-				branchSubstitutionModel = partition.branchSubstitutionModel;
+				branchSubstitutionModel = partition.getBranchModel();
 				siteModel = partition.siteModel;
 				freqModel = partition.freqModel;
 				partitionSiteCount = partition.getPartitionSiteCount();

@@ -1,5 +1,5 @@
 /*
- * LocalBranchModel.java
+ * BranchSpecificBranchModel.java
  *
  * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
  *

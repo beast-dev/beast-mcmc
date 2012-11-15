@@ -26,13 +26,9 @@
 package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
@@ -90,7 +86,7 @@ public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser 
         boolean useMAP = xo.getAttribute(MAP_RECONSTRUCTION, false);
         boolean useMarginalLogLikelihood = xo.getAttribute(MARGINAL_LIKELIHOOD, true);
 
-        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
+        return new AncestralStateBeagleTreeLikelihood(  // Current just returns a OldBeagleTreeLikelihood
                 patternList,
                 treeModel,
                 branchModel,

@@ -137,7 +137,7 @@ public class NewTreeLikelihoodParser extends AbstractXMLObjectParser {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
                 throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
-                        "BeagleTreeLikelihood object '"+xo.getId());
+                        "OldBeagleTreeLikelihood object '"+xo.getId());
 
         }
 

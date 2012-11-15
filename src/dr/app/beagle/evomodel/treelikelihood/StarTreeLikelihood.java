@@ -45,7 +45,7 @@ import java.util.logging.Logger;
  * @author Philippe Lemey
  */
 
-public class StarTreeLikelihood extends BeagleTreeLikelihood {
+public class StarTreeLikelihood extends OldBeagleTreeLikelihood {
 
     public StarTreeLikelihood(PatternList patternList, TreeModel treeModel,
                               BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,

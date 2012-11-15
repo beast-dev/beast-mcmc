@@ -31,7 +31,7 @@ import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.OldBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.alignment.Patterns;
@@ -75,14 +75,14 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
         return TREE_LIKELIHOOD;
     }
 
-    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected OldBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                         BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,
                                                         Map<Set<String>, Parameter> partialsRestrictions,
                                                         XMLObject xo) throws XMLParseException {
-        return new BeagleTreeLikelihood(
+        return new OldBeagleTreeLikelihood(
                 patternList,
                 treeModel,
                 branchSubstitutionModel,
@@ -135,7 +135,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
             scalingScheme = PartialsRescalingScheme.parseFromString(xo.getStringAttribute(SCALING_SCHEME));
             if (scalingScheme == null)
                 throw new XMLParseException("Unknown scaling scheme '"+xo.getStringAttribute(SCALING_SCHEME)+"' in "+
-                        "BeagleTreeLikelihood object '"+xo.getId());
+                        "OldBeagleTreeLikelihood object '"+xo.getId());
 
         }
 
@@ -185,7 +185,7 @@ public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
             Patterns subPatterns = new Patterns((SitePatterns)patternList, 0, 0, 1, i, instanceCount);
 
-            BeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
+            OldBeagleTreeLikelihood treeLikelihood = createTreeLikelihood(
                     subPatterns,
                     treeModel,
                     branchSubstitutionModel,

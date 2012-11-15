@@ -26,15 +26,9 @@
 package dr.app.beagle.evomodel.operators;
 
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
-import dr.evomodel.operators.ExchangeOperator;
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.treelikelihood.AbstractLikelihoodCore;
-import dr.evomodel.treelikelihood.TreeLikelihood;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.xml.*;
 
 /**
  * @author Marc A. Suchard

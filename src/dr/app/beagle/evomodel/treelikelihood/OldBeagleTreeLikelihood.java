@@ -26,7 +26,7 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.*;
-import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
+import dr.app.beagle.evomodel.parsers.OldTreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
@@ -107,7 +107,7 @@ public class OldBeagleTreeLikelihood extends AbstractTreeLikelihood {
                                    PartialsRescalingScheme rescalingScheme,
                                    Map<Set<String>, Parameter> partialsRestrictions) {
 
-        super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
+        super(OldTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");

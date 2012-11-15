@@ -59,7 +59,7 @@ import java.util.Set;
  */
 
 @Deprecated // Switching to BranchModel
-public class TreeLikelihoodParser extends AbstractXMLObjectParser {
+public class OldTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 

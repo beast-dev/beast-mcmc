@@ -29,7 +29,7 @@ import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.parsers.TreeLikelihoodParser;
+import dr.app.beagle.evomodel.parsers.OldTreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.*;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
@@ -67,7 +67,7 @@ import java.util.logging.Logger;
  */
 
 @SuppressWarnings("serial")
-public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
+public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
     // This property is a comma-delimited list of resource numbers (0 == CPU) to
     // allocate each BEAGLE instance to. If less than the number of instances then
@@ -90,29 +90,29 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
 
-    public NewBeagleTreeLikelihood(PatternList patternList,
-                                   TreeModel treeModel,
-                                   BranchModel branchModel,
-                                   SiteRateModel siteRateModel,
-                                   BranchRateModel branchRateModel,
-                                   TipStatesModel tipStatesModel,
-                                   boolean useAmbiguities,
-                                   PartialsRescalingScheme rescalingScheme) {
+    public BeagleTreeLikelihood(PatternList patternList,
+                                TreeModel treeModel,
+                                BranchModel branchModel,
+                                SiteRateModel siteRateModel,
+                                BranchRateModel branchRateModel,
+                                TipStatesModel tipStatesModel,
+                                boolean useAmbiguities,
+                                PartialsRescalingScheme rescalingScheme) {
 
         this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, null);
     }
 
-    public NewBeagleTreeLikelihood(PatternList patternList,
-                                   TreeModel treeModel,
-                                   BranchModel branchModel,
-                                   SiteRateModel siteRateModel,
-                                   BranchRateModel branchRateModel,
-                                   TipStatesModel tipStatesModel,
-                                   boolean useAmbiguities,
-                                   PartialsRescalingScheme rescalingScheme,
-                                   Map<Set<String>, Parameter> partialsRestrictions) {
+    public BeagleTreeLikelihood(PatternList patternList,
+                                TreeModel treeModel,
+                                BranchModel branchModel,
+                                SiteRateModel siteRateModel,
+                                BranchRateModel branchRateModel,
+                                TipStatesModel tipStatesModel,
+                                boolean useAmbiguities,
+                                PartialsRescalingScheme rescalingScheme,
+                                Map<Set<String>, Parameter> partialsRestrictions) {
 
-        super(TreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
+        super(OldTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");
@@ -1263,11 +1263,11 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
 
-            NewBeagleTreeLikelihood nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+            BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("nBTL(homogeneous) = " + nbtl.getLogLikelihood());
 
-             nbtl = new NewBeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
+             nbtl = new BeagleTreeLikelihood(alignment, treeModel, epochBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
             System.out.println("nBTL(epoch) = " + nbtl.getLogLikelihood());
 

@@ -109,7 +109,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
 
 //        	System.err.println("Doing the substitution model stuff");
 
-            // set this to pass it along to the TreeLikelihoodParser...
+            // set this to pass it along to the OldTreeLikelihoodParser...
             substitutionModel = (SubstitutionModel) xo.getElementFirstChild(SUBSTITUTION_MODEL);
             siteRateModel.setSubstitutionModel(substitutionModel);
 

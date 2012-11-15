@@ -26,9 +26,7 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.DataType;
@@ -52,7 +50,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateBeagleTreeLikelihood extends NewBeagleTreeLikelihood implements TreeTraitProvider {
+public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider {
 
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,

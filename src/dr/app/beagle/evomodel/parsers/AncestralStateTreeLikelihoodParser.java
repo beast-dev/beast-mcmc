@@ -29,7 +29,7 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -61,7 +61,7 @@ public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser 
         return RECONSTRUCTING_TREE_LIKELIHOOD;
     }
 
-	protected NewBeagleTreeLikelihood createTreeLikelihood(
+	protected BeagleTreeLikelihood createTreeLikelihood(
 			PatternList patternList, //
 			TreeModel treeModel, //
 			BranchModel branchModel, //
@@ -105,7 +105,7 @@ public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser 
 
     public XMLSyntaxRule[] getSyntaxRules() {
         return new XMLSyntaxRule[] {
-                AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
                 AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
@@ -114,7 +114,7 @@ public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser 
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),
                 new ElementRule(SubstitutionModel.class, true),
-                AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME,true),
+                AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME,true),
                 new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                         new ElementRule(TaxonList.class),
                         new ElementRule(Parameter.class),

@@ -46,7 +46,7 @@ import java.util.Set;
  * @author Philippe Lemey
  */
 
-public class StarTreeLikelihoodParser extends TreeLikelihoodParser {
+public class StarTreeLikelihoodParser extends OldTreeLikelihoodParser {
 
     public static final String STAR_TREE = "starTreeLikelihood";
 //    public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
@@ -77,6 +77,6 @@ public class StarTreeLikelihoodParser extends TreeLikelihoodParser {
     }
 
     public XMLSyntaxRule[] getSyntaxRules() {
-        return TreeLikelihoodParser.rules;
+        return OldTreeLikelihoodParser.rules;
     }
 }

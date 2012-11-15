@@ -2482,7 +2482,7 @@ public class BeastGenerator extends BeautiOptions {
 //									new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //							}
 //					);
-//					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood1"), true);
+//					writer.writeTag(OldTreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood1"), true);
 //					writer.writeCloseTag(ColumnsParser.COLUMN);
 //					writer.writeOpenTag(ColumnsParser.COLUMN,
 //							new Attribute[] {
@@ -2491,7 +2491,7 @@ public class BeastGenerator extends BeautiOptions {
 //									new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //							}
 //					);
-//					writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood2"), true);
+//					writer.writeTag(OldTreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,"treeLikelihood2"), true);
 //					writer.writeCloseTag(ColumnsParser.COLUMN);
 //				} else if (codonHeteroPattern.equals("123")) {
 //					for (int i =1; i <= 3; i++) {
@@ -2502,7 +2502,7 @@ public class BeastGenerator extends BeautiOptions {
 //										new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //								}
 //						);
-//						writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
+//						writer.writeTag(OldTreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,OldTreeLikelihoodParser.TREE_LIKELIHOOD + i), true);
 //						writer.writeCloseTag(ColumnsParser.COLUMN);
 //					}
 //				}
@@ -2514,7 +2514,7 @@ public class BeastGenerator extends BeautiOptions {
 //								new Attribute.Default<String>(ColumnsParser.WIDTH, "12")
 //						}
 //				);
-//				writer.writeTag(TreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,TreeLikelihoodParser.TREE_LIKELIHOOD), true);
+//				writer.writeTag(OldTreeLikelihoodParser.TREE_LIKELIHOOD, new Attribute.Default<String>(XMLParser.IDREF,OldTreeLikelihoodParser.TREE_LIKELIHOOD), true);
 //				writer.writeCloseTag(ColumnsParser.COLUMN);
 //			}
 //		}

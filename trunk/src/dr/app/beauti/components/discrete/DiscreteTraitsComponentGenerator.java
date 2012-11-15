@@ -518,7 +518,7 @@ public class DiscreteTraitsComponentGenerator extends BaseComponentGenerator {
 //            if (partitionData.getPartitionTreeModel() == treeModel) {
 //                String prefix = partitionData.getName() + ".";
 //                writer.writeIDref(AncestralStateTreeLikelihoodParser.RECONSTRUCTING_TREE_LIKELIHOOD,
-//                        prefix + TreeLikelihoodParser.TREE_LIKELIHOOD);
+//                        prefix + OldTreeLikelihoodParser.TREE_LIKELIHOOD);
 //            }
 //        }
 //    }

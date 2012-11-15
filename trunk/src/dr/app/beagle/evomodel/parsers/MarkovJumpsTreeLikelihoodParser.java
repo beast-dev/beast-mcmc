@@ -28,7 +28,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
 import dr.evolution.alignment.PatternList;
@@ -68,7 +68,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
         return MARKOV_JUMP_TREE_LIKELIHOOD;
     }
 
-    protected NewBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
+    protected BeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
                                                         BranchModel branchModel,
                                                         GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
@@ -186,7 +186,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
 
     public static XMLSyntaxRule[]  rules =
             new XMLSyntaxRule[] {
-                    AttributeRule.newBooleanRule(TreeLikelihoodParser.USE_AMBIGUITIES, true),
+                    AttributeRule.newBooleanRule(OldTreeLikelihoodParser.USE_AMBIGUITIES, true),
                     AttributeRule.newStringRule(RECONSTRUCTION_TAG_NAME, true),
                     AttributeRule.newStringRule(JUMP_TAG_NAME, true),
                     AttributeRule.newBooleanRule(SCALE_REWARDS,true),
@@ -205,7 +205,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     new ElementRule(BranchModel.class, true),
                     new ElementRule(SubstitutionModel.class, true),
                     new ElementRule(BranchRateModel.class, true),
-                    AttributeRule.newStringRule(TreeLikelihoodParser.SCALING_SCHEME, true),
+                    AttributeRule.newStringRule(OldTreeLikelihoodParser.SCALING_SCHEME, true),
                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE), // For backwards compatibility
                     new ElementRule(COUNTS,
                             new XMLSyntaxRule[] {

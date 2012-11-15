@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -26,7 +27,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood implements TreeTraitProvider {
+public class AncestralStateBeagleTreeLikelihood extends NewBeagleTreeLikelihood implements TreeTraitProvider {
 
 //    public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
 //                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
@@ -40,7 +41,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //    }
 
     public AncestralStateBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                              BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+                                              BranchModel branchModel,
+                                              SiteRateModel siteRateModel,
                                               BranchRateModel branchRateModel,
                                               TipStatesModel tipStatesModel,
                                               boolean useAmbiguities,
@@ -48,11 +50,11 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                                               Map<Set<String>, Parameter> partialsRestrictions,
                                               final DataType dataType,
                                               final String tag,
-                                              SubstitutionModel substModel,
+//                                              SubstitutionModel substModel,
                                               boolean useMAP,
                                               boolean returnML) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
+        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, scalingScheme,
               partialsRestrictions);
 
         this.dataType = dataType;
@@ -74,8 +76,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             int index = patternList.getTaxonIndex(id);
             tipStates[i] = getStates(patternList,index);
         }
-
-        substitutionModel = substModel;
 
         reconstructedStates = new int[treeModel.getNodeCount()][patternCount];
         storedReconstructedStates = new int[treeModel.getNodeCount()][patternCount];
@@ -107,10 +107,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     }
 
-    public SubstitutionModel getSubstitutionModel() {
-        return substitutionModel;
-    }
-
     private int[] getStates(PatternList patternList,
                             int sequenceIndex) {
 
@@ -119,6 +115,10 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
             states[i] = patternList.getPatternState(sequenceIndex, i);
         }
         return states;
+    }
+
+    public BranchModel getBranchModel() {
+        return branchModel;
     }
 
     protected Helper treeTraits = new Helper();
@@ -233,8 +233,8 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
         return sb.toString();
     }
 
-    protected void getMatrix(int matrixNum, double[] probabilities) {
-        beagle.getTransitionMatrix(matrixBufferHelper.getOffsetIndex(matrixNum),probabilities);
+    protected void getMatrix(int branchIndex, double[] probabilities) {
+        beagle.getTransitionMatrix(substitutionModelDelegate.getMatrixIndex(branchIndex),probabilities);
         // NB: It may be faster to compute matrices in BEAST via substitutionModel
     }
 
@@ -356,7 +356,7 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
                     int partialsIndex = (rateCategory == null ? 0 : rateCategory[j]) * stateCount * patternCount;
                     System.arraycopy(partials, partialsIndex + j * stateCount, conditionalProbabilities, 0, stateCount);
 
-                    double[] frequencies = branchSubstitutionModel.getStateFrequencies(0); // TODO May have more than one set of frequencies
+                    double[] frequencies = substitutionModelDelegate.getRootStateFrequencies(); // TODO May have more than one set of frequencies
                     for (int i = 0; i < stateCount; i++) {
                         conditionalProbabilities[i] *= frequencies[i];
                     }
@@ -493,8 +493,6 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 
     private int[][] tipStates;
 
-    protected SubstitutionModel substitutionModel;
-
     private double[] probabilities;
     private double[] partials;
 
@@ -502,4 +500,5 @@ public class AncestralStateBeagleTreeLikelihood extends BeagleTreeLikelihood imp
 //    private double[] rootPartials;
 //    private int[][] cumulativeScaleBuffers;
 //    private int scaleBufferIndex;
+
 }

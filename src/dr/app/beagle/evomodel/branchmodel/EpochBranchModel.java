@@ -64,6 +64,10 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         super(EPOCH_BRANCH_MODEL);
 
         this.substitutionModels = substitutionModels;
+        if (substitutionModels == null || substitutionModels.size() == 0) {
+            throw new IllegalArgumentException("EpochBranchModel must be provided with at least one substitution model");
+        }
+
         this.epochTimes = epochTimes;
         this.tree = tree;
         
@@ -180,6 +184,11 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
     @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
+    }
+
+    @Override
+    public SubstitutionModel getRootSubstitutionModel() {
+        return substitutionModels.get(substitutionModels.size() - 1);
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

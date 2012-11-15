@@ -25,6 +25,7 @@
 
 package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
@@ -32,6 +33,7 @@ import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AncestralStateBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
@@ -51,7 +53,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
+public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;
@@ -63,11 +65,10 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return RECONSTRUCTING_TREE_LIKELIHOOD;
     }
 
-	protected BeagleTreeLikelihood createTreeLikelihood(
+	protected NewBeagleTreeLikelihood createTreeLikelihood(
 			PatternList patternList, //
 			TreeModel treeModel, //
-			BranchSubstitutionModel branchSubstitutionModel, //
-//			FrequencyModel freqModel,
+			BranchModel branchModel, //
 			GammaSiteRateModel siteRateModel, //
 			BranchRateModel branchRateModel, //
 			TipStatesModel tipStatesModel, //
@@ -81,28 +82,8 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
 		
 //		System.err.println("XML object: " + xo.toString());
 	
-		DataType dataType = null;
-		SubstitutionModel substModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-		
-		// TODO
-		// both BSM and FM have to be specified, handle the exception
-		if(branchSubstitutionModel instanceof EpochBranchSubstitutionModel) {
-		
-			FrequencyModel freqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
-			dataType = freqModel.getDataType();
+		DataType dataType = branchModel.getRootSubstitutionModel().getDataType();
 
-		} else {
-
-			if (substModel == null) {
-
-				substModel = siteRateModel.getSubstitutionModel();
-
-			}
-
-			 dataType = substModel.getDataType();
-
-		}
-		
         // default tag is RECONSTRUCTION_TAG
         String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 
@@ -112,7 +93,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
         return new AncestralStateBeagleTreeLikelihood(  // Current just returns a BeagleTreeLikelihood
                 patternList,
                 treeModel,
-                branchSubstitutionModel,
+                branchModel,
                 siteRateModel,
                 branchRateModel,
                 tipStatesModel,
@@ -121,7 +102,6 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 partialsRestrictions,
                 dataType,
                 tag,
-                substModel,
                 useMAP,
                 useMarginalLogLikelihood
         );
@@ -134,7 +114,7 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                 new ElementRule(PatternList.class),
                 new ElementRule(TreeModel.class),
                 new ElementRule(GammaSiteRateModel.class),
-                new ElementRule(BranchSubstitutionModel.class, true),
+                new ElementRule(BranchModel.class, true),
                 new ElementRule(BranchRateModel.class, true),
                 new ElementRule(TipStatesModel.class, true),
                 new ElementRule(SubstitutionModel.class, true),
@@ -143,7 +123,6 @@ public class AncestralStateTreeLikelihoodParser extends TreeLikelihoodParser {
                         new ElementRule(TaxonList.class),
                         new ElementRule(Parameter.class),
                 }, true),
-                new ElementRule(FrequencyModel.class, true),
         };
     }
 }

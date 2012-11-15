@@ -16,6 +16,7 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Filip Bielejec
+ * @author Marc A. Suchard
  * @version $Id$
  */
 public class ExternalInternalBranchModel extends AbstractModel implements BranchModel, Citable {
@@ -49,6 +50,11 @@ public class ExternalInternalBranchModel extends AbstractModel implements Branch
         substitutionModels.add(externalSubstModel);
         substitutionModels.add(internalSubstModel);
         return substitutionModels;
+    }
+
+    @Override
+    public SubstitutionModel getRootSubstitutionModel() {
+        return internalSubstModel;
     }
 
     @Override

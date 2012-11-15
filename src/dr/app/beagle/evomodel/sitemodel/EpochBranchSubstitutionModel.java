@@ -50,6 +50,8 @@ import java.util.*;
  * @version $Id$
  */
 @SuppressWarnings("serial")
+
+@Deprecated // Switching to BranchModel
 public class EpochBranchSubstitutionModel extends AbstractModel implements
         BranchSubstitutionModel, Citable {
 

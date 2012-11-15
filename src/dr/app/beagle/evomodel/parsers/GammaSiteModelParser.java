@@ -142,7 +142,7 @@ public class GammaSiteModelParser extends AbstractXMLObjectParser {
                     }),
                     new ElementRule(BRANCH_SUBSTITUTION_MODEL, new XMLSyntaxRule[]{
                             new ElementRule(BranchSubstitutionModel.class)
-                    }), false
+                    }), true
             ),
 
             new XORRule(

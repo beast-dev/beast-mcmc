@@ -27,12 +27,9 @@ package dr.app.beagle.evomodel.treelikelihood;
 
 import beagle.Beagle;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
-import dr.evomodel.tree.TreeModel;
-import dr.stats.Variate;
 
 import java.util.*;
 
@@ -100,6 +97,14 @@ final class SubstitutionModelDelegate {
         return matrixBufferHelper.getBufferCount() + extraBufferCount;
     }
 
+    public int getSubstitutionModelCount() {
+        return substitutionModelList.size();
+    }
+
+    public SubstitutionModel getSubstitutionModel(int index) {
+        return substitutionModelList.get(index);
+    }
+
     public void updateSubstitutionModels(Beagle beagle) {
         for (int i = 0; i < eigenCount; i++) {
             eigenBufferHelper.flipOffset(i);
@@ -129,10 +134,8 @@ final class SubstitutionModelDelegate {
             int[] order = mapping.getOrder();
             double[] weights = mapping.getWeights();
 
-            matrixBufferHelper.flipOffset(branchIndices[i]);
-
             if (order.length == 1) {
-                probabilityIndices[order[0]][counts[order[0]]] = branchIndices[i];
+                probabilityIndices[order[0]][counts[order[0]]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
                 edgeLengths[order[0]][counts[order[0]]] = edgeLength[i];
                 counts[order[0]] ++;
             } else {
@@ -176,7 +179,7 @@ final class SubstitutionModelDelegate {
 
                     bufferIndices.add(buffer);
                 }
-                bufferIndices.add(branchIndices[i]);
+                bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
 
                 convolutionList.add(bufferIndices);
             }
@@ -318,6 +321,10 @@ final class SubstitutionModelDelegate {
     public double[] getRootStateFrequencies() {
         return substitutionModelList.get(0).getFrequencyModel().getFrequencies();
     }// END: getStateFrequencies
+
+    public void flipMatrixBuffer(int branchIndex) {
+        matrixBufferHelper.flipOffset(branchIndex);
+    }
 
     public int getMatrixIndex(int branchIndex) {
         return matrixBufferHelper.getOffsetIndex(branchIndex);

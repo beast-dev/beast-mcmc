@@ -40,6 +40,8 @@ import dr.inference.model.Model;
  * @author Marc A. Suchard
  * @version $Id$
  */
+
+@Deprecated // Switching to BranchModel
 public interface BranchSubstitutionModel extends Model {
 
     EigenDecomposition getEigenDecomposition(int modelIndex, int categoryIndex);

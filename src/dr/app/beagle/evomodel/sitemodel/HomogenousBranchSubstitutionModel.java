@@ -43,6 +43,8 @@ import dr.inference.model.Variable;
  * @author Alexei Drummond
  * @version $Id$
  */
+
+@Deprecated // Switching to BranchModel
 public class HomogenousBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel {
     public HomogenousBranchSubstitutionModel(SubstitutionModel substModel, FrequencyModel frequencyModel) {
         super("HomogenousBranchSubstitutionModel");

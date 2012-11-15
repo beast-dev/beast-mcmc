@@ -1,5 +1,6 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
@@ -36,22 +37,22 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         implements MarkovJumpsRegisterAcceptor {
 
     public MarkovJumpsBeagleTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                           BranchSubstitutionModel branchSubstitutionModel, SiteRateModel siteRateModel,
+                                           BranchModel branchModel,
+                                           SiteRateModel siteRateModel,
                                            BranchRateModel branchRateModel,
                                            TipStatesModel tipStatesModel,
                                            boolean useAmbiguities,
                                            PartialsRescalingScheme scalingScheme,
                                            Map<Set<String>, Parameter> partialsRestrictions,
                                            DataType dataType, String stateTag,
-                                           SubstitutionModel substModel,
                                            boolean useMAP,
                                            boolean returnMarginalLikelihood,
                                            boolean useUniformization,
                                            boolean reportUnconditionedColumns,
                                            int nSimulants) {
 
-        super(patternList, treeModel, branchSubstitutionModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
-                scalingScheme, partialsRestrictions, dataType, stateTag, substModel, useMAP, returnMarginalLikelihood);
+        super(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities,
+                scalingScheme, partialsRestrictions, dataType, stateTag, useMAP, returnMarginalLikelihood);
 
         this.useUniformization = useUniformization;
         this.reportUnconditionedColumns = reportUnconditionedColumns;
@@ -82,11 +83,11 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         addVariable(addRegisterParameter);
         final String tag = addRegisterParameter.getId();
 
-        for (int i = 0; i < branchSubstitutionModel.getEigenCount(); ++i) {
+        for (int i = 0; i < substitutionModelDelegate.getSubstitutionModelCount(); ++i) {
 
             registerParameter.add(addRegisterParameter);
             MarkovJumpsSubstitutionModel mjModel;
-            SubstitutionModel substitutionModel = branchSubstitutionModel.getSubstitutionModel(i, 0);
+            SubstitutionModel substitutionModel = substitutionModelDelegate.getSubstitutionModel(i);
 
             if (useUniformization) {
                 mjModel = new UniformizedSubstitutionModel(substitutionModel, type, nSimulants);
@@ -103,7 +104,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
             String traitName;
 
-            if (branchSubstitutionModel.getEigenCount() == 1) {
+            if (substitutionModelDelegate.getSubstitutionModelCount() == 1) {
                 traitName = tag;
             } else {
                 traitName = tag + i;
@@ -304,10 +305,14 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             MarkovJumpsSubstitutionModel thisMarkovJumps = markovjumps.get(r);
 
             final int modelNumberFromrRegistry = branchModelNumber.get(r);
-            int dummy = 0;
-            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
+//            int dummy = 0;
+//            final int modelNumberFromTree = branchSubstitutionModel.getBranchIndex(tree, childNode, dummy);
+            // @todo AR - not sure about this - if this is an epoch this is just going to get the most
+            // @todo tipward model for the branch. I think this was what was happening before (in comment,
+            // @todo above).
+            BranchModel.Mapping mapping = branchModel.getBranchModelMapping(childNode);
 
-            if (modelNumberFromrRegistry == modelNumberFromTree) {
+            if (modelNumberFromrRegistry == mapping.getOrder()[0]) {
                 if (useUniformization) {
                     computeSampledMarkovJumpsForBranch(((UniformizedSubstitutionModel) thisMarkovJumps), substTime,
                             branchRate, childNum, parentStates, childStates, parentTime, childTime,probabilities, scaleByTime[r],

@@ -109,7 +109,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
         numCodons = partition[0].getPatternWeights().length;
 
         for (int i = 0; i < 3; i++) {
-            substModelsList.add(partition[i].getSubstitutionModel());
+            substModelsList.add(partition[i].getBranchModel().getRootSubstitutionModel());
             siteRateModelsList.add(partition[i].getSiteRateModel());
             if (partition[i].getPatternWeights().length != numCodons) {
                 throw new RuntimeException("All sequence lengths must be equal in CodonPartitionedRobustCounting");

@@ -1,6 +1,7 @@
 package dr.app.tools;
 
 
+import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.parsers.GammaSiteModelParser;
 import dr.app.beast.BeastVersion;
 import dr.app.util.Arguments;
@@ -892,7 +893,7 @@ public class AncestralSequenceAnnotator {
         AncestralStateBeagleTreeLikelihood likelihood = new AncestralStateBeagleTreeLikelihood(
                 alignment,
                 treeModel,
-                new HomogenousBranchSubstitutionModel(siteModel.getSubstitutionModel(), siteModel.getSubstitutionModel().getFrequencyModel()),
+                new HomogeneousBranchModel(siteModel.getSubstitutionModel()),
                 siteModel,
                 rateModel,
                 null,
@@ -901,7 +902,6 @@ public class AncestralSequenceAnnotator {
                 null,
                 alignment.getDataType(),
                 TAG,
-                siteModel.getSubstitutionModel(),
                 false, true
                 );
 

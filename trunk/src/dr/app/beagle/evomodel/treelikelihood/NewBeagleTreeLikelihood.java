@@ -103,8 +103,7 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
                                    boolean useAmbiguities,
                                    PartialsRescalingScheme rescalingScheme) {
 
-        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme,
-                null);
+        this(patternList, treeModel, branchModel, siteRateModel, branchRateModel, tipStatesModel, useAmbiguities, rescalingScheme, null);
     }
 
     public NewBeagleTreeLikelihood(PatternList patternList,
@@ -584,13 +583,14 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
             }
 
         } else if (model == branchModel) {
-            if (index == -1) {
-                updateSubstitutionModel = true;
-                updateAllNodes();
-            } else {
-                updateNode(treeModel.getNode(index));
-            }
+//            if (index == -1) {
+//                updateSubstitutionModel = true;
+//                updateAllNodes();
+//            } else {
+//                updateNode(treeModel.getNode(index));
+//            }
 
+            makeDirty();
 
         } else if (model == siteRateModel) {
 
@@ -612,7 +612,14 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
         super.handleModelChangedEvent(model, object, index);
     }
 
-    // **************************************************************
+    @Override
+    public void makeDirty() {
+        super.makeDirty();
+        updateSiteModel = true;
+        updateSubstitutionModel = true;
+        updateRestrictedNodePartials = true;
+    }
+// **************************************************************
     // Model IMPLEMENTATION
     // **************************************************************
 
@@ -969,6 +976,9 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
                 throw new RuntimeException("Negative branch length: " + branchLength);
             }
 
+            if (flip) {
+                substitutionModelDelegate.flipMatrixBuffer(nodeNum);
+            }
             branchUpdateIndices[branchUpdateCount] = nodeNum;
             branchLengths[branchUpdateCount] = branchLength;
             branchUpdateCount++;
@@ -1153,13 +1163,11 @@ public class NewBeagleTreeLikelihood extends AbstractTreeLikelihood {
      * Flag to specify that the substitution model has changed
      */
     protected boolean updateSubstitutionModel;
-    protected boolean storedUpdateSubstitutionModel;
 
     /**
      * Flag to specify that the site model has changed
      */
     protected boolean updateSiteModel;
-    protected boolean storedUpdateSiteModel;
 
 //    /***
 //     * Flag to specify if LikelihoodCore supports dynamic rescaling

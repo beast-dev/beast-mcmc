@@ -57,11 +57,13 @@ import java.util.Set;
  * @author Marc Suchard
  * @version $Id$
  */
+
+@Deprecated // Switching to BranchModel
 public class TreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
-    public static final String TREE_LIKELIHOOD = "treeLikelihood";
+    public static final String TREE_LIKELIHOOD = "oldTreeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
     //    public static final String DEVICE_NUMBER = "deviceNumber";

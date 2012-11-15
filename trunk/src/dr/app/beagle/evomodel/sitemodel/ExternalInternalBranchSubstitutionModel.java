@@ -48,6 +48,8 @@ import java.util.List;
  * @author Marc A. Suchard
  * @version $Id$
  */
+
+@Deprecated // Switching to BranchModel
 public class ExternalInternalBranchSubstitutionModel extends AbstractModel implements BranchSubstitutionModel, Citable {
     public ExternalInternalBranchSubstitutionModel(List<SubstitutionModel> substModelList, List<FrequencyModel> frequencyModelList) {
         super("ExternalInternalBranchSubstitutionModel");

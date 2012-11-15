@@ -31,6 +31,7 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.NewBeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
@@ -62,7 +63,7 @@ public class NewTreeLikelihoodParser extends AbstractXMLObjectParser {
 
     public static final String BEAGLE_INSTANCE_COUNT = "beagle.instance.count";
 
-    public static final String TREE_LIKELIHOOD = "newTreeLikelihood";
+    public static final String TREE_LIKELIHOOD = "treeLikelihood";
     public static final String USE_AMBIGUITIES = "useAmbiguities";
     public static final String INSTANCE_COUNT = "instanceCount";
     //    public static final String DEVICE_NUMBER = "deviceNumber";
@@ -114,9 +115,14 @@ public class NewTreeLikelihoodParser extends AbstractXMLObjectParser {
 
         BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
         if (branchModel == null) {
-            branchModel = new HomogeneousBranchModel(
-                    siteRateModel.getSubstitutionModel()
-            );
+            SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
+            if (substitutionModel == null) {
+                substitutionModel = siteRateModel.getSubstitutionModel();
+            }
+            if (substitutionModel == null) {
+                throw new XMLParseException("No substitution model available for TreeLikelihood: "+xo.getId());
+            }
+            branchModel = new HomogeneousBranchModel(substitutionModel);
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);
@@ -217,6 +223,7 @@ public class NewTreeLikelihoodParser extends AbstractXMLObjectParser {
             new ElementRule(TreeModel.class),
             new ElementRule(GammaSiteRateModel.class),
             new ElementRule(BranchModel.class, true),
+            new ElementRule(SubstitutionModel.class, true),
             new ElementRule(BranchRateModel.class, true),
             new ElementRule(TipStatesModel.class, true),
             AttributeRule.newStringRule(SCALING_SCHEME,true),
@@ -224,7 +231,6 @@ public class NewTreeLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(TaxonList.class),
                     new ElementRule(Parameter.class),
             }, true),
-            new ElementRule(FrequencyModel.class, true),
             new ElementRule(TipStatesModel.class, true)
     };
 

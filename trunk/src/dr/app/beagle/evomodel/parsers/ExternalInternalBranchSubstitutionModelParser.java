@@ -12,6 +12,9 @@ import java.util.List;
 /**
  * @author Marc A. Suchard
  */
+
+@Deprecated
+
 public class ExternalInternalBranchSubstitutionModelParser extends AbstractXMLObjectParser {
 
     public static final String PARSER_NAME = "tipBranchSubstitutionModel";

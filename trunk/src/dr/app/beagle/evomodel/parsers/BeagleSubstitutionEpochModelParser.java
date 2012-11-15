@@ -23,6 +23,8 @@ import dr.xml.XMLSyntaxRule;
  * @author Marc A. Suchard
  * @version $Id$
  */
+
+@Deprecated // Switching to BranchModel
 public class BeagleSubstitutionEpochModelParser extends AbstractXMLObjectParser {
 
 	public static final String SUBSTITUTION_EPOCH_MODEL = "beagleSubstitutionEpochModel";

@@ -132,6 +132,7 @@ public abstract class BaseSubstitutionModel extends AbstractModel
         // frequencyModel changed!
         updateMatrix = true;
         frequenciesChanged();
+        fireModelChanged();
     }
 
     protected void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {

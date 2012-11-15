@@ -49,7 +49,7 @@ import java.util.Set;
  * @author Andrew Rambaut
  */
 
-public class AncestralStateTreeLikelihoodParser extends NewTreeLikelihoodParser {
+public class AncestralStateTreeLikelihoodParser extends BeagleTreeLikelihoodParser {
 
     public static final String RECONSTRUCTING_TREE_LIKELIHOOD = "ancestralTreeLikelihood";
     public static final String RECONSTRUCTION_TAG = AncestralStateTreeLikelihood.STATES_KEY;

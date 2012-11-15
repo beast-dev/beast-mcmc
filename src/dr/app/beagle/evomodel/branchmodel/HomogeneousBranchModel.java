@@ -1,5 +1,5 @@
 /*
- * BranchSubstitutionModel.java
+ * HomogeneousBranchModel.java
  *
  * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
@@ -45,6 +45,7 @@ public class HomogeneousBranchModel extends AbstractModel implements BranchModel
     public HomogeneousBranchModel(SubstitutionModel substitutionModel) {
         super("HomogeneousBranchModel");
         this.substitutionModel = substitutionModel;
+        addModel(substitutionModel);
     }
 
     public Mapping getBranchModelMapping(NodeRef node) {
@@ -59,12 +60,18 @@ public class HomogeneousBranchModel extends AbstractModel implements BranchModel
     }
 
     @Override
+    public SubstitutionModel getRootSubstitutionModel() {
+        return substitutionModel;
+    }
+
+    @Override
     public boolean requiresMatrixConvolution() {
         return false;
     }
 
     @Override
     protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
     }
 
     @Override

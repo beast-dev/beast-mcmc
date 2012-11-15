@@ -24,9 +24,12 @@ import jam.framework.Exportable;
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.io.*;
 import java.util.*;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -63,6 +66,13 @@ public class PathogenFrame extends DocumentFrame {
         getSaveAsAction().setEnabled(false);
 
         getFindAction().setEnabled(false);
+
+        getCutAction().setEnabled(false);
+        getPasteAction().setEnabled(false);
+        getDeleteAction().setEnabled(false);
+        getSelectAllAction().setEnabled(false);
+
+        getCopyAction().setEnabled(false);
 
         getZoomWindowAction().setEnabled(false);
     }
@@ -297,6 +307,20 @@ public class PathogenFrame extends DocumentFrame {
         }
 
         return exportable;
+    }
+
+    @Override
+    public void doCopy() {
+        StringWriter writer = new StringWriter();
+        PrintWriter pwriter = new PrintWriter(writer);
+
+        for (String tip : treesPanel.getSelectedTips()) {
+            pwriter.println(tip);
+        }
+
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        StringSelection selection = new StringSelection(writer.toString());
+        clipboard.setContents(selection, selection);
     }
 
     public Action getExportTreeAction() {

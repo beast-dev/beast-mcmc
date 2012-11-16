@@ -25,15 +25,11 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
-import beagle.Beagle;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import java.util.ArrayList;
+import java.util.List;
+
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
-import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.AbstractModel;
 import dr.inference.model.Model;
@@ -42,8 +38,6 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-
-import java.util.*;
 
 /**
  * @author Filip Bielejec

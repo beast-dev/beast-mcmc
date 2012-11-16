@@ -1,6 +1,7 @@
 package dr.evomodel.epidemiology.casetocase;
 
 import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.inference.model.Variable;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
  */
 public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
-    public LesionDatedFarmCaseSet(String name, GammaDistributionModel incubationPeriodDistribution,
+    public LesionDatedFarmCaseSet(String name, ParametricDistributionModel incubationPeriodDistribution,
                                   ArrayList<AbstractCase> farms, Integer riemannSampleSize){
         super(name);
         this.incubationPeriodDistribution = incubationPeriodDistribution;
@@ -30,7 +31,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         }
     }
 
-    public LesionDatedFarmCaseSet(GammaDistributionModel incubationPeriodDistribution,
+    public LesionDatedFarmCaseSet(ParametricDistributionModel incubationPeriodDistribution,
                                   ArrayList<AbstractCase> farms, Integer riemannSampleSize){
         this(LESION_DATED_FARM_CASE_SET, incubationPeriodDistribution, farms, riemannSampleSize);
     }
@@ -81,8 +82,8 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            final GammaDistributionModel incubationPeriodDistribution =
-                    (GammaDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
+            final ParametricDistributionModel incubationPeriodDistribution =
+                    (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             ArrayList<AbstractCase> tempFarms = new ArrayList<AbstractCase>();
             for(int i=0; i<xo.getChildCount(); i++){
                 if(xo.getChild(i) instanceof LesionDatedFarmCase){
@@ -115,7 +116,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, GammaDistributionModel.class, "The probability " +
+                new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of incubation periods for this set of cases", false),
                 new ElementRule(LesionDatedFarmCase.class, 1, Integer.MAX_VALUE),
                 new ElementRule(RIEMANN_SAMPLE_SIZE, Parameter.class, "The sample size for the Riemann numerical" +
@@ -124,7 +125,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
     };
 
     public static final String LESION_DATED_FARM_CASE_SET = "newModelFarmSet";
-    private GammaDistributionModel incubationPeriodDistribution;
+    private ParametricDistributionModel incubationPeriodDistribution;
     public RiemannApproximation numericalIntegrator;
 
     @Override

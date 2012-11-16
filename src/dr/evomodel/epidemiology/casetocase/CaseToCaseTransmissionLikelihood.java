@@ -232,8 +232,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public double calculateLogLikelihood(AbstractCase[] map){
         NodeRef root = virusTree.getRoot();
-        double result = calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
-        return result;
+        return calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
     }
 
     /* Return the integer day on which the given node occurred */

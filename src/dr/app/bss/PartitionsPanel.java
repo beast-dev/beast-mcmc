@@ -156,7 +156,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private class PartitionTableModelListener implements TableModelListener {
 		public void tableChanged(TableModelEvent ev) {
 
-			System.out.println("TODO: PartitionTableModelListener");
+//			System.out.println("TODO: PartitionTableModelListener");
 			frame.fireModelChanged();
 			
 		}

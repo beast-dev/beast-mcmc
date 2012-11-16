@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
@@ -81,9 +83,9 @@ public class PartitionData {
 			1.0 // Kappa value
 	};
 
-	public BranchSubstitutionModel createBranchSubstitutionModel() {
+	public BranchModel createBranchModel() {
 
-		BranchSubstitutionModel substitutionModel = null;
+		BranchModel branchModel = null;
 
 		if (this.substitutionModel == 0) { // HKY
 
@@ -93,7 +95,7 @@ public class PartitionData {
 
 			HKY hky = new HKY(kappa, frequencyModel);
 			
-			substitutionModel = new HomogenousBranchSubstitutionModel(hky, frequencyModel);
+			branchModel = new HomogeneousBranchModel(hky);
 
 		} else if (this.substitutionModel == 1) { // GTR
 
@@ -108,7 +110,7 @@ public class PartitionData {
 			
 			GTR gtr = new GTR(ac, ag, at, cg, ct, gt, frequencyModel);
 
-			substitutionModel = new HomogenousBranchSubstitutionModel(gtr, frequencyModel);
+			branchModel = new HomogeneousBranchModel(gtr);
 			
 		} else if (this.substitutionModel == 2) { // TN93
 
@@ -119,7 +121,7 @@ public class PartitionData {
 
 			TN93 tn93 = new TN93(kappa1, kappa2, frequencyModel);
 			
-			substitutionModel = new HomogenousBranchSubstitutionModel(tn93, frequencyModel);
+			branchModel = new HomogeneousBranchModel(tn93);
 			
 		} else if (this.substitutionModel == 3) { // Yang Codon Model
 
@@ -130,7 +132,7 @@ public class PartitionData {
 			
 			GY94CodonModel yangCodonModel = new GY94CodonModel(Codons.UNIVERSAL, omega, kappa, frequencyModel);
 			
-			substitutionModel = new HomogenousBranchSubstitutionModel(yangCodonModel, frequencyModel);
+			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
 		} else if (this.substitutionModel == 4) { 
 			
@@ -138,7 +140,7 @@ public class PartitionData {
 			
 		}
 
-		return substitutionModel;
+		return branchModel;
 	}// END: createBranchSubstitutionModel
 
 	// ////////////////////

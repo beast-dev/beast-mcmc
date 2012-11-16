@@ -28,18 +28,19 @@ package dr.app.beagle.tools;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Locale;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.treelikelihood.BufferIndexHelper;
+import dr.app.beagle.evomodel.treelikelihood.SubstitutionModelDelegate;
 import dr.evolution.alignment.Alignment;
 import dr.evolution.alignment.SimpleAlignment;
 import dr.evolution.datatype.Codons;
@@ -71,8 +72,10 @@ public class BeagleSequenceSimulator {
     private DataType dataType;
     private int stateCount;
 	private ConcurrentHashMap<Taxon, int[]> alignmentMap;
-    private boolean fieldsSet = false;
-	
+	private boolean fieldsSet = false;
+	private SubstitutionModelDelegate substitutionModelDelegate;
+    
+    
     private int gapFlag = Integer.MAX_VALUE;
     
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //
@@ -148,7 +151,7 @@ public class BeagleSequenceSimulator {
 	private void simulatePartition(Partition partition) {
 
 		TreeModel treeModel = partition.treeModel;
-		BranchSubstitutionModel branchModel = partition.getBranchModel();
+		BranchModel branchModel = partition.getBranchModel();
 		GammaSiteRateModel siteModel = partition.siteModel;
 		FrequencyModel freqModel = partition.freqModel;
 		int partitionSiteCount = partition.getPartitionSiteCount();
@@ -168,7 +171,7 @@ public class BeagleSequenceSimulator {
 		}//END: partitionCount check
 		
 		// Buffer index helpers
-		int eigenCount = branchModel.getEigenCount();
+		int eigenCount = branchModel.getModelCount();
 		BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 		
 		int nodeCount = treeModel.getNodeCount();
@@ -177,6 +180,8 @@ public class BeagleSequenceSimulator {
 		int tipCount = treeModel.getExternalNodeCount();
 		BufferIndexHelper partialBufferHelper = new BufferIndexHelper(nodeCount, tipCount);
 
+		substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel);
+		
 		// load beagle
 		Beagle beagle = loadBeagleInstance(partition, eigenBufferHelper,
 				matrixBufferHelper, partialBufferHelper);
@@ -213,17 +218,18 @@ public class BeagleSequenceSimulator {
 
 		}// END: ancestral sequence check
 		
-		for (int i = 0; i < eigenCount; i++) {
-
-			eigenBufferHelper.flipOffset(i);
-
-			branchModel.setEigenDecomposition(beagle, //
-					i, //
-					eigenBufferHelper, //
-					0 //
-					);
-
-		}// END: i loop
+		substitutionModelDelegate.updateSubstitutionModels(beagle);
+//		for (int i = 0; i < eigenCount; i++) {
+//
+//			eigenBufferHelper.flipOffset(i);
+//
+//			branchModel.setEigenDecomposition(beagle, //
+//					i, //
+//					eigenBufferHelper, //
+//					0 //
+//					);
+//
+//		}// END: i loop
 
 		int categoryCount = siteModel.getCategoryCount();
 		traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
@@ -237,7 +243,7 @@ public class BeagleSequenceSimulator {
 			) {
 
 		TreeModel treeModel = partition.treeModel;
-		BranchSubstitutionModel branchModel = partition.getBranchModel();
+//		BranchModel branchModel = partition.getBranchModel();
 		GammaSiteRateModel siteModel = partition.siteModel;
 		int partitionSiteCount = partition.getPartitionSiteCount();
 		
@@ -246,27 +252,30 @@ public class BeagleSequenceSimulator {
 		int patternCount = partitionSiteCount;
 		int categoryCount = siteModel.getCategoryCount();
 		int internalNodeCount = treeModel.getInternalNodeCount();
-		int scaleBufferCount = internalNodeCount + 1;
+//		int scaleBufferCount = internalNodeCount + 1;
 
 		int[] resourceList = new int[] { 0 };
 		long preferenceFlags = 0;
 		long requirementFlags = 0;
 
-		Beagle beagle = BeagleFactory.loadBeagleInstance(
-				tipCount, //
-				partialBufferHelper.getBufferCount(), //
-				compactPartialsCount, //
-				stateCount, //
-				patternCount, //
-				eigenBufferHelper.getBufferCount(), //
-				matrixBufferHelper.getBufferCount() + branchModel.getExtraBufferCount(treeModel), //
-				categoryCount, //
-				scaleBufferCount, //
-				resourceList, //
-				preferenceFlags, //
-				requirementFlags //
-				);
-
+        // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
+		BufferIndexHelper  scaleBufferHelper = new BufferIndexHelper(internalNodeCount + 1, 0);
+		
+		Beagle  beagle = BeagleFactory.loadBeagleInstance(
+                tipCount,
+                partialBufferHelper.getBufferCount(),
+                compactPartialsCount,
+                stateCount,
+                patternCount,
+                substitutionModelDelegate.getEigenBufferCount(),
+                substitutionModelDelegate.getMatrixBufferCount(),
+                categoryCount,
+                scaleBufferHelper.getBufferCount(), // Always allocate; they may become necessary
+                resourceList,
+                preferenceFlags,
+                requirementFlags
+        );
+		
 		return beagle;
 	}// END: loadBeagleInstance
 	
@@ -294,7 +303,7 @@ public class BeagleSequenceSimulator {
 
 			if(DEBUG) {
 				System.out.println("parent sequence:");
-				EpochBranchSubstitutionModel.printArray(parentSequence);
+				printArray(parentSequence);
 			}
 			
 			for (int i = 0; i < partitionSiteCount; i++) {
@@ -306,7 +315,7 @@ public class BeagleSequenceSimulator {
 			
 			if (DEBUG) {
 				System.out.println("partition sequence:");
-				EpochBranchSubstitutionModel.printArray(partitionSequence);
+				printArray(partitionSequence);
 			}
 			
 			if (treeModel.getChildCount(child) == 0) {
@@ -359,16 +368,16 @@ public class BeagleSequenceSimulator {
 
 		double[][] probabilities = new double[categoryCount][stateCount * stateCount];
 
-		BranchSubstitutionModel branchSubstitutionModel = partition.getBranchModel();
+//		BranchModel branchModel = partition.getBranchModel();
 		TreeModel treeModel = partition.treeModel;
 		BranchRateModel branchRateModel = partition.branchRateModel;
 		
 		int nodeNum = node.getNumber();
 		matrixBufferHelper.flipOffset(nodeNum);
-		int branchIndex = matrixBufferHelper.getOffsetIndex(nodeNum);
-		int eigenIndex = branchSubstitutionModel.getBranchIndex(treeModel, node, branchIndex);
-		int count = 1;
-
+		int branchIndex = nodeNum;//matrixBufferHelper.getOffsetIndex(nodeNum);
+		
+//		int eigenIndex = branchModel.getBranchIndex(treeModel, node, branchIndex);
+		
 		double branchRate = branchRateModel.getBranchRate(treeModel, node);
 		double branchTime = treeModel.getBranchLength(node) * branchRate;
 		
@@ -376,15 +385,18 @@ public class BeagleSequenceSimulator {
             throw new RuntimeException("Negative branch length: " + branchTime);
         }
 		
-		branchSubstitutionModel.updateTransitionMatrices(beagle, //
-				eigenIndex, //
-				eigenBufferHelper, //
-				new int[] { branchIndex }, //
-				null, //
-				null, //
-				new double[] { branchTime }, //
-				count //
-				);
+        int count = 1;
+        substitutionModelDelegate.updateTransitionMatrices(beagle, new int[] { branchIndex }, new double[] { branchTime }, count);
+        
+//		branchSubstitutionModel.updateTransitionMatrices(beagle, //
+//				eigenIndex, //
+//				eigenBufferHelper, //
+//				new int[] { branchIndex }, //
+//				null, //
+//				null, //
+//				new double[] { branchTime }, //
+//				count //
+//				);
 
 		double transitionMatrix[] = new double[categoryCount * stateCount * stateCount];
 		
@@ -476,7 +488,7 @@ public class BeagleSequenceSimulator {
 			   int[] sequence = (int[])pairs.getValue();
 			   
 			   System.out.println(taxon.toString());
-			   EpochBranchSubstitutionModel.printArray(sequence);
+			  printArray(sequence);
 			   
 		}// END: while has next
 		
@@ -485,8 +497,8 @@ public class BeagleSequenceSimulator {
 	public static void main(String[] args) {
 
 		simulateOnePartition();
-		simulateTwoPartitions();
-		simulateThreePartitions(); 
+//		simulateTwoPartitions();
+//		simulateThreePartitions(); 
 
 	} // END: main
 
@@ -494,6 +506,8 @@ public class BeagleSequenceSimulator {
 
 		try {
 
+			MathUtils.setSeed(666);
+			
 			System.out.println("Test case 1: simulateOnePartition");
 			
 			int sequenceLength = 10;
@@ -514,8 +528,7 @@ public class BeagleSequenceSimulator {
 			// create substitution model
 			Parameter kappa = new Parameter.Default(1, 10);
 			HKY hky = new HKY(kappa, freqModel);
-			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
-					hky, freqModel);
+			HomogeneousBranchModel substitutionModel = new HomogeneousBranchModel(hky);
 
 			// create site model
 			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
@@ -552,165 +565,165 @@ public class BeagleSequenceSimulator {
 
 	}// END: simulateOnePartition
 
-	static void simulateTwoPartitions() {
-
-		try {
-
-			System.out.println("Test case 2: simulateTwoPartitions");
-			
-			int sequenceLength = 11;
-			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
-
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25, 0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
-
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
-					hky, freqModel);
-
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
-
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
-
-			// create partition
-			Partition partition1 = new Partition(treeModel, //
-					substitutionModel, //
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					4, // to
-					1 // every
-			);
-
-			// create partition
-			Partition partition2 = new Partition(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					5, // from
-					sequenceLength - 1, // to
-					1 // every
-			);
-		
-//			Sequence ancestralSequence = new Sequence();
-//			ancestralSequence.appendSequenceString("TCAAGTGAGG");
-//			partition2.setAncestralSequence(ancestralSequence);
-			
-			partitionsList.add(partition1);
-			partitionsList.add(partition2);
-			
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
-			System.out.println(simulator.simulate().toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
-
-	}// END: simulateTwoPartitions
+//	static void simulateTwoPartitions() {
+//
+//		try {
+//
+//			System.out.println("Test case 2: simulateTwoPartitions");
+//			
+//			int sequenceLength = 11;
+//			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+//
+//			// create tree
+//			NewickImporter importer = new NewickImporter(
+//					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+//			Tree tree = importer.importTree(null);
+//			TreeModel treeModel = new TreeModel(tree);
+//
+//			// create Frequency Model
+//			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25, 0.25, 0.25 });
+//			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+//					freqs);
+//
+//			// create substitution model
+//			Parameter kappa = new Parameter.Default(1, 10);
+//			HKY hky = new HKY(kappa, freqModel);
+//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
+//					hky, freqModel);
+//
+//			// create site model
+//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//					"siteModel");
+//
+//			// create branch rate model
+//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+//
+//			// create partition
+//			Partition partition1 = new Partition(treeModel, //
+//					substitutionModel, //
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					0, // from
+//					4, // to
+//					1 // every
+//			);
+//
+//			// create partition
+//			Partition partition2 = new Partition(treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					5, // from
+//					sequenceLength - 1, // to
+//					1 // every
+//			);
+//		
+////			Sequence ancestralSequence = new Sequence();
+////			ancestralSequence.appendSequenceString("TCAAGTGAGG");
+////			partition2.setAncestralSequence(ancestralSequence);
+//			
+//			partitionsList.add(partition1);
+//			partitionsList.add(partition2);
+//			
+//			// feed to sequence simulator and generate data
+//			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
+//			System.out.println(simulator.simulate().toString());
+//			
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		} // END: try-catch block
+//
+//	}// END: simulateTwoPartitions
 	
-	static void simulateThreePartitions() {
-
-		try {
-
-			System.out.println("Test case 3: simulateThreePartitions");
-			
-			int sequenceLength = 10;
-			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
-
-			// create tree
-			NewickImporter importer = new NewickImporter(
-					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
-			Tree tree = importer.importTree(null);
-			TreeModel treeModel = new TreeModel(tree);
-
-			// create Frequency Model
-			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25, 0.25, 0.25 });
-			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
-					freqs);
-
-			// create substitution model
-			Parameter kappa = new Parameter.Default(1, 10);
-			HKY hky = new HKY(kappa, freqModel);
-			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
-					hky, freqModel);
-
-			// create site model
-			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
-					"siteModel");
-
-			// create branch rate model
-			BranchRateModel branchRateModel = new DefaultBranchRateModel();
-
-			// create partition
-			Partition partition1 = new Partition(treeModel, //
-					substitutionModel, //
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					0, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
-
-			// create partition
-			Partition partition2 = new Partition(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					1, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
-			
-			// create partition
-			Partition partition3 = new Partition(treeModel, //
-					substitutionModel,//
-					siteRateModel, //
-					branchRateModel, //
-					freqModel, //
-					2, // from
-					sequenceLength - 1, // to
-					3 // every
-			);
-			
-			partitionsList.add(partition1);
-			partitionsList.add(partition2);
-			partitionsList.add(partition3);
-			
-			// feed to sequence simulator and generate data
-			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
-			System.out.println(simulator.simulate().toString());
-			
-		} catch (Exception e) {
-			e.printStackTrace();
-			System.exit(-1);
-		} // END: try-catch block
-
-	}// END: simulateThreePartitions
+//	static void simulateThreePartitions() {
+//
+//		try {
+//
+//			System.out.println("Test case 3: simulateThreePartitions");
+//			
+//			int sequenceLength = 10;
+//			ArrayList<Partition> partitionsList = new ArrayList<Partition>();
+//
+//			// create tree
+//			NewickImporter importer = new NewickImporter(
+//					"(SimSeq1:73.7468,(SimSeq2:25.256989999999995,SimSeq3:45.256989999999995):18.48981);");
+//			Tree tree = importer.importTree(null);
+//			TreeModel treeModel = new TreeModel(tree);
+//
+//			// create Frequency Model
+//			Parameter freqs = new Parameter.Default(new double[] { 0.25, 0.25, 0.25, 0.25 });
+//			FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
+//					freqs);
+//
+//			// create substitution model
+//			Parameter kappa = new Parameter.Default(1, 10);
+//			HKY hky = new HKY(kappa, freqModel);
+//			HomogenousBranchSubstitutionModel substitutionModel = new HomogenousBranchSubstitutionModel(
+//					hky, freqModel);
+//
+//			// create site model
+//			GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
+//					"siteModel");
+//
+//			// create branch rate model
+//			BranchRateModel branchRateModel = new DefaultBranchRateModel();
+//
+//			// create partition
+//			Partition partition1 = new Partition(treeModel, //
+//					substitutionModel, //
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					0, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//
+//			// create partition
+//			Partition partition2 = new Partition(treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					1, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//			
+//			// create partition
+//			Partition partition3 = new Partition(treeModel, //
+//					substitutionModel,//
+//					siteRateModel, //
+//					branchRateModel, //
+//					freqModel, //
+//					2, // from
+//					sequenceLength - 1, // to
+//					3 // every
+//			);
+//			
+//			partitionsList.add(partition1);
+//			partitionsList.add(partition2);
+//			partitionsList.add(partition3);
+//			
+//			// feed to sequence simulator and generate data
+//			BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
+//			System.out.println(simulator.simulate().toString());
+//			
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			System.exit(-1);
+//		} // END: try-catch block
+//
+//	}// END: simulateThreePartitions
 	
 	public class simulatePartitionRunnable implements Runnable {
 
 		private Partition partition;
 		private FrequencyModel freqModel;
-		private BranchSubstitutionModel branchSubstitutionModel;
+		private BranchModel branchModel;
 		private Tree treeModel;
 		private GammaSiteRateModel siteModel;
 		private int partitionSiteCount;
@@ -726,7 +739,7 @@ public class BeagleSequenceSimulator {
 			try {
 			
 				treeModel = partition.treeModel;
-				branchSubstitutionModel = partition.getBranchModel();
+				branchModel = partition.getBranchModel();
 				siteModel = partition.siteModel;
 				freqModel = partition.freqModel;
 				partitionSiteCount = partition.getPartitionSiteCount();
@@ -747,7 +760,7 @@ public class BeagleSequenceSimulator {
 			}//END: partitionCount check
 			
 			// Buffer index helpers
-			int eigenCount = branchSubstitutionModel.getEigenCount();
+			int eigenCount = branchModel.getModelCount();
 			BufferIndexHelper eigenBufferHelper = new BufferIndexHelper(eigenCount, 0);
 			
 			int nodeCount = treeModel.getNodeCount();
@@ -792,17 +805,19 @@ public class BeagleSequenceSimulator {
 
 			}// END: ancestral sequence check
 			
-			for (int i = 0; i < eigenCount; i++) {
-
-				eigenBufferHelper.flipOffset(i);
-
-				branchSubstitutionModel.setEigenDecomposition(beagle, //
-						i, //
-						eigenBufferHelper, //
-						0 //
-						);
-
-			}// END: i loop
+			substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel);
+			substitutionModelDelegate.updateSubstitutionModels(beagle);
+//			for (int i = 0; i < eigenCount; i++) {
+//
+//				eigenBufferHelper.flipOffset(i);
+//
+//				branchModel.setEigenDecomposition(beagle, //
+//						i, //
+//						eigenBufferHelper, //
+//						0 //
+//						);
+//
+//			}// END: i loop
 
 			int categoryCount = siteModel.getCategoryCount();
 			traverse(beagle, partition, root, parentSequence, category, categoryCount, matrixBufferHelper, eigenBufferHelper);
@@ -814,5 +829,98 @@ public class BeagleSequenceSimulator {
 		}// END: run
 
 	}//END: simulatePartitionRunnable class
+	
+	// /////////////
+	// ---DEBUG---//
+	// /////////////
+    
+	public static void printArray(double[] array) {
+		for (int i = 0; i < array.length; i++) {
+			System.out.println(String.format(Locale.US, "%.10f", array[i]));
+		}
+		System.out.print("\n");
+	}// END: printArray
+    
+	public static void printArray(int[] array) {
+		for (int i = 0; i < array.length; i++) {
+			System.out.println(array[i]);
+		}
+	}// END: printArray
+
+    public static void printArray(double[] array, int nrow) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.println(String.format(Locale.US, "%.10f", array[row]));
+        }
+        System.out.print("\n");
+    }// END: printArray
+
+    public static void printArray(int[] array, int nrow) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.println(array[row]);
+        }
+        System.out.print("\n");
+    }// END: printArray
+	
+	public static void print2DArray(double[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			System.out.print("| ");
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(String.format(Locale.US, "%.10f", array[row][col]) + " ");
+			}
+			System.out.print("|\n");
+		}
+		System.out.print("\n");
+	}// END: print2DArray
+
+	public static void print2DArray(int[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(array[row][col] + " ");
+			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
+    
+    public static void printMatrix(double[][] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            for (int col = 0; col < nrow; col++)
+                System.out.print(String.format(Locale.US, "%.10f", matrix[col + row * nrow]) + " ");
+            System.out.print("\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
+
+    public static void printMatrix(double[] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.print("| ");
+            for (int col = 0; col < nrow; col++)
+                System.out.print(String.format(Locale.US, "%.10f", matrix[col + row * nrow]) + " ");
+            System.out.print("|\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
+
+    public static void printMatrix(int[] matrix, int nrow, int ncol) {
+        for (int row = 0; row < nrow; row++) {
+            System.out.print("| ");
+            for (int col = 0; col < nrow; col++)
+                System.out.print(matrix[col + row * nrow] + " ");
+            System.out.print("|\n");
+        }
+        System.out.print("\n");
+    }// END: printMatrix
+
+	public double[] scaleArray(double[] array, double scalar) {
+
+		for (int i = 0; i < array.length; i++) {
+			array[i] = array[i] * scalar;
+		}
+		return array;
+
+	}// END: scaleArray
+    
+    // //////////////////
+    // ---END: DEBUG---//
+    // //////////////////
 	
 } // END: class

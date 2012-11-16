@@ -25,9 +25,9 @@
 
 package dr.app.beagle.tools.parsers;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.tools.Partition;
@@ -112,15 +112,15 @@ public class PartitionParser extends AbstractXMLObjectParser {
 			rateModel = new DefaultBranchRateModel();
 		} 
 		
-		BranchSubstitutionModel branchSubstitutionModel = (BranchSubstitutionModel) xo.getChild(BranchSubstitutionModel.class);
-		if (branchSubstitutionModel == null) {
+		BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
+		if (branchModel == null) {
 
 			SubstitutionModel substitutionModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
-			branchSubstitutionModel = new HomogenousBranchSubstitutionModel(substitutionModel, freqModel);
+			branchModel = new HomogeneousBranchModel(substitutionModel);
 		
 		}
 		
-		Partition partition = new Partition(tree, branchSubstitutionModel, siteModel, rateModel, freqModel, from, to, every);
+		Partition partition = new Partition(tree, branchModel, siteModel, rateModel, freqModel, from, to, every);
 
 		if (ancestralSequence != null) {
 				partition.setAncestralSequence(ancestralSequence);
@@ -146,7 +146,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 										+ FROM
 										+ "</b>, default is 1 (every site)"), //
 				new ElementRule(TreeModel.class), //
-				new XORRule(new ElementRule(BranchSubstitutionModel.class),
+				new XORRule(new ElementRule(BranchModel.class),
 						new ElementRule(SubstitutionModel.class), false), //
 				new ElementRule(GammaSiteRateModel.class), //
 				new ElementRule(BranchRateModel.class, true), //

@@ -174,7 +174,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
                 return weights;
             }
         };
-    }// END: getBranchIndex
+    }// END: getBranchModelMapping
 
     @Override
     public boolean requiresMatrixConvolution() {

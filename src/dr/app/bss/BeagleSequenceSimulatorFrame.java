@@ -197,7 +197,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 						// create partition
 						Partition partition = new Partition(data.treeModel, //
-								data.createBranchSubstitutionModel(), //
+								data.createBranchModel(), //
 								data.createSiteRateModel(), //
 								data.createBranchRateModel(), //
 								data.createFrequencyModel(), //

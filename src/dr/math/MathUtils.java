@@ -406,5 +406,19 @@ public class MathUtils {
             return value;
         }
     }
+
+    /**
+     * Returns the log of the sum of the two log numbers
+     * @param a log of A
+     * @param b log of B
+     * @return log of (A+B)
+     */
+    public static double add_log(double a, double b){
+        if(a == Double.NEGATIVE_INFINITY)
+            return b;
+        if(b == Double.NEGATIVE_INFINITY)
+            return a;
+        return Math.max(a, b) + Math.log1p(Math.exp( -Math.abs(a - b) ));
+    }
     
 }

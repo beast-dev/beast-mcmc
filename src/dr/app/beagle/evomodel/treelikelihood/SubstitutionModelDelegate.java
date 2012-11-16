@@ -39,8 +39,7 @@ import java.util.*;
  * @author Marc A. Suchard
  * @version $Id$
  */
-@SuppressWarnings("serial")
-final class SubstitutionModelDelegate {
+public final class SubstitutionModelDelegate {
 
     private static final boolean DEBUG = false;
 

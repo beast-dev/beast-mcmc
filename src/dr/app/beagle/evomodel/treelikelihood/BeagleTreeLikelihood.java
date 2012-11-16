@@ -25,12 +25,24 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import beagle.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Logger;
+
+import beagle.Beagle;
+import beagle.BeagleFactory;
+import beagle.BeagleFlag;
+import beagle.InstanceDetails;
+import beagle.ResourceDetails;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.parsers.OldTreeLikelihoodParser;
-import dr.app.beagle.evomodel.sitemodel.*;
+import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -53,9 +65,6 @@ import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
-
-import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -980,6 +989,10 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             branchUpdateCount++;
 
             update = true;
+            
+//            System.out.println("eigenIndex:" + eigenIndex);
+//            BeagleSequenceSimulator.print2DArray(matrixUpdateIndices);
+//            System.out.println();
         }
 
         // If the node is internal, update the partial likelihoods.
@@ -1200,19 +1213,18 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             FrequencyModel freqModel = new FrequencyModel(Nucleotides.INSTANCE,
                     freqs);
 
-            // create substitution model
-            Parameter kappa = new Parameter.Default(1, 1);
-            Parameter kappa2 = new Parameter.Default(1, 100);
+            // create branch model
+            Parameter kappa1 = new Parameter.Default(1, 1);
+            Parameter kappa2 = new Parameter.Default(1, 1);
 
-            HKY hky = new HKY(kappa, freqModel);
+            HKY hky1 = new HKY(kappa1, freqModel);
             HKY hky2 = new HKY(kappa2, freqModel);
 
-            HomogenousBranchSubstitutionModel homogenousBranchSubstitutionModel = new HomogenousBranchSubstitutionModel(
-                    hky, freqModel);
-
+            HomogeneousBranchModel homogenousBranchSubstitutionModel = new HomogeneousBranchModel(
+                    hky1);
 
             List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
-            substitutionModels.add(hky);
+            substitutionModels.add(hky1);
             substitutionModels.add(hky2);
             List<FrequencyModel> freqModels = new ArrayList<FrequencyModel>();
             freqModels.add(freqModel);
@@ -1223,16 +1235,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             Parameter rate = new Parameter.Default(1, 0.001);
             BranchRateModel branchRateModel = new StrictClockBranchRates(rate);
 
-            EpochBranchSubstitutionModel ebsm = new EpochBranchSubstitutionModel(substitutionModels, freqModels, branchRateModel, epochTimes);
-
             // create site model
             GammaSiteRateModel siteRateModel = new GammaSiteRateModel(
                     "siteModel");
 
+            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky1);
+
+            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
 
             // create partition
             Partition partition1 = new Partition(treeModel, //
-                    ebsm,//
+            		homogenousBranchSubstitutionModel,//
                     siteRateModel, //
                     branchRateModel, //
                     freqModel, //
@@ -1241,27 +1254,11 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                     1 // every
             );
 
-//            Sequence ancestralSequence = new Sequence();
-//            ancestralSequence.appendSequenceString("TCAAGTGAGG");
-//            partition1.setAncestralSequence(ancestralSequence);
-
             partitionsList.add(partition1);
 
             // feed to sequence simulator and generate data
             BeagleSequenceSimulator simulator = new BeagleSequenceSimulator(partitionsList, sequenceLength);
             Alignment alignment = simulator.simulate();
-
-            OldBeagleTreeLikelihood btl = new OldBeagleTreeLikelihood(alignment, treeModel, homogenousBranchSubstitutionModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
-
-            System.out.println("BTL(homogeneous) = " + btl.getLogLikelihood());
-
-            btl = new OldBeagleTreeLikelihood(alignment, treeModel, ebsm, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
-
-            System.out.println("BTL(epoch) = " + btl.getLogLikelihood());
-
-            BranchModel homogeneousBranchModel = new HomogeneousBranchModel(hky);
-
-            BranchModel epochBranchModel = new EpochBranchModel(treeModel, substitutionModels, epochTimes);
 
             BeagleTreeLikelihood nbtl = new BeagleTreeLikelihood(alignment, treeModel, homogeneousBranchModel, siteRateModel, branchRateModel, null, false, PartialsRescalingScheme.DEFAULT);
 
@@ -1276,4 +1273,5 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             System.exit(-1);
         } // END: try-catch block
     }
+    
 }

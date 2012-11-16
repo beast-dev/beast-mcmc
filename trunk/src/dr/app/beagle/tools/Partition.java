@@ -25,7 +25,7 @@
 
 package dr.app.beagle.tools;
 
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
+import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.evolution.sequence.Sequence;
@@ -42,7 +42,7 @@ public class Partition {
 	public int to;
 	public int every;
 
-	private BranchSubstitutionModel branchModel;
+	private BranchModel branchModel;
 	
 	public TreeModel treeModel;
 	public GammaSiteRateModel siteModel;
@@ -55,7 +55,7 @@ public class Partition {
 	// public static final ThreadLocal threadLocal = new ThreadLocal();
 
 	public Partition(TreeModel treeModel, //
-			BranchSubstitutionModel branchModel, GammaSiteRateModel siteModel, //
+			BranchModel branchModel, GammaSiteRateModel siteModel, //
 			BranchRateModel branchRateModel, //
 			FrequencyModel freqModel, //
 			int from, //
@@ -85,7 +85,7 @@ public class Partition {
 		return partitionSiteCount;
 	}// END: getPartitionSiteCount
 
-	public BranchSubstitutionModel getBranchModel() {
+	public BranchModel getBranchModel() {
 		return this.branchModel;
 	}// END: getBranchModel
 

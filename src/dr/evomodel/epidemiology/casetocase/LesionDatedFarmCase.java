@@ -5,6 +5,7 @@ import dr.evolution.util.Taxa;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.Units;
 import dr.inference.distribution.GammaDistributionModel;
+import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.distribution.TruncatedNormalDistributionModel;
 import dr.inference.model.Parameter;
 import dr.math.IntegrableUnivariateFunction;
@@ -24,8 +25,8 @@ import dr.xml.*;
 
 public class LesionDatedFarmCase extends AbstractCase {
 
-    public LesionDatedFarmCase(String name, Date examDate, Date cullDate, TruncatedNormalDistributionModel
-            infectiousDate, Double oldestLesionAge, GammaDistributionModel incubationPeriod, Taxa associatedTaxa){
+    public LesionDatedFarmCase(String name, Date examDate, Date cullDate, ParametricDistributionModel
+            infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
         this.name = name;
         //The time value for end of these days is the numerical value of these dates plus 1.
         this.examDate = examDate;
@@ -98,10 +99,10 @@ public class LesionDatedFarmCase extends AbstractCase {
                 }
             }
             final Taxa associatedTaxa = tempTaxa;
-            final GammaDistributionModel incubationPeriodDistribution =
-                    (GammaDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
-            final TruncatedNormalDistributionModel infectiousDateDistribution =
-                    (TruncatedNormalDistributionModel) xo.getElementFirstChild(INFECTIOUS_DATE_DISTRIBUTION);
+            final ParametricDistributionModel incubationPeriodDistribution =
+                    (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
+            final ParametricDistributionModel infectiousDateDistribution =
+                    (ParametricDistributionModel) xo.getElementFirstChild(INFECTIOUS_DATE_DISTRIBUTION);
             return new LesionDatedFarmCase(farmName, examinationDate, cullDate, infectiousDateDistribution,
                     oldestLesionAgeParameter.getParameterValue(0), incubationPeriodDistribution, associatedTaxa);
         }
@@ -116,10 +117,10 @@ public class LesionDatedFarmCase extends AbstractCase {
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
-                new ElementRule(INFECTIOUS_DATE_DISTRIBUTION, TruncatedNormalDistributionModel.class, "The " +
+                new ElementRule(INFECTIOUS_DATE_DISTRIBUTION, ParametricDistributionModel.class, "The " +
                         "probability distribution of the infection date, in days since the date origins specified" +
                         "in the ", false),
-                new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, GammaDistributionModel.class, "The probability " +
+                new ElementRule(INCUBATION_PERIOD_DISTRIBUTION, ParametricDistributionModel.class, "The probability " +
                         "distribution of the incubation period of this farm", false),
                 new ElementRule(OLDEST_LESION_AGE, Parameter.class, "The estimated oldest lesion date as determined" +
                         "by investigating vets")
@@ -229,10 +230,10 @@ public class LesionDatedFarmCase extends AbstractCase {
     private Date examDate;
     private Date endOfInfectiousDate;
     private Double oldestLesionAge;
-    private TruncatedNormalDistributionModel infectiousDate;
+    private ParametricDistributionModel infectiousDate;
     private InfectionDatePDF infectionDate;
     private Taxa associatedTaxa;
     private RiemannApproximation numericalIntegrator;
-    private GammaDistributionModel incubationPeriod;
+    private ParametricDistributionModel incubationPeriod;
 
 }

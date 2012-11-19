@@ -124,16 +124,12 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public void setValueAt(Object value, int row, int column) {
 
+//		System.out.println(row);
+
 		switch (column) {
 		case PARTITION_TREE_INDEX:
 
-			// TODO
-//			if (value == null) {
-//				dataList.get(row).treeFile = new File("");
-//			} else {
-				dataList.get(row).treeFile = (File) value;
-//			}
-		
+			dataList.get(row).treeFile = (File) value;
 			break;
 
 		case FROM_INDEX:
@@ -146,21 +142,24 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).every = (Integer) value;
 			break;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
-			 dataList.get(row).substitutionModel = (Integer) value;
+			dataList.get(row).substitutionModel = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
-			 dataList.get(row).siteModel= (Integer) value;
+			dataList.get(row).siteModel = (Integer) value;
 		case CLOCK_RATE_MODEL_INDEX:
-			 dataList.get(row).clockModel= (Integer) value;
+			dataList.get(row).clockModel = (Integer) value;
 		case FREQUENCY_MODEL_INDEX:
-			 dataList.get(row).frequencyModel= (Integer) value;
+			dataList.get(row).frequencyModel = (Integer) value;
 		default:
 			System.out.println("invalid index");
 		}
 
 		fireTableCellUpdated(row, column);
-	}
+//		fireTableChanged(new TableModelEvent(this, row, row, column, TableModelEvent.UPDATE));
+		
+//		Utils.printDataList(dataList);
+		
+	}// END: setValueAt
 
-	// This appends a row
 	public void addRow(PartitionData row) {
 		dataList.add(row);
 		this.fireTableDataChanged();

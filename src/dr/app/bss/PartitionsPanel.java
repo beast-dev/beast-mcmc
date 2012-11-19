@@ -9,7 +9,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
-import java.util.List;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -45,8 +44,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	private Action addPartitionAction = new AbstractAction("+") {
 		public void actionPerformed(ActionEvent ae) {
 
-//			partitionTableModel.addDefaultRow();
-			 partitionTableModel.addRow(dataList.get(partitionsCount - 1));
+			partitionTableModel.addDefaultRow();
 
 			partitionsCount++;
 			setPartitions();
@@ -95,19 +93,14 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 		add(scrollPane, BorderLayout.CENTER);
 
-		// set columns
-
-		// ////////////////////////
-		// ---TODO TREE COLUMN---//
-		// ////////////////////////
+		// ////////////////////
+		// --- TREE COLUMN---//
+		// ////////////////////
 	
 		column = partitionTable.getColumnModel().getColumn(partitionTableModel.PARTITION_TREE_INDEX);
-//		JComboBox comboBox = new JComboBox();
-//		comboBox.addActionListener(new ListenComboBox(comboBox, dataList.treeFilesList));
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer(new String[] { "" }));
 
-		// //////////////////////////////////////////////////
 
 		column = partitionTable.getColumnModel().getColumn(
 				partitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
@@ -135,7 +128,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		add(actionPanel, BorderLayout.SOUTH);
 
 		setPartitions();
-
+		
 	}// END: Constructor
 
 	public JComponent getExportableComponent() {
@@ -150,6 +143,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			removePartitionAction.setEnabled(true);
 		}
 
+		ColumnResizer.adjustColumnPreferredWidths (partitionTable);                    
+		partitionTable.revalidate();
 		this.updateUI();
 	}// END: setPartitions
 

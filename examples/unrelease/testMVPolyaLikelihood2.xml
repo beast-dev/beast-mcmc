@@ -43,7 +43,7 @@
                 <matrixParameter idref="bkg.OTU.abundance.matrix"/>
             </data>
             <alpha>
-                <parameter id="rates" value="5 5 5"/>
+                <parameter id="bkg.rates" value="5 5 5"/>
             </alpha>
     </mvPolyaLikelihood>
 
@@ -68,11 +68,16 @@
     <mcmc id="mcmc" chainLength="100000" autoOptimize="true">
         <posterior id="posterior">
             <likelihood id="likelihood">
-                <mvPolyaLikelihood idref="mvPolyaLike"/>
+                <mixtureModelLikelihood normalize="true">
+                    <mvPolyaLikelihood idref="mvPolyaLike"/>
+                    <mvPolyaLikelihood idref="bkg.mvPolyaLike"/>
+                    <parameter id="MVPolya.mix" value="0.5 0.5"/>
+                </mixtureModelLikelihood>
             </likelihood>
             <prior id="prior">
                 <gammaPrior id="prior.Gamma" shape="0.001" scale="100" offset="0.0">
                     <parameter idref="rates"/>
+                    <parameter idref="bkg.rates"/>
                 </gammaPrior>
             </prior>
         </posterior>

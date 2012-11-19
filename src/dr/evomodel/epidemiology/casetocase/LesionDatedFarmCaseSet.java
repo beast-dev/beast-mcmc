@@ -55,7 +55,6 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
     public double branchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {
-        double branchLL = branchLogLikelihood(parent, child, childInfected, childInfectiousBy);
         return Math.exp(branchLogLikelihood(parent, child, childInfected, childInfectiousBy));
     }
 

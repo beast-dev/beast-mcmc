@@ -63,5 +63,34 @@ public class Utils {
 		e.printStackTrace();
 	}// END: logException
 	
+	// ///////////////////////
+	// ---DEBUGGING UTILS---//
+	// ///////////////////////
+	
+	public static void printDataList(PartitionDataList dataList) {
+
+		int row = 1;
+		for (PartitionData data : dataList) {
+
+			System.out.println("Partition: " + row);
+			System.out.println("\tReplications: " + dataList.sequenceLength);
+			System.out.println("\tFrom: " + data.from);
+			System.out.println("\tTo: " + data.to);
+			System.out.println("\tEvery: " + data.every);
+			System.out.println("\tTree model: " + data.treeFile.getName());
+			System.out.println("\tSubstitution model: " + PartitionData.substitutionModels[data.substitutionModel]);
+			System.out.println("\tSite rate model: " + PartitionData.siteModels[data.siteModel]);
+			System.out.println("\tClock rate model: " + PartitionData.clockModels[data.clockModel]);
+			System.out.println("\tFrequency model: " + PartitionData.frequencyModels[data.frequencyModel]);
+
+			System.out.println("Possible trees: ");
+			for (int i = 0; i < dataList.treeFilesList.size(); i++) {
+				System.out.println(dataList.treeFilesList.get(i).getName());
+			}
+			
+			row++;
+		}// END: data list loop
+
+	}// END: printDataList
 	
 }// END: class

@@ -7,7 +7,9 @@ import dr.evolution.util.Units;
 import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.distribution.TruncatedNormalDistributionModel;
+import dr.inference.model.Model;
 import dr.inference.model.Parameter;
+import dr.inference.model.Variable;
 import dr.math.IntegrableUnivariateFunction;
 import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
@@ -25,9 +27,10 @@ import dr.xml.*;
 
 public class LesionDatedFarmCase extends AbstractCase {
 
-    public LesionDatedFarmCase(String name, Date examDate, Date cullDate, ParametricDistributionModel
+    public LesionDatedFarmCase(String name, String caseID, Date examDate, Date cullDate, ParametricDistributionModel
             infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
-        this.name = name;
+        super(name);
+        this.caseID = name;
         //The time value for end of these days is the numerical value of these dates plus 1.
         this.examDate = examDate;
         endOfInfectiousDate = cullDate;
@@ -36,6 +39,12 @@ public class LesionDatedFarmCase extends AbstractCase {
         this.oldestLesionAge = oldestLesionAge;
         this.incubationPeriod = incubationPeriod;
         infectionDate = new InfectionDatePDF();
+    }
+
+    public LesionDatedFarmCase(String caseID, Date examDate, Date cullDate, ParametricDistributionModel
+            infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
+        this(LESION_DATED_FARM_CASE, caseID, examDate, cullDate, infectiousDate, oldestLesionAge, incubationPeriod,
+                associatedTaxa);
     }
 
     public Date getLatestPossibleInfectionDate() {
@@ -79,7 +88,7 @@ public class LesionDatedFarmCase extends AbstractCase {
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
-        public static final String NAME = "name";
+        public static final String CASE_ID = "caseID";
         public static final String CULL_DAY = "cullDay";
         public static final String EXAMINATION_DAY = "examinationDay";
         public static final String INCUBATION_PERIOD_DISTRIBUTION = "incubationPeriodDistribution";
@@ -88,7 +97,7 @@ public class LesionDatedFarmCase extends AbstractCase {
 
         @Override
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-            String farmName = (String) xo.getAttribute(NAME);
+            String farmID = (String) xo.getAttribute(CASE_ID);
             final Date cullDate = (Date) xo.getElementFirstChild(CULL_DAY);
             final Date examinationDate = (Date) xo.getElementFirstChild(EXAMINATION_DAY);
             final Parameter oldestLesionAgeParameter = (Parameter) xo.getElementFirstChild(OLDEST_LESION_AGE);
@@ -103,7 +112,7 @@ public class LesionDatedFarmCase extends AbstractCase {
                     (ParametricDistributionModel) xo.getElementFirstChild(INCUBATION_PERIOD_DISTRIBUTION);
             final ParametricDistributionModel infectiousDateDistribution =
                     (ParametricDistributionModel) xo.getElementFirstChild(INFECTIOUS_DATE_DISTRIBUTION);
-            return new LesionDatedFarmCase(farmName, examinationDate, cullDate, infectiousDateDistribution,
+            return new LesionDatedFarmCase(farmID, examinationDate, cullDate, infectiousDateDistribution,
                     oldestLesionAgeParameter.getParameterValue(0), incubationPeriodDistribution, associatedTaxa);
         }
 
@@ -113,7 +122,7 @@ public class LesionDatedFarmCase extends AbstractCase {
         }
 
         private final XMLSyntaxRule[] rules = {
-                new StringAttributeRule(NAME, "The unique identifier for this farm"),
+                new StringAttributeRule(CASE_ID, "The unique identifier for this farm"),
                 new ElementRule(CULL_DAY, Date.class, "The date this farm was culled", false),
                 new ElementRule(EXAMINATION_DAY, Date.class, "The date this farm was examined", false),
                 new ElementRule(Taxon.class, 0, Integer.MAX_VALUE),
@@ -140,9 +149,34 @@ public class LesionDatedFarmCase extends AbstractCase {
         }
 
         public String getParserName() {
-            return NEW_MODEL_FARM;
+            return LESION_DATED_FARM_CASE;
         }
     };
+
+    @Override
+    protected void handleModelChangedEvent(Model model, Object object, int index) {
+        fireModelChanged();
+    }
+
+    @Override
+    protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void storeState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void restoreState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    protected void acceptState() {
+        //To change body of implemented methods use File | Settings | File Templates.
+    }
 
     /* Probability for the infection date taking the value 'argument' and the incubation period being at most
      * 't2' minus 'argument'; i.e. infected at 'argument' and infectious before 't2'. */
@@ -226,7 +260,7 @@ public class LesionDatedFarmCase extends AbstractCase {
         private double currentT;
     }
 
-    public static final String NEW_MODEL_FARM = "newModelFarm";
+    public static final String LESION_DATED_FARM_CASE = "LesionDatedFarmCase";
     private Date examDate;
     private Date endOfInfectiousDate;
     private Double oldestLesionAge;

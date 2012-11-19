@@ -2,6 +2,7 @@ package dr.evomodel.epidemiology.casetocase;
 
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxa;
+import dr.inference.model.AbstractModel;
 
 /**
  * Created with IntelliJ IDEA.
@@ -12,16 +13,20 @@ import dr.evolution.util.Taxa;
  */
 
 
-public abstract class AbstractCase {
+public abstract class AbstractCase extends AbstractModel {
 
-    protected String name;
+    public AbstractCase(String name){
+        super(name);
+    }
+
+    protected String caseID;
     //These can be either dates or probability distributions
     protected Object infectionDate;
     protected Object infectiousDate;
     protected Object endOfInfectiousDate;
 
     public String getName(){
-        return name;
+        return caseID;
     }
 
     public abstract Date getLatestPossibleInfectionDate();
@@ -31,7 +36,7 @@ public abstract class AbstractCase {
     public abstract boolean culledYet(int time);
 
     public String toString(){
-        return name;
+        return caseID;
     }
 
 

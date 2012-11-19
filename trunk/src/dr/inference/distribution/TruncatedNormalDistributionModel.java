@@ -61,7 +61,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
         minimum.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
         addVariable(maximum);
         maximum.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 1));
-        distribution = new TruncatedNormalDistribution(mean(),getStdev(),minimum(),maximum());
+        recomputeTruncatedNormalDistribution();
     }
 
     public TruncatedNormalDistributionModel(Parameter meanParameter, Parameter scale, Parameter minParameter, Parameter
@@ -155,6 +155,11 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
         return pdfFunction;
     }
 
+    private void recomputeTruncatedNormalDistribution(){
+        distribution = new TruncatedNormalDistribution(mean.getValue(0), stdev.getValue(0), minimum.getValue(0),
+                maximum.getValue(0));
+    };
+
     private final UnivariateFunction pdfFunction = new UnivariateFunction() {
         public final double evaluate(double x) {
             return pdf(x);
@@ -178,14 +183,16 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
     }
 
     protected final void handleVariableChangedEvent(Variable variable, int index, Parameter.ChangeType type) {
-        // no intermediates need to be recalculated...
+        recomputeTruncatedNormalDistribution();
     }
 
     protected void storeState() {
-    } // no additional state needs storing
+        storedDistribution = distribution;
+    }
 
     protected void restoreState() {
-    } // no additional state needs restoring
+        distribution = storedDistribution;
+    }
 
     protected void acceptState() {
     } // no additional state needs accepting
@@ -193,6 +200,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
     public Element createElement(Document document) {
         throw new RuntimeException("Not implemented!");
     }
+
 
     // **************************************************************
     // Private instance variables
@@ -204,6 +212,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
     private final Variable<Double> maximum;
     private Variable<Double> precision;
     private boolean hasPrecision = false;
-    private TruncatedNormalDistribution distribution;
+    private TruncatedNormalDistribution distribution = null;
+    private TruncatedNormalDistribution storedDistribution = null;
 
 }

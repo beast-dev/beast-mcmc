@@ -55,6 +55,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
 
     public double branchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {
+        double branchLL = branchLogLikelihood(parent, child, childInfected, childInfectiousBy);
         return Math.exp(branchLogLikelihood(parent, child, childInfected, childInfectiousBy));
     }
 
@@ -124,7 +125,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         };
     };
 
-    public static final String LESION_DATED_FARM_CASE_SET = "newModelFarmSet";
+    public static final String LESION_DATED_FARM_CASE_SET = "LesionDatedFarmCaseSet";
     private ParametricDistributionModel incubationPeriodDistribution;
     public RiemannApproximation numericalIntegrator;
 

@@ -95,7 +95,7 @@ MCLogger logger) {
         scheme.init();
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
-            reportIteration(pathParameter, chainLength, burnin);
+            reportIteration(pathParameter, chainLength, burnin, scheme.pathSteps, scheme.step);
             long cl = mc.getCurrentLength();
             mc.setCurrentLength(0);
             mc.runChain(burnin, false/*, 0*/);
@@ -289,8 +289,8 @@ MCLogger logger) {
         }
     }*/
 
-    private void reportIteration(double pathParameter, long chainLength, long burnin) {
-        System.out.println("Attempting theta = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+    private void reportIteration(double pathParameter, long chainLength, long burnin, long totalSteps, long steps) {
+        System.out.println("Attempting theta ("+steps+"/" + totalSteps +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
     }
 
     public void run() {

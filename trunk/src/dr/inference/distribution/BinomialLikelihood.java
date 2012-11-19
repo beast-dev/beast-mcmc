@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihood.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -45,15 +45,16 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
 
     public static final String BINOMIAL_LIKELIHOOD = "binomialLikelihood";
 
-    public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, int[] counts) {
+    public BinomialLikelihood(Parameter trialsParameter, Parameter proportionParameter, Parameter countsParameter) {
 
         super(BINOMIAL_LIKELIHOOD);
 
         this.trialsParameter = trialsParameter;
         this.proportionParameter = proportionParameter;
+        this.countsParameter = countsParameter;
         addVariable(trialsParameter);
         addVariable(proportionParameter);
-        this.counts = counts;
+        addVariable(countsParameter);
 
     }
 
@@ -82,11 +83,11 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
         double logL = 0.0;
         for (int i = 0; i < trialsParameter.getDimension(); i++) {
             int trials = (int) Math.round(trialsParameter.getParameterValue(i));
+            int counts = (int) Math.round(countsParameter.getParameterValue(i));
 
-            if (counts[i] > trials) return Double.NEGATIVE_INFINITY;
-            logL += binomialLogLikelihood(trials, counts[i], logP, log1MinusP);
+            if (counts > trials) return Double.NEGATIVE_INFINITY;
+            logL += binomialLogLikelihood(trials, counts, logP, log1MinusP);
         }
-
         return logL;
     }
 
@@ -129,9 +130,8 @@ public class BinomialLikelihood extends AbstractModelLikelihood {
         throw new RuntimeException("Not implemented yet!");
     }
 
-    Binomial binom = new Binomial();
     Parameter trialsParameter;
     Parameter proportionParameter;
-    int[] counts;
+    Parameter countsParameter;
 }
 

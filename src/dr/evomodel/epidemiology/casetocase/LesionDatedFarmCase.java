@@ -30,7 +30,7 @@ public class LesionDatedFarmCase extends AbstractCase {
     public LesionDatedFarmCase(String name, String caseID, Date examDate, Date cullDate, ParametricDistributionModel
             infectiousDate, Double oldestLesionAge, ParametricDistributionModel incubationPeriod, Taxa associatedTaxa){
         super(name);
-        this.caseID = name;
+        this.caseID = caseID;
         //The time value for end of these days is the numerical value of these dates plus 1.
         this.examDate = examDate;
         endOfInfectiousDate = cullDate;

@@ -447,11 +447,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(checkNonZero){
                 Double[] branchLogLs = new Double[2];
                 for(int i=0; i<2; i++){
+                    if(node.getNumber()==105){
+                        System.out.println("Stop here");
+                    }
                     branchLogLs[i]= cases.branchLogLikelihood(choices[i], choices[1-i], getNodeDay(node),
                             getNodeDay(node.getChild(1-i)));
                 }
                 if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
-                    throw new RuntimeException("Both branch possibilities have zero likelihood. Node "
+                    throw new RuntimeException("Both branch possibilities have zero likelihood: "
                             +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");
                 } else if(branchLogLs[0]==Double.NEGATIVE_INFINITY || branchLogLs[1]==Double.NEGATIVE_INFINITY){
                     if(branchLogLs[0]==Double.NEGATIVE_INFINITY){

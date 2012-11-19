@@ -5,11 +5,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
+import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
-import dr.app.beagle.evomodel.sitemodel.EpochBranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
-import dr.app.beagle.evomodel.sitemodel.HomogenousBranchSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
@@ -451,7 +449,7 @@ public class PartitionData {
 	
 	public double[] parameterValues = new double[] { 1.0, 10.0, 1.0 }; 
 	
-	public EpochBranchSubstitutionModel createEpochBranchSubstitutionModel() {
+	public EpochBranchModel createEpochBranchModel() {
 		
 		// create Frequency Model
 		FrequencyModel frequencyModel = this.createFrequencyModel();
@@ -459,7 +457,7 @@ public class PartitionData {
 		frequencyModelList.add(frequencyModel);
 
 		// create branch rate model
-		BranchRateModel branchRateModel = this.createBranchRateModel();
+//		BranchRateModel branchRateModel = this.createBranchRateModel();
 		
 		// 1st epoch
 		Parameter epochTimes = null;
@@ -483,13 +481,9 @@ public class PartitionData {
 
 		}//END: i loop
 		
-		
-		
-		
-		EpochBranchSubstitutionModel epochModel = new EpochBranchSubstitutionModel(
+		EpochBranchModel epochModel = new EpochBranchModel(
+				treeModel,
 				substModelList, //
-				frequencyModelList, //
-				branchRateModel, //
 				epochTimes //
 		);
 

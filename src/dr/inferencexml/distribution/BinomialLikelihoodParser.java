@@ -1,7 +1,7 @@
 /*
  * BinomialLikelihoodParser.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -38,6 +38,7 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
     public static final String TRIALS = "trials";
     public static final String COUNTS = "counts";
     public static final String PROPORTION = "proportion";
+    public static final String VALUES = "values";
 
     public String getParserName() {
         return BinomialLikelihood.BINOMIAL_LIKELIHOOD;
@@ -52,7 +53,17 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
         Parameter proportionParam = (Parameter) cxo.getChild(Parameter.class);
 
         cxo = xo.getChild(COUNTS);
-        int[] counts = cxo.getIntegerArrayAttribute("values");
+        Parameter counts = null;
+        if (cxo.hasAttribute(VALUES)) {
+            int[] tmp = cxo.getIntegerArrayAttribute(VALUES);
+            double[] v = new double[tmp.length];
+            for (int i = 0; i < tmp.length; ++i) {
+                v[i] = tmp[i];
+            }
+            counts = new Parameter.Default(v);
+        } else {
+            counts = (Parameter) cxo.getChild(Parameter.class);
+        }
 
         return new BinomialLikelihood(trialsParam, proportionParam, counts);
 
@@ -71,8 +82,13 @@ public class BinomialLikelihoodParser extends AbstractXMLObjectParser {
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
             new ElementRule(PROPORTION,
                     new XMLSyntaxRule[]{new ElementRule(Parameter.class)}),
-            new ElementRule(COUNTS,
-                    new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule("values", false),})
+            new XORRule(
+                    new ElementRule(COUNTS,
+                            new XMLSyntaxRule[]{AttributeRule.newIntegerArrayRule(VALUES, false),})
+                    ,
+                    new ElementRule(COUNTS,
+                            new XMLSyntaxRule[]{new ElementRule(Parameter.class)}
+                    )),
     };
 
     public String getParserDescription() {

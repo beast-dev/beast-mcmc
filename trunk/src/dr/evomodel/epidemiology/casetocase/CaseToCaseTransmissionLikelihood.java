@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * A likelihood function for transmission between identified epidemiological cases
  *
- * Currently works only for fixed trees and estimates the network only (no coestimation of parameters yet). Timescale
+ * Currently works only for fixed trees and estimates the network and epidemiological parameters. Timescale
  * must be in days. Python scripts to write XML for it and analyse the posterior set of networks exist; contact MH.
  *
  * @author Matthew Hall
@@ -105,17 +105,18 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         cases = caseData;
         addModel(cases);
         verbose = false;
-        if(startingNetworkFileName==null){
-            branchMap = prepareBranches();
-        } else {
-            branchMap = paintSpecificNetwork(startingNetworkFileName);
-        }
 
         tipMap = new HashMap<AbstractCase, NodeRef>();
 
         subTreeRecalculationNeeded = new boolean[virusTree.getNodeCount()];
         Arrays.fill(subTreeRecalculationNeeded, true);
         subTreeLogLikelihoods = new double[virusTree.getNodeCount()];
+
+        if(startingNetworkFileName==null){
+            branchMap = paintRandomNetwork();
+        } else {
+            branchMap = paintSpecificNetwork(startingNetworkFileName);
+        }
 
         for(int i=0; i<virusTree.getExternalNodeCount(); i++){
             TreeModel.Node currentExternalNode = (TreeModel.Node)virusTree.getExternalNode(i);
@@ -335,13 +336,25 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
     * likelihood first.*/
 
-    private AbstractCase[] prepareBranches(){
+    private AbstractCase[] paintRandomNetwork(){
+        boolean gotOne = false;
+        AbstractCase[] map = null;
+        int tries = 1;
         System.out.println("Generating a random starting painting of the tree (checking nonzero likelihood for all " +
-                "branches)");
-        AbstractCase[] map = new AbstractCase[virusTree.getNodeCount()];
-        map = prepareExternalNodeMap(map);
-        TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
-        randomlyPaintNode(root, map, true);
+                "branches and repeating until a start with nonzero likelihood is found)");
+        System.out.print("Attempt: ");
+        while(!gotOne){
+            System.out.print(tries + "...");
+            map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
+            TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
+            randomlyPaintNode(root, map, true);
+            if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
+                gotOne = true;
+                System.out.print("found.");
+            }
+            tries++;
+        }
+        System.out.println();
         return map;
     }
 

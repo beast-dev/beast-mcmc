@@ -67,7 +67,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			treePanel = new TreePanel(this, dataList);
 			partitionsPanel = new PartitionsPanel(this, dataList);
 			simulationPanel = new SimulationPanel(
-//					this, 
+					this, 
 					dataList);
 
 			tabbedPane.addTab("Taxa", null, taxaPanel);
@@ -110,8 +110,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			public void run() {
 
 				taxaPanel.updateUI();
-				statusLabel.setText(Integer.toString(dataList.taxonList
-						.getTaxonCount()) + " taxa loaded.");
+				setStatus(Integer.toString(dataList.taxonList.getTaxonCount()) + " taxa loaded.");
 
 			}
 		});
@@ -178,7 +177,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
-		progressBar.setIndeterminate(true);
+		setBusy();
 
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
 
@@ -213,8 +212,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
 							partitionsList, dataList.sequenceLength);
 
-					writer.println(beagleSequenceSimulator.simulate()
-							.toString());
+					writer.println(beagleSequenceSimulator.simulate().toString());
 					writer.close();
 
 				} catch (Exception e) {
@@ -227,8 +225,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				statusLabel.setText("Generated " + dataList.sequenceLength + " replicates.");
-				progressBar.setIndeterminate(false);
+				setStatus("Generated " + dataList.sequenceLength + " replicates.");
+				setIdle();
 
 			}// END: done
 		};
@@ -292,5 +290,17 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	public void fireModelChanged() {
 		collectAllSettings();
 	}// END: fireModelChanged
-
+	
+	public void setBusy() {
+		progressBar.setIndeterminate(true);
+	}
+	
+	public void setIdle() {
+		progressBar.setIndeterminate(false);
+	}
+	
+	public void setStatus(String status) {
+		statusLabel.setText(status);
+	}
+	
 }// END: class

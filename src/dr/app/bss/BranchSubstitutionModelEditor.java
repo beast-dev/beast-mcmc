@@ -55,7 +55,6 @@ public class BranchSubstitutionModelEditor {
 		}// END: fill loop
 
 		substitutionCombo.addItemListener(new ListenSubstitutionCombo());
-//		substitutionCombo.setSelectedIndex(this.dataList.get(row).substitutionModel);
 		
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
 			substitutionParameterFields[i] = new RealNumberField();

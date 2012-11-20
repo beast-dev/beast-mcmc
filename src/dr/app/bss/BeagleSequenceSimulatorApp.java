@@ -13,6 +13,8 @@ import javax.swing.UnsupportedLookAndFeelException;
 
 public class BeagleSequenceSimulatorApp {
 
+	public final static boolean DEBUG = true;
+	
 	// Share those if neccessary
 	private Image beagleSequenceSimulatorImage;
 	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
@@ -22,6 +24,7 @@ public class BeagleSequenceSimulatorApp {
 	public static ImageIcon errorIcon;
 	public static ImageIcon hammerIcon;
 	public static ImageIcon closeIcon;
+	public static ImageIcon nuclearIcon;
 	
 	public BeagleSequenceSimulatorApp() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
@@ -114,6 +117,7 @@ public class BeagleSequenceSimulatorApp {
 		errorIcon = CreateImageIcon("icons/error.png");
 		hammerIcon = CreateImageIcon("icons/hammer.png");
 		closeIcon = CreateImageIcon("icons/close.png");
+		nuclearIcon = CreateImageIcon("icons/nuclear.png");
 		
 	}// END: Constructor
 
@@ -167,14 +171,24 @@ public class BeagleSequenceSimulatorApp {
 	}// END: CreateImage
 
 	private ImageIcon CreateImageIcon(String path) {
-		URL imgURL = this.getClass().getResource(path);
-		if (imgURL != null) {
-			return new ImageIcon(imgURL);
-		} else {
-			System.err.println("Couldn't find file: " + path + "\n");
-			return null;
-		}
+
+		ImageIcon icon = null;
+
+		try {
+
+			URL imgURL = getClass().getResource(path);
+			if (imgURL != null) {
+				icon = new ImageIcon(imgURL);
+			} else {
+				System.err.println("Couldn't find file: " + path + "\n");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}// END: try-catch block
+
+		return icon;
 	}// END: CreateImageIcon
 
-}// END: TestlabOutbreakApp
+}// END: BeagleSequenceSimulatorApp
 

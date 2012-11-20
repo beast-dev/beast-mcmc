@@ -67,7 +67,7 @@ public class BeagleSequenceSimulator {
 	private final boolean DEBUG = false;
 	
 	private ArrayList<Partition> partitions;
-	private int replications;
+	private int sequenceLength;
     private SimpleAlignment simpleAlignment;
     private DataType dataType;
     private int stateCount;
@@ -79,11 +79,11 @@ public class BeagleSequenceSimulator {
     private int gapFlag = Integer.MAX_VALUE;
     
 	public BeagleSequenceSimulator(ArrayList<Partition> partitions, //
-			int replications //
+			int sequenceLength //
 	) {
 
 		this.partitions = partitions;
-		this.replications = replications;
+		this.sequenceLength = sequenceLength;
 
 		alignmentMap = new ConcurrentHashMap<Taxon, int[]>();
 		
@@ -334,7 +334,7 @@ public class BeagleSequenceSimulator {
 
 				} else {
 
-					int[] sequence = new int[replications];
+					int[] sequence = new int[sequenceLength];
 					// TODO
 					Arrays.fill(sequence, gapFlag);
 
@@ -419,7 +419,7 @@ public class BeagleSequenceSimulator {
 
 		if (dataType instanceof Codons) {
 
-			for (int i = 0; i < replications; i++) {
+			for (int i = 0; i < sequenceLength; i++) {
 
 				int state = seq[i];
 
@@ -433,7 +433,7 @@ public class BeagleSequenceSimulator {
 
 		} else {
 
-			for (int i = 0; i < replications; i++) {
+			for (int i = 0; i < sequenceLength; i++) {
 
 				int state = seq[i];
 
@@ -452,19 +452,19 @@ public class BeagleSequenceSimulator {
 	
 	private int[] sequence2intArray(Sequence sequence) {
 
-		int array[] = new int[replications];
+		int array[] = new int[sequenceLength];
 
 		if (dataType instanceof Codons) {
 
 			int k = 0;
-			for (int i = 0; i < replications; i++) {
+			for (int i = 0; i < sequenceLength; i++) {
 				array[i] = ((Codons) dataType).getState(sequence.getChar(k), sequence.getChar(k + 1), sequence.getChar(k + 2));
 				k += 3;
 			}// END: replications loop
 
 		} else {
 
-			for (int i = 0; i < replications; i++) {
+			for (int i = 0; i < sequenceLength; i++) {
 				array[i] = dataType.getState(sequence.getChar(i));
 			}// END: replications loop
 

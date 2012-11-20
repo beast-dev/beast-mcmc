@@ -38,7 +38,7 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public PartitionTableModel(PartitionDataList dataList) {
 		this.dataList = dataList;
-	}// END: constructor
+	}// END: Constructor
 
 	@Override
 	public int getColumnCount() {
@@ -59,10 +59,9 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
 			
-//			return dataList.treeFilesList.get(row) == null ? new File("") : dataList.treeFilesList.get(row).getName();
-//			return dataList.treeFilesList.get(row);
+			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
+
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -126,8 +125,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
 			dataList.get(row).treeFile = (File) value;
-			
-//			dataList.treeFilesList.set(row, (File) value);
 			break;
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
@@ -151,9 +148,6 @@ public class PartitionTableModel extends AbstractTableModel {
 		}
 
 		fireTableCellUpdated(row, column);
-//		fireTableChanged(new TableModelEvent(this, row, row, column, TableModelEvent.UPDATE));
-		
-//		Utils.printDataList(dataList);
 		
 	}// END: setValueAt
 

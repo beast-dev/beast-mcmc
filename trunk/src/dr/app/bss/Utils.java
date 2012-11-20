@@ -77,7 +77,7 @@ public class Utils {
 			System.out.println("\tFrom: " + data.from);
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);
-			System.out.println("\tTree model: " + data.treeModel.getId());
+			System.out.println("\tTree model: " + data.treeFile);
 			System.out.println("\tSubstitution model: " + PartitionData.substitutionModels[data.substitutionModel]);
 			System.out.println("\tSite rate model: " + PartitionData.siteModels[data.siteModel]);
 			System.out.println("\tClock rate model: " + PartitionData.clockModels[data.clockModel]);

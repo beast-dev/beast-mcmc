@@ -32,12 +32,6 @@ public class PartitionData {
 	public File treeFile = null;
 	public TreeModel treeModel = null;
 	
-//	public TreeModel createTreeModel() {
-//		
-//		
-//		
-//	}
-	
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////

@@ -18,31 +18,31 @@ import org.virion.jam.components.WholeNumberField;
 @SuppressWarnings("serial")
 public class SimulationPanel extends JPanel implements Exportable {
 
-//	 private BeagleSequenceSimulatorFrame frame;
+	 private BeagleSequenceSimulatorFrame frame;
 	private PartitionDataList dataList;
 	private OptionsPanel optionPanel;
 
 	private JLabel replicatesLabel = new JLabel("Number of sites:");
-	private WholeNumberField replicatesField = new WholeNumberField(1,
+	private WholeNumberField sequenceLengthField = new WholeNumberField(1,
 			Integer.MAX_VALUE);
 	
 	// Buttons
 	private JButton simulate;
 	
 	public SimulationPanel(
-//			final BeagleSequenceSimulatorFrame frame,
+			final BeagleSequenceSimulatorFrame frame,
 			final PartitionDataList dataList) {
 
-//		this.frame = frame;
+		this.frame = frame;
 		this.dataList = dataList;
 
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
 		
 		// number of sites
-		replicatesField.setColumns(8);
-		replicatesField.setValue(dataList.sequenceLength);
+		sequenceLengthField.setColumns(8);
+		sequenceLengthField.setValue(dataList.sequenceLength);
 		
-		optionPanel.addComponents(replicatesLabel, replicatesField);
+		optionPanel.addComponents(replicatesLabel, sequenceLengthField);
 
 		// Buttons
 		simulate = new JButton("Simulate", BeagleSequenceSimulatorApp.hammerIcon);
@@ -61,7 +61,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	public final void collectSettings() {
 
 		// all elements hold the same value
-			dataList.sequenceLength = replicatesField.getValue();
+			dataList.sequenceLength = sequenceLengthField.getValue();
 		// frame.fireModelChanged();
 	}// END: collectSettings
 
@@ -73,7 +73,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private class ListenSimulate implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
-//			frame.doExport();
+			frame.doExport();
 			Utils.printDataList(dataList);
 			
 		}// END: actionPerformed

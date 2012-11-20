@@ -1,18 +1,14 @@
 package dr.app.bss;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.GTR;
 import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
-import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.datatype.Codons;
 import dr.evolution.datatype.Nucleotides;
@@ -34,7 +30,13 @@ public class PartitionData {
 	// //////////////////
 	
 	public File treeFile = null;
-	public TreeModel treeModel;
+	public TreeModel treeModel = null;
+	
+//	public TreeModel createTreeModel() {
+//		
+//		
+//		
+//	}
 	
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
@@ -443,52 +445,52 @@ public class PartitionData {
 	// ---EPOCH MODEL---//
 	// ///////////////////
 	
-	public int epochCount = 3;
-
-	public int[] transitionTimes = new int[] { 10, 20 };
-	
-	public double[] parameterValues = new double[] { 1.0, 10.0, 1.0 }; 
-	
-	public EpochBranchModel createEpochBranchModel() {
-		
-		// create Frequency Model
-		FrequencyModel frequencyModel = this.createFrequencyModel();
-		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
-		frequencyModelList.add(frequencyModel);
-
-		// create branch rate model
-//		BranchRateModel branchRateModel = this.createBranchRateModel();
-		
-		// 1st epoch
-		Parameter epochTimes = null;
-		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
-		Parameter kappa = new Parameter.Default(1, parameterValues[0]);
-		HKY hky = new HKY(kappa, frequencyModel);
-		substModelList.add(hky);
-		
-		// epochs 2, 3, ...
-		for (int i = 1; i < epochCount; i++) {
-
-			if (i == 1) {
-				epochTimes = new Parameter.Default(1, transitionTimes[0]);
-			} else {
-				epochTimes.addDimension(1, transitionTimes[i - 1]);
-			}
-			
-			kappa = new Parameter.Default(1, parameterValues[i]);
-			hky = new HKY(kappa, frequencyModel);
-			substModelList.add(hky);
-
-		}//END: i loop
-		
-		EpochBranchModel epochModel = new EpochBranchModel(
-				treeModel,
-				substModelList, //
-				epochTimes //
-		);
-
-		return (epochModel);
-	}// END: createBranchRateModel
+//	public int epochCount = 3;
+//
+//	public int[] transitionTimes = new int[] { 10, 20 };
+//	
+//	public double[] parameterValues = new double[] { 1.0, 10.0, 1.0 }; 
+//	
+//	public EpochBranchModel createEpochBranchModel() {
+//		
+//		// create Frequency Model
+//		FrequencyModel frequencyModel = this.createFrequencyModel();
+//		List<FrequencyModel> frequencyModelList = new ArrayList<FrequencyModel>();
+//		frequencyModelList.add(frequencyModel);
+//
+//		// create branch rate model
+////		BranchRateModel branchRateModel = this.createBranchRateModel();
+//		
+//		// 1st epoch
+//		Parameter epochTimes = null;
+//		List<SubstitutionModel> substModelList = new ArrayList<SubstitutionModel>();
+//		Parameter kappa = new Parameter.Default(1, parameterValues[0]);
+//		HKY hky = new HKY(kappa, frequencyModel);
+//		substModelList.add(hky);
+//		
+//		// epochs 2, 3, ...
+//		for (int i = 1; i < epochCount; i++) {
+//
+//			if (i == 1) {
+//				epochTimes = new Parameter.Default(1, transitionTimes[0]);
+//			} else {
+//				epochTimes.addDimension(1, transitionTimes[i - 1]);
+//			}
+//			
+//			kappa = new Parameter.Default(1, parameterValues[i]);
+//			hky = new HKY(kappa, frequencyModel);
+//			substModelList.add(hky);
+//
+//		}//END: i loop
+//		
+//		EpochBranchModel epochModel = new EpochBranchModel(
+//				treeModel,
+//				substModelList, //
+//				epochTimes //
+//		);
+//
+//		return (epochModel);
+//	}// END: createBranchRateModel
 	
 }// END: class
 

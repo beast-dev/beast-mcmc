@@ -24,6 +24,7 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 
 import org.virion.jam.panels.ActionPanel;
 
@@ -97,28 +98,28 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		// --- TREE COLUMN---//
 		// ////////////////////
 	
-		column = partitionTable.getColumnModel().getColumn(partitionTableModel.PARTITION_TREE_INDEX);
+		column = partitionTable.getColumnModel().getColumn(PartitionTableModel.PARTITION_TREE_INDEX);
 		column.setCellEditor(new JTableComboBoxCellEditor());
 		column.setCellRenderer(new JTableComboBoxCellRenderer(new String[] { "" }));
 
 
 		column = partitionTable.getColumnModel().getColumn(
-				partitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
+				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
-				partitionTableModel.SITE_RATE_MODEL_INDEX);
+				PartitionTableModel.SITE_RATE_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
-				partitionTableModel.CLOCK_RATE_MODEL_INDEX);
+				PartitionTableModel.CLOCK_RATE_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
 		column = partitionTable.getColumnModel().getColumn(
-				partitionTableModel.FREQUENCY_MODEL_INDEX);
+				PartitionTableModel.FREQUENCY_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
 
@@ -148,10 +149,29 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		this.updateUI();
 	}// END: setPartitions
 
+	//TODO: listen to tree choices, set tree model in partition data
 	private class PartitionTableModelListener implements TableModelListener {
 		public void tableChanged(TableModelEvent ev) {
 
-//			System.out.println("TODO: PartitionTableModelListener");
+			if (ev.getType() == TableModelEvent.UPDATE) {
+				int row = ev.getFirstRow();
+				int column = ev.getColumn();
+
+				if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
+					
+//					System.out.println(row + ", " + column);
+					
+//					PartitionTableModel model = (PartitionTableModel) ev.getSource();
+					System.out.println(partitionTableModel.getValueAt(row, column));
+					
+//					int index = ((Integer) model.getValueAt(row, column)).intValue();
+//					System.out.println(dataList.treeModelsList.get(index-1).toString());
+//					dataList.get(row).treeModel = dataList.treeModelsList.get(index-1);
+					
+					
+				}
+			}
+			
 			frame.fireModelChanged();
 			
 		}
@@ -221,7 +241,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 			((JComboBox) editorComponent).removeAllItems();
 
-			if (column == partitionTableModel.PARTITION_TREE_INDEX) {
+			if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
 				for (File file : dataList.treeFilesList) {
 					((JComboBox) editorComponent).addItem(file);
 				}

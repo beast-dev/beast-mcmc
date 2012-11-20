@@ -2,6 +2,7 @@ package dr.app.bss;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import dr.evolution.util.Taxa;
@@ -20,8 +21,11 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public List<File> treeFilesList = new ArrayList<File>();
 	public List<TreeModel> treeModelsList= new ArrayList<TreeModel>();
 	
+//	HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
+	
 	public PartitionDataList() {
 		super();
+//		treeFilesList.add(null);
 	}
 	
 //	public int getSequenceLength() {

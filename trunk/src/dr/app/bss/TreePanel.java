@@ -17,6 +17,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 
 import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
@@ -34,8 +35,6 @@ public class TreePanel extends JPanel implements Exportable {
 	private JButton treeFileButton = new JButton("Choose File...");
 	private JTextField treeFileNameText = new JTextField("not selected", 16);
 
-//	private int treeCount;
-	
 	public TreePanel(final BeagleSequenceSimulatorFrame frame,
 			final PartitionDataList dataList) {
 
@@ -43,8 +42,7 @@ public class TreePanel extends JPanel implements Exportable {
 
 		this.frame = frame;
 		this.dataList = dataList;
-//		treeCount = 0;
-		
+
 		setOpaque(false);
 		setLayout(new BorderLayout());
 		optionPanel = new OptionsPanel(12, 12, SwingConstants.CENTER);
@@ -65,11 +63,10 @@ public class TreePanel extends JPanel implements Exportable {
 		public void actionPerformed(ActionEvent ae) {
 
 			doImport();
-			
+
 		}// END: actionPerformed
 	}// END: ListenTreeFileButton
 
-	//TODO: set to work with multiple trees
 	public void doImport() {
 
 		try {
@@ -98,9 +95,8 @@ public class TreePanel extends JPanel implements Exportable {
 					}
 
 				}// END: file opened check
-
 			}// END: dialog cancelled check
-			
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ImportException e) {
@@ -108,32 +104,57 @@ public class TreePanel extends JPanel implements Exportable {
 		}// END: try-catch block
 
 	}// END: doImport
-	
-	//TODO: set to work with multiple trees
-	public void importFromFile(File file) throws IOException, ImportException {
-		
-        BufferedReader reader = new BufferedReader(new FileReader(file));
 
-        String line = reader.readLine();
-        Tree tree;
+	public void importFromFile(final File file) throws IOException,
+			ImportException {
 
-        if (line.toUpperCase().startsWith("#NEXUS")) {
-            NexusImporter importer = new NexusImporter(reader);
-            tree = importer.importTree(null);
-        } else {
-            NewickImporter importer = new NewickImporter(reader);
-            tree = importer.importTree(null);
-        }
-        
-        // TODO Add taxons from a new tree to that list and display them in Taxa panel
-        dataList.taxonList = tree;
-        dataList.treeModelsList.add(new TreeModel(tree));
-        
-        reader.close();
-        frame.fireTaxaChanged();
-		
-	}//END: importFromFile
-	
+		frame.setBusy();
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+
+			// Executed in background thread
+			public Void doInBackground() {
+
+				try {
+
+					BufferedReader reader = new BufferedReader(new FileReader(
+							file));
+
+					String line = reader.readLine();
+					Tree tree;
+
+					if (line.toUpperCase().startsWith("#NEXUS")) {
+						NexusImporter importer = new NexusImporter(reader);
+						tree = importer.importTree(null);
+					} else {
+						NewickImporter importer = new NewickImporter(reader);
+						tree = importer.importTree(null);
+					}
+
+					// TODO Add taxons from a new tree to that list and display
+					// them in Taxa panel
+					dataList.taxonList = tree;
+					dataList.treeModelsList.add(new TreeModel(tree));
+
+					reader.close();
+
+				} catch (Exception e) {
+					Utils.handleException(e);
+				}// END: try-catch block
+
+				return null;
+			}// END: doInBackground()
+
+			// Executed in event dispatch thread
+			public void done() {
+				frame.setIdle();
+				frame.fireTaxaChanged();
+			}// END: done
+		};
+
+		worker.execute();
+
+	}// END: importFromFile
+
 	public JComponent getExportableComponent() {
 		return this;
 	}// END: getExportableComponent

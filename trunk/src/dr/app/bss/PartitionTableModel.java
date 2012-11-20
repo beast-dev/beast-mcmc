@@ -17,14 +17,14 @@ public class PartitionTableModel extends AbstractTableModel {
 	private ClockRateModelEditor clockRateModelEditor;
 	private FrequencyModelEditor frequencyModelEditor;
 
-	public final int PARTITION_TREE_INDEX = 0;
-	public final int FROM_INDEX = 1;
-	public final int TO_INDEX = 2;
-	public final int EVERY_INDEX = 3;
-	public final int BRANCH_SUBSTITUTION_MODEL_INDEX = 4;
-	public final int SITE_RATE_MODEL_INDEX = 5;
-	public final int CLOCK_RATE_MODEL_INDEX = 6;
-	public final int FREQUENCY_MODEL_INDEX = 7;
+	public final static int PARTITION_TREE_INDEX = 0;
+	public final static int FROM_INDEX = 1;
+	public final static int TO_INDEX = 2;
+	public final static int EVERY_INDEX = 3;
+	public final static int BRANCH_SUBSTITUTION_MODEL_INDEX = 4;
+	public final static int SITE_RATE_MODEL_INDEX = 5;
+	public final static int CLOCK_RATE_MODEL_INDEX = 6;
+	public final static int FREQUENCY_MODEL_INDEX = 7;
 
 	private String[] COLUMN_NAMES = { "Partition Tree", "From", "To", "Every",
 			"Branch Substitution Model", "Site Rate Model", "Clock Rate Model",
@@ -59,11 +59,10 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
+			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile.getName();
 			
-			// TODO
-			return dataList.get(row).treeFile == null ? new File("") : dataList
-					.get(row).treeFile.getName();
-			
+//			return dataList.treeFilesList.get(row) == null ? new File("") : dataList.treeFilesList.get(row).getName();
+//			return dataList.treeFilesList.get(row);
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -124,14 +123,12 @@ public class PartitionTableModel extends AbstractTableModel {
 
 	public void setValueAt(Object value, int row, int column) {
 
-//		System.out.println(row);
-
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-
 			dataList.get(row).treeFile = (File) value;
+			
+//			dataList.treeFilesList.set(row, (File) value);
 			break;
-
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
 			break;
@@ -166,6 +163,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	}
 
 	public void addDefaultRow() {
+		//TODO: this could copy the previous line (new constructor that takes all the elements)
 		dataList.add(new PartitionData());
 		fireTableRowsInserted(dataList.size() - 1, dataList.size() - 1);
 	}

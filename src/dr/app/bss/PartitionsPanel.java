@@ -24,7 +24,6 @@ import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
 
 import org.virion.jam.panels.ActionPanel;
 
@@ -100,8 +99,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 	
 		column = partitionTable.getColumnModel().getColumn(PartitionTableModel.PARTITION_TREE_INDEX);
 		column.setCellEditor(new JTableComboBoxCellEditor());
-		column.setCellRenderer(new JTableComboBoxCellRenderer(new String[] { "" }));
-
+		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
 		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
@@ -158,62 +156,51 @@ public class PartitionsPanel extends JPanel implements Exportable {
 				int column = ev.getColumn();
 
 				if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
+
+					File value = (File) partitionTableModel.getValueAt(row, column);
+					System.out.println(value);
+					dataList.get(row).treeModel = dataList.forestMap.get(value);
 					
-//					System.out.println(row + ", " + column);
-					
-//					PartitionTableModel model = (PartitionTableModel) ev.getSource();
-					System.out.println(partitionTableModel.getValueAt(row, column));
-					
-//					int index = ((Integer) model.getValueAt(row, column)).intValue();
-//					System.out.println(dataList.treeModelsList.get(index-1).toString());
-//					dataList.get(row).treeModel = dataList.treeModelsList.get(index-1);
-					
-					
-				}
-			}
-			
+				}// END: column check
+			}// END: event check
+
 			frame.fireModelChanged();
-			
-		}
+
+		}// END: tableChanged
 	}// END: InteractiveTableModelListener
 
 	public class JTableComboBoxCellRenderer extends JComboBox implements
 			TableCellRenderer {
 
-		public JTableComboBoxCellRenderer(String[] items) {
-			super(items);
-	        setOpaque(true);
-		}
+		public JTableComboBoxCellRenderer() {
+			super();
+			setOpaque(true);
+		}// END: Constructor
 
-		public JTableComboBoxCellRenderer(File[] items) {
-			super(items);
-	        setOpaque(true);
-		}
-		
 		public Component getTableCellRendererComponent(JTable table,
 				Object value, boolean isSelected, boolean hasFocus, int row,
 				int column) {
 
 			if (isSelected) {
 
-	            this.setForeground(table.getSelectionForeground());
-	            this.setBackground(table.getSelectionBackground());
+				this.setForeground(table.getSelectionForeground());
+				this.setBackground(table.getSelectionBackground());
 
 			} else {
 
-	            this.setForeground(table.getForeground());
-	            this.setBackground(table.getBackground());
-	            
+				this.setForeground(table.getForeground());
+				this.setBackground(table.getBackground());
+
 			}
 
 			// Select the current value
 			setSelectedItem(value);
 
-            if (value != null) {
-                removeAllItems();
-                addItem(value);
-            }
-			
+			if (value != null) {
+				removeAllItems();
+				addItem(value);
+			}
+
 			return this;
 		}
 	}// END: JTableComboBoxCellRenderer class
@@ -242,7 +229,7 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			((JComboBox) editorComponent).removeAllItems();
 
 			if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
-				for (File file : dataList.treeFilesList) {
+				for (File file : dataList.forestMap.keySet()) {
 					((JComboBox) editorComponent).addItem(file);
 				}
 			}
@@ -360,31 +347,5 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		}// END: mouseClicked
 
 	}// END: JTableButtonMouseListener class
-
-//	private class ListenComboBox implements ActionListener {
-//
-//		private JComboBox combobox;
-//		private List<File> list;
-//
-//		public ListenComboBox(JComboBox combobox, List<File> list) {
-//			this.combobox = combobox;
-//			this.list = list;
-//		}
-//
-//		public void actionPerformed(ActionEvent ev) {
-//
-//			// TODO
-//			combobox.removeAll();
-//			for (File file : list) {
-//				combobox.addItem(file);
-//			}
-//
-//			combobox.validate();
-//			combobox.repaint();
-//			
-//		}// END: actionPerformed
-//	}// END: ListenComboBox
 	
-	//
-
 }// END: class

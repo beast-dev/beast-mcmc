@@ -128,7 +128,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
 
-			if (dataList.treeModelsList.size() == 0) {
+			if (dataList.forestMap.size() == 0) {
 
 				tabbedPane.setSelectedComponent(treePanel);
 				treePanel.doImport();

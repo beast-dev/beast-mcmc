@@ -59,7 +59,7 @@ public class PartitionTableModel extends AbstractTableModel {
 	public Object getValueAt(final int row, final int column) {
 		switch (column) {
 		case PARTITION_TREE_INDEX:
-			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile.getName();
+			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
 			
 //			return dataList.treeFilesList.get(row) == null ? new File("") : dataList.treeFilesList.get(row).getName();
 //			return dataList.treeFilesList.get(row);

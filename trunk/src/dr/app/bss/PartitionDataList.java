@@ -3,7 +3,6 @@ package dr.app.bss;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
@@ -18,15 +17,11 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public TaxonList taxonList = new Taxa();
 	public int sequenceLength = 1000;	
 	
-	public List<File> treeFilesList = new ArrayList<File>();
-	public List<TreeModel> treeModelsList= new ArrayList<TreeModel>();
-	
-//	HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
+	public HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
 	
 	public PartitionDataList() {
 		super();
-//		treeFilesList.add(null);
-	}
+	}// END: Constructor
 	
 //	public int getSequenceLength() {
 //		return sequenceLength;

@@ -60,6 +60,22 @@ public class LesionDatedFarmCase extends AbstractCase {
         return associatedTaxa;
     }
 
+    public void setIncubationPeriodDistribution(ParametricDistributionModel distribution){
+        incubationPeriod = distribution;
+    }
+
+    public ParametricDistributionModel getIncubationPeriodDistribution(){
+        return incubationPeriod;
+    }
+
+    public void setInfectiousDateDistribution(ParametricDistributionModel distribution){
+        infectiousDate = distribution;
+    }
+
+    public ParametricDistributionModel getInfectiousDateDistribution(){
+        return infectiousDate;
+    }
+
     public boolean culledYet(int day) {
         return day>endOfInfectiousDate.getTimeValue()+1;
     }

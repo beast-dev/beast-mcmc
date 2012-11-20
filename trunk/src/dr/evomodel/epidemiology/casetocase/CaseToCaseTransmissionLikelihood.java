@@ -1,4 +1,4 @@
-package dr.evomodel.epidemiology.casetocase;// import au.com.bytecode.opencsv.CSVReader;
+package dr.evomodel.epidemiology.casetocase;
 import dr.evolution.tree.FlexibleTree;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
@@ -19,6 +19,9 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -78,30 +81,17 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // Basic constructor.
 
-    public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData)
+    public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData,
+                                            String startingNetworkFileName)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData);
+        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName);
     }
 
-    /* Constructor where the correct network is supplied by reference to a CSV file in the XML; the likelihood of this
-    network will be calculated and given before the MCMC starts. Simulated data only, obviously!*/
-
-    public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData, String
-            correctNetworkFileName)
-            throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData);
-        /*
-        This section commented out for the committed version; requires openCSV.
-
-        AbstractCase[] correctPainting = paintSpecificNetwork(correctNetworkFileName);
-        System.out.println("Log likelihood of the correct network: " + calculateLogLikelihood(correctPainting));
-        Arrays.fill(subTreeRecalculationNeeded, true);
-        */
-    }
 
     // Constructor for an instance with a non-default name
 
-    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData)
+    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData, String
+            startingNetworkFileName)
             throws TaxonList.MissingTaxonException {
 
         super(name);
@@ -115,7 +105,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         cases = caseData;
         addModel(cases);
         verbose = false;
-        branchMap = prepareBranches();
+        if(startingNetworkFileName==null){
+            branchMap = prepareBranches();
+        } else {
+            branchMap = paintSpecificNetwork(startingNetworkFileName);
+        }
 
         tipMap = new HashMap<AbstractCase, NodeRef>();
 
@@ -368,30 +362,35 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return map;
     }
 
-    /* Takes a CSV file with a specific network and paints the tree with it. Requires openCSV, hence commented out for
-    the committed version.
+/*  The CSV file should have a header line, and then a line for each node with its id in the first column and the id
+    of its parent in the second. The node with no parent has "Start" in the second column.*/
 
     private AbstractCase[] paintSpecificNetwork(String networkFileName){
+        System.out.println("Using specified starting network.");
         try{
-            CSVReader reader = new CSVReader(new FileReader(networkFileName));
-            HashMap<AbstractCase, AbstractCase> correctParentMap = new HashMap<AbstractCase, AbstractCase>();
-            reader.readNext();
-            List<String[]> lines = reader.readAll();
-            for(String[] line: lines){
-                if(!line[1].equals("Start")){
-                    correctParentMap.put(cases.getCase(line[0]), cases.getCase(line[1]));
+            BufferedReader reader = new BufferedReader (new FileReader(networkFileName));
+            HashMap<AbstractCase, AbstractCase> specificParentMap = new HashMap<AbstractCase, AbstractCase>();
+            // skip header line
+            reader.readLine();
+            String currentLine = reader.readLine();
+            while(currentLine!=null){
+                currentLine = currentLine.replace("\"", "");
+                String[] splitLine = currentLine.split("\\,");
+                if(!splitLine[1].equals("Start")){
+                    specificParentMap.put(cases.getCase(splitLine[0]), cases.getCase(splitLine[1]));
                 } else {
-                    correctParentMap.put(cases.getCase(line[0]),null);
+                    specificParentMap.put(cases.getCase(splitLine[0]),null);
                 }
+                currentLine = reader.readLine();
             }
-            return paintSpecificNetwork(correctParentMap);
+            reader.close();
+            return paintSpecificNetwork(specificParentMap);
         } catch(IOException e){
             System.out.println("Problem reading file (IOException)");
             return null;
         }
     }
 
-    */
 
     /* Takes a HashMap referring each case to its parent, and tries to paint the tree with it */
 
@@ -447,9 +446,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             if(checkNonZero){
                 Double[] branchLogLs = new Double[2];
                 for(int i=0; i<2; i++){
-                    if(node.getNumber()==105){
-                        System.out.println("Stop here");
-                    }
                     branchLogLs[i]= cases.branchLogLikelihood(choices[i], choices[1-i], getNodeDay(node),
                             getNodeDay(node.getChild(1-i)));
                 }
@@ -479,7 +475,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
         public static final String VIRUS_TREE = "virusTree";
-        public static final String CORRECT_NETWORK = "correctNetwork";
+        public static final String STARTING_NETWORK = "startingNetwork";
 
         public String getParserName() {
             return CASE_TO_CASE_TRANSMISSION_LIKELIHOOD;
@@ -489,10 +485,10 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
             FlexibleTree flexTree = (FlexibleTree) xo.getElementFirstChild(VIRUS_TREE);
 
-            String correctNetworkFileName=null;
+            String startingNetworkFileName=null;
 
-            if(xo.hasChildNamed(CORRECT_NETWORK)){
-                correctNetworkFileName = (String) xo.getElementFirstChild(CORRECT_NETWORK);
+            if(xo.hasChildNamed(STARTING_NETWORK)){
+                startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
             }
 
             TreeModel virusTree = new TreeModel(flexTree);
@@ -501,15 +497,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
             CaseToCaseTransmissionLikelihood likelihood;
 
-
-            //in here, you want to read and translate the data file
-
             try {
-                if (correctNetworkFileName==null){
-                    likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet);
-                } else {
-                    likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, correctNetworkFileName);
-                }
+                likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -532,7 +521,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         private final XMLSyntaxRule[] rules = {
                 new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
                 new ElementRule(AbstractCaseSet.class, "The set of cases"),
-                new ElementRule("correctNetwork", String.class, "The correct network file in CSV format", true)
+                new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
+                        true)
         };
     };
 
@@ -568,5 +558,5 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         citations.add(new Citation(new Author[]{new Author("M", "Hall"), new Author("A", "Rambaut")},
                 Citation.Status.IN_PREPARATION));
         return citations;
-        }
     }
+}

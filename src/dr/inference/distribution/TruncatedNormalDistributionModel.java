@@ -85,7 +85,7 @@ public class TruncatedNormalDistributionModel extends AbstractModel implements P
         }
         addVariable(scale);
         scale.addBounds(new Parameter.DefaultBounds(Double.POSITIVE_INFINITY, 0.0, 1));
-        distribution = new TruncatedNormalDistribution(mean(),getStdev(),minimum(),maximum());
+        recomputeTruncatedNormalDistribution();
     }
 
     public double getStdev() {

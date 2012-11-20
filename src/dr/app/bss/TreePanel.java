@@ -134,7 +134,6 @@ public class TreePanel extends JPanel implements Exportable {
 					// them in Taxa panel
 					dataList.taxonList = tree;
 					dataList.forestMap.put(file, new TreeModel(tree));
-
 					reader.close();
 
 				} catch (Exception e) {

@@ -15,7 +15,9 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public static final String DATE_STRING = "2012";
 	
 	public TaxonList taxonList = new Taxa();
+	//TODO: last partition should have this number as TO value
 	public int sequenceLength = 1000;	
+	public int simulationsNumber = 1;
 	
 	public HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
 	

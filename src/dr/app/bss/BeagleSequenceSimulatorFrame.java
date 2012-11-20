@@ -128,16 +128,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	private AbstractAction simulateAction = new AbstractAction("Simulate...") {
 		public void actionPerformed(ActionEvent ae) {
 
-			if (dataList.forestMap.size() == 0) {
-
-				tabbedPane.setSelectedComponent(treePanel);
-				treePanel.doImport();
-
-			} else {
-
 				doExport();
 
-			}// END: tree loaded check
 		}// END: actionPerformed
 	};
 
@@ -145,35 +137,41 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 		try {
 
-			JFileChooser chooser = new JFileChooser();
-			chooser.setDialogTitle("Simulate...");
-			chooser.setMultiSelectionEnabled(false);
-			chooser.setCurrentDirectory(workingDirectory);
+			if (dataList.forestMap.size() == 0) {
 
-			chooser.showSaveDialog(Utils.getActiveFrame());
-			File file = chooser.getSelectedFile();
+				tabbedPane.setSelectedComponent(treePanel);
+				treePanel.doImport();
 
-			if (file != null) {
+			} else {
 
-				collectAllSettings();
-				generateFile(file);
+				JFileChooser chooser = new JFileChooser();
+				chooser.setDialogTitle("Simulate...");
+				chooser.setMultiSelectionEnabled(false);
+				chooser.setCurrentDirectory(workingDirectory);
 
-				File tmpDir = chooser.getCurrentDirectory();
-				if (tmpDir != null) {
-					workingDirectory = tmpDir;
-				}
+				chooser.showSaveDialog(Utils.getActiveFrame());
+				File file = chooser.getSelectedFile();
 
-			}// END: file opened check
+				if (file != null) {
 
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ImportException e) {
-			e.printStackTrace();
-		}// END: try catch block
+					collectAllSettings();
+					generateFile(file);
+
+					File tmpDir = chooser.getCurrentDirectory();
+					if (tmpDir != null) {
+						workingDirectory = tmpDir;
+					}
+
+				}// END: file selected check
+
+			}// END: tree loaded check
+
+		} catch (Exception e) {
+			Utils.handleException(e);
+		} // END: try catch block
 
 	}// END: doExport
 
-	// TODO: fix to work with multiple partitions
 	private void generateFile(final File outFile) throws IOException,
 			ImportException {
 
@@ -185,6 +183,10 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			public Void doInBackground() {
 
 				try {
+
+					if (BeagleSequenceSimulatorApp.DEBUG) {
+						Utils.printDataList(dataList);
+					}
 
 					PrintWriter writer;
 
@@ -220,7 +222,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 				}
 
 				return null;
-			}// END: doInBackground()
+			}// END: doInBackground
 
 			// Executed in event dispatch thread
 			public void done() {
@@ -235,6 +237,8 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: generateFile
 
+	
+	
 	@Override
 	public JComponent getExportableComponent() {
 		JComponent exportable = null;
@@ -251,13 +255,11 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	@Override
 	protected boolean readFromFile(File arg0) throws IOException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	protected boolean writeToFile(File arg0) throws IOException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

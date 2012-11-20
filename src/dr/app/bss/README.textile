@@ -16,12 +16,12 @@ h1. LICENSE
    
 h1. PURPOSE
 
-A long overdue simulator in Beagle.  
+Long overdue simulator in Beagle.  
    
 h1. TODO
-* simplify taxa panel
+* parse heights taxa panel
 * keep values set in Editors
 * animated buttons in Partitions Panel
-* icon in Simulate button
-* importing multiple trees
-* combo box with trees
+* icons in Simulate panel
+* simulate number of simulations times
+* connect sequence length and to fields

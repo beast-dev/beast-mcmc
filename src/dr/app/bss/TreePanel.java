@@ -84,7 +84,7 @@ public class TreePanel extends JPanel implements Exportable {
 
 				if (file != null) {
 
-					dataList.treeFilesList.add(file);
+//					dataList.treeFilesList.add(file);
 					treeFileNameText.setText(file.getName());
 
 					importFromFile(file);
@@ -133,7 +133,7 @@ public class TreePanel extends JPanel implements Exportable {
 					// TODO Add taxons from a new tree to that list and display
 					// them in Taxa panel
 					dataList.taxonList = tree;
-					dataList.treeModelsList.add(new TreeModel(tree));
+					dataList.forestMap.put(file, new TreeModel(tree));
 
 					reader.close();
 

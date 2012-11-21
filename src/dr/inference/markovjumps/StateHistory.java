@@ -241,7 +241,8 @@ public class StateHistory {
 
     public String toStringChanges(int site, DataType dataType) {
         StringBuilder sb = new StringBuilder("{");
-        sb.append(site).append(",");
+        // site number gets put into each and every event string
+//        sb.append(site).append(",");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
         for (int i = 1; i < stateList.size() - 1; i++) {  // TODO Code review: should this really be size() - 1?
@@ -254,7 +255,7 @@ public class StateHistory {
                     sb.append(",");
                 }
                 double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, -1);
+                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, site);
                 firstChange = false;
                 currentState = nextState;
             }

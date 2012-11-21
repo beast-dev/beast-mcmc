@@ -239,8 +239,9 @@ public class StateHistory {
         return newHistory;
     }
 
-    public String toStringChanges(DataType dataType) {
+    public String toStringChanges(int site, DataType dataType) {
         StringBuilder sb = new StringBuilder("{");
+        sb.append(site).append(",");
         int currentState = stateList.get(0).getState();
         boolean firstChange = true;
         for (int i = 1; i < stateList.size() - 1; i++) {  // TODO Code review: should this really be size() - 1?
@@ -253,7 +254,7 @@ public class StateHistory {
                     sb.append(",");
                 }
                 double time = stateList.get(i).getTime(); // + startTime;
-                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time);
+                addEventToStringBuilder(sb, dataType.getCode(currentState), dataType.getCode(nextState), time, -1);
                 firstChange = false;
                 currentState = nextState;
             }
@@ -264,11 +265,11 @@ public class StateHistory {
 
     public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time, int site) {
         // AR changed this to match an attribute array:
-        sb.append("{").append(site).append(",").append(time).append(",").append(source).append(",").append(dest).append("}");
-    }
-
-    public static void addEventToStringBuilder(StringBuilder sb, String source, String dest, double time) {
-        addEventToStringBuilder(sb, source, dest, time, -1);
+        sb.append("{");
+        if (site > 0) {
+            sb.append(site).append(",");
+        }
+        sb.append(time).append(",").append(source).append(",").append(dest).append("}");
     }
 
     public static StateHistory simulateConditionalOnEndingState(double startingTime,

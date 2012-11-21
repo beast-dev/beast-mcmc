@@ -135,7 +135,7 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
             // Rescale time of events
             completeHistory.rescaleTimesOfEvents(newStartTime, newEndTime);
         }
-        return completeHistory.toStringChanges(dataType); //, 0.0);
+        return completeHistory.toStringChanges(-1, dataType); //, 0.0);
     }
 
     public int getNumberOfJumpsInCompleteHistory() {

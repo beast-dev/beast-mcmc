@@ -236,12 +236,12 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
                     int n = history.getNumberOfJumps();
                     // MAS may have broken the next line
-                    String hstring = "{" + (i + 1) + "," + history.toStringChanges(usModel.dataType) + "}";
+                    String hstring = history.toStringChanges(i + 1, usModel.dataType);
                     if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()
                                 + " : "
-                                + history.toStringChanges(usModel.dataType)
+                                + history.toStringChanges(i + 1, usModel.dataType)
                                 + " " + codonLabeling.getText());
                     }
 

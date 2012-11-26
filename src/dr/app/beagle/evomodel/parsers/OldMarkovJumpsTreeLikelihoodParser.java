@@ -52,7 +52,7 @@ import java.util.Set;
 @Deprecated // Switching to BranchModel
 public class OldMarkovJumpsTreeLikelihoodParser extends OldAncestralStateTreeLikelihoodParser {
 
-    public static final String MARKOV_JUMP_TREE_LIKELIHOOD = "markovJumpsTreeLikelihood";
+    public static final String MARKOV_JUMP_TREE_LIKELIHOOD = "oldMarkovJumpsTreeLikelihood";
     public static final String JUMP_TAG = "jumps";
     public static final String JUMP_TAG_NAME = "jumpTagName";
     public static final String COUNTS = MarkovJumpsType.COUNTS.getText();

@@ -346,13 +346,16 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         while(!gotOne){
             System.out.print(tries + "...");
             map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
-            TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
-            randomlyPaintNode(root, map, true);
+            paintRandomNetwork(map,true);
             if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
                 gotOne = true;
                 System.out.print("found.");
             }
             tries++;
+            if(tries==101){
+                throw new RuntimeException("Failed to find a starting transmission tree after 100 attempts; giving " +
+                        "up.");
+            }
         }
         System.out.println();
         return map;
@@ -408,12 +411,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     /* Takes a HashMap referring each case to its parent, and tries to paint the tree with it */
 
     private AbstractCase[] paintSpecificNetwork(HashMap<AbstractCase, AbstractCase> map){
+        Arrays.fill(subTreeRecalculationNeeded,true);
         AbstractCase[] branchArray = new AbstractCase[virusTree.getNodeCount()];
         branchArray = prepareExternalNodeMap(branchArray);
         TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
         specificallyPaintNode(root, branchArray, map);
         return branchArray;
     }
+
 
     /* Paints a phylogenetic tree node and its children according to a specified map of child to parent cases */
 
@@ -441,6 +446,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
     is much less likely to).
      */
+
+    private AbstractCase[] paintRandomNetwork(AbstractCase[] map, boolean checkNonZero){
+        Arrays.fill(subTreeRecalculationNeeded,true);
+        TreeModel.Node root = (TreeModel.Node)virusTree.getRoot();
+        randomlyPaintNode(root, map, checkNonZero);
+        return map;
+    }
 
     private AbstractCase randomlyPaintNode(TreeModel.Node node, AbstractCase[] map, boolean checkNonZero){
         if(node.isExternal()){

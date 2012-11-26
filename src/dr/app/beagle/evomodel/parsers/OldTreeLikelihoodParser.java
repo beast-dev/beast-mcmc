@@ -76,7 +76,8 @@ public class OldTreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     protected OldBeagleTreeLikelihood createTreeLikelihood(PatternList patternList, TreeModel treeModel,
-                                                        BranchSubstitutionModel branchSubstitutionModel, GammaSiteRateModel siteRateModel,
+                                                        BranchSubstitutionModel branchSubstitutionModel,
+                                                        GammaSiteRateModel siteRateModel,
                                                         BranchRateModel branchRateModel,
                                                         TipStatesModel tipStatesModel,
                                                         boolean useAmbiguities, PartialsRescalingScheme scalingScheme,

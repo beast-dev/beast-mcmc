@@ -40,6 +40,7 @@ import beagle.ResourceDetails;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
+import dr.app.beagle.evomodel.parsers.BeagleTreeLikelihoodParser;
 import dr.app.beagle.evomodel.parsers.OldTreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
@@ -121,7 +122,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
                                 PartialsRescalingScheme rescalingScheme,
                                 Map<Set<String>, Parameter> partialsRestrictions) {
 
-        super(OldTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
+        super(BeagleTreeLikelihoodParser.TREE_LIKELIHOOD, patternList, treeModel);
 
         try {
             final Logger logger = Logger.getLogger("dr.evomodel");

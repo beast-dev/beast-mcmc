@@ -1,7 +1,7 @@
 /*
  * CompleteHistoryLogger.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -221,9 +221,13 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                                 for (int j = 0; j < changes.length; ++j) {
 
                                     Object[] change = (Object[]) changes[j];
-                                    String source = (String) change[2];
-                                    String dest = (String) change[3];
-                                    double thisTime = (Double) change[1];
+                                    // MAS: Leaving these inline in case I am breaking code elsewhere
+//                                    String source = (String) change[2];
+//                                    String dest = (String) change[3];
+//                                    double thisTime = (Double) change[1];
+                                    String source = (String) change[1];
+                                    String dest = (String) change[2];
+                                    double thisTime = (Double) change[0];
                                     if (thisTime < 0.0) {
                                         throw new RuntimeException("negative time");
                                     }

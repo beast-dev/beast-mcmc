@@ -1,7 +1,7 @@
 /*
  * ALSTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -51,7 +51,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
     public static final String OBSERVATION_TYPE = "type";
     public static final String OBSERVATION_TAXON = "taxon";
     public static final String ANY_TIP = "anyTip";
-    final static String IMMIGRATION_RATE = "immigrationRate";
+    public final static String IMMIGRATION_RATE = "immigrationRate";
 
     public String getParserName() {
         return LIKE_NAME;
@@ -105,7 +105,7 @@ public class ALSTreeLikelihoodParser extends AbstractXMLObjectParser {
                 observationProcess.setIntegrateGainRate(integrateGainRate);
             }
         }
-        Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutaion (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
+        Logger.getLogger("dr.evolution").info("\tIf you publish results using Acquisition-Loss-Mutation (ALS) Model likelihood, please reference Alekseyenko, Lee and Suchard (2008) Syst. Biol 57: 772-784.\n---------------------------------\n");
 
         return new ALSTreeLikelihood(observationProcess, patternList, treeModel, siteModel, branchRateModel, useAmbiguities, storePartials);
     }

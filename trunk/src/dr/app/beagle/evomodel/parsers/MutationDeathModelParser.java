@@ -23,19 +23,20 @@
  * Boston, MA  02110-1301  USA
  */
 
-package dr.evomodelxml.substmodel;
+package dr.app.beagle.evomodel.parsers;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.MutationDeathModel;
+import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.datatype.MutationDeathType;
-import dr.evomodel.substmodel.AbstractSubstitutionModel;
-import dr.evomodel.substmodel.FrequencyModel;
-import dr.evomodel.substmodel.MutationDeathModel;
 import dr.inference.model.Parameter;
 import dr.xml.*;
 
 import java.util.logging.Logger;
 
 /**
- *
+ * @author Alexander V. Alekseyenko
+ * @author Marc A. Suchard
  */
 public class MutationDeathModelParser extends AbstractXMLObjectParser {
 
@@ -55,7 +56,7 @@ public class MutationDeathModelParser extends AbstractXMLObjectParser {
 
         MutationDeathType dT = (MutationDeathType) xo.getChild(MutationDeathType.class);
 
-        AbstractSubstitutionModel evoModel = (AbstractSubstitutionModel) xo.getChild(AbstractSubstitutionModel.class);
+        SubstitutionModel evoModel = (SubstitutionModel) xo.getChild(SubstitutionModel.class);
         if (evoModel == null) {  // Assuming pure survival model
             Logger.getLogger("dr.evomodel").info("\tSubstitutionModel not provided assuming pure death/survival model.");
             dummyFreqParameter = new Parameter.Default(new double[]{1.0, 0.0});
@@ -99,7 +100,7 @@ public class MutationDeathModelParser extends AbstractXMLObjectParser {
     }
 
     private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
-            new ElementRule(AbstractSubstitutionModel.class, true),
+            new ElementRule(SubstitutionModel.class, true),
             new ElementRule(Parameter.class),
             new ElementRule(MutationDeathType.class),
             new ElementRule(MUTATION_RATE, new XMLSyntaxRule[]{new ElementRule(Parameter.class)}, true)

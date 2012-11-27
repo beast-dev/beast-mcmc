@@ -1,5 +1,31 @@
+/*
+ * AbstractObservationProcess.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.MSSD;
 
+import dr.app.beagle.evomodel.treelikelihood.ALSBeagleTreeLikelihood;
 import dr.evolution.alignment.AscertainedSitePatterns;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.MutationDeathType;
@@ -137,6 +163,62 @@ abstract public class AbstractObservationProcess extends AbstractModel {
         double logL = 0;
         for (int j = 0; j < patternCount; ++j) {
             logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
+        }
+        return logL;
+    }
+
+
+    public double nodePatternLikelihood(double[] freqs, ALSBeagleTreeLikelihood alsBeagleTreeLikelihood) {
+        int i, j;
+        double logL = gammaNorm;
+
+        double birthRate = lam.getParameterValue(0);
+        double logProb;
+        if (!nodePatternInclusionKnown)
+            setNodePatternInclusion();
+        if (nodePartials == null) {
+            nodePartials = new double[patternCount * stateCount];
+        }
+
+        double averageRate = getAverageRate();
+
+        for (j = 0; j < patternCount; ++j) cumLike[j] = 0;
+
+        for (i = 0; i < nodeCount; ++i) {
+            // get partials for node i
+            alsBeagleTreeLikelihood.getPartials(i, nodePartials);
+            /*
+                multiply the partials by equilibrium probs
+                    this part could be optimized by first summing
+                    and then multiplying by equilibrium probs
+            */
+//            likelihoodCore.calculateLogLikelihoods(nodePartials, freqs, nodeLikelihoods);   // MAS Removed
+            logProb = Math.log(getNodeSurvivalProbability(i, averageRate));
+
+            for (j = 0; j < patternCount; ++j) {
+                if (nodePatternInclusion[i * patternCount + j]) {
+//                    cumLike[j] += Math.exp(nodeLikelihoods[j] + logProb);  // MAS Replaced with line below
+                    cumLike[j] += Math.exp(calculateSiteLogLikelihood(j, nodePartials, freqs)
+                                    + logProb);
+                }
+            }
+        }
+
+        double ascertainmentCorrection = getAscertainmentCorrection(cumLike);
+//        System.err.println("AscertainmentCorrection: "+ascertainmentCorrection);
+
+        for (j = 0; j < patternCount; ++j) {
+            logL += Math.log(cumLike[j] / ascertainmentCorrection) * patternWeights[j];
+        }
+
+        double deathRate = mu.getParameterValue(0);
+
+        double logTreeWeight = getLogTreeWeight();
+
+        if (integrateGainRate) {
+            logL -= gammaNorm + logN + Math.log(-logTreeWeight * deathRate / birthRate) * totalPatterns;
+        } else {
+            logL += logTreeWeight + Math.log(birthRate / deathRate) * totalPatterns;
         }
         return logL;
     }

@@ -1,7 +1,7 @@
 /*
- * NewBeagleTreeLikelihood.java
+ * BeagleTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,23 +25,11 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.logging.Logger;
-
-import beagle.Beagle;
-import beagle.BeagleFactory;
-import beagle.BeagleFlag;
-import beagle.InstanceDetails;
-import beagle.ResourceDetails;
+import beagle.*;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.EpochBranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.parsers.BeagleTreeLikelihoodParser;
-import dr.app.beagle.evomodel.parsers.OldTreeLikelihoodParser;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.FrequencyModel;
@@ -66,6 +54,9 @@ import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+
+import java.util.*;
+import java.util.logging.Logger;
 
 /**
  * BeagleTreeLikelihoodModel - implements a Likelihood Function for sequences on a tree.
@@ -892,7 +883,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         return logL;
     }
 
-    protected void getPartials(int number, double[] partials) {
+    public void getPartials(int number, double[] partials) {
         int cumulativeBufferIndex = Beagle.NONE;
         /* No need to rescale partials */
         beagle.getPartials(partialBufferHelper.getOffsetIndex(number), cumulativeBufferIndex, partials);
@@ -990,10 +981,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             branchUpdateCount++;
 
             update = true;
-            
-//            System.out.println("eigenIndex:" + eigenIndex);
-//            BeagleSequenceSimulator.print2DArray(matrixUpdateIndices);
-//            System.out.println();
         }
 
         // If the node is internal, update the partial likelihoods.

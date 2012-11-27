@@ -47,6 +47,8 @@ public class LesionDatedFarmCase extends AbstractCase {
                 associatedTaxa);
     }
 
+
+
     public Date getLatestPossibleInfectionDate() {
         Double doubleDate = examDate.getTimeValue();
         return Date.createTimeSinceOrigin(doubleDate, Units.Type.DAYS, examDate.getOrigin());
@@ -78,6 +80,26 @@ public class LesionDatedFarmCase extends AbstractCase {
 
     public boolean culledYet(int day) {
         return day>endOfInfectiousDate.getTimeValue()+1;
+    }
+
+    public Object getInfectionDate() {
+        return infectionDate;
+    }
+
+    public Object getInfectiousDate() {
+        return infectiousDate;
+    }
+
+    public Object getEndOfInfectiousDate() {
+        return endOfInfectiousDate;
+    }
+
+    public Double getEndOfInfectiousDateModeHeight(Date latestTaxonDate) {
+        return latestTaxonDate.getTimeValue()-endOfInfectiousDate.getTimeValue();
+    }
+
+    public Double getInfectiousDateModeHeight(Date latestTaxonDate) {
+        return latestTaxonDate.getTimeValue()-infectiousDate.mean();
     }
 
     public double infectiousCDF(double time){

@@ -35,6 +35,16 @@ public abstract class AbstractCase extends AbstractModel {
 
     public abstract boolean culledYet(int time);
 
+    public abstract Object getInfectionDate();
+
+    public abstract Object getInfectiousDate();
+
+    public abstract Object getEndOfInfectiousDate();
+
+    public abstract Double getEndOfInfectiousDateModeHeight(Date latestTaxonDate);
+
+    public abstract Double getInfectiousDateModeHeight(Date latestTaxonDate);
+
     public String toString(){
         return caseID;
     }

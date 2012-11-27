@@ -19,9 +19,7 @@ import dr.util.Citable;
 import dr.util.Citation;
 import dr.xml.*;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -73,6 +71,18 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
+    // occasionally needed for debugging purposes
+
+/*
+    private HashMap<AbstractCase, Double> treeInfectionDates;
+    private HashMap<AbstractCase, Integer> treeInfectionDays;
+    private HashMap<AbstractCase, Double> treeExamDates;
+    private HashMap<AbstractCase, Integer> treeExamDays;
+    private HashMap<AbstractCase, Double> dataInfectiousnessDates;
+    private HashMap<AbstractCase, Double> dataExamDates;
+*/
+
+
     // PUBLIC STUFF
 
     // Name
@@ -99,9 +109,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         addModel(virusTree);
         Date lastSampleDate = getLatestTaxonDate(virusTree);
 
-        /* We assume samples were taken at midday on the date of the last tip */
+        /* We assume samples were taken at the end of the date of the last tip */
 
-        estimatedLastSampleTime = lastSampleDate.getTimeValue()+0.5;
+        estimatedLastSampleTime = lastSampleDate.getTimeValue();
         cases = caseData;
         addModel(cases);
         verbose = false;
@@ -151,7 +161,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     protected final void handleModelChangedEvent(Model model, Object object, int index) {
         Arrays.fill(subTreeRecalculationNeeded, true);
         likelihoodKnown = false;
-
     }
 
 
@@ -226,7 +235,20 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public double calculateLogLikelihood(AbstractCase[] map){
+        // temporary stuff
+
+/*        treeInfectionDates = new HashMap<AbstractCase,Double>();
+        treeInfectionDays = new HashMap<AbstractCase,Integer>();
+        treeExamDates = new HashMap<AbstractCase, Double>();
+        treeExamDays = new HashMap<AbstractCase, Integer>();
+        dataExamDates = new HashMap<AbstractCase, Double>();
+        dataInfectiousnessDates = new HashMap<AbstractCase, Double>();*/
+
+
         NodeRef root = virusTree.getRoot();
+
+/*        buildDataTable(root,map,true,true,"test_table.csv");*/
+
         return calculateNodeTransmissionLogLikelihood(root, Integer.MIN_VALUE, map);
     }
 
@@ -287,7 +309,64 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return virusTree.getNodeHeight(node);
     }
 
-    /* Return the case whose infection resulted from this node (if internal) */
+    /* Writes a table of farm infection, infectiousness and exam dates based on the current painting */
+
+/*
+    private void buildDataTable(NodeRef node, AbstractCase[] currentBranchMap, boolean firstLoop,
+                                boolean doOutput, String fileName){
+        AbstractCase nodeCase = currentBranchMap[node.getNumber()];
+        if(virusTree.isRoot(node)){
+            treeInfectionDates.put(nodeCase, -1.0);
+            treeInfectionDays.put(nodeCase, -1);
+        } else {
+            NodeRef parent = virusTree.getParent(node);
+            AbstractCase parentCase = currentBranchMap[parent.getNumber()];
+            if(!parentCase.equals(nodeCase)){
+                treeInfectionDates.put(nodeCase, getHeight(parent));
+                treeInfectionDays.put(nodeCase, getNodeDay(parent));
+            }
+        }
+        if(virusTree.isExternal(node)){
+            treeExamDates.put(nodeCase, getHeight(node));
+            treeExamDays.put(nodeCase, getNodeDay(node));
+        } else {
+            for(int i=0;i<2;i++){
+                buildDataTable(virusTree.getChild(node,i),currentBranchMap,false,false,null);
+            }
+        }
+        if(firstLoop){
+            for(AbstractCase currentCase: cases.getCases()){
+                dataExamDates.put(currentCase,currentCase.getEndOfInfectiousDateModeHeight(getLatestTaxonDate(virusTree)));
+                dataInfectiousnessDates.put(currentCase,
+                        currentCase.getInfectiousDateModeHeight(getLatestTaxonDate(virusTree)));
+            }
+            if(doOutput){
+                try{
+                    BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+                    String header = "Name,tree_infection_date,tree_infection_day,tree_exam_date,tree_exam_day,"+
+                            "data_exam_date,data_infectious_date";
+                    writer.write(header);
+                    writer.newLine();
+                    for(AbstractCase currentCase: cases.getCases()){
+                        String line = currentCase.getName() + "," + Double.toString(treeInfectionDates.get(currentCase)) +
+                                "," + Integer.toString(treeInfectionDays.get(currentCase)) + "," +
+                                Double.toString(treeExamDates.get(currentCase)) + "," +
+                                Integer.toString(treeExamDays.get(currentCase)) + "," +
+                                Double.toString(dataExamDates.get(currentCase)) + "," +
+                                Double.toString(dataInfectiousnessDates.get(currentCase));
+                        writer.write(line);
+                        writer.newLine();
+                    }
+                    writer.close();
+                } catch(IOException e){
+                    System.out.println("Write to file failed (IOException");
+                }
+            }
+        }
+    }
+*/
+
+        /* Return the case whose infection resulted from this node (if internal) */
 
     private AbstractCase getInfected(NodeRef node){
         if(virusTree.isExternal(node)){
@@ -329,36 +408,6 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     public AbstractCase getParentCase(NodeRef node){
         return branchMap[virusTree.getParent(node).getNumber()];
-    }
-
-    /*Given a new tree with no labels, associates each of the terminal branches with the relevant case and then
-    * generates a random painting of the rest of the tree to start off with. If checkNonZero is true in
-    * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
-    * likelihood first.*/
-
-    private AbstractCase[] paintRandomNetwork(){
-        boolean gotOne = false;
-        AbstractCase[] map = null;
-        int tries = 1;
-        System.out.println("Generating a random starting painting of the tree (checking nonzero likelihood for all " +
-                "branches and repeating until a start with nonzero likelihood is found)");
-        System.out.print("Attempt: ");
-        while(!gotOne){
-            System.out.print(tries + "...");
-            map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
-            paintRandomNetwork(map,true);
-            if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
-                gotOne = true;
-                System.out.print("found.");
-            }
-            tries++;
-            if(tries==101){
-                throw new RuntimeException("Failed to find a starting transmission tree after 100 attempts; giving " +
-                        "up.");
-            }
-        }
-        System.out.println();
-        return map;
     }
 
     /* Populates the branch map for external nodes */
@@ -442,10 +491,43 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
+    /*Given a new tree with no labels, associates each of the terminal branches with the relevant case and then
+  * generates a random painting of the rest of the tree to start off with. If checkNonZero is true in
+  * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
+  * likelihood first.*/
+
+    private AbstractCase[] paintRandomNetwork(){
+        boolean gotOne = false;
+        AbstractCase[] map = null;
+        int tries = 1;
+        System.out.println("Generating a random starting painting of the tree (checking nonzero likelihood for all " +
+                "branches and repeating up to 100 times until a start with nonzero likelihood is found)");
+        System.out.print("Attempt: ");
+        while(!gotOne){
+            System.out.print(tries + "...");
+            map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
+            paintRandomNetwork(map,true);
+            if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
+                gotOne = true;
+                System.out.print("found.");
+            }
+            tries++;
+            if(tries==101){
+                System.out.println("giving " +
+                        "up.");
+                break;
+            }
+        }
+        System.out.println();
+        return map;
+    }
+
+
+
     /* Paints a phylogenetic tree with a random compatible painting; if checkNonZero is true, make sure all branch
-    likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
-    is much less likely to).
-     */
+   likelihoods are nonzero in the process (this sometimes still results in a zero likelihood for the whole tree, but
+   is much less likely to).
+    */
 
     private AbstractCase[] paintRandomNetwork(AbstractCase[] map, boolean checkNonZero){
         Arrays.fill(subTreeRecalculationNeeded,true);

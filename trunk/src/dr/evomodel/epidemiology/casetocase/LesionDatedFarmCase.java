@@ -259,7 +259,7 @@ public class LesionDatedFarmCase extends AbstractCase {
                 throw new RuntimeException("Numerical integrator not specified.");
             } else {
                 L_x_fi underlyingFunction = new L_x_fi(argument);
-                return numericalIntegrator.integrate(underlyingFunction,argument,examDate.getTimeValue()+1);
+                return numericalIntegrator.integrate(underlyingFunction,argument,examDate.getTimeValue());
             }
         }
 

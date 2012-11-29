@@ -388,7 +388,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
         if (!treeModel.isRoot(node)) {
             // Integrate out trait value at this node
             double thisPrecision = 1.0 / getRescaledBranchLength(node);
-            upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
+            if (Double.isInfinite(thisPrecision)) {
+                upperPrecisionCache[thisNumber] = totalPrecision;
+            } else {
+                upperPrecisionCache[thisNumber] = totalPrecision * thisPrecision / (totalPrecision + thisPrecision);
+            }
         }
 
         // Compute logRemainderDensity

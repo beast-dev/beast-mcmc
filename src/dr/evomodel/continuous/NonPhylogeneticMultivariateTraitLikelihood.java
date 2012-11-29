@@ -1,7 +1,7 @@
 /*
  * NonPhylogeneticMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -108,6 +108,18 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
         sb.append("\n\tDiffusion dimension   : ").append(dimTrait).append("\n");
         sb.append(  "\tNumber of observations: ").append(numData).append("\n");
         Logger.getLogger("dr.evomodel").info(sb.toString());
+    }
+
+    protected double getTreeLength() {
+        double treeLength = 0;
+
+        double rootHeight = treeModel.getNodeHeight(treeModel.getRoot());
+        treeLength = 0;
+        for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
+            NodeRef node = treeModel.getExternalNode(i);
+            treeLength += rootHeight - treeModel.getNodeHeight(node); // Bug was here
+        }
+        return treeLength;
     }
         
     public List<Citation> getCitations() {

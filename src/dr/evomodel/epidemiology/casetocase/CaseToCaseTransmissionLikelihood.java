@@ -491,6 +491,30 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
     }
 
+    public void writeNetworkToFile(String fileName){
+        try{
+            BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+            writer.write("Case,Parent");
+            writer.newLine();
+            for(int i=0; i<virusTree.getExternalNodeCount(); i++){
+                TreeModel.Node extNode = (TreeModel.Node)virusTree.getExternalNode(i);
+                String tipName = extNode.taxon.toString();
+                String infector;
+                try{
+                    infector = getInfector(extNode).getName();
+                } catch(NullPointerException e){
+                    infector = "Start";
+                }
+                writer.write(tipName + "," + infector);
+                writer.newLine();
+            }
+            writer.close();
+        } catch(IOException e) {
+            System.out.println("Failed to write to file");
+        }
+
+    }
+
     /*Given a new tree with no labels, associates each of the terminal branches with the relevant case and then
   * generates a random painting of the rest of the tree to start off with. If checkNonZero is true in
   * randomlyPaintNode then the network will be checked to prohibit links with zero (or rounded to zero)
@@ -506,11 +530,15 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         while(!gotOne){
             System.out.print(tries + "...");
             map = prepareExternalNodeMap(new AbstractCase[virusTree.getNodeCount()]);
-            paintRandomNetwork(map,true);
-            if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
-                gotOne = true;
-                System.out.print("found.");
-            }
+            //Warning - if the BadPaintingException in randomlyPaintNode might be caused by a bug rather than both
+            //likelihoods rounding to zero, you want to stop catching this to investigate.
+            try{
+                paintRandomNetwork(map,true);
+                if(calculateLogLikelihood(map)!=Double.NEGATIVE_INFINITY){
+                    gotOne = true;
+                    System.out.print("found.");
+                }
+            } catch(BadPaintingException ignored){}
             tries++;
             if(tries==101){
                 System.out.println("giving " +
@@ -557,7 +585,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                             getNodeDay(node.getChild(1-i)));
                 }
                 if(branchLogLs[0]==Double.NEGATIVE_INFINITY && branchLogLs[1]==Double.NEGATIVE_INFINITY){
-                    throw new RuntimeException("Both branch possibilities have zero likelihood: "
+                    throw new BadPaintingException("Both branch possibilities have zero likelihood: "
                             +node.toString()+", cases " + choices[0].getName() + " and " + choices[1].getName() + ".");
                 } else if(branchLogLs[0]==Double.NEGATIVE_INFINITY || branchLogLs[1]==Double.NEGATIVE_INFINITY){
                     if(branchLogLs[0]==Double.NEGATIVE_INFINITY){
@@ -666,4 +694,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 Citation.Status.IN_PREPARATION));
         return citations;
     }
+
+    public class BadPaintingException extends RuntimeException{
+
+        public BadPaintingException(String s){
+            super(s);
+        }
+
+    }
+
 }

@@ -166,9 +166,9 @@ public class JChart extends JPanel {
         repaint();
     }
 
-    public void selectPoints(Rectangle2D dragRectangle) {
+    public void selectPoints(Rectangle2D dragRectangle, boolean addToSelection) {
         for (Plot plot : plots) {
-            plot.selectPoints(dragRectangle);
+            plot.selectPoints(dragRectangle, addToSelection);
         }
         repaint();
     }
@@ -658,7 +658,7 @@ public class JChart extends JPanel {
 
             if (plotBounds != null && plotBounds.contains(me.getPoint())) {
                 for (Plot plot : plots) {
-                    plot.pointClicked(me.getPoint());
+                    plot.pointClicked(me.getPoint(), me.isShiftDown());
                 }
 
 

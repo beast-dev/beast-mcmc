@@ -37,10 +37,6 @@ public class ChartSelector implements MouseListener, MouseMotionListener {
     }
 
     public void mouseClicked(MouseEvent mouseEvent) {
-        if (chart == null) {
-            return;
-        }
-
 //        Node selectedNode = treePane.getNodeAt((Graphics2D) treePane.getGraphics(), mouseEvent.getPoint());
 //        if (!mouseEvent.isShiftDown()) {
 //            treePane.clearSelection();
@@ -78,7 +74,7 @@ public class ChartSelector implements MouseListener, MouseMotionListener {
         double y1 = Math.min(dragPoint.getY(), mouseEvent.getPoint().getY());
         double x2 = Math.max(dragPoint.getX(), mouseEvent.getPoint().getX());
         double y2 = Math.max(dragPoint.getY(), mouseEvent.getPoint().getY());
-        chart.selectPoints(new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1));
+        chart.selectPoints(new Rectangle2D.Double(x1, y1, x2 - x1, y2 - y1), mouseEvent.isShiftDown());
 
         chart.setDragRectangle(null);
     }

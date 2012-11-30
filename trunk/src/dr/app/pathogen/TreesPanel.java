@@ -410,6 +410,11 @@ public class TreesPanel extends JPanel implements Exportable {
                 rootToTipPlot.setMarkStyle(Plot.CIRCLE_MARK, 5, new BasicStroke(0.5F), new Color(44, 44, 44), new Color(249, 202, 105));
                 rootToTipPlot.setHilightedMarkStyle(new BasicStroke(0.5F), new Color(44, 44, 44), UIManager.getColor("List.selectionBackground"));
                 rootToTipPlot.addListener(new Plot.Adaptor() {
+                    @Override
+                    public void markClicked(int index, double x, double y, boolean isShiftDown) {
+                         rootToTipPlot.selectPoint(index, isShiftDown);
+                    }
+
                     public void selectionChanged(final Set<Integer> selectedPoints) {
                         plotSelectionChanged(selectedPoints);
                     }
@@ -495,6 +500,12 @@ public class TreesPanel extends JPanel implements Exportable {
                 Variate.D yOffsetValues = new Variate.D(dummyValues);
                 residualPlot = new ScatterPlot(values, yOffsetValues);
                 residualPlot.addListener(new Plot.Adaptor() {
+                    @Override
+                    public void markClicked(int index, double x, double y, boolean isShiftDown) {
+                        rootToTipPlot.selectPoint(index, isShiftDown);
+                    }
+
+                    @Override
                     public void selectionChanged(final Set<Integer> selectedPoints) {
                         plotSelectionChanged(selectedPoints);
                     }

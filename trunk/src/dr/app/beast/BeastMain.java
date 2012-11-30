@@ -38,6 +38,8 @@ import dr.util.Version;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
+import mpi.MPI;
+import mpi.MPIException;
 
 import javax.swing.*;
 import java.io.File;
@@ -240,6 +242,10 @@ public class BeastMain {
         System.out.println();
     }
 
+    private static long updateSeedByRank(long seed, int rank) {
+        return seed + 1000 * 1000 * rank;
+    }
+
     //Main method
     public static void main(String[] args) throws java.io.IOException {
 
@@ -277,6 +283,7 @@ public class BeastMain {
                         new Arguments.StringOption("beagle_scaling", new String[]{"default", "dynamic", "delayed", "always", "none"},
                                 false, "BEAGLE: specify scaling scheme to use"),
                         new Arguments.IntegerOption("beagle_rescale", "BEAGLE: frequency of rescaling (dynamic scaling only)"),
+                        new Arguments.Option("mpi", "Use MPI rank to label output"),
                         new Arguments.Option("help", "Print this information and stop"),
                 });
 
@@ -307,6 +314,7 @@ public class BeastMain {
         final boolean working = arguments.hasOption("working");
         String fileNamePrefix = null;
         boolean allowOverwrite = arguments.hasOption("overwrite");
+        boolean useMPI = arguments.hasOption("mpi");
 
         long seed = MathUtils.getSeed();
         boolean useJava = false;
@@ -387,6 +395,24 @@ public class BeastMain {
                 System.err.println("The random number seed should be > 0");
                 System.exit(1);
             }
+        }
+
+        if (useMPI) {
+            String[] nullArgs = new String[0];
+            try {
+                MPI.Init(nullArgs);
+            } catch (MPIException e) {
+                throw new RuntimeException("Unable to access MPI.");
+            }
+            int rank = MPI.COMM_WORLD.Rank();
+            System.setProperty("mpi.rank.postfix", String.valueOf(rank));
+
+        }
+
+        String rankProp = System.getProperty("mpi.rank.postfix");
+        if (rankProp != null) {
+            int rank = Integer.valueOf(rankProp);
+            seed = updateSeedByRank(seed, rank);
         }
 
         int maxErrorCount = 0;
@@ -567,6 +593,10 @@ public class BeastMain {
             } else {
                 System.exit(1);
             }
+        }
+
+        if (useMPI) {
+            MPI.Finalize();
         }
 
         if (!window) {

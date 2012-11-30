@@ -1,7 +1,7 @@
 /*
  * XMLParser.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -390,7 +390,7 @@ public class XMLParser {
      * @return
      */
     private static File getFileHandle(XMLObject xo, String attributeName) throws XMLParseException {
-        final String fileName = xo.getStringAttribute(attributeName);
+        String fileName = xo.getStringAttribute(attributeName);
 
         // Check to see if a filename prefix has been specified, check it doesn't contain directory
         // separator characters and then prefix it.
@@ -399,6 +399,16 @@ public class XMLParser {
         if (fileNamePrefix != null) {
             if (fileNamePrefix.trim().length() == 0 || fileNamePrefix.contains(fileSeparator)) {
                 throw new XMLParseException("The specified file name prefix is illegal.");
+            }
+        }
+
+        final String fileRankPostfix = System.getProperty("mpi.rank.postfix");
+        if (fileRankPostfix != null) {
+            if (fileName.endsWith(".log")) {
+                fileName = fileName.substring(0, fileName.length() - 4) + fileRankPostfix + ".log";
+            }
+            if (fileName.endsWith(".trees")) {
+                fileName = fileName.substring(0, fileName.length() - 6) + fileRankPostfix + ".trees";
             }
         }
 

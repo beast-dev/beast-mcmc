@@ -168,7 +168,7 @@ public class ScatterPlot extends Plot.AbstractPlot {
     /**
      * A point on the plot has been clicked
      */
-    public void pointClicked(Point2D point) {
+    public void pointClicked(Point2D point, boolean isShiftDown) {
 
         double x = untransformX(point.getX());
         double y = untransformY(point.getY());
@@ -182,10 +182,10 @@ public class ScatterPlot extends Plot.AbstractPlot {
                     break;
                 }
             }
-            fireMarkClickedEvent(mark, x, y);
+            fireMarkClickedEvent(mark, x, y, isShiftDown);
 		}
 
-		firePointClickedEvent(x, y);
+		firePointClickedEvent(x, y, isShiftDown);
 	}
 
 }

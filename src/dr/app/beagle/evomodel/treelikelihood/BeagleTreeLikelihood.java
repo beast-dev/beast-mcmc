@@ -962,7 +962,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         }
 
         // First update the transition probability matrix(ices) for this branch
-        if (flip && parent != null && updateNode[nodeNum]) {
+        if (parent != null && updateNode[nodeNum]) {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 

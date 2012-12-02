@@ -1,7 +1,7 @@
 /*
  * SubstitutionModelDelegate.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,7 +31,10 @@ import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -85,7 +88,8 @@ public final class SubstitutionModelDelegate {
     }// END: Constructor
 
     public boolean canReturnComplexDiagonalization() {
-        return substitutionModelList.get(0).getEigenDecomposition().canReturnComplexDiagonalization();
+        // TODO Should return true if any model in list is complex.
+        return substitutionModelList.get(0).canReturnComplexDiagonalization();
     }
 
     public int getEigenBufferCount() {
@@ -136,8 +140,10 @@ public final class SubstitutionModelDelegate {
             if (order.length == 1) {
                 probabilityIndices[order[0]][counts[order[0]]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
                 edgeLengths[order[0]][counts[order[0]]] = edgeLength[i];
-                counts[order[0]] ++;
+                counts[order[0]]++;
             } else {
+                System.err.println("No!");
+                System.exit(-1);
                 double sum = 0.0;
                 for (double w : weights) {
                     sum += w;
@@ -164,7 +170,7 @@ public final class SubstitutionModelDelegate {
                             convolveMatrices(beagle, convolutionList);
 
                             // reset the counts
-                            for (int k = 0; k < eigenCount; k ++) {
+                            for (int k = 0; k < eigenCount; k++) {
                                 counts[k] = 0;
                             }
 
@@ -259,17 +265,17 @@ public final class SubstitutionModelDelegate {
                             operationsCount = 0;
                             done = false;
                         }
-                    } while(!done);
+                    } while (!done);
 
                     resultConvolutionBuffers[operationsCount] = buffer;
                     convolve.push(buffer);
-                    operationsCount ++;
+                    operationsCount++;
 
-                } else  if (convolve.size() == 3) {
+                } else if (convolve.size() == 3) {
                     firstConvolutionBuffers[operationsCount] = convolve.pop();
                     secondConvolutionBuffers[operationsCount] = convolve.pop();
                     resultConvolutionBuffers[operationsCount] = convolve.pop();
-                    operationsCount ++;
+                    operationsCount++;
                 } else {
                     throw new RuntimeException("Unexpected convolve list size");
                 }

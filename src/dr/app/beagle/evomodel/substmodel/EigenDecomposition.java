@@ -72,14 +72,6 @@ public class EigenDecomposition {
     }
 
     /**
-     * This functions returns true if the diagonalization may be complex
-     * @return bool
-     */
-    public boolean canReturnComplexDiagonalization() {
-        return false;
-    }
-
-    /**
      * This function rescales the eigen values; this is more stable than
      * rescaling the original Q matrix, also O(stateCount) instead of O(stateCount^2)
      */

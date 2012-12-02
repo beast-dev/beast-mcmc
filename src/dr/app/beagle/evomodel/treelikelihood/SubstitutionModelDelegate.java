@@ -1,7 +1,7 @@
 /*
  * SubstitutionModelDelegate.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -138,12 +138,11 @@ public final class SubstitutionModelDelegate {
             double[] weights = mapping.getWeights();
 
             if (order.length == 1) {
-                probabilityIndices[order[0]][counts[order[0]]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
-                edgeLengths[order[0]][counts[order[0]]] = edgeLength[i];
-                counts[order[0]]++;
+                int k = order[0];
+                probabilityIndices[k][counts[k]] = matrixBufferHelper.getOffsetIndex(branchIndices[i]);
+                edgeLengths[k][counts[k]] = edgeLength[i];
+                counts[k]++;
             } else {
-                System.err.println("No!");
-                System.exit(-1);
                 double sum = 0.0;
                 for (double w : weights) {
                     sum += w;

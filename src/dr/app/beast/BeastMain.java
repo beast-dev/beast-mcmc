@@ -38,8 +38,6 @@ import dr.util.Version;
 import dr.xml.XMLObjectParser;
 import dr.xml.XMLParser;
 import jam.util.IconUtils;
-import mpi.MPI;
-import mpi.MPIException;
 
 import javax.swing.*;
 import java.io.File;
@@ -400,11 +398,11 @@ public class BeastMain {
         if (useMPI) {
             String[] nullArgs = new String[0];
             try {
-                MPI.Init(nullArgs);
-            } catch (MPIException e) {
+                BeastMPI.Init(nullArgs);
+            } catch (Exception e) {
                 throw new RuntimeException("Unable to access MPI.");
             }
-            int rank = MPI.COMM_WORLD.Rank();
+            int rank = BeastMPI.COMM_WORLD.Rank();
             System.setProperty("mpi.rank.postfix", String.valueOf(rank));
 
         }
@@ -596,7 +594,7 @@ public class BeastMain {
         }
 
         if (useMPI) {
-            MPI.Finalize();
+            BeastMPI.Finalize();
         }
 
         if (!window) {

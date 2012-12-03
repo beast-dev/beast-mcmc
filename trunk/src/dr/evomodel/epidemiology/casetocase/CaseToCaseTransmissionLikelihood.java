@@ -73,15 +73,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
     // occasionally needed for debugging purposes
 
-/*
-    private HashMap<AbstractCase, Double> treeInfectionDates;
+/*    private HashMap<AbstractCase, Double> treeInfectionDates;
     private HashMap<AbstractCase, Integer> treeInfectionDays;
     private HashMap<AbstractCase, Double> treeExamDates;
     private HashMap<AbstractCase, Integer> treeExamDays;
     private HashMap<AbstractCase, Double> dataInfectiousnessDates;
-    private HashMap<AbstractCase, Double> dataExamDates;
-*/
-
+    private HashMap<AbstractCase, Double> dataExamDates;*/
 
     // PUBLIC STUFF
 
@@ -237,12 +234,14 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     public double calculateLogLikelihood(AbstractCase[] map){
         // temporary stuff
 
-/*        treeInfectionDates = new HashMap<AbstractCase,Double>();
+/*
+        treeInfectionDates = new HashMap<AbstractCase,Double>();
         treeInfectionDays = new HashMap<AbstractCase,Integer>();
         treeExamDates = new HashMap<AbstractCase, Double>();
         treeExamDays = new HashMap<AbstractCase, Integer>();
         dataExamDates = new HashMap<AbstractCase, Double>();
-        dataInfectiousnessDates = new HashMap<AbstractCase, Double>();*/
+        dataInfectiousnessDates = new HashMap<AbstractCase, Double>();
+*/
 
 
         NodeRef root = virusTree.getRoot();
@@ -336,7 +335,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
         if(firstLoop){
             for(AbstractCase currentCase: cases.getCases()){
-                dataExamDates.put(currentCase,currentCase.getEndOfInfectiousDateModeHeight(getLatestTaxonDate(virusTree)));
+                dataExamDates.put(currentCase,
+                        currentCase.getEndOfInfectiousDateModeHeight(getLatestTaxonDate(virusTree)));
                 dataInfectiousnessDates.put(currentCase,
                         currentCase.getInfectiousDateModeHeight(getLatestTaxonDate(virusTree)));
             }
@@ -348,8 +348,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                     writer.write(header);
                     writer.newLine();
                     for(AbstractCase currentCase: cases.getCases()){
-                        String line = currentCase.getName() + "," + Double.toString(treeInfectionDates.get(currentCase)) +
-                                "," + Integer.toString(treeInfectionDays.get(currentCase)) + "," +
+                        String line = currentCase.getName() + ","
+                                + Double.toString(treeInfectionDates.get(currentCase)) + "," +
+                                Integer.toString(treeInfectionDays.get(currentCase)) + "," +
                                 Double.toString(treeExamDates.get(currentCase)) + "," +
                                 Integer.toString(treeExamDays.get(currentCase)) + "," +
                                 Double.toString(dataExamDates.get(currentCase)) + "," +

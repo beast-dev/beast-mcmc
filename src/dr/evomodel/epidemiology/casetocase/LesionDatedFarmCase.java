@@ -281,7 +281,7 @@ public class LesionDatedFarmCase extends AbstractCase {
         }
 
         public double evaluate(double argument) {
-            if(argument<currentT || argument>examDate.getTimeValue()+1){
+            if(argument<currentT || argument>examDate.getTimeValue()){
                 return 0;
             } else {
                 return incubationPeriod.pdf(argument-currentT)*infectiousDate.pdf(argument);

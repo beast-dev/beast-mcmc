@@ -966,9 +966,17 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
 
             final double branchRate = branchRateModel.getBranchRate(tree, node);
 
-            // Get the operational time of the branch
-            final double branchLength = branchRate * (tree.getNodeHeight(parent) - tree.getNodeHeight(node));
+            double parentHeight, nodeHeight;
+            synchronized (tree) {
+                // there was an issue when multiple BTL tried to get node heights from the
+                // same tree in different threads. Synchronizing on the tree fixes this -
+                // might have other implications.
+                parentHeight = tree.getNodeHeight(parent);
+                nodeHeight = tree.getNodeHeight(node);
+            }
 
+            // Get the operational time of the branch
+            final double branchLength = branchRate * (parentHeight - nodeHeight);
             if (branchLength < 0.0) {
                 throw new RuntimeException("Negative branch length: " + branchLength);
             }

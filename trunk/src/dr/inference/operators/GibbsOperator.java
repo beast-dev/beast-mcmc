@@ -1,7 +1,7 @@
 /*
  * GibbsOperator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -36,4 +36,9 @@ public interface GibbsOperator extends MCMCOperator {
 	* @return the number of steps the operator performs in one go.
 	*/
 	int getStepCount();
+
+    /**
+     * Set the path parameter for sampling from power-posterior
+     */
+    void setPathParameter(double beta);
 }

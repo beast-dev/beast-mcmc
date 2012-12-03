@@ -1,7 +1,7 @@
 /*
- * MCMC.java
+ * MarginalLikelihoodEstimator.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -31,9 +31,7 @@ import dr.inference.markovchain.MarkovChain;
 import dr.inference.markovchain.MarkovChainListener;
 import dr.inference.model.Model;
 import dr.inference.model.PathLikelihood;
-import dr.inference.operators.CombinedOperatorSchedule;
-import dr.inference.operators.OperatorAnalysisPrinter;
-import dr.inference.operators.OperatorSchedule;
+import dr.inference.operators.*;
 import dr.inference.prior.Prior;
 import dr.util.Identifiable;
 import dr.xml.*;
@@ -41,11 +39,9 @@ import org.apache.commons.math.MathException;
 import org.apache.commons.math.distribution.BetaDistributionImpl;
 
 /**
- * An MCMC analysis that estimates parameters of a probabilistic model.
- *
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
- * @version $Id: MCMC.java,v 1.41 2005/07/11 14:06:25 rambaut Exp $
+ * @author Marc Suchard
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
@@ -96,6 +92,14 @@ MCLogger logger) {
         for (pathParameter = scheme.nextPathParameter(); pathParameter >= 0; pathParameter = scheme.nextPathParameter()) {
             pathLikelihood.setPathParameter(pathParameter);
             reportIteration(pathParameter, chainLength, burnin, scheme.pathSteps, scheme.step);
+
+            for (int i = 0; i < schedule.getOperatorCount(); ++i) {
+                MCMCOperator operator = schedule.getOperator(i);
+                if (operator instanceof GibbsOperator) {
+                    ((GibbsOperator)operator).setPathParameter(pathParameter);
+                }
+            }
+
             long cl = mc.getCurrentLength();
             mc.setCurrentLength(0);
             mc.runChain(burnin, false/*, 0*/);

@@ -73,7 +73,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
     private double numberObservations;
     private final String traitName;
     private final boolean isSampledTraitLikelihood;
-
+    private double pathWeight = 1.0;
 
     public PrecisionMatrixGibbsOperator(
             MultivariateDistributionLikelihood likelihood,
@@ -125,11 +125,18 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         if (!isSampledTraitLikelihood &&
                 !(traitModel instanceof ConjugateWishartStatisticsProvider)) {
-            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood and " +
+            throw new RuntimeException("Only implemented for a SampledMultivariateTraitLikelihood or " +
                     "ConjugateWishartStatisticsProvider");
         }
 
         multivariateLikelihood = null;
+    }
+
+    public void setPathParameter(double beta) {
+        if (beta < 0 || beta > 1) {
+            throw new IllegalArgumentException("Illegal path weight of " + beta);
+        }
+        pathWeight = beta;
     }
 
     public int getStepCount() {
@@ -248,6 +255,9 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         try {
             S2 = new SymmetricMatrix(S);
+            if (pathWeight != 1.0) {
+                S2.product(pathWeight);
+            }
             if (priorInverseScaleMatrix != null)
                 S2 = priorInverseScaleMatrix.add(S2);
             inverseS2 = (SymmetricMatrix) S2.inverse();
@@ -265,7 +275,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
 
         final double[][] scaleMatrix = getOperationScaleMatrixAndSetObservationCount();
         final double treeDf = numberObservations;
-        final double df = priorDf + treeDf;
+        final double df = priorDf + treeDf * pathWeight;
 
         double[][] draw = WishartDistribution.nextWishart(df, scaleMatrix);
 

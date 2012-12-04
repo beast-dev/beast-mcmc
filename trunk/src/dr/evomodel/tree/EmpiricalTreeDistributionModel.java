@@ -55,6 +55,10 @@ public class EmpiricalTreeDistributionModel extends TreeModel {
 
         currentTreeIndex = MathUtils.nextInt(trees.length);
 
+        // Force computation of node heights now rather than later in the evaluation
+        // where multithreading may get conflicts.
+        trees[currentTreeIndex].getNodeHeight(trees[currentTreeIndex].getRoot());
+
 //        System.err.println(") new tree = " + currentTreeIndex);
 
         fireModelChanged(new TreeModel.TreeChangedEvent());

@@ -233,10 +233,10 @@ public class FlexibleTree implements MutableTree {
     }
 
     public double getNodeHeight(NodeRef node) {
-        if (!heightsKnown) {
-            calculateNodeHeights();
-        }
-        return ((FlexibleNode) node).getHeight();
+            if (!heightsKnown) {
+                calculateNodeHeights();
+            }
+            return ((FlexibleNode) node).getHeight();
     }
 
     public boolean hasBranchLengths() {
@@ -244,10 +244,10 @@ public class FlexibleTree implements MutableTree {
     }
 
     public double getBranchLength(NodeRef node) {
-        if (!lengthsKnown) {
-            calculateBranchLengths();
-        }
-        return ((FlexibleNode) node).getLength();
+            if (!lengthsKnown) {
+                calculateBranchLengths();
+            }
+            return ((FlexibleNode) node).getLength();
     }
 
     public double getNodeRate(NodeRef node) {

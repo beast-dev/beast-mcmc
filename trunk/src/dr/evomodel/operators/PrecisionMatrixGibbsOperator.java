@@ -256,7 +256,7 @@ public class PrecisionMatrixGibbsOperator extends SimpleMCMCOperator implements 
         try {
             S2 = new SymmetricMatrix(S);
             if (pathWeight != 1.0) {
-                S2.product(pathWeight);
+                 S2 = (SymmetricMatrix) S2.product(pathWeight);
             }
             if (priorInverseScaleMatrix != null)
                 S2 = priorInverseScaleMatrix.add(S2);

@@ -99,7 +99,7 @@ public class InitialTreeGenerator extends Generator {
                     taxaId = TaxaParser.TAXA;
                 } else { // Microsatellite always uses code below
                     taxaId = options.getDataPartitions(model).get(0).getPrefix() + TaxaParser.TAXA;
-                            }
+                }
 
                 writer.writeComment("Generate a random starting tree under the coalescent process");
                 if (options.taxonSets != null && options.taxonSets.size() > 0 && !options.useStarBEAST) { // need !options.useStarBEAST,
@@ -112,11 +112,10 @@ public class InitialTreeGenerator extends Generator {
                             }
                     );
 
+                    writeTaxaRef(taxaId, model, writer);
 
-                writeTaxaRef(taxaId, model, writer);
-
-                writeInitialDemoModelRef(model, writer);
-                writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+                    writeInitialDemoModelRef(model, writer);
+                    writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
                 }
                 break;
             default:
@@ -226,7 +225,7 @@ public class InitialTreeGenerator extends Generator {
             writeSubTree(null, null, taxa5, model, writer);
         }
 
-        if (taxaId != null) {
+        if (taxaId == null) {
             writer.writeIDref(TaxaParser.TAXA, taxa.getId());
         } else {
             writer.writeIDref(TaxaParser.TAXA, taxaId);

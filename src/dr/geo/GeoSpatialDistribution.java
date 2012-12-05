@@ -26,7 +26,6 @@
 package dr.geo;
 
 import dr.inference.distribution.MultivariateDistributionLikelihood;
-import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.math.distributions.MultivariateDistribution;
 import dr.xml.*;
@@ -208,7 +207,7 @@ public class GeoSpatialDistribution implements MultivariateDistribution {
         }
 
         public Class getReturnType() {
-            return Likelihood.class;
+            return MultivariateDistributionLikelihood.class;
         }
     };
 

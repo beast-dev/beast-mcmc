@@ -186,7 +186,7 @@ public class NonPhylogeneticMultivariateTraitLikelihood extends FullyConjugateMu
             final int tipNumber = tipNode.getNumber();
 
             double tipWeight = 0.0;
-            if (!missing[tipNumber]) {
+            if (!missingTraits.isCompletelyMissing(tipNumber)) {
                 
                 tipWeight = 1.0 / getLengthToRoot(tipNode);
 

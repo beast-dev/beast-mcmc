@@ -44,7 +44,6 @@ import dr.util.Citation;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.logging.Logger;
 
 /**
  * A multivariate trait likelihood that analytically integrates out the unobserved trait values at all internal
@@ -98,9 +97,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             storedLogRemainderDensityCache = new double[treeModel.getNodeCount()];
         }
 
-        missing = new boolean[treeModel.getNodeCount()];
-        Arrays.fill(missing, true); // All internal and root nodes are missing
-
         // Set up reusable temporary storage
         Ay = new double[dimTrait];
         tmpM = new double[dimTrait][dimTrait];
@@ -108,23 +104,20 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         zeroDimVector = new double[dim];
 
-        setTipDataValuesForAllNodes(missingIndices);
+        missingTraits = new MissingTraits.CompletelyMissing(treeModel, missingIndices, dim);
+        setTipDataValuesForAllNodes();
 
     }
 
-    private void setTipDataValuesForAllNodes(List<Integer> missingIndices) {
+    private void setTipDataValuesForAllNodes() {
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             setTipDataValuesForNode(node);
         }
-        for (Integer i : missingIndices) {
-            int whichTip = i / dim;
-            Logger.getLogger("dr.evomodel").info(
-                    "\tMarking taxon " + treeModel.getTaxonId(whichTip) + " as completely missing");
-            missing[whichTip] = true;
-        }
+        missingTraits.handleMissingTips();
     }
 
+    @SuppressWarnings("unused")
     public double getTotalTreePrecision() {
         getLogLikelihood(); // Do peeling if necessary
         final int rootIndex = treeModel.getRoot().getNumber();
@@ -139,7 +132,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             throw new RuntimeException("The trait parameter for the tip with index, " + index + ", is too short");
         }
         System.arraycopy(traitValue, 0, meanCache, dim * index, dim);
-        missing[index] = false;
     }
 
     public double[] getTipDataValues(int index) {
@@ -343,7 +335,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
             // Fill in precision scalar, traitValues already filled in
 
-            if (missing[thisNumber]) {
+            if (missingTraits.isCompletelyMissing(thisNumber)) {
                 upperPrecisionCache[thisNumber] = 0;
                 lowerPrecisionCache[thisNumber] = 0; // Needed in the pre-order traversal
             } else { // not missing tip trait
@@ -371,18 +363,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
         lowerPrecisionCache[thisNumber] = totalPrecision;
 
-        // Multiple child0 and child1 densities
+        // Multiply child0 and child1 densities
 
         if (totalPrecision == 0) {
             System.arraycopy(zeroDimVector, 0, meanCache, meanThisOffset, dim);
         } else {
-
-//            computeWeightedMeanCache(meanThisOffset, meanOffset0, meanOffset1, precision0, precision1);
-
-            computeWeightedAverage(
-                    meanCache, meanOffset0, precision0,
-                    meanCache, meanOffset1, precision1,
-                    meanCache, meanThisOffset, dim);
+            // Delegate in case either child is partially missing
+            missingTraits.computeWeightedAverage(meanCache,
+                    meanOffset0, precision0,
+                    meanOffset1, precision1,
+                    meanThisOffset, dim);
         }
 
         if (!treeModel.isRoot(node)) {
@@ -588,7 +578,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
 
     // Computes the weighted average of two vectors, used many times in these computations
 
-    protected static void computeWeightedAverage(double[] in0, int offset0, double weight0,
+    public static void computeWeightedAverage(double[] in0, int offset0, double weight0,
                                                  double[] in1, int offset1, double weight1,
                                                  double[] out2, int offset2,
                                                  int length) {
@@ -639,12 +629,16 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
         } else { // draw conditional on parentState
 
-            if (!missing[thisIndex]) {
+            if (!missingTraits.isCompletelyMissing(thisIndex)
+                    && !missingTraits.isPartiallyMissing(thisIndex)) {
 
                 System.arraycopy(meanCache, thisIndex * dim, drawnStates, thisIndex * dim, dim);
 
             } else {
 
+                if (missingTraits.isPartiallyMissing(thisIndex)) {
+                    throw new RuntimeException("Partially missing values are not yet implemented");
+                }
                 // This code should work for sampling a missing tip trait as well, but needs testing
 
                 // parent trait at drawnStates[parentOffset]
@@ -712,8 +706,6 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] lowerPrecisionCache;
     private double[] logRemainderDensityCache;
 
-    protected boolean[] missing;
-
     private double[] storedMeanCache;
     private double[] storedUpperPrecisionCache;
     private double[] storedLowerPrecisionCache;
@@ -734,5 +726,7 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     protected double[] Ay;
     protected double[][] tmpM;
     protected double[] tmp2;
+
+    protected final MissingTraits missingTraits;
 
 }

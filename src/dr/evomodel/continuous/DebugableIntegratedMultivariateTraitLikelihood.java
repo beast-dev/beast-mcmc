@@ -1,20 +1,45 @@
+/*
+ * DebugableIntegratedMultivariateTraitLikelihood.java
+ *
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.continuous;
 
-import dr.evomodel.tree.TreeModel;
-import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.inference.model.CompoundParameter;
-import dr.inference.model.Model;
-import dr.math.matrixAlgebra.Vector;
-import dr.math.matrixAlgebra.Matrix;
-import dr.math.matrixAlgebra.SymmetricMatrix;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.KroneckerOperation;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
+import dr.evomodel.branchratemodel.BranchRateModel;
+import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
+import dr.inference.model.Model;
+import dr.math.KroneckerOperation;
+import dr.math.distributions.MultivariateNormalDistribution;
+import dr.math.matrixAlgebra.Matrix;
+import dr.math.matrixAlgebra.SymmetricMatrix;
+import dr.math.matrixAlgebra.Vector;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
 /**
  * This class contains all of the O(number of tips^2) functions to debug the dynamic programming in its superclasses
@@ -52,7 +77,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
         int index = 0;
         for (int i = 0; i < tipCount; i++) {
 
-            if (!missing[i]) {
+            if (!missingTraits.isCompletelyMissing(i)) {
                 for (int k = 0; k < dimTrait; k++) {
                     traits[index++] = meanCache[dim * i + datum * dimTrait + k];
                 }
@@ -74,11 +99,11 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
 
         int iReal = 0;
         for (int i = 0; i < tipCount; i++) {
-            if (!missing[i]) {
+            if (!missingTraits.isCompletelyMissing(i)) {
 
                 int jReal = 0;
                 for (int j = 0; j < tipCount; j++) {
-                    if (!missing[j]) {
+                    if (!missingTraits.isCompletelyMissing(i)) {
 
                         outVariance[iReal][jReal] = variance[i][j];
 
@@ -230,7 +255,7 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
     protected int countNonMissingTips() {
         int tipCount = treeModel.getExternalNodeCount();
         for (int i = 0; i < tipCount; i++) {
-            if (missing[i]) {
+            if (missingTraits.isCompletelyMissing(i)) {
                 tipCount--;
             }
         }
@@ -294,10 +319,10 @@ public class DebugableIntegratedMultivariateTraitLikelihood extends SemiConjugat
         }
 
         for (int i = 0; i < nTips; i++) {
-            if (!missing[i]) {
+            if (!missingTraits.isCompletelyMissing(i)) {
                 tipTraitOuterProducts[i][i] = computeTipTraitOuterProduct(i, i);
                 for (int j = i + 1; j < nTips; j++) {
-                    if (!missing[j]) {
+                    if (!missingTraits.isCompletelyMissing(i)) {
                         tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = computeTipTraitOuterProduct(i, j);
                     } else {
                         tipTraitOuterProducts[j][i] = tipTraitOuterProducts[i][j] = null;

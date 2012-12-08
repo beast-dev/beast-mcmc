@@ -42,6 +42,7 @@ import org.apache.commons.math.distribution.BetaDistributionImpl;
  * @author Andrew Rambaut
  * @author Alex Alekseyenko
  * @author Marc Suchard
+ * @author Guy Baele
  */
 public class MarginalLikelihoodEstimator implements Runnable, Identifiable {
 
@@ -294,7 +295,7 @@ MCLogger logger) {
     }*/
 
     private void reportIteration(double pathParameter, long chainLength, long burnin, long totalSteps, long steps) {
-        System.out.println("Attempting theta ("+steps+"/" + totalSteps +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
+        System.out.println("Attempting theta ("+steps+"/" + (totalSteps+1) +") = " + pathParameter + " for " + chainLength + " iterations + " + burnin + " burnin.");
     }
 
     public void run() {
@@ -518,7 +519,7 @@ MCLogger logger) {
                     "\n  If you use these results, please cite:" +
                     "\n    Guy Baele, Philippe Lemey, Trevor Bedford, Andrew Rambaut, Marc A. Suchard, and Alexander V. Alekseyenko." +
                     "\n    2012. Improving the accuracy of demographic and molecular clock model comparison while accommodating " + 
-                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. (in press).");
+                    "\n          phylogenetic uncertainty. Mol. Biol. Evol. 29(9):2157-2167.");
             return mle;
         }
 

@@ -240,7 +240,11 @@ public class StateHistory {
     }
 
     public String toStringChanges(int site, DataType dataType) {
-        StringBuilder sb = new StringBuilder("{");
+        return toStringChanges(site, dataType, true);
+    }
+
+    public String toStringChanges(int site, DataType dataType, boolean wrap) {
+        StringBuilder sb = wrap ? new StringBuilder("{") : new StringBuilder();
         // site number gets put into each and every event string
 //        sb.append(site).append(",");
         int currentState = stateList.get(0).getState();
@@ -260,7 +264,9 @@ public class StateHistory {
                 currentState = nextState;
             }
         }
-        sb.append("}"); // Always returns an array of arrays
+        if (wrap) {
+            sb.append("}"); // Always returns an array of arrays
+        }
         return sb.toString();
     }
 

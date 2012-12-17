@@ -1,7 +1,7 @@
 /*
  * CodonPartitionedRobustCounting.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -222,6 +222,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
             if (useUniformization && saveCompleteHistory) {
                 UniformizedSubstitutionModel usModel = (UniformizedSubstitutionModel) markovJumps;
 
+                if (completeHistoryPerNode == null) {
+                    completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
+                }
+
                 StateHistory history = usModel.getStateHistory();
 
                 // Only report syn or nonsyn changes
@@ -236,7 +240,7 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
 
                     int n = history.getNumberOfJumps();
                     // MAS may have broken the next line
-                    String hstring = history.toStringChanges(i + 1, usModel.dataType);
+                    String hstring = history.toStringChanges(i + 1, usModel.dataType, false);
                     if (DEBUG) {
                         System.err.println("site " + (i + 1) + " : "
                                 + history.getNumberOfJumps()
@@ -244,12 +248,9 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                                 + history.toStringChanges(i + 1, usModel.dataType)
                                 + " " + codonLabeling.getText());
                     }
-
-                    if (completeHistoryPerNode == null) {
-                        completeHistoryPerNode = new String[tree.getNodeCount()][numCodons];
-                    }
-//                    completeHistoryPerNode[child.getNumber()][i] = usModel.getCompleteHistory(parentTime, childTime); // TODO Should reformat
                     completeHistoryPerNode[child.getNumber()][i] = hstring;
+                } else {
+                    completeHistoryPerNode[child.getNumber()][i] = null;
                 }
             }
 
@@ -292,11 +293,35 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                 }
 
                 public String[] getTrait(Tree tree, NodeRef node) {
-                    getExpectedCountsForBranch(node); // Lazy simulation of complete histories
+                    double[] count = getExpectedCountsForBranch(node); // Lazy simulation of complete histories
                     List<String> events = new ArrayList<String>();
                     for (int i = 0; i < numCodons; i++) {
                         if (completeHistoryPerNode[node.getNumber()][i] != null) {
                             events.add(completeHistoryPerNode[node.getNumber()][i]);
+                        }
+                    }
+                    if (DEBUG) {
+                        double sum = 0.0;
+                        for (double d : count) {
+                            if (d > 0.0) {
+                                sum += 1;
+                            }
+                        }
+                        System.err.println(events.size() + " " + sum);
+                        if (Math.abs(events.size() - sum) > 0.5) {
+                            System.err.println("Error");
+                            for (int i = 0; i < count.length; ++i) {
+                                if (count[i] != 0.0) {
+                                    System.err.println(i + ": " + count[i] + completeHistoryPerNode[node.getNumber()][i]);
+                                }
+                            }
+                            System.err.println("Error");
+                            int c = 0;
+                            for (String s : events) {
+                                c++;
+                                System.err.println(c + ":" + s);
+                            }
+                            System.exit(-1);
                         }
                     }
                     String[] array = new String[events.size()];

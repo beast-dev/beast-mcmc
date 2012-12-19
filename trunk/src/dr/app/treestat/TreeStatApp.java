@@ -27,6 +27,7 @@ package dr.app.treestat;
 
 import dr.app.beast.BeastVersion;
 import dr.app.util.OSType;
+import dr.evolution.io.NexusImporter;
 import dr.util.Version;
 import jam.framework.SingleDocApplication;
 import jam.mac.Utils;
@@ -49,6 +50,10 @@ public class TreeStatApp extends SingleDocApplication {
         // There is a major issue with languages that use the comma as a decimal separator.
         // To ensure compatibility between programs in the package, enforce the US locale.
         Locale.setDefault(Locale.US);
+
+        // don't display warnings from NexusImporter as they are only relevant to Beast-MCMC-1.x
+        NexusImporter.setSuppressWarnings(true);
+
 
         if (OSType.isMac()) {
             if (Utils.getMacOSXVersion().startsWith("10.5")) {

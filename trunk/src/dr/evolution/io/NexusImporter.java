@@ -66,6 +66,12 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
     public static final NexusBlock TREES_BLOCK = new NexusBlock("TREES");
     public static final NexusBlock CALIBRATION_BLOCK = new NexusBlock("CALIBRATION");
 
+    public static boolean suppressWarnings = false;
+
+    public static void setSuppressWarnings(boolean sw) {
+        suppressWarnings = sw;
+    }
+
     // NEXUS specific ImportException classes
     public static class MissingBlockException extends ImportException {
         /**
@@ -1029,9 +1035,9 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         // read the first child
         node.addChild(readBranch(translationList));
 
-        //if (getLastDelimiter() != ',') {
-            //throw new BadFormatException("Missing ',' in tree in TREES block");
-        //}
+        if (getLastDelimiter() != ',' && !suppressWarnings) {
+            java.util.logging.Logger.getLogger("dr.evolution.io").warning("Internal node only has a single child!");
+        }
 
         // this allows one or more children
         while(getLastDelimiter()==',') {

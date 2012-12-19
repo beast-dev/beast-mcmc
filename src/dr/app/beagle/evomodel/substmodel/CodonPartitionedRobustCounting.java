@@ -296,8 +296,16 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     double[] count = getExpectedCountsForBranch(node); // Lazy simulation of complete histories
                     List<String> events = new ArrayList<String>();
                     for (int i = 0; i < numCodons; i++) {
-                        if (completeHistoryPerNode[node.getNumber()][i] != null) {
-                            events.add(completeHistoryPerNode[node.getNumber()][i]);
+                        String eventString = completeHistoryPerNode[node.getNumber()][i];
+                        if (eventString != null) {
+                            if (eventString.contains("},{")) { // There are multiple events
+                                String[] elements = eventString.split("(?<=\\}),(?=\\{)");
+                                for (String e : elements) {
+                                    events.add(e);
+                                }
+                            } else {
+                                events.add(eventString);
+                            }
                         }
                     }
                     if (DEBUG) {

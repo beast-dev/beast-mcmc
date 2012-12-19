@@ -1251,7 +1251,8 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         // value=number, value="string", value={item1, item2, item3}
         // (label must be quoted if it contains spaces (i.e. "my label"=label)
 
-        Pattern pattern = Pattern.compile("(\"[^\"]*\"+|[^,=\\s]+)\\s*(=\\s*(\\{[^=}]*\\}|\"[^\"]*\"+|[^,]+))?");
+        // TODO MAS Minor change in line below for nested arrays may cause other unforeseen bugs
+        Pattern pattern = Pattern.compile("(\"[^\"]*\"+|[^,=\\s]+)\\s*(=\\s*(\\{[^=]*\\}|\"[^\"]*\"+|[^,]+))?");
         Matcher matcher = pattern.matcher(meta);
 
         while (matcher.find()) {
@@ -1291,7 +1292,35 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         if (value.startsWith("{")) {
             // the value is a list so recursively parse the elements
             // and return an array
-            String[] elements = value.substring(1, value.length() - 1).split(",");
+            String inside = value.substring(1, value.length() - 1);
+
+            if (inside.length() == 0) {
+                return null;
+            }
+
+             // Determine depth of further nesting
+            int depth = 0;
+            while (inside.charAt(depth) == '{') {
+                depth++;
+            }
+
+            StringBuilder split;
+            if (depth == 0) {
+                split = new StringBuilder(",");
+            } else {
+                StringBuilder rightBookEnd = new StringBuilder("(?<=");
+                StringBuilder leftBookEnd = new StringBuilder("(?=");
+                for (int i = 0; i < depth; ++i) {
+                    rightBookEnd.append("\\}");
+                    leftBookEnd.append("\\{");
+                }
+                leftBookEnd.append(")");
+                rightBookEnd.append(")");
+                split = rightBookEnd.append(",").append(leftBookEnd);
+            }
+
+            // Non-destructive split
+            String[] elements = inside.split(split.toString());
             Object[] values = new Object[elements.length];
             for (int i = 0; i < elements.length; i++) {
                 values[i] = parseValue(elements[i]);

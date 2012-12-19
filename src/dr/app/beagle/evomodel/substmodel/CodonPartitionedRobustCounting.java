@@ -292,6 +292,10 @@ public class CodonPartitionedRobustCounting extends AbstractModel implements Tre
                     return Intent.BRANCH;
                 }
 
+                public boolean getFormatAsArray() {
+                    return true;
+                }
+
                 public String[] getTrait(Tree tree, NodeRef node) {
                     double[] count = getExpectedCountsForBranch(node); // Lazy simulation of complete histories
                     List<String> events = new ArrayList<String>();

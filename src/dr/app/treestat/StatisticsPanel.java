@@ -93,6 +93,7 @@ public class StatisticsPanel extends OptionsPanel implements Exportable {
         availableStatistics.add(B1Statistic.FACTORY);
         availableStatistics.add(CollessIndex.FACTORY);
         availableStatistics.add(CherryStatistic.FACTORY);
+        availableStatistics.add(SingleChildCountStatistic.FACTORY);
         availableStatistics.add(Nbar.FACTORY);
         availableStatistics.add(TreenessStatistic.FACTORY);
         availableStatistics.add(GammaStatistic.FACTORY);

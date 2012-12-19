@@ -1029,16 +1029,20 @@ public class NexusImporter extends Importer implements SequenceImporter, TreeImp
         // read the first child
         node.addChild(readBranch(translationList));
 
-        // an internal node must have at least 2 children
-        if (getLastDelimiter() != ',') {
-            throw new BadFormatException("Missing ',' in tree in TREES block");
+        //if (getLastDelimiter() != ',') {
+            //throw new BadFormatException("Missing ',' in tree in TREES block");
+        //}
+
+        // this allows one or more children
+        while(getLastDelimiter()==',') {
+            node.addChild(readBranch(translationList));
         }
 
         // read subsequent children
-        do {
-            node.addChild(readBranch(translationList));
-
-        } while (getLastDelimiter() == ',');
+        //do {
+        //    node.addChild(readBranch(translationList));
+        //
+        //} while (getLastDelimiter() == ',');
 
         // should have had a closing ')'
         if (getLastDelimiter() != ')') {

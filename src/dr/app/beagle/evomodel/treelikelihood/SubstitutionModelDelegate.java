@@ -323,7 +323,8 @@ public final class SubstitutionModelDelegate {
     }
 
     public double[] getRootStateFrequencies() {
-        return substitutionModelList.get(0).getFrequencyModel().getFrequencies();
+        return branchModel.getRootSubstitutionModel().getFrequencyModel().getFrequencies();
+//        return substitutionModelList.get(0).getFrequencyModel().getFrequencies();
     }// END: getStateFrequencies
 
     public void flipMatrixBuffer(int branchIndex) {

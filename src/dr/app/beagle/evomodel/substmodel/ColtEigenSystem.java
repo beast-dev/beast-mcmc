@@ -37,6 +37,16 @@ import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
  */
 public class ColtEigenSystem implements EigenSystem {
 
+    public ColtEigenSystem() {
+        this(defaultCheckConditioning, defaultMaxConditionNumber, defaultMaxIterations);
+    }
+
+    public ColtEigenSystem(boolean checkConditioning, int maxConditionNumber, int maxIterations) {
+        this.checkConditioning = checkConditioning;
+        this.maxConditionNumber = maxConditionNumber;
+        this.maxIterations = maxIterations;
+    }
+
     public EigenDecomposition decomposeMatrix(double[][] matrix) {
 
         final int stateCount = matrix.length;
@@ -108,11 +118,15 @@ public class ColtEigenSystem implements EigenSystem {
         );
     }
 
-    protected boolean checkConditioning = true;
-    protected int maxConditionNumber = 1000000;
-    protected int maxIterations = 1000000;
+    private boolean checkConditioning;
+    private int maxConditionNumber;
+    private int maxIterations;
 
     private static final double minProb = Property.DEFAULT.tolerance();
     private static final Algebra alegbra = new Algebra(minProb);
+
+    public static final boolean defaultCheckConditioning = true;
+    public static final int defaultMaxConditionNumber = 1000000;
+    public static final int defaultMaxIterations = 1000000;
 
 }

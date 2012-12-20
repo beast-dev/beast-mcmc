@@ -216,18 +216,15 @@ public class CompleteHistoryLogger implements Loggable, Citable {
                             double minTime = Math.min(parentTime, childTime);
                             double maxTime = Math.max(parentTime, childTime);
                             String trait = treeTraitHistory[anonSite].getTraitString(tree, node);
-                            if (trait.compareTo("{}") != 0) {
+                            if (trait != null && trait.compareTo("{}") != 0) {
                                 Object[] changes = (Object[]) parseValue(trait);
                                 for (int j = 0; j < changes.length; ++j) {
 
                                     Object[] change = (Object[]) changes[j];
-                                    // MAS: Leaving these inline in case I am breaking code elsewhere
-//                                    String source = (String) change[2];
-//                                    String dest = (String) change[3];
-//                                    double thisTime = (Double) change[1];
-                                    String source = (String) change[1];
-                                    String dest = (String) change[2];
-                                    double thisTime = (Double) change[0];
+                                    int offset = (change.length == 4) ? 1 : 0;
+                                    String source = (String) change[1 + offset];
+                                    String dest = (String) change[2 + offset];
+                                    double thisTime = (Double) change[0 + offset];
                                     if (thisTime < 0.0) {
                                         throw new RuntimeException("negative time");
                                     }

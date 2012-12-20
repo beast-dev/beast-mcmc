@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsBeagleTreeLikelihood.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -26,7 +26,6 @@
 package dr.app.beagle.evomodel.treelikelihood;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
-import dr.app.beagle.evomodel.sitemodel.BranchSubstitutionModel;
 import dr.app.beagle.evomodel.sitemodel.SiteRateModel;
 import dr.app.beagle.evomodel.substmodel.MarkovJumpsSubstitutionModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
@@ -198,6 +197,49 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                 historyRegisterNumber = numRegisters; // Record the complete history for this register
                 ((UniformizedSubstitutionModel) mjModel).setSaveCompleteHistory(true);
 
+                if (useCompactHistory && logHistory) {
+
+                    treeTraits.addTrait(ALL_HISTORY, new TreeTrait.SA() {
+                        public String getTraitName() {
+                            return ALL_HISTORY;
+                        }
+
+                        public Intent getIntent() {
+                            return Intent.BRANCH;
+                        }
+
+                        public boolean getFormatAsArray() {
+                            return true;
+                        }
+
+                        public String[] getTrait(Tree tree, NodeRef node) {
+
+                            List<String> events = new ArrayList<String>();
+                            for (int i = 0; i < patternCount; i++) {
+                                String eventString = getHistoryForNode(tree, node, i);
+                                if (eventString != null && eventString.compareTo("{}") != 0) {
+                                    eventString = eventString.substring(1, eventString.length() - 1);
+                                    if (eventString.contains("},{")) { // There are multiple events
+                                        String[] elements = eventString.split("(?<=\\}),(?=\\{)");
+                                        for (String e : elements) {
+                                            events.add(e);
+                                        }
+                                    } else {
+                                        events.add(eventString);
+                                    }
+                                }
+                            }
+                            String[] array = new String[events.size()];
+                            events.toArray(array);
+                            return array;
+                        }
+
+                        public boolean getLoggable() {
+                            return true;
+                        }
+                    });
+                }
+
                 for (int site = 0; site < patternCount; ++site) {
 
                     final String anonName = (patternCount == 1) ? HISTORY : HISTORY + "_" + (site + 1);
@@ -214,11 +256,12 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
                         }
 
                         public String getTrait(Tree tree, NodeRef node) {
-                            return getHistoryForNode(tree, node, anonSite);
+                            String history = getHistoryForNode(tree, node, anonSite);
+                            return (history.compareTo("{}") != 0) ? history : null; // Return null if empty
                         }
 
                         public boolean getLoggable() {
-                            return logHistory;
+                            return logHistory && !useCompactHistory;
                         }
                     });
                 }
@@ -231,6 +274,10 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
 
     public void setLogHistories(boolean in) {
         logHistory = in;
+    }
+
+    public void setUseCompactHistory(boolean in) {
+        useCompactHistory = in;
     }
 
 //    public double[] getRewardsForNodeAndPattern(Tree tree, NodeRef node, int pattern) {
@@ -385,7 +432,8 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
             }
             thisExpectedJumps[childNum][j] = value;
             if (saveHistory) {
-                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(parentTime, childTime);
+                int site = (useCompactHistory) ? j + 1 : -1;
+                histories[childNum][j] = thisMarkovJumps.getCompleteHistory(site, parentTime, childTime);
             }
         }
     }
@@ -566,6 +614,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
         }
     }
 
+    public static final String ALL_HISTORY = "history_all";
     public static final String HISTORY = "history";
     public static final String TOTAL_COUNTS = "allTransitions";
 
@@ -576,6 +625,7 @@ public class MarkovJumpsBeagleTreeLikelihood extends AncestralStateBeagleTreeLik
     private List<double[][]> expectedJumps;
 //    private List<double[][]> storedExpectedJumps;
     private boolean logHistory = false;
+    private boolean useCompactHistory = false;
     private String[][] histories = null;
     private boolean[] scaleByTime;
     private double[] tmpProbabilities;

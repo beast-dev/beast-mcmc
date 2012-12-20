@@ -1,7 +1,7 @@
 /*
  * ColtEigenSystem.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,10 +25,10 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import cern.colt.matrix.linalg.Property;
-import cern.colt.matrix.linalg.Algebra;
-import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.linalg.Algebra;
+import cern.colt.matrix.linalg.Property;
 import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import dr.math.matrixAlgebra.RobustSingularValueDecomposition;
 
@@ -108,10 +108,9 @@ public class ColtEigenSystem implements EigenSystem {
         );
     }
 
-
     protected boolean checkConditioning = true;
-    protected int maxConditionNumber = 1000;
-    protected int maxIterations = 1000;
+    protected int maxConditionNumber = 1000000;
+    protected int maxIterations = 1000000;
 
     private static final double minProb = Property.DEFAULT.tolerance();
     private static final Algebra alegbra = new Algebra(minProb);

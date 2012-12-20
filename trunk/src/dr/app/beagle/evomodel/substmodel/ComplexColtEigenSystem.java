@@ -1,7 +1,7 @@
 /*
  * ComplexColtEigenSystem.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,13 +25,21 @@
 
 package dr.app.beagle.evomodel.substmodel;
 
-import dr.math.matrixAlgebra.RobustEigenDecomposition;
 import cern.colt.matrix.DoubleMatrix2D;
+import dr.math.matrixAlgebra.RobustEigenDecomposition;
 
 /**
  * @author Marc Suchard
  */
 public class ComplexColtEigenSystem extends ColtEigenSystem {
+
+    public ComplexColtEigenSystem() {
+        super();
+    }
+
+    public ComplexColtEigenSystem(boolean checkConditioning, int maxConditionNumber, int maxIterations) {
+        super(checkConditioning, maxConditionNumber, maxIterations);
+    }
 
     protected double[] getAllEigenValues(RobustEigenDecomposition decomposition) {
         double[] realEval = decomposition.getRealEigenvalues().toArray();

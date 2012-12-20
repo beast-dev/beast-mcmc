@@ -1,7 +1,7 @@
 /*
  * UniformizedSubstitutionModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -130,12 +130,16 @@ public class UniformizedSubstitutionModel extends MarkovJumpsSubstitutionModel {
         return getCompleteHistory(null, null);
     }
 
-    public String getCompleteHistory(Double newStartTime, Double newEndTime) {
+   public String getCompleteHistory(Double newStartTime, Double newEndTime) {
+        return getCompleteHistory(-1, newStartTime, newEndTime);
+   }
+
+    public String getCompleteHistory(int site, Double newStartTime, Double newEndTime) {
         if (newStartTime != null && newEndTime != null) {
             // Rescale time of events
             completeHistory.rescaleTimesOfEvents(newStartTime, newEndTime);
         }
-        return completeHistory.toStringChanges(-1, dataType); //, 0.0);
+        return completeHistory.toStringChanges(site, dataType); //, 0.0);
     }
 
     public int getNumberOfJumpsInCompleteHistory() {

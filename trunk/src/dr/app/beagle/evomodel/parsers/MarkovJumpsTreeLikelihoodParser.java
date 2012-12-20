@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsTreeLikelihoodParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -29,8 +29,8 @@ import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
-import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
+import dr.app.beagle.evomodel.treelikelihood.PartialsRescalingScheme;
 import dr.evolution.alignment.PatternList;
 import dr.evolution.datatype.DataType;
 import dr.evolution.util.TaxonList;
@@ -38,9 +38,9 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodel.treelikelihood.TipStatesModel;
 import dr.inference.markovjumps.MarkovJumpsRegisterAcceptor;
-import dr.xml.*;
-import dr.inference.model.Parameter;
 import dr.inference.markovjumps.MarkovJumpsType;
+import dr.inference.model.Parameter;
+import dr.xml.*;
 
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +60,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
     public static final String USE_UNIFORMIZATION = "useUniformization";
     public static final String SAVE_HISTORY = "saveCompleteHistory";
     public static final String LOG_HISTORY = "logCompleteHistory";
+    public static final String COMPACT_HISTORY = "compactHistory";
     public static final String NUMBER_OF_SIMULANTS = "numberOfSimulants";
     public static final String REPORT_UNCONDITIONED_COLUMNS = "reportUnconditionedValues";
 
@@ -149,8 +150,9 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                 }
             }
             allCounts.setId(MarkovJumpsBeagleTreeLikelihood.TOTAL_COUNTS);
-            treeLikelihood.addRegister(allCounts, MarkovJumpsType.HISTORY, false);
             treeLikelihood.setLogHistories(xo.getAttribute(LOG_HISTORY, false));
+            treeLikelihood.setUseCompactHistory(xo.getAttribute(COMPACT_HISTORY, false));
+            treeLikelihood.addRegister(allCounts, MarkovJumpsType.HISTORY, false);
         }
 
         return treeLikelihood;
@@ -195,6 +197,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                     AttributeRule.newIntegerRule(NUMBER_OF_SIMULANTS,true),
                     AttributeRule.newBooleanRule(SAVE_HISTORY, true),
                     AttributeRule.newBooleanRule(LOG_HISTORY, true),
+                    AttributeRule.newBooleanRule(COMPACT_HISTORY, true),
                     new ElementRule(PARTIALS_RESTRICTION, new XMLSyntaxRule[] {
                             new ElementRule(TaxonList.class),
                             new ElementRule(Parameter.class),

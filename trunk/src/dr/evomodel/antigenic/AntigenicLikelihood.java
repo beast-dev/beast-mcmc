@@ -447,27 +447,25 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         logLikelihood = 0.0;
         int i = 0;
+
         for (Measurement measurement : measurements) {
 
             if (locationChanged[measurement.rowStrain] || locationChanged[measurement.columnStrain]) {
 
                 double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain);
-                double logNormalization = calculateTruncationNormalization(mapDistance, sd);
+                double expectation = calculateBaseline(measurement.column, measurement.row) - mapDistance;
 
                 switch (measurement.type) {
                     case INTERVAL: {
-                        // once transformed the lower titre becomes the higher distance
-                        double minHiDistance = transformTitre(measurement.log2Titre + 1.0, measurement.column, measurement.row);
-                        double maxHiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minHiDistance, maxHiDistance, mapDistance, sd) - logNormalization;
+                        double minTitre = measurement.log2Titre;
+                        double maxTitre = measurement.log2Titre + 1;
+                        logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre, expectation, sd);
                     } break;
                     case POINT: {
-                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+                        logLikelihoods[i] = computeMeasurementLikelihood(measurement.log2Titre, expectation, sd);
                     } break;
                     case THRESHOLD: {
-                        double hiDistance = transformTitre(measurement.log2Titre, measurement.column, measurement.row);
-                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(hiDistance, mapDistance, sd) - logNormalization;
+                        logLikelihoods[i] = computeMeasurementThresholdLikelihood(measurement.log2Titre, expectation, sd);
                     } break;
                     case MISSING:
                         break;
@@ -506,86 +504,58 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     /**
-     * Transforms a titre into log2 space and normalizes it with respect to a unit normal
-     * @param titre
+     * Calculates the expected log2 titre when mapDistance = 0
      * @param column
      * @param row
      * @return
      */
-    private double transformTitre(double titre, int column, int row) {
-        double t;
+    private double calculateBaseline(int column, int row) {
+        double baseline;
         double columnEffect = columnEffectsParameter.getParameterValue(column);
         if (rowEffectsParameter != null) {
             double rowEffect = rowEffectsParameter.getParameterValue(row);
-            t = ((rowEffect + columnEffect) * 0.5) - titre;
+            baseline = 0.5 * (rowEffect + columnEffect);
         } else {
-            t = columnEffect - titre;
+            baseline = columnEffect;
         }
-        return t;
+        return baseline;
     }
 
-    private static double computeMeasurementIntervalLikelihood(double minDistance, double maxDistance, double mean, double sd) {
-
-        double cdf1 = NormalDistribution.cdf(minDistance, mean, sd, false);
-        double cdf2 = NormalDistribution.cdf(maxDistance, mean, sd, false);
-
-        double lnL = Math.log(cdf2 - cdf1);
-        if (cdf1 == cdf2) {
-            lnL = Math.log(cdf1);
-        }
+    private static double computeMeasurementLikelihood(double titre, double expectation, double sd) {
+        double lnL = NormalDistribution.logPdf(titre, expectation, sd);
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
     }
 
-    private static double computeMeasurementIntervalLikelihood_CDF(double minDistance, double maxDistance, double mean, double sd) {
+    private static double computeMeasurementThresholdLikelihood(double titre, double expectation, double sd) {
 
-        double cdf1 = NormalDistribution.cdf(minDistance, mean, sd, false);
-        double cdf2 = NormalDistribution.cdf(maxDistance, mean, sd, false);
+        // real titre is somewhere between -infinity and measured 'titre'
+        // want the lower tail of the normal CDF
+
+        double lnL = NormalDistribution.cdf(titre, expectation, sd, true);   // returns logged CDF
+        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+            throw new RuntimeException("infinite");
+        }
+        return lnL;
+    }
+
+    private static double computeMeasurementIntervalLikelihood(double minTitre, double maxTitre, double expectation, double sd) {
+
+        // real titre is somewhere between measured minTitre and maxTitre
+
+        double cdf1 = NormalDistribution.cdf(maxTitre, expectation, sd, false); // returns normal CDF
+        double cdf2 = NormalDistribution.cdf(minTitre, expectation, sd, false);     // returns normal CDF
 
         double lnL = Math.log(cdf1 - cdf2);
         if (cdf1 == cdf2) {
-            lnL = Math.log(cdf1);
+            lnL = Math.log(cdf2);
         }
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
             throw new RuntimeException("infinite");
         }
         return lnL;
-    }
-
-    private static double computeMeasurementLikelihood(double distance, double mean, double sd) {
-        double lnL = NormalDistribution.logPdf(distance, mean, sd);
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
-        }
-        return lnL;
-    }
-
-//    private static double computeMeasurementLowerBoundLikelihood(double transformedMinTitre) {
-//        // a lower bound in non-transformed titre so the bottom tail of the distribution
-//        double cdf = NormalDistribution.standardTail(transformedMinTitre, false);
-//        double lnL = Math.log(cdf);
-//        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-//            throw new RuntimeException("infinite");
-//        }
-//        return lnL;
-//    }
-
-    private static double computeMeasurementThresholdLikelihood(double distance, double mean, double sd) {
-        // a upper bound in non-transformed titre so the upper tail of the distribution
-
-        // using special tail function of NormalDistribution (see main() in NormalDistribution for test)
-        double tail = NormalDistribution.tailCDF(distance, mean, sd);
-        double lnL = Math.log(tail);
-        if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
-        }
-        return lnL;
-    }
-
-    private static double calculateTruncationNormalization(double distance, double sd) {
-        return NormalDistribution.cdf(distance, 0.0, sd, true);
     }
 
     public void makeDirty() {
@@ -806,10 +776,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         for (double titre : titres) {
             double point = AntigenicLikelihood.computeMeasurementLikelihood(titre, 0.0, 1.0);
             double interval = AntigenicLikelihood.computeMeasurementIntervalLikelihood(titre + 1.0, titre, 0.0, 1.0);
-            double interval2 = AntigenicLikelihood.computeMeasurementIntervalLikelihood_CDF(titre + 1.0, titre, 0.0, 1.0);
             double threshold = AntigenicLikelihood.computeMeasurementThresholdLikelihood(titre, 0.0, 1.0);
 
-            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + interval2 + "\t" + threshold);
+            System.out.println(titre + "\t" + point + "\t" + interval + "\t" + threshold);
         }
     }
 }

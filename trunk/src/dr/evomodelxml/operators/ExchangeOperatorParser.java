@@ -118,7 +118,7 @@ public class ExchangeOperatorParser {
 
             final TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
             if (treeModel.getExternalNodeCount() <= 2) {
-                throw new XMLParseException("Tree with less than 3 taxa");
+                throw new XMLParseException("Tree with fewer than 3 taxa");
             }
             final double weight = xo.getDoubleAttribute(MCMCOperator.WEIGHT);
 

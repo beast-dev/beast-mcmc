@@ -261,7 +261,7 @@ public class BeagleSequenceSimulator {
         // one scaling buffer for each internal node plus an extra for the accumulation, then doubled for store/restore
 		BufferIndexHelper  scaleBufferHelper = new BufferIndexHelper(internalNodeCount + 1, 0);
 		
-		Beagle  beagle = BeagleFactory.loadBeagleInstance(
+		Beagle beagle = BeagleFactory.loadBeagleInstance(
                 tipCount,
                 partialBufferHelper.getBufferCount(),
                 compactPartialsCount,

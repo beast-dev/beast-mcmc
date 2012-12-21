@@ -458,7 +458,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 switch (measurement.type) {
                     case INTERVAL: {
                         double minTitre = measurement.log2Titre;
-                        double maxTitre = measurement.log2Titre + 1;
+                        double maxTitre = measurement.log2Titre + intervalWidth;
                         logLikelihoods[i] = computeMeasurementIntervalLikelihood(minTitre, maxTitre, expectation, sd);
                     } break;
                     case POINT: {

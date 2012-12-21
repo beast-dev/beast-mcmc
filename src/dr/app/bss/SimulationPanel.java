@@ -98,8 +98,8 @@ public class SimulationPanel extends JPanel implements Exportable {
 	private class ListenGenerateXML implements ActionListener {
 		public void actionPerformed(ActionEvent ev) {
 
-			System.out.println("TODO: ListenGenerateXML");
-
+            frame.doGenerateXML();
+			
 		}// END: actionPerformed
 	}// END: ListenSaveLocationCoordinates
 

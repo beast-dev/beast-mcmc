@@ -237,8 +237,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	}// END: generateFile
 
-	
-	
 	@Override
 	public JComponent getExportableComponent() {
 		JComponent exportable = null;

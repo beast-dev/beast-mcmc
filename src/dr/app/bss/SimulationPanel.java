@@ -4,7 +4,6 @@ import jam.framework.Exportable;
 import jam.panels.OptionsPanel;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
@@ -59,10 +58,10 @@ public class SimulationPanel extends JPanel implements Exportable {
 		// Buttons holder
 		JPanel buttonsHolder = new JPanel();
 		buttonsHolder.setOpaque(false);
-
+		
 		// simulate button
 		simulate = new JButton("Simulate",
-				BeagleSequenceSimulatorApp.nuclearIcon);
+				BeagleSequenceSimulatorApp.biohazardIcon);
 		simulate.addActionListener(new ListenSimulate());
 		buttonsHolder.add(simulate);
 

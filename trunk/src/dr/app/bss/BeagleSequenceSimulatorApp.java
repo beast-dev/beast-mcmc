@@ -17,8 +17,10 @@ public class BeagleSequenceSimulatorApp {
 	
 	// Share those if neccessary
 	private Image beagleSequenceSimulatorImage;
-	private static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
-
+	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
+	public static final String VERSION = "0.0.1pre";
+	public static final String DATE_STRING = "2013";
+	
 	// Icons
 	public static ImageIcon doneIcon;
 	public static ImageIcon errorIcon;
@@ -133,7 +135,7 @@ public class BeagleSequenceSimulatorApp {
 
 				Thread.setDefaultUncaughtExceptionHandler(new ExceptionHandler());
 				new BeagleSequenceSimulatorApp();
-				// Cool sub-title for a paper
+				// Cool sub-title for a software note
 				System.out.println("Do the evolution baby!");
 
 			} catch (UnsupportedClassVersionError e) {

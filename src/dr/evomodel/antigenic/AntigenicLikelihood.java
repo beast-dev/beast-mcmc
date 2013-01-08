@@ -3,6 +3,7 @@ package dr.evomodel.antigenic;
 import dr.evolution.util.*;
 import dr.inference.model.*;
 import dr.math.MathUtils;
+import dr.math.LogTricks;
 import dr.math.distributions.NormalDistribution;
 import dr.util.*;
 import dr.xml.*;
@@ -522,9 +523,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private static double computeMeasurementLikelihood(double titre, double expectation, double sd) {
+
         double lnL = NormalDistribution.logPdf(titre, expectation, sd);
+
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
+            throw new RuntimeException("infinite point measurement");
         }
         return lnL;
     }
@@ -534,9 +537,10 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         // real titre is somewhere between -infinity and measured 'titre'
         // want the lower tail of the normal CDF
 
-        double lnL = NormalDistribution.cdf(titre, expectation, sd, true);   // returns logged CDF
+        double lnL = NormalDistribution.cdf(titre, expectation, sd, true);          // returns logged CDF
+
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
+            throw new RuntimeException("infinite threshold measurement");
         }
         return lnL;
     }
@@ -545,15 +549,17 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         // real titre is somewhere between measured minTitre and maxTitre
 
-        double cdf1 = NormalDistribution.cdf(maxTitre, expectation, sd, false); // returns normal CDF
-        double cdf2 = NormalDistribution.cdf(minTitre, expectation, sd, false);     // returns normal CDF
+        double cdf1 = NormalDistribution.cdf(maxTitre, expectation, sd, true);     // returns logged CDF
+        double cdf2 = NormalDistribution.cdf(minTitre, expectation, sd, true);     // returns logged CDF
+        double lnL = LogTricks.logDiff(cdf1, cdf2);
 
-        double lnL = Math.log(cdf1 - cdf2);
-        if (cdf1 == cdf2) {
-            lnL = Math.log(cdf2);
-        }
         if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
-            throw new RuntimeException("infinite");
+            // this occurs when the interval is in the far tail of the distribution, cdf1 == cdf2
+            // instead return logPDF of the point
+            lnL = NormalDistribution.logPdf(minTitre, expectation, sd);
+            if (CHECK_INFINITE && Double.isNaN(lnL) || Double.isInfinite(lnL)) {
+                 throw new RuntimeException("infinite interval measurement");
+             }
         }
         return lnL;
     }

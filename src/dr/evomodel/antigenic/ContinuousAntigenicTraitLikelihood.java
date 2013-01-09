@@ -15,6 +15,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
+@Deprecated // for the moment at least
 public class ContinuousAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {
 
     public final static String ANTIGENIC_TRAIT_LIKELIHOOD = "antigenicTraitLikelihood";

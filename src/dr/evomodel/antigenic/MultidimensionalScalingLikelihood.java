@@ -13,6 +13,7 @@ import java.io.IOException;
  * @author Marc Suchard
  * @version $Id$
  */
+@Deprecated // for the moment at least
 public class MultidimensionalScalingLikelihood extends AbstractModelLikelihood {
 
 

@@ -1,7 +1,7 @@
 /*
  * DriftedLocationLogger.java
  *
- * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional

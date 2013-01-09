@@ -16,6 +16,7 @@ import dr.xml.XMLSyntaxRule;
 /**
  * @author Aaron Darling (koadman)
  */
+
 public class MoveLinkageGroupParser extends AbstractXMLObjectParser {
     public static final String MOVE_LINKAGE_GROUP = "moveLinkageGroup";
 

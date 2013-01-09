@@ -1,7 +1,7 @@
 /*
  * ProgressiveScalarTreeTransform.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -108,11 +108,20 @@ public class ProgressiveScalarTreeTransform extends TreeTransform {
 
     // TODO Move to JUnitTest
     public static void main(String[] args) throws Exception {
-        NewickImporter importer = new NewickImporter("(0:3.0,(1:2.0,(2:1.0,3:1):1.0):1.0);");
+
+        NewickImporter importer = new NewickImporter(
+                "((((A:2,B:1):0.5,C:3):1.5,(D:1.5,E:1):3.5):1,F:5);"
+//                "(0:3.0,(1:2.0,(2:1.0,3:1):1.0):1.0);"
+        );
         Tree tree = importer.importTree(null);
         Parameter scale = new Parameter.Default(0.5);
         TreeTransform xform = new ProgressiveScalarTreeTransform(scale);
         TransformedTreeModel model = new TransformedTreeModel("tree", tree, xform);
         System.err.println(model.toString());
+
+
+        TreeTransform xform2 = new SingleScalarTreeTransform(scale);
+        TransformedTreeModel model2 = new TransformedTreeModel("tree2", tree, xform2);
+        System.err.println(model2.toString());
     }
 }

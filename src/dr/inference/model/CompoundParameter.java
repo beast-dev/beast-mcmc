@@ -1,7 +1,7 @@
 /*
  * CompoundParameter.java
  *
- * Copyright (C) 2002-2007 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -139,13 +139,13 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
 
         if (bounds == null) {
             bounds = new CompoundBounds();
-            return;
-        } else {
-            IntersectionBounds newBounds = new IntersectionBounds(getDimension());
-            newBounds.addBounds(bounds);
+//            return;
+        } //else {
+        IntersectionBounds newBounds = new IntersectionBounds(getDimension());
+        newBounds.addBounds(bounds);
 
-        }
-        ((IntersectionBounds)bounds).addBounds(boundary);
+//        }
+        ((IntersectionBounds) bounds).addBounds(boundary);
     }
 
     public Bounds<Double> getBounds() {
@@ -202,7 +202,7 @@ public class CompoundParameter extends Parameter.Abstract implements VariableLis
         parameters.get(dim).setParameterValueQuietly(pindex.get(dim), value);
     }
 
-    public void setParameterValueNotifyChangedAll(int dim, double value){
+    public void setParameterValueNotifyChangedAll(int dim, double value) {
         parameters.get(dim).setParameterValueNotifyChangedAll(pindex.get(dim), value);
     }
 

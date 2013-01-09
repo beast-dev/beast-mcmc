@@ -88,7 +88,6 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int columnStrain = -1;
             String columnStrainName;
-            double columnDate = 0;
             if (mergeColumnStrains) {
                 columnStrainName = values[SERUM_STRAIN];
             } else {
@@ -103,8 +102,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 columnStrain = strainNames.indexOf(columnStrainName);
                 if (columnStrain == -1) {
                     strainNames.add(columnStrainName);
-                    columnDate = Double.parseDouble(values[SERUM_DATE]);
-                    strainDateMap.put(columnStrainName, columnDate);
+                    double date = Double.parseDouble(values[SERUM_DATE]);
+                    strainDateMap.put(columnStrainName, date);
                     columnStrain = strainNames.size() - 1;
                 }
                 int thisStrain = serumNames.indexOf(columnStrainName);
@@ -112,6 +111,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     serumNames.add(columnStrainName);
                 }
             }
+
+            double columnDate = Double.parseDouble(values[SERUM_DATE]);
 
             if (columnStrain == -1) {
                 throw new IllegalArgumentException("Error reading data table: Unrecognized serum strain name, " + values[SERUM_STRAIN] + ", in row " + (i+1));
@@ -125,15 +126,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int rowStrain = -1;
             String rowStrainName = values[VIRUS_STRAIN];
-            double rowDate = 0;
             if (strainTaxa != null) {
                 rowStrain = strainTaxa.getTaxonIndex(rowStrainName);
             } else {
                 rowStrain = strainNames.indexOf(rowStrainName);
                 if (rowStrain == -1) {
                     strainNames.add(rowStrainName);
-                    rowDate = Double.parseDouble(values[VIRUS_DATE]);
-                    strainDateMap.put(rowStrainName, rowDate);
+                    double date = Double.parseDouble(values[VIRUS_DATE]);
+                    strainDateMap.put(rowStrainName, date);
                     rowStrain = strainNames.size() - 1;
                 }
                 int thisStrain = virusNames.indexOf(rowStrainName);
@@ -144,6 +144,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             if (rowStrain == -1) {
                 throw new IllegalArgumentException("Error reading data table: Unrecognized virus strain name, " + values[VIRUS_STRAIN] + ", in row " + (i+1));
             }
+
+            double rowDate = Double.parseDouble(values[VIRUS_DATE]);
 
             boolean isThreshold = false;
             double rawTitre = Double.NaN;
@@ -164,11 +166,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 }
             }
 
-            if (earliestDate > columnDate) {
+            if (columnDate < earliestDate) {
                 earliestDate = columnDate;
             }
 
-            if (earliestDate > rowDate) {
+            if (rowDate < earliestDate) {
                 earliestDate = rowDate;
             }
 

@@ -1,7 +1,7 @@
 /*
  * IntegratedMultivariateTraitLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -290,6 +290,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
             meanCache[index] = traitParameter.getValue(index);
             likelihoodKnown = false;
+            if (!cacheBranches) {
+                throw new RuntimeException("Must cache means in IMTL if they are random");
+            }
         }
         super.handleVariableChangedEvent(variable, index, type);
     }
@@ -579,9 +582,9 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
     // Computes the weighted average of two vectors, used many times in these computations
 
     public static void computeWeightedAverage(double[] in0, int offset0, double weight0,
-                                                 double[] in1, int offset1, double weight1,
-                                                 double[] out2, int offset2,
-                                                 int length) {
+                                              double[] in1, int offset1, double weight1,
+                                              double[] out2, int offset2,
+                                              int length) {
 
         final double totalInverseWeight = 1.0 / (weight0 + weight1);
         for (int i = 0; i < length; i++) {

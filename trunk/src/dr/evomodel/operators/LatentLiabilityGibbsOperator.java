@@ -1,7 +1,7 @@
 /*
  * LatentLiabilityGibbsOperator.java
  *
- * Copyright (C) 2002-2011 Alexei Drummond, Andrew Rambaut and Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,8 +27,8 @@ package dr.evomodel.operators;
 
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.continuous.AbstractMultivariateTraitLikelihood;
+import dr.evomodel.continuous.BinaryLatentLiabilityLikelihood;
 import dr.evomodel.continuous.IntegratedMultivariateTraitLikelihood;
-import dr.evomodel.continuous.LatentLiabilityLikelihood;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.MatrixParameter;
 import dr.inference.operators.GibbsOperator;
@@ -36,9 +36,6 @@ import dr.inference.operators.MCMCOperator;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
-import dr.math.distributions.MultivariateDistribution;
-import dr.math.distributions.MultivariateNormalDistribution;
-import dr.math.matrixAlgebra.SymmetricMatrix;
 import dr.util.Citable;
 import dr.xml.*;
 
@@ -60,7 +57,7 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
     private final TreeModel treeModel;
     private final MatrixParameter precisionMatrixParameter;
     private final IntegratedMultivariateTraitLikelihood traitModel;
-    private final LatentLiabilityLikelihood liabilityLikelihood;
+    private final BinaryLatentLiabilityLikelihood liabilityLikelihood;
 
     private final int dim;
     private final String traitName;
@@ -74,11 +71,11 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
 //    private boolean sampleRoot = false;
 //    private double[] rootPriorMean;
 //    private double[][] rootPriorPrecision;
-    
+
     private final int maxTries = 10000;
 
     public LatentLiabilityGibbsOperator(IntegratedMultivariateTraitLikelihood traitModel,
-                                        LatentLiabilityLikelihood liabilityLikelihood) {
+                                        BinaryLatentLiabilityLikelihood liabilityLikelihood) {
         super();
         this.traitModel = traitModel;
         this.liabilityLikelihood = liabilityLikelihood;
@@ -322,8 +319,8 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
             IntegratedMultivariateTraitLikelihood traitModel = (IntegratedMultivariateTraitLikelihood)
                     xo.getChild(AbstractMultivariateTraitLikelihood.class);
 
-            LatentLiabilityLikelihood liabilityLikelihood = (LatentLiabilityLikelihood)
-                    xo.getChild(LatentLiabilityLikelihood.class);
+            BinaryLatentLiabilityLikelihood liabilityLikelihood = (BinaryLatentLiabilityLikelihood)
+                    xo.getChild(BinaryLatentLiabilityLikelihood.class);
 
             LatentLiabilityGibbsOperator operator = new LatentLiabilityGibbsOperator(traitModel, liabilityLikelihood);
             operator.setWeight(weight);
@@ -350,7 +347,7 @@ public class LatentLiabilityGibbsOperator extends SimpleMCMCOperator implements 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 new ElementRule(IntegratedMultivariateTraitLikelihood.class),
-                new ElementRule(LatentLiabilityLikelihood.class),
+                new ElementRule(BinaryLatentLiabilityLikelihood.class),
         };
 
     };

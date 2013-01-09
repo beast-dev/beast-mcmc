@@ -1,3 +1,28 @@
+/*
+ * BinaryLatentLiabilityLikelihood.java
+ *
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ *
+ * This file is part of BEAST.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership and licensing.
+ *
+ * BEAST is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with BEAST; if not, write to the
+ * Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
+ * Boston, MA  02110-1301  USA
+ */
+
 package dr.evomodel.continuous;
 
 import dr.evolution.alignment.PatternList;
@@ -23,11 +48,11 @@ import java.util.logging.Logger;
  * @version $Id$
  */
 
-public class LatentLiabilityLikelihood extends AbstractModelLikelihood implements Citable {
+public class BinaryLatentLiabilityLikelihood extends AbstractModelLikelihood implements Citable {
 
     public final static String LATENT_LIABILITY_LIKELIHOOD = "latentLiabilityLikelihood";
 
-    public LatentLiabilityLikelihood(TreeModel treeModel, PatternList patternList, CompoundParameter tipTraitParameter) {
+    public BinaryLatentLiabilityLikelihood(TreeModel treeModel, PatternList patternList, CompoundParameter tipTraitParameter) {
         super(LATENT_LIABILITY_LIKELIHOOD);
         this.treeModel = treeModel;
         this.patternList = patternList;
@@ -36,7 +61,7 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
         addVariable(tipTraitParameter);
 
         setTipDataValuesForAllNodes();
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("Constructing a latent liability likelihood model:\n");
         sb.append("\tBinary patterns: ").append(patternList.getId()).append("\n");
@@ -48,7 +73,7 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
         if (tipData == null) {
             tipData = new boolean[treeModel.getExternalNodeCount()][patternList.getPatternCount()];
         }
-        
+
         for (int i = 0; i < treeModel.getExternalNodeCount(); i++) {
             NodeRef node = treeModel.getExternalNode(i);
             String id = treeModel.getTaxonId(i);
@@ -65,7 +90,7 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
         }
 
         for (int datum = 0; datum < patternList.getPatternCount(); ++datum) {
-            tipData[index][datum] = patternList.getPattern(datum)[index]  == 1;
+            tipData[index][datum] = patternList.getPattern(datum)[index] == 1;
             if (DEBUG) {
                 Parameter oneTipTraitParameter = tipTraitParameter.getParameter(index);
                 System.err.println("Data = " + tipData[index][datum] + " : " + oneTipTraitParameter.getParameterValue(datum));
@@ -116,7 +141,7 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
 
     public String toString() {
         return getClass().getName() + "(" + getLogLikelihood() + ")";
-    }    
+    }
 
     protected double computeLogLikelihood() {
         boolean valid = true;
@@ -179,7 +204,7 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
                 throw new XMLParseException("Binary data is wrong dimension in latent liability model");
             }
 
-            return new LatentLiabilityLikelihood(treeModel, patternList, tipTraitParameter);
+            return new BinaryLatentLiabilityLikelihood(treeModel, patternList, tipTraitParameter);
         }
 
         //************************************************************************
@@ -195,14 +220,14 @@ public class LatentLiabilityLikelihood extends AbstractModelLikelihood implement
         }
 
         private final XMLSyntaxRule[] rules = {
-                new ElementRule(AbstractMultivariateTraitLikelihood.class, "The model for the latent random variables"),                                
+                new ElementRule(AbstractMultivariateTraitLikelihood.class, "The model for the latent random variables"),
                 new ElementRule(TIP_TRAIT, CompoundParameter.class, "The parameter of tip locations from the tree"),
                 new ElementRule(PatternList.class, "The binary tip data"),
                 new ElementRule(TreeModel.class, "The tree model"),
         };
 
         public Class getReturnType() {
-            return LatentLiabilityLikelihood.class;
+            return BinaryLatentLiabilityLikelihood.class;
         }
     };
 

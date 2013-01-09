@@ -18,6 +18,12 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
+/*
+    Virus locations are shifted by locationDrift.  A virus location is increased by locationDrift x time.
+    Time is set to 0 for the earliest virus.
+    Serum locations are not shifted.
+
+*/
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;
     private static final boolean USE_THRESHOLDS = true;
@@ -44,6 +50,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     public AntigenicLikelihood(
             int mdsDimension,
             Parameter mdsPrecisionParameter,
+            Parameter locationDriftParameter,
             TaxonList strainTaxa,
             MatrixParameter virusLocationsParameter,
             MatrixParameter serumLocationsParameter,
@@ -194,8 +201,12 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
 
         this.mdsDimension = mdsDimension;
+
         this.mdsPrecisionParameter = mdsPrecisionParameter;
         addVariable(mdsPrecisionParameter);
+
+        this.locationDriftParameter = locationDriftParameter;
+        addVariable(locationDriftParameter);
 
         this.locationsParameter = locationsParameter;
         setupLocationsParameter(this.locationsParameter, strainNames);
@@ -399,6 +410,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
         } else if (variable == mdsPrecisionParameter) {
             setLocationChangedFlags(true);
+        } else if (variable == locationDriftParameter) {
+            setLocationChangedFlags(true);
         } else if (variable == columnEffectsParameter) {
             setLocationChangedFlags(true);
         } else if (variable == rowEffectsParameter) {
@@ -600,6 +613,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final int mdsDimension;
     private final double intervalWidth;
     private final Parameter mdsPrecisionParameter;
+    private final Parameter locationDriftParameter;
 
     private final MatrixParameter locationsParameter;
     private final MatrixParameter virusLocationsParameter;
@@ -636,6 +650,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String MERGE_COLUMNS = "mergeColumns";
         public static final String INTERVAL_WIDTH = "intervalWidth";
         public static final String MDS_PRECISION = "mdsPrecision";
+        public static final String LOCATION_DRIFT = "locationDrift";
         public static final String COLUMN_EFFECTS = "columnEffects";
         public static final String ROW_EFFECTS = "rowEffects";
 
@@ -693,6 +708,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             Parameter mdsPrecision = (Parameter) xo.getElementFirstChild(MDS_PRECISION);
 
+            Parameter locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
+
             Parameter columnEffectsParameter = null;
             if (xo.hasChildNamed(COLUMN_EFFECTS)) {
                 columnEffectsParameter = (Parameter) xo.getElementFirstChild(COLUMN_EFFECTS);
@@ -705,6 +722,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             AntigenicLikelihood AGL = new AntigenicLikelihood(
                     mdsDimension,
                     mdsPrecision,
+                    locationDrift,
                     strains,
                     virusLocationsParameter,
                     serumLocationsParameter,
@@ -750,7 +768,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_DATES, Parameter.class, "An optional parameter for strain dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
                 new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
-                new ElementRule(MDS_PRECISION, Parameter.class)
+                new ElementRule(MDS_PRECISION, Parameter.class),
+                new ElementRule(LOCATION_DRIFT, Parameter.class)
         };
 
         public Class getReturnType() {

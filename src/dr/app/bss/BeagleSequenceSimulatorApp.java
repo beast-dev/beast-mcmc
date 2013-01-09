@@ -18,6 +18,7 @@ public class BeagleSequenceSimulatorApp {
 	// Share those if neccessary
 	private Image beagleSequenceSimulatorImage;
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "Beagle Sequence Simulator";
+	public static final String STARTING_TREE = "startingTree";
 	public static final String VERSION = "0.0.1pre";
 	public static final String DATE_STRING = "2013";
 	

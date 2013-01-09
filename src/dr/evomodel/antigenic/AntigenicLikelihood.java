@@ -76,6 +76,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         int thresholdCount = 0;
 
+
+        earliestDate = Double.POSITIVE_INFINITY;
         for (int i = 0; i < dataTable.getRowCount(); i++) {
             String[] values = dataTable.getRow(i);
             int column = columnLabels.indexOf(values[COLUMN_LABEL]);
@@ -86,6 +88,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int columnStrain = -1;
             String columnStrainName;
+            double columnDate = 0;
             if (mergeColumnStrains) {
                 columnStrainName = values[SERUM_STRAIN];
             } else {
@@ -100,8 +103,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 columnStrain = strainNames.indexOf(columnStrainName);
                 if (columnStrain == -1) {
                     strainNames.add(columnStrainName);
-                    Double date = Double.parseDouble(values[SERUM_DATE]);
-                    strainDateMap.put(columnStrainName, date);
+                    columnDate = Double.parseDouble(values[SERUM_DATE]);
+                    strainDateMap.put(columnStrainName, columnDate);
                     columnStrain = strainNames.size() - 1;
                 }
                 int thisStrain = serumNames.indexOf(columnStrainName);
@@ -122,14 +125,15 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             int rowStrain = -1;
             String rowStrainName = values[VIRUS_STRAIN];
+            double rowDate = 0;
             if (strainTaxa != null) {
                 rowStrain = strainTaxa.getTaxonIndex(rowStrainName);
             } else {
                 rowStrain = strainNames.indexOf(rowStrainName);
                 if (rowStrain == -1) {
                     strainNames.add(rowStrainName);
-                    Double date = Double.parseDouble(values[VIRUS_DATE]);
-                    strainDateMap.put(rowStrainName, date);
+                    rowDate = Double.parseDouble(values[VIRUS_DATE]);
+                    strainDateMap.put(rowStrainName, rowDate);
                     rowStrain = strainNames.size() - 1;
                 }
                 int thisStrain = virusNames.indexOf(rowStrainName);
@@ -160,8 +164,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 }
             }
 
+            if (earliestDate > columnDate) {
+                earliestDate = columnDate;
+            }
+
+            if (earliestDate > rowDate) {
+                earliestDate = rowDate;
+            }
+
             MeasurementType type = (isThreshold ? MeasurementType.THRESHOLD : (useIntervals ? MeasurementType.INTERVAL : MeasurementType.POINT));
-            Measurement measurement = new Measurement(column, columnStrain, row, rowStrain, type, rawTitre);
+            Measurement measurement = new Measurement(column, columnStrain, columnDate, row, rowStrain, rowDate, type, rawTitre);
 
             if (USE_THRESHOLDS || !isThreshold) {
                 measurements.add(measurement);
@@ -226,6 +238,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
         }
 
+        this.virusDatesParameter = virusDatesParameter;
         if (virusDatesParameter != null) {
             // this parameter is not used in this class but is setup to be used in other classes
             setupDatesParameter(virusDatesParameter, virusNames, strainDateMap);
@@ -374,19 +387,13 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private void setupInitialLocations(List<String> strainNames, Map<String,Double> strainDateMap) {
-        double earliestDate = Double.POSITIVE_INFINITY;
-        for (double date : strainDateMap.values()) {
-            if (earliestDate > date) {
-                earliestDate = date;
-            }
-        }
 
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-            double date = (double) strainDateMap.get(strainNames.get(i));
-            double diff = (date-earliestDate);
-            locationsParameter.getParameter(i).setParameterValue(0, diff + MathUtils.nextGaussian());
+       //     double date = (double) strainDateMap.get(strainNames.get(i));
+       //     double diff = (date-earliestDate);
+        //    locationsParameter.getParameter(i).setParameterValue(0, diff + MathUtils.nextGaussian());
 
-            for (int j = 1; j < mdsDimension; j++) {
+            for (int j = 0; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValue(j, r);
             }
@@ -466,7 +473,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             if (locationChanged[measurement.rowStrain] || locationChanged[measurement.columnStrain]) {
 
-                double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain);
+                // the row strain is shifted
+                double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain, measurement.rowDate);
                 double expectation = calculateBaseline(measurement.column, measurement.row) - mapDistance;
 
                 switch (measurement.type) {
@@ -502,16 +510,27 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         }
     }
 
-    protected double computeDistance(int rowStrain, int columnStrain) {
+    // offset virus location when computing
+    // this is the row strain
+    protected double computeDistance(int rowStrain, int columnStrain, double rowDate) {
         if (rowStrain == columnStrain) {
             return 0.0;
         }
 
-        Parameter X = locationsParameter.getParameter(rowStrain);
-        Parameter Y = locationsParameter.getParameter(columnStrain);
+        Parameter vLoc = locationsParameter.getParameter(rowStrain);
+        Parameter sLoc = locationsParameter.getParameter(columnStrain);
         double sum = 0.0;
-        for (int i = 0; i < mdsDimension; i++) {
-            double difference = X.getParameterValue(i) - Y.getParameterValue(i);
+
+        // first dimension is shifted
+        double offset = locationDriftParameter.getParameterValue(0) * (rowDate - earliestDate);
+        double vxLoc = vLoc.getParameterValue(0) + offset;
+        double sxLoc = sLoc.getParameterValue(0);
+        double difference = vxLoc - sxLoc;
+        sum += difference * difference;
+
+        // other dimensions are not
+        for (int i = 1; i < mdsDimension; i++) {
+            difference = vLoc.getParameterValue(i) - sLoc.getParameterValue(i);
             sum += difference * difference;
         }
         return Math.sqrt(sum);
@@ -583,11 +602,13 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     }
 
     private class Measurement {
-        private Measurement(final int column, final int columnStrain, final int row, final int rowStrain, final MeasurementType type, final double titre) {
+        private Measurement(final int column, final int columnStrain, final double columnDate, final int row, final int rowStrain, final double rowDate, final MeasurementType type, final double titre) {
             this.column = column;
             this.columnStrain = columnStrain;
+            this.columnDate = columnDate;
             this.row = row;
             this.rowStrain = rowStrain;
+            this.rowDate = rowDate;
 
             this.type = type;
             this.titre = titre;
@@ -598,6 +619,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         final int row;
         final int columnStrain;
         final int rowStrain;
+        final double columnDate;
+        final double rowDate;
 
         final MeasurementType type;
         final double titre;
@@ -618,6 +641,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final MatrixParameter locationsParameter;
     private final MatrixParameter virusLocationsParameter;
     private final MatrixParameter serumLocationsParameter;
+
+    private double earliestDate;
+    private final Parameter virusDatesParameter;
 
     private final CompoundParameter tipTraitsParameter;
     private final TaxonList strains;

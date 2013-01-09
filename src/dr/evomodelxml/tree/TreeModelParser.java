@@ -29,8 +29,9 @@ import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Date;
 import dr.evolution.util.Taxon;
-import dr.evolution.util.TimeScale;
+import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
+import dr.inference.model.CompoundParameter;
 import dr.inference.model.Parameter;
 import dr.inference.model.ParameterParser;
 import dr.xml.*;
@@ -55,6 +56,9 @@ public class TreeModelParser extends AbstractXMLObjectParser {
     public static final String ROOT_NODE = "rootNode";
     public static final String INTERNAL_NODES = "internalNodes";
     public static final String LEAF_NODES = "leafNodes";
+
+    public static final String LEAF_HEIGHTS = "leafHeights";
+
     public static final String FIRE_TREE_EVENTS = "fireTreeEvents";
 
     public static final String TAXON = "taxon";
@@ -99,7 +103,12 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                                 AttributeRule.newStringRule(TAXON, false, "The name of the taxon for the leaf"),
                                 AttributeRule.newStringRule(NAME, false, "The name of the trait attribute in the taxa"),
                                 new ElementRule(Parameter.class, "A parameter definition with id only (cannot be a reference!)")
-                        }, 0, Integer.MAX_VALUE)
+                        }, 0, Integer.MAX_VALUE),
+                new ElementRule(LEAF_HEIGHTS,
+                        new XMLSyntaxRule[]{
+                                new ElementRule(TaxonList.class, "A set of taxa for which leaf heights are required"),
+                                new ElementRule(Parameter.class, "A compound parameter containing the leaf heights")
+                        }, true)
         };
     }
 
@@ -146,26 +155,32 @@ public class TreeModelParser extends AbstractXMLObjectParser {
                     ParameterParser.replaceParameter(cxo, newParameter);
 
                     Taxon taxon = treeModel.getTaxon(index);
-                    Date date = taxon.getDate();
-                    if (date != null) {
-                        double precision = date.getPrecision();
-                        if (precision > 0.0) {
-                            // taxon date not specified to exact value so add appropriate bounds
-                            double upper = Taxon.getHeightFromDate(date);
-                            double lower = Taxon.getHeightFromDate(date);
-                            if (date.isBackwards()) {
-                                upper += precision;
-                            } else {
-                                lower -= precision;
-                            }
 
-                            // set the bounds for the given precision
-                            newParameter.addBounds(new Parameter.DefaultBounds(upper, lower, 1));
+                    setPrecisionBounds(newParameter, taxon);
 
-                            // set the initial value to be mid-point
-                            newParameter.setParameterValue(0, (upper + lower) / 2);
+                } else if (cxo.getName().equals(LEAF_HEIGHTS)) {
+                    // get a set of leaf height parameters out as a compound parameter...
+
+                    TaxonList taxa = (TaxonList)cxo.getChild(TaxonList.class);
+                    Parameter offsetParameter = (Parameter)cxo.getChild(Parameter.class);
+
+                    CompoundParameter leafHeights = new CompoundParameter("leafHeights");
+                    for (Taxon taxon : taxa) {
+                        int index = treeModel.getTaxonIndex(taxon);
+                        if (index == -1) {
+                            throw new XMLParseException("taxon " + taxon.getId() + " not found for leafHeight element in treeModel element");
                         }
+                        NodeRef node = treeModel.getExternalNode(index);
+
+                        Parameter newParameter = treeModel.getLeafHeightParameter(node);
+
+                        leafHeights.addParameter(newParameter);
+
+                        setPrecisionBounds(newParameter, taxon);
                     }
+
+                    ParameterParser.replaceParameter(cxo, leafHeights);
+
                 } else if (cxo.getName().equals(NODE_HEIGHTS)) {
 
                     boolean rootNode = cxo.getAttribute(ROOT_NODE, false);
@@ -239,7 +254,6 @@ public class TreeModelParser extends AbstractXMLObjectParser {
 
                     ParameterParser.replaceParameter(cxo, parameter);
 
-
                 } else {
                     throw new XMLParseException("illegal child element in " + getParserName() + ": " + cxo.getName());
                 }
@@ -258,6 +272,29 @@ public class TreeModelParser extends AbstractXMLObjectParser {
         Logger.getLogger("dr.evomodel").info("  initial tree topology = " + Tree.Utils.uniqueNewick(treeModel, treeModel.getRoot()));
         Logger.getLogger("dr.evomodel").info("  tree height = " + treeModel.getNodeHeight(treeModel.getRoot()));
         return treeModel;
+    }
+
+    private void setPrecisionBounds(Parameter newParameter, Taxon taxon) {
+        Date date = taxon.getDate();
+        if (date != null) {
+            double precision = date.getPrecision();
+            if (precision > 0.0) {
+                // taxon date not specified to exact value so add appropriate bounds
+                double upper = Taxon.getHeightFromDate(date);
+                double lower = Taxon.getHeightFromDate(date);
+                if (date.isBackwards()) {
+                    upper += precision;
+                } else {
+                    lower -= precision;
+                }
+
+                // set the bounds for the given precision
+                newParameter.addBounds(new Parameter.DefaultBounds(upper, lower, 1));
+
+                // set the initial value to be mid-point
+                newParameter.setParameterValue(0, (upper + lower) / 2);
+            }
+        }
     }
 
     //************************************************************************

@@ -391,11 +391,11 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private void setupInitialLocations(List<String> strainNames, Map<String,Double> strainDateMap) {
 
         for (int i = 0; i < locationsParameter.getParameterCount(); i++) {
-       //     double date = (double) strainDateMap.get(strainNames.get(i));
-       //     double diff = (date-earliestDate);
-        //    locationsParameter.getParameter(i).setParameterValue(0, diff + MathUtils.nextGaussian());
+            double date = (double) strainDateMap.get(strainNames.get(i));
+            double diff = (date-earliestDate);
+            locationsParameter.getParameter(i).setParameterValue(0, diff + MathUtils.nextGaussian());
 
-            for (int j = 0; j < mdsDimension; j++) {
+            for (int j = 1; j < mdsDimension; j++) {
                 double r = MathUtils.nextGaussian();
                 locationsParameter.getParameter(i).setParameterValue(j, r);
             }

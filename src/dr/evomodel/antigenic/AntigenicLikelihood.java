@@ -57,6 +57,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             MatrixParameter serumLocationsParameter,
             MatrixParameter locationsParameter,
             CompoundParameter tipTraitsParameter,
+            Parameter virusOffsetParameter,
+            Parameter serumOffsetParameter,
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
@@ -68,6 +70,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         List<String> strainNames = new ArrayList<String>();
         List<String> virusNames = new ArrayList<String>();
         List<String> serumNames = new ArrayList<String>();
+        Map<String, Double> strainDateMap = new HashMap<String, Double>();
 
         this.intervalWidth = intervalWidth;
         boolean useIntervals = USE_INTERVALS && intervalWidth > 0.0;
@@ -100,6 +103,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 columnStrain = strainNames.indexOf(columnStrainName);
                 if (columnStrain == -1) {
                     strainNames.add(columnStrainName);
+                    double date = Double.parseDouble(values[SERUM_DATE]);
+                    strainDateMap.put(columnStrainName, date);
                     columnStrain = strainNames.size() - 1;
                 }
                 int thisStrain = serumNames.indexOf(columnStrainName);
@@ -128,6 +133,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 rowStrain = strainNames.indexOf(rowStrainName);
                 if (rowStrain == -1) {
                     strainNames.add(rowStrainName);
+                    double date = Double.parseDouble(values[VIRUS_DATE]);
+                    strainDateMap.put(rowStrainName, date);
                     rowStrain = strainNames.size() - 1;
                 }
                 int thisStrain = virusNames.indexOf(rowStrainName);
@@ -234,6 +241,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
         }
 
+        this.virusOffsetParameter = virusOffsetParameter;
+        if (virusOffsetParameter != null) {
+            setupOffsetParameter(virusOffsetParameter, virusNames, strainDateMap, earliestDate);
+        }
+
+        this.serumOffsetParameter = serumOffsetParameter;
+        if (serumOffsetParameter != null) {
+            setupOffsetParameter(serumOffsetParameter, serumNames, strainDateMap, earliestDate);
+        }
+
         this.columnEffectsParameter = setupColumnEffectsParameter(columnParameter, maxColumnTitre);
 
         this.rowEffectsParameter = setupRowEffectsParameter(rowParameter, maxRowTitre);
@@ -316,6 +333,21 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             }
         }
     }
+
+    private void setupOffsetParameter(Parameter datesParameter, List<String> strainNames, Map<String, Double> strainDateMap, double earliest) {
+        datesParameter.setDimension(strainNames.size());
+        String[] labelArray = new String[strainNames.size()];
+        strainNames.toArray(labelArray);
+        datesParameter.setDimensionNames(labelArray);
+        for (int i = 0; i < strainNames.size(); i++) {
+            Double date = strainDateMap.get(strainNames.get(i)) - new Double(earliest);
+            if (date == null) {
+                throw new IllegalArgumentException("Date missing for strain: " + strainNames.get(i));
+            }
+            datesParameter.setParameterValue(i, date);
+        }
+    }
+
 
     private void setupTipTraitsParameter(CompoundParameter tipTraitsParameter, List<String> strainNames) {
         tipIndices = new int[strainNames.size()];
@@ -616,6 +648,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final MatrixParameter serumLocationsParameter;
 
     private double earliestDate;
+    private final Parameter virusOffsetParameter;
+    private final Parameter serumOffsetParameter;
 
     private final CompoundParameter tipTraitsParameter;
     private final TaxonList strains;
@@ -650,6 +684,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String LOCATION_DRIFT = "locationDrift";
         public static final String COLUMN_EFFECTS = "columnEffects";
         public static final String ROW_EFFECTS = "rowEffects";
+        public final static String VIRUS_OFFSET = "virusOffset";
+        public final static String SERUM_OFFSET = "serumOffset";
 
         public static final String STRAINS = "strains";
 
@@ -702,6 +738,16 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             Parameter locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
 
+            Parameter virusOffsetParameter = null;
+            if (xo.hasChildNamed(VIRUS_OFFSET)) {
+                virusOffsetParameter = (Parameter) xo.getElementFirstChild(VIRUS_OFFSET);
+            }
+
+            Parameter serumOffsetParameter = null;
+            if (xo.hasChildNamed(SERUM_OFFSET)) {
+                serumOffsetParameter = (Parameter) xo.getElementFirstChild(SERUM_OFFSET);
+            }
+
             Parameter columnEffectsParameter = null;
             if (xo.hasChildNamed(COLUMN_EFFECTS)) {
                 columnEffectsParameter = (Parameter) xo.getElementFirstChild(COLUMN_EFFECTS);
@@ -720,6 +766,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     serumLocationsParameter,
                     locationsParameter,
                     tipTraitParameter,
+                    virusOffsetParameter,
+                    serumOffsetParameter,
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
@@ -755,6 +803,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "The parameter of locations of all virus", true),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "The parameter of locations of all sera", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
+                new ElementRule(VIRUS_OFFSET, Parameter.class, "An optional parameter for virus dates to be stored", true),
+                new ElementRule(SERUM_OFFSET, Parameter.class, "An optional parameter for serum dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
                 new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
                 new ElementRule(MDS_PRECISION, Parameter.class),

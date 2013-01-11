@@ -19,7 +19,7 @@ import java.util.List;
 
 // jumpVector is a series of year-to-year changes in AG1.  Start of at 0.
 // jumpMean and jumpSd give the parameters of the gamma distribution of jump sizes
-
+@Deprecated // drift prior incorporated into antigenicLikelihood
 public class AntigenicJumpPrior extends AbstractModelLikelihood implements Citable {
 
     public final static String ANTIGENIC_JUMP_PRIOR = "antigenicJumpPrior";

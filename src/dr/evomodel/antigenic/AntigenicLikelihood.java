@@ -57,8 +57,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             MatrixParameter serumLocationsParameter,
             MatrixParameter locationsParameter,
             CompoundParameter tipTraitsParameter,
-            Parameter virusOffsetParameter,
-            Parameter serumOffsetParameter,
+            Parameter virusOffsetsParameter,
+            Parameter serumOffsetsParameter,
             Parameter columnParameter,
             Parameter rowParameter,
             DataTable<String[]> dataTable,
@@ -241,14 +241,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
             setupTipTraitsParameter(this.tipTraitsParameter, strainNames);
         }
 
-        this.virusOffsetParameter = virusOffsetParameter;
-        if (virusOffsetParameter != null) {
-            setupOffsetParameter(virusOffsetParameter, virusNames, strainDateMap, earliestDate);
+        this.virusOffsetsParameter = virusOffsetsParameter;
+        if (virusOffsetsParameter != null) {
+            setupOffsetParameter(virusOffsetsParameter, virusNames, strainDateMap, earliestDate);
         }
 
-        this.serumOffsetParameter = serumOffsetParameter;
-        if (serumOffsetParameter != null) {
-            setupOffsetParameter(serumOffsetParameter, serumNames, strainDateMap, earliestDate);
+        this.serumOffsetsParameter = serumOffsetsParameter;
+        if (serumOffsetsParameter != null) {
+            setupOffsetParameter(serumOffsetsParameter, serumNames, strainDateMap, earliestDate);
         }
 
         this.columnEffectsParameter = setupColumnEffectsParameter(columnParameter, maxColumnTitre);
@@ -648,8 +648,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private final MatrixParameter serumLocationsParameter;
 
     private double earliestDate;
-    private final Parameter virusOffsetParameter;
-    private final Parameter serumOffsetParameter;
+    private final Parameter virusOffsetsParameter;
+    private final Parameter serumOffsetsParameter;
 
     private final CompoundParameter tipTraitsParameter;
     private final TaxonList strains;
@@ -684,8 +684,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         public static final String LOCATION_DRIFT = "locationDrift";
         public static final String COLUMN_EFFECTS = "columnEffects";
         public static final String ROW_EFFECTS = "rowEffects";
-        public final static String VIRUS_OFFSET = "virusOffset";
-        public final static String SERUM_OFFSET = "serumOffset";
+        public final static String VIRUS_OFFSETS = "virusOffsets";
+        public final static String SERUM_OFFSETS = "serumOffsets";
 
         public static final String STRAINS = "strains";
 
@@ -738,14 +738,14 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
             Parameter locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
 
-            Parameter virusOffsetParameter = null;
-            if (xo.hasChildNamed(VIRUS_OFFSET)) {
-                virusOffsetParameter = (Parameter) xo.getElementFirstChild(VIRUS_OFFSET);
+            Parameter virusOffsetsParameter = null;
+            if (xo.hasChildNamed(VIRUS_OFFSETS)) {
+                virusOffsetsParameter = (Parameter) xo.getElementFirstChild(VIRUS_OFFSETS);
             }
 
-            Parameter serumOffsetParameter = null;
-            if (xo.hasChildNamed(SERUM_OFFSET)) {
-                serumOffsetParameter = (Parameter) xo.getElementFirstChild(SERUM_OFFSET);
+            Parameter serumOffsetsParameter = null;
+            if (xo.hasChildNamed(SERUM_OFFSETS)) {
+                serumOffsetsParameter = (Parameter) xo.getElementFirstChild(SERUM_OFFSETS);
             }
 
             Parameter columnEffectsParameter = null;
@@ -766,8 +766,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                     serumLocationsParameter,
                     locationsParameter,
                     tipTraitParameter,
-                    virusOffsetParameter,
-                    serumOffsetParameter,
+                    virusOffsetsParameter,
+                    serumOffsetsParameter,
                     columnEffectsParameter,
                     rowEffectsParameter,
                     assayTable,
@@ -803,8 +803,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
                 new ElementRule(VIRUS_LOCATIONS, MatrixParameter.class, "The parameter of locations of all virus", true),
                 new ElementRule(SERUM_LOCATIONS, MatrixParameter.class, "The parameter of locations of all sera", true),
                 new ElementRule(LOCATIONS, MatrixParameter.class),
-                new ElementRule(VIRUS_OFFSET, Parameter.class, "An optional parameter for virus dates to be stored", true),
-                new ElementRule(SERUM_OFFSET, Parameter.class, "An optional parameter for serum dates to be stored", true),
+                new ElementRule(VIRUS_OFFSETS, Parameter.class, "An optional parameter for virus dates to be stored", true),
+                new ElementRule(SERUM_OFFSETS, Parameter.class, "An optional parameter for serum dates to be stored", true),
                 new ElementRule(COLUMN_EFFECTS, Parameter.class, "An optional parameter for column effects", true),
                 new ElementRule(ROW_EFFECTS, Parameter.class, "An optional parameter for row effects", true),
                 new ElementRule(MDS_PRECISION, Parameter.class),

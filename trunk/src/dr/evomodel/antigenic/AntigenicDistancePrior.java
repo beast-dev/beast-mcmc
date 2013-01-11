@@ -27,6 +27,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
+@Deprecated // drift prior incorporated into antigenicLikelihood
 public class AntigenicDistancePrior extends AbstractModelLikelihood implements Citable {
 
     public final static String ANTIGENIC_DISTANCE_PRIOR = "antigenicDistancePrior";

@@ -11,11 +11,11 @@ public class DriftedLocationsStatistic extends Statistic.Abstract implements Var
 
     public static final String DRIFTED_LOCATIONS_STATISTIC = "driftedLocationsStatistic";
 
-    public DriftedLocationsStatistic(MatrixParameter locationsParameter, Parameter offsetParameter, Parameter locationDriftParameter) {
+    public DriftedLocationsStatistic(MatrixParameter locationsParameter, Parameter offsetsParameter, Parameter locationDriftParameter) {
         this.locationsParameter = locationsParameter;
         locationsParameter.addParameterListener(this);
-        this.offsetParameter = offsetParameter;
-        offsetParameter.addParameterListener(this);
+        this.offsetsParameter = offsetsParameter;
+        offsetsParameter.addParameterListener(this);
         this.locationDriftParameter = locationDriftParameter;
         locationDriftParameter.addParameterListener(this);
     }
@@ -45,7 +45,7 @@ public class DriftedLocationsStatistic extends Statistic.Abstract implements Var
         Parameter loc = locationsParameter.getParameter(x);
 
         if (y == 0) {
-            val = loc.getParameterValue(y) + locationDriftParameter.getParameterValue(0) * offsetParameter.getParameterValue(x);
+            val = loc.getParameterValue(y) + locationDriftParameter.getParameterValue(0) * offsetsParameter.getParameterValue(x);
         }
         else {
             val = loc.getParameterValue(y);
@@ -67,7 +67,7 @@ public class DriftedLocationsStatistic extends Statistic.Abstract implements Var
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public final static String LOCATIONS = "locations";
-        public final static String OFFSET = "offset";
+        public final static String OFFSETS = "offsets";
         public final static String LOCATION_DRIFT = "locationDrift";
 
         public String getParserName() {
@@ -77,7 +77,7 @@ public class DriftedLocationsStatistic extends Statistic.Abstract implements Var
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MatrixParameter locations = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
-            Parameter offset = (Parameter) xo.getElementFirstChild(OFFSET);
+            Parameter offset = (Parameter) xo.getElementFirstChild(OFFSETS);
             Parameter locationDrift = (Parameter) xo.getElementFirstChild(LOCATION_DRIFT);
             return new DriftedLocationsStatistic(locations, offset, locationDrift);
 
@@ -101,12 +101,12 @@ public class DriftedLocationsStatistic extends Statistic.Abstract implements Var
 
         private XMLSyntaxRule[] rules = new XMLSyntaxRule[]{
             new ElementRule(LOCATIONS, MatrixParameter.class),
-            new ElementRule(OFFSET, Parameter.class),
+            new ElementRule(OFFSETS, Parameter.class),
             new ElementRule(LOCATION_DRIFT, Parameter.class)
         };
     };
 
     private MatrixParameter locationsParameter;
-    private Parameter offsetParameter;
+    private Parameter offsetsParameter;
     private Parameter locationDriftParameter;
 }

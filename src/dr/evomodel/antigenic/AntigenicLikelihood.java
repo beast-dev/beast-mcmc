@@ -21,9 +21,9 @@ import java.util.logging.Logger;
  */
 /*
     Both virus locations and serum locations are shifted by the parameter locationDrift.
-    A location is increased by locationDrift x time.
-    Time is set to 0 for the earliest virus.
-    This makes the raw virusLocations and serumLocations parameters not interpretable.
+    A location is increased by locationDrift x offset.
+    Offset is set to 0 for the earliest virus and increasing with difference in date from earliest virus.
+    This makes the raw virusLocations and serumLocations parameters not directly interpretable.
 */
 public class AntigenicLikelihood extends AbstractModelLikelihood implements Citable {
     private static final boolean CHECK_INFINITE = false;
@@ -272,6 +272,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         Logger.getLogger("dr.evomodel").info(sb.toString());
 
         locationChanged = new boolean[this.locationsParameter.getParameterCount()];
+        columnEffectChanged = new boolean[maxColumnTitre.length];
+        rowEffectChanged = new boolean[maxRowTitre.length];
         logLikelihoods = new double[measurements.size()];
         storedLogLikelihoods = new double[measurements.size()];
 
@@ -423,9 +425,9 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         } else if (variable == locationDriftParameter) {
             setLocationChangedFlags(true);
         } else if (variable == columnEffectsParameter) {
-            setLocationChangedFlags(true);
+            columnEffectChanged[index] = true;
         } else if (variable == rowEffectsParameter) {
-            setLocationChangedFlags(true);
+            rowEffectChanged[index] = true;
         } else {
             // could be a derived class's parameter
 //            throw new IllegalArgumentException("Unknown parameter");
@@ -474,7 +476,7 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
 
         for (Measurement measurement : measurements) {
 
-            if (locationChanged[measurement.rowStrain] || locationChanged[measurement.columnStrain]) {
+            if (locationChanged[measurement.rowStrain] || locationChanged[measurement.columnStrain] || columnEffectChanged[measurement.column] || rowEffectChanged[measurement.row]) {
 
                 // the row strain is shifted
                 double mapDistance = computeDistance(measurement.rowStrain, measurement.columnStrain, measurement.rowDate, measurement.columnDate);
@@ -503,6 +505,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
         likelihoodKnown = true;
 
         setLocationChangedFlags(false);
+        setColumnEffectChangedFlags(false);
+        setRowEffectChangedFlags(false);
 
         return logLikelihood;
     }
@@ -510,6 +514,18 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private void setLocationChangedFlags(boolean flag) {
         for (int i = 0; i < locationChanged.length; i++) {
             locationChanged[i] = flag;
+        }
+    }
+
+    private void setColumnEffectChangedFlags(boolean flag) {
+        for (int i = 0; i < columnEffectChanged.length; i++) {
+            columnEffectChanged[i] = flag;
+        }
+    }
+
+    private void setRowEffectChangedFlags(boolean flag) {
+        for (int i = 0; i < rowEffectChanged.length; i++) {
+            rowEffectChanged[i] = flag;
         }
     }
 
@@ -663,6 +679,8 @@ public class AntigenicLikelihood extends AbstractModelLikelihood implements Cita
     private boolean likelihoodKnown = false;
 
     private final boolean[] locationChanged;
+    private final boolean[] columnEffectChanged;
+    private final boolean[] rowEffectChanged;
     private double[] logLikelihoods;
     private double[] storedLogLikelihoods;
 

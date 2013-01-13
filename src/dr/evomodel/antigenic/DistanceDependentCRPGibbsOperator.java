@@ -2,7 +2,6 @@ package dr.evomodel.antigenic;
 
 import java.util.logging.Logger;
 
-import dr.evomodel.antigenic.NPAntigenicLikelihood;
 import dr.inference.model.Likelihood;
 import dr.inference.model.Parameter;
 import dr.inference.operators.GibbsOperator;
@@ -16,13 +15,16 @@ import dr.xml.*;
 
 /**
  * A Gibbs operator for allocation of items to clusters under a distance dependent Chinese restaurant process.
+ *
+ * @author Gabriela Cybis
+ * @author Marc Suchard
  */
 
-public class ddCRPGibbsOperator extends SimpleMCMCOperator implements GibbsOperator  {
+public class DistanceDependentCRPGibbsOperator extends SimpleMCMCOperator implements GibbsOperator  {
 
 
 
-	    public final static String DDCRP_GIBBS_OPERATOR = "ddCRPGibbsOperator";
+	    public final static String DDCRP_GIBBS_OPERATOR = "distanceDependentCRPGibbsOperator";
 
 	   
 	    private final Parameter chiParameter;
@@ -32,10 +34,10 @@ public class ddCRPGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 	    private Parameter assignments = null;
 	    
 	    
-	    public ddCRPGibbsOperator(Parameter links, Parameter assignments,
-	                                         Parameter chiParameter,
-	                                         NPAntigenicLikelihood Likelihood,
-	                                         double weight ) {
+	    public DistanceDependentCRPGibbsOperator(Parameter links, Parameter assignments,
+                                                 Parameter chiParameter,
+                                                 NPAntigenicLikelihood Likelihood,
+                                                 double weight) {
 	     
 	    	this.links = links;
 	    	this.assignments = assignments;
@@ -543,7 +545,7 @@ public class ddCRPGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 		  
 		        
 		        
-	            return new ddCRPGibbsOperator( links, assignments,
+	            return new DistanceDependentCRPGibbsOperator( links, assignments,
                         chiParameter,likelihood, weight);
 
 	        }
@@ -557,7 +559,7 @@ public class ddCRPGibbsOperator extends SimpleMCMCOperator implements GibbsOpera
 	        }
 
 	        public Class getReturnType() {
-	            return ddCRPGibbsOperator.class;
+	            return DistanceDependentCRPGibbsOperator.class;
 	        }
 
 

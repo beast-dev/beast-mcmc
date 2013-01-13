@@ -29,6 +29,10 @@ import dr.xml.XMLObjectParser;
 import dr.xml.XMLParseException;
 import dr.xml.XMLSyntaxRule;
 
+/**
+ * @author Gabriela Cybis
+ * @author Marc Suchard
+ */
 public class NPAntigenicLikelihood extends AbstractModelLikelihood {
 	
 	  public static final String NP_ANTIGENIC_LIKELIHOOD = "NPAntigenicLikelihood";

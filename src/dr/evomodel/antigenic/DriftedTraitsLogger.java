@@ -1,5 +1,5 @@
 /*
- * DriftedLocationLogger.java
+ * DriftedTraitsLogger.java
  *
  * Copyright (C) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *

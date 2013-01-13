@@ -14,6 +14,7 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
+@Deprecated
 public class DiscreteAntigenicTraitLikelihood extends AntigenicTraitLikelihood implements Citable {
 
     public final static String DISCRETE_ANTIGENIC_TRAIT_LIKELIHOOD = "discreteAntigenicTraitLikelihood";

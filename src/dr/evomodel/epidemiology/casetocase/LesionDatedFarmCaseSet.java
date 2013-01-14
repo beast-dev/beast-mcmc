@@ -1,6 +1,5 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -36,13 +35,14 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         this(LESION_DATED_FARM_CASE_SET, incubationPeriodDistribution, farms, riemannSampleSize);
     }
 
-    /* Likelihood of the root branch (the farm is infectious by the root node time)*/
+    /* Likelihood of the root branch (the farm is infectious by the root node time). No longer root-specific
+    * and this name badly needs to change.*/
 
-    public double rootBranchLikelihood(AbstractCase farm, Integer farmInfectiousBy) {
-        return Math.exp(rootBranchLogLikelihood(farm, farmInfectiousBy));
+    public double noTransmissionBranchLikelihood(AbstractCase farm, Integer farmInfectiousBy) {
+        return Math.exp(noTransmissionBranchLogLikelihood(farm, farmInfectiousBy));
     }
 
-    public double rootBranchLogLikelihood(AbstractCase farm, Integer farmInfectiousBy) {
+    public double noTransmissionBranchLogLikelihood(AbstractCase farm, Integer farmInfectiousBy) {
         if(farm.culledYet(farmInfectiousBy)){
             return Double.NEGATIVE_INFINITY;
         } else {
@@ -51,14 +51,14 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
     }
 
     /* Likelihood of a non-root branch (the farm is infected at the parent node time and infectious by the child node
-    time). */
+    time). May need a new name. */
 
-    public double branchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
+    public double transmissionBranchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {
-        return Math.exp(branchLogLikelihood(parent, child, childInfected, childInfectiousBy));
+        return Math.exp(transmissionBranchLogLikelihood(parent, child, childInfected, childInfectiousBy));
     }
 
-    public double branchLogLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
+    public double transmissionBranchLogLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {
         if(child.culledYet(childInfectiousBy)){
             return Double.NEGATIVE_INFINITY;

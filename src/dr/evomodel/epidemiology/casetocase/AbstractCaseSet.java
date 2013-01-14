@@ -22,20 +22,20 @@ public abstract class AbstractCaseSet extends AbstractModel {
 
     /*Likelihood for the root if it is painted with 'farm'  */
 
-    public abstract double rootBranchLikelihood(AbstractCase farm, Integer farmInfectiousBy);
+    public abstract double noTransmissionBranchLikelihood(AbstractCase farm, Integer farmInfectiousBy);
 
-    public abstract double rootBranchLogLikelihood(AbstractCase farm, Integer farmInfectiousBy);
+    public abstract double noTransmissionBranchLogLikelihood(AbstractCase farm, Integer farmInfectiousBy);
 
 
     /*Likelihood for a branch leading from a node painted 'parent' to a node painted 'child'. This deals with the
     probability that farm2 is infected at the first time and infectious at the second. The calculations for farm1
     will be done when that node is considered as a child, or as the root*/
 
-    public abstract double branchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected,
-                                            Integer childInfectiousBy);
+    public abstract double transmissionBranchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected,
+                                                        Integer childInfectiousBy);
 
-    public abstract double branchLogLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected,
-                                            Integer childInfectiousBy);
+    public abstract double transmissionBranchLogLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected,
+                                                           Integer childInfectiousBy);
 
     public abstract ArrayList<AbstractCase> getCases();
 

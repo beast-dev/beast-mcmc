@@ -1,7 +1,7 @@
 /*
  * BranchModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,9 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
-import dr.evolution.tree.Tree;
 import dr.inference.model.Model;
 
 import java.util.List;
@@ -63,6 +63,12 @@ public interface BranchModel extends Model {
      * @return the substitution model
      */
     SubstitutionModel getRootSubstitutionModel();
+
+    /**
+     * Gets the frequency model that will be applied at the root.
+     * @return the substitution model
+     */
+    FrequencyModel getRootFrequencyModel();
 
     /**
      * Is this model going to require convolution of matrices along any branches (essentially

@@ -1,7 +1,7 @@
 /*
  * MarkovJumpsTreeLikelihoodParser.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -27,6 +27,7 @@ package dr.app.beagle.evomodel.parsers;
 
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.MarkovJumpsBeagleTreeLikelihood;
@@ -218,6 +219,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AncestralStateTreeLikelihoo
                             new XMLSyntaxRule[] {
                                     new ElementRule(Parameter.class,0,Integer.MAX_VALUE)
                             },true),
+                     new ElementRule(FrequencyModel.class, true),
             };
 
     public XMLSyntaxRule[] getSyntaxRules() {

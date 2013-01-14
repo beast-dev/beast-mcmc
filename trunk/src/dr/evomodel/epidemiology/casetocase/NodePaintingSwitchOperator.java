@@ -16,10 +16,10 @@ import dr.xml.*;
 public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     public static final String NODE_PAINTING_SWITCH_OPERATOR = "nodePaintingSwitchOperator";
-    private CaseToCaseTransmissionLikelihood c2cLikelihood;
+    private OldCaseToCaseTransmissionLikelihood c2cLikelihood;
 
 
-    public NodePaintingSwitchOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight){
+    public NodePaintingSwitchOperator(OldCaseToCaseTransmissionLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
     }
@@ -115,8 +115,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-            CaseToCaseTransmissionLikelihood ftLikelihood =
-                    (CaseToCaseTransmissionLikelihood) xo.getChild(CaseToCaseTransmissionLikelihood.class);
+            OldCaseToCaseTransmissionLikelihood ftLikelihood =
+                    (OldCaseToCaseTransmissionLikelihood) xo.getChild(OldCaseToCaseTransmissionLikelihood.class);
             final double weight = xo.getDoubleAttribute("weight");
             return new NodePaintingSwitchOperator(ftLikelihood, weight);
         }
@@ -136,7 +136,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
         private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule("weight"),
-                new ElementRule(CaseToCaseTransmissionLikelihood.class),
+                new ElementRule(OldCaseToCaseTransmissionLikelihood.class),
         };
     };
 }

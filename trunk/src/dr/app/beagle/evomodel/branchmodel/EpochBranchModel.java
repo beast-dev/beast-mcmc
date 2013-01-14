@@ -1,7 +1,7 @@
 /*
  * EpochBranchModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
@@ -38,6 +36,9 @@ import dr.inference.model.Variable;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Filip Bielejec
@@ -73,7 +74,7 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         addVariable(epochTimes);
     }// END: Constructor
 
-    @Override
+//    @Override
     public Mapping getBranchModelMapping(NodeRef node) {
 
         int nModels = substitutionModels.size();
@@ -158,31 +159,35 @@ public class EpochBranchModel extends AbstractModel implements BranchModel, Cita
         }
 
         return new Mapping() {
-            @Override
+//            @Override
             public int[] getOrder() {
                 return order;
             }
 
-            @Override
+//            @Override
             public double[] getWeights() {
                 return weights;
             }
         };
     }// END: getBranchModelMapping
 
-    @Override
+//    @Override  // use java 1.5
     public boolean requiresMatrixConvolution() {
         return true;
     }
 
-    @Override
+//    @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
     }
 
-    @Override
+//    @Override
     public SubstitutionModel getRootSubstitutionModel() {
         return substitutionModels.get(substitutionModels.size() - 1);
+    }
+
+    public FrequencyModel getRootFrequencyModel() {
+        return getRootSubstitutionModel().getFrequencyModel();
     }
 
     protected void handleModelChangedEvent(Model model, Object object, int index) {

@@ -1,7 +1,7 @@
 /*
- * NewTreeLikelihoodParser.java
+ * BeagleTreeLikelihoodParser.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -30,6 +30,7 @@ package dr.app.beagle.evomodel.parsers;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.branchmodel.HomogeneousBranchModel;
 import dr.app.beagle.evomodel.sitemodel.GammaSiteRateModel;
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.app.beagle.evomodel.treelikelihood.AbstractTreeLikelihood;
 import dr.app.beagle.evomodel.treelikelihood.BeagleTreeLikelihood;
@@ -111,6 +112,8 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
         PatternList patternList = (PatternList) xo.getChild(PatternList.class);
         TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
         GammaSiteRateModel siteRateModel = (GammaSiteRateModel) xo.getChild(GammaSiteRateModel.class);
+
+        FrequencyModel rootFreqModel = (FrequencyModel) xo.getChild(FrequencyModel.class);
 
         BranchModel branchModel = (BranchModel) xo.getChild(BranchModel.class);
         if (branchModel == null) {
@@ -230,7 +233,8 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
                     new ElementRule(TaxonList.class),
                     new ElementRule(Parameter.class),
             }, true),
-            new ElementRule(TipStatesModel.class, true)
+            new ElementRule(TipStatesModel.class, true),
+            new ElementRule(FrequencyModel.class, true),
     };
 
     public XMLSyntaxRule[] getSyntaxRules() {

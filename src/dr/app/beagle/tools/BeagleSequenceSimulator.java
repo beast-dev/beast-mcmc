@@ -1,7 +1,7 @@
 /*
  * BeagleSequenceSimulator.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -24,13 +24,6 @@
  */
 
 package dr.app.beagle.tools;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Locale;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import beagle.Beagle;
 import beagle.BeagleFactory;
@@ -56,6 +49,13 @@ import dr.evomodel.branchratemodel.DefaultBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 import dr.math.MathUtils;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Filip Bielejec
@@ -733,7 +733,7 @@ public class BeagleSequenceSimulator {
 			this.partition = partition;
 		}// END: Constructor
 
-		@Override
+//		@Override   // use java 1.5
 		public void run() {
 			
 			try {

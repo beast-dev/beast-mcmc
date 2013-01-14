@@ -1,7 +1,7 @@
 /*
  * BranchSpecificBranchModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,11 +25,11 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.AbstractBranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.LocalClockModelParser;
 import dr.inference.model.AbstractModel;
@@ -104,7 +104,7 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         throw new UnsupportedOperationException("Not implemented yet");
     }
 
-    @Override
+//    @Override // use java 1.5
     public Mapping getBranchModelMapping(NodeRef branch) {
         if (updateNodeMaps) {
             setupNodeMaps();
@@ -116,17 +116,21 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         return BranchModel.DEFAULT;
     }
 
-    @Override
+//    @Override
     public List<SubstitutionModel> getSubstitutionModels() {
         return substitutionModels;
     }
 
-    @Override
+//    @Override
     public SubstitutionModel getRootSubstitutionModel() {
         return rootSubstitutionModel;
     }
 
-    @Override
+    public FrequencyModel getRootFrequencyModel() {
+        return getRootSubstitutionModel().getFrequencyModel();
+    }
+
+//    @Override
     public boolean requiresMatrixConvolution() {
         return requiresMatrixConvolution;
     }
@@ -194,12 +198,12 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
                 }
 
                 nodeMap.put(node, new Mapping() {
-                    @Override
+//                    @Override
                     public int[] getOrder() {
                         return new int[] { index , ancestralIndex };
                     }
 
-                    @Override
+//                    @Override
                     public double[] getWeights() {
                         return new double[] { weight, 1.0 - weight };
                     }
@@ -219,12 +223,12 @@ public class BranchSpecificBranchModel extends AbstractModel implements BranchMo
         }
 
         nodeMap.put(node, new Mapping() {
-            @Override
+//            @Override
             public int[] getOrder() {
                 return new int[] { clade.getIndex() };
             }
 
-            @Override
+//            @Override
             public double[] getWeights() {
                 return new double[] { 1.0 };
             }

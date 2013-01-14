@@ -1,7 +1,7 @@
 /*
  * HomogeneousBranchModel.java
  *
- * Copyright (C) 2002-2012 Alexei Drummond, Andrew Rambaut & Marc A. Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,7 @@
 
 package dr.app.beagle.evomodel.branchmodel;
 
+import dr.app.beagle.evomodel.substmodel.FrequencyModel;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.NodeRef;
 import dr.inference.model.AbstractModel;
@@ -52,19 +53,23 @@ public class HomogeneousBranchModel extends AbstractModel implements BranchModel
         return DEFAULT;
     }
 
-    @Override
+//    @Override // use java 1.5
     public List<SubstitutionModel> getSubstitutionModels() {
         List<SubstitutionModel> substitutionModels = new ArrayList<SubstitutionModel>();
         substitutionModels.add(substitutionModel);
         return substitutionModels;
     }
 
-    @Override
+//    @Override
     public SubstitutionModel getRootSubstitutionModel() {
         return substitutionModel;
     }
 
-    @Override
+    public FrequencyModel getRootFrequencyModel() {
+        return getRootSubstitutionModel().getFrequencyModel();
+    }
+
+//    @Override
     public boolean requiresMatrixConvolution() {
         return false;
     }

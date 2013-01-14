@@ -135,7 +135,7 @@ public class EigendecompositionTest {
 
         ComplexSubstitutionModel substModel = new ComplexSubstitutionModel("test", dataType, freqModel, rateMatrix);
 
-        ArrayList<Integer[]> indicators = getAllPossibleZeroRows(dim, columnNumberLookup);
+        ArrayList<Integer[]> indicators = makeMatrices(getAllPossibilities(dim), columnNumberLookup);
 
         for(Integer[] ind:indicators){
 
@@ -164,6 +164,20 @@ public class EigendecompositionTest {
                 normalise(rateMatrix);
 
                 boolean EigenDecompOK = testEigenDecomposition(substModel);
+                if(!EigenDecompOK){
+                    for(int row=0; row<dim; row++){
+                        for(int col=0; col<dim; col++){
+                            if(row==col){
+                                System.out.print("- ");
+                            } else {
+                                System.out.print(rateMatrix.getParameterValue(columnNumberLookup[row][col])+" ");
+                            }
+                        }
+                        System.out.println();
+                    }
+                    System.out.println();
+                }
+
 
                 Boolean[] transProbsOK = new Boolean[dim];
 
@@ -175,19 +189,20 @@ public class EigendecompositionTest {
                 for(int i=0; i<dim; i++)
                     if(EigenDecompOK && transProbsOK[i]){successTP[i]++;}
             }
-
-            System.out.print("Indicators: ");
-            for(int i=0;i<dim*(dim-1);i++){
-                System.out.print(ind[i]+" ");
-            }
-            System.out.println();
-            System.out.println("Eigendecomposition succeeded "+successED+" times out of 100");
-            for(int i=0;i<dim;i++){
-                if(zeroRows[i]==1){
-                    System.out.println("Row " + (i+1) + ": Connectivity check would work "+successTP[i]+" times out of "+successED);
+            if(successED!=100){
+                System.out.print("Indicators: ");
+                for(int i=0;i<dim*(dim-1);i++){
+                    System.out.print(ind[i]+" ");
                 }
+                System.out.println();
+                System.out.println("Eigendecomposition succeeded "+successED+" times out of 100");
+                for(int i=0;i<dim;i++){
+                    if(zeroRows[i]==1){
+                        System.out.println("Row " + (i+1) + ": Connectivity check would work "+successTP[i]+" times out of "+successED);
+                    }
+                }
+                System.out.println();
             }
-            System.out.println();
         }
 
     }
@@ -200,24 +215,49 @@ public class EigendecompositionTest {
             }
         }
 
+
+
         return false;
 
     }
 
-    private static ArrayList<Integer[]> getAllPossibleZeroRows(int dim, int[][] lookup){
+    private static ArrayList<Integer[]> getAllPossibleZeroRows(int dim){
         ArrayList<Integer[]> allPossibleZeroRows = new ArrayList<Integer[]>();
         for(int zeroRow=0; zeroRow<dim; zeroRow++){
-            Integer[] possibility = new Integer[dim*(dim-1)];
-            for(int row=0; row<dim; row++){
-                for(int col=0; col<dim; col++){
-                    if(row!=col){
-                        possibility[lookup[row][col]] = row==zeroRow ? 0:1;
-                    }
-                }
+            Integer[] possibility = new Integer[dim];
+            for(int i=0; i<dim; i++){
+                possibility[i] = i==zeroRow ? 0:1;
+
             }
             allPossibleZeroRows.add(possibility);
         }
         return allPossibleZeroRows;
+    }
+
+
+    private static ArrayList<Integer[]> makeMatrices(ArrayList<Integer[]> configs, int[][] lookup){
+        ArrayList<Integer[]> out = new ArrayList<Integer[]>();
+        int dim = configs.get(0).length;
+        for(Integer[] config: configs){
+            boolean allZeroes = true;
+            for(int i=0; i<dim; i++){
+                if(config[i]!=0){
+                    allZeroes=false;
+                }
+            }
+            if(!allZeroes){
+                Integer[] possibility = new Integer[dim*(dim-1)];
+                for(int row=0; row<dim; row++){
+                    for(int col=0; col<dim; col++){
+                        if(row!=col){
+                            possibility[lookup[row][col]] = config[row]==0 ? 0:1;
+                        }
+                    }
+                }
+                out.add(possibility);
+            }
+        }
+        return out;
     }
 
     private static ArrayList<Integer[]> getAllPossibilities(int length){
@@ -272,16 +312,6 @@ public class EigendecompositionTest {
             if(i!=rowOfInterest*dim+rowOfInterest){
                 if(probs[i]>tolerance){
                     out = false;
-                }
-            }
-        }
-
-        if(!out){
-            for(int i=rowOfInterest*dim; i<rowOfInterest*dim+dim; i++){
-                if(i==rowOfInterest*dim+rowOfInterest){
-                    if(probs[i]>1){
-                        System.out.println();
-                    }
                 }
             }
         }

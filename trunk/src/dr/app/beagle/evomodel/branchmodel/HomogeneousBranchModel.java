@@ -38,15 +38,27 @@ import java.util.List;
 /**
  * @author Andrew Rambaut
  * @author Filip Bielejec
+ * @author Marc Suchard
  * @version $Id$
  */
-public class HomogeneousBranchModel extends AbstractModel implements BranchModel{
+public class HomogeneousBranchModel extends AbstractModel implements BranchModel {
     private final SubstitutionModel substitutionModel;
+    private final FrequencyModel rootFrequencyModel;
 
     public HomogeneousBranchModel(SubstitutionModel substitutionModel) {
+        this(substitutionModel, null);
+    }
+
+    public HomogeneousBranchModel(SubstitutionModel substitutionModel, FrequencyModel rootFrequencyModel) {
         super("HomogeneousBranchModel");
         this.substitutionModel = substitutionModel;
         addModel(substitutionModel);
+        if (rootFrequencyModel != null) {
+            addModel(rootFrequencyModel);
+            this.rootFrequencyModel = rootFrequencyModel;
+        } else {
+            this.rootFrequencyModel = substitutionModel.getFrequencyModel();
+        }
     }
 
     public Mapping getBranchModelMapping(NodeRef node) {
@@ -66,7 +78,7 @@ public class HomogeneousBranchModel extends AbstractModel implements BranchModel
     }
 
     public FrequencyModel getRootFrequencyModel() {
-        return getRootSubstitutionModel().getFrequencyModel();
+        return rootFrequencyModel;
     }
 
 //    @Override

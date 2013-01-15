@@ -58,28 +58,66 @@ public class SpecificEigendecompositionTest extends MathTestCase {
         return new ComplexSubstitutionModel("test", dataType, freqModel, rateVector);
     }
 
+//    private static int dim = 4;
+//
+//    private static double[] testRates = {
+//     0.27577,     0.39669,     0.07341,
+//                  0.07491,     0.08690,
+//                                   0.0,
+//     0.75, 0.0, 0.19029,
+//           0.0, 0.44924,
+//                0.70278
+//    };
+//
+//    private static double[] checkEigenvalues = {-1.7950052, -1.7884673, -0.4165275,  0.0000000, 0.0, 0.0, 0.0, 0.0};
+
+//    private static int dim = 5;
+//
+//    private static double[] testRates = {
+//            0.0,                      0.0,          0.0,                    0.0,
+//                                      0.0,          0.0,                    0.0,
+//                                                    3.478773070125323,      0.2848265288341367,
+//                                                                            0.0,
+//    0.0,    3.606696517465288,        0.0,          0.3708731237136557,
+//            4.421855313152474,        0.0,          2.6121833491266533,
+//                                      0.0,          3.997241604528838,
+//                                                    1.227550493053631
+//    };
+//
+//    private static double[] checkEigenvalues = {-3.0214359488392066, -1.978564049686774, 0.0, 0.0, 0.0};
+
+    private static int dim = 6;
+
     private static double[] testRates = {
-     0.27577,     0.39669,     0.07341,
-                  0.07491,     0.08690,
-                                   0.0,
-     0.75, 0.0, 0.19029,
-           0.0, 0.44924,
-                0.70278
+            0.0,        0.0,        0.0,        0.0,        0.0,
+                        0.0,        0.0,        0.0,        0.0,
+                                    0.0,        0.0,        0.0,
+                                                0.0,        0.0,
+                                                            3.5409959027854936,
+    0.0,    0.0,        0.0,        1.9115985677138407,     3.6880365950035827,
+            0.0,        0.0,        3.135364040895322,      1.2936152589276488,
+                        0.0,        2.4748026323565226,     4.738559654533422,
+                                    3.4092727663178453,     2.1723540463137088,
+                                                            3.635400535152609
+
     };
+
+    private static double[] checkEigenvalues = {-3.72531, -2.27469, 0.0, 0.0, 0.0, 0.0};
+
+
 
 //    private static double[] testRates = {
 //        1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 //    };
 
 
-    private static double[] checkEigenvalues = {-1.7950052, -1.7884673, -0.4165275,  0.0000000, 0.0, 0.0, 0.0, 0.0};
 
     private static double tolerance = 1E-4;
 
     public void testEigendecomposition() {
         System.out.println("Testing specific eigendecomposition...");
-        ComplexSubstitutionModel csm = setupModel(4, testRates);
-        double[] tmp = new double[16];
+        ComplexSubstitutionModel csm = setupModel(dim, testRates);
+        double[] tmp = new double[dim*dim];
         csm.getInfinitesimalMatrix(tmp);
         System.out.println("Rates: " + new Vector(tmp) + "\n");
 

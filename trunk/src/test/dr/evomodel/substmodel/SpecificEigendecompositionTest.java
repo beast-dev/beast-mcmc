@@ -1,7 +1,7 @@
 /*
  * SpecificEigendecompositionTest.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,9 +25,7 @@
 
 package test.dr.evomodel.substmodel;
 
-import dr.app.beagle.evomodel.substmodel.ComplexSubstitutionModel;
-import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
-import dr.app.beagle.evomodel.substmodel.FrequencyModel;
+import dr.app.beagle.evomodel.substmodel.*;
 import dr.evolution.datatype.GeneralDataType;
 import dr.inference.model.Parameter;
 import dr.math.matrixAlgebra.Vector;
@@ -55,7 +53,11 @@ public class SpecificEigendecompositionTest extends MathTestCase {
         FrequencyModel freqModel = new FrequencyModel(dataType, freqVector);
         Parameter rateVector = new Parameter.Default(rates);
 
-        return new ComplexSubstitutionModel("test", dataType, freqModel, rateVector);
+        return new ComplexSubstitutionModel("test", dataType, freqModel, rateVector) {
+            protected EigenSystem getDefaultEigenSystem(int stateCount) {
+                 return new ComplexColtEigenSystem(false, ColtEigenSystem.defaultMaxConditionNumber, ColtEigenSystem.defaultMaxIterations);
+             }
+        };
     }
 
 //    private static int dim = 4;
@@ -102,7 +104,7 @@ public class SpecificEigendecompositionTest extends MathTestCase {
 
     };
 
-    private static double[] checkEigenvalues = {-3.72531, -2.27469, 0.0, 0.0, 0.0, 0.0};
+    private static double[] checkEigenvalues = {-3.72531, -2.27469, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
 
 

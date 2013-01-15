@@ -124,7 +124,7 @@ public class BeagleTreeLikelihoodParser extends AbstractXMLObjectParser {
             if (substitutionModel == null) {
                 throw new XMLParseException("No substitution model available for TreeLikelihood: "+xo.getId());
             }
-            branchModel = new HomogeneousBranchModel(substitutionModel);
+            branchModel = new HomogeneousBranchModel(substitutionModel, rootFreqModel);
         }
 
         BranchRateModel branchRateModel = (BranchRateModel) xo.getChild(BranchRateModel.class);

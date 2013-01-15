@@ -198,7 +198,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
      * Calculates the log likelihood of the tree under current values of the epidemiological parameters
      */
     public double calculateLogLikelihood() {
-        return Double.NEGATIVE_INFINITY;
+        double totalLikelihood = 0;
+        NodeRef root = virusTree.getRoot();
+        for(AbstractCase thisCase: cases.getCases()){
+            totalLikelihood += L(root,thisCase);
+        }
+        return Math.log(totalLikelihood);
     }
 
     /* Check whether the tree will admit a particular painting for a particular node. This is true if a
@@ -229,6 +234,27 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             }
             return totalLikelihood;
+        }
+    }
+
+    /* The maximum likelihood version of the above for ancestral state reconstruction*/
+
+    private double L_max(NodeRef alpha, AbstractCase i){
+        if(virusTree.isExternal(alpha)){
+            return tipMap.get(i)==alpha ? 1:0;
+        } else {
+            double maxLikelihood = 0;
+            NodeRef[] children = getChildren(alpha);
+            for(AbstractCase case_x: cases.getCases()){
+                for(AbstractCase case_y: cases.getCases()){
+                    double P_term = P(i, case_x, case_y, alpha);
+                    double L_term = L_max(children[0],case_x)*L_max(children[1],case_y);
+                    if(L_term*P_term > maxLikelihood){
+                        maxLikelihood = L_term*P_term;
+                    }
+                }
+            }
+            return maxLikelihood;
         }
     }
 
@@ -263,6 +289,76 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             return b_term*a_term;
         }
     }
+
+    /* The method to get the maximum likelihood painting and thus network. I'm not yet sure that this procedure
+     actually results in a painting, and need to check hard for counterexamples. */
+
+    private HashMap<AbstractCase, AbstractCase> getMaximumLikelihoodNetwork(){
+        HashMap<NodeRef, AbstractCase> maxLikelihoodPainting = new HashMap<NodeRef, AbstractCase>();
+        NodeRef root = virusTree.getRoot();
+        AbstractCase rootPainting = null;
+        double maxRootPaintingLikelihood = 0;
+        for(AbstractCase thisCase: cases.getCases()){
+            double likelihood = L_max(root,thisCase);
+            if(likelihood>maxRootPaintingLikelihood){
+                maxRootPaintingLikelihood = likelihood;
+                rootPainting = thisCase;
+            }
+        }
+        maxLikelihoodPainting.put(root,rootPainting);
+        fillUp(root,maxLikelihoodPainting);
+        HashMap<AbstractCase, AbstractCase> network = new HashMap<AbstractCase, AbstractCase>();
+        for(AbstractCase thisCase: cases.getCases()){
+            network.put(thisCase, getInfector(thisCase,maxLikelihoodPainting));
+        }
+        return network;
+    }
+
+    private void fillUp(NodeRef node, HashMap<NodeRef, AbstractCase> painting){
+        if(!virusTree.isExternal(node)){
+            AbstractCase[] bestChildren = bestChildren(node, painting.get(node));
+            for(int i=0; i<bestChildren.length; i++){
+                NodeRef child = virusTree.getChild(node,i);
+                painting.put(child,bestChildren[i]);
+                fillUp(child, painting);
+            }
+        }
+    }
+
+    private AbstractCase[] bestChildren(NodeRef node, AbstractCase nodePainting){
+        double maxLikelihood = 0;
+        AbstractCase[] bestPair = new AbstractCase[2];
+        for(AbstractCase left: cases.getCases()){
+            for(AbstractCase right: cases.getCases()){
+                double P_term = P(nodePainting, left, right, node);
+                double L_term = L_max(virusTree.getChild(node,0),left)*L_max(virusTree.getChild(node,1),right);
+                if(P_term*L_term>maxLikelihood){
+                    bestPair[0] = left;
+                    bestPair[1] = right;
+                }
+            }
+        }
+        return bestPair;
+    }
+
+    public AbstractCase getInfector(AbstractCase thisCase, HashMap<NodeRef, AbstractCase> branchMap){
+        NodeRef tip = tipMap.get(thisCase);
+        return getInfector(tip, branchMap);
+    }
+
+    public AbstractCase getInfector(NodeRef node, HashMap<NodeRef, AbstractCase> branchMap){
+        if(virusTree.isRoot(node) || node.getNumber()==virusTree.getRoot().getNumber()){
+            return null;
+        } else {
+            AbstractCase nodeCase = branchMap.get(node);
+            if(branchMap.get(virusTree.getParent(node).getNumber())!=nodeCase){
+                return branchMap.get(virusTree.getParent(node).getNumber());
+            } else {
+                return getInfector(virusTree.getParent(node), branchMap);
+            }
+        }
+    }
+
 
     private NodeRef[] getChildren(NodeRef node){
         NodeRef[] children = new NodeRef[virusTree.getChildCount(node)];
@@ -333,10 +429,29 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Loggable implementation
     //************************************************************************
 
-    // This also requires serious thought
 
     public LogColumn[] getColumns(){
-        return null;
+
+        LogColumn[] columns = new LogColumn[cases.size()];
+
+        final HashMap<AbstractCase,AbstractCase> reconstructedNetwork = getMaximumLikelihoodNetwork();
+
+        for(int i=0; i< cases.size(); i++){
+            final AbstractCase infected = cases.getCase(i);
+            columns[i] = new LogColumn.Abstract(infected.toString()){
+                @Override
+                protected String getFormattedValue() {
+                    if(reconstructedNetwork.get(infected)==null){
+                        return "Start";
+                    } else {
+                        return reconstructedNetwork.get(infected).toString();
+                    }
+                }
+            };
+        }
+
+        return columns;
+
     }
 
     //************************************************************************

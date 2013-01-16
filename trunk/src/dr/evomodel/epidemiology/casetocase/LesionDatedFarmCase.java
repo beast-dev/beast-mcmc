@@ -15,6 +15,8 @@ import dr.math.RiemannApproximation;
 import dr.math.UnivariateFunction;
 import dr.xml.*;
 
+import java.util.ArrayList;
+
 /**
  * New class for farms, discarding most of what's left of the original model and using numerical integration rather
  * than a discrete timescale based on days.
@@ -46,6 +48,8 @@ public class LesionDatedFarmCase extends AbstractCase {
         this(LESION_DATED_FARM_CASE, caseID, examDate, cullDate, infectiousDate, oldestLesionAge, incubationPeriod,
                 associatedTaxa);
     }
+
+
 
 
 
@@ -307,5 +311,6 @@ public class LesionDatedFarmCase extends AbstractCase {
     private Taxa associatedTaxa;
     private RiemannApproximation numericalIntegrator;
     private ParametricDistributionModel incubationPeriod;
+    private double[] fastInfectionDate;
 
 }

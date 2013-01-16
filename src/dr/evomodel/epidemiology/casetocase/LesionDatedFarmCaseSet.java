@@ -1,5 +1,6 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import dr.inference.distribution.GammaDistributionModel;
 import dr.inference.distribution.ParametricDistributionModel;
 import dr.inference.model.Model;
 import dr.inference.model.Parameter;
@@ -35,8 +36,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
         this(LESION_DATED_FARM_CASE_SET, incubationPeriodDistribution, farms, riemannSampleSize);
     }
 
-    /* Likelihood of the root branch (the farm is infectious by the root node time). No longer root-specific
-    * and this name badly needs to change.*/
+    /* Likelihood of the root branch (the farm is infectious by the root node time).*/
 
     public double noTransmissionBranchLikelihood(AbstractCase farm, Integer farmInfectiousBy) {
         return Math.exp(noTransmissionBranchLogLikelihood(farm, farmInfectiousBy));
@@ -51,7 +51,7 @@ public class LesionDatedFarmCaseSet extends AbstractCaseSet{
     }
 
     /* Likelihood of a non-root branch (the farm is infected at the parent node time and infectious by the child node
-    time). May need a new name. */
+    time). */
 
     public double transmissionBranchLikelihood(AbstractCase parent, AbstractCase child, Integer childInfected, Integer
             childInfectiousBy) {

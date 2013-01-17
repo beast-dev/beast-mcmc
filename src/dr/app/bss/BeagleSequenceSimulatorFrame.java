@@ -39,6 +39,7 @@ import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.tree.TreeModel;
 import dr.evomodelxml.branchratemodel.StrictClockBranchRatesParser;
 import dr.evomodelxml.coalescent.CoalescentSimulatorParser;
+import dr.evomodelxml.substmodel.FrequencyModelParser;
 import dr.evomodelxml.tree.TreeModelParser;
 import dr.evoxml.NewickParser;
 import dr.evoxml.TaxaParser;
@@ -77,7 +78,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 		try {
 
-			setSize(new Dimension(900, 600));
+			setSize(new Dimension(1100, 600));
 			setMinimumSize(new Dimension(260, 100));
 
 			taxaPanel = new TaxaPanel(this, dataList);
@@ -292,8 +293,6 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 	public void generateXML(File file) throws IOException {
 
-		// System.out.println("TODO: generateXML");
-
 		XMLWriter writer = new XMLWriter(new BufferedWriter(
 				new FileWriter(file)));
 
@@ -412,14 +411,26 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 
 		}// END: try-catch block
 
+		// ////////////////////////////
+		// ---branch model element---//
+		// ////////////////////////////
 		
-		
-		
-		
-		
-		
-		
-		
+		try {
+
+			for (PartitionData data : dataList) {
+
+				writeBranchModel(data, writer);
+				writer.writeBlankLine();
+
+			}// END: partitions loop
+
+		} catch (Exception e) {
+
+			System.err.println(e);
+			throw new RuntimeException(
+					"Branch model generation has failed:\n" + e.getMessage());
+
+		}// END: try-catch block
 		
 		
 		
@@ -431,55 +442,269 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		writer.close();
 	}// END: generateXML
 
+	private void writeBranchModel(PartitionData data, XMLWriter writer) {
+		
+		
+		
+		
+		
+	}//END: writeBranchModel
+	
 	private void writeFrequencyModel(PartitionData data, XMLWriter writer) {
 
-//		 DataType dataType = data.
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+		int dataTypeIndex = data.dataTypeIndex;
+
+		switch (dataTypeIndex) {
+
+		case 0: // Nucleotide
+
+			try {
+
+				DataType dataType = data.createDataType();
+
+				String frequencies = String
+						.valueOf(data.frequencyParameterValues[0])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[1])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[2])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[3]);
+
+				writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, // tagname
+						new Attribute[] { // attributes[]
+								new Attribute.Default<String>(XMLParser.ID,
+										"freqModel"), // id
+								new Attribute.Default<String>("dataType",
+										dataType.getDescription()) // dataType
+						});
+
+				writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+				writer.writeTag(
+						ParameterParser.PARAMETER,
+						new Attribute[] {
+								new Attribute.Default<String>(
+										"dimension",
+										String.valueOf(dataType.getStateCount())),
+								new Attribute.Default<String>(
+										ParameterParser.VALUE, frequencies),
+								new Attribute.Default<String>(
+										ParameterParser.LOWER, "0.0"),
+								new Attribute.Default<String>(
+										ParameterParser.UPPER, "1.0") }, true);
+				writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+
+				writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}// END: try-catch block
+
+			break;
+
+		case 1: // Codon
+
+			try {
+
+				DataType dataType = data.createDataType();
+
+				String frequencies = String
+						.valueOf(data.frequencyParameterValues[4])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[5])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[6])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[7])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[8])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[9])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[10])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[11])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[12])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[13])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[14])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[15])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[16])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[17])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[18])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[19])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[20])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[21])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[22])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[23])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[24])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[25])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[26])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[27])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[28])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[29])
+                        + " "
+						+ String.valueOf(data.frequencyParameterValues[30])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[31])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[32])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[33])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[34])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[35])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[36])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[37])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[38])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[39])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[40])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[41])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[42])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[43])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[44])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[45])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[46])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[47])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[48])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[49])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[50])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[51])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[52])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[53])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[54])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[55])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[56])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[57])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[58])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[59])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[60])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[61])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[62])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[63])
+						+ " "
+						+ String.valueOf(data.frequencyParameterValues[64]);
+
+				writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, // tagname
+						new Attribute[] { // attributes[]
+								new Attribute.Default<String>(XMLParser.ID,
+										"freqModel"), // id
+								new Attribute.Default<String>("dataType",
+										dataType.getDescription()) // dataType
+						});
+
+				writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
+
+				writer.writeTag(ParameterParser.PARAMETER, // tagname
+						new Attribute[] { // attributes[]
+								new Attribute.Default<String>(
+										"dimension",
+										String.valueOf(dataType.getStateCount())), //
+								new Attribute.Default<String>(
+										ParameterParser.VALUE, frequencies), //
+								new Attribute.Default<String>(
+										ParameterParser.LOWER, "0.0"), //
+								new Attribute.Default<String>(
+										ParameterParser.UPPER, "1.0") //
+						}, true // close
+				);
+				writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
+
+				writer.writeCloseTag(FrequencyModelParser.FREQUENCY_MODEL);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}// END: try-catch block
+
+		}// END: switch
+
 	}// END: writeFrequencyModel
 
 	private void writeBranchRatesModel(PartitionData data, XMLWriter writer) {
 
-		int clockModel = data.clockModel;
+		int clockModel = data.clockModelIndex;
 		switch (clockModel) {
 
 		case 0: // StrictClock
 
-			writer.writeOpenTag(
-					StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
-					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, BranchRateModel.BRANCH_RATES) });
+			try {
 
-			writer.writeOpenTag("rate");
+				writer.writeOpenTag(
+						StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
+						new Attribute[] { new Attribute.Default<String>(
+								XMLParser.ID, BranchRateModel.BRANCH_RATES) });
 
-			ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
+				writer.writeOpenTag("rate");
 
-			attributes.add(new Attribute.Default<String>(XMLParser.ID,
-					"clock.rate"));
-			attributes.add(new Attribute.Default<String>(ParameterParser.VALUE,
-					String.valueOf(data.clockParameterValues[0])));
+				ArrayList<Attribute.Default> attributes = new ArrayList<Attribute.Default>();
 
-			Attribute[] attrArray = new Attribute[attributes.size()];
-			for (int i = 0; i < attrArray.length; i++) {
-				attrArray[i] = attributes.get(i);
-			}
+				attributes.add(new Attribute.Default<String>(XMLParser.ID,
+						"clock.rate"));
+				attributes.add(new Attribute.Default<String>(
+						ParameterParser.VALUE, String
+								.valueOf(data.clockParameterValues[0])));
 
-			writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
+				Attribute[] attrArray = new Attribute[attributes.size()];
+				for (int i = 0; i < attrArray.length; i++) {
+					attrArray[i] = attributes.get(i);
+				}
 
-			writer.writeCloseTag("rate");
+				writer.writeTag(ParameterParser.PARAMETER, attrArray, true);
 
-			writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
+				writer.writeCloseTag("rate");
+
+				writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}// END: try-catch block
 
 			break;
 

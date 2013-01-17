@@ -130,7 +130,7 @@ public class FrequencyModelEditor {
 
 	public void collectSettings() {
 
-		dataList.get(row).frequencyModel = frequencyCombo.getSelectedIndex();
+		dataList.get(row).frequencyModelIndex = frequencyCombo.getSelectedIndex();
 		for (int i = 0; i < PartitionData.frequencyParameterNames.length; i++) {
 
 			dataList.get(row).frequencyParameterValues[i] = frequencyParameterFields[i].getValue();

@@ -40,7 +40,7 @@ public class PartitionData {
 	// ---DATA TYPE---//
 	// /////////////////
 	
-	public int dataType = 0;
+	public int dataTypeIndex = 0;
 
 	public static String[] dataTypes = { "Nucleotide", //
 			"Codon" //
@@ -50,11 +50,11 @@ public class PartitionData {
 
 		DataType dataType = null;
 
-		if (this.dataType == 0) { // Nucleotide
+		if (this.dataTypeIndex == 0) { // Nucleotide
 
 			dataType = Nucleotides.INSTANCE;
 
-		} else if (this.dataType == 1) { // Codon
+		} else if (this.dataTypeIndex == 1) { // Codon
 
 			dataType = Codons.UNIVERSAL;
 
@@ -71,7 +71,7 @@ public class PartitionData {
 	// ---SUBSTITUTION MODELS---//
 	// ///////////////////////////
 	
-	public int substitutionModel = 0;
+	public int substitutionModelIndex = 0;
 
 	public static String[] substitutionModels = { "HKY", //
 		    "GTR", //
@@ -116,7 +116,7 @@ public class PartitionData {
 
 		BranchModel branchModel = null;
 
-		if (this.substitutionModel == 0) { // HKY
+		if (this.substitutionModelIndex == 0) { // HKY
 
 			Parameter kappa = new Parameter.Default(1, substitutionParameterValues[0]);
 			
@@ -126,7 +126,7 @@ public class PartitionData {
 			
 			branchModel = new HomogeneousBranchModel(hky);
 
-		} else if (this.substitutionModel == 1) { // GTR
+		} else if (this.substitutionModelIndex == 1) { // GTR
 
 			Parameter ac = new Parameter.Default(1, substitutionParameterValues[1]);
 			Parameter ag = new Parameter.Default(1, substitutionParameterValues[2]);
@@ -141,7 +141,7 @@ public class PartitionData {
 
 			branchModel = new HomogeneousBranchModel(gtr);
 			
-		} else if (this.substitutionModel == 2) { // TN93
+		} else if (this.substitutionModelIndex == 2) { // TN93
 
 			Parameter kappa1 = new Parameter.Default(1, substitutionParameterValues[7]);
 			Parameter kappa2 = new Parameter.Default(1, substitutionParameterValues[8]);
@@ -152,7 +152,7 @@ public class PartitionData {
 			
 			branchModel = new HomogeneousBranchModel(tn93);
 			
-		} else if (this.substitutionModel == 3) { // Yang Codon Model
+		} else if (this.substitutionModelIndex == 3) { // Yang Codon Model
 
             FrequencyModel frequencyModel = this.createFrequencyModel();
 
@@ -163,7 +163,7 @@ public class PartitionData {
 			
 			branchModel = new HomogeneousBranchModel(yangCodonModel);
 
-		} else if (this.substitutionModel == 4) { 
+		} else if (this.substitutionModelIndex == 4) { 
 			
 			System.out.println("Not yet implemented");
 			
@@ -176,7 +176,7 @@ public class PartitionData {
 	// ---CLOCK MODELS---//
 	// ////////////////////
 
-	public int clockModel = 0;
+	public int clockModelIndex = 0;
 
 	public static String[] clockModels = { "Strict Clock", //
 	};
@@ -194,12 +194,12 @@ public class PartitionData {
 
 		BranchRateModel branchRateModel = null;
 
-		if (this.clockModel == 0) { // Strict Clock
+		if (this.clockModelIndex == 0) { // Strict Clock
 
 			Parameter rateParameter = new Parameter.Default(1, clockParameterValues[0]);
 			branchRateModel = new StrictClockBranchRates(rateParameter);
 
-		} else if (this.clockModel == 1) {
+		} else if (this.clockModelIndex == 1) {
 
 			System.out.println("Not yet implemented");
 
@@ -212,7 +212,7 @@ public class PartitionData {
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
-	public int frequencyModel = 0;
+	public int frequencyModelIndex = 0;
 
 	public static String[] frequencyModels = { "Nucleotide frequencies", //
 		"Codon frequencies"
@@ -367,7 +367,7 @@ public class PartitionData {
 
 		FrequencyModel frequencyModel = null;
 
-		if (this.frequencyModel == 0) { // Nucleotidefrequencies
+		if (this.frequencyModelIndex == 0) { // Nucleotidefrequencies
 
 			Parameter freqs = new Parameter.Default(new double[] {
 					frequencyParameterValues[0], frequencyParameterValues[1],
@@ -375,7 +375,7 @@ public class PartitionData {
 
 			frequencyModel = new FrequencyModel(Nucleotides.INSTANCE, freqs);
 
-		} else if (this.frequencyModel == 1) {
+		} else if (this.frequencyModelIndex == 1) {
 
 			Parameter freqs = new Parameter.Default(new double[] {
 					frequencyParameterValues[4], frequencyParameterValues[5],
@@ -412,7 +412,7 @@ public class PartitionData {
 
 			frequencyModel = new FrequencyModel(Codons.UNIVERSAL, freqs);
 
-		} else if (this.frequencyModel == 2) {
+		} else if (this.frequencyModelIndex == 2) {
 			
 			System.out.println("Not yet implemented");
 			
@@ -425,7 +425,7 @@ public class PartitionData {
 	// ---SITE RATE MODELS---//
 	// ////////////////////////
 
-	public int siteModel = 0;
+	public int siteModelIndex = 0;
 
 	public static String[] siteModels = { "No model", //
 			"Gamma Site Rate Model", //
@@ -449,16 +449,16 @@ public class PartitionData {
 		GammaSiteRateModel siteModel = null;
 		String name = "siteModel";
 
-		if (this.siteModel == 0) { // no model
+		if (this.siteModelIndex == 0) { // no model
 
 			siteModel = new GammaSiteRateModel("siteModel");
 
-		} else if (this.siteModel == 1) { // GammaSiteRateModel
+		} else if (this.siteModelIndex == 1) { // GammaSiteRateModel
 
 			siteModel = new GammaSiteRateModel(name, siteParameterValues[1],
 					(int) siteParameterValues[0]);
 
-		} else if (this.siteModel == 2) {
+		} else if (this.siteModelIndex == 2) {
 
 			System.out.println("Not yet implemented");
 

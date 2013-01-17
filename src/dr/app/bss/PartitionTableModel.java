@@ -62,7 +62,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		case PARTITION_TREE_INDEX:
 			return dataList.get(row).treeFile == null ? new File("") : dataList.get(row).treeFile;
 		case DATA_TYPE_INDEX:
-			return PartitionData.dataTypes[ dataList.get(row).dataType];
+			return PartitionData.dataTypes[ dataList.get(row).dataTypeIndex];
 		case FROM_INDEX:
 			return dataList.get(row).from;
 		case TO_INDEX:
@@ -128,7 +128,7 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).treeFile = (File) value;
 			break;
 		case DATA_TYPE_INDEX:
-			dataList.get(row).dataType = (Integer) Utils.arrayIndex(PartitionData.dataTypes, (String)value);
+			dataList.get(row).dataTypeIndex = (Integer) Utils.arrayIndex(PartitionData.dataTypes, (String)value);
 			break;
 		case FROM_INDEX:
 			dataList.get(row).from = (Integer) value;
@@ -140,13 +140,13 @@ public class PartitionTableModel extends AbstractTableModel {
 			dataList.get(row).every = (Integer) value;
 			break;
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
-			dataList.get(row).substitutionModel = (Integer) value;
+			dataList.get(row).substitutionModelIndex = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
-			dataList.get(row).siteModel = (Integer) value;
+			dataList.get(row).siteModelIndex = (Integer) value;
 		case CLOCK_RATE_MODEL_INDEX:
-			dataList.get(row).clockModel = (Integer) value;
+			dataList.get(row).clockModelIndex = (Integer) value;
 		case FREQUENCY_MODEL_INDEX:
-			dataList.get(row).frequencyModel = (Integer) value;
+			dataList.get(row).frequencyModelIndex = (Integer) value;
 		default:
 			System.out.println("invalid index");
 		}

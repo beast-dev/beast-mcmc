@@ -92,15 +92,15 @@ public class Utils {
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);
 			System.out.println("\tTree model: " + data.treeFile);
-			System.out.println("\tData type: " + PartitionData.dataTypes[data.dataType]);
+			System.out.println("\tData type: " + PartitionData.dataTypes[data.dataTypeIndex]);
 			System.out.println("\tSubstitution model: "
-					+ PartitionData.substitutionModels[data.substitutionModel]);
+					+ PartitionData.substitutionModels[data.substitutionModelIndex]);
 			System.out.println("\tSite rate model: "
-					+ PartitionData.siteModels[data.siteModel]);
+					+ PartitionData.siteModels[data.siteModelIndex]);
 			System.out.println("\tClock rate model: "
-					+ PartitionData.clockModels[data.clockModel]);
+					+ PartitionData.clockModels[data.clockModelIndex]);
 			System.out.println("\tFrequency model: "
-					+ PartitionData.frequencyModels[data.frequencyModel]);
+					+ PartitionData.frequencyModels[data.frequencyModelIndex]);
 
 			// System.out.println("Possible trees: ");
 			// for (int i = 0; i < dataList.treeFilesList.size(); i++) {

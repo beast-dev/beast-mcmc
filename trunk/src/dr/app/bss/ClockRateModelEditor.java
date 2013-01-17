@@ -123,7 +123,7 @@ public class ClockRateModelEditor {
 
 	public void collectSettings() {
 
-		dataList.get(row).clockModel = clockCombo.getSelectedIndex();
+		dataList.get(row).clockModelIndex = clockCombo.getSelectedIndex();
 		for (int i = 0; i < PartitionData.clockParameterNames.length; i++) {
 
 			dataList.get(row).clockParameterValues[i] = clockParameterFields[i]

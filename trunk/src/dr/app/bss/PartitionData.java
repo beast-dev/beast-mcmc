@@ -11,6 +11,7 @@ import dr.app.beagle.evomodel.substmodel.GY94CodonModel;
 import dr.app.beagle.evomodel.substmodel.HKY;
 import dr.app.beagle.evomodel.substmodel.TN93;
 import dr.evolution.datatype.Codons;
+import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
@@ -21,6 +22,9 @@ import dr.inference.model.Parameter;
 
 public class PartitionData {
 
+	public PartitionData() {
+	}// END: Constructor
+	
 	public int from = 1;
 	public int to = 1000;
 	public int every = 1;
@@ -31,6 +35,37 @@ public class PartitionData {
 	
 	public File treeFile = null;
 	public TreeModel treeModel = null;
+	
+	// /////////////////
+	// ---DATA TYPE---//
+	// /////////////////
+	
+	public int dataType = 0;
+
+	public static String[] dataTypes = { "Nucleotide", //
+			"Codon" //
+	};
+	
+	public DataType createDataType() {
+
+		DataType dataType = null;
+
+		if (this.dataType == 0) { // Nucleotide
+
+			dataType = Nucleotides.INSTANCE;
+
+		} else if (this.dataType == 1) { // Codon
+
+			dataType = Codons.UNIVERSAL;
+
+		} else {
+
+			System.out.println("Not yet implemented");
+
+		}
+
+		return dataType;
+	}// END: createDataType
 	
 	// ///////////////////////////
 	// ---SUBSTITUTION MODELS---//
@@ -432,9 +467,6 @@ public class PartitionData {
 		return siteModel;
 	}// END: createGammaSiteRateModel
 	
-	public PartitionData() {
-	}// END: Constructor
-
 	// ///////////////////
 	// ---EPOCH MODEL---//
 	// ///////////////////

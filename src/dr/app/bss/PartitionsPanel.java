@@ -99,6 +99,11 @@ public class PartitionsPanel extends JPanel implements Exportable {
 		column.setCellRenderer(new JTableComboBoxCellRenderer());
 
 		column = partitionTable.getColumnModel().getColumn(
+				PartitionTableModel.DATA_TYPE_INDEX);
+		column.setCellEditor(new JTableComboBoxCellEditor());
+		column.setCellRenderer(new JTableComboBoxCellRenderer());
+
+		column = partitionTable.getColumnModel().getColumn(
 				PartitionTableModel.BRANCH_SUBSTITUTION_MODEL_INDEX);
 		column.setCellRenderer(new JTableButtonCellRenderer());
 		column.setCellEditor(new JTableButtonCellEditor());
@@ -154,11 +159,16 @@ public class PartitionsPanel extends JPanel implements Exportable {
 
 				if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
 
-					File value = (File) partitionTableModel.getValueAt(row, column);
-					// System.out.println(value);
+					File value = (File) partitionTableModel.getValueAt(row,
+							column);
 					dataList.get(row).treeModel = dataList.forestMap.get(value);
 
-				}// END: column check
+				}
+				// else if(column == PartitionTableModel.DATA_TYPE_INDEX) {
+				// } else {
+				// // do nothing
+				// }// END: column check
+
 			}// END: event check
 
 			frame.fireModelChanged();
@@ -214,16 +224,28 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			((JComboBox) editorComponent).removeAllItems();
 
 			if (column == PartitionTableModel.PARTITION_TREE_INDEX) {
+
 				for (File file : dataList.forestMap.keySet()) {
 					((JComboBox) editorComponent).addItem(file);
-				}
-			}
+				}// END: fill loop
+
+			} else if (column == PartitionTableModel.DATA_TYPE_INDEX) {
+
+				for (String dataType : PartitionData.dataTypes) {
+					((JComboBox) editorComponent).addItem(dataType);
+				}// END: fill loop
+
+			} else {
+
+				// do nothing
+
+			}// END: column check
 
 			((JComboBox) editorComponent).setSelectedItem(value);
 			delegate.setValue(value);
 
 			return editorComponent;
-		}
+		}// END: getTableCellEditorComponent
 
 	}// END: JTableComboBoxCellEditor class
 
@@ -248,7 +270,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			// button.setText((value == null) ? "" : value.toString());
 
 			return button;
-		}
+		}// END: getTableCellRendererComponent
+
 	}// END: JTableButtonRenderer class
 
 	private class JTableButtonCellEditor extends DefaultCellEditor {
@@ -319,7 +342,8 @@ public class PartitionsPanel extends JPanel implements Exportable {
 			int column = table.getColumnModel().getColumnIndexAtX(e.getX());
 			int row = e.getY() / table.getRowHeight();
 
-			if (row < table.getRowCount() && row >= 0 && column < table.getColumnCount() && column >= 0) {
+			if (row < table.getRowCount() && row >= 0
+					&& column < table.getColumnCount() && column >= 0) {
 
 				Object value = table.getValueAt(row, column);
 				if (value instanceof JButton) {

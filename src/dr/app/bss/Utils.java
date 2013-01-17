@@ -1,11 +1,27 @@
 package dr.app.bss;
 
 import java.awt.Frame;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 public class Utils {
+
+	// ///////////////////////////////
+	// ---GENERAL UTILITY METHODS---//
+	// ///////////////////////////////
+
+	public static int arrayIndex(String[] array, String element) {
+
+		List<String> vector = new ArrayList<String>();
+		for (int i = 0; i < array.length; i++) {
+			vector.add(array[i]);
+		}
+
+		return vector.indexOf(element);
+	}// END: arrayIndex
 
 	// /////////////////
 	// ---GUI UTILS---//
@@ -31,7 +47,7 @@ public class Utils {
 	public static void handleException(final Throwable e) {
 
 		final Thread t = Thread.currentThread();
-		
+
 		if (SwingUtilities.isEventDispatchThread()) {
 			showExceptionDialog(t, e);
 		} else {
@@ -44,7 +60,7 @@ public class Utils {
 	}// END: uncaughtException
 
 	private static void showExceptionDialog(Thread t, Throwable e) {
-		
+
 		String msg = String.format("Unexpected problem on thread %s: %s",
 				t.getName(), e.getMessage());
 
@@ -58,15 +74,13 @@ public class Utils {
 	}// END: showExceptionDialog
 
 	private static void logException(Thread t, Throwable e) {
-		// TODO: start a thread that logs it, also spying on the user and planting evidence
-		// CIA style MOFO!!!
 		e.printStackTrace();
 	}// END: logException
-	
+
 	// ///////////////////////
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
-	
+
 	public static void printDataList(PartitionDataList dataList) {
 
 		int row = 1;
@@ -78,19 +92,24 @@ public class Utils {
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);
 			System.out.println("\tTree model: " + data.treeFile);
-			System.out.println("\tSubstitution model: " + PartitionData.substitutionModels[data.substitutionModel]);
-			System.out.println("\tSite rate model: " + PartitionData.siteModels[data.siteModel]);
-			System.out.println("\tClock rate model: " + PartitionData.clockModels[data.clockModel]);
-			System.out.println("\tFrequency model: " + PartitionData.frequencyModels[data.frequencyModel]);
+			System.out.println("\tData type: " + PartitionData.dataTypes[data.dataType]);
+			System.out.println("\tSubstitution model: "
+					+ PartitionData.substitutionModels[data.substitutionModel]);
+			System.out.println("\tSite rate model: "
+					+ PartitionData.siteModels[data.siteModel]);
+			System.out.println("\tClock rate model: "
+					+ PartitionData.clockModels[data.clockModel]);
+			System.out.println("\tFrequency model: "
+					+ PartitionData.frequencyModels[data.frequencyModel]);
 
-//			System.out.println("Possible trees: ");
-//			for (int i = 0; i < dataList.treeFilesList.size(); i++) {
-//				System.out.println(dataList.treeFilesList.get(i).getName());
-//			}
-			
+			// System.out.println("Possible trees: ");
+			// for (int i = 0; i < dataList.treeFilesList.size(); i++) {
+			// System.out.println(dataList.treeFilesList.get(i).getName());
+			// }
+
 			row++;
 		}// END: data list loop
 
 	}// END: printDataList
-	
+
 }// END: class

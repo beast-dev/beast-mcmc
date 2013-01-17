@@ -290,9 +290,11 @@ public abstract class IntegratedMultivariateTraitLikelihood extends AbstractMult
             }
             meanCache[index] = traitParameter.getValue(index);
             likelihoodKnown = false;
-            if (!cacheBranches) {
-                throw new RuntimeException("Must cache means in IMTL if they are random");
-            }
+//            if (!cacheBranches) {
+//                throw new RuntimeException("Must cache means in IMTL if they are random");
+//            }
+            // TODO Need better solution.  If tips are random, cacheBranches should be true (to get reset).
+            // TODO However, jitter calls setParameterValue() on the tips at initialization
         }
         super.handleVariableChangedEvent(variable, index, type);
     }

@@ -120,7 +120,7 @@ public class BranchSubstitutionModelEditor {
 	
 	public void collectSettings() {
 
-		dataList.get(row).substitutionModel = substitutionCombo.getSelectedIndex();
+		dataList.get(row).substitutionModelIndex = substitutionCombo.getSelectedIndex();
 		for (int i = 0; i < PartitionData.substitutionParameterNames.length; i++) {
 
 			dataList.get(row).substitutionParameterValues[i] = substitutionParameterFields[i].getValue();

@@ -158,7 +158,7 @@ public class SiteRateModelEditor {
 	public void collectSettings() {
 
 		int index = siteCombo.getSelectedIndex();
-		dataList.get(row).siteModel = index;
+		dataList.get(row).siteModelIndex = index;
 		
 		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
 

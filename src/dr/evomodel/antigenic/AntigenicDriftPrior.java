@@ -1,25 +1,13 @@
 package dr.evomodel.antigenic;
 
-import dr.evolution.util.Taxa;
-import dr.evolution.util.Taxon;
-import dr.evolution.util.TaxonList;
 import dr.inference.model.*;
-import dr.math.MathUtils;
-import dr.math.distributions.NormalDistribution;
-import dr.stats.Regression;
 import dr.util.Author;
 import dr.util.Citable;
 import dr.util.Citation;
-import dr.util.DataTable;
 import dr.xml.*;
 
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * @author Andrew Rambaut
@@ -27,25 +15,24 @@ import java.util.logging.Logger;
  * @author Marc Suchard
  * @version $Id$
  */
-@Deprecated // drift prior incorporated into antigenicLikelihood
-public class AntigenicDistancePrior extends AbstractModelLikelihood implements Citable {
+public class AntigenicDriftPrior extends AbstractModelLikelihood implements Citable {
 
-    public final static String ANTIGENIC_DISTANCE_PRIOR = "antigenicDistancePrior";
+    public final static String ANTIGENIC_DRIFT_PRIOR = "antigenicDriftPrior";
 
-    public AntigenicDistancePrior(
+    public AntigenicDriftPrior(
             MatrixParameter locationsParameter,
-            Parameter datesParameter,
+            Parameter offsetsParameter,
             Parameter regressionSlopeParameter,
             Parameter regressionPrecisionParameter
     ) {
 
-        super(ANTIGENIC_DISTANCE_PRIOR);
+        super(ANTIGENIC_DRIFT_PRIOR);
 
         this.locationsParameter = locationsParameter;
         addVariable(this.locationsParameter);
 
-        this.datesParameter = datesParameter;
-        addVariable(this.datesParameter);
+        this.offsetsParameter = offsetsParameter;
+        addVariable(this.offsetsParameter);
 
         dimension = locationsParameter.getParameter(0).getDimension();
         count = locationsParameter.getParameterCount();
@@ -60,14 +47,6 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
         likelihoodKnown = false;
 
-        earliestDate = datesParameter.getParameterValue(0);
-        for (int i=0; i<count; i++) {
-            double date = datesParameter.getParameterValue(i);
-            if (earliestDate > date) {
-                earliestDate = date;
-            }
-        }
-
     }
 
 
@@ -77,7 +56,7 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     @Override
     protected void handleVariableChangedEvent(Variable variable, int index, Variable.ChangeType type) {
-        if (variable == locationsParameter || variable == datesParameter
+        if (variable == locationsParameter || variable == offsetsParameter
             || variable == regressionSlopeParameter || variable == regressionPrecisionParameter) {
             likelihoodKnown = false;
         }
@@ -128,11 +107,11 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         for (int i=0; i < count; i++) {
 
             Parameter loc = locationsParameter.getParameter(i);
-            double date = datesParameter.getParameterValue(i);
+            double offset = offsetsParameter.getParameterValue(i);
             double beta = regressionSlopeParameter.getParameterValue(0);
             double x = loc.getParameterValue(0);
 
-            double y = (date-earliestDate) * beta;
+            double y = offset * beta;
 
             ssr += (x - y) * (x - y);
 
@@ -146,21 +125,6 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
         return ssr;
     }
 
-    protected double computeDistance(int rowStrain, int columnStrain) {
-        if (rowStrain == columnStrain) {
-            return 0.0;
-        }
-
-        Parameter X = locationsParameter.getParameter(rowStrain);
-        Parameter Y = locationsParameter.getParameter(columnStrain);
-        double sum = 0.0;
-        for (int i = 0; i < dimension; i++) {
-            double difference = X.getParameterValue(i) - Y.getParameterValue(i);
-            sum += difference * difference;
-        }
-        return Math.sqrt(sum);
-    }
-
     @Override
     public void makeDirty() {
         likelihoodKnown = false;
@@ -168,12 +132,11 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
     private final int dimension;
     private final int count;
-    private final Parameter datesParameter;
+    private final Parameter offsetsParameter;
     private final MatrixParameter locationsParameter;
     private final Parameter regressionSlopeParameter;
     private final Parameter regressionPrecisionParameter;
 
-    private double earliestDate;
     private double logLikelihood = 0.0;
     private double storedLogLikelihood = 0.0;
     private boolean likelihoodKnown = false;
@@ -185,28 +148,26 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
     public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
 
         public final static String LOCATIONS = "locations";
-        public final static String DATES = "dates";
-        public final static String REGRESSIONSLOPE = "regressionSlope";
-        public final static String REGRESSIONPRECISION = "regressionPrecision";
+        public final static String OFFSETS = "offsets";
+        public final static String REGRESSION_SLOPE = "regressionSlope";
+        public final static String REGRESSION_PRECISION = "regressionPrecision";
 
         public String getParserName() {
-            return ANTIGENIC_DISTANCE_PRIOR;
+            return ANTIGENIC_DRIFT_PRIOR;
         }
 
         public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
             MatrixParameter locationsParameter = (MatrixParameter) xo.getElementFirstChild(LOCATIONS);
-            Parameter datesParameter = (Parameter) xo.getElementFirstChild(DATES);
-            Parameter regressionSlopeParameter = (Parameter) xo.getElementFirstChild(REGRESSIONSLOPE);
-            Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSIONPRECISION);
+            Parameter offsetsParameter = (Parameter) xo.getElementFirstChild(OFFSETS);
+            Parameter regressionSlopeParameter = (Parameter) xo.getElementFirstChild(REGRESSION_SLOPE);
+            Parameter regressionPrecisionParameter = (Parameter) xo.getElementFirstChild(REGRESSION_PRECISION);
 
-            AntigenicDistancePrior AGDP = new AntigenicDistancePrior(
+            AntigenicDriftPrior AGDP = new AntigenicDriftPrior(
                 locationsParameter,
-                datesParameter,
+                offsetsParameter,
                 regressionSlopeParameter,
                 regressionPrecisionParameter);
-
-//            Logger.getLogger("dr.evomodel").info("Using EvolutionaryCartography model. Please cite:\n" + Utils.getCitationString(AGL));
 
             return AGDP;
         }
@@ -225,13 +186,13 @@ public class AntigenicDistancePrior extends AbstractModelLikelihood implements C
 
         private final XMLSyntaxRule[] rules = {
                 new ElementRule(LOCATIONS, MatrixParameter.class),
-                new ElementRule(DATES, Parameter.class),
-                new ElementRule(REGRESSIONSLOPE, Parameter.class),
-                new ElementRule(REGRESSIONPRECISION, Parameter.class)
+                new ElementRule(OFFSETS, Parameter.class),
+                new ElementRule(REGRESSION_SLOPE, Parameter.class),
+                new ElementRule(REGRESSION_PRECISION, Parameter.class)
         };
 
         public Class getReturnType() {
-            return ContinuousAntigenicTraitLikelihood.class;
+            return AntigenicDriftPrior.class;
         }
     };
 

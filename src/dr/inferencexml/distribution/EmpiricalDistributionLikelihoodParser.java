@@ -1,7 +1,7 @@
 /*
- * DistributionLikelihoodParser.java
+ * EmpiricalDistributionLikelihoodParser.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -46,6 +46,8 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
     public static final String INVERSE = "inverse";
     public static final String READ_BY_COLUMN = "readByColumn";
     public static final String OFFSET="offset";
+    public static final String LOWER = "lower";
+    public static final String UPPER = "upper";
 
     public String getParserName() {
         return EmpiricalDistributionLikelihood.EMPIRICAL_DISTRIBUTION_LIKELIHOOD;
@@ -97,6 +99,13 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
         double offset = cxo1.getAttribute(OFFSET,0); 
         likelihood.setOffset(offset);
 
+        if (cxo1.hasAttribute(LOWER) || cxo1.hasAttribute(UPPER)) {
+            likelihood.setBounds(
+                    cxo1.getAttribute(LOWER, Double.NEGATIVE_INFINITY),
+                    cxo1.getAttribute(UPPER, Double.POSITIVE_INFINITY)
+            );
+        }
+
         return likelihood;
     }
 
@@ -118,6 +127,8 @@ public class EmpiricalDistributionLikelihoodParser extends AbstractXMLObjectPars
                     AttributeRule.newIntegerRule(FROM, true),
                     AttributeRule.newIntegerRule(TO, true),
                     AttributeRule.newDoubleRule(OFFSET,true),
+                    AttributeRule.newDoubleRule(LOWER, true),
+                    AttributeRule.newDoubleRule(UPPER, true),
                     new ElementRule(Statistic.class, 1, Integer.MAX_VALUE)
             })
     };

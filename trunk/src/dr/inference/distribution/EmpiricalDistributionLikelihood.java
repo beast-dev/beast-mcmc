@@ -1,7 +1,7 @@
 /*
- * DistributionLikelihood.java
+ * EmpiricalDistributionLikelihood.java
  *
- * Copyright (C) 2002-2009 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -12,10 +12,10 @@
  * published by the Free Software Foundation; either version 2
  * of the License, or (at your option) any later version.
  *
- * BEAST is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  BEAST is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with BEAST; if not, write to the
@@ -56,6 +56,8 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
     private int from = -1;
     private int to = Integer.MAX_VALUE;
     private double offset = 0;
+    private double lower = Double.NEGATIVE_INFINITY;
+    private double upper = Double.POSITIVE_INFINITY;
 
     public EmpiricalDistributionLikelihood(String fileName, boolean inverse, boolean byColumn) {
         super(null);
@@ -67,6 +69,11 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             readFileByRow(fileName);
 
         this.inverse = inverse;    
+    }
+
+    public void setBounds(double lower, double upper) {
+        this.lower = lower;
+        this.upper = upper;
     }
 
     class ComparablePoint2D extends Point2D.Double implements Comparable<ComparablePoint2D> {
@@ -208,7 +215,11 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             for (int j = Math.max(0, from); j < Math.min(attributeValue.length, to); j++) {
 
                 double value = attributeValue[j] + offset;
-                logL += logPDF(value);
+                if (value > lower && value < upper) {
+                    logL += logPDF(value);
+                } else {
+                    return Double.NEGATIVE_INFINITY;
+                }
 
                 if (DEBUG) {
                     if (Double.isInfinite(logL)) {

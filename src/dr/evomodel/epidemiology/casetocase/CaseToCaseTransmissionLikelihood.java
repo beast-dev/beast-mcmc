@@ -72,6 +72,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     private boolean likelihoodKnown = false;
     private double logLikelihood;
 
+    // for extended version
+
+    private boolean extended;
+    private boolean[] switchLocks;
+    private boolean[] creepLocks;
+
     // occasionally needed for debugging purposes
 
 /*    private HashMap<AbstractCase, Double> treeInfectionDates;
@@ -90,17 +96,23 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // Basic constructor.
 
     public CaseToCaseTransmissionLikelihood(TreeModel virusTree, AbstractCaseSet caseData,
-                                            String startingNetworkFileName)
+                                            String startingNetworkFileName, boolean extended)
             throws TaxonList.MissingTaxonException {
-        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName);
+        this(CASE_TO_CASE_TRANSMISSION_LIKELIHOOD, virusTree, caseData, startingNetworkFileName, extended);
+    }
+
+    // Legacy constructor
+
+    public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData, String
+            startingNetworkFileName){
+        this(name, virusTree, caseData, startingNetworkFileName, false);
     }
 
 
     // Constructor for an instance with a non-default name
 
     public CaseToCaseTransmissionLikelihood(String name, TreeModel virusTree, AbstractCaseSet caseData, String
-            startingNetworkFileName)
-            throws TaxonList.MissingTaxonException {
+            startingNetworkFileName, boolean extended) {
 
         super(name);
         this.virusTree = virusTree;
@@ -111,6 +123,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
         estimatedLastSampleTime = lastSampleDate.getTimeValue();
         cases = caseData;
+        this.extended = extended;
         addModel(cases);
         verbose = false;
 
@@ -137,6 +150,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
                 }
             }
         }
+        if(extended){
+            switchLocks = new boolean[virusTree.getInternalNodeCount()];
+            creepLocks = new boolean[virusTree.getInternalNodeCount()];
+        }
+
     }
 
     /* Get the date of the last tip */
@@ -149,6 +167,41 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             }
         }
         return latestDate;
+    }
+
+    public boolean tipLinked(NodeRef node){
+        NodeRef tip = tipMap.get(branchMap[node.getNumber()]);
+        if(tip==node){
+            return true;
+        }
+        NodeRef parent = tip;
+        while(parent!=virusTree.getRoot()){
+            parent = virusTree.getParent(parent);
+            if(parent==node){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean[] getSwitchLocks(){
+        return switchLocks;
+    }
+
+    public boolean[] getCreepLocks(){
+        return creepLocks;
+    }
+
+    public boolean isExtended(){
+        return extended;
+    }
+
+    public void changeSwitchLock(int index, boolean value){
+        switchLocks[index]=value;
+    }
+
+    public void changeCreepLock(int index, boolean value){
+        creepLocks[index]=value;
     }
 
     // **************************************************************
@@ -453,7 +506,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             reader.close();
             return paintSpecificNetwork(specificParentMap);
         } catch(IOException e){
-            System.out.println("Problem reading file (IOException)");
+            System.out.println("Cannot read file: " + networkFileName );
             return null;
         }
     }
@@ -634,8 +687,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
 
             CaseToCaseTransmissionLikelihood likelihood;
 
+            final boolean extended = xo.getBooleanAttribute("extended");
+
             try {
-                likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName);
+                likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName,
+                        extended);
             } catch (TaxonList.MissingTaxonException e) {
                 throw new XMLParseException(e.toString());
             }
@@ -656,6 +712,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         }
 
         private final XMLSyntaxRule[] rules = {
+                AttributeRule.newBooleanRule("extended"),
                 new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
                 new ElementRule(AbstractCaseSet.class, "The set of cases"),
                 new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",

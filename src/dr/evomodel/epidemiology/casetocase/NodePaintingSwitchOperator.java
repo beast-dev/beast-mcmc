@@ -35,11 +35,14 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         TreeModel tree = c2cLikelihood.getTree();
         int internalNodeCount = tree.getInternalNodeCount();
         int nodeToSwitch = MathUtils.nextInt(internalNodeCount);
+        while(c2cLikelihood.isExtended() && c2cLikelihood.getSwitchLocks()[nodeToSwitch]){
+            nodeToSwitch = MathUtils.nextInt(internalNodeCount);
+        }
         NodeRef node = tree.getInternalNode(nodeToSwitch);
-        AbstractCase currentFarm = c2cLikelihood.getBranchMap()[node.getNumber()];
+        AbstractCase currentCase = c2cLikelihood.getBranchMap()[node.getNumber()];
         for(int i=0; i<tree.getChildCount(node); i++){
-            if(c2cLikelihood.getBranchMap()[tree.getChild(node,i).getNumber()]!=currentFarm){
-                adjustTree(tree, node, c2cLikelihood.getBranchMap());
+            if(c2cLikelihood.getBranchMap()[tree.getChild(node,i).getNumber()]!=currentCase){
+                adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.isExtended());
                 flagForRecalculation(tree, node, c2cLikelihood.getRecalculationArray());
             }
         }
@@ -50,41 +53,41 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     /*Look at the children of the current node, pick the one that is not labelled the same, change the node's
     * label to that one, then go up the tree and replace any others higher up with the same label*/
 
-    private static void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map){
-        AbstractCase originalFarm = map[node.getNumber()];
+    private static void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
+        AbstractCase originalCase = map[node.getNumber()];
         if(tree.isExternal(node)){
             throw new RuntimeException("Node is external");
         }
-        AbstractCase[] childFarms = new AbstractCase[2];
+        AbstractCase[] childCases = new AbstractCase[2];
         for(int i=0; i<tree.getChildCount(node); i++){
-            childFarms[i] = map[tree.getChild(node, i).getNumber()];
+            childCases[i] = map[tree.getChild(node, i).getNumber()];
         }
-        if(childFarms[0]==childFarms[1]){
+        if(childCases[0]==childCases[1] && !extended){
             throw new RuntimeException("Node children are the same");
         }
-        if(originalFarm!=childFarms[0]&&originalFarm!=childFarms[1]){
+        if(originalCase!=childCases[0] && originalCase!=childCases[1] && !extended){
             throw new RuntimeException("You've ended up with a node neither of whose children are have the same " +
                     "label as itself. Help!");
         }
-        AbstractCase newFarm;
+        AbstractCase newCase;
         for(int i=0; i<2; i++){
-            if(childFarms[i]!=originalFarm){
-                newFarm=childFarms[i];
-                map[node.getNumber()]=newFarm;
+            if(childCases[i]!=originalCase){
+                newCase=childCases[i];
+                map[node.getNumber()]=newCase;
                 if(!tree.isRoot(node)){
-                    changeParentNodes(tree, node, originalFarm, newFarm, map);
+                    changeParentNodes(tree, node, originalCase, newCase, map);
                 }
             }
         }
     }
 
-    private static void changeParentNodes(TreeModel tree, NodeRef node, AbstractCase originalFarm, AbstractCase newFarm,
+    private static void changeParentNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
                                           AbstractCase[] map){
         NodeRef parent = tree.getParent(node);
-        if(map[parent.getNumber()]==originalFarm){
-            map[parent.getNumber()]=newFarm;
+        if(map[parent.getNumber()]==originalCase){
+            map[parent.getNumber()]=newCase;
             if(!tree.isRoot(parent)){
-                changeParentNodes(tree, parent, originalFarm, newFarm, map);
+                changeParentNodes(tree, parent, originalCase, newCase, map);
             }
         }
     }
@@ -122,8 +125,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         }
 
         public String getParserDescription(){
-            return "This operator switches the painting of a random internal node from the painting of one of its" +
-                    "children to the painting of the other";
+            return "This operator switches the painting of a random eligible internal node from the painting of one of " +
+                    "its children to the painting of the other";
         }
 
         public Class getReturnType() {

@@ -46,7 +46,7 @@ public final class SubstitutionModelDelegate {
 
     private static final boolean DEBUG = false;
 
-    private static final int BUFFER_POOL_SIZE = 100;
+    private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
     private final Tree tree;
     private final List<SubstitutionModel> substitutionModelList;
@@ -63,6 +63,10 @@ public final class SubstitutionModelDelegate {
     private Deque<Integer> availableBuffers = new ArrayDeque<Integer>();
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel) {
+        this(tree, branchModel, BUFFER_POOL_SIZE_DEFAULT);
+    }
+
+    public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int bufferPoolSize) {
 
         this.tree = tree;
 
@@ -79,7 +83,9 @@ public final class SubstitutionModelDelegate {
         // two matrices for each node less the root
         matrixBufferHelper = new BufferIndexHelper(nodeCount, 0);
 
-        this.extraBufferCount = branchModel.requiresMatrixConvolution() ? BUFFER_POOL_SIZE : 0;
+        this.extraBufferCount = branchModel.requiresMatrixConvolution() ?
+                (bufferPoolSize > 0 ? bufferPoolSize : BUFFER_POOL_SIZE_DEFAULT) : 0;
+        // TODO min extra buffer count should >= 3 ???
 
         for (int i = 0; i < extraBufferCount; i++) {
             pushAvailableBuffer(i + matrixBufferHelper.getBufferCount());

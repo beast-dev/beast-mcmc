@@ -1,7 +1,7 @@
 /*
  * BeagleTreeLikelihood.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -78,6 +78,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static final String REQUIRED_FLAGS_PROPERTY = "beagle.required.flags";
     private static final String SCALING_PROPERTY = "beagle.scaling";
     private static final String RESCALE_FREQUENCY_PROPERTY = "beagle.rescale";
+    private static final String EXTRA_BUFFER_COUNT_PROPERTY = "beagle.extra.buffer.count";
 
     // Which scheme to use if choice not specified (or 'default' is selected):
     private static final PartialsRescalingScheme DEFAULT_RESCALING_SCHEME = PartialsRescalingScheme.DELAYED;
@@ -87,6 +88,7 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
     private static List<Integer> preferredOrder = null;
     private static List<Integer> requiredOrder = null;
     private static List<String> scalingOrder = null;
+    private static List<Integer> extraBufferOrder = null;
 
     private static final int RESCALE_FREQUENCY = 10000;
     private static final int RESCALE_TIMES = 1;
@@ -124,7 +126,6 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             addModel(this.siteRateModel);
 
             this.branchModel = branchModel;
-            substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel);
             addModel(this.branchModel);
 
             if (branchRateModel != null) {
@@ -168,6 +169,15 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
             if (scalingOrder == null) {
                 scalingOrder = parseSystemPropertyStringArray(SCALING_PROPERTY);
             }
+            if (extraBufferOrder == null) {
+                extraBufferOrder = parseSystemPropertyIntegerArray(EXTRA_BUFFER_COUNT_PROPERTY);
+            }
+
+            int extraBufferCount = -1; // default
+            if (extraBufferOrder.size() > 0) {
+                extraBufferCount = extraBufferOrder.get(instanceCount % extraBufferOrder.size());
+            }
+            substitutionModelDelegate = new SubstitutionModelDelegate(treeModel, branchModel, extraBufferCount);
 
             // first set the rescaling scheme to use from the parser
             this.rescalingScheme = rescalingScheme;

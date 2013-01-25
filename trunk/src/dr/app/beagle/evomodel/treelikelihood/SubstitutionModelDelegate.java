@@ -255,11 +255,25 @@ public final class SubstitutionModelDelegate {
                                 System.out.println();
                             }
 
+                            if (operationsCount == 0) {
+                                throw new RuntimeException("Unexpected operation count");
+                            }
+
                             beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                                     secondConvolutionBuffers, // B
                                     resultConvolutionBuffers, // C
                                     operationsCount // count
                             );
+
+                            // Return to available pool
+                            for (int i = 0; i < operationsCount; i++) {
+                                if (firstConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
+                                    pushAvailableBuffer(firstConvolutionBuffers[i]);
+                                }
+                                if (secondConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
+                                    pushAvailableBuffer(secondConvolutionBuffers[i]);
+                                }
+                            }
 
                             operationsCount = 0;
                             done = false;

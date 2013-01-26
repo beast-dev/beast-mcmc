@@ -44,7 +44,7 @@ import java.util.List;
  */
 public final class SubstitutionModelDelegate {
 
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
@@ -281,8 +281,15 @@ public final class SubstitutionModelDelegate {
                                 }
                             }
 
+                            // copy the uncompleted operation back down to the beginning of the operations list
+                            firstConvolutionBuffers[0] = firstConvolutionBuffers[operationsCount];
+                            secondConvolutionBuffers[0] = secondConvolutionBuffers[operationsCount];
+
+                            // reset the operation count
                             operationsCount = 0;
                             done = false;
+
+                            // there should be enough spare buffers to get a resultConvolutionBuffer for this operation no
                         }
                     } while (!done);
 

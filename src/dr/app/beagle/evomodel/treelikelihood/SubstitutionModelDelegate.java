@@ -44,7 +44,7 @@ import java.util.List;
  */
 public final class SubstitutionModelDelegate {
 
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
@@ -56,6 +56,7 @@ public final class SubstitutionModelDelegate {
     private final int nodeCount;
 
     private final int extraBufferCount;
+    private final int reserveBufferIndex;
 
     private final BufferIndexHelper eigenBufferHelper;
     private BufferIndexHelper matrixBufferHelper;
@@ -91,6 +92,10 @@ public final class SubstitutionModelDelegate {
             pushAvailableBuffer(i + matrixBufferHelper.getBufferCount());
         }
 
+        // one extra created as a reserve
+        // which is used to free up buffers when the avail stack is empty.
+        reserveBufferIndex = matrixBufferHelper.getBufferCount() + extraBufferCount;
+
     }// END: Constructor
 
     public boolean canReturnComplexDiagonalization() {
@@ -103,7 +108,8 @@ public final class SubstitutionModelDelegate {
     }
 
     public int getMatrixBufferCount() {
-        return matrixBufferHelper.getBufferCount() + extraBufferCount;
+        // plus one for the reserve buffer
+        return matrixBufferHelper.getBufferCount() + extraBufferCount + 1;
     }
 
     public int getSubstitutionModelCount() {
@@ -235,6 +241,7 @@ public final class SubstitutionModelDelegate {
             List<Deque<Integer>> empty = new ArrayList<Deque<Integer>>();
 
             for (Deque<Integer> convolve : convolutionList) {
+
                 if (convolve.size() > 3) {
                     firstConvolutionBuffers[operationsCount] = convolve.pop();
                     secondConvolutionBuffers[operationsCount] = convolve.pop();
@@ -261,41 +268,37 @@ public final class SubstitutionModelDelegate {
                                 System.out.println();
                             }
 
-                            if (operationsCount == 0) {
-                                throw new RuntimeException("Unexpected operation count");
+                            if (operationsCount > 0) {
+
+                                convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
+
+                                // copy the uncompleted operation back down to the beginning of the operations list
+                                firstConvolutionBuffers[0] = firstConvolutionBuffers[operationsCount];
+                                secondConvolutionBuffers[0] = secondConvolutionBuffers[operationsCount];
+
+                                // reset the operation count
+                                operationsCount = 0;
+                                done = false;
+
+                                // there should be enough spare buffers to get a resultConvolutionBuffer for this operation now
+                            } else {
+                                // only one partially setup operation so there would be none to free up
+                                // in this case we will use the reserve buffer
+                                resultConvolutionBuffers[operationsCount] = getReserveBuffer();
+                                convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, 1);
+                                convolve.push(getReserveBuffer());
+                                done = true; // break out of the do loop
                             }
-
-                            beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
-                                    secondConvolutionBuffers, // B
-                                    resultConvolutionBuffers, // C
-                                    operationsCount // count
-                            );
-
-                            // Return to available pool
-                            for (int i = 0; i < operationsCount; i++) {
-                                if (firstConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
-                                    pushAvailableBuffer(firstConvolutionBuffers[i]);
-                                }
-                                if (secondConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
-                                    pushAvailableBuffer(secondConvolutionBuffers[i]);
-                                }
-                            }
-
-                            // copy the uncompleted operation back down to the beginning of the operations list
-                            firstConvolutionBuffers[0] = firstConvolutionBuffers[operationsCount];
-                            secondConvolutionBuffers[0] = secondConvolutionBuffers[operationsCount];
-
-                            // reset the operation count
-                            operationsCount = 0;
-                            done = false;
-
-                            // there should be enough spare buffers to get a resultConvolutionBuffer for this operation no
                         }
                     } while (!done);
 
-                    resultConvolutionBuffers[operationsCount] = buffer;
-                    convolve.push(buffer);
-                    operationsCount++;
+                    if (buffer >= 0) {
+                        // if the buffer is still negative then the loop above will have used the reserve buffer
+                        // to complete the convolution.
+                        resultConvolutionBuffers[operationsCount] = buffer;
+                        convolve.push(buffer);
+                        operationsCount++;
+                    }
 
                 } else if (convolve.size() == 3) {
                     firstConvolutionBuffers[operationsCount] = convolve.pop();
@@ -319,22 +322,26 @@ public final class SubstitutionModelDelegate {
                 System.out.println();
             }
 
-            beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
-                    secondConvolutionBuffers, // B
-                    resultConvolutionBuffers, // C
-                    operationsCount // count
-            );
-
-            for (int i = 0; i < operationsCount; i++) {
-                if (firstConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
-                    pushAvailableBuffer(firstConvolutionBuffers[i]);
-                }
-                if (secondConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount()) {
-                    pushAvailableBuffer(secondConvolutionBuffers[i]);
-                }
-            }
+            convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
 
             convolutionList.removeAll(empty);
+        }
+    }
+
+    private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
+        beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
+                secondConvolutionBuffers, // B
+                resultConvolutionBuffers, // C
+                operationsCount // count
+        );
+
+        for (int i = 0; i < operationsCount; i++) {
+            if (firstConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount() && firstConvolutionBuffers[i] != reserveBufferIndex) {
+                pushAvailableBuffer(firstConvolutionBuffers[i]);
+            }
+            if (secondConvolutionBuffers[i] >= matrixBufferHelper.getBufferCount() && secondConvolutionBuffers[i] != reserveBufferIndex) {
+                pushAvailableBuffer(secondConvolutionBuffers[i]);
+            }
         }
     }
 
@@ -343,6 +350,14 @@ public final class SubstitutionModelDelegate {
             return -1;
         }
         return availableBuffers.pop();
+    }
+
+    /**
+     * the reserve buffer is one extra buffer used to free up some spare buffers
+     * @return
+     */
+    private int getReserveBuffer() {
+        return reserveBufferIndex;
     }
 
     private void pushAvailableBuffer(int index) {

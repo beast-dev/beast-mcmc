@@ -96,7 +96,7 @@ public class Utils {
 			System.out.println("\tSubstitution model: "
 					+ PartitionData.substitutionModels[data.substitutionModelIndex]);
 			System.out.println("\tSite rate model: "
-					+ PartitionData.siteModels[data.siteModelIndex]);
+					+ PartitionData.siteRateModels[data.siteRateModelIndex]);
 			System.out.println("\tClock rate model: "
 					+ PartitionData.clockModels[data.clockModelIndex]);
 			System.out.println("\tFrequency model: "

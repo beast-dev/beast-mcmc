@@ -425,22 +425,22 @@ public class PartitionData {
 	// ---SITE RATE MODELS---//
 	// ////////////////////////
 
-	public int siteModelIndex = 0;
+	public int siteRateModelIndex = 0;
 
-	public static String[] siteModels = { "No model", //
+	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //
 	};
 
-	public static String[] siteParameterNames = new String[] {
+	public static String[] siteRateModelParameterNames = new String[] {
 			"Gamma categories", //
 			"alpha", //
 	};
 
-	public int[][] siteParameterIndices = { {}, // nomodel
+	public int[][] siteRateModelParameterIndices = { {}, // nomodel
 			{ 0, 1 }, // GammaSiteRateModel
 	};
 
-	public double[] siteParameterValues = new double[] { 4.0, // GammaCategories
+	public double[] siteRateModelParameterValues = new double[] { 4.0, // GammaCategories
 			0.5, // alpha
 	};
 
@@ -449,16 +449,16 @@ public class PartitionData {
 		GammaSiteRateModel siteModel = null;
 		String name = "siteModel";
 
-		if (this.siteModelIndex == 0) { // no model
+		if (this.siteRateModelIndex == 0) { // no model
 
 			siteModel = new GammaSiteRateModel("siteModel");
 
-		} else if (this.siteModelIndex == 1) { // GammaSiteRateModel
+		} else if (this.siteRateModelIndex == 1) { // GammaSiteRateModel
 
-			siteModel = new GammaSiteRateModel(name, siteParameterValues[1],
-					(int) siteParameterValues[0]);
+			siteModel = new GammaSiteRateModel(name, siteRateModelParameterValues[1],
+					(int) siteRateModelParameterValues[0]);
 
-		} else if (this.siteModelIndex == 2) {
+		} else if (this.siteRateModelIndex == 2) {
 
 			System.out.println("Not yet implemented");
 

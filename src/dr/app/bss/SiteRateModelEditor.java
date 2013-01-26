@@ -33,7 +33,7 @@ public class SiteRateModelEditor {
 	// Settings	
 	private OptionsPanel optionPanel;
 	private JComboBox siteCombo;
-	private RealNumberField[] siteParameterFields = new RealNumberField[PartitionData.siteParameterNames.length];
+	private RealNumberField[] siteParameterFields = new RealNumberField[PartitionData.siteRateModelParameterNames.length];
     private JSpinner gammaCategoriesSpinner;
 	
 	//Buttons
@@ -55,16 +55,16 @@ public class SiteRateModelEditor {
 		siteCombo = new JComboBox();
 		siteCombo.setOpaque(false);
 
-		for (String siteModel : PartitionData.siteModels) {
+		for (String siteModel : PartitionData.siteRateModels) {
 			siteCombo.addItem(siteModel);
 		}// END: fill loop
 
 		siteCombo.addItemListener(new ListenSiteCombo());
 
-		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.siteRateModelParameterNames.length; i++) {
 			siteParameterFields[i] = new RealNumberField();
 			siteParameterFields[i].setColumns(8);
-			siteParameterFields[i].setValue(dataList.get(0).siteParameterValues[i]);
+			siteParameterFields[i].setValue(dataList.get(0).siteRateModelParameterValues[i]);
 		}// END: fill loop
 
 		setSiteArguments();
@@ -99,11 +99,11 @@ public class SiteRateModelEditor {
 
 		int index = siteCombo.getSelectedIndex();
 		
-		for (int i = 0; i < dataList.get(0).siteParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(0).siteRateModelParameterIndices[index].length; i++) {
 
 			if(index == 1 && i == 0) {
 				
-				int k = dataList.get(0).siteParameterIndices[index][i];
+				int k = dataList.get(0).siteRateModelParameterIndices[index][i];
 				
 				Integer initValue = Integer.valueOf(siteParameterFields[k].getText(0, 1)); 
 				Integer	min = 0;
@@ -117,18 +117,18 @@ public class SiteRateModelEditor {
 				panel.add(gammaCategoriesSpinner, BorderLayout.WEST);
 				panel.setOpaque(false);
 				optionPanel.addComponentWithLabel(
-						PartitionData.siteParameterNames[k] + ":",
+						PartitionData.siteRateModelParameterNames[k] + ":",
 						panel);
 				
 			} else {
 			
-			int k = dataList.get(0).siteParameterIndices[index][i];
+			int k = dataList.get(0).siteRateModelParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(siteParameterFields[k], BorderLayout.WEST);
 			panel.setOpaque(false);
 			optionPanel.addComponentWithLabel(
-					PartitionData.siteParameterNames[k] + ":",
+					PartitionData.siteRateModelParameterNames[k] + ":",
 					panel);
 
 			}// END: gama categories field check
@@ -158,17 +158,17 @@ public class SiteRateModelEditor {
 	public void collectSettings() {
 
 		int index = siteCombo.getSelectedIndex();
-		dataList.get(row).siteModelIndex = index;
+		dataList.get(row).siteRateModelIndex = index;
 		
-		for (int i = 0; i < PartitionData.siteParameterNames.length; i++) {
+		for (int i = 0; i < PartitionData.siteRateModelParameterNames.length; i++) {
 
 			if(index == 1 && i == 0) { 
 				
-				dataList.get(row).siteParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
+				dataList.get(row).siteRateModelParameterValues[i] = Double.valueOf(gammaCategoriesSpinner.getValue().toString()); 
 						
 			} else {
 			
-				dataList.get(0).siteParameterValues[i] = siteParameterFields[i].getValue();
+				dataList.get(0).siteRateModelParameterValues[i] = siteParameterFields[i].getValue();
 			
 			}// END: gama categories field check
 

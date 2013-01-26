@@ -142,7 +142,7 @@ public class PartitionTableModel extends AbstractTableModel {
 		case BRANCH_SUBSTITUTION_MODEL_INDEX:
 			dataList.get(row).substitutionModelIndex = (Integer) value;
 		case SITE_RATE_MODEL_INDEX:
-			dataList.get(row).siteModelIndex = (Integer) value;
+			dataList.get(row).siteRateModelIndex = (Integer) value;
 		case CLOCK_RATE_MODEL_INDEX:
 			dataList.get(row).clockModelIndex = (Integer) value;
 		case FREQUENCY_MODEL_INDEX:

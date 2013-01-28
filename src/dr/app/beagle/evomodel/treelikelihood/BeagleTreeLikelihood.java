@@ -1274,4 +1274,12 @@ public class BeagleTreeLikelihood extends AbstractTreeLikelihood {
         } // END: try-catch block
     }
     
-}
+	public Double getUpdateTimer() {
+		return Double.valueOf(substitutionModelDelegate.updateTime);
+	}
+    
+	public Double getConvolveTimer() {
+		return Double.valueOf(substitutionModelDelegate.convolveTime);
+	}
+	
+}//END: class

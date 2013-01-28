@@ -75,19 +75,45 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 newCase=childCases[i];
                 map[node.getNumber()]=newCase;
                 if(!tree.isRoot(node)){
-                    changeParentNodes(tree, node, originalCase, newCase, map);
+                    changeAncestorNodes(tree, node, originalCase, newCase, map, extended);
                 }
             }
         }
     }
 
-    private static void changeParentNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
-                                          AbstractCase[] map){
+    /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.*/
+
+    private static void changeAncestorNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
+                                            AbstractCase[] map, boolean extended){
         NodeRef parent = tree.getParent(node);
         if(map[parent.getNumber()]==originalCase){
             map[parent.getNumber()]=newCase;
+            if(extended){
+                NodeRef otherChild = tree.getChild(parent,0) == node ? tree.getChild(parent,1) : tree.getChild(parent,0);
+                if(map[otherChild.getNumber()]==originalCase){
+                    changeDescendantNodes(tree, parent, originalCase, newCase, map);
+                }
+            }
             if(!tree.isRoot(parent)){
-                changeParentNodes(tree, parent, originalCase, newCase, map);
+                changeAncestorNodes(tree, parent, originalCase, newCase, map, extended);
+            }
+        }
+    }
+
+/*    Extended only. Go down the tree and change all descendants of the current node that have the old painting to have
+    the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
+    something is wrong.*/
+
+    private static void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
+                                              AbstractCase[] map){
+        if(tree.isExternal(node)){
+            throw new RuntimeException("changeDescendantNodes has reached a tip, which should never happen.");
+        }
+        for(int i=0; i<tree.getChildCount(node); i++){
+            NodeRef child = tree.getChild(node,i);
+            if(map[child.getNumber()]==originalCase){
+                map[child.getNumber()]=newCase;
+                changeDescendantNodes(tree, child, originalCase, newCase, map);
             }
         }
     }

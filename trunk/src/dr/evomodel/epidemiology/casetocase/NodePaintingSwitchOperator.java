@@ -53,8 +53,9 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     /*Look at the children of the current node, pick the one that is not labelled the same, change the node's
     * label to that one, then go up the tree and replace any others higher up with the same label*/
 
-    private static void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags, boolean extended){
+    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags, boolean extended){
         AbstractCase originalCase = map[node.getNumber()];
+        boolean reachesRoot = originalCase==map[tree.getRoot().getNumber()];
         if(tree.isExternal(node)){
             throw new RuntimeException("Node is external");
         }
@@ -79,13 +80,15 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 }
             }
         }
-        flagForRecalculation(tree, node, flags);
+        CaseToCaseTransmissionLikelihood.flagForRecalculation(tree, node, flags);
     }
 
-    /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.*/
+    /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.
+    * Return whether the painted section reaches the root.*/
 
-    private static void changeAncestorNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
+    private void changeAncestorNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
                                             AbstractCase[] map, boolean[] flags, boolean extended){
+
         NodeRef parent = tree.getParent(node);
         if(map[parent.getNumber()]==originalCase){
             map[parent.getNumber()]=newCase;
@@ -105,7 +108,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
     something is wrong.*/
 
-    private static void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase,
+    private void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase,
                                               AbstractCase newCase, AbstractCase[] map, boolean[] flags){
         if(tree.isExternal(node)){
             throw new RuntimeException("changeDescendantNodes has reached a tip, which should never happen.");
@@ -120,21 +123,10 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
             }
         }
         if(!creepContinues){
-            flagForRecalculation(tree, node, flags);
+            CaseToCaseTransmissionLikelihood.flagForRecalculation(tree, node, flags);
         }
     }
 
-    private static void flagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
-        for(int i=0; i<tree.getChildCount(node); i++){
-            flags[tree.getChild(node,i).getNumber()]=true;
-        }
-        NodeRef currentNode=node;
-        while(!tree.isRoot(currentNode)){
-            flags[currentNode.getNumber()]=true;
-            currentNode = tree.getParent(currentNode);
-        }
-        flags[currentNode.getNumber()]=true;
-    }
 
     public String getPerformanceSuggestion(){
         return "Not implemented";

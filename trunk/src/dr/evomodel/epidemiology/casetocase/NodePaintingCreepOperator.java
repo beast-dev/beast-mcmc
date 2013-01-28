@@ -1,11 +1,15 @@
 package dr.evomodel.epidemiology.casetocase;
 
+import com.sun.xml.internal.bind.v2.model.runtime.RuntimeReferencePropertyInfo;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.OperatorFailedException;
 import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
+
+import java.util.ArrayList;
+import java.util.HashSet;
 
 /**
  * Created with IntelliJ IDEA.
@@ -33,21 +37,74 @@ public class NodePaintingCreepOperator extends SimpleMCMCOperator {
     }
 
     public double doOperation() throws OperatorFailedException {
+        int oldUnlockedNodes = 0;
         TreeModel tree = c2cLikelihood.getTree();
+        for(int i=0; i<tree.getInternalNodeCount(); i++){
+            if(c2cLikelihood.getCreepLocks()[i]){
+                oldUnlockedNodes++;
+            }
+        }
         int internalNodeCount = tree.getInternalNodeCount();
         int nodeToSwitch = MathUtils.nextInt(internalNodeCount);
-        while(c2cLikelihood.getCreepLocks()[nodeToSwitch]){
+        // Cannot apply this operator if the node is locked to it
+        while(c2cLikelihood.getCreepLocks()[nodeToSwitch]
+                && c2cLikelihood.getBranchMap()[nodeToSwitch]==c2cLikelihood.getBranchMap()[tree.getRoot().getNumber()]){
             nodeToSwitch = MathUtils.nextInt(internalNodeCount);
         }
         NodeRef node = tree.getInternalNode(nodeToSwitch);
-        AbstractCase currentCase = c2cLikelihood.getBranchMap()[node.getNumber()];
+        adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.getRecalculationArray());
+        int newUnlockedNodes = 0;
+        for(int i=0; i<tree.getInternalNodeCount(); i++){
+            if(c2cLikelihood.getCreepLocks()[i]){
+                newUnlockedNodes++;
+            }
+        }
         return 0;
     }
 
-    private void adjustTree(NodeRef node){
+    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags){
+        AbstractCase currentCase = map[node.getNumber()];
         if(c2cLikelihood.tipLinked(node)){
+            HashSet<Integer> nodesToChange = c2cLikelihood.samePaintingUpTree(node, true);
+            NodeRef currentAncestor = node;
+            // Find the painting of the first ancestor that doesn't have the same painting
+            while(map[currentAncestor.getNumber()]==currentCase){
+                currentAncestor = tree.getParent(node);
+            }
+            // Make the changes and adjust switch locks
+            AbstractCase newCase = map[currentAncestor.getNumber()];
+            c2cLikelihood.changeSwitchLock(currentAncestor.getNumber(),true);
+            for(int i:nodesToChange){
+                map[i]=newCase;
+                c2cLikelihood.changeSwitchLock(i,true);
+            }
+            // Adjust creep locks - any nodes with two children of the same painting, and any ancestors of those nodes
+            // that are not tip-linked, and any descendants of those nodes which are not, need to be locked.
+            if(c2cLikelihood.countChildrenWithSamePainting(currentAncestor)==2){
 
+
+
+            }
         } else {
+            HashSet<Integer> nodesToChange = c2cLikelihood.samePaintingDownTree(node, true);
+            nodesToChange.add(node.getNumber());
+            NodeRef descendant = node;
+            while(c2cLikelihood.countChildrenWithSamePainting(descendant)!=0){
+                if(c2cLikelihood.countChildrenWithSamePainting(descendant)>1){
+                    throw new RuntimeException("A node that should be creep-locked is not.");
+                } else {
+                    for(int i=0; i<tree.getChildCount(descendant);i++){
+                        if(map[tree.getChild(descendant,i).getNumber()]==currentCase){
+                            descendant=tree.getChild(descendant,i);
+                        }
+                    }
+                }
+            }
+            int choice = MathUtils.nextInt(1);
+            AbstractCase replacementPainting = map[tree.getChild(descendant,choice).getNumber()];
+            for(Integer i:nodesToChange){
+                map[i]=replacementPainting;
+            }
 
         }
     }

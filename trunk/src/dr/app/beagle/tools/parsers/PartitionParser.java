@@ -98,7 +98,7 @@ public class PartitionParser extends AbstractXMLObjectParser {
 
 		if (every <= 0) {
 			throw new XMLParseException(
-					"illegal 'every' attribute in patterns element");
+					"Illegal 'every' attribute in patterns element");
 		}// END: every check
 
 		TreeModel tree = (TreeModel) xo.getChild(TreeModel.class);

@@ -7,11 +7,10 @@ import dr.math.MathUtils;
 import dr.xml.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Matthew Hall
- * Date: 13/07/2012
- * Time: 14:46
- * To change this template use File | Settings | File Templates.
+ * This operator changes the assigned case of a random node from the assigned case of one of its children to the
+ * assigned case of the other, and then goes up the tree replacing all ancestral occurances of one to the other.
+ *
+ * @author Matthew Hall
  */
 public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 

@@ -42,8 +42,8 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
         AbstractCase currentCase = c2cLikelihood.getBranchMap()[node.getNumber()];
         for(int i=0; i<tree.getChildCount(node); i++){
             if(c2cLikelihood.getBranchMap()[tree.getChild(node,i).getNumber()]!=currentCase){
-                adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.isExtended());
-                flagForRecalculation(tree, node, c2cLikelihood.getRecalculationArray());
+                adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.getRecalculationArray(),
+                        c2cLikelihood.isExtended());
             }
         }
         c2cLikelihood.makeDirty();
@@ -53,7 +53,7 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     /*Look at the children of the current node, pick the one that is not labelled the same, change the node's
     * label to that one, then go up the tree and replace any others higher up with the same label*/
 
-    private static void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean extended){
+    private static void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags, boolean extended){
         AbstractCase originalCase = map[node.getNumber()];
         if(tree.isExternal(node)){
             throw new RuntimeException("Node is external");
@@ -75,27 +75,28 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                 newCase=childCases[i];
                 map[node.getNumber()]=newCase;
                 if(!tree.isRoot(node)){
-                    changeAncestorNodes(tree, node, originalCase, newCase, map, extended);
+                    changeAncestorNodes(tree, node, originalCase, newCase, map, flags, extended);
                 }
             }
         }
+        flagForRecalculation(tree, node, flags);
     }
 
     /*Go up the tree and change all ancestors of the current node that had the old painting to have the new painting.*/
 
     private static void changeAncestorNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
-                                            AbstractCase[] map, boolean extended){
+                                            AbstractCase[] map, boolean[] flags, boolean extended){
         NodeRef parent = tree.getParent(node);
         if(map[parent.getNumber()]==originalCase){
             map[parent.getNumber()]=newCase;
             if(extended){
                 NodeRef otherChild = tree.getChild(parent,0) == node ? tree.getChild(parent,1) : tree.getChild(parent,0);
                 if(map[otherChild.getNumber()]==originalCase){
-                    changeDescendantNodes(tree, parent, originalCase, newCase, map);
+                    changeDescendantNodes(tree, parent, originalCase, newCase, map, flags);
                 }
             }
             if(!tree.isRoot(parent)){
-                changeAncestorNodes(tree, parent, originalCase, newCase, map, extended);
+                changeAncestorNodes(tree, parent, originalCase, newCase, map, flags, extended);
             }
         }
     }
@@ -104,17 +105,22 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     the new painting. This should never change the label of tip-linked nodes under either painting, and if it does
     something is wrong.*/
 
-    private static void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase, AbstractCase newCase,
-                                              AbstractCase[] map){
+    private static void changeDescendantNodes(TreeModel tree, NodeRef node, AbstractCase originalCase,
+                                              AbstractCase newCase, AbstractCase[] map, boolean[] flags){
         if(tree.isExternal(node)){
             throw new RuntimeException("changeDescendantNodes has reached a tip, which should never happen.");
         }
+        boolean creepContinues = false;
         for(int i=0; i<tree.getChildCount(node); i++){
             NodeRef child = tree.getChild(node,i);
             if(map[child.getNumber()]==originalCase){
                 map[child.getNumber()]=newCase;
-                changeDescendantNodes(tree, child, originalCase, newCase, map);
+                changeDescendantNodes(tree, child, originalCase, newCase, map, flags);
+                creepContinues = true;
             }
+        }
+        if(!creepContinues){
+            flagForRecalculation(tree, node, flags);
         }
     }
 

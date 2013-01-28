@@ -47,7 +47,7 @@ public final class SubstitutionModelDelegate {
 
 	private static final boolean DEBUG = false;
     
-	public static final boolean MEASURE_RUN_TIME = true;
+	public static final boolean MEASURE_RUN_TIME = false;
 	public double updateTime;
 	public double convolveTime;
 

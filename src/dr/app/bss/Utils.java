@@ -81,6 +81,13 @@ public class Utils {
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
 
+	
+	public static void printArray(int[] x) {
+		for (int i = 0; i < x.length; i++) {
+			System.out.println(x[i]);
+		}
+	}// END: printArray
+	
 	public static void printDataList(PartitionDataList dataList) {
 
 		int row = 1;

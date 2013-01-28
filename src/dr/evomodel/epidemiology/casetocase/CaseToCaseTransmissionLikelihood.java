@@ -20,10 +20,7 @@ import dr.util.Citation;
 import dr.xml.*;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * A likelihood function for transmission between identified epidemiological cases
@@ -192,12 +189,155 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return creepLocks;
     }
 
+    public boolean isSwitchLocked(NodeRef node){
+        if(virusTree.isExternal(node)){
+            throw new RuntimeException("Checking the lock on an external node");
+        }
+        return !tipLinked(node) || countChildrenWithSamePainting(node) == 2;
+    }
+
+    public boolean isCreepLocked(NodeRef node){
+        if(virusTree.isExternal(node)){
+            throw new RuntimeException("Checking the lock on an external node");
+        }
+        if(tipLinked(node) && samePaintingUpTree(node, false).contains(virusTree.getRoot().getNumber())){
+            return true;
+        } else if(tipLinked(node)){
+            return doubleChildAncestor(node);
+        } else {
+            return doubleChildDescendant(node);
+        }
+    }
+
+    // An ancestor of this node, or this node has the same painting and two children with that same painting
+
+    public boolean doubleChildAncestor(NodeRef node){
+        AbstractCase nodePainting = branchMap[node.getNumber()];
+        NodeRef ancestor = node;
+        while(ancestor!=null && branchMap[ancestor.getNumber()]==nodePainting){
+            if(countChildrenWithSamePainting(ancestor)==2){
+                return true;
+            }
+            ancestor=virusTree.getParent(ancestor);
+        }
+        return false;
+    }
+
+    //  A descendant of this node, or this node has the same painting and two children with that same painting
+
+    public boolean doubleChildDescendant(NodeRef node){
+        AbstractCase nodePainting = branchMap[node.getNumber()];
+        return countChildrenWithSamePainting(node) == 2
+                || doubleChildDescendant(virusTree.getChild(node, 0))
+                || doubleChildDescendant(virusTree.getChild(node, 1));
+    }
+
     public boolean isExtended(){
         return extended;
     }
 
     public void changeSwitchLock(int index, boolean value){
         switchLocks[index]=value;
+    }
+
+    //Counts the children of the current node which have the same painting as itself under the current map.
+    //This will always be 1 if extended==false.
+
+    public int countChildrenWithSamePainting(NodeRef node){
+        if(virusTree.isExternal(node)){
+            return -1;
+        } else {
+            int count = 0;
+            AbstractCase parentCase = branchMap[node.getNumber()];
+            for(int i=0; i<virusTree.getChildCount(node); i++){
+                if(branchMap[virusTree.getChild(node,i).getNumber()]==parentCase){
+                    count++;
+                }
+            }
+            return count;
+        }
+    }
+
+    private static NodeRef sibling(TreeModel tree, NodeRef node){
+        if(tree.isRoot(node)){
+            return null;
+        } else {
+            NodeRef parent = tree.getParent(node);
+            for(int i=0; i<tree.getChildCount(parent); i++){
+                if(tree.getChild(parent,i)!=node){
+                    return tree.getChild(parent,i);
+                }
+            }
+        }
+        return null;
+    }
+
+    //Return a set of nodes that are not descendants of (or equal to) the current node and have the same painting as it.
+
+    public HashSet<Integer> samePaintingUpTree(NodeRef node, boolean flagForRecalc){
+        if(!subTreeRecalculationNeeded[node.getNumber()] && flagForRecalc){
+            flagForRecalculation(virusTree, virusTree.getChild(node,0), subTreeRecalculationNeeded);
+            flagForRecalculation(virusTree, virusTree.getChild(node,1), subTreeRecalculationNeeded);
+        }
+        HashSet<Integer> out = new HashSet<Integer>();
+        AbstractCase painting = branchMap[node.getNumber()];
+        NodeRef ancestorNode = virusTree.getParent(node);
+        while(branchMap[ancestorNode.getNumber()]==painting){
+            out.add(ancestorNode.getNumber());
+            if(extended){
+                if(countChildrenWithSamePainting(ancestorNode)==2){
+                    NodeRef otherChild = sibling(virusTree, ancestorNode);
+                    out.add(otherChild.getNumber());
+                    out.addAll(samePaintingDownTree(otherChild, flagForRecalc));
+                }
+            }
+            ancestorNode = virusTree.getParent(ancestorNode);
+        }
+        return out;
+    }
+
+    //Return a set of nodes that are descendants (and not equal to) the current node and have the same painting as it.
+
+
+    public HashSet<Integer> samePaintingDownTree(NodeRef node, boolean flagForRecalc){
+        HashSet<Integer> out = new HashSet<Integer>();
+        AbstractCase painting = branchMap[node.getNumber()];
+        boolean creepsFurther = false;
+        for(int i=0; i<virusTree.getChildCount(node); i++){
+            if(branchMap[virusTree.getChild(node,i).getNumber()]==painting){
+                creepsFurther = true;
+                out.add(virusTree.getChild(node,i).getNumber());
+                out.addAll(samePaintingDownTree(virusTree.getChild(node,i), flagForRecalc));
+            }
+        }
+        if(flagForRecalc && !creepsFurther){
+            flagForRecalculation(virusTree, virusTree.getChild(node,0), subTreeRecalculationNeeded);
+            flagForRecalculation(virusTree, virusTree.getChild(node,1), subTreeRecalculationNeeded);
+        }
+        return out;
+    }
+
+    // Return the node numbers of the entire subtree with the same painting as this node (including itself)
+
+    public HashSet<Integer> samePainting(NodeRef node, boolean flagForRecalc){
+        HashSet<Integer> out = new HashSet<Integer>();
+        out.add(node.getNumber());
+        out.addAll(samePaintingDownTree(node, flagForRecalc));
+        out.addAll(samePaintingUpTree(node, flagForRecalc));
+        return out;
+    }
+
+    public static void flagForRecalculation(TreeModel tree, NodeRef node, boolean[] flags){
+        flags[node.getNumber()]=true;
+        for(int i=0; i<tree.getChildCount(node); i++){
+            flags[tree.getChild(node,i).getNumber()]=true;
+        }
+        NodeRef currentNode=node;
+        while(!tree.isRoot(currentNode) && !flags[currentNode.getNumber()]){
+            currentNode = tree.getParent(currentNode);
+            flags[currentNode.getNumber()]=true;
+        }
+
     }
 
     public void changeCreepLock(int index, boolean value){
@@ -663,62 +803,62 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     // AbstractXMLObjectParser implementation
     //************************************************************************
 
-    public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
-        public static final String VIRUS_TREE = "virusTree";
-        public static final String STARTING_NETWORK = "startingNetwork";
+public static XMLObjectParser PARSER = new AbstractXMLObjectParser() {
+    public static final String VIRUS_TREE = "virusTree";
+    public static final String STARTING_NETWORK = "startingNetwork";
 
-        public String getParserName() {
-            return CASE_TO_CASE_TRANSMISSION_LIKELIHOOD;
+    public String getParserName() {
+        return CASE_TO_CASE_TRANSMISSION_LIKELIHOOD;
+    }
+
+    public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+
+        FlexibleTree flexTree = (FlexibleTree) xo.getElementFirstChild(VIRUS_TREE);
+
+        String startingNetworkFileName=null;
+
+        if(xo.hasChildNamed(STARTING_NETWORK)){
+            startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
         }
 
-        public Object parseXMLObject(XMLObject xo) throws XMLParseException {
+        TreeModel virusTree = new TreeModel(flexTree);
 
-            FlexibleTree flexTree = (FlexibleTree) xo.getElementFirstChild(VIRUS_TREE);
+        AbstractCaseSet caseSet = (AbstractCaseSet) xo.getChild(AbstractCaseSet.class);
 
-            String startingNetworkFileName=null;
+        CaseToCaseTransmissionLikelihood likelihood;
 
-            if(xo.hasChildNamed(STARTING_NETWORK)){
-                startingNetworkFileName = (String) xo.getElementFirstChild(STARTING_NETWORK);
-            }
+        final boolean extended = xo.getBooleanAttribute("extended");
 
-            TreeModel virusTree = new TreeModel(flexTree);
-
-            AbstractCaseSet caseSet = (AbstractCaseSet) xo.getChild(AbstractCaseSet.class);
-
-            CaseToCaseTransmissionLikelihood likelihood;
-
-            final boolean extended = xo.getBooleanAttribute("extended");
-
-            try {
-                likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName,
-                        extended);
-            } catch (TaxonList.MissingTaxonException e) {
-                throw new XMLParseException(e.toString());
-            }
-
-            return likelihood;
+        try {
+            likelihood = new CaseToCaseTransmissionLikelihood(virusTree, caseSet, startingNetworkFileName,
+                    extended);
+        } catch (TaxonList.MissingTaxonException e) {
+            throw new XMLParseException(e.toString());
         }
 
-        public String getParserDescription() {
-            return "This element represents a likelihood function for case to case transmission.";
-        }
+        return likelihood;
+    }
 
-        public Class getReturnType() {
-            return CaseToCaseTransmissionLikelihood.class;
-        }
+    public String getParserDescription() {
+        return "This element represents a likelihood function for case to case transmission.";
+    }
 
-        public XMLSyntaxRule[] getSyntaxRules() {
-            return rules;
-        }
+    public Class getReturnType() {
+        return CaseToCaseTransmissionLikelihood.class;
+    }
 
-        private final XMLSyntaxRule[] rules = {
-                AttributeRule.newBooleanRule("extended"),
-                new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
-                new ElementRule(AbstractCaseSet.class, "The set of cases"),
-                new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
-                        true)
-        };
+    public XMLSyntaxRule[] getSyntaxRules() {
+        return rules;
+    }
+
+    private final XMLSyntaxRule[] rules = {
+            AttributeRule.newBooleanRule("extended"),
+            new ElementRule("virusTree", Tree.class, "The (currently fixed) tree"),
+            new ElementRule(AbstractCaseSet.class, "The set of cases"),
+            new ElementRule("startingNetwork", String.class, "A CSV file containing a specified starting network",
+                    true)
     };
+};
 
 
     //************************************************************************
@@ -754,12 +894,12 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         return citations;
     }
 
-    public class BadPaintingException extends RuntimeException{
+public class BadPaintingException extends RuntimeException{
 
-        public BadPaintingException(String s){
-            super(s);
-        }
-
+    public BadPaintingException(String s){
+        super(s);
     }
+
+}
 
 }

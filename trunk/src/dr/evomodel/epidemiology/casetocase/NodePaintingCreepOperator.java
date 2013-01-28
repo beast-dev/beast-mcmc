@@ -1,6 +1,5 @@
 package dr.evomodel.epidemiology.casetocase;
 
-import com.sun.xml.internal.bind.v2.model.runtime.RuntimeReferencePropertyInfo;
 import dr.evolution.tree.NodeRef;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.operators.OperatorFailedException;
@@ -8,7 +7,6 @@ import dr.inference.operators.SimpleMCMCOperator;
 import dr.math.MathUtils;
 import dr.xml.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 
 /**

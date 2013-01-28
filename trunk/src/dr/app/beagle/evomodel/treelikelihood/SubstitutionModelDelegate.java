@@ -96,7 +96,10 @@ public final class SubstitutionModelDelegate {
 
         this.extraBufferCount = branchModel.requiresMatrixConvolution() ?
                 (bufferPoolSize > 0 ? bufferPoolSize : BUFFER_POOL_SIZE_DEFAULT) : 0;
-        // TODO min extra buffer count should >= 3 ???
+
+        if (branchModel.requiresMatrixConvolution() && this.extraBufferCount < eigenCount) {
+            throw new RuntimeException("SubstitutionModelDelegate requires at least " + eigenCount + " extra buffers to convolve matrices");
+        }
 
         for (int i = 0; i < extraBufferCount; i++) {
             pushAvailableBuffer(i + matrixBufferHelper.getBufferCount());
@@ -170,38 +173,32 @@ public final class SubstitutionModelDelegate {
                     sum += w;
                 }
 
+                if (getAvailableBufferCount() < order.length) {
+                    // too few buffers available, process what we have and continue...
+                    computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
+                    convolveMatrices(beagle, convolutionList);
+
+                    // reset the counts
+                    for (int k = 0; k < eigenCount; k++) {
+                        counts[k] = 0;
+                    }
+                }
+
                 Deque<Integer> bufferIndices = new ArrayDeque<Integer>();
                 for (int j = 0; j < order.length; j++) {
 
-                    int buffer;
-                    boolean done;
+                    int buffer = popAvailableBuffer();
 
-                    do {
-                        done = true;
+                    if (buffer < 0) {
+                        // no buffers available
+                        throw new RuntimeException("Ran out of buffers for transition matrices - computing current list.");
 
-                        buffer = popAvailableBuffer();
+                    }
 
-                        if (buffer < 0) {
-                            // no buffers available
-                            if (DEBUG) {
-                                System.out.println("Ran out of buffers for transition matrices - computing current list.");
-                            }
-                            // we have run out of buffers, process what we have and continue...
-                            computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
-                            convolveMatrices(beagle, convolutionList);
-
-                            // reset the counts
-                            for (int k = 0; k < eigenCount; k++) {
-                                counts[k] = 0;
-                            }
-
-                            done = false;
-                        }
-                    } while (!done);
-
-                    probabilityIndices[order[j]][counts[order[j]]] = buffer;
-                    edgeLengths[order[j]][counts[order[j]]] = weights[j] * edgeLength[i] / sum;
-                    counts[order[j]]++;
+                    int k = order[j];
+                    probabilityIndices[k][counts[k]] = buffer;
+                    edgeLengths[k][counts[k]] = weights[j] * edgeLength[i] / sum;
+                    counts[k]++;
 
                     bufferIndices.add(buffer);
                 }
@@ -235,13 +232,14 @@ public final class SubstitutionModelDelegate {
                     System.out.print(" " + probabilityIndices[i][j]);
                 }
             }
-
-            beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(i),
-                    probabilityIndices[i],
-                    null, // firstDerivativeIndices
-                    null, // secondDerivativeIndices
-                    edgeLengths[i],
-                    counts[i]);
+            if (counts[i] > 0) {
+                beagle.updateTransitionMatrices(eigenBufferHelper.getOffsetIndex(i),
+                        probabilityIndices[i],
+                        null, // firstDerivativeIndices
+                        null, // secondDerivativeIndices
+                        edgeLengths[i],
+                        counts[i]);
+            }
         }
 
         if (DEBUG) {
@@ -393,6 +391,10 @@ public final class SubstitutionModelDelegate {
         }
         
     }//END: convolveAndRelease
+
+    private int getAvailableBufferCount() {
+        return availableBuffers.size();
+    }
 
     private int popAvailableBuffer() {
         if (availableBuffers.isEmpty()) {

@@ -150,6 +150,9 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         if(extended){
             switchLocks = new boolean[virusTree.getInternalNodeCount()];
             creepLocks = new boolean[virusTree.getInternalNodeCount()];
+            for(int i=0; i<virusTree.getInternalNodeCount(); i++){
+                creepLocks[virusTree.getInternalNode(i).getNumber()] = isCreepLocked(virusTree.getInternalNode(i));
+            }
         }
 
     }

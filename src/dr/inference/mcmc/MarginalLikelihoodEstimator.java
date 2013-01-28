@@ -154,7 +154,7 @@ MCLogger logger) {
             if (step > pathSteps) {
                 return -1;
             }
-            double pathParameter = 1.0 - (double)step / (double)(pathSteps - 1);
+            double pathParameter = 1.0 - (double)step / (double)(pathSteps);
             step = step + 1;
             return pathParameter;
         }

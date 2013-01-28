@@ -10,11 +10,14 @@ import dr.xml.*;
 import java.util.HashSet;
 
 /**
- * Created with IntelliJ IDEA.
- * User: mhall
- * Date: 24/01/2013
- * Time: 16:18
- * To change this template use File | Settings | File Templates.
+ * This operator first randomly selects an appropriate node. If its assignment to a case has not previously been changed
+ * by this procedure, it then finds its first ancestor which has a different assigned case, and assigns that case to the
+ * original node and all intervening nodes. If the assignment had previously been changed, it reverts its assignment
+ * and the assignment of all descendants with the same assignment to the assignment of a suitable other descendant.
+ *
+ * Only necessary for the "extended" case, i.e. where the time of transmission can be later than the TMRCA.
+ *
+ * @author Matthew Hall
  */
 public class NodePaintingCreepOperator extends SimpleMCMCOperator {
 

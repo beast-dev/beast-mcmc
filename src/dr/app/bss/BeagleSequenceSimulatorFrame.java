@@ -212,7 +212,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 					}// END: data list loop
 
 					BeagleSequenceSimulator beagleSequenceSimulator = new BeagleSequenceSimulator(
-							partitionsList, dataList.sequenceLength);
+							partitionsList, dataList.siteCount);
 
 					writer.println(beagleSequenceSimulator.simulate()
 							.toString());
@@ -228,7 +228,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			// Executed in event dispatch thread
 			public void done() {
 
-				setStatus("Generated " + dataList.sequenceLength
+				setStatus("Generated " + dataList.siteCount
 						+ " replicates.");
 				setIdle();
 

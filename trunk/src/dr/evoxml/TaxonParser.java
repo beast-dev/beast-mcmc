@@ -46,6 +46,12 @@ public class TaxonParser extends AbstractXMLObjectParser {
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
+        if (dr.xml.XMLParser.ID.contains("\'") && dr.xml.XMLParser.ID.contains("\"")) {
+            // unable to handle taxon names that contain both single and double quotes
+            // as it won't be possible to wrap it in either.
+            throw new XMLParseException("Illegal taxon name, " + dr.xml.XMLParser.ID + ", - contains both single and double quotes");
+        }
+
         Taxon taxon = new Taxon(xo.getStringAttribute(dr.xml.XMLParser.ID));
 
         for (int i = 0; i < xo.getChildCount(); i++) {
@@ -64,7 +70,7 @@ public class TaxonParser extends AbstractXMLObjectParser {
                     taxon.setAttribute(attr.getAttributeName(), attr.getAttributeValue());
                 }
             } else {
-                throw new XMLParseException("Unrecognized element found in taxon element!");
+                throw new XMLParseException("Unrecognized element found in taxon element");
             }
         }
 

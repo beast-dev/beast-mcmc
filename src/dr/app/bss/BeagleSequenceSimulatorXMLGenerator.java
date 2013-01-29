@@ -6,6 +6,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import dr.app.beagle.tools.parsers.BeagleSequenceSimulatorParser;
+import dr.app.beagle.tools.parsers.PartitionParser;
 import dr.app.beauti.util.XMLWriter;
 import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
@@ -210,12 +212,8 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
-//			for (PartitionData data : dataList) {
-
 				writeBeagleSequenceSimulator(writer);
 				writer.writeBlankLine();
-
-//			}// END: partitions loop
 
 		} catch (Exception e) {
 
@@ -231,14 +229,80 @@ public class BeagleSequenceSimulatorXMLGenerator {
 	}// END: generateXML
 
 	private void writeBeagleSequenceSimulator(XMLWriter writer) {
-		//TODO
+
+		writer.writeOpenTag(
+				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
+				new Attribute[] {
+						new Attribute.Default<String>(XMLParser.ID, "simulator"),
+						new Attribute.Default<String>(
+								BeagleSequenceSimulatorParser.SITE_COUNT,
+								String.valueOf(dataList.siteCount)) });		
 		
+		for (PartitionData data : dataList) {
+			
+			//TODO: not always all three are needed
+			writer.writeOpenTag(PartitionParser.PARTITION,
+					new Attribute[] { 
+					new Attribute.Default<String>(PartitionParser.FROM, String.valueOf(data.from)),
+					new Attribute.Default<String>(PartitionParser.TO, String.valueOf(data.to)),
+					new Attribute.Default<String>(PartitionParser.EVERY, String.valueOf(data.every))
+			});
+			
+			writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
+			
+			int substitutionModelIndex = data.substitutionModelIndex;
+			switch (substitutionModelIndex) {
+
+			case 0: // HKY
+
+				writer.writeIDref(NucModelType.HKY.getXMLName(), PartitionData.substitutionModels[0].toLowerCase());
+				break;
+
+			case 1: // GTR
+
+				writer.writeIDref(GTRParser.GTR_MODEL, PartitionData.substitutionModels[1].toLowerCase());
+				break;
+
+			case 2: // TN93
+
+				writer.writeIDref(NucModelType.TN93.getXMLName(), PartitionData.substitutionModels[2].toLowerCase());
+				break;
+
+			case 3: // Yang Codon Model
+
+				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase());
+				break;
+
+			}// END: switch
+			
+			writer.writeIDref(SiteModel.SITE_MODEL, SiteModel.SITE_MODEL);
+			
+			int clockModel = data.clockModelIndex;
+			switch (clockModel) {
+
+			case 0: // StrictClock
+
+				writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
+				break;
+
+			}// END: switch			
+			
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			
+			writer.writeCloseTag(PartitionParser.PARTITION);
+
+			//TODO: ancestral sequence
+			
+			
+		}//END: partitions loop
+		
+		writer.writeCloseTag(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR);
 		
 	}//END: writeBeagleSequenceSimulator
 	
 	private void writeSiteModel(PartitionData data, XMLWriter writer) {
 
-		writer.writeOpenTag(GammaSiteModel.SITE_MODEL,
+		writer.writeOpenTag(SiteModel.SITE_MODEL,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
 						SiteModel.SITE_MODEL) });
 
@@ -293,7 +357,7 @@ public class BeagleSequenceSimulatorXMLGenerator {
 			break;
 		}// END: switch
 
-		writer.writeCloseTag(GammaSiteModel.SITE_MODEL);
+		writer.writeCloseTag(SiteModel.SITE_MODEL);
 
 	}// END: writeSiteModel
 
@@ -409,20 +473,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		}// END: switch
 
 	}// END: writeBranchModel
-
-	// private String multiDimensionalValue(int dimension, double firstValue,
-	// double repValue) {
-	//
-	// String value = firstValue + "";
-	//
-	// for (int i = 0; i < dimension - 1; i++) {
-	//
-	// value += " " + repValue;
-	//
-	// }
-	//
-	// return value;
-	// }// END: multiDimensionalValue
 
 	private void writeFrequencyModel(PartitionData data, XMLWriter writer) {
 
@@ -647,12 +697,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		writer.writeIDref("tree", BeagleSequenceSimulatorApp.STARTING_TREE);
 
-		// writer.writeOpenTag(TreeModelParser.ROOT_HEIGHT);
-		// writer.writeTag(ParameterParser.PARAMETER,
-		// new Attribute.Default<String>(XMLParser.ID, treeModelName + "."
-		// + CoalescentSimulatorParser.ROOT_HEIGHT), true);
-		// writer.writeCloseTag(TreeModelParser.ROOT_HEIGHT);
-
 		writeParameter(TreeModelParser.ROOT_HEIGHT, treeModelName + "."
 				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, null, null,
 				writer);
@@ -660,12 +704,12 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
 				new Attribute.Default<String>(TreeModelParser.INTERNAL_NODES,
 						"true"));
-		// writer.writeTag(ParameterParser.PARAMETER, new
-		// Attribute.Default<String>(XMLParser.ID, treeModelName + "." +
-		// "internalNodeHeights"), true);
+
+
 		writeParameter(null, treeModelName + "."
 				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, null, null,
 				writer);
+		
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
 		writer.writeOpenTag(TreeModelParser.NODE_HEIGHTS,
@@ -674,11 +718,11 @@ public class BeagleSequenceSimulatorXMLGenerator {
 								TreeModelParser.INTERNAL_NODES, "true"),
 						new Attribute.Default<String>(
 								TreeModelParser.ROOT_NODE, "true") });
-		// writer.writeTag(ParameterParser.PARAMETER, new
-		// Attribute.Default<String>(XMLParser.ID, treeModelName + "." +
-		// "allInternalNodeHeights"), true);
+
+
 		writeParameter(null, treeModelName + "." + "allInternalNodeHeights", 1,
 				null, null, null, writer);
+		
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
 
 		writer.writeCloseTag(TreeModel.TREE_MODEL);

@@ -44,7 +44,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		simulationsNumberLabel = new JLabel("Number of simulations:");
 		simulationsNumberField = new WholeNumberField(1, Integer.MAX_VALUE);
 		simulationsNumberField.setColumns(8);
-		simulationsNumberField.setValue(dataList.simulationsNumber);
+		simulationsNumberField.setValue(dataList.simulationsCount);
 		optionPanel.addComponents(simulationsNumberLabel,
 				simulationsNumberField);
 
@@ -52,7 +52,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 		sequenceLengthLabel = new JLabel("Number of sites:");
 		sequenceLengthField = new WholeNumberField(1, Integer.MAX_VALUE);
 		sequenceLengthField.setColumns(8);
-		sequenceLengthField.setValue(dataList.sequenceLength);
+		sequenceLengthField.setValue(dataList.siteCount);
 		optionPanel.addComponents(sequenceLengthLabel, sequenceLengthField);
 
 		// Buttons holder
@@ -78,7 +78,7 @@ public class SimulationPanel extends JPanel implements Exportable {
 	}// END: SimulationPanel
 
 	public final void collectSettings() {
-		dataList.sequenceLength = sequenceLengthField.getValue();
+		dataList.siteCount = sequenceLengthField.getValue();
 		// frame.fireModelChanged();
 	}// END: collectSettings
 

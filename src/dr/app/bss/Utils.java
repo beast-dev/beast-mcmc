@@ -80,13 +80,21 @@ public class Utils {
 	// ///////////////////////
 	// ---DEBUGGING UTILS---//
 	// ///////////////////////
-
 	
 	public static void printArray(int[] x) {
 		for (int i = 0; i < x.length; i++) {
 			System.out.println(x[i]);
 		}
 	}// END: printArray
+
+	public static void print2DArray(double[][] array) {
+		for (int row = 0; row < array.length; row++) {
+			for (int col = 0; col < array[row].length; col++) {
+				System.out.print(array[row][col] + " ");
+			}
+			System.out.print("\n");
+		}
+	}// END: print2DArray
 	
 	public static void printDataList(PartitionDataList dataList) {
 
@@ -94,7 +102,7 @@ public class Utils {
 		for (PartitionData data : dataList) {
 
 			System.out.println("Partition: " + row);
-			System.out.println("\tReplications: " + dataList.sequenceLength);
+			System.out.println("\tReplications: " + dataList.siteCount);
 			System.out.println("\tFrom: " + data.from);
 			System.out.println("\tTo: " + data.to);
 			System.out.println("\tEvery: " + data.every);

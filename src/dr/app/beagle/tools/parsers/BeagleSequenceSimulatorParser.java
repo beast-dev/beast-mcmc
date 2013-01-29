@@ -47,7 +47,7 @@ import dr.xml.XMLSyntaxRule;
 public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 	public static final String BEAGLE_SEQUENCE_SIMULATOR = "beagleSequenceSimulator";
-	public static final String REPLICATIONS = "replications";
+	public static final String SITE_COUNT = "siteCount";
 	
 	public String getParserName() {
 		return BEAGLE_SEQUENCE_SIMULATOR;
@@ -67,7 +67,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 	public XMLSyntaxRule[] getSyntaxRules() {
 		
 		return new XMLSyntaxRule[] {
-				AttributeRule.newIntegerRule(REPLICATIONS), 
+				AttributeRule.newIntegerRule(SITE_COUNT), 
 				new ElementRule(Partition.class, 1, Integer.MAX_VALUE)
 				};
 		
@@ -78,7 +78,7 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 
 		String msg = "";
 		
-		int replications = xo.getIntegerAttribute(REPLICATIONS);
+		int replications = xo.getIntegerAttribute(SITE_COUNT);
 		msg += "\n\t" + replications + ( (replications > 1) ? " replications " : " replication");
 		
 		ArrayList<Partition> partitionsList = new ArrayList<Partition>();
@@ -88,12 +88,12 @@ public class BeagleSequenceSimulatorParser extends AbstractXMLObjectParser {
 			
 			if (partition.from > replications) {
 				throw new XMLParseException(
-						"illegal 'from' attribute in " + PartitionParser.PARTITION + " element");
+						"Illegal 'from' attribute in " + PartitionParser.PARTITION + " element");
 			}
 
 			if (partition.to > replications) {
 				throw new XMLParseException(
-						"illegal 'to' attribute in " + PartitionParser.PARTITION + " element");
+						"Illegal 'to' attribute in " + PartitionParser.PARTITION + " element");
 			}
 
 			if (partition.to == -1) {

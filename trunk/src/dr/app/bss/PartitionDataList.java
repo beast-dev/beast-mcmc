@@ -17,8 +17,8 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public TaxonList taxonList = new Taxa();
 	
 	//TODO: last partition should have this number as TO value
-	public int sequenceLength = 1000;	
-	public int simulationsNumber = 1;
+	public int siteCount = 1000;	
+	public int simulationsCount = 1;
 	
 	public HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
 	

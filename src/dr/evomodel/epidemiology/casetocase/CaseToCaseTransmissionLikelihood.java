@@ -425,7 +425,11 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
     public final void makeDirty() {
+        // so every switch operator is forcing recalculation of the whole tree? Can't be necessary.
         Arrays.fill(subTreeRecalculationNeeded, true);
+        if(extended){
+            recalculateLocks();
+        }
         likelihoodKnown = false;
     }
 

@@ -44,9 +44,6 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                         c2cLikelihood.isExtended());
             }
         }
-        if(c2cLikelihood.isExtended()){
-            c2cLikelihood.recalculateLocks();
-        }
         c2cLikelihood.makeDirty();
         return 1;
     }

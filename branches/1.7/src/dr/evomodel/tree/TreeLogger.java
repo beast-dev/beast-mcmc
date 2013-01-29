@@ -43,7 +43,7 @@ import java.util.*;
 public class TreeLogger extends MCLogger {
 
     private Tree tree;
-	private BranchRates branchRates = null;
+    private BranchRates branchRates = null;
 
     private TreeAttributeProvider[] treeAttributeProviders;
     private TreeTraitProvider[] treeTraitProviders;
@@ -70,7 +70,7 @@ public class TreeLogger extends MCLogger {
          * @param state
          * @return  True if log tree of this state.
          */
-       boolean logNow(long state);
+        boolean logNow(long state);
     }
 
     public TreeLogger(Tree tree, LogFormatter formatter, int logEvery, boolean nexusFormat,
@@ -142,10 +142,7 @@ public class TreeLogger extends MCLogger {
             logLine("\tTaxlabels");
 
             for (String taxaId : taxaIds) {
-                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                    taxaId = "'" + taxaId + "'";
-                }
-                logLine("\t\t" + taxaId);
+                logLine("\t\t" + cleanTaxonName(taxaId));
             }
 
             logLine("\t\t;");
@@ -158,19 +155,31 @@ public class TreeLogger extends MCLogger {
                 logLine("\tTranslate");
                 int k = 1;
                 for (String taxaId : taxaIds) {
-                    if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                        taxaId = "'" + taxaId + "'";
-                    }
                     if (k < taxonCount) {
-                        logLine("\t\t" + k + " " + taxaId + ",");
+                        logLine("\t\t" + k + " " + cleanTaxonName(taxaId) + ",");
                     } else {
-                        logLine("\t\t" + k + " " + taxaId);
+                        logLine("\t\t" + k + " " + cleanTaxonName(taxaId));
                     }
                     k += 1;
                 }
                 logLine("\t\t;");
             }
         }
+    }
+
+    private String cleanTaxonName(String taxaId) {
+        if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+            if (taxaId.contains("\'")) {
+                if (taxaId.contains("\"")) {
+                    throw new RuntimeException("Illegal taxon name - contains both single and double quotes");
+                }
+
+                return "\"" + taxaId + "\"";
+            }
+
+            return "\'" + taxaId + "\'";
+        }
+        return taxaId;
     }
 
     public void log(long state) {
@@ -180,7 +189,7 @@ public class TreeLogger extends MCLogger {
         }*/
 
         final boolean doIt = condition != null ? condition.logNow(state) :
-                    (logEvery < 0 || ((state % logEvery) == 0));
+                (logEvery < 0 || ((state % logEvery) == 0));
 
         if ( doIt ) {
             StringBuffer buffer = new StringBuffer("tree STATE_");
@@ -228,11 +237,11 @@ public class TreeLogger extends MCLogger {
     }
 
     public Tree getTree() {
-		return tree;
-	}
+        return tree;
+    }
 
-	public void setTree(Tree tree) {
-		this.tree = tree;
-	}
+    public void setTree(Tree tree) {
+        this.tree = tree;
+    }
 
 }

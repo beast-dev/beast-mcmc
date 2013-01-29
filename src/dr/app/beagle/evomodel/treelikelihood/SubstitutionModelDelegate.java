@@ -45,11 +45,11 @@ import java.util.List;
  */
 public final class SubstitutionModelDelegate {
 
-	private static final boolean DEBUG = false;
-    
-	public static final boolean MEASURE_RUN_TIME = false;
-	public double updateTime;
-	public double convolveTime;
+    private static final boolean DEBUG = false;
+    private static final boolean RUN_IN_SERIES = false;
+    public static final boolean MEASURE_RUN_TIME = false;
+    public double updateTime;
+    public double convolveTime;
 
     private static final int BUFFER_POOL_SIZE_DEFAULT = 100;
 
@@ -74,11 +74,11 @@ public final class SubstitutionModelDelegate {
 
     public SubstitutionModelDelegate(Tree tree, BranchModel branchModel, int bufferPoolSize) {
 
-		if (MEASURE_RUN_TIME) {
-			updateTime = 0;
-			convolveTime = 0;
-		}
-    	
+        if (MEASURE_RUN_TIME) {
+            updateTime = 0;
+            convolveTime = 0;
+        }
+
         this.tree = tree;
 
         this.substitutionModelList = branchModel.getSubstitutionModels();
@@ -211,17 +211,17 @@ public final class SubstitutionModelDelegate {
 
         computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
         convolveMatrices(beagle, convolutionList);
-        
-	}// END: updateTransitionMatrices
+
+    }// END: updateTransitionMatrices
 
     private void computeTransitionMatrices(Beagle beagle, int[][] probabilityIndices, double[][] edgeLengths, int[] counts) {
-    	
-		Timer timer;
-		if (MEASURE_RUN_TIME) {
-			timer = new Timer();
-			timer.start();
-		}
-    	
+
+        Timer timer;
+        if (MEASURE_RUN_TIME) {
+            timer = new Timer();
+            timer.start();
+        }
+
         if (DEBUG) {
             System.out.print("Computing matrices:");
         }
@@ -245,23 +245,23 @@ public final class SubstitutionModelDelegate {
         if (DEBUG) {
             System.out.println();
         }
-        
-		if (MEASURE_RUN_TIME) {
-			 timer.stop();
-			 double timeInSeconds = timer.toSeconds();
-			 updateTime += timeInSeconds;
-		}
-        
+
+        if (MEASURE_RUN_TIME) {
+            timer.stop();
+            double timeInSeconds = timer.toSeconds();
+            updateTime += timeInSeconds;
+        }
+
     }//END: computeTransitionMatrices
 
     private void convolveMatrices(Beagle beagle, List<Deque<Integer>> convolutionList) {
-    	
-		Timer timer;
-		if (MEASURE_RUN_TIME) {
-			timer = new Timer();
-			timer.start();
-		}
-    	
+
+        Timer timer;
+        if (MEASURE_RUN_TIME) {
+            timer = new Timer();
+            timer.start();
+        }
+
         while (convolutionList.size() > 0) {
             int[] firstConvolutionBuffers = new int[nodeCount];
             int[] secondConvolutionBuffers = new int[nodeCount];
@@ -305,7 +305,7 @@ public final class SubstitutionModelDelegate {
 //									e.printStackTrace();
 //								}
 //                        	}
-                            
+
                             if (operationsCount > 0) {
 
                                 convolveAndRelease(beagle, firstConvolutionBuffers, secondConvolutionBuffers, resultConvolutionBuffers, operationsCount);
@@ -364,18 +364,22 @@ public final class SubstitutionModelDelegate {
 
             convolutionList.removeAll(empty);
         }
-        
-		if (MEASURE_RUN_TIME) {
-			 timer.stop();
-			 double timeInSeconds = timer.toSeconds();
-			 convolveTime += timeInSeconds;
-		}
 
-	}// END: convolveTransitionMatrices
+        if (MEASURE_RUN_TIME) {
+            timer.stop();
+            double timeInSeconds = timer.toSeconds();
+            convolveTime += timeInSeconds;
+        }
+
+    }// END: convolveTransitionMatrices
 
     private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
-     
-    	beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
+
+        if (RUN_IN_SERIES && operationsCount > 1) {
+            throw new RuntimeException("Unable to convolve matrices in series");
+        }
+
+        beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                 secondConvolutionBuffers, // B
                 resultConvolutionBuffers, // C
                 operationsCount // count
@@ -389,11 +393,15 @@ public final class SubstitutionModelDelegate {
                 pushAvailableBuffer(secondConvolutionBuffers[i]);
             }
         }
-        
+
     }//END: convolveAndRelease
 
     private int getAvailableBufferCount() {
-        return availableBuffers.size();
+        if (RUN_IN_SERIES) {
+            return 0;
+        } else {
+            return availableBuffers.size();
+        }
     }
 
     private int popAvailableBuffer() {

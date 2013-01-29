@@ -243,6 +243,13 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
         switchLocks[index]=value;
     }
 
+    public void recalculateLocks(){
+        for(int i=0; i<virusTree.getInternalNodeCount(); i++){
+            switchLocks[virusTree.getInternalNode(i).getNumber()]=isSwitchLocked(virusTree.getInternalNode(i));
+            creepLocks[virusTree.getInternalNode(i).getNumber()]=isCreepLocked(virusTree.getInternalNode(i));
+        }
+    }
+
     //Counts the children of the current node which have the same painting as itself under the current map.
     //This will always be 1 if extended==false.
 
@@ -260,6 +267,7 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
             return count;
         }
     }
+
 
     private static NodeRef sibling(TreeModel tree, NodeRef node){
         if(tree.isRoot(node)){
@@ -655,7 +663,8 @@ public class CaseToCaseTransmissionLikelihood extends AbstractModelLikelihood im
     }
 
 
-    /* Takes a HashMap referring each case to its parent, and tries to paint the tree with it */
+    /* Takes a HashMap referring each case to its parent, and tries to paint the tree with it. This only works on
+     * the non-extended version right now, watch it. */
 
     private AbstractCase[] paintSpecificNetwork(HashMap<AbstractCase, AbstractCase> map){
         Arrays.fill(subTreeRecalculationNeeded,true);

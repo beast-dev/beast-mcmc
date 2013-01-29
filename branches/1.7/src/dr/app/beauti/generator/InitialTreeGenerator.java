@@ -115,7 +115,7 @@ public class InitialTreeGenerator extends Generator {
                     writeTaxaRef(taxaId, model, writer);
 
                     writeInitialDemoModelRef(model, writer);
-                    writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_TREE);
+                    writer.writeCloseTag(CoalescentSimulatorParser.COALESCENT_SIMULATOR);
                 }
                 break;
             default:

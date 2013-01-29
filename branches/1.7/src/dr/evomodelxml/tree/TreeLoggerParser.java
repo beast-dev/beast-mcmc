@@ -35,6 +35,9 @@ public class TreeLoggerParser extends LoggerParser {
     public static final String MAP_NAMES = "mapNamesToNumbers";
     public static final String DECIMAL_PLACES = "dp";
     //    public static final String NORMALISE_MEAN_RATE_TO = "normaliseMeanRateTo";
+    public static final String EXTERNAL_NODES = "externalNodes";
+    public static final String INTERNAL_NODES = "internalNodes";
+
     public static final String FILTER_TRAITS = "traitFilter";
     public static final String TREE_TRAIT = "trait";
     public static final String NAME = "name";
@@ -142,6 +145,9 @@ public class TreeLoggerParser extends LoggerParser {
 
                     String name = xco.getStringAttribute(NAME);
                     final TreeTrait trait = ttp.getTreeTrait(name);
+
+                    boolean externalNodes = xco.getAttribute(EXTERNAL_NODES, false);
+                    boolean internalNodes = xco.getAttribute(INTERNAL_NODES, true);
 
                     if (trait == null) {
                         String childName = "TreeTraitProvider";
@@ -330,6 +336,8 @@ public class TreeLoggerParser extends LoggerParser {
                     new XMLSyntaxRule[] {
                             AttributeRule.newStringRule(NAME, false, "The name of the trait"),
                             AttributeRule.newStringRule(TAG, true, "The label of the trait to be used in the tree"),
+                            AttributeRule.newBooleanRule(EXTERNAL_NODES, true, "Whether to log the tip trait values (default false)"),
+                            AttributeRule.newBooleanRule(INTERNAL_NODES, true, "Whether to log the internal node trait values (default true)"),
                             new ElementRule(TreeAttributeProvider.class, "The trait provider")
                     }, 0, Integer.MAX_VALUE),
             new ElementRule(Likelihood.class, true),

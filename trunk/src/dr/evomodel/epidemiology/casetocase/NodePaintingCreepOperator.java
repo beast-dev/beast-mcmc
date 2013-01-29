@@ -48,22 +48,27 @@ public class NodePaintingCreepOperator extends SimpleMCMCOperator {
         int internalNodeCount = tree.getInternalNodeCount();
         int nodeToSwitch = MathUtils.nextInt(internalNodeCount);
         // Cannot apply this operator if the node is locked to it
-        while(c2cLikelihood.getCreepLocks()[nodeToSwitch]
-                && c2cLikelihood.getBranchMap()[nodeToSwitch]==c2cLikelihood.getBranchMap()[tree.getRoot().getNumber()]){
+        while(c2cLikelihood.getCreepLocks()[nodeToSwitch]){
             nodeToSwitch = MathUtils.nextInt(internalNodeCount);
         }
+        boolean tipLinked = c2cLikelihood.tipLinked(tree.getInternalNode(nodeToSwitch));
         NodeRef node = tree.getInternalNode(nodeToSwitch);
-        adjustTree(tree, node, c2cLikelihood.getBranchMap(), c2cLikelihood.getRecalculationArray());
+        adjustTree(tree, node, c2cLikelihood.getBranchMap());
+        c2cLikelihood.recalculateLocks();
         int newUnlockedNodes = 0;
         for(int i=0; i<tree.getInternalNodeCount(); i++){
             if(c2cLikelihood.getCreepLocks()[i]){
                 newUnlockedNodes++;
             }
         }
-        return 0;
+        if(tipLinked){
+            return Math.log(oldUnlockedNodes/(newUnlockedNodes*2));
+        } else {
+            return Math.log((newUnlockedNodes * 2)/oldUnlockedNodes);
+        }
     }
 
-    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags){
+    private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map){
         AbstractCase currentCase = map[node.getNumber()];
         if(c2cLikelihood.tipLinked(node)){
             HashSet<Integer> nodesToChange = c2cLikelihood.samePaintingUpTree(node, true);
@@ -72,19 +77,11 @@ public class NodePaintingCreepOperator extends SimpleMCMCOperator {
             while(map[currentAncestor.getNumber()]==currentCase){
                 currentAncestor = tree.getParent(node);
             }
-            // Make the changes and adjust switch locks
+            // Make the changes
             AbstractCase newCase = map[currentAncestor.getNumber()];
-            c2cLikelihood.changeSwitchLock(currentAncestor.getNumber(),true);
+            map[node.getNumber()]=newCase;
             for(int i:nodesToChange){
                 map[i]=newCase;
-                c2cLikelihood.changeSwitchLock(i,true);
-            }
-            // Adjust creep locks - any nodes with two children of the same painting, and any ancestors of those nodes
-            // that are not tip-linked, and any descendants of those nodes which are not, need to be locked.
-            if(c2cLikelihood.countChildrenWithSamePainting(currentAncestor)==2){
-
-
-
             }
         } else {
             HashSet<Integer> nodesToChange = c2cLikelihood.samePaintingDownTree(node, true);
@@ -106,7 +103,6 @@ public class NodePaintingCreepOperator extends SimpleMCMCOperator {
             for(Integer i:nodesToChange){
                 map[i]=replacementPainting;
             }
-
         }
     }
 

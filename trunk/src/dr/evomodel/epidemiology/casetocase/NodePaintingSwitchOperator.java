@@ -17,7 +17,6 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
     public static final String NODE_PAINTING_SWITCH_OPERATOR = "nodePaintingSwitchOperator";
     private CaseToCaseTransmissionLikelihood c2cLikelihood;
 
-
     public NodePaintingSwitchOperator(CaseToCaseTransmissionLikelihood c2cLikelihood, double weight){
         this.c2cLikelihood = c2cLikelihood;
         setWeight(weight);
@@ -45,6 +44,9 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
                         c2cLikelihood.isExtended());
             }
         }
+        if(c2cLikelihood.isExtended()){
+            c2cLikelihood.recalculateLocks();
+        }
         c2cLikelihood.makeDirty();
         return 1;
     }
@@ -54,7 +56,6 @@ public class NodePaintingSwitchOperator extends SimpleMCMCOperator{
 
     private void adjustTree(TreeModel tree, NodeRef node, AbstractCase[] map, boolean[] flags, boolean extended){
         AbstractCase originalCase = map[node.getNumber()];
-        boolean reachesRoot = originalCase==map[tree.getRoot().getNumber()];
         if(tree.isExternal(node)){
             throw new RuntimeException("Node is external");
         }

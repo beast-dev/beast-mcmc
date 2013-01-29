@@ -142,11 +142,8 @@ public class TreeLogger extends MCLogger {
             logLine("\tTaxlabels");
 
             for (String taxaId : taxaIds) {
-                if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                    taxaId = "'" + taxaId + "'";
+                logLine("\t\t" + cleanTaxonName(taxaId));
                 }
-                logLine("\t\t" + taxaId);
-            }
 
             logLine("\t\t;");
             logLine("End;");
@@ -158,19 +155,31 @@ public class TreeLogger extends MCLogger {
                 logLine("\tTranslate");
                 int k = 1;
                 for (String taxaId : taxaIds) {
-                    if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
-                        taxaId = "'" + taxaId + "'";
-                    }
                     if (k < taxonCount) {
-                        logLine("\t\t" + k + " " + taxaId + ",");
+                        logLine("\t\t" + k + " " + cleanTaxonName(taxaId) + ",");
                     } else {
-                        logLine("\t\t" + k + " " + taxaId);
+                        logLine("\t\t" + k + " " + cleanTaxonName(taxaId));
                     }
                     k += 1;
                 }
                 logLine("\t\t;");
             }
         }
+    }
+
+    private String cleanTaxonName(String taxaId) {
+        if (taxaId.matches(NexusExporter.SPECIAL_CHARACTERS_REGEX)) {
+            if (taxaId.contains("\'")) {
+                if (taxaId.contains("\"")) {
+                    throw new RuntimeException("Illegal taxon name - contains both single and double quotes");
+                }
+
+                return "\"" + taxaId + "\"";
+            }
+
+            return "\'" + taxaId + "\'";
+        }
+        return taxaId;
     }
 
     public void log(long state) {

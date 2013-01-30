@@ -435,9 +435,18 @@ public class BeautiFrame extends DocumentFrame {
     protected boolean readFromFile(File file) throws IOException {
         FileInputStream fileIn =
                 new FileInputStream(file);
-        ObjectInputStream in = new ObjectInputStream(fileIn);
         try {
+        ObjectInputStream in = new ObjectInputStream(fileIn);
             options = (BeautiOptions) in.readObject();
+            in.close();
+        } catch (IOException ioe) {
+            JOptionPane.showMessageDialog(this,
+                    "Unable to read BEAUti file. BEAUti can only read files\n" +
+                    "created by 'Saving' within BEAUti. It cannot read BEAST\n" +
+                    "XML files. To read data within BEAST XML files, use\n" +
+                            "the 'Import' option.",
+                    "Unable to read file",
+                    JOptionPane.ERROR_MESSAGE);
         } catch (ClassNotFoundException cnfe) {
             JOptionPane.showMessageDialog(this, "Unable to read BEAUti file: " + cnfe.getMessage(),
                     "Unable to read file",
@@ -445,7 +454,6 @@ public class BeautiFrame extends DocumentFrame {
             cnfe.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             return false;
         }
-        in.close();
         fileIn.close();
 
         generator = new BeastGenerator(options, components);

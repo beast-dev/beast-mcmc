@@ -475,6 +475,7 @@ public class ClockModelOptions extends ModelOptions {
                 int siteCount = 0;
 
                 for (AbstractPartitionData partition : partitions) {
+                    if (partition.getDistances() != null) {   // ignore partitions that don't have distances
                     Tree tree = new UPGMATree(partition.getDistances());
 
                     Set<String> leafNodes = Taxa.Utils.getTaxonListIdSet(taxa);
@@ -489,6 +490,7 @@ public class ClockModelOptions extends ModelOptions {
                     rootDistance += tree.getNodeHeight(tree.getRoot());
 
                     siteCount += partition.getSiteCount();
+                }
                 }
 
                 rootDistance /= partitions.size();

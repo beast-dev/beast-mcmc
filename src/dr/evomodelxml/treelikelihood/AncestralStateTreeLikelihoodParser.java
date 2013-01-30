@@ -31,10 +31,10 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
 
-        throw new XMLParseException("Ancestral state functionality is only support under BEAGLE.");
+        throw new XMLParseException("Ancestral state functionality is only support when using the BEAGLE library.\nAvailable from http://http://beagle-lib.googlecode.com/");
 
-//        boolean useAmbiguities = xo.getAttribute(OldTreeLikelihoodParser.USE_AMBIGUITIES, false);
-//        boolean storePartials = xo.getAttribute(OldTreeLikelihoodParser.STORE_PARTIALS, true);
+//        boolean useAmbiguities = xo.getAttribute(TreeLikelihoodParser.USE_AMBIGUITIES, false);
+//        boolean storePartials = xo.getAttribute(TreeLikelihoodParser.STORE_PARTIALS, true);
 //
 //        PatternList patternList = (PatternList) xo.getChild(PatternList.class);
 //        TreeModel treeModel = (TreeModel) xo.getChild(TreeModel.class);
@@ -50,7 +50,7 @@ public class AncestralStateTreeLikelihoodParser extends AbstractXMLObjectParser 
 //        // default tag is RECONSTRUCTION_TAG
 //        String tag = xo.getAttribute(RECONSTRUCTION_TAG_NAME, RECONSTRUCTION_TAG);
 //
-//        boolean forceRescaling = xo.getAttribute(OldTreeLikelihoodParser.FORCE_RESCALING, false);
+//        boolean forceRescaling = xo.getAttribute(TreeLikelihoodParser.FORCE_RESCALING, false);
 //
 //        return new AncestralStateTreeLikelihood(patternList, treeModel, siteModel,
 //                branchRateModel, useAmbiguities, storePartials, dataType, tag, forceRescaling,

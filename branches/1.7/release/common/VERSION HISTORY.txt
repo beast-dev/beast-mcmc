@@ -31,6 +31,7 @@ Version 1.7.5 released XXth February 2013
        tree.
 
 	Bug Fixes:
+        Issue 672:	BEAUti duplicates rates in phylograms
         Issue 671:	Exporting taxon names in Nexus format - names with apostrophes are enclosed in single quotes.
         Issue 667:	Dollo ambiguity code is incorrect when using BEAUti's no data option.
         Issue 666 (the issue of the BEAST):	BEAUti should read charsets from sets blocks in NEXUS files

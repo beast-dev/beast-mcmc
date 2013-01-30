@@ -50,6 +50,7 @@ import java.util.List;
 public class NexusApplicationImporter extends NexusImporter {
 
     public static final NexusBlock ASSUMPTIONS_BLOCK = new NexusBlock("ASSUMPTIONS");
+    public static final NexusBlock SETS_BLOCK = new NexusBlock("SETS");
     public static final NexusBlock PAUP_BLOCK = new NexusBlock("PAUP");
     public static final NexusBlock MRBAYES_BLOCK = new NexusBlock("MRBAYES");
 
@@ -73,6 +74,8 @@ public class NexusApplicationImporter extends NexusImporter {
     public NexusBlock findBlockName(String blockName) {
         if (blockName.equalsIgnoreCase(ASSUMPTIONS_BLOCK.toString())) {
             return ASSUMPTIONS_BLOCK;
+        } else if (blockName.equalsIgnoreCase(SETS_BLOCK.toString())) {
+            return SETS_BLOCK;
         } else if (blockName.equalsIgnoreCase(PAUP_BLOCK.toString())) {
             return PAUP_BLOCK;
         } else if (blockName.equalsIgnoreCase(MRBAYES_BLOCK.toString())) {

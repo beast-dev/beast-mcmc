@@ -50,6 +50,9 @@ import java.util.List;
  */
 public class AlignmentGenerator extends Generator {
 
+    // used as a null sequence if sampling from the prior only. It is
+    // three characters long in case it is codon partitioned.
+    private static final String NULL_SEQUENCE = "???";
 
     public AlignmentGenerator(BeautiOptions options, ComponentFactory[] components) {
         super(options, components);
@@ -121,7 +124,7 @@ public class AlignmentGenerator extends Generator {
 //                System.out.println("len = " + alignment.getAlignedSequenceString(i).length() + "\n");
             } else {
                 // generate a codon in case there is codon partitioning
-                writer.writeText("NNN");
+                writer.writeText(NULL_SEQUENCE);
             }
             writer.writeCloseTag(SequenceParser.SEQUENCE);
         }

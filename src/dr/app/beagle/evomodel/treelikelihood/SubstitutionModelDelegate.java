@@ -25,17 +25,17 @@
 
 package dr.app.beagle.evomodel.treelikelihood;
 
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
+
 import beagle.Beagle;
 import dr.app.beagle.evomodel.branchmodel.BranchModel;
 import dr.app.beagle.evomodel.substmodel.EigenDecomposition;
 import dr.app.beagle.evomodel.substmodel.SubstitutionModel;
 import dr.evolution.tree.Tree;
 import dr.util.Timer;
-
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
-import java.util.List;
 
 /**
  * @author Andrew Rambaut
@@ -47,7 +47,7 @@ public final class SubstitutionModelDelegate {
 
     private static final boolean DEBUG = false;
     private static final boolean RUN_IN_SERIES = false;
-    public static final boolean MEASURE_RUN_TIME = false;
+    public static final boolean MEASURE_RUN_TIME = true;
     public double updateTime;
     public double convolveTime;
 
@@ -108,7 +108,12 @@ public final class SubstitutionModelDelegate {
         // one extra created as a reserve
         // which is used to free up buffers when the avail stack is empty.
         reserveBufferIndex = matrixBufferHelper.getBufferCount() + extraBufferCount;
-
+        
+		if (DEBUG) {
+			System.out.println("Creating reserve buffer with index: "
+					+ reserveBufferIndex);
+		}
+	
     }// END: Constructor
 
     public boolean canReturnComplexDiagonalization() {
@@ -198,6 +203,7 @@ public final class SubstitutionModelDelegate {
                     int k = order[j];
                     probabilityIndices[k][counts[k]] = buffer;
                     edgeLengths[k][counts[k]] = weights[j] * edgeLength[i] / sum;
+//                    edgeLengths[k][counts[k]] = weights[j] ;
                     counts[k]++;
 
                     bufferIndices.add(buffer);
@@ -205,9 +211,9 @@ public final class SubstitutionModelDelegate {
                 bufferIndices.add(matrixBufferHelper.getOffsetIndex(branchIndices[i]));
 
                 convolutionList.add(bufferIndices);
-            }
+			}// END: if convolution needed
 
-        }
+		}// END: i loop
 
         computeTransitionMatrices(beagle, probabilityIndices, edgeLengths, counts);
         convolveMatrices(beagle, convolutionList);
@@ -229,7 +235,8 @@ public final class SubstitutionModelDelegate {
         for (int i = 0; i < eigenCount; i++) {
             if (DEBUG) {
                 for (int j = 0; j < counts[i]; j++) {
-                    System.out.print(" " + probabilityIndices[i][j]);
+//                    System.out.print(" " + probabilityIndices[i][j]);
+                	System.out.print(" " + probabilityIndices[i][j] + " (" + edgeLengths[i][j] + ")");
                 }
             }
             if (counts[i] > 0) {
@@ -291,20 +298,12 @@ public final class SubstitutionModelDelegate {
                             // we have run out of buffers, process what we have and continue...
                             if (DEBUG) {
                                 System.out.println("Ran out of buffers for convolving - computing current list.");
-                                System.out.print("Convolving matrices:");
+                                System.out.print("Convolving " + operationsCount + " matrices:");
                                 for (int i = 0; i < operationsCount; i++) {
                                     System.out.print(" " + firstConvolutionBuffers[i] + "*" + secondConvolutionBuffers[i] + "->" + resultConvolutionBuffers[i]);
                                 }
                                 System.out.println();
                             }
-
-//                        	if(operationsCount == 0) {
-//								try {
-//									Thread.sleep(1000);
-//								} catch (InterruptedException e) {
-//									e.printStackTrace();
-//								}
-//                        	}
 
                             if (operationsCount > 0) {
 
@@ -353,7 +352,7 @@ public final class SubstitutionModelDelegate {
             }
 
             if (DEBUG) {
-                System.out.print("Convolving matrices:");
+                System.out.print("Convolving " + operationsCount+ " matrices:");
                 for (int i = 0; i < operationsCount; i++) {
                     System.out.print(" " + firstConvolutionBuffers[i] + "*" + secondConvolutionBuffers[i] + "->" + resultConvolutionBuffers[i]);
                 }
@@ -375,9 +374,11 @@ public final class SubstitutionModelDelegate {
 
     private void convolveAndRelease(Beagle beagle, int[] firstConvolutionBuffers, int[] secondConvolutionBuffers, int[] resultConvolutionBuffers, int operationsCount) {
 
-        if (RUN_IN_SERIES && operationsCount > 1) {
-            throw new RuntimeException("Unable to convolve matrices in series");
-        }
+        if (RUN_IN_SERIES) {
+			if (operationsCount > 1) {
+			    throw new RuntimeException("Unable to convolve matrices in series");
+			}
+		}
 
         beagle.convolveTransitionMatrices(firstConvolutionBuffers, // A
                 secondConvolutionBuffers, // B

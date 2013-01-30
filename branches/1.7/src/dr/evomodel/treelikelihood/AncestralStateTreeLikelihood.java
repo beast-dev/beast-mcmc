@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 /**
  * @author Marc A. Suchard
  */
+@Deprecated
 public class AncestralStateTreeLikelihood extends TreeLikelihood implements TreeTraitProvider {
     public static final String STATES_KEY = "states";
 

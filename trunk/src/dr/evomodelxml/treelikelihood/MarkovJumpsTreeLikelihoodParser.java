@@ -20,7 +20,7 @@ public class MarkovJumpsTreeLikelihoodParser extends AbstractXMLObjectParser {
     }
 
     public Object parseXMLObject(XMLObject xo) throws XMLParseException {
-       throw new XMLParseException("MarkovJump functionality is only support under BEAGLE.");
+        throw new XMLParseException("MarkovJump functionality is only support when using the BEAGLE library.\nAvailable from http://http://beagle-lib.googlecode.com/");
     }
 
     //************************************************************************

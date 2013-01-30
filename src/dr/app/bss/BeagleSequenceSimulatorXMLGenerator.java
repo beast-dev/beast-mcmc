@@ -14,7 +14,6 @@ import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.branchratemodel.BranchRateModel;
-import dr.evomodel.sitemodel.GammaSiteModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.TreeModel;
@@ -32,6 +31,7 @@ import dr.evoxml.TaxaParser;
 import dr.evoxml.TaxonParser;
 import dr.inference.model.ParameterParser;
 import dr.util.Attribute;
+import dr.xml.Report;
 import dr.xml.XMLParser;
 
 public class BeagleSequenceSimulatorXMLGenerator {
@@ -223,11 +223,42 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		}// END: try-catch block
 		
+		// /////////////////////////////////////////
+		// ---beagle sequence simulator element---//
+		// /////////////////////////////////////////
+
+		try {
+
+				writeReport(writer);
+				writer.writeBlankLine();
+
+		} catch (Exception e) {
+
+			System.err.println(e);
+			throw new RuntimeException("Report element generation has failed:\n"
+					+ e.getMessage());
+
+		}// END: try-catch block
+		
 		writer.writeCloseTag("beast");
 		writer.flush();
 		writer.close();
 	}// END: generateXML
-
+	
+	//TODO
+	private void writeReport(XMLWriter writer) {
+		
+		writer.writeOpenTag(Report.REPORT,
+				new Attribute[] { 
+				new Attribute.Default<String>(Report.FILENAME, "sequences.fasta")
+		});
+		
+		writer.writeIDref(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR, "simulator");
+		
+		writer.writeCloseTag(Report.REPORT);
+		
+	}//END: writeReport
+	
 	private void writeBeagleSequenceSimulator(XMLWriter writer) {
 
 		writer.writeOpenTag(
@@ -292,7 +323,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 			writer.writeCloseTag(PartitionParser.PARTITION);
 
 			//TODO: ancestral sequence
-			
 			
 		}//END: partitions loop
 		
@@ -706,8 +736,7 @@ public class BeagleSequenceSimulatorXMLGenerator {
 						"true"));
 
 
-		writeParameter(null, treeModelName + "."
-				+ CoalescentSimulatorParser.ROOT_HEIGHT, 1, null, null, null,
+		writeParameter(null, treeModelName + "." + "internalNodeHeights", 1, null, null, null,
 				writer);
 		
 		writer.writeCloseTag(TreeModelParser.NODE_HEIGHTS);
@@ -718,7 +747,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 								TreeModelParser.INTERNAL_NODES, "true"),
 						new Attribute.Default<String>(
 								TreeModelParser.ROOT_NODE, "true") });
-
 
 		writeParameter(null, treeModelName + "." + "allInternalNodeHeights", 1,
 				null, null, null, writer);

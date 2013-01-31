@@ -1,7 +1,7 @@
                     BEAST v1.7.5 2002-2013
         Bayesian Evolutionary Analysis Sampling Trees
                               by
-      Alexei J. Drummond, Andrew Rambaut & Marc Suchard
+      Alexei J. Drummond, Andrew Rambaut & Marc A. Suchard
 
                 Department of Computer Science
                      University of Auckland
@@ -17,7 +17,7 @@
 
 
 Version History
-Last updated: a.rambaut@ed.ac.uk - 30th January 2013
+Last updated: msuchard@ucla.edu - 31st January 2013
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
@@ -30,13 +30,14 @@ Version 1.7.5 released XXth February 2013
        the priors table. These starting dates are now used by BEAST when generating an initial
        tree.
 
-	Bug Fixes:
+	Bug Fixes:	
         Issue 672:	BEAUti duplicates rates in phylograms
         Issue 671:	Exporting taxon names in Nexus format - names with apostrophes are enclosed in single quotes.
         Issue 667:	Dollo ambiguity code is incorrect when using BEAUti's no data option.
         Issue 666 (the issue of the BEAST):	BEAUti should read charsets from sets blocks in NEXUS files
         Issue 665:	The coalescent based simulator doesn't respect hard bounds placed on MRCAs of taxon sets.
         Issue 662:	Problem with reconstructing synonymous/non-synonymous change counts (BEAGLE must be used).
+        Issue 659:  BEAUti generates various Dollo ambiguity codes        
 
 ================================================================================
 

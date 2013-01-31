@@ -1,7 +1,7 @@
 /*
  * DolloComponentGenerator.java
  *
- * Copyright (c) 2002-2012 Alexei Drummond, Andrew Rambaut and Marc Suchard
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -164,7 +164,9 @@ public class DolloComponentGenerator extends BaseComponentGenerator {
             writer.writeTag(MutationDeathTypeParser.STATE,
                     new Attribute.Default<String>(MutationDeathTypeParser.CODE, "0"), true);
             writer.writeTag(MutationDeathTypeParser.AMBIGUITY,
-                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "-"), true);  // TODO Change back to '?'
+                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "-"), true);  // Some users use this specification
+            writer.writeTag(MutationDeathTypeParser.AMBIGUITY,
+                    new Attribute.Default<String>(MutationDeathTypeParser.CODE, "?"), true);
         writer.writeCloseTag(MutationDeathTypeParser.MODEL_NAME);
     }
 

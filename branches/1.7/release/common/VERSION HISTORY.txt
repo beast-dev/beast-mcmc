@@ -29,6 +29,10 @@ Version 1.7.5 released XXth February 2013
        taxon sets. This allows the user to ensure they are within any hard` bounds specified in
        the priors table. These starting dates are now used by BEAST when generating an initial
        tree.
+       Conditional reference prior for mutation rates returns a proper density when tree height is
+       is a random quantity.
+       Ancestral recombination graph inference improved for two partition problems.
+       BEAST runs on NSF Keeneland supercomputer in a massively parallel fashion.
 
 	Bug Fixes:	
         Issue 672:	BEAUti duplicates rates in phylograms

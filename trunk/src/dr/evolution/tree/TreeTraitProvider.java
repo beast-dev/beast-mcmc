@@ -127,6 +127,23 @@ public interface TreeTraitProvider {
             return traits.get(key);
         }
 
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            Helper helper = (Helper) o;
+
+            if (traits != null ? !traits.equals(helper.traits) : helper.traits != null) return false;
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return traits != null ? traits.hashCode() : 0;
+        }
+
         // Private members
 
         private Map<String, TreeTrait> traits = new HashMap<String, TreeTrait>();

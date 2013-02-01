@@ -63,6 +63,11 @@ public class TreeLoggerParser extends LoggerParser {
         List<TreeAttributeProvider> taps = new ArrayList<TreeAttributeProvider>();
         List<TreeTraitProvider> ttps = new ArrayList<TreeTraitProvider>();
 
+        // ttps2 are for TTPs that are not specified within a Trait element. These are only
+        // included if not already added through a trait element to avoid duplication of
+        // (in particular) the BranchRates which is required for substitution trees.
+        List<TreeTraitProvider> ttps2 = new ArrayList<TreeTraitProvider>();
+
         for (int i = 0; i < xo.getChildCount(); i++) {
             Object cxo = xo.getChild(i);
 
@@ -127,12 +132,12 @@ public class TreeLoggerParser extends LoggerParser {
                         }
                     }
                     if (filteredTraits.size() > 0) {
-                        ttps.add(new TreeTraitProvider.Helper(filteredTraits));
+                        ttps2.add(new TreeTraitProvider.Helper(filteredTraits));
                     }
 
                 } else {
                     // Add all of them
-                    ttps.add((TreeTraitProvider) cxo);
+                    ttps2.add((TreeTraitProvider) cxo);
                 }
             }
             if (cxo instanceof XMLObject) {
@@ -229,6 +234,13 @@ public class TreeLoggerParser extends LoggerParser {
                 });
             }
 
+        }
+
+        // if we don't have any of the newer trait elements but we do have some tree trait providers
+        // included directly then assume the user wanted to log these as tree traits (it may be an older
+        // form XML).
+        if (ttps.size() == 0 && ttps2.size() > 0) {
+            ttps.addAll(ttps2);
         }
 
         if (substitutions) {

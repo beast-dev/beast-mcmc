@@ -7,6 +7,8 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import dr.evolution.util.MutableTaxonList;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 
 public class Utils {
@@ -34,6 +36,21 @@ public class Utils {
 
 		return treeModelList;
 	}// END: treesToList
+	
+	public static boolean taxonExists(Taxon taxon1, MutableTaxonList taxonList) {
+		
+		boolean exists = false;
+		for(Taxon taxon2 : taxonList) {
+
+			if(taxon1.equals(taxon2)) {
+				exists = true;
+				break;
+			}
+			
+		}
+		
+		return exists;
+	}// END: taxonExists
 	
 	// /////////////////
 	// ---GUI UTILS---//

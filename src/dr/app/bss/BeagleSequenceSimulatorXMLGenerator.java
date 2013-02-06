@@ -121,14 +121,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 			
-//			for (PartitionData data : dataList) {
-//
-//				TreeModel tree = data.treeModel;
-//				writeTreeModel(tree, writer);
-//				writer.writeBlankLine();
-//
-//			}// END: partitions loop
-
 			int suffix = 1;
 			for(TreeModel tree : uniqueTreeModelList) {
 				
@@ -138,6 +130,13 @@ public class BeagleSequenceSimulatorXMLGenerator {
 				
 			}
 			
+//			for (PartitionData data : dataList) {
+//
+//				TreeModel tree = data.treeModel;
+//				writeTreeModel(tree, writer);
+//				writer.writeBlankLine();
+//
+//			}// END: partitions loop
 			
 		} catch (Exception e) {
 
@@ -154,6 +153,8 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		try {
 
 			//TODO: write different elements only if they differ across partitions
+		
+//			uniqueTreeModelList = new ArrayList<TreeModel>(new LinkedHashSet<TreeModel>(Utils.treesToList(dataList)));
 			
 			for (PartitionData data : dataList) {
 

@@ -1,7 +1,7 @@
 /*
  * GammaDistribution.java
  *
- * Copyright (C) 2002-2006 Alexei Drummond and Andrew Rambaut
+ * Copyright (c) 2002-2013 Alexei Drummond, Andrew Rambaut and Marc Suchard
  *
  * This file is part of BEAST.
  * See the NOTICE file distributed with this work for additional
@@ -25,6 +25,9 @@
 
 package dr.math.distributions;
 
+import cern.jet.random.Gamma;
+import cern.jet.random.engine.MersenneTwister;
+import cern.jet.random.engine.RandomEngine;
 import dr.math.GammaFunction;
 import dr.math.MathUtils;
 import dr.math.UnivariateFunction;
@@ -56,6 +59,11 @@ public class GammaDistribution implements Distribution {
         this.shape = shape;
         this.scale = scale;
         this.samples = 0;
+
+        if (TRY_COLT) {
+            randomEngine = new MersenneTwister(MathUtils.nextInt());
+            coltGamma = new Gamma(shape, scale, randomEngine);
+        }
     }
 
     public double getShape() {
@@ -247,6 +255,9 @@ public class GammaDistribution implements Distribution {
      * @return sample
      */
     public static double nextGamma(double shape, double scale) {
+        if (TRY_COLT) {
+            return coltGamma.nextDouble(shape, scale); // TODO this may need to be 1.0 / scale
+        }
         return nextGamma(shape, scale, false);
     }
 
@@ -781,6 +792,10 @@ System.out.println(e.getMessage());
 
     protected double shape, scale;
     protected int samples;
+
+    private static final boolean TRY_COLT = false;
+    private static RandomEngine randomEngine;
+    private static Gamma coltGamma;
 
 }
 

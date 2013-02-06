@@ -17,7 +17,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.table.AbstractTableModel;
 
-import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableEditorStopper;
 
 @SuppressWarnings("serial")
@@ -27,7 +26,7 @@ public class TaxaPanel extends JPanel implements Exportable {
 	private PartitionDataList dataList = null;
 
 	private JScrollPane scrollPane = new JScrollPane();
-	private JTable dataTable = null;
+	private JTable taxaTable = null;
 	private TaxaTableModel taxaTableModel = null;
 
 	private double[] heights = null;
@@ -39,49 +38,59 @@ public class TaxaPanel extends JPanel implements Exportable {
 		this.dataList = dataList;
 
 		taxaTableModel = new TaxaTableModel();
+		taxaTable = new JTable(taxaTableModel);
+
 //		TableSorter sorter = new TableSorter(taxaTableModel);
-		dataTable = new JTable(taxaTableModel);
+//		sorter.setTableHeader(taxaTable.getTableHeader());
 
-//		sorter.setTableHeader(dataTable.getTableHeader());
-
-		dataTable.getTableHeader().setReorderingAllowed(false);
-		dataTable.getTableHeader()
+		taxaTable.getTableHeader().setReorderingAllowed(false);
+		
+		taxaTable.getTableHeader()
 				.setDefaultRenderer(
 						new HeaderRenderer(SwingConstants.LEFT, new Insets(0,
-								4, 0, 4)));
+								2, 0, 2)));
 
-		dataTable
+		taxaTable
 				.getColumnModel()
 				.getColumn(0)
 				.setCellRenderer(
-						new TableRenderer(SwingConstants.LEFT, new Insets(0, 4,
-								0, 4)));
-		dataTable.getColumnModel().getColumn(0).setPreferredWidth(80);
+						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+								0, 2)));
+		
+		taxaTable.getColumnModel().getColumn(0).setPreferredWidth(80);
 
-		dataTable
+		taxaTable
 				.getColumnModel()
 				.getColumn(1)
 				.setCellRenderer(
-						new TableRenderer(SwingConstants.LEFT, new Insets(0, 4,
-								0, 4)));
-		dataTable.getColumnModel().getColumn(1).setPreferredWidth(80);
-		dataTable.getColumnModel().getColumn(1)
-				.setCellEditor(new DateCellEditor());
+						new TableRenderer(SwingConstants.LEFT, new Insets(0, 2,
+								0, 2)));
+	
+		taxaTable.getColumnModel().getColumn(1).setPreferredWidth(80);
 
-		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(dataTable);
+//		taxaTable.getColumnModel().getColumn(1)
+//		.setCellEditor(new DateCellEditor());
+		
+		TableEditorStopper.ensureEditingStopWhenTableLosesFocus(taxaTable);
 
-		dataTable.getSelectionModel().addListSelectionListener(
+		taxaTable.getSelectionModel().addListSelectionListener(
 				new ListSelectionListener() {
 					public void valueChanged(ListSelectionEvent evt) {
 						selectionChanged();
 					}
 				});
 
-		scrollPane = new JScrollPane(dataTable,
+		scrollPane = new JScrollPane(taxaTable,
 				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
 				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-		scrollPane.setOpaque(false);
+		
+//		RowNumberTable rowNumberTable = new RowNumberTable(taxaTable);
+//		scrollPane.setRowHeaderView(rowNumberTable);
+//		scrollPane.setCorner(JScrollPane.UPPER_LEFT_CORNER,
+//				rowNumberTable.getTableHeader());
 
+		scrollPane.getViewport().setOpaque(false);
+		
 		setOpaque(false);
 		setBorder(new BorderUIResource.EmptyBorderUIResource(
 				new java.awt.Insets(12, 12, 12, 12)));
@@ -89,15 +98,15 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		add(scrollPane, "Center");
 
-	}
+	}// END: Constructor
 
 	public JComponent getExportableComponent() {
-		return dataTable;
+		return taxaTable;
 	}
 
 	public void selectionChanged() {
 
-		int[] selRows = dataTable.getSelectedRows();
+		int[] selRows = taxaTable.getSelectedRows();
 		if (selRows == null || selRows.length == 0) {
 			frame.dataSelectionChanged(false);
 		} else {

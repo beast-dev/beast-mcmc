@@ -139,21 +139,17 @@ public class TreePanel extends JPanel implements Exportable {
 						
 						NewickImporter importer = new NewickImporter(reader);
 
-//						if(importer.hasTree()) {
-//							tree = importer.importNextTree();
-//						}
-						
+						// tree = importer.importNextTree();
 						tree = importer.importTree(null);
 						
 					}
 
 					dataList.forestMap.put(file, new TreeModel(tree));
 					for (Taxon taxon : tree.asList()) {
-						
-						dataList.taxonList.addTaxon(taxon);
-						
-//						System.out.println(taxon.getId());
-//						System.out.println(taxon.getHeight());
+
+						if (!Utils.taxonExists(taxon, dataList.taxonList)) {
+							dataList.taxonList.addTaxon(taxon);
+						}// END: taxon exists check
 
 					}
 					

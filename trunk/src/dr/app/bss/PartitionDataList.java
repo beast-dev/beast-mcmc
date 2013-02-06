@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
 import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
@@ -14,7 +15,7 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public static final String VERSION = "0.0.1";
 	public static final String DATE_STRING = "2012";
 	
-	public TaxonList taxonList = new Taxa();
+	public MutableTaxonList taxonList = new Taxa();
 	
 	//TODO: last partition should have this number as TO value
 	public int siteCount = 1000;	

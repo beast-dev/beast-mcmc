@@ -45,7 +45,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 	}// END: Constructor
 
-	//TODO: write different elements only if they differ across partitions
 	public void generateXML(File file) throws IOException {
 
 		XMLWriter writer = new XMLWriter(new BufferedWriter(
@@ -154,6 +153,8 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
+			//TODO: write different elements only if they differ across partitions
+			
 			for (PartitionData data : dataList) {
 
 				writeBranchRatesModel(data, writer);

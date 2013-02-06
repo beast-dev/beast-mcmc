@@ -164,12 +164,12 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 			case 0:
 				dataList.taxonList.getTaxon(row).setId(value.toString());
-//				break;
+				break;
 				
 			case 1:
 //				 getHeights();
 //				 dataList.get(0).taxonList.getTaxon(row).getHeight();
-//				break;
+				break;
 				
 			default:
 				break;
@@ -215,6 +215,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	public void fireTableDataChanged() {
 		taxaTableModel.fireTableDataChanged();
-	}
+	}// END: fireTableDataChanged
 	
 }// END: class

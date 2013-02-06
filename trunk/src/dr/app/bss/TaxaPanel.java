@@ -19,7 +19,6 @@ import javax.swing.table.AbstractTableModel;
 
 import dr.app.gui.table.DateCellEditor;
 import dr.app.gui.table.TableEditorStopper;
-import dr.app.gui.table.TableSorter;
 
 @SuppressWarnings("serial")
 public class TaxaPanel extends JPanel implements Exportable {
@@ -106,7 +105,6 @@ public class TaxaPanel extends JPanel implements Exportable {
 		}
 	}
 
-	// TODO: multiple partitions
 	private void getHeights() {
 
 		System.out.println("Parsing heights");
@@ -116,6 +114,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 			heights[i] = dataList.taxonList.getTaxon(i).getHeight();
 
+			System.out.println(heights[i]);
+			
 		}// END: taxon loop
 		
 		taxaTableModel.fireTableDataChanged();
@@ -138,39 +138,44 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 		public Object getValueAt(int row, int col) {
 			switch (col) {
+			
 			case 0:
 				return dataList.taxonList.getTaxonId(row);
+				
 			case 1:
-				
-//				getHeights();
-				
+
+//				 getHeights();
+
 				if (heights != null) {
 					return heights[row];
 				} else {
-					
 					return "0.0";
-					
 				}
-				default:
-					return null;
-			}
-		}//END: getValueAt
+
+			default:
+				return null;
+
+			}// END: switch
+		}// END: getValueAt
 
 		public void setValueAt(Object value, int row, int col) {
-			
-			getHeights();
-			
-			if (col == 0) {
+
+			switch (col) {
+
+			case 0:
 				dataList.taxonList.getTaxon(row).setId(value.toString());
-			}
-			
-//			if (col == 1) {
-//				
-//				dataList.get(0).taxonList.getTaxon(row).getHeight();
-//				
-//			}
-			
-		}
+//				break;
+				
+			case 1:
+//				 getHeights();
+//				 dataList.get(0).taxonList.getTaxon(row).getHeight();
+//				break;
+				
+			default:
+				break;
+				
+			}// END: switch
+		}// END: setValueAt
 
 		public boolean isCellEditable(int row, int col) {
 			return false;
@@ -208,4 +213,8 @@ public class TaxaPanel extends JPanel implements Exportable {
 
 	}// END: TaxaTableModel class
 
+	public void fireTableDataChanged() {
+		taxaTableModel.fireTableDataChanged();
+	}
+	
 }// END: class

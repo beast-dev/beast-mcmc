@@ -109,7 +109,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 			public void run() {
 
 				taxaPanel.fireTableDataChanged();
-				taxaPanel.updateUI();
+//				taxaPanel.updateUI();
 				setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
 						+ " taxa loaded.");
 

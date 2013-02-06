@@ -10,6 +10,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -23,6 +24,7 @@ import dr.evolution.io.Importer.ImportException;
 import dr.evolution.io.NewickImporter;
 import dr.evolution.io.NexusImporter;
 import dr.evolution.tree.Tree;
+import dr.evolution.util.Taxon;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")
@@ -105,6 +107,7 @@ public class TreePanel extends JPanel implements Exportable {
 
 	}// END: doImport
 
+	//TODO: this should import from all the different formats
 	public void importFromFile(final File file) throws IOException,
 			ImportException {
 
@@ -120,22 +123,43 @@ public class TreePanel extends JPanel implements Exportable {
 							file));
 
 					String line = reader.readLine();
-					Tree tree;
+					
+//		            while (line != null && line.length() == 0) {
+//		                line = reader.readLine();
+//		                System.out.println(line);
+//		            }
+					
+					Tree tree = null;
 
 					if (line.toUpperCase().startsWith("#NEXUS")) {
+						
 						NexusImporter importer = new NexusImporter(reader);
 						tree = importer.importTree(null);
+						
 					} else {
+						
 						NewickImporter importer = new NewickImporter(reader);
+
+//						if(importer.hasTree()) {
+//							tree = importer.importNextTree();
+//						}
+						
 						tree = importer.importTree(null);
+						
 					}
 
 					// TODO Add taxons from a new tree to that list and display
 					// them in Taxa panel
-					dataList.taxonList = tree;
 					dataList.forestMap.put(file, new TreeModel(tree));
+					for (Taxon taxon : tree.asList()) {
+						dataList.taxonList.addTaxon(taxon);
+						
+//						System.out.println(taxon.getId());
+						
+					}
+					
 					reader.close();
-
+					
 				} catch (Exception e) {
 					Utils.handleException(e);
 				}// END: try-catch block

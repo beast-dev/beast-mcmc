@@ -7,6 +7,8 @@ import java.util.List;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
+import dr.evomodel.tree.TreeModel;
+
 public class Utils {
 
 	// ///////////////////////////////
@@ -23,6 +25,16 @@ public class Utils {
 		return vector.indexOf(element);
 	}// END: arrayIndex
 
+	public static ArrayList<TreeModel> treesToList(PartitionDataList dataList) {
+
+		ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+		for (PartitionData data : dataList) {
+			treeModelList.add(data.treeModel);
+		}
+
+		return treeModelList;
+	}// END: treesToList
+	
 	// /////////////////
 	// ---GUI UTILS---//
 	// /////////////////

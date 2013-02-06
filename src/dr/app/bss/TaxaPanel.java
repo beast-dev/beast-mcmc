@@ -40,10 +40,10 @@ public class TaxaPanel extends JPanel implements Exportable {
 		this.dataList = dataList;
 
 		taxaTableModel = new TaxaTableModel();
-		TableSorter sorter = new TableSorter(taxaTableModel);
-		dataTable = new JTable(sorter);
+//		TableSorter sorter = new TableSorter(taxaTableModel);
+		dataTable = new JTable(taxaTableModel);
 
-		sorter.setTableHeader(dataTable.getTableHeader());
+//		sorter.setTableHeader(dataTable.getTableHeader());
 
 		dataTable.getTableHeader().setReorderingAllowed(false);
 		dataTable.getTableHeader()

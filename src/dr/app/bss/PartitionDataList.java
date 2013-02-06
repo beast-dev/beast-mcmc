@@ -6,7 +6,6 @@ import java.util.HashMap;
 
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
-import dr.evolution.util.TaxonList;
 import dr.evomodel.tree.TreeModel;
 
 @SuppressWarnings("serial")

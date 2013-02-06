@@ -108,6 +108,7 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 
+				taxaPanel.fireTableDataChanged();
 				taxaPanel.updateUI();
 				setStatus(Integer.toString(dataList.taxonList.getTaxonCount())
 						+ " taxa loaded.");
@@ -339,5 +340,5 @@ public class BeagleSequenceSimulatorFrame extends DocumentFrame {
 	public void setStatus(String status) {
 		statusLabel.setText(status);
 	}
-
+	
 }// END: class

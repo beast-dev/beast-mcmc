@@ -10,7 +10,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -148,14 +147,14 @@ public class TreePanel extends JPanel implements Exportable {
 						
 					}
 
-					// TODO Add taxons from a new tree to that list and display
-					// them in Taxa panel
 					dataList.forestMap.put(file, new TreeModel(tree));
 					for (Taxon taxon : tree.asList()) {
+						
 						dataList.taxonList.addTaxon(taxon);
 						
 //						System.out.println(taxon.getId());
-						
+//						System.out.println(taxon.getHeight());
+
 					}
 					
 					reader.close();

@@ -125,7 +125,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             // Find min density
             double minDensity = Double.POSITIVE_INFINITY;
             for(ComparablePoint2D pt : ptList) {
-                if (pt.getY() < minDensity)
+                if (pt.getY() > 0.0 && pt.getY() < minDensity)
                     minDensity = pt.getY();
             }
             // Set zeros in the middle to 1/100th of minDensity
@@ -135,17 +135,22 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
             }
             values = new double[ptList.size()];
             density = new double[ptList.size()];
+            double total = 0.0;
             for(int i=0; i<ptList.size(); i++) {
                 ComparablePoint2D pt = ptList.get(i);
                 values[i] = pt.getX();
                 density[i] = pt.getY();
-            }         
+                total += pt.getY();
+            }
+            for (int i = 0; i < density.length; ++i) {
+                density[i] /= total;
+            }
             reader.close();
 
             if (DEBUG) {
                 System.err.println("EDL File : "+fileName);
                 System.err.println("Min value: "+values[0]);
-                System.err.println("Max value: "+values[values.length-1]);                
+                System.err.println("Max value: "+values[values.length-1]);
             }
 
         } catch (FileNotFoundException e) {
@@ -227,7 +232,7 @@ public abstract class EmpiricalDistributionLikelihood extends AbstractDistributi
                                 (getId() != null ? getId() : fileName)                        
                         );
                         System.err.println("Evaluated at "+value);
-                        System.err.println("Min: "+values[0]+" Max: "+values[values.length-1]);
+                        System.err.println("Min: " + values[0] + " Max: " + values[values.length - 1]);
                     }
                 }
             }

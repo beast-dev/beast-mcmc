@@ -29,12 +29,12 @@ public class Utils {
 
 	public static ArrayList<TreeModel> treesToList(PartitionDataList dataList) {
 
-		ArrayList<TreeModel> treeModelList = new ArrayList<TreeModel>();
+		ArrayList<TreeModel> treeModelsList = new ArrayList<TreeModel>();
 		for (PartitionData data : dataList) {
-			treeModelList.add(data.treeModel);
+			treeModelsList.add(data.treeModel);
 		}
 
-		return treeModelList;
+		return treeModelsList;
 	}// END: treesToList
 	
 	public static boolean taxonExists(Taxon taxon1, MutableTaxonList taxonList) {
@@ -51,6 +51,30 @@ public class Utils {
 		
 		return exists;
 	}// END: taxonExists
+	
+	public static boolean isModelInList(PartitionData data,
+			ArrayList<PartitionData> dataList) {
+
+		boolean exists = false;
+		int clockModelIndex = data.clockModelIndex;
+
+		for (PartitionData data2 : dataList) {
+
+			if (clockModelIndex == data2.clockModelIndex) {
+
+				for (int i = 0; i < data2.clockParameterValues.length; i++) {
+
+					if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+
+						exists = true;
+
+					}// END: parameters check
+				}// END: parameters loop
+			}// END: model index check
+		}// END: list loop
+
+		return exists;
+	}// END: isModelInList
 	
 	// /////////////////
 	// ---GUI UTILS---//

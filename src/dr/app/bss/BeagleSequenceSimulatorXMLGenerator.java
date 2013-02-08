@@ -152,17 +152,37 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
-			//TODO: write different elements only if they differ across partitions
-		
-//			uniqueTreeModelList = new ArrayList<TreeModel>(new LinkedHashSet<TreeModel>(Utils.treesToList(dataList)));
 			
+			int suffix = 1;
+			ArrayList<PartitionData> dataList2 = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				writeBranchRatesModel(data, writer);
+				if(dataList2.size()==0 | !Utils.isModelInList(data, dataList2)) {
+				
+				System.out.println(suffix + " different!");
+					
+				writeBranchRatesModel(data, writer, String.valueOf(suffix));
 				writer.writeBlankLine();
+				dataList2.add(data);
+				
+				} else {
+					
+					System.out.println(suffix + " identical!");
+					
+				}
+				
+				suffix++;
 
-			}// END: partitions loop
-
+			}// END: partition loop
+			
+//			for (PartitionData data : dataList) {
+//
+//				writeBranchRatesModel(data, writer, "");
+//				writer.writeBlankLine();
+//
+//			}// END: partitions loop
+			
+			
 		} catch (Exception e) {
 
 			System.err.println(e);
@@ -238,6 +258,8 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		// ---beagle sequence simulator element---//
 		// /////////////////////////////////////////
 
+		//TODO: idrefs
+		
 		try {
 
 				writeBeagleSequenceSimulator(writer);
@@ -250,10 +272,10 @@ public class BeagleSequenceSimulatorXMLGenerator {
 					+ e.getMessage());
 
 		}// END: try-catch block
-		
-		// /////////////////////////////////////////
-		// ---beagle sequence simulator element---//
-		// /////////////////////////////////////////
+
+		// //////////////////////
+		// ---report element---//
+		// //////////////////////
 
 		try {
 
@@ -272,6 +294,101 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		writer.flush();
 		writer.close();
 	}// END: generateXML
+	
+	private void writeBeagleSequenceSimulator(XMLWriter writer) {
+
+		writer.writeOpenTag(
+				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
+				new Attribute[] {
+						new Attribute.Default<String>(XMLParser.ID, "simulator"),
+						new Attribute.Default<String>(
+								BeagleSequenceSimulatorParser.SITE_COUNT,
+								String.valueOf(dataList.siteCount)) });		
+		
+		for (PartitionData data : dataList) {
+			
+			//TODO: not always all three are needed
+			writer.writeOpenTag(PartitionParser.PARTITION,
+					new Attribute[] { 
+					new Attribute.Default<String>(PartitionParser.FROM, String.valueOf(data.from)),
+					new Attribute.Default<String>(PartitionParser.TO, String.valueOf(data.to)),
+					new Attribute.Default<String>(PartitionParser.EVERY, String.valueOf(data.every))
+			});
+			
+			writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
+			
+			int substitutionModelIndex = data.substitutionModelIndex;
+			switch (substitutionModelIndex) {
+
+			case 0: // HKY
+
+				writer.writeIDref(NucModelType.HKY.getXMLName(), PartitionData.substitutionModels[0].toLowerCase());
+				break;
+
+			case 1: // GTR
+
+				writer.writeIDref(GTRParser.GTR_MODEL, PartitionData.substitutionModels[1].toLowerCase());
+				break;
+
+			case 2: // TN93
+
+				writer.writeIDref(NucModelType.TN93.getXMLName(), PartitionData.substitutionModels[2].toLowerCase());
+				break;
+
+			case 3: // Yang Codon Model
+
+				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase());
+				break;
+
+			}// END: switch
+			
+			writer.writeIDref(SiteModel.SITE_MODEL, SiteModel.SITE_MODEL);
+			
+			int clockModel = data.clockModelIndex;
+			switch (clockModel) {
+
+			case 0: // StrictClock
+
+				writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
+				break;
+
+			}// END: switch			
+			
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			
+			writer.writeCloseTag(PartitionParser.PARTITION);
+
+			//TODO: ancestral sequence
+			
+		}//END: partitions loop
+		
+		writer.writeCloseTag(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR);
+		
+	}//END: writeBeagleSequenceSimulator
+	
+	private void writeBranchRatesModel(PartitionData data, XMLWriter writer, String suffix) {
+
+		int clockModel = data.clockModelIndex;
+		switch (clockModel) {
+
+		case 0: // StrictClock
+
+				writer.writeOpenTag(
+						StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
+						new Attribute[] { new Attribute.Default<String>(
+								XMLParser.ID, BranchRateModel.BRANCH_RATES + suffix) });
+
+				writeParameter("rate", "clock.rate", 1,
+						String.valueOf(data.clockParameterValues[0]), null,
+						null, writer);
+
+				writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
+
+			break;
+
+		}// END: switch
+
+	}// END: writeBranchRatesModel
 	
 	private void writeTaxa(TaxonList taxonList, XMLWriter writer) {
 
@@ -357,77 +474,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		writer.writeCloseTag(Report.REPORT);
 		
 	}//END: writeReport
-	
-	private void writeBeagleSequenceSimulator(XMLWriter writer) {
-
-		writer.writeOpenTag(
-				BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR,
-				new Attribute[] {
-						new Attribute.Default<String>(XMLParser.ID, "simulator"),
-						new Attribute.Default<String>(
-								BeagleSequenceSimulatorParser.SITE_COUNT,
-								String.valueOf(dataList.siteCount)) });		
-		
-		for (PartitionData data : dataList) {
-			
-			//TODO: not always all three are needed
-			writer.writeOpenTag(PartitionParser.PARTITION,
-					new Attribute[] { 
-					new Attribute.Default<String>(PartitionParser.FROM, String.valueOf(data.from)),
-					new Attribute.Default<String>(PartitionParser.TO, String.valueOf(data.to)),
-					new Attribute.Default<String>(PartitionParser.EVERY, String.valueOf(data.every))
-			});
-			
-			writer.writeIDref(TreeModel.TREE_MODEL, TreeModel.TREE_MODEL);
-			
-			int substitutionModelIndex = data.substitutionModelIndex;
-			switch (substitutionModelIndex) {
-
-			case 0: // HKY
-
-				writer.writeIDref(NucModelType.HKY.getXMLName(), PartitionData.substitutionModels[0].toLowerCase());
-				break;
-
-			case 1: // GTR
-
-				writer.writeIDref(GTRParser.GTR_MODEL, PartitionData.substitutionModels[1].toLowerCase());
-				break;
-
-			case 2: // TN93
-
-				writer.writeIDref(NucModelType.TN93.getXMLName(), PartitionData.substitutionModels[2].toLowerCase());
-				break;
-
-			case 3: // Yang Codon Model
-
-				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase());
-				break;
-
-			}// END: switch
-			
-			writer.writeIDref(SiteModel.SITE_MODEL, SiteModel.SITE_MODEL);
-			
-			int clockModel = data.clockModelIndex;
-			switch (clockModel) {
-
-			case 0: // StrictClock
-
-				writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
-				break;
-
-			}// END: switch			
-			
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
-			
-			writer.writeCloseTag(PartitionParser.PARTITION);
-
-			//TODO: ancestral sequence
-			
-		}//END: partitions loop
-		
-		writer.writeCloseTag(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR);
-		
-	}//END: writeBeagleSequenceSimulator
 	
 	private void writeSiteModel(PartitionData data, XMLWriter writer) {
 
@@ -792,30 +838,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		}// END: switch
 
 	}// END: writeFrequencyModel
-
-	private void writeBranchRatesModel(PartitionData data, XMLWriter writer) {
-
-		int clockModel = data.clockModelIndex;
-		switch (clockModel) {
-
-		case 0: // StrictClock
-
-				writer.writeOpenTag(
-						StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
-						new Attribute[] { new Attribute.Default<String>(
-								XMLParser.ID, BranchRateModel.BRANCH_RATES) });
-
-				writeParameter("rate", "clock.rate", 1,
-						String.valueOf(data.clockParameterValues[0]), null,
-						null, writer);
-
-				writer.writeCloseTag(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES);
-
-			break;
-
-		}// END: switch
-
-	}// END: writeBranchRatesModel
 
 	@SuppressWarnings("rawtypes")
 	private void writeParameter(String wrapper, String id, int dimension,

@@ -53,12 +53,12 @@ public class Utils {
 	}// END: taxonExists
 	
 	public static boolean isModelInList(PartitionData data,
-			ArrayList<PartitionData> dataList) {
+			ArrayList<PartitionData> partitionList) {
 
 		boolean exists = false;
+		
 		int clockModelIndex = data.clockModelIndex;
-
-		for (PartitionData data2 : dataList) {
+		for (PartitionData data2 : partitionList) {
 
 			if (clockModelIndex == data2.clockModelIndex) {
 
@@ -75,6 +75,36 @@ public class Utils {
 
 		return exists;
 	}// END: isModelInList
+	
+	public static int isIdenticalWith(PartitionData data,
+			ArrayList<PartitionData> partitionList) {
+
+		int index = -Integer.MAX_VALUE;
+
+		int clockModelIndex = data.clockModelIndex;
+		for (PartitionData data2 : partitionList) {
+
+			if (clockModelIndex == data2.clockModelIndex) {
+
+				for (int i = 0; i < data2.clockParameterValues.length; i++) {
+
+					if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+
+						index = partitionList.indexOf(data2);
+						break;
+
+					}// END: parameters check
+				}// END: parameters loop
+			}// END: model index check
+		}// END: list loop
+
+		return index;
+	}// END: isIdenticalWith
+	
+	
+	
+	
+	
 	
 	// /////////////////
 	// ---GUI UTILS---//

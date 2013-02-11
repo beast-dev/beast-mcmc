@@ -13,6 +13,17 @@ import dr.evomodel.tree.TreeModel;
 
 public class Utils {
 
+	// /////////////////
+	// ---CONSTANTS---//
+	// /////////////////
+
+//	public static final int TREE_MODEL_ELEMENT = 0;
+	public static final int BRANCH_MODEL_ELEMENT = 1;
+	public static final int SITE_RATE_MODEL_ELEMENT = 2;
+	public static final int BRANCH_RATE_MODEL_ELEMENT = 3;
+	public static final int FREQUENCY_MODEL_ELEMENT = 4;
+	
+	
 	// ///////////////////////////////
 	// ---GENERAL UTILITY METHODS---//
 	// ///////////////////////////////
@@ -51,52 +62,201 @@ public class Utils {
 		
 		return exists;
 	}// END: taxonExists
-	
-	public static boolean isModelInList(PartitionData data,
-			ArrayList<PartitionData> partitionList) {
+
+	// TODO: horrible amount of code duplication
+	public static boolean isElementInList(PartitionData data,
+			ArrayList<PartitionData> partitionList, int elementIndex) {
 
 		boolean exists = false;
-		
-		int clockModelIndex = data.clockModelIndex;
-		for (PartitionData data2 : partitionList) {
 
-			if (clockModelIndex == data2.clockModelIndex) {
+		switch (elementIndex) {
 
-				for (int i = 0; i < data2.clockParameterValues.length; i++) {
+		case BRANCH_RATE_MODEL_ELEMENT:
 
-					if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+			int clockModelIndex = data.clockModelIndex;
+			for (PartitionData data2 : partitionList) {
 
-						exists = true;
+				if (clockModelIndex == data2.clockModelIndex) {
 
-					}// END: parameters check
-				}// END: parameters loop
-			}// END: model index check
-		}// END: list loop
+					for (int i = 0; i < data2.clockParameterValues.length; i++) {
+
+						if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+
+							exists = true;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+
+			break;
+
+		case FREQUENCY_MODEL_ELEMENT:
+
+			int frequencyModelIndex = data.frequencyModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (frequencyModelIndex == data2.frequencyModelIndex) {
+
+					for (int i = 0; i < data2.frequencyParameterValues.length; i++) {
+
+						if (data.frequencyParameterValues[i] == data2.frequencyParameterValues[i]) {
+
+							exists = true;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+
+			break;
+
+		case BRANCH_MODEL_ELEMENT:
+			
+			int substitutionModelIndex = data.substitutionModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (substitutionModelIndex == data2.substitutionModelIndex) {
+
+					for (int i = 0; i < data2.substitutionParameterValues.length; i++) {
+
+						if (data.substitutionParameterValues[i] == data2.substitutionParameterValues[i]) {
+
+							exists = true;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+			
+			break;
+			
+		case SITE_RATE_MODEL_ELEMENT:
+			
+			int siteRateModelIndex = data.siteRateModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (siteRateModelIndex == data2.siteRateModelIndex) {
+
+					for (int i = 0; i < data2.siteRateModelParameterValues.length; i++) {
+
+						if (data.siteRateModelParameterValues[i] == data2.siteRateModelParameterValues[i]) {
+
+							exists = true;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+			
+			break;
+			
+		default:
+
+			throw new RuntimeException("Unknown element");
+
+		}// END: switch
 
 		return exists;
 	}// END: isModelInList
 	
+	// TODO: horrible amount of code duplication
 	public static int isIdenticalWith(PartitionData data,
-			ArrayList<PartitionData> partitionList) {
+			ArrayList<PartitionData> partitionList, int elementIndex) {
 
 		int index = -Integer.MAX_VALUE;
 
-		int clockModelIndex = data.clockModelIndex;
-		for (PartitionData data2 : partitionList) {
+		switch (elementIndex) {
 
-			if (clockModelIndex == data2.clockModelIndex) {
+		case BRANCH_RATE_MODEL_ELEMENT:
 
-				for (int i = 0; i < data2.clockParameterValues.length; i++) {
+			int clockModelIndex = data.clockModelIndex;
+			for (PartitionData data2 : partitionList) {
 
-					if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+				if (clockModelIndex == data2.clockModelIndex) {
 
-						index = partitionList.indexOf(data2);
-						break;
+					for (int i = 0; i < data2.clockParameterValues.length; i++) {
 
-					}// END: parameters check
-				}// END: parameters loop
-			}// END: model index check
-		}// END: list loop
+						if (data.clockParameterValues[i] == data2.clockParameterValues[i]) {
+
+							index = partitionList.indexOf(data2);
+							break;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+
+			break;
+
+		case FREQUENCY_MODEL_ELEMENT:
+
+			int frequencyModelIndex = data.frequencyModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (frequencyModelIndex == data2.frequencyModelIndex) {
+
+					for (int i = 0; i < data2.frequencyParameterValues.length; i++) {
+
+						if (data.frequencyParameterValues[i] == data2.frequencyParameterValues[i]) {
+
+							index = partitionList.indexOf(data2);
+							break;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+
+			break;
+
+		case BRANCH_MODEL_ELEMENT:
+			
+			int substitutionModelIndex = data.substitutionModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (substitutionModelIndex == data2.substitutionModelIndex) {
+
+					for (int i = 0; i < data2.substitutionParameterValues.length; i++) {
+
+						if (data.substitutionParameterValues[i] == data2.substitutionParameterValues[i]) {
+
+							index = partitionList.indexOf(data2);
+							break;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+			
+			break;
+			
+		case SITE_RATE_MODEL_ELEMENT:
+			
+			int siteRateModelIndex = data.siteRateModelIndex;
+			for (PartitionData data2 : partitionList) {
+
+				if (siteRateModelIndex == data2.siteRateModelIndex) {
+
+					for (int i = 0; i < data2.siteRateModelParameterValues.length; i++) {
+
+						if (data.siteRateModelParameterValues[i] == data2.siteRateModelParameterValues[i]) {
+
+							index = partitionList.indexOf(data2);
+							break;
+
+						}// END: parameters check
+					}// END: parameters loop
+				}// END: model index check
+			}// END: list loop
+			
+			break;
+			
+		default:
+
+			throw new RuntimeException("Unknown element");
+
+		}// END: switch
 
 		return index;
 	}// END: isIdenticalWith

@@ -14,7 +14,6 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.tree.Tree;
 import dr.evolution.util.Taxon;
 import dr.evolution.util.TaxonList;
-import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.substmodel.NucModelType;
 import dr.evomodel.tree.TreeModel;
@@ -85,6 +84,8 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		// ---starting tree element---//
 		// /////////////////////////////
 
+		// TODO: redo, nasty solution
+		
 		try {
 
 			uniqueTreeModelList = new ArrayList<TreeModel>(new LinkedHashSet<TreeModel>(Utils.treesToList(dataList)));
@@ -98,15 +99,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 				
 			}
 			
-//			for (PartitionData data : dataList) {
-//
-//				TreeModel tree = data.treeModel;
-//				
-//				writeStartingTree(tree, writer);
-//				writer.writeBlankLine();
-//
-//			}// END: partitions loop
-
 		} catch (Exception e) {
 
 			System.err.println(e);
@@ -130,14 +122,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 				
 			}
 			
-//			for (PartitionData data : dataList) {
-//
-//				TreeModel tree = data.treeModel;
-//				writeTreeModel(tree, writer);
-//				writer.writeBlankLine();
-//
-//			}// END: partitions loop
-			
 		} catch (Exception e) {
 
 			System.err.println(e);
@@ -156,7 +140,7 @@ public class BeagleSequenceSimulatorXMLGenerator {
 			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				if (partitionList.size() == 0 | !Utils.isModelInList(data, partitionList)) {
+				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.BRANCH_RATE_MODEL_ELEMENT)) {
 
 					data.clockModelIdref += suffix; 
 					
@@ -166,22 +150,14 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 				} else {
 
-					int idref = Utils.isIdenticalWith(data, partitionList) + 1 ;
-					data.clockModelIdref += idref;
+					int index = Utils.isIdenticalWith(data, partitionList, Utils.BRANCH_RATE_MODEL_ELEMENT) + 1 ;
+					data.clockModelIdref += index;
 					
 				}
 
 				suffix++;
 
 			}// END: partition loop
-			
-//			for (PartitionData data : dataList) {
-//
-//				writeBranchRatesModel(data, writer, "");
-//				writer.writeBlankLine();
-//
-//			}// END: partitions loop
-			
 			
 		} catch (Exception e) {
 
@@ -197,20 +173,29 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
-			
-			
-			
-			
-			
-			
-			
+			int suffix = 1;
+			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				writeFrequencyModel(data, writer);
-				writer.writeBlankLine();
+				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.FREQUENCY_MODEL_ELEMENT)) {
 
-			}// END: partitions loop
+					data.frequencyModelIdref += suffix; 
+					
+					writeFrequencyModel(data, writer);
+					writer.writeBlankLine();
+					partitionList.add(data);
 
+				} else {
+
+					int index = Utils.isIdenticalWith(data, partitionList, Utils.FREQUENCY_MODEL_ELEMENT) + 1 ;
+					data.frequencyModelIdref += index;
+					
+				}
+
+				suffix++;
+
+			}// END: partition loop
+			
 		} catch (Exception e) {
 
 			System.err.println(e);
@@ -225,13 +210,30 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
+			int suffix = 1;
+			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				writeBranchModel(data, writer);
-				writer.writeBlankLine();
+				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.BRANCH_MODEL_ELEMENT)) {
 
-			}// END: partitions loop
+					data.substitutionModelIdref += suffix; 
+					
+					writeBranchModel(data, writer, String.valueOf(suffix));
+					writer.writeBlankLine();
+					partitionList.add(data);
 
+				} else {
+
+					int index = Utils.isIdenticalWith(data, partitionList, Utils.BRANCH_MODEL_ELEMENT) + 1 ;
+					
+					data.substitutionModelIdref += index;
+					
+				}
+
+				suffix++;
+
+			}// END: partition loop
+			
 		} catch (Exception e) {
 
 			System.err.println(e);
@@ -240,23 +242,65 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		}// END: try-catch block
 
-		// //////////////////////////
-		// ---site model element---//
-		// //////////////////////////
+		// ///////////////////////////////
+		// ---site rate model element---//
+		// ///////////////////////////////
 
 		try {
 
+			
+			int suffix = 1;
+			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				writeSiteModel(data, writer);
-				writer.writeBlankLine();
+				if (partitionList.size() == 0 | !Utils.isElementInList(data, partitionList, Utils.SITE_RATE_MODEL_ELEMENT)) {
 
-			}// END: partitions loop
+					data.siteRateModelIdref += suffix; 
+					
+					writeSiteRateModel(data, writer);
+					writer.writeBlankLine();
+					partitionList.add(data);
+
+//					System.out.println(suffix + " Different");
+					
+				} else {
+
+					int index = Utils.isIdenticalWith(data, partitionList, Utils.SITE_RATE_MODEL_ELEMENT) + 1 ;
+					
+					data.siteRateModelIdref += index;
+					
+//					System.out.println(suffix + ": Identical with " + index);
+					
+				}
+
+				suffix++;
+
+			}// END: partition loop
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+//			for (PartitionData data : dataList) {
+//
+//				writeSiteRateModel(data, writer);
+//				writer.writeBlankLine();
+//
+//			}// END: partitions loop
 
 		} catch (Exception e) {
 
 			System.err.println(e);
-			throw new RuntimeException("Site model generation has failed:\n"
+			throw new RuntimeException("Site rate model generation has failed:\n"
 					+ e.getMessage());
 
 		}// END: try-catch block
@@ -265,8 +309,6 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		// ---beagle sequence simulator element---//
 		// /////////////////////////////////////////
 
-		//TODO: idrefs
-		
 		try {
 
 				writeBeagleSequenceSimulator(writer);
@@ -329,27 +371,27 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			case 0: // HKY
 
-				writer.writeIDref(NucModelType.HKY.getXMLName(), PartitionData.substitutionModels[0].toLowerCase());
+				writer.writeIDref(NucModelType.HKY.getXMLName(), data.substitutionModelIdref);
 				break;
 
 			case 1: // GTR
 
-				writer.writeIDref(GTRParser.GTR_MODEL, PartitionData.substitutionModels[1].toLowerCase());
+				writer.writeIDref(GTRParser.GTR_MODEL, data.substitutionModelIdref);
 				break;
 
 			case 2: // TN93
 
-				writer.writeIDref(NucModelType.TN93.getXMLName(), PartitionData.substitutionModels[2].toLowerCase());
+				writer.writeIDref(NucModelType.TN93.getXMLName(), data.substitutionModelIdref);
 				break;
 
 			case 3: // Yang Codon Model
 
-				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase());
+				writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, data.substitutionModelIdref);
 				break;
 
 			}// END: switch
 			
-			writer.writeIDref(SiteModel.SITE_MODEL, SiteModel.SITE_MODEL);
+			writer.writeIDref(SiteModel.SITE_MODEL, data.siteRateModelIdref);
 			
 			int clockModel = data.clockModelIndex;
 			switch (clockModel) {
@@ -361,12 +403,12 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			}// END: switch			
 			
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, data.frequencyModelIdref);
+			
+			//TODO: ancestral sequence
 			
 			writer.writeCloseTag(PartitionParser.PARTITION);
 
-			//TODO: ancestral sequence
-			
 		}//END: partitions loop
 		
 		writer.writeCloseTag(BeagleSequenceSimulatorParser.BEAGLE_SEQUENCE_SIMULATOR);
@@ -383,9 +425,9 @@ public class BeagleSequenceSimulatorXMLGenerator {
 				writer.writeOpenTag(
 						StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES,
 						new Attribute[] { new Attribute.Default<String>(
-								XMLParser.ID, BranchRateModel.BRANCH_RATES + suffix) });
+								XMLParser.ID, data.clockModelIdref) });
 
-				writeParameter("rate", "clock.rate", 1,
+				writeParameter("rate", "clock.rate" + suffix, 1,
 						String.valueOf(data.clockParameterValues[0]), null,
 						null, writer);
 
@@ -482,11 +524,11 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		
 	}//END: writeReport
 	
-	private void writeSiteModel(PartitionData data, XMLWriter writer) {
+	private void writeSiteRateModel(PartitionData data, XMLWriter writer) {
 
 		writer.writeOpenTag(SiteModel.SITE_MODEL,
 				new Attribute[] { new Attribute.Default<String>(XMLParser.ID,
-						SiteModel.SITE_MODEL) });
+						data.siteRateModelIdref) });
 
 		writer.writeOpenTag(GammaSiteModelParser.SUBSTITUTION_MODEL);
 
@@ -495,22 +537,22 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		case 0: // HKY
 
-			writer.writeIDref(NucModelType.HKY.getXMLName(), PartitionData.substitutionModels[0].toLowerCase());
+			writer.writeIDref(NucModelType.HKY.getXMLName(), data.substitutionModelIdref);
 			break;
 
 		case 1: // GTR
 
-			writer.writeIDref(GTRParser.GTR_MODEL, PartitionData.substitutionModels[1].toLowerCase());
+			writer.writeIDref(GTRParser.GTR_MODEL, data.substitutionModelIdref);
 			break;
 
 		case 2: // TN93
 
-			writer.writeIDref(NucModelType.TN93.getXMLName(), PartitionData.substitutionModels[2].toLowerCase());
+			writer.writeIDref(NucModelType.TN93.getXMLName(), data.substitutionModelIdref);
 			break;
 
 		case 3: // Yang Codon Model
 
-			writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase());
+			writer.writeIDref(YangCodonModelParser.YANG_CODON_MODEL, data.substitutionModelIdref);
 			break;
 
 		}// END: switch
@@ -543,7 +585,7 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 	}// END: writeSiteModel
 
-	private void writeBranchModel(PartitionData data, XMLWriter writer) {
+	private void writeBranchModel(PartitionData data, XMLWriter writer, String suffix) {
 
 		int substitutionModelIndex = data.substitutionModelIndex;
 
@@ -553,15 +595,15 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			writer.writeOpenTag(NucModelType.HKY.getXMLName(),
 					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, PartitionData.substitutionModels[0].toLowerCase()) });
+							XMLParser.ID, data.substitutionModelIdref) });
 
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
 
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, data.frequencyModelIdref);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(HKYParser.KAPPA, HKYParser.KAPPA, 1,
+			writeParameter(HKYParser.KAPPA, HKYParser.KAPPA + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[0]), null,
 					null, writer);
 
@@ -573,32 +615,32 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			writer.writeOpenTag(GTRParser.GTR_MODEL,
 					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, PartitionData.substitutionModels[1].toLowerCase()) });
+							XMLParser.ID, data.substitutionModelIdref) });
 
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
 
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, data.frequencyModelIdref);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(GTRParser.A_TO_C,
-					String.valueOf(data.substitutionParameterValues[1]), 1,
-					null, null, null, writer);
-			writeParameter(GTRParser.A_TO_G,
-					String.valueOf(data.substitutionParameterValues[2]), 1,
-					null, null, null, writer);
-			writeParameter(GTRParser.A_TO_T,
-					String.valueOf(data.substitutionParameterValues[3]), 1,
-					null, null, null, writer);
-			writeParameter(GTRParser.C_TO_G,
-					String.valueOf(data.substitutionParameterValues[4]), 1,
-					null, null, null, writer);
-			writeParameter(GTRParser.C_TO_T,
-					String.valueOf(data.substitutionParameterValues[5]), 1,
-					null, null, null, writer);
-			writeParameter(GTRParser.G_TO_T,
-					String.valueOf(data.substitutionParameterValues[6]), 1,
-					null, null, null, writer);
+			writeParameter(GTRParser.A_TO_C, "ac" + suffix, 1,
+					String.valueOf(data.substitutionParameterValues[1]),
+					null, null, writer);
+			writeParameter(GTRParser.A_TO_G, "ag" + suffix, 1,
+					String.valueOf(data.substitutionParameterValues[2]), 
+					null, null, writer);
+			writeParameter(GTRParser.A_TO_T, "at" + suffix, 1, 
+					String.valueOf(data.substitutionParameterValues[3]), 
+					null, null, writer);
+			writeParameter(GTRParser.C_TO_G, "cg" + suffix, 1, 
+					String.valueOf(data.substitutionParameterValues[4]), 
+					null, null, writer);
+			writeParameter(GTRParser.C_TO_T, "ct" + suffix, 1, 
+					String.valueOf(data.substitutionParameterValues[5]), 
+					null, null, writer);
+			writeParameter(GTRParser.G_TO_T, "gt" + suffix, 1, 
+					String.valueOf(data.substitutionParameterValues[6]), 
+					null, null, writer);
 
 			writer.writeCloseTag(GTRParser.GTR_MODEL);
 
@@ -608,19 +650,19 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			writer.writeOpenTag(NucModelType.TN93.getXMLName(),
 					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, PartitionData.substitutionModels[2].toLowerCase()) });
+							XMLParser.ID, data.substitutionModelIdref) });
 
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
 
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, data.frequencyModelIdref);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(TN93Parser.KAPPA1, "kappa1", 1,
+			writeParameter(TN93Parser.KAPPA1, "kappa1" + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[7]), null,
 					null, writer);
 
-			writeParameter(TN93Parser.KAPPA2, "kappa2", 1,
+			writeParameter(TN93Parser.KAPPA2, "kappa2" + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[8]), null,
 					null, writer);
 
@@ -632,19 +674,19 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			writer.writeOpenTag(YangCodonModelParser.YANG_CODON_MODEL,
 					new Attribute[] { new Attribute.Default<String>(
-							XMLParser.ID, PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase()) });
+							XMLParser.ID, data.substitutionModelIdref) });
 
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCIES);
 
-			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, "freqModel");
+			writer.writeIDref(FrequencyModelParser.FREQUENCY_MODEL, data.frequencyModelIdref);
 
 			writer.writeCloseTag(FrequencyModelParser.FREQUENCIES);
 
-			writeParameter(YangCodonModelParser.OMEGA, "omega", 1,
+			writeParameter(YangCodonModelParser.OMEGA, "omega" + suffix, 1,
 					String.valueOf(data.substitutionParameterValues[9]), null,
 					null, writer);
 
-			writeParameter(YangCodonModelParser.KAPPA, "kappa", 1,
+			writeParameter(YangCodonModelParser.KAPPA, "kappa"+ suffix, 1,
 					String.valueOf(data.substitutionParameterValues[10]), null,
 					null, writer);
 
@@ -673,19 +715,10 @@ public class BeagleSequenceSimulatorXMLGenerator {
 				frequencies += " " + data.frequencyParameterValues[i];
 			}
 
-			// frequencies = String
-			// .valueOf(data.frequencyParameterValues[0])
-			// + " "
-			// + String.valueOf(data.frequencyParameterValues[1])
-			// + " "
-			// + String.valueOf(data.frequencyParameterValues[2])
-			// + " "
-			// + String.valueOf(data.frequencyParameterValues[3]);
-
 			writer.writeOpenTag(FrequencyModelParser.FREQUENCY_MODEL, // tagname
 					new Attribute[] { // attributes[]
 							new Attribute.Default<String>(XMLParser.ID,
-									"freqModel"), // id
+									data.frequencyModelIdref), // id
 							new Attribute.Default<String>("dataType", dataType
 									.getDescription()) // dataType
 					});

@@ -15,6 +15,7 @@ import dr.evolution.datatype.DataType;
 import dr.evolution.datatype.Nucleotides;
 import dr.evomodel.branchratemodel.BranchRateModel;
 import dr.evomodel.branchratemodel.StrictClockBranchRates;
+import dr.evomodel.sitemodel.SiteModel;
 import dr.evomodel.tree.TreeModel;
 import dr.inference.model.Parameter;
 
@@ -35,6 +36,7 @@ public class PartitionData {
 	
 	public File treeFile = null;
 	public TreeModel treeModel = null;
+	public String treeModelIdref =  TreeModel.TREE_MODEL;
 	
 	// /////////////////
 	// ---DATA TYPE---//
@@ -72,6 +74,40 @@ public class PartitionData {
 	// ///////////////////////////
 	
 	public int substitutionModelIndex = 0;
+
+	public String substitutionModelIdref = createSubstitutionModelIdref();
+	
+	private String createSubstitutionModelIdref() {
+
+		String substitutionModelIdref = "";
+
+		switch (this.substitutionModelIndex) {
+
+		case 0: // HKY
+
+			substitutionModelIdref = PartitionData.substitutionModels[0]
+					.toLowerCase();
+			break;
+
+		case 1: // GTR
+
+			substitutionModelIdref = PartitionData.substitutionModels[1]
+					.toLowerCase();
+			break;
+
+		case 2: // TNF93
+			substitutionModelIdref = PartitionData.substitutionModels[2].toLowerCase();
+			break;
+
+		case 3: // Yang Codon Model
+
+			substitutionModelIdref = PartitionData.substitutionModels[3].replaceAll(" +", ".").toLowerCase();
+			break;
+
+		}// END: switch
+
+		return substitutionModelIdref;
+	}
 
 	public static String[] substitutionModels = { "HKY", //
 		    "GTR", //
@@ -214,6 +250,8 @@ public class PartitionData {
 	// ---FREQUENCY MODELS---//
 	// ////////////////////////
 
+	public String frequencyModelIdref = "freqModel";
+	
 	public int frequencyModelIndex = 0;
 
 	public static String[] frequencyModels = { "Nucleotide frequencies", //
@@ -429,6 +467,8 @@ public class PartitionData {
 
 	public int siteRateModelIndex = 0;
 
+	public String siteRateModelIdref = SiteModel.SITE_MODEL;
+	
 	public static String[] siteRateModels = { "No model", //
 			"Gamma Site Rate Model", //
 	};

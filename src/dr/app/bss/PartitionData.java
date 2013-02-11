@@ -178,6 +178,8 @@ public class PartitionData {
 
 	public int clockModelIndex = 0;
 
+	public String clockModelIdref = BranchRateModel.BRANCH_RATES;
+	
 	public static String[] clockModels = { "Strict Clock", //
 	};
 

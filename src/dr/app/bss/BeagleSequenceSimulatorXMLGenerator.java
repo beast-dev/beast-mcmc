@@ -151,26 +151,26 @@ public class BeagleSequenceSimulatorXMLGenerator {
 		// //////////////////////////////////
 
 		try {
-
 			
 			int suffix = 1;
-			ArrayList<PartitionData> dataList2 = new ArrayList<PartitionData>();
+			ArrayList<PartitionData> partitionList = new ArrayList<PartitionData>();
 			for (PartitionData data : dataList) {
 
-				if(dataList2.size()==0 | !Utils.isModelInList(data, dataList2)) {
-				
-				System.out.println(suffix + " different!");
+				if (partitionList.size() == 0 | !Utils.isModelInList(data, partitionList)) {
+
+					data.clockModelIdref += suffix; 
 					
-				writeBranchRatesModel(data, writer, String.valueOf(suffix));
-				writer.writeBlankLine();
-				dataList2.add(data);
-				
+					writeBranchRatesModel(data, writer, String.valueOf(suffix));
+					writer.writeBlankLine();
+					partitionList.add(data);
+
 				} else {
-					
-					System.out.println(suffix + " identical!");
+
+					int idref = Utils.isIdenticalWith(data, partitionList) + 1 ;
+					data.clockModelIdref += idref;
 					
 				}
-				
+
 				suffix++;
 
 			}// END: partition loop
@@ -197,6 +197,13 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 		try {
 
+			
+			
+			
+			
+			
+			
+			
 			for (PartitionData data : dataList) {
 
 				writeFrequencyModel(data, writer);
@@ -349,7 +356,7 @@ public class BeagleSequenceSimulatorXMLGenerator {
 
 			case 0: // StrictClock
 
-				writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, BranchRateModel.BRANCH_RATES);
+				writer.writeIDref(StrictClockBranchRatesParser.STRICT_CLOCK_BRANCH_RATES, data.clockModelIdref);
 				break;
 
 			}// END: switch			

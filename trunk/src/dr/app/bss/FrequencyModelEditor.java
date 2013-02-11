@@ -103,9 +103,9 @@ public class FrequencyModelEditor {
 
 		int index = frequencyCombo.getSelectedIndex();
 
-		for (int i = 0; i < dataList.get(0).frequencyParameterIndices[index].length; i++) {
+		for (int i = 0; i < dataList.get(row).frequencyParameterIndices[index].length; i++) {
 
-			int k = dataList.get(0).frequencyParameterIndices[index][i];
+			int k = dataList.get(row).frequencyParameterIndices[index][i];
 
 			JPanel panel = new JPanel(new BorderLayout(6, 6));
 			panel.add(frequencyParameterFields[k], BorderLayout.WEST);

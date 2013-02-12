@@ -99,7 +99,13 @@ public class IndependentGammaSampler extends SimpleMCMCOperator {
 				
 				//both current and new value of the variable needed for the hastings ratio
 				currentValue = variable.getValue(i);
+				
 				newValue = gamma.nextGamma();
+				while (newValue == 0.0) {
+					newValue = gamma.nextGamma();
+				}
+				
+				//System.err.println("newValue: " + newValue + " - logPdf: " + gamma.logPdf(newValue));
 				
 				logq += (gamma.logPdf(currentValue) - gamma.logPdf(newValue));
 				
@@ -147,7 +153,8 @@ public class IndependentGammaSampler extends SimpleMCMCOperator {
 		private final XMLSyntaxRule[] rules = {
                 AttributeRule.newDoubleRule(WEIGHT),
                 AttributeRule.newDoubleRule(SHAPE),
-                AttributeRule.newDoubleRule(SCALE)
+                AttributeRule.newDoubleRule(SCALE),
+                new ElementRule(Parameter.class)
         };
 
 		public String getParserDescription() {

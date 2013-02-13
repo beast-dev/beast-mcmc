@@ -17,12 +17,12 @@
 
 
 Version History
-Last updated: msuchard@ucla.edu - 31st January 2013
+Last updated: a.rambaut@ed.ac.uk - 13th February 2013
 All issues can be viewed at http://code.google.com/p/beast-mcmc/issues/list
 
 ================================================================================
 
-Version 1.7.5 released XXth February 2013
+Version 1.7.5 released 14th February 2013
 
     New Features:
        Added ability to add a starting value for the age of clades specified in BEAUti using
@@ -33,6 +33,8 @@ Version 1.7.5 released XXth February 2013
        is a random quantity.
        Ancestral recombination graph inference improved for two partition problems.
        BEAST runs on NSF Keeneland supercomputer in a massively parallel fashion.
+       BEAUti site model options now has a 'Yang96' button to set a codon position model described in
+       that paper.
 
 	Bug Fixes:	
         Issue 672:	BEAUti duplicates rates in phylograms

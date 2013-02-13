@@ -2,7 +2,7 @@ package dr.app.bss;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 import dr.evolution.util.MutableTaxonList;
 import dr.evolution.util.Taxa;
@@ -20,18 +20,10 @@ public class PartitionDataList extends ArrayList<PartitionData> {
 	public int siteCount = 1000;	
 	public int simulationsCount = 1;
 	
-	public HashMap<File, TreeModel> forestMap = new HashMap<File, TreeModel>();
+	public LinkedHashMap<File, TreeModel> forestMap = new LinkedHashMap<File, TreeModel>();
 	
 	public PartitionDataList() {
 		super();
 	}// END: Constructor
-	
-//	public int getSequenceLength() {
-//		return sequenceLength;
-//	}
-//	
-//	public void setSequenceLength(int sequenceLength) {
-//		this.sequenceLength=sequenceLength;
-//	}
 	
 }//END:class

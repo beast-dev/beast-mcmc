@@ -48,12 +48,12 @@ public class Utils {
 		return treeModelsList;
 	}// END: treesToList
 	
-	public static boolean taxonExists(Taxon taxon1, MutableTaxonList taxonList) {
+	public static boolean taxonExists(Taxon taxon, MutableTaxonList taxonList) {
 		
 		boolean exists = false;
 		for(Taxon taxon2 : taxonList) {
 
-			if(taxon1.equals(taxon2)) {
+			if(taxon.equals(taxon2)) {
 				exists = true;
 				break;
 			}
@@ -63,6 +63,38 @@ public class Utils {
 		return exists;
 	}// END: taxonExists
 
+	public static boolean isTreeModelInList(TreeModel treeModel, ArrayList<TreeModel> treeModelList) {
+		
+		boolean exists = false;
+		
+		for(TreeModel treeModel2 : treeModelList) {
+			
+			if(treeModel.equals(treeModel2)) {
+				exists = true;
+				break;
+			}
+			
+		}
+		
+		return exists;
+	}//END: isTreeModelInList
+	
+	public static int treeModelIsIdenticalWith(TreeModel treeModel, ArrayList<TreeModel> treeModelList) {
+		
+		int index = -Integer.MAX_VALUE;
+		
+		for(TreeModel treeModel2 : treeModelList) {
+			
+			if(treeModel.equals(treeModel2)) {
+				index = treeModelList.indexOf(treeModel2);
+				break;
+			}
+			
+		}
+		
+		return index;
+	}// END: treeModelIsIdenticalWith
+	
 	// TODO: horrible amount of code duplication
 	public static boolean isElementInList(PartitionData data,
 			ArrayList<PartitionData> partitionList, int elementIndex) {
@@ -260,11 +292,6 @@ public class Utils {
 
 		return index;
 	}// END: isIdenticalWith
-	
-	
-	
-	
-	
 	
 	// /////////////////
 	// ---GUI UTILS---//
